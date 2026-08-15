@@ -28,7 +28,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `SUPABASE_PROJECT_REF` | Supabase project | Local setup metadata | Local only |
 | `SUPABASE_REGION` | Provisioning decision | Local setup metadata | Local only |
 
-`SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility.
+`SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
 ## Authentication smoke test
 

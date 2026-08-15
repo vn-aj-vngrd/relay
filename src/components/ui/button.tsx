@@ -17,5 +17,5 @@ export function Button({ variant = "primary", className = "", ...props }: Compon
 }
 
 export function ButtonLink({ href, children, variant = "primary", className = "", ...props }: Omit<ComponentProps<typeof Link>, "href"> & { href: string; children: ReactNode; variant?: Variant }) {
-  return <Link href={href} className={`${base} ${variants[variant]} ${className}`} {...props}>{children}</Link>;
+  return <Link href={href} prefetch={false} className={`${base} ${variants[variant]} ${className}`} {...props}>{children}</Link>;
 }
