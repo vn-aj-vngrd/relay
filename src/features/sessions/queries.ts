@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, profiles, sessionPlayers, sessions } from "@/db/schema";
 
@@ -11,7 +11,9 @@ export async function getUserSessions(userId: string) {
 export async function getHomeSessions(userId: string) {
   const now = new Date();
   const rows = await getUserSessions(userId);
-  const enriched = await Promise.all(rows.map(async (row) => ({ ...row, playerCount: await db.$count(sessionPlayers, and(eq(sessionPlayers.sessionId, row.session.id), eq(sessionPlayers.rsvp, "going"))) })));
+  const counts = rows.length ? await db.select({ sessionId: sessionPlayers.sessionId, total: count() }).from(sessionPlayers).where(and(inArray(sessionPlayers.sessionId, rows.map(({ session }) => session.id)), eq(sessionPlayers.rsvp, "going"))).groupBy(sessionPlayers.sessionId) : [];
+  const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
+  const enriched = rows.map((row) => ({ ...row, playerCount: playerCounts.get(row.session.id) ?? 0 }));
   return {
     upcoming: enriched.filter(({ session }) => session.startsAt >= now && session.status !== "cancelled"),
     recent: enriched.filter(({ session }) => session.startsAt < now || session.status === "completed").sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()).slice(0, 4),

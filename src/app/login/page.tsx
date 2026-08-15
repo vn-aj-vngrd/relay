@@ -14,6 +14,11 @@ function SessionPromise({ inverse = false }: { inverse?: boolean }) {
   return <dl className={`divide-y border-y ${inverse ? "divide-white/12 border-white/12" : "divide-line border-line"}`}>{sessionPromises.map(([term, detail]) => <div key={term} className="grid grid-cols-[112px_1fr] gap-3 py-3 text-sm"><dt className={`font-[650] ${inverse ? "text-white" : "text-ink"}`}>{term}</dt><dd className={inverse ? "text-white/62" : "text-muted"}>{detail}</dd></div>)}</dl>;
 }
 
+function CourtMotionGraphic() {
+  const ball = <g><circle cx="260" cy="112" r="35" fill="var(--signal)" /><g fill="var(--court)" opacity=".72"><circle cx="246" cy="96" r="3.2" /><circle cx="267" cy="91" r="3.2" /><circle cx="278" cy="111" r="3.2" /><circle cx="259" cy="120" r="3.2" /><circle cx="240" cy="119" r="3.2" /><circle cx="271" cy="135" r="3.2" /></g></g>;
+  return <><svg aria-hidden viewBox="0 0 440 280" className="pointer-events-none absolute left-1/2 top-[13%] hidden w-[82%] -translate-x-1/2 lg:block"><path d="M44 232C128 58 233 238 392 45" fill="none" stroke="var(--court-line)" strokeWidth="2" strokeDasharray="7 10" opacity=".34" />{ball}</svg><svg aria-hidden viewBox="0 0 440 280" className="pointer-events-none absolute bottom-0 right-1 h-24 w-36 lg:hidden"><path d="M130 246C200 104 284 215 406 72" fill="none" stroke="var(--court-line)" strokeWidth="3" strokeDasharray="10 13" opacity=".28" />{ball}</svg></>;
+}
+
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string; next?: string }> }) {
   const query = await searchParams;
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
@@ -21,6 +26,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main id="main-content" className="min-h-screen bg-surface lg:grid lg:grid-cols-[minmax(360px,0.84fr)_minmax(520px,1.16fr)]">
       <section className="court-panel relative flex h-36 flex-col overflow-hidden bg-court px-5 py-2 text-white sm:h-40 sm:px-8 sm:py-3 lg:h-auto lg:min-h-screen lg:flex-col lg:px-10 lg:py-8" aria-label="Relay introduction">
+        <CourtMotionGraphic />
         <div className="relative z-10 flex w-full items-start justify-between">
           <Brand inverse />
           <ThemeToggle inverse />

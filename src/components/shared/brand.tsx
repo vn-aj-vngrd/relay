@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
-    <Link href="/" className={`-mx-1 inline-flex min-h-11 items-center gap-2.5 rounded-lg px-1 font-[730] tracking-[-0.03em] ${inverse ? "text-white" : "text-ink"}`} aria-label="Relay home">
+    <Link href="/" prefetch={false} className={`-mx-1 inline-flex min-h-11 items-center gap-2.5 rounded-lg px-1 font-[730] tracking-[-0.03em] ${inverse ? "text-white" : "text-ink"}`} aria-label="Relay home">
       <svg aria-hidden viewBox="0 0 36 36" className="h-9 w-9" fill="none">
         <rect width="36" height="36" rx="10" fill="var(--brand)" />
         <g transform="rotate(-18 18 18)">
