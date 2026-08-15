@@ -70,7 +70,7 @@ p { text-wrap: pretty; }
 .score { font-family: var(--score); font-variant-numeric: tabular-nums; letter-spacing: -0.035em; }
 .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 .text-pretty { text-wrap: pretty; }
-.app-title { font-size: 2rem; line-height: 2.3rem; font-weight: 760; letter-spacing: -0.032em; }
+.app-title { font-size: 1.875rem; line-height: 2.25rem; font-weight: 720; letter-spacing: -0.025em; }
 .sport-label { font-family: var(--score); font-size: 0.75rem; line-height: 1rem; font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
 .app-chrome, .mobile-chrome { background: color-mix(in oklch, var(--surface) 91%, transparent); backdrop-filter: saturate(1.2) blur(18px); -webkit-backdrop-filter: saturate(1.2) blur(18px); }
 .court-rule { border-color: color-mix(in oklch, var(--court-line) 26%, transparent); }
@@ -84,7 +84,7 @@ p { text-wrap: pretty; }
 .court-panel::after { content: ""; position: absolute; right: 0; top: 56%; width: 42%; height: 1px; background: color-mix(in oklch, var(--court-line) 23%, transparent); }
 
 @media (min-width: 640px) {
-  .app-title { font-size: 2.375rem; line-height: 2.7rem; }
+  .app-title { font-size: 2.25rem; line-height: 2.625rem; }
 }
 
 @media (min-width: 768px) {

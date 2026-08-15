@@ -17,15 +17,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="px-2 pb-8 pt-1"><Brand /></div>
       <AppNav username={profile.username} mode="sidebar" />
       <div className="mt-auto space-y-1 border-t border-line pt-4">
-        <Link href="/search" prefetch={false} className="pressable flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[650] text-muted hover:bg-surface-strong hover:text-ink"><Search aria-hidden size={21} strokeWidth={2.3} />Search</Link>
-        <Link href="/notifications" prefetch={false} className="pressable relative flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[650] text-muted hover:bg-surface-strong hover:text-ink"><Bell aria-hidden size={21} strokeWidth={2.3} />Notifications{unreadCount ? <span className="ml-auto h-2 w-2 rounded-full bg-live" aria-label={`${unreadCount} unread`} /> : null}</Link>
+        <Link href="/search" prefetch={false} className="pressable flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[620] text-muted hover:bg-surface-strong hover:text-ink"><Search aria-hidden size={20} />Search</Link>
+        <Link href="/notifications" prefetch={false} className="pressable relative flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[620] text-muted hover:bg-surface-strong hover:text-ink"><Bell aria-hidden size={20} />Notifications{unreadCount ? <span className="ml-auto h-2 w-2 rounded-full bg-live" aria-label={`${unreadCount} unread`} /> : null}</Link>
       </div>
     </aside>
 
     <header className="app-chrome sticky top-0 z-20 border-b border-line lg:hidden">
       <div className="flex h-[60px] items-center justify-between px-4 sm:h-16 sm:px-6">
         <Brand />
-        <div className="flex items-center gap-1"><Link href="/search" prefetch={false} aria-label="Search" className="pressable grid h-10 w-10 place-items-center rounded-xl bg-surface-strong text-ink hover:bg-primary-soft hover:text-primary"><Search aria-hidden size={20} strokeWidth={2.4} /></Link><Link href="/notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-10 w-10 place-items-center rounded-xl bg-surface-strong text-ink hover:bg-primary-soft hover:text-primary"><Bell aria-hidden size={20} strokeWidth={2.4} />{unreadCount ? <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-live ring-2 ring-surface" /> : null}</Link></div>
+        <div className="flex items-center"><Link href="/search" prefetch={false} aria-label="Search" className="pressable grid h-11 w-11 place-items-center text-ink hover:text-primary"><Search aria-hidden size={21} strokeWidth={2.2} /></Link><Link href="/notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-11 w-11 place-items-center text-ink hover:text-primary"><Bell aria-hidden size={21} strokeWidth={2.2} />{unreadCount ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-live ring-2 ring-surface" /> : null}</Link></div>
       </div>
     </header>
 

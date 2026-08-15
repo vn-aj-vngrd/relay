@@ -66,7 +66,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
   return <form className="space-y-8" action={action} autoComplete="off" noValidate>
     {state.error ? <p role="alert" className="rounded-xl bg-danger/8 px-4 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15">{state.error}</p> : null}
 
-    <section className="space-y-6 rounded-2xl bg-surface-strong p-5 sm:p-6" aria-labelledby="game-basics-heading">
+    <section className="space-y-6" aria-labelledby="game-basics-heading">
       <div><h2 id="game-basics-heading" className="text-lg font-[680]">Game details</h2><p className="mt-1 text-sm text-muted">The essentials your friends see on the invite.</p></div>
       <div>
         <label className={labelClass} htmlFor="title">Game name</label>
@@ -89,7 +89,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
       <QuantityInput id="courts" label="Court quantity" hint="The number of courts available to your group." min={1} max={20} defaultValue={Number(value("courts", String(defaults.courts ?? 2)))} error={courtsError} />
     </section>
 
-    <section className="rounded-2xl border border-line bg-surface px-4 sm:px-5">
+    <section className="border-y border-line py-2">
       <button type="button" onClick={() => setMore((open) => !open)} aria-expanded={advancedOpen} className="pressable flex min-h-14 w-full items-center justify-between text-left font-semibold"><span><span className="block">More details</span><span className="mt-0.5 block text-sm font-normal text-muted">Cost, court numbers, booking, and notes</span></span><ChevronDown className={`transition-transform ${advancedOpen ? "rotate-180" : ""}`} size={20} /></button>
       {advancedOpen ? <div className="space-y-6 pb-5 pt-4">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
@@ -101,6 +101,6 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
       </div> : null}
     </section>
 
-    <div className="app-chrome sticky bottom-0 z-10 -mx-4 flex items-center justify-end gap-2 border-t border-line px-4 py-3 safe-bottom sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>Save draft</Button><Button type="submit" name="intent" value="publish" className="min-w-36 sm:min-w-40" disabled={pending}>{pending ? "Publishing…" : "Publish game"}</Button></div>
+    <div className="flex items-center justify-end gap-2 border-t border-line pt-5 sm:border-0 sm:pt-0"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>Save draft</Button><Button type="submit" name="intent" value="publish" className="min-w-36 sm:min-w-40" disabled={pending}>{pending ? "Publishing…" : "Publish game"}</Button></div>
   </form>;
 }

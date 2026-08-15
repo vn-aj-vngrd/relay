@@ -110,7 +110,7 @@ Native controls with 48px height, white surface, cool keyline, and a court-blue 
 
 ### Navigation
 
-Sticky top and bottom chrome uses a slightly translucent canvas plus controlled blur. Current sections use a compact filled icon tile and stronger label weight; inactive icons retain a deliberate 2.25px optical stroke instead of hairline decoration. Create remains a high-contrast action. Appearance controls live in the owner’s Profile settings rather than competing with daily navigation. Live Mode prioritizes local Courts navigation over global navigation.
+Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses quiet rows and primary color only for the current icon; mobile uses a standard edge-to-edge tab bar with no floating container or decorative icon tiles. Create is the only enclosed tab action. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Courts navigation over global navigation.
 
 ### Session identity
 
