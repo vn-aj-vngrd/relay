@@ -349,15 +349,9 @@ note "Stable production URL: $PRODUCTION_URL"
 
 stage "Supabase Auth — email and redirect URLs"
 say "Relay supports email/password and magic-link email. Supabase's default mailer is sufficient for initial testing."
-open_url "https://supabase.com/dashboard/project/${PROJECT_REF}/auth/url-configuration"
-step "Set Site URL to ${PRODUCTION_URL}."
-step "Add redirect URL: http://localhost:3000/**"
-step "Add redirect URL: ${PRODUCTION_URL}/**"
-pause "Save the URL configuration, then press Enter."
-open_url "https://supabase.com/dashboard/project/${PROJECT_REF}/auth/providers"
-step "Open Email and confirm Enable Email provider is on."
-step "Keep Confirm email on. Password and magic-link flows can coexist."
-pause "Save the Email provider settings, then press Enter."
+step "Pushing the reviewed settings in supabase/config.toml."
+supabase config push --project-ref "$PROJECT_REF" --yes
+say "Configured the production Site URL, localhost/Vercel redirects, confirmed email, eight-character OTPs, password requirements, and TOTP support."
 
 stage "Google — OAuth client and Supabase provider"
 say "Google needs one Web application OAuth client. The client secret stays in Google and Supabase; Relay does not store it locally."
