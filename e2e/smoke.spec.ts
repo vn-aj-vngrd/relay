@@ -41,11 +41,14 @@ test("a new user can create an account and reach the authenticated home", async 
   expect(desktopCreate!.x).toBeLessThan(240);
 
   await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto("/games/new");
+  await page.goto("/");
   const mobileNav = await page.getByRole("navigation", { name: "Main navigation" }).boundingBox();
   expect(mobileNav).not.toBeNull();
   expect(mobileNav!.x).toBeGreaterThanOrEqual(0);
   expect(mobileNav!.x + mobileNav!.width).toBeLessThanOrEqual(320);
+
+  await page.goto("/games/new");
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
   const date = await page.locator("#date").boundingBox();
   const capacity = await page.locator("#capacity").boundingBox();
   const start = await page.locator("#start").boundingBox();
@@ -56,6 +59,12 @@ test("a new user can create an account and reach the authenticated home", async 
   }
   expect(date!.y + date!.height).toBeLessThanOrEqual(capacity!.y);
   expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
+
+  await page.locator("#venue").fill("Central Pickle");
+  await page.locator("#courts").fill("21");
+  await page.getByRole("button", { name: "Publish game" }).click();
+  await expect(page.getByText("Relay supports up to 20 courts per session.")).toBeVisible();
+  await expect(page.locator("#courts")).toBeFocused();
 });
 
 test("login switches between sign in and account creation", async ({ page }) => {

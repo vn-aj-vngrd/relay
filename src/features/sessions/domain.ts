@@ -1,16 +1,16 @@
 import { z } from "zod";
 
 export const createSessionSchema = z.object({
-  title: z.string().trim().min(2).max(80),
-  startsAt: z.coerce.date(),
-  endsAt: z.coerce.date(),
-  venueName: z.string().trim().min(2).max(120),
-  capacity: z.coerce.number().int().min(2).max(40),
-  courtCount: z.coerce.number().int().min(1).max(12),
-  notes: z.string().trim().max(1200).optional(),
-  estimatedCostCents: z.coerce.number().int().nonnegative().optional(),
+  title: z.string().trim().min(2, "Add a game name with at least 2 characters.").max(80, "Keep the game name under 80 characters."),
+  startsAt: z.coerce.date({ error: "Choose a valid date and start time." }),
+  endsAt: z.coerce.date({ error: "Choose a valid end time." }),
+  venueName: z.string().trim().min(2, "Add the venue name.").max(120, "Keep the venue name under 120 characters."),
+  capacity: z.coerce.number().int("Player limit must be a whole number.").min(2, "Invite at least 2 players.").max(40, "Player limit can’t exceed 40."),
+  courtCount: z.coerce.number().int("Court quantity must be a whole number.").min(1, "Choose at least 1 court.").max(20, "Relay supports up to 20 courts per session."),
+  notes: z.string().trim().max(1200, "Keep the note under 1,200 characters.").optional(),
+  estimatedCostCents: z.coerce.number().int("Enter a valid amount.").nonnegative("Cost can’t be negative.").optional(),
 }).superRefine((value, context) => {
-  if (value.endsAt <= value.startsAt) context.addIssue({ code: "custom", path: ["endsAt"], message: "End time must be after start time" });
+  if (value.endsAt <= value.startsAt) context.addIssue({ code: "custom", path: ["endsAt"], message: "End time must be after start time." });
 });
 
 export type Rsvp = "invited" | "going" | "maybe" | "waitlisted" | "declined";

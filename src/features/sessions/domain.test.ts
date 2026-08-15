@@ -5,9 +5,15 @@ describe("session validation", () => {
   const valid = { title: "Saturday Night Pickle", startsAt: new Date("2026-08-22T11:00:00Z"), endsAt: new Date("2026-08-22T14:00:00Z"), venueName: "Central Pickle", capacity: 8, courtCount: 2 };
   it("accepts the smallest complete session plan", () => expect(createSessionSchema.safeParse(valid).success).toBe(true));
   it("rejects an end time before the start", () => expect(createSessionSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
-  it("rejects unsafe capacity and court counts", () => {
+  it("accepts a larger court quantity without a four-court preset limit", () => {
+    expect(createSessionSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(true);
+  });
+  it("returns clear boundaries for unsafe capacity and court quantities", () => {
     expect(createSessionSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
-    expect(createSessionSchema.safeParse({ ...valid, courtCount: 0 }).success).toBe(false);
+    const tooFew = createSessionSchema.safeParse({ ...valid, courtCount: 0 });
+    const tooMany = createSessionSchema.safeParse({ ...valid, courtCount: 21 });
+    expect(tooFew.success ? [] : tooFew.error.flatten().fieldErrors.courtCount).toContain("Choose at least 1 court.");
+    expect(tooMany.success ? [] : tooMany.error.flatten().fieldErrors.courtCount).toContain("Relay supports up to 20 courts per session.");
   });
 });
 

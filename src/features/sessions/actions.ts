@@ -33,7 +33,23 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     notes: formData.get("notes") || undefined,
     estimatedCostCents: typeof rawCost === "string" && rawCost ? Math.round(Number(rawCost) * 100) : undefined,
   });
-  if (!parsed.success) return { error: "Check the highlighted details and try again.", fieldErrors: parsed.error.flatten().fieldErrors };
+  if (!parsed.success) {
+    const errors = parsed.error.flatten().fieldErrors;
+    return {
+      error: "A few details need attention. Check the fields marked below.",
+      fieldErrors: {
+        title: errors.title ?? [],
+        venue: errors.venueName ?? [],
+        date: errors.startsAt ?? [],
+        start: errors.startsAt ?? [],
+        end: errors.endsAt ?? [],
+        capacity: errors.capacity ?? [],
+        courts: errors.courtCount ?? [],
+        notes: errors.notes ?? [],
+        cost: errors.estimatedCostCents ?? [],
+      },
+    };
+  }
 
   const intent = formData.get("intent") === "draft" ? "draft" : "published";
   const courtNumbers = String(formData.get("courtNumbers") ?? "").split(",").map((value) => value.trim()).filter(Boolean);
