@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("protected routes send signed-out users to a usable login", async ({ page }) => {
+test("protected routes send signed-out users to a usable login", async ({ page }, testInfo) => {
   await page.goto("/");
   expect(new URL(page.url()).pathname).toBe("/login");
   expect(new URL(page.url()).searchParams.get("next")).toBe("/");
@@ -10,6 +10,12 @@ test("protected routes send signed-out users to a usable login", async ({ page }
   await expect(page.locator("#password")).toBeVisible();
   await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" })).toBeVisible();
+  if (testInfo.project.name.startsWith("mobile")) {
+    await expect(page.getByRole("heading", { name: "Built for friendly game nights" })).toBeVisible();
+    await expect(page.getByText("A little organization, without leagues or rankings.")).toBeVisible();
+  } else {
+    await expect(page.getByText(/No leagues, ladders, or ratings/)).toBeVisible();
+  }
   await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
 });

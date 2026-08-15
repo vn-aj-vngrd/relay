@@ -7,9 +7,10 @@ import { formatSessionDate, formatSessionTime, peso } from "@/features/sessions/
 import { getHomeSessions } from "@/features/sessions/queries";
 
 const sessionFlow = [
-  ["01", "Invite", "Share a public link. Friends can join by name."],
-  ["02", "Play", "Run the paddle stack, court teams, and points."],
-  ["03", "Remember", "Keep results and photos, then play again."],
+  ["01", "Plan", "Share the time, venue, player limit, and cost."],
+  ["02", "Invite", "Send one public link. Friends can join by name."],
+  ["03", "Play", "Run the paddle stack, court teams, and points."],
+  ["04", "Settle", "Split expenses and keep payment status clear."],
 ] as const;
 
 export default async function HomePage() {
@@ -40,7 +41,7 @@ export default async function HomePage() {
       <div className="py-8 lg:border-r lg:border-line lg:py-10 lg:pr-12">
         <p className="sport-label text-primary">One session, start to finish</p>
         <h2 id="first-game-heading" className="mt-4 max-w-md text-[1.75rem] font-[720] leading-tight tracking-[-0.03em] sm:text-3xl">Set the plan once.<br />Keep everyone moving.</h2>
-        <p className="mt-4 max-w-md leading-7 text-muted">Relay gives your crew one clear home before, during, and after the game.</p>
+        <p className="mt-4 max-w-md leading-7 text-muted">Relay gives friends one clear home for casual games—without league setup, ladders, or ratings.</p>
         <ButtonLink href="/games/new" className="mt-7">Create your first game <ArrowRight size={17} /></ButtonLink>
       </div>
       <ol className="divide-y divide-line py-2 lg:py-5 lg:pl-12">{sessionFlow.map(([number, title, detail]) => <li key={number} className="grid grid-cols-[36px_88px_1fr] gap-3 py-5"><span className="score text-xs font-semibold text-primary">{number}</span><span className="font-[680]">{title}</span><span className="text-sm leading-5 text-muted">{detail}</span></li>)}</ol>

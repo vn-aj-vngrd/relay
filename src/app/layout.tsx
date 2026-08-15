@@ -9,7 +9,7 @@ export const viewport: Viewport = { themeColor: "oklch(1 0 0)" };
 
 export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
-  description: "Make the plan, run the courts, remember the game.",
+  description: "Plan casual pickleball with friends, share one invite, run the courts, and split the cost.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002"),
 };
 

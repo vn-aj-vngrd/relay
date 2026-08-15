@@ -5,10 +5,10 @@ import { AuthForm } from "@/features/auth/auth-form";
 import { signInWithGoogle } from "@/features/auth/actions";
 
 const sessionPromises = [
-  ["Invite", "Share one link. Guests can join by name."],
-  ["Organize", "Keep the paddle stack, courts, and live score clear."],
+  ["Plan", "Put the time, venue, players, and cost in one place."],
+  ["Invite", "Share one link. Friends can join by name."],
+  ["Play", "Run the paddle stack, courts, and live score."],
   ["Settle", "Split costs and review payment proof."],
-  ["Remember", "Save results, photos, and play again."],
 ] as const;
 
 function SessionPromise() {
@@ -33,9 +33,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <CourtMotionGraphic />
         <div className="relative z-10 flex w-full items-start justify-between"><Brand /><ThemeToggle /></div>
         <div className="relative z-10 mt-auto max-w-lg pb-2 lg:pb-6">
-          <p className="sport-label mb-3 text-primary">Pickleball, organized</p>
+          <p className="sport-label mb-3 text-primary">Pickleball with friends</p>
           <h2 className="text-[1.65rem] font-[740] leading-[1.05] tracking-[-0.035em] sm:text-3xl lg:text-[3.5rem]">Make the plan.<br />Run the courts.</h2>
-          <p className="mt-3 hidden max-w-md text-[17px] leading-7 text-muted lg:block">One calm place for the invite, the paddle stack, the score, and everything your crew needs next.</p>
+          <p className="mt-3 hidden max-w-md text-[17px] leading-7 text-muted lg:block">Relay keeps friendly game nights easy—from the invite and paddle stack to scores and the payment split. No leagues, ladders, or ratings.</p>
           <div className="mt-8 hidden lg:block"><SessionPromise /></div>
         </div>
       </section>
@@ -45,7 +45,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           {query.error ? <p role="alert" className="mb-6 border-l-2 border-danger bg-danger/6 px-4 py-3 text-sm font-medium leading-5 text-danger">{query.error}</p> : null}
           {query.sent ? <p role="status" className="mb-6 border-l-2 border-primary bg-primary-soft px-4 py-3 text-sm font-medium text-primary">Check your email for your secure sign-in link.</p> : null}
           <AuthForm next={query.next} />
-          <div className="mt-10 lg:hidden"><h2 className="mb-3 text-base font-[680]">Everything for game night</h2><SessionPromise /></div>
+          <div className="mt-10 lg:hidden"><h2 className="text-base font-[680]">Built for friendly game nights</h2><p className="mb-4 mt-1 text-sm leading-5 text-muted">A little organization, without leagues or rankings.</p><SessionPromise /></div>
           {googleEnabled ? <><div className="my-6 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div><form action={signInWithGoogle}><Button variant="secondary" className="h-12 w-full">Continue with Google</Button></form></> : null}
           <p className="mt-8 border-t border-line pt-5 text-center text-xs leading-5 text-muted">Have an invite? Open its shared link to see the plan and RSVP without an account.</p>
         </div>
