@@ -20,8 +20,8 @@ Demo screens use local fixture data so the product can be reviewed without crede
 ## Run locally
 
 ```bash
-cp .env.example .env.local
 corepack pnpm install
+./scripts/setup-integrations.sh
 corepack pnpm dev
 ```
 
@@ -42,6 +42,8 @@ corepack pnpm db:generate
 - [`PRODUCT.md`](./PRODUCT.md) — product context and principles
 - [`DESIGN.md`](./DESIGN.md) — visual system
 - [`docs/product-blueprint.md`](./docs/product-blueprint.md) — requirements, flows, routes, IA, domain, authorization, architecture, and milestones
+- [`docs/integrations.md`](./docs/integrations.md) — Supabase, Vercel, Auth, Storage, Realtime, and credential operations
+- [`drizzle/0000_initial_relay_schema.md`](./drizzle/0000_initial_relay_schema.md) — initial migration intent and verification
 
 ## Architecture
 

@@ -361,4 +361,107 @@ ALTER TABLE "sessions" ADD CONSTRAINT "sessions_venue_id_venues_id_fk" FOREIGN K
 ALTER TABLE "venue_photos" ADD CONSTRAINT "venue_photos_venue_id_venues_id_fk" FOREIGN KEY ("venue_id") REFERENCES "public"."venues"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "notifications_user_unread_idx" ON "notifications" USING btree ("user_id","read_at");--> statement-breakpoint
 CREATE INDEX "session_players_roster_idx" ON "session_players" USING btree ("session_id","rsvp");--> statement-breakpoint
-CREATE INDEX "sessions_starts_at_idx" ON "sessions" USING btree ("starts_at");
+CREATE INDEX "sessions_starts_at_idx" ON "sessions" USING btree ("starts_at");--> statement-breakpoint
+-- Supabase Auth identity mirror. Domain data references public.users while
+-- authentication remains owned by auth.users.
+CREATE OR REPLACE FUNCTION public.sync_auth_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  INSERT INTO public.users (id, email)
+  VALUES (NEW.id, COALESCE(NEW.email, NEW.id::text || '@relay.invalid'))
+  ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, updated_at = now();
+  RETURN NEW;
+END;
+$$;
+--> statement-breakpoint
+CREATE TRIGGER on_auth_user_saved
+AFTER INSERT OR UPDATE OF email ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.sync_auth_user();
+--> statement-breakpoint
+
+-- Storage is private by default. Avatars and venue photography are intentionally
+-- public product assets; sensitive payment, booking, and memory media are private.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES
+  ('avatars', 'avatars', true, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']),
+  ('venue-photos', 'venue-photos', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp']),
+  ('payment-qrs', 'payment-qrs', false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']),
+  ('booking-screenshots', 'booking-screenshots', false, 10485760, ARRAY['image/jpeg', 'image/png', 'image/webp']),
+  ('session-memories', 'session-memories', false, 26214400, ARRAY['image/jpeg', 'image/png', 'image/webp', 'video/mp4'])
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+--> statement-breakpoint
+
+CREATE POLICY "Public assets are readable"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id IN ('avatars', 'venue-photos'));
+--> statement-breakpoint
+CREATE POLICY "Users manage their own avatar files"
+ON storage.objects FOR ALL TO authenticated
+USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = (SELECT auth.uid()::text))
+WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = (SELECT auth.uid()::text));
+--> statement-breakpoint
+
+-- RLS is deny-by-default. Server mutations still perform explicit authorization;
+-- these policies protect direct Supabase Data API access as defense in depth.
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.venues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.venue_photos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.group_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_invites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payment_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.player_payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.match_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.match_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_queue ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.message_reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.memories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.memory_media ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+--> statement-breakpoint
+
+CREATE POLICY "Public profiles are readable"
+ON public.profiles FOR SELECT TO public USING (true);
+CREATE POLICY "Users update their own profile"
+ON public.profiles FOR UPDATE TO authenticated
+USING ((SELECT auth.uid()) = user_id)
+WITH CHECK ((SELECT auth.uid()) = user_id);
+CREATE POLICY "Published public and link sessions are readable"
+ON public.sessions FOR SELECT TO public
+USING (status IN ('published', 'live', 'completed') AND visibility IN ('public', 'link'));
+CREATE POLICY "Public venues are readable"
+ON public.venues FOR SELECT TO public USING (true);
+CREATE POLICY "Public venue photos are readable"
+ON public.venue_photos FOR SELECT TO public USING (true);
+CREATE POLICY "Users read their own notifications"
+ON public.notifications FOR SELECT TO authenticated
+USING ((SELECT auth.uid()) = user_id);
+CREATE POLICY "Users update their own notifications"
+ON public.notifications FOR UPDATE TO authenticated
+USING ((SELECT auth.uid()) = user_id)
+WITH CHECK ((SELECT auth.uid()) = user_id);
+--> statement-breakpoint
+
+-- Only collaborative live-session tables join the realtime publication.
+ALTER PUBLICATION supabase_realtime ADD TABLE
+  public.courts,
+  public.matches,
+  public.match_scores,
+  public.session_queue,
+  public.messages,
+  public.message_reactions;

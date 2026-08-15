@@ -5,3 +5,6 @@ node_modules
 coverage
 *.tsbuildinfo
 .DS_Store
+.vercel
+.supabase
+supabase/.temp
