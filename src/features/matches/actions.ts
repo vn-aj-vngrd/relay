@@ -2,6 +2,7 @@
 
 import { and, asc, eq, inArray, max, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/db/client";
 import { courts, matches, matchPlayers, memories, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -65,7 +66,7 @@ export async function changeScore(formData: FormData) {
 
 export async function completeSession(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  await requireHost(sessionId);
+  const session = await requireHost(sessionId);
   const activeCount = await db.$count(matches, and(eq(matches.sessionId, sessionId), eq(matches.status, "active")));
   if (activeCount) throw new Error("Finish active matches before ending the session");
   await db.transaction(async (tx) => {
@@ -74,6 +75,7 @@ export async function completeSession(formData: FormData) {
   });
   revalidatePath(`/games/${sessionId}/live`);
   revalidatePath(`/games/${sessionId}`);
+  redirect(`/s/${session.slug}`);
 }
 
 export async function finishMatch(formData: FormData) {
