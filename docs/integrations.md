@@ -21,6 +21,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `NEXT_PUBLIC_APP_URL` | Localhost or Vercel project alias | Public | Local, Vercel |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project reference | Public | Local, Vercel |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys | Public | Local, Vercel |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | `true` after Google provider setup | Public | Local, Vercel |
 | `SUPABASE_SECRET_KEY` | Supabase API Keys | Secret, server-only | Local, Vercel |
 | `DATABASE_URL` | Supabase Connect → Transaction pooler | Secret, server-only | Local, Vercel |
 | `SUPABASE_PROJECT_REF` | Supabase project | Local setup metadata | Local only |
