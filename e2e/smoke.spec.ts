@@ -36,6 +36,19 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("form").getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto("/games/new");
+  const date = await page.locator("#date").boundingBox();
+  const capacity = await page.locator("#capacity").boundingBox();
+  const start = await page.locator("#start").boundingBox();
+  const end = await page.locator("#end").boundingBox();
+  for (const field of [date, capacity, start, end]) {
+    expect(field).not.toBeNull();
+    expect(field!.x + field!.width).toBeLessThanOrEqual(320);
+  }
+  expect(date!.y + date!.height).toBeLessThanOrEqual(capacity!.y);
+  expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
 });
 
 test("login switches between sign in and account creation", async ({ page }) => {

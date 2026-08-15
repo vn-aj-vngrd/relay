@@ -14,6 +14,8 @@ Players stand under bright court lights and share one phone between rallies. The
 
 **The digital court.** Session heroes and match surfaces use a deep blue-black field, crisp white divisions, court-blue action areas, tabular scores, and a single optic-yellow signal. The geometry encodes actual structure—sides, courts, queue order, and live state. It is never a decorative pattern.
 
+The Relay mark is a top-down court in motion: court boundaries, a contrasting net, and one optic ball crossing into the next side. It expresses pickleball and relay without relying on a generic letter, paddle silhouette, or social-app glyph.
+
 ## Color strategy
 
 Restrained foundation with a stronger sport mode. Court blue occupies less than 10% of planning surfaces and expands only in session identity, selected state, and Live Mode.
