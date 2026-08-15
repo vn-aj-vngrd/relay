@@ -124,6 +124,10 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 - Score mutations temporarily disable repeat input and explain concurrency conflicts.
 - A finished match collapses into history; it does not linger as an active card.
 
+### Collections
+
+Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid when they want more visual separation between sessions. The choice is explicit, accessible, and saved locally as `relay-games-view`; it never changes the underlying sort or information hierarchy.
+
 ### Queue and standings
 
 Queue order uses tabular numbers and rows, not pills. Standings are a compact table with right-aligned numeric columns. Neither imitates a professional rating system.

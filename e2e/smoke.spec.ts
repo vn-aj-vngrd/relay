@@ -40,6 +40,12 @@ test("a new user can create an account and reach the authenticated home", async 
   expect(desktopCreate).not.toBeNull();
   expect(desktopCreate!.x).toBeLessThan(240);
 
+  await page.goto("/games");
+  await page.getByRole("button", { name: "Grid view" }).click();
+  await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute("aria-pressed", "true");
+
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/");
   const mobileNav = await page.getByRole("navigation", { name: "Main navigation" }).boundingBox();
