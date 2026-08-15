@@ -14,6 +14,9 @@ export async function ensureProfile(user: User) {
   const name = user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split("@")[0] ?? "Player";
   const base = slugify(name);
   const username = `${base}-${user.id.slice(0, 5)}`;
-  const [created] = await db.insert(profiles).values({ userId: user.id, name, username, avatarPath: user.user_metadata.avatar_url }).returning();
+  const [created] = await db.insert(profiles)
+    .values({ userId: user.id, name, username, avatarPath: user.user_metadata.avatar_url })
+    .onConflictDoUpdate({ target: profiles.userId, set: { userId: user.id } })
+    .returning();
   return created;
 }
