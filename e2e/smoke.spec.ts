@@ -36,9 +36,16 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("form").getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+  const desktopCreate = await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Create" }).boundingBox();
+  expect(desktopCreate).not.toBeNull();
+  expect(desktopCreate!.x).toBeLessThan(240);
 
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/games/new");
+  const mobileNav = await page.getByRole("navigation", { name: "Main navigation" }).boundingBox();
+  expect(mobileNav).not.toBeNull();
+  expect(mobileNav!.x).toBeGreaterThanOrEqual(0);
+  expect(mobileNav!.x + mobileNav!.width).toBeLessThanOrEqual(320);
   const date = await page.locator("#date").boundingBox();
   const capacity = await page.locator("#capacity").boundingBox();
   const start = await page.locator("#start").boundingBox();
@@ -98,6 +105,7 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
   const button = page.locator("form").getByRole("button", { name: "Sign in" });
   const box = await button.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
+  expect(await button.evaluate((element) => getComputedStyle(element).cursor)).toBe("pointer");
   const brand = page.getByRole("link", { name: "Relay home" });
   expect((await brand.boundingBox())?.height).toBeGreaterThanOrEqual(44);
 });

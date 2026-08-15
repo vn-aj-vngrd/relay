@@ -91,8 +91,9 @@ This gives Apple devices native SF typography while retaining Geist elsewhere. G
 ## Layout
 
 - Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation.
-- Desktop: centered 1180px shell; overview/roster and courts/queue become deliberate two-column compositions.
-- Header and bottom navigation are sticky navigation materials, not page decoration.
+- Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions.
+- Mobile: a compact floating tab bar stays inside the safe area and preserves 44px touch targets without obscuring content.
+- Navigation chrome may float and blur; content remains opaque and structurally flat.
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
 - Desktop never stretches mobile cards; it introduces useful adjacency.
 

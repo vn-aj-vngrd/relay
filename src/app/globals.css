@@ -59,7 +59,9 @@ body {
 }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-a { text-decoration: none; }
+a { cursor: pointer; text-decoration: none; }
+button:not(:disabled), [role="button"], summary, select { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
 h1, h2, h3 { text-wrap: balance; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-geist-sans), "Segoe UI", sans-serif; }
 p { text-wrap: pretty; }
 ::selection { background: var(--primary-soft); color: var(--ink); }
