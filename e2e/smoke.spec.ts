@@ -24,6 +24,16 @@ test("a new user can create an account and reach the authenticated home", async 
 
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+
+  await page.getByRole("link", { name: "Profile" }).click();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
+  await page.getByLabel("Password").fill(process.env.E2E_AUTH_PASSWORD!);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
 });
 
 test("login has no serious accessibility violations", async ({ page }) => {
