@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, Grid2X2, List, MapPin, Users } from "lucide-react";
+import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Grid2X2, History, List, MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 
@@ -41,7 +41,8 @@ function saveView(mode: ViewMode) {
 }
 
 function EmptyCollection({ past }: { past?: boolean }) {
-  return <div className="border-y border-line py-8"><p className="font-[650]">{past ? "No game memories yet" : "Nothing scheduled"}</p><p className="mt-1 text-sm text-muted">{past ? "Completed games will stay here with scores and photos." : "Create a game, share the link, and let the roster fill itself."}</p>{!past ? <Link href="/games/new" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-[650] text-white hover:bg-primary-hover">Create game</Link> : null}</div>;
+  const Icon = past ? History : CalendarPlus;
+  return <div className="rounded-2xl bg-surface-strong p-5 sm:p-6"><span className={`grid h-11 w-11 place-items-center rounded-xl ${past ? "bg-surface text-muted" : "bg-primary text-white"}`}><Icon aria-hidden size={22} strokeWidth={2.5} /></span><p className="mt-4 font-[700]">{past ? "No game memories yet" : "Nothing scheduled"}</p><p className="mt-1 text-sm leading-5 text-muted">{past ? "Completed games will stay here with scores and photos." : "Create a game, share the link, and let the roster fill itself."}</p>{!past ? <Link href="/games/new" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-[700] text-white hover:bg-primary-hover">Create game</Link> : null}</div>;
 }
 
 function GameList({ items }: { items: GameCollectionItem[] }) {

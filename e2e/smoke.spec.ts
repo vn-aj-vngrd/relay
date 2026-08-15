@@ -34,6 +34,9 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
 
   await page.getByRole("link", { name: "Profile" }).click();
+  await page.getByRole("button", { name: "Use dark mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.getByRole("button", { name: "Use light mode" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
