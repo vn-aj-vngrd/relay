@@ -189,6 +189,7 @@ TOTAL_STAGES=7
 
 PROJECT_NAME="relay-pickleball"
 VERCEL_PROJECT_NAME="relay-pickleball"
+VERCEL_SCOPE="van-aj-vanguardias-projects"
 REGION="ap-southeast-1"
 ORG_ID=""
 
@@ -330,18 +331,18 @@ fi
 stage "Vercel — create, configure, and deploy"
 say "This creates a free Vercel project and configures production plus preview environments."
 if [[ ! -f .vercel/project.json ]]; then
-  vercel project add "$VERCEL_PROJECT_NAME" >/dev/null 2>&1 || true
-  vercel link --yes --project "$VERCEL_PROJECT_NAME"
+  vercel project add "$VERCEL_PROJECT_NAME" --scope "$VERCEL_SCOPE" >/dev/null 2>&1 || true
+  vercel link --yes --project "$VERCEL_PROJECT_NAME" --scope "$VERCEL_SCOPE"
 else
   say "This directory is already linked to a Vercel project."
 fi
+vercel project update "$VERCEL_PROJECT_NAME" --framework nextjs --auto-detect output-directory --auto-detect build-command --auto-detect install-command >/dev/null
 PRODUCTION_URL="https://${VERCEL_PROJECT_NAME}.vercel.app"
 set_vercel_env NEXT_PUBLIC_APP_URL "$PRODUCTION_URL"
 set_vercel_env NEXT_PUBLIC_SUPABASE_URL "$NEXT_PUBLIC_SUPABASE_URL"
 set_vercel_env NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
 set_vercel_env SUPABASE_SECRET_KEY "$SUPABASE_SECRET_KEY"
 set_vercel_env DATABASE_URL "$DATABASE_URL"
-write_env NEXT_PUBLIC_APP_URL "$PRODUCTION_URL"
 step "Deploying the production build."
 vercel deploy --prod --yes
 note "Stable production URL: $PRODUCTION_URL"
