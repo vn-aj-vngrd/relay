@@ -5,12 +5,12 @@ import "./globals.css";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const viewport: Viewport = { themeColor: "oklch(0.975 0.006 250)" };
+export const viewport: Viewport = { themeColor: "oklch(1 0 0)" };
 
 export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
   description: "Make the plan, run the courts, remember the game.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002"),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

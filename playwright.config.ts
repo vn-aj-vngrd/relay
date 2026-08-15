@@ -7,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3100",
+    baseURL: process.env.E2E_BASE_URL ?? "http://localhost:3002",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -21,8 +21,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: "corepack pnpm exec next dev --turbopack -p 3100",
-        url: "http://localhost:3100/login",
+        command: "corepack pnpm dev",
+        url: "http://localhost:3002/login",
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       },
