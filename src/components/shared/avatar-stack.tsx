@@ -1,4 +1,4 @@
-const colors = ["bg-primary", "bg-[#30455c]", "bg-[#a34d3f]", "bg-[#6c5b88]", "bg-[#8c7139]"];
+const colors = ["bg-primary", "bg-[oklch(.42_.09_245)]", "bg-[oklch(.55_.13_32)]", "bg-[oklch(.48_.11_285)]", "bg-[oklch(.47_.10_185)]"];
 
 export function Avatar({ name, index = 0, size = "md" }: { name: string; index?: number; size?: "sm" | "md" | "lg" }) {
   const dimensions = size === "lg" ? "h-12 w-12 text-base" : size === "sm" ? "h-8 w-8 text-xs" : "h-10 w-10 text-sm";

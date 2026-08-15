@@ -1,21 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --canvas: oklch(1 0 0);
-  --surface: oklch(0.975 0.004 170);
-  --surface-strong: oklch(0.94 0.008 170);
-  --ink: oklch(0.19 0.018 185);
-  --court: oklch(0.19 0.018 185);
-  --muted: oklch(0.46 0.018 185);
-  --line: oklch(0.89 0.01 170);
-  --primary: oklch(0.48 0.105 170);
-  --primary-hover: oklch(0.42 0.11 170);
-  --primary-soft: oklch(0.94 0.035 170);
-  --accent: oklch(0.68 0.15 35);
-  --success: oklch(0.52 0.13 145);
-  --warning: oklch(0.69 0.14 75);
-  --danger: oklch(0.56 0.18 25);
-  --score: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+  --canvas: oklch(0.985 0.004 245);
+  --surface: oklch(1 0 0);
+  --surface-strong: oklch(0.965 0.006 245);
+  --ink: oklch(0.18 0.018 250);
+  --court: oklch(0.135 0.025 248);
+  --court-line: oklch(0.86 0.08 220);
+  --muted: oklch(0.46 0.018 250);
+  --line: oklch(0.89 0.009 245);
+  --primary: oklch(0.53 0.18 248);
+  --primary-hover: oklch(0.47 0.18 248);
+  --primary-soft: oklch(0.94 0.035 248);
+  --signal: oklch(0.88 0.17 102);
+  --live: oklch(0.64 0.20 32);
+  --success: oklch(0.52 0.14 150);
+  --warning: oklch(0.69 0.15 78);
+  --danger: oklch(0.56 0.20 26);
+  --score: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @theme inline {
@@ -24,47 +27,86 @@
   --color-surface-strong: var(--surface-strong);
   --color-ink: var(--ink);
   --color-court: var(--court);
+  --color-court-line: var(--court-line);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
   --color-primary-soft: var(--primary-soft);
-  --color-accent: var(--accent);
+  --color-signal: var(--signal);
+  --color-live: var(--live);
+  --color-accent: var(--live);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-geist-sans), "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 * { box-sizing: border-box; }
 html { background: var(--canvas); color: var(--ink); }
-body { margin: 0; min-height: 100vh; background: var(--canvas); font-family: var(--font-geist-sans), system-ui, sans-serif; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-geist-sans), "Segoe UI", sans-serif;
+  font-size: 16px;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 button, input, select, textarea { font: inherit; }
-a { color: inherit; text-decoration: none; }
-::selection { background: var(--primary-soft); }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { text-decoration: none; }
+h1, h2, h3 { text-wrap: balance; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-geist-sans), "Segoe UI", sans-serif; }
+p { text-wrap: pretty; }
+::selection { background: var(--primary-soft); color: var(--ink); }
 
-:focus-visible { outline: 3px solid oklch(0.68 0.12 170); outline-offset: 3px; }
+:focus-visible { outline: 3px solid oklch(0.68 0.15 248); outline-offset: 3px; }
 .score { font-family: var(--score); font-variant-numeric: tabular-nums; letter-spacing: -0.035em; }
 .safe-bottom { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 .text-pretty { text-wrap: pretty; }
+.app-title { font-size: 1.875rem; line-height: 2.25rem; font-weight: 720; letter-spacing: -0.025em; }
+.sport-label { font-family: var(--score); font-size: 0.75rem; line-height: 1rem; font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
+.app-chrome, .mobile-chrome { background: color-mix(in oklch, var(--canvas) 84%, transparent); backdrop-filter: saturate(1.35) blur(18px); -webkit-backdrop-filter: saturate(1.35) blur(18px); }
+.court-rule { border-color: color-mix(in oklch, var(--court-line) 26%, transparent); }
+
+@media (min-width: 640px) {
+  .app-title { font-size: 2.25rem; line-height: 2.625rem; }
+}
+
+@media (min-width: 768px) {
+  .mobile-chrome { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
 
 @media (prefers-reduced-motion: no-preference) {
-  .pressable { transition: background-color 180ms ease-out, color 180ms ease-out, border-color 180ms ease-out, transform 120ms ease-out; }
-  .pressable:active { transform: scale(0.98); }
+  .pressable { transition: background-color 170ms cubic-bezier(.22,1,.36,1), color 170ms cubic-bezier(.22,1,.36,1), border-color 170ms cubic-bezier(.22,1,.36,1), transform 120ms cubic-bezier(.22,1,.36,1); }
+  .pressable:active { transform: translateY(1px) scale(0.99); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: oklch(0.14 0.008 185);
-    --surface: oklch(0.18 0.01 185);
-    --surface-strong: oklch(0.23 0.012 185);
-    --ink: oklch(0.95 0.006 170);
-    --court: oklch(0.095 0.012 185);
-    --muted: oklch(0.72 0.012 175);
-    --line: oklch(0.30 0.012 180);
-    --primary: oklch(0.67 0.105 170);
-    --primary-hover: oklch(0.73 0.10 170);
-    --primary-soft: oklch(0.27 0.045 170);
+    color-scheme: dark;
+    --canvas: oklch(0.105 0.01 250);
+    --surface: oklch(0.145 0.014 250);
+    --surface-strong: oklch(0.205 0.016 250);
+    --ink: oklch(0.95 0.006 245);
+    --court: oklch(0.075 0.018 248);
+    --court-line: oklch(0.69 0.11 225);
+    --muted: oklch(0.71 0.014 245);
+    --line: oklch(0.28 0.016 250);
+    --primary: oklch(0.68 0.15 246);
+    --primary-hover: oklch(0.73 0.14 246);
+    --primary-soft: oklch(0.25 0.055 248);
+    --signal: oklch(0.84 0.16 102);
+    --live: oklch(0.70 0.18 32);
+    --success: oklch(0.68 0.13 150);
+    --warning: oklch(0.78 0.14 82);
+    --danger: oklch(0.69 0.18 27);
   }
 }
