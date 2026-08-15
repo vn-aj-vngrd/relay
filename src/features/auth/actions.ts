@@ -39,12 +39,12 @@ export async function createPasswordAccount(formData: FormData) {
   const password = passwordSchema.safeParse(formData.get("password"));
   if (!email.success || !password.success) loginError("Enter a valid email and a password of at least 8 characters.");
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: email.data,
     password: password.data,
-    options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
   });
-  if (error) loginError(error.message);
+  if (error) loginError(error.message === "User already registered" ? "An account already exists for this email. Sign in instead." : "We couldn’t create your account. Please try again.");
+  if (data.session) redirect("/");
   redirect("/login?sent=account");
 }
 

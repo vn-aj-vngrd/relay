@@ -22,6 +22,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project reference | Public | Local, Vercel |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys | Public | Local, Vercel |
 | `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | `true` after Google provider setup | Public | Local, Vercel |
+| `NEXT_PUBLIC_MAGIC_LINK_ENABLED` | `true` only after production SMTP is verified | Public | Local, Vercel |
 | `SUPABASE_SECRET_KEY` | Supabase API Keys | Secret, server-only | Local, Vercel |
 | `DATABASE_URL` | Supabase Connect → Transaction pooler | Secret, server-only | Local, Vercel |
 | `SUPABASE_PROJECT_REF` | Supabase project | Local setup metadata | Local only |
@@ -31,14 +32,16 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 
 ## Authentication smoke test
 
+Password authentication is the production baseline and does not depend on email delivery. Email confirmation is disabled in `supabase/config.toml`; accounts receive a session immediately after creation.
+
 1. Open `/login` on localhost.
-2. Request a magic link and confirm it returns through `/auth/callback`.
-3. Create a password account, confirm the email, sign out, and sign in again.
-4. Continue with Google and confirm the Google consent screen returns to Relay.
-5. In Supabase Authentication → Users, verify one identity per method.
+2. Create a password account, confirm it reaches the authenticated home, sign out, and sign in again.
+3. When production SMTP is configured, set `NEXT_PUBLIC_MAGIC_LINK_ENABLED=true`, request a magic link, and confirm it returns through `/auth/callback`.
+4. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
+5. In Supabase Authentication → Users, verify one identity per enabled method.
 6. In the SQL editor, verify the same IDs exist in `public.users`.
 
-**Complete when:** magic link, password, and Google each create a persistent Supabase session, and every authenticated identity has a matching `public.users` row.
+**Complete when:** password authentication creates a persistent session and every enabled optional method passes its callback flow. Supabase’s built-in mailer is test-only; never enable magic links in production without custom SMTP.
 
 ## Storage contract
 
