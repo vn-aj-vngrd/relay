@@ -1,18 +1,23 @@
 import Link from "next/link";
 
+export function RelayMark({ inverse = false, className = "h-9 w-9" }: { inverse?: boolean; className?: string }) {
+  const ink = inverse ? "white" : "var(--ink)";
+  return <svg aria-hidden viewBox="0 0 40 40" className={className} fill="none">
+    <path d="M8.5 5.5h23v29h-23z" stroke={ink} strokeWidth="2" />
+    <path d="M8.5 20h23" stroke="var(--primary)" strokeWidth="2.5" />
+    <path d="M20 5.5v10.25M20 24.25V34.5" stroke={ink} strokeWidth="1.5" />
+    <path d="M11 30.5 28.5 9" stroke="var(--primary)" strokeWidth="1.5" strokeDasharray="2.5 3.5" opacity=".62" />
+    <circle cx="28.5" cy="9" r="4.25" fill="var(--signal)" stroke={ink} strokeWidth="1.25" />
+    <circle cx="27.2" cy="7.8" r=".55" fill="var(--ink)" opacity=".55" />
+    <circle cx="29.8" cy="9.8" r=".55" fill="var(--ink)" opacity=".55" />
+  </svg>;
+}
+
 export function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
-    <Link href="/" prefetch={false} className={`-mx-1 inline-flex min-h-11 items-center gap-2.5 rounded-lg px-1 font-[730] tracking-[-0.03em] ${inverse ? "text-white" : "text-ink"}`} aria-label="Relay home">
-      <svg aria-hidden viewBox="0 0 36 36" className="h-9 w-9" fill="none">
-        <rect width="36" height="36" rx="10" fill="var(--brand)" />
-        <g transform="rotate(-18 18 18)">
-          <rect x="9" y="6.5" width="18" height="23" rx="1.5" stroke="white" strokeWidth="1.7" />
-          <path d="M9 18h18" stroke="var(--court-line)" strokeWidth="1.8" />
-          <path d="M18 6.5v8M18 21.5v8" stroke="white" strokeWidth="1.35" />
-          <circle cx="22.3" cy="12.3" r="2.25" fill="var(--signal)" />
-        </g>
-      </svg>
-      <span className="text-[18px]">Relay</span>
+    <Link href="/" prefetch={false} className={`-mx-1 inline-flex min-h-11 items-center gap-2 px-1 font-[750] tracking-[-0.035em] ${inverse ? "text-white" : "text-ink"}`} aria-label="Relay home">
+      <RelayMark inverse={inverse} />
+      <span className="text-[19px]">Relay</span>
     </Link>
   );
 }

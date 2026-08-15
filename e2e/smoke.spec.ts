@@ -75,6 +75,27 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.getByRole("button", { name: "Publish game" }).click();
   await expect(page.getByText("Relay supports up to 20 courts per session.")).toBeVisible();
   await expect(page.locator("#courts")).toBeFocused();
+  await expect(page.locator("#venue")).toHaveValue("Central Pickle");
+
+  await page.locator("#courts").fill("2");
+  await page.getByRole("button", { name: "Publish game" }).click();
+  await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
+  const sessionId = new URL(page.url()).pathname.split("/").at(-1);
+  await page.goto(`/games/${sessionId}/payments`);
+  await page.locator("#total").fill("300");
+  await page.locator("#details").fill("0917 123 4567 · Relay host");
+  await page.getByRole("button", { name: "Create payment split" }).click();
+  await page.locator('input[name="proof"]').setInputFiles("e2e/fixtures/payment-proof.png");
+  await page.getByRole("button", { name: "Submit proof" }).click();
+  await expect(page.getByText("Waiting for host review")).toBeVisible({ timeout: 15_000 });
+  await page.getByText("Request new proof", { exact: true }).click();
+  await page.getByLabel("Reason for requesting new proof").fill("Show the amount and recipient.");
+  await page.getByRole("button", { name: "Send request" }).click();
+  await expect(page.getByRole("paragraph").getByText("New proof requested", { exact: true })).toBeVisible();
+  await page.locator('input[name="proof"]').setInputFiles("e2e/fixtures/payment-proof.png");
+  await page.getByRole("button", { name: "Submit proof" }).click();
+  await page.getByRole("button", { name: "Confirm paid" }).click();
+  await expect(page.getByText("Paid", { exact: true })).toBeVisible();
 });
 
 test("login switches between sign in and account creation", async ({ page }) => {

@@ -2,14 +2,14 @@
 
 :root {
   color-scheme: light;
-  --canvas: oklch(0.975 0.006 250);
+  --canvas: oklch(1 0 0);
   --surface: oklch(1 0 0);
-  --surface-strong: oklch(0.948 0.01 250);
-  --ink: oklch(0.19 0.025 255);
+  --surface-strong: oklch(0.965 0.005 250);
+  --ink: oklch(0.17 0.018 255);
   --court: oklch(0.18 0.045 252);
   --court-line: oklch(0.84 0.095 220);
-  --muted: oklch(0.44 0.025 252);
-  --line: oklch(0.875 0.012 250);
+  --muted: oklch(0.43 0.018 252);
+  --line: oklch(0.89 0.008 250);
   --brand: oklch(0.55 0.205 255);
   --primary: oklch(0.55 0.205 255);
   --primary-hover: oklch(0.49 0.205 255);
@@ -72,7 +72,7 @@ p { text-wrap: pretty; }
 .text-pretty { text-wrap: pretty; }
 .app-title { font-size: 1.875rem; line-height: 2.25rem; font-weight: 720; letter-spacing: -0.025em; }
 .sport-label { font-family: var(--score); font-size: 0.75rem; line-height: 1rem; font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
-.app-chrome, .mobile-chrome { background: color-mix(in oklch, var(--canvas) 84%, transparent); backdrop-filter: saturate(1.35) blur(18px); -webkit-backdrop-filter: saturate(1.35) blur(18px); }
+.app-chrome, .mobile-chrome { background: color-mix(in oklch, var(--surface) 91%, transparent); backdrop-filter: saturate(1.2) blur(18px); -webkit-backdrop-filter: saturate(1.2) blur(18px); }
 .court-rule { border-color: color-mix(in oklch, var(--court-line) 26%, transparent); }
 .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 50; min-height: 44px; display: inline-flex; align-items: center; border-radius: .75rem; background: var(--ink); color: var(--canvas); padding: 0 1rem; font-weight: 650; transform: translateY(-180%); }
 .skip-link:focus { transform: translateY(0); }

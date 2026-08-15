@@ -12,7 +12,7 @@ import { ensureProfile } from "@/features/players/profile";
 import { createSessionSchema, findRosterIdentity } from "./domain";
 import { sessionSlug } from "./slug";
 
-export type SessionActionState = { error?: string; success?: boolean; fieldErrors?: Record<string, string[]> };
+export type SessionActionState = { error?: string; success?: boolean; fieldErrors?: Record<string, string[]>; values?: Record<string, string> };
 
 function manilaDate(date: FormDataEntryValue | null, time: FormDataEntryValue | null) {
   if (typeof date !== "string" || typeof time !== "string") return new Date(Number.NaN);
@@ -37,6 +37,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     const errors = parsed.error.flatten().fieldErrors;
     return {
       error: "A few details need attention. Check the fields marked below.",
+      values: Object.fromEntries(["title", "venue", "date", "capacity", "start", "end", "courts", "cost", "courtNumbers", "notes", "booked"].map((key) => [key, String(formData.get(key) ?? "")])),
       fieldErrors: {
         title: errors.title ?? [],
         venue: errors.venueName ?? [],

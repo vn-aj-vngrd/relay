@@ -14,7 +14,7 @@ Players stand under bright court lights and share one phone between rallies. The
 
 **The digital court.** Session heroes and match surfaces use a deep blue-black field, crisp white divisions, court-blue action areas, tabular scores, and a single optic-yellow signal. The geometry encodes actual structure—sides, courts, queue order, and live state. It is never a decorative pattern.
 
-The Relay mark is a top-down court in motion: court boundaries, a contrasting net, and one optic ball crossing into the next side. It expresses pickleball and relay without relying on a generic letter, paddle silhouette, or social-app glyph.
+The Relay mark is a freestanding top-down court in motion: black boundaries, a blue net, and one optic ball crossing the court. It expresses pickleball and relay without relying on a generic letter, enclosing app-icon tile, paddle silhouette, or social-app glyph.
 
 ## Color strategy
 
@@ -22,12 +22,12 @@ Restrained foundation with a stronger sport mode. Court blue occupies less than 
 
 ```css
 /* Light */
---canvas: oklch(.975 .006 250);
+--canvas: oklch(1 0 0);
 --surface: oklch(1 0 0);
---surface-raised: oklch(.948 .01 250);
---ink: oklch(.19 .025 255);
---muted: oklch(.44 .025 252);
---line: oklch(.875 .012 250);
+--surface-raised: oklch(.965 .005 250);
+--ink: oklch(.17 .018 255);
+--muted: oklch(.43 .018 252);
+--line: oklch(.89 .008 250);
 
 --primary: oklch(.55 .205 255);      /* court blue */
 --primary-hover: oklch(.49 .205 255);
@@ -75,7 +75,8 @@ This gives Apple devices native SF typography while retaining Geist elsewhere. G
 
 ## Materials and elevation
 
-- Canvas is a cool near-white; content surfaces are true white.
+- Light mode uses a true-white canvas. Hierarchy comes from typography, spacing, dividers, and sparse neutral fills—not a tinted dashboard background.
+- Introductory and authentication surfaces remain white; sport character comes from court geometry, the optic ball, and precise blue actions rather than large dark marketing panels.
 - Navigation chrome may use `backdrop-filter` because it floats above scrolling content. Content cards never use blur.
 - Elevation is expressed by surface contrast, a 1px keyline, and at most an 8px blur shadow for floating chrome.
 - No gradient fills, glow, glass cards, border-plus-wide-shadow cards, or decorative transparency.

@@ -4,7 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { useSyncExternalStore } from "react";
 
 const themeColors = {
-  light: "oklch(0.975 0.006 250)",
+  light: "oklch(1 0 0)",
   dark: "oklch(0.13 0.014 252)",
 } as const;
 
