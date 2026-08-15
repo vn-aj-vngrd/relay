@@ -15,7 +15,7 @@ A mobile-first social pickleball session app built with Next.js, TypeScript, Sup
 - Tested RSVP/waitlist, expense split, queue assignment, standings, cloning, and permission rules
 - Supabase server/browser client boundaries and strict environment validation
 
-Demo screens use local fixture data so the product can be reviewed without credentials. Database-backed actions, RLS policy rollout, and realtime subscriptions are the next vertical slice.
+Core consumer workflows are database-backed: authentication, session creation, public guest RSVP with transactional capacity handling, rosters, live queue setup, match creation, persistent scoring, match completion, standings, chat, and profiles. Supabase Realtime publication is configured; client subscriptions and the remaining venue/group/payment/memory management slices continue from the same domain model.
 
 ## Run locally
 

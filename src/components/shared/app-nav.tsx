@@ -1,15 +1,14 @@
 import { CalendarDays, Home, Plus, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 
-const items = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/games", label: "Games", icon: CalendarDays },
-  { href: "/games/new", label: "Create", icon: Plus, create: true },
-  { href: "/groups", label: "Groups", icon: UsersRound },
-  { href: "/profile/van", label: "Profile", icon: UserRound },
-];
-
-export function AppNav() {
+export function AppNav({ username }: { username: string }) {
+  const items = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/games", label: "Games", icon: CalendarDays },
+    { href: "/games/new", label: "Create", icon: Plus, create: true },
+    { href: "/groups", label: "Groups", icon: UsersRound },
+    { href: `/profile/${username}`, label: "Profile", icon: UserRound },
+  ];
   return <nav aria-label="Main navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/95 px-2 backdrop-blur md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
     <ul className="safe-bottom mx-auto flex max-w-lg items-end justify-around pt-1.5 md:max-w-none md:gap-1 md:p-0">
       {items.map(({ href, label, icon: Icon, create }) => <li key={href} className="flex-1 md:flex-none">

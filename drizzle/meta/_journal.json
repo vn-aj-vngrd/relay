@@ -8,6 +8,20 @@
       "when": 1786755754782,
       "tag": "0000_initial_relay_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786766930237,
+      "tag": "0001_session_core",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786768305701,
+      "tag": "0002_realtime_access",
+      "breakpoints": true
     }
   ]
 }

@@ -103,6 +103,8 @@ export const sessions = pgTable("sessions", {
   hostId: uuid("host_id").notNull().references(() => users.id, { onDelete: "restrict" }),
   groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
   venueId: uuid("venue_id").references(() => venues.id, { onDelete: "set null" }),
+  venueName: text("venue_name").notNull(),
+  venueAddress: text("venue_address"),
   title: text("title").notNull(),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
@@ -123,6 +125,7 @@ export const sessions = pgTable("sessions", {
   bookingTotalCents: integer("booking_total_cents"),
   bookingNotes: text("booking_notes"),
   version: integer("version").notNull().default(1),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   ...timestamps,
 }, (table) => [

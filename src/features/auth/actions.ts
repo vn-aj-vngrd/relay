@@ -48,6 +48,12 @@ export async function createPasswordAccount(formData: FormData) {
   redirect("/login?sent=account");
 }
 
+export async function signOut() {
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
+
 export async function signInWithGoogle() {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({

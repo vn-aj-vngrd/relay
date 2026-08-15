@@ -4,7 +4,7 @@ export const createSessionSchema = z.object({
   title: z.string().trim().min(2).max(80),
   startsAt: z.coerce.date(),
   endsAt: z.coerce.date(),
-  venueId: z.string().uuid(),
+  venueName: z.string().trim().min(2).max(120),
   capacity: z.coerce.number().int().min(2).max(40),
   courtCount: z.coerce.number().int().min(1).max(12),
   notes: z.string().trim().max(1200).optional(),
@@ -15,6 +15,13 @@ export const createSessionSchema = z.object({
 
 export type Rsvp = "invited" | "going" | "maybe" | "waitlisted" | "declined";
 export type RosterPlayer = { id: string; rsvp: Rsvp; waitlistPosition?: number };
+export type RosterIdentity = { id: string; userId: string | null; guestTokenHash: string | null };
+
+export function findRosterIdentity<T extends RosterIdentity>(roster: T[], actor: { userId?: string | null; guestTokenHash?: string | null }): T | undefined {
+  if (actor.userId) return roster.find((player) => player.userId === actor.userId);
+  if (actor.guestTokenHash) return roster.find((player) => player.guestTokenHash === actor.guestTokenHash);
+  return undefined;
+}
 
 export function applyRsvp(roster: RosterPlayer[], playerId: string, requested: Exclude<Rsvp, "invited" | "waitlisted">, capacity: number): RosterPlayer[] {
   if (capacity < 2) throw new Error("Session capacity must be at least 2");

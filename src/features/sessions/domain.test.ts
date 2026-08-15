@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { applyRsvp, cloneSession, promoteWaitlist } from "./domain";
+import { applyRsvp, cloneSession, findRosterIdentity, promoteWaitlist } from "./domain";
 
 describe("session roster", () => {
+  it("does not confuse a new guest with an authenticated player that has no guest token", () => {
+    const roster = [{ id: "host", userId: "user-1", guestTokenHash: null }];
+    expect(findRosterIdentity(roster, { userId: null, guestTokenHash: null })).toBeUndefined();
+    expect(findRosterIdentity(roster, { guestTokenHash: "guest-hash" })).toBeUndefined();
+  });
   it("waitlists a player when capacity is full", () => {
     const roster = [{ id: "a", rsvp: "going" as const }, { id: "b", rsvp: "going" as const }];
     expect(applyRsvp(roster, "c", "going", 2).find((p) => p.id === "c")).toEqual({ id: "c", rsvp: "waitlisted", waitlistPosition: 1 });
