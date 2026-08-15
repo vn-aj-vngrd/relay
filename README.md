@@ -33,6 +33,7 @@ Without Supabase credentials, the demo UI still builds because clients are insta
 corepack pnpm lint
 corepack pnpm typecheck
 corepack pnpm test
+corepack pnpm test:e2e
 corepack pnpm build
 corepack pnpm db:generate
 ```
@@ -41,8 +42,11 @@ corepack pnpm db:generate
 
 - [`PRODUCT.md`](./PRODUCT.md) — product context and principles
 - [`DESIGN.md`](./DESIGN.md) — visual system
+- [`docs/UI_QUALITY.md`](./docs/UI_QUALITY.md) — implementation and anti-slop quality gate
 - [`docs/product-blueprint.md`](./docs/product-blueprint.md) — requirements, flows, routes, IA, domain, authorization, architecture, and milestones
 - [`docs/integrations.md`](./docs/integrations.md) — Supabase, Vercel, Auth, Storage, Realtime, and credential operations
+- [`docs/research/competitor-patterns.md`](./docs/research/competitor-patterns.md) — primary-source product research and scoped decisions
+- [`docs/audits/2026-08-15-ui-audit.md`](./docs/audits/2026-08-15-ui-audit.md) — UI audit and remediation evidence
 - [`drizzle/0000_initial_relay_schema.md`](./drizzle/0000_initial_relay_schema.md) — initial migration intent and verification
 
 ## Architecture

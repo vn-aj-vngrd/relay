@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div className="flex items-center"><Link href="/search" aria-label="Search" className="pressable grid h-11 w-11 place-items-center rounded-full hover:bg-surface"><Search aria-hidden size={20} /></Link><Link href="/notifications" aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-11 w-11 place-items-center rounded-full hover:bg-surface"><Bell aria-hidden size={20} />{unreadCount ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-accent ring-2 ring-canvas" /> : null}</Link></div>
       </div>
     </header>
-    <main className="mx-auto max-w-[1180px] px-4 pb-28 pt-8 sm:px-6 md:pb-16 md:pt-12">{children}</main>
+    <main id="main-content" className="mx-auto max-w-[1180px] px-4 pb-28 pt-8 sm:px-6 md:pb-16 md:pt-12">{children}</main>
     <div className="md:hidden"><AppNav username={profile.username} /></div>
   </div>;
 }

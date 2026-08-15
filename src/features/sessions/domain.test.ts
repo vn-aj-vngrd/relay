@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { applyRsvp, cloneSession, findRosterIdentity, promoteWaitlist } from "./domain";
+import { applyRsvp, cloneSession, createSessionSchema, findRosterIdentity, promoteWaitlist } from "./domain";
+
+describe("session validation", () => {
+  const valid = { title: "Saturday Night Pickle", startsAt: new Date("2026-08-22T11:00:00Z"), endsAt: new Date("2026-08-22T14:00:00Z"), venueName: "Central Pickle", capacity: 8, courtCount: 2 };
+  it("accepts the smallest complete session plan", () => expect(createSessionSchema.safeParse(valid).success).toBe(true));
+  it("rejects an end time before the start", () => expect(createSessionSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
+  it("rejects unsafe capacity and court counts", () => {
+    expect(createSessionSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
+    expect(createSessionSchema.safeParse({ ...valid, courtCount: 0 }).success).toBe(false);
+  });
+});
 
 describe("session roster", () => {
   it("does not confuse a new guest with an authenticated player that has no guest token", () => {

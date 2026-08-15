@@ -11,3 +11,4 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Project runbooks
 
 - **Integrations:** Read `docs/integrations.md` before provisioning, rotating credentials, changing auth/storage/realtime configuration, or applying the baseline migration.
+- **UI quality:** Read `DESIGN.md` and `docs/UI_QUALITY.md` before changing UI, interaction copy, tokens, responsive behavior, or product states. Apply every completion criterion and run the anti-slop review before shipping.
