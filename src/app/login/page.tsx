@@ -5,9 +5,10 @@ import { AuthForm } from "@/features/auth/auth-form";
 import { signInWithGoogle } from "@/features/auth/actions";
 
 const sessionPromises = [
-  ["One link", "Plan, cost, and guest RSVPs"],
-  ["Live courts", "Queue, teams, and scores"],
-  ["After the game", "Photos, results, and play again"],
+  ["Open invite", "Guests join by name—no account"],
+  ["Courtside", "Paddle stack, teams, and live points"],
+  ["Shared costs", "Split expenses and confirm proof"],
+  ["After game", "Results, photos, and play again"],
 ] as const;
 
 function SessionPromise({ inverse = false }: { inverse?: boolean }) {

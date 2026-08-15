@@ -126,7 +126,7 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 ### Collections
 
-Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid when they want more visual separation between sessions. The choice is explicit, accessible, and saved locally as `relay-games-view`; it never changes the underlying sort or information hierarchy.
+Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid or a familiar month calendar spanning live, upcoming, and past sessions. The choice is explicit, accessible, and saved locally as `relay-games-view`; it never changes the underlying sort or information hierarchy.
 
 ### Queue and standings
 

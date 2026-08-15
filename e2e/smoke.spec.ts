@@ -45,6 +45,10 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute("aria-pressed", "true");
   await page.reload();
   await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Calendar view" }).click();
+  await expect(page.getByTestId("games-calendar")).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Calendar view" })).toHaveAttribute("aria-pressed", "true");
 
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/");

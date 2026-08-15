@@ -1,25 +1,28 @@
 "use client";
 
-import { CalendarDays, ChevronRight, Grid2X2, List, MapPin, Users } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Grid2X2, List, MapPin, Users } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 export type GameCollectionItem = {
   id: string;
   href: string;
   title: string;
   date: string;
+  dateKey: string;
   time: string;
   venue: string;
   playerCount: number;
   capacity: number;
+  status: "draft" | "published" | "live" | "completed" | "cancelled";
 };
 
-type ViewMode = "list" | "grid";
+type ViewMode = "list" | "grid" | "calendar";
 const preferenceKey = "relay-games-view";
 
 function getView(): ViewMode {
-  return localStorage.getItem(preferenceKey) === "grid" ? "grid" : "list";
+  const saved = localStorage.getItem(preferenceKey);
+  return saved === "grid" || saved === "calendar" ? saved : "list";
 }
 
 function subscribe(callback: () => void) {
@@ -49,14 +52,40 @@ function GameGrid({ items }: { items: GameCollectionItem[] }) {
   return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} className="pressable group rounded-2xl border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"><article><div className="flex items-center justify-between gap-4"><time className="score text-xs font-bold text-primary">{game.date}</time><span className="score text-xs text-muted">{game.playerCount} / {game.capacity}</span></div><h3 className="mt-5 truncate text-lg font-[680]">{game.title}</h3><div className="mt-3 space-y-2 text-sm text-muted"><p className="flex items-center gap-2"><CalendarDays aria-hidden size={16} />{game.time}</p><p className="flex items-center gap-2"><MapPin aria-hidden size={16} /><span className="truncate">{game.venue}</span></p><p className="flex items-center gap-2 sm:hidden"><Users aria-hidden size={16} />{game.playerCount} players</p></div><span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">Open game <ChevronRight aria-hidden size={16} className="transition-transform group-hover:translate-x-0.5" /></span></article></Link>)}</div>;
 }
 
-function CollectionSection({ title, items, mode, past }: { title: string; items: GameCollectionItem[]; mode: ViewMode; past?: boolean }) {
+function MonthCalendar({ upcoming, past, todayKey }: { upcoming: GameCollectionItem[]; past: GameCollectionItem[]; todayKey: string }) {
+  const [monthKey, setMonthKey] = useState(todayKey.slice(0, 7));
+  const month = new Date(`${monthKey}-01T00:00:00Z`);
+  const year = month.getUTCFullYear();
+  const monthIndex = month.getUTCMonth();
+  const leadingDays = month.getUTCDay();
+  const dayCount = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+  const games = [...upcoming.map((game) => ({ ...game, phase: game.status === "live" ? "live" as const : "upcoming" as const })), ...past.map((game) => ({ ...game, phase: "past" as const }))];
+  const gamesByDate = new Map<string, typeof games>();
+  games.forEach((game) => gamesByDate.set(game.dateKey, [...(gamesByDate.get(game.dateKey) ?? []), game]));
+  const changeMonth = (amount: number) => {
+    const next = new Date(Date.UTC(year, monthIndex + amount, 1));
+    setMonthKey(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
+  };
+  const title = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(month);
+  const cells = [...Array.from({ length: leadingDays }, () => null), ...Array.from({ length: dayCount }, (_, index) => index + 1)];
+
+  return <section aria-labelledby="calendar-month"><div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h2 id="calendar-month" className="text-xl font-[680]">{title}</h2><p className="mt-1 text-sm text-muted"><span className="text-live">● Live</span><span className="mx-2">·</span><span className="text-primary">● Upcoming</span><span className="mx-2">·</span>Past</p></div><div className="flex self-end gap-1 sm:self-auto"><button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="pressable grid h-11 w-11 place-items-center rounded-xl text-muted hover:bg-surface-strong hover:text-ink"><ChevronLeft aria-hidden size={20} /></button><button type="button" onClick={() => setMonthKey(todayKey.slice(0, 7))} className="pressable min-h-11 rounded-xl px-3 text-sm font-[650] text-muted hover:bg-surface-strong hover:text-ink">Today</button><button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="pressable grid h-11 w-11 place-items-center rounded-xl text-muted hover:bg-surface-strong hover:text-ink"><ChevronRight aria-hidden size={20} /></button></div></div><div className="grid grid-cols-7 text-center text-xs font-[650] text-muted">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <div key={day} className="py-2">{day}</div>)}</div><div className="grid grid-cols-7 border-l border-t border-line">{cells.map((day, index) => {
+    if (!day) return <div key={`empty-${index}`} aria-hidden className="min-h-14 border-b border-r border-line bg-surface/35 sm:min-h-28" />;
+    const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dayGames = gamesByDate.get(dateKey) ?? [];
+    const fullDate = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${dateKey}T00:00:00Z`));
+    return <div key={dateKey} aria-label={`${fullDate}, ${dayGames.length} ${dayGames.length === 1 ? "game" : "games"}`} className={`min-h-14 min-w-0 border-b border-r border-line p-1.5 sm:min-h-28 sm:p-2 ${dateKey === todayKey ? "bg-primary-soft/55" : "bg-surface"}`}><time dateTime={dateKey} className={`score text-xs font-semibold ${dateKey === todayKey ? "text-primary" : "text-muted"}`}>{day}</time><div className="mt-1 space-y-1">{dayGames.slice(0, 2).map((game) => <Link key={game.id} href={game.href} prefetch={false} className={`block min-h-5 rounded-md px-1.5 py-1 text-left text-[11px] font-[650] leading-4 ${game.phase === "live" ? "bg-live/12 text-live" : game.phase === "upcoming" ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}><span className="sr-only sm:not-sr-only sm:line-clamp-1">{game.title}</span><span aria-hidden className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${game.phase === "live" ? "bg-live" : game.phase === "upcoming" ? "bg-primary" : "bg-muted"}`} /></Link>)}{dayGames.length > 2 ? <p className="text-center text-[10px] text-muted">+{dayGames.length - 2}</p> : null}</div></div>;
+  })}</div></section>;
+}
+
+function CollectionSection({ title, items, mode, past }: { title: string; items: GameCollectionItem[]; mode: Exclude<ViewMode, "calendar">; past?: boolean }) {
   return <section><h2 className="mb-3 text-lg font-[680]">{title}</h2>{items.length ? mode === "grid" ? <GameGrid items={items} /> : <GameList items={items} /> : <EmptyCollection past={past} />}</section>;
 }
 
-export function GameCollection({ upcoming, past }: { upcoming: GameCollectionItem[]; past: GameCollectionItem[] }) {
+export function GameCollection({ upcoming, past, todayKey }: { upcoming: GameCollectionItem[]; past: GameCollectionItem[]; todayKey: string }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   return <div className="mt-10">
-    <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-4"><p className="text-sm text-muted">{upcoming.length + past.length} {upcoming.length + past.length === 1 ? "game" : "games"}</p><div aria-label="Game view" className="inline-flex rounded-xl bg-surface-strong p-1"><button type="button" aria-label="List view" aria-pressed={mode === "list"} onClick={() => saveView("list")} className={`pressable grid h-10 w-10 place-items-center rounded-lg ${mode === "list" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}><List aria-hidden size={18} /></button><button type="button" aria-label="Grid view" aria-pressed={mode === "grid"} onClick={() => saveView("grid")} className={`pressable grid h-10 w-10 place-items-center rounded-lg ${mode === "grid" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}><Grid2X2 aria-hidden size={17} /></button></div></div>
-    <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-12"><CollectionSection title="Upcoming" items={upcoming} mode={mode} /><CollectionSection title="Past games" items={past} mode={mode} past /></div>
+    <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-4"><p className="text-sm text-muted">{upcoming.length + past.length} {upcoming.length + past.length === 1 ? "game" : "games"}</p><div aria-label="Game view" className="inline-flex rounded-xl bg-surface-strong p-1"><button type="button" aria-label="List view" aria-pressed={mode === "list"} onClick={() => saveView("list")} className={`pressable grid h-10 w-10 place-items-center rounded-lg ${mode === "list" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}><List aria-hidden size={18} /></button><button type="button" aria-label="Grid view" aria-pressed={mode === "grid"} onClick={() => saveView("grid")} className={`pressable grid h-10 w-10 place-items-center rounded-lg ${mode === "grid" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}><Grid2X2 aria-hidden size={17} /></button><button type="button" aria-label="Calendar view" aria-pressed={mode === "calendar"} onClick={() => saveView("calendar")} className={`pressable grid h-10 w-10 place-items-center rounded-lg ${mode === "calendar" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}><CalendarDays aria-hidden size={18} /></button></div></div>
+    {mode === "calendar" ? <div data-testid="games-calendar"><MonthCalendar upcoming={upcoming} past={past} todayKey={todayKey} /></div> : <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-12"><CollectionSection title="Upcoming" items={upcoming} mode={mode} /><CollectionSection title="Past games" items={past} mode={mode} past /></div>}
   </div>;
 }

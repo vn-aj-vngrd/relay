@@ -203,6 +203,8 @@ export const playerPayments = pgTable("player_payments", {
   amountCents: integer("amount_cents").notNull(),
   status: paymentStatus("status").notNull().default("unpaid"),
   sentAt: timestamp("sent_at", { withTimezone: true }),
+  proofStoragePath: text("proof_storage_path"),
+  reviewNote: text("review_note"),
   confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
   confirmedById: uuid("confirmed_by_id").references(() => users.id, { onDelete: "restrict" }),
   ...timestamps,

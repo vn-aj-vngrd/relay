@@ -2,7 +2,7 @@ import { CalendarPlus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { GameCollection, type GameCollectionItem } from "@/features/sessions/game-collection";
-import { formatSessionDate, formatSessionTime } from "@/features/sessions/format";
+import { formatSessionDate, formatSessionTime, sessionDateKey } from "@/features/sessions/format";
 import { getHomeSessions } from "@/features/sessions/queries";
 
 export default async function GamesPage() {
@@ -13,21 +13,26 @@ export default async function GamesPage() {
     href: `/games/${session.id}`,
     title: session.title,
     date: formatSessionDate(session.startsAt),
+    dateKey: sessionDateKey(session.startsAt, session.timezone),
     time: formatSessionTime(session.startsAt, session.endsAt),
     venue: session.venueName,
     playerCount,
     capacity: session.capacity,
+    status: session.status,
   }));
   const past: GameCollectionItem[] = data.recent.map(({ session, playerCount }) => ({
     id: session.id,
     href: `/s/${session.slug}`,
     title: session.title,
     date: formatSessionDate(session.startsAt),
+    dateKey: sessionDateKey(session.startsAt, session.timezone),
     time: formatSessionTime(session.startsAt, session.endsAt),
     venue: session.venueName,
     playerCount,
     capacity: session.capacity,
+    status: session.status,
   }));
+  const todayKey = sessionDateKey(new Date());
 
-  return <div><div className="flex items-end justify-between gap-4"><div><h1 className="app-title">Games</h1><p className="mt-2 max-w-xl text-muted">Every plan, active session, and game-night memory in one place.</p></div><span className="hidden sm:block"><ButtonLink href="/games/new"><CalendarPlus size={17} />Create game</ButtonLink></span></div><GameCollection upcoming={upcoming} past={past} /></div>;
+  return <div><div className="flex items-end justify-between gap-4"><div><h1 className="app-title">Games</h1><p className="mt-2 max-w-xl text-muted">Every plan, active session, and game-night memory in one place.</p></div><span className="hidden sm:block"><ButtonLink href="/games/new"><CalendarPlus size={17} />Create game</ButtonLink></span></div><GameCollection upcoming={upcoming} past={past} todayKey={todayKey} /></div>;
 }

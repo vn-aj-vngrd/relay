@@ -1,6 +1,11 @@
 export function formatSessionDate(value: Date, timeZone = "Asia/Manila") {
   return new Intl.DateTimeFormat("en-PH", { weekday: "short", month: "short", day: "numeric", timeZone }).format(value);
 }
+export function sessionDateKey(value: Date, timeZone = "Asia/Manila") {
+  const parts = new Intl.DateTimeFormat("en-US", { year: "numeric", month: "2-digit", day: "2-digit", timeZone }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
 export function formatSessionDateLong(value: Date, timeZone = "Asia/Manila") {
   return new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric", timeZone }).format(value);
 }

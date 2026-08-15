@@ -16,7 +16,7 @@ export async function getHomeSessions(userId: string) {
   const enriched = rows.map((row) => ({ ...row, playerCount: playerCounts.get(row.session.id) ?? 0 }));
   return {
     upcoming: enriched.filter(({ session }) => session.startsAt >= now && session.status !== "cancelled"),
-    recent: enriched.filter(({ session }) => session.startsAt < now || session.status === "completed").sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()).slice(0, 4),
+    recent: enriched.filter(({ session }) => session.startsAt < now || session.status === "completed").sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()),
   };
 }
 

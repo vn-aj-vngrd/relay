@@ -1,3 +1,11 @@
+const paymentProofTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+export function validatePaymentProof(file: { type: string; size: number }) {
+  if (!paymentProofTypes.has(file.type)) return "Upload one JPG, PNG, or WebP image.";
+  if (file.size > 5 * 1024 * 1024) return "Keep payment proof under 5 MB.";
+  return null;
+}
+
 export function splitExpense(totalCents: number, playerIds: string[], overrides: Record<string, number> = {}): Record<string, number> {
   if (!Number.isInteger(totalCents) || totalCents < 0) throw new Error("Total must be a nonnegative integer");
   const uniquePlayers = [...new Set(playerIds)];

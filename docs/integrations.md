@@ -46,8 +46,9 @@ Password authentication is the production baseline and does not depend on email 
 ## Storage contract
 
 - Public: `avatars`, `venue-photos`.
-- Private: `payment-qrs`, `booking-screenshots`, `session-memories`.
+- Private: `payment-qrs`, `payment-proofs`, `booking-screenshots`, `session-memories`.
 - Avatar objects use `<user-id>/<filename>` so the baseline ownership policy can authorize them.
+- Payment proof objects use `<session-id>/<payment-id>` and are replaced in place so each payment has one current proof.
 - Private media stays inaccessible through the Data API until its feature adds participant/host path policies. Server-generated signed URLs must be short-lived.
 
 **Complete when:** anonymous users can read a public test asset, cannot read a private test asset, and an authenticated user can only mutate avatar objects under their own ID prefix.
