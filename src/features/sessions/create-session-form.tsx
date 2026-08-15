@@ -32,6 +32,6 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
       </div> : null}
     </section>
 
-    <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>Save draft</Button><Button type="submit" name="intent" value="publish" className="sm:min-w-40" disabled={pending}>{pending ? "Publishing…" : "Publish game"}</Button></div>
+    <div className="flex items-center justify-end gap-2 border-t border-line pt-5 sm:border-0 sm:pt-0"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>Save draft</Button><Button type="submit" name="intent" value="publish" className="min-w-36 sm:min-w-40" disabled={pending}>{pending ? "Publishing…" : "Publish game"}</Button></div>
   </form>;
 }

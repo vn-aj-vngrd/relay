@@ -5,10 +5,7 @@ import "./globals.css";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const viewport: Viewport = { themeColor: [
-  { media: "(prefers-color-scheme: light)", color: "oklch(0.985 0.004 245)" },
-  { media: "(prefers-color-scheme: dark)", color: "oklch(0.105 0.01 250)" },
-] };
+export const viewport: Viewport = { themeColor: "oklch(0.975 0.006 250)" };
 
 export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
@@ -18,7 +15,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}}catch{}` }} /></head>
       <body className={`${geist.variable} ${geistMono.variable}`}><a href="#main-content" className="skip-link">Skip to content</a>{children}</body>
     </html>
   );

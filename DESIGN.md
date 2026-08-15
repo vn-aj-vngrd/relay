@@ -2,7 +2,7 @@
 
 ## Design thesis
 
-Relay should feel like checking a beautifully made sports instrument: immediate, precise, and calm until play becomes live. The visual world combines **hard-court geometry** with **Apple-like product discipline**—native-feeling typography, strong hierarchy, polished materials, and controls that behave exactly as expected.
+Relay should feel like checking a beautifully made sports instrument: immediate, precise, and calm until play becomes live. Light mode is the deliberate default for bright venues and daytime planning; dark mode is an explicit, persistent user choice. The visual world combines **hard-court geometry** with **Apple-like product discipline**—native-feeling typography, strong hierarchy, polished materials, and controls that behave exactly as expected.
 
 Apple is a quality reference, not a skin. Relay does not imitate macOS windows, traffic-light controls, frosted cards, or desktop chrome. The influence appears through legibility, restraint, platform-native behavior, material used only for navigation, and careful state feedback.
 
@@ -20,19 +20,19 @@ Restrained foundation with a stronger sport mode. Court blue occupies less than 
 
 ```css
 /* Light */
---canvas: oklch(.985 .004 245);
+--canvas: oklch(.975 .006 250);
 --surface: oklch(1 0 0);
---surface-raised: oklch(.965 .006 245);
---ink: oklch(.18 .018 250);
---muted: oklch(.46 .018 250);
---line: oklch(.89 .009 245);
+--surface-raised: oklch(.948 .01 250);
+--ink: oklch(.19 .025 255);
+--muted: oklch(.44 .025 252);
+--line: oklch(.875 .012 250);
 
---primary: oklch(.53 .18 248);       /* court blue */
---primary-hover: oklch(.47 .18 248);
---primary-soft: oklch(.94 .035 248);
---court: oklch(.135 .025 248);       /* scoreboard/court field */
---court-line: oklch(.86 .08 220);
---signal: oklch(.88 .17 102);        /* optic ball; sparse */
+--primary: oklch(.55 .205 255);      /* court blue */
+--primary-hover: oklch(.49 .205 255);
+--primary-soft: oklch(.94 .04 252);
+--court: oklch(.18 .045 252);        /* scoreboard/court field */
+--court-line: oklch(.84 .095 220);
+--signal: oklch(.89 .18 105);        /* optic ball; sparse */
 --live: oklch(.64 .20 32);
 
 --success: oklch(.52 .14 150);
@@ -40,7 +40,7 @@ Restrained foundation with a stronger sport mode. Court blue occupies less than 
 --danger: oklch(.56 .20 26);
 ```
 
-Dark mode uses neutral blue-black architecture rather than inverting light colors. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
+Dark mode uses neutral blue-black architecture rather than inverting light colors. The app never follows the operating-system theme implicitly: it starts light, exposes a labeled toggle, and stores the user’s choice. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
 
 ### Color rules
 

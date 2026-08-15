@@ -5,11 +5,12 @@ test("protected routes send signed-out users to a usable login", async ({ page }
   await page.goto("/");
   expect(new URL(page.url()).pathname).toBe("/login");
   expect(new URL(page.url()).searchParams.get("next")).toBe("/");
-  await expect(page.getByRole("heading", { name: "Welcome to Relay" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.locator("#password-email")).toBeVisible();
-  await expect(page.getByLabel("Password")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Create account" })).toBeVisible();
+  await expect(page.locator("#password")).toBeVisible();
+  await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
 });
 
@@ -18,9 +19,10 @@ test("a new user can create an account and reach the authenticated home", async 
   test.skip(!process.env.E2E_AUTH_EMAIL || !process.env.E2E_AUTH_PASSWORD, "requires disposable auth credentials");
 
   await page.goto("/login");
+  await page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }).click();
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
-  await page.getByLabel("Password").fill(process.env.E2E_AUTH_PASSWORD!);
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
+  await page.locator("form").getByRole("button", { name: "Create account" }).click();
 
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
@@ -30,10 +32,26 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page).toHaveURL(/\/login$/);
 
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
-  await page.getByLabel("Password").fill(process.env.E2E_AUTH_PASSWORD!);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
+  await page.locator("form").getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+});
+
+test("login switches between sign in and account creation", async ({ page }) => {
+  await page.goto("/login");
+  await page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByRole("heading", { name: "Join your next game" })).toBeVisible();
+  await expect(page.locator("#password")).toHaveAttribute("autocomplete", "new-password");
+});
+
+test("light mode is default and dark mode persists", async ({ page }) => {
+  await page.goto("/login");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await page.getByRole("button", { name: "Use dark mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Use light mode" })).toBeVisible();
 });
 
 test("login has no serious accessibility violations", async ({ page }) => {
@@ -64,7 +82,7 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
   test.skip(!testInfo.project.name.startsWith("mobile"), "mobile-only validation");
   await page.goto("/login");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
-  const button = page.getByRole("button", { name: "Sign in" });
+  const button = page.locator("form").getByRole("button", { name: "Sign in" });
   const box = await button.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
   const brand = page.getByRole("link", { name: "Relay home" });

@@ -2,22 +2,23 @@
 
 :root {
   color-scheme: light;
-  --canvas: oklch(0.985 0.004 245);
+  --canvas: oklch(0.975 0.006 250);
   --surface: oklch(1 0 0);
-  --surface-strong: oklch(0.965 0.006 245);
-  --ink: oklch(0.18 0.018 250);
-  --court: oklch(0.135 0.025 248);
-  --court-line: oklch(0.86 0.08 220);
-  --muted: oklch(0.46 0.018 250);
-  --line: oklch(0.89 0.009 245);
-  --primary: oklch(0.53 0.18 248);
-  --primary-hover: oklch(0.47 0.18 248);
-  --primary-soft: oklch(0.94 0.035 248);
-  --signal: oklch(0.88 0.17 102);
-  --live: oklch(0.64 0.20 32);
-  --success: oklch(0.52 0.14 150);
-  --warning: oklch(0.69 0.15 78);
-  --danger: oklch(0.56 0.20 26);
+  --surface-strong: oklch(0.948 0.01 250);
+  --ink: oklch(0.19 0.025 255);
+  --court: oklch(0.18 0.045 252);
+  --court-line: oklch(0.84 0.095 220);
+  --muted: oklch(0.44 0.025 252);
+  --line: oklch(0.875 0.012 250);
+  --brand: oklch(0.55 0.205 255);
+  --primary: oklch(0.55 0.205 255);
+  --primary-hover: oklch(0.49 0.205 255);
+  --primary-soft: oklch(0.94 0.04 252);
+  --signal: oklch(0.89 0.18 105);
+  --live: oklch(0.63 0.21 31);
+  --success: oklch(0.50 0.145 151);
+  --warning: oklch(0.66 0.155 77);
+  --danger: oklch(0.55 0.205 26);
   --score: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -74,6 +75,11 @@ p { text-wrap: pretty; }
 .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 50; min-height: 44px; display: inline-flex; align-items: center; border-radius: .75rem; background: var(--ink); color: var(--canvas); padding: 0 1rem; font-weight: 650; transform: translateY(-180%); }
 .skip-link:focus { transform: translateY(0); }
 .message-row { content-visibility: auto; contain-intrinsic-size: 72px; }
+.field { margin-top: .375rem; height: 3rem; width: 100%; border-radius: .75rem; border: 1px solid var(--line); background: var(--surface); padding: 0 .875rem; color: var(--ink); font-size: 1rem; transition: border-color 170ms cubic-bezier(.22,1,.36,1), box-shadow 170ms cubic-bezier(.22,1,.36,1), background-color 170ms cubic-bezier(.22,1,.36,1); }
+.field::placeholder { color: var(--muted); opacity: 1; }
+.field:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 18%, transparent); }
+.court-panel::before { content: ""; position: absolute; inset: 0 22% 0 auto; width: 1px; background: color-mix(in oklch, var(--court-line) 23%, transparent); }
+.court-panel::after { content: ""; position: absolute; right: 0; top: 56%; width: 42%; height: 1px; background: color-mix(in oklch, var(--court-line) 23%, transparent); }
 
 @media (min-width: 640px) {
   .app-title { font-size: 2.25rem; line-height: 2.625rem; }
@@ -92,24 +98,22 @@ p { text-wrap: pretty; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --canvas: oklch(0.105 0.01 250);
-    --surface: oklch(0.145 0.014 250);
-    --surface-strong: oklch(0.205 0.016 250);
-    --ink: oklch(0.95 0.006 245);
-    --court: oklch(0.075 0.018 248);
-    --court-line: oklch(0.69 0.11 225);
-    --muted: oklch(0.71 0.014 245);
-    --line: oklch(0.28 0.016 250);
-    --primary: oklch(0.68 0.15 246);
-    --primary-hover: oklch(0.73 0.14 246);
-    --primary-soft: oklch(0.25 0.055 248);
-    --signal: oklch(0.84 0.16 102);
-    --live: oklch(0.70 0.18 32);
-    --success: oklch(0.68 0.13 150);
-    --warning: oklch(0.78 0.14 82);
-    --danger: oklch(0.69 0.18 27);
-  }
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: oklch(0.13 0.014 252);
+  --surface: oklch(0.165 0.018 252);
+  --surface-strong: oklch(0.225 0.022 252);
+  --ink: oklch(0.95 0.008 248);
+  --court: oklch(0.095 0.026 252);
+  --court-line: oklch(0.72 0.105 224);
+  --muted: oklch(0.72 0.018 248);
+  --line: oklch(0.30 0.022 252);
+  --primary: oklch(0.69 0.155 250);
+  --primary-hover: oklch(0.75 0.14 250);
+  --primary-soft: oklch(0.25 0.06 252);
+  --signal: oklch(0.86 0.17 104);
+  --live: oklch(0.71 0.18 32);
+  --success: oklch(0.69 0.13 151);
+  --warning: oklch(0.79 0.14 82);
+  --danger: oklch(0.70 0.175 27);
 }
