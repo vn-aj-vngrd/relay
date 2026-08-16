@@ -5,6 +5,7 @@ node_modules
 coverage
 playwright-report
 test-results
+dogfood-output/
 *.tsbuildinfo
 .DS_Store
 .vercel
