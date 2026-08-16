@@ -26,6 +26,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
   const parsed = createSessionSchema.safeParse({
     title: formData.get("title"),
     venueName: formData.get("venue"),
+    venueAddress: formData.get("venueAddress") || undefined,
     startsAt: manilaDate(formData.get("date"), formData.get("start")),
     endsAt: manilaDate(formData.get("date"), formData.get("end")),
     capacity: formData.get("capacity"),
@@ -37,7 +38,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     const errors = parsed.error.flatten().fieldErrors;
     return {
       error: "A few details need attention. Check the fields marked below.",
-      values: Object.fromEntries(["title", "venue", "date", "capacity", "start", "end", "courts", "cost", "courtNumbers", "notes", "booked"].map((key) => [key, String(formData.get(key) ?? "")])),
+      values: Object.fromEntries(["title", "venue", "venueAddress", "date", "capacity", "start", "end", "courts", "cost", "courtNumbers", "notes", "booked"].map((key) => [key, String(formData.get(key) ?? "")])),
       fieldErrors: {
         title: errors.title ?? [],
         venue: errors.venueName ?? [],
@@ -57,7 +58,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
   const created = await db.transaction(async (tx) => {
     const [session] = await tx.insert(sessions).values({
       slug: sessionSlug(parsed.data.title), hostId: user.id, title: parsed.data.title,
-      venueName: parsed.data.venueName, startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt,
+      venueName: parsed.data.venueName, venueAddress: parsed.data.venueAddress || null, startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt,
       capacity: parsed.data.capacity, courtCount: parsed.data.courtCount, courtNumbers,
       notes: parsed.data.notes, estimatedCostCents: parsed.data.estimatedCostCents,
       status: intent, publishedAt: intent === "published" ? new Date() : null,

@@ -5,6 +5,7 @@ export const createSessionSchema = z.object({
   startsAt: z.coerce.date({ error: "Choose a valid date and start time." }),
   endsAt: z.coerce.date({ error: "Choose a valid end time." }),
   venueName: z.string().trim().min(2, "Add the venue name.").max(120, "Keep the venue name under 120 characters."),
+  venueAddress: z.string().trim().max(240, "Keep the venue address under 240 characters.").optional(),
   capacity: z.coerce.number().int("Player limit must be a whole number.").min(2, "Invite at least 2 players.").max(40, "Player limit can’t exceed 40."),
   courtCount: z.coerce.number().int("Court quantity must be a whole number.").min(1, "Choose at least 1 court.").max(20, "Relay supports up to 20 courts per session."),
   notes: z.string().trim().max(1200, "Keep the note under 1,200 characters.").optional(),

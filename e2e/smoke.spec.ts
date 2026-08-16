@@ -33,7 +33,13 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
   await page.locator("form").getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
+  await page.waitForURL(/\/(home|onboarding)$/, { timeout: 15_000 });
+  if (new URL(page.url()).pathname === "/onboarding") {
+    await page.getByRole("button", { name: "Skip setup and use my defaults" }).click();
+    await expect(page).toHaveURL(/\/onboarding\/tour$/);
+    await page.getByRole("button", { name: "Skip tour" }).click();
+    await expect(page).toHaveURL(/\/home$/);
+  }
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
 
   await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
@@ -94,6 +100,9 @@ test("a new user can create an account and reach the authenticated home", async 
   expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
 
   await page.locator("#venue").fill("Central Pickle");
+  await expect(page.getByRole("listbox", { name: "Venue suggestions" })).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("option").first().click();
+  await expect(page.locator('input[name="venueAddress"]')).not.toHaveValue("");
   await page.locator("#courts").fill("21");
   await page.getByRole("button", { name: "Publish game" }).click();
   await expect(page.getByText("Relay supports up to 20 courts per session.")).toBeVisible();
@@ -119,6 +128,12 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.getByRole("button", { name: "Submit proof" }).click();
   await page.getByRole("button", { name: "Confirm paid" }).click();
   await expect(page.getByText("Paid", { exact: true })).toBeVisible();
+
+  await page.goto(`/games/${sessionId}/more`);
+  await page.getByRole("button", { name: "Delete game" }).click();
+  await page.getByLabel(/Type Saturday Night Pickle to confirm/).fill("Saturday Night Pickle");
+  await page.getByRole("dialog").getByRole("button", { name: "Delete game" }).click();
+  await expect(page).toHaveURL(/\/games$/);
 });
 
 test("login and account creation have distinct entry routes", async ({ page }) => {
@@ -156,6 +171,8 @@ test("keyboard users can skip directly to the main content", async ({ page }) =>
 });
 
 test("core public and protected routes fail safely", async ({ page }) => {
+  const venueSearch = await page.request.get("/api/venues/search?q=Central");
+  expect(venueSearch.status()).toBe(401);
   await page.goto("/games/new");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/s/session-that-does-not-exist");

@@ -47,6 +47,9 @@ export const profiles = pgTable("profiles", {
   skillLevel: text("skill_level"),
   dominantHand: text("dominant_hand"),
   city: text("city"),
+  discoverySource: text("discovery_source"),
+  onboardingCompletedAt: timestamp("onboarding_completed_at", { withTimezone: true }),
+  productTourCompletedAt: timestamp("product_tour_completed_at", { withTimezone: true }),
   ...timestamps,
 });
 

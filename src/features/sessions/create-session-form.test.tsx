@@ -15,6 +15,9 @@ describe("CreateSessionForm", () => {
     const courts = screen.getByRole("spinbutton", { name: "Court quantity" });
 
     expect(courts).toHaveValue(2);
+    expect(courts.parentElement?.nextElementSibling).toHaveTextContent("The number of courts available to your group.");
+    const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
+    expect(capacity.parentElement?.nextElementSibling).toHaveTextContent("Going players before waitlisting.");
     fireEvent.click(screen.getByRole("button", { name: "Increase court quantity" }));
     expect(courts).toHaveValue(3);
     fireEvent.change(courts, { target: { value: "20" } });

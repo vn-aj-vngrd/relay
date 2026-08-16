@@ -9,6 +9,8 @@ const publicSchema = z.object({
 const serverSchema = publicSchema.extend({
   DATABASE_URL: z.string().min(1),
   SUPABASE_SECRET_KEY: z.string().min(1),
+  GEOAPIFY_API_KEY: z.string().min(20),
+  GEOAPIFY_API_URL: z.url().default("https://api.geoapify.com"),
 });
 
 export type PublicEnv = z.infer<typeof publicSchema>;
@@ -27,5 +29,7 @@ export function getServerEnv(): ServerEnv {
     ...getPublicEnv(),
     DATABASE_URL: process.env.DATABASE_URL,
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+    GEOAPIFY_API_KEY: process.env.GEOAPIFY_API_KEY,
+    GEOAPIFY_API_URL: process.env.GEOAPIFY_API_URL,
   });
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { CaretDown, MapPin, Minus, Plus } from "@phosphor-icons/react";
+import { CaretDown, Minus, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { VenueCombobox } from "@/features/venues/venue-combobox";
 import { createSessionAction, type SessionActionState } from "./actions";
 
-const labelClass = "text-sm font-[650]";
+const labelClass = "block text-sm font-[650]";
 
 function fieldClass(error?: string) {
   return `mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
@@ -30,17 +31,17 @@ function QuantityInput({ id, label, hint, min, max, defaultValue, error }: { id:
 
   return <div className="min-w-0">
     <label className={labelClass} htmlFor={id}>{label}</label>
-    <p id={`${id}-hint`} className="mt-1 text-sm text-muted">{hint}</p>
-    <div className={`mt-2 inline-flex h-11 items-stretch overflow-hidden rounded-lg border bg-surface ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"}`}>
+    <div className={`mt-1.5 inline-flex h-11 items-stretch overflow-hidden rounded-lg border bg-surface ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"}`}>
       <button type="button" onClick={() => changeBy(-1)} disabled={numericValue <= min} aria-label={`Decrease ${label.toLowerCase()}`} className="pressable grid w-12 place-items-center border-r border-line text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-35"><Minus aria-hidden size={17} /></button>
       <input id={id} name={id} type="number" inputMode="numeric" min={min} max={max} step="1" value={value} onChange={(event) => setValue(event.target.value)} required aria-invalid={Boolean(error)} aria-describedby={describedBy} className="score w-20 appearance-none bg-transparent px-2 text-center text-base font-semibold text-ink outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
       <button type="button" onClick={() => changeBy(1)} disabled={numericValue >= max} aria-label={`Increase ${label.toLowerCase()}`} className="pressable grid w-12 place-items-center border-l border-line text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-35"><Plus aria-hidden size={17} /></button>
     </div>
+    <p id={`${id}-hint`} className="mt-1.5 text-sm text-muted">{hint}</p>
     <FieldError id={`${id}-error`} message={error} />
   </div>;
 }
 
-export type CreateSessionDefaults = { date: string; title?: string; venue?: string; capacity?: number; courts?: number; start?: string; end?: string; cost?: number };
+export type CreateSessionDefaults = { date: string; title?: string; venue?: string; venueAddress?: string; capacity?: number; courts?: number; start?: string; end?: string; cost?: number };
 
 export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefaults }) {
   const [more, setMore] = useState(false);
@@ -75,7 +76,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
       </div>
       <div>
         <label className={labelClass} htmlFor="venue">Venue</label>
-        <div className="relative"><MapPin className="pointer-events-none absolute left-3.5 top-[17px] text-muted" size={18} /><input className={`${fieldClass(venueError)} pl-10`} id="venue" name="venue" required maxLength={120} placeholder="Search or enter a venue…" defaultValue={value("venue", defaults.venue)} aria-invalid={Boolean(venueError)} aria-describedby={venueError ? "venue-error" : undefined} /></div>
+        <VenueCombobox key={`${value("venue", defaults.venue)}:${value("venueAddress", defaults.venueAddress)}`} defaultValue={value("venue", defaults.venue)} defaultAddress={value("venueAddress", defaults.venueAddress)} error={venueError} />
         <FieldError id="venue-error" message={venueError} />
       </div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">

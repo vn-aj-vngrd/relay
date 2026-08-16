@@ -29,6 +29,13 @@
       "when": 1786812393272,
       "tag": "0003_payment_proof_review",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786854487464,
+      "tag": "0004_profile_onboarding",
+      "breakpoints": true
     }
   ]
 }
