@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { applyRsvp, cloneSession, createSessionSchema, findRosterIdentity, promoteWaitlist } from "./domain";
+import { applyRsvp, cloneSession, createSessionSchema, findRosterIdentity, promoteWaitlist, resolveJoinRsvp, updateSessionSchema } from "./domain";
 
 describe("session validation", () => {
   const valid = { title: "Saturday Night Pickle", startsAt: new Date("2026-08-22T11:00:00Z"), endsAt: new Date("2026-08-22T14:00:00Z"), venueName: "Central Pickle", capacity: 8, courtCount: 2 };
   it("accepts the smallest complete session plan", () => expect(createSessionSchema.safeParse(valid).success).toBe(true));
+  it("defaults to violet and rejects colors outside the curated game palette", () => {
+    expect(createSessionSchema.parse(valid).accentColor).toBe("violet");
+    expect(createSessionSchema.safeParse({ ...valid, accentColor: "hot-pink" }).success).toBe(false);
+  });
   it("rejects an end time before the start", () => expect(createSessionSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
   it("accepts a larger court quantity without a four-court preset limit", () => {
     expect(createSessionSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(true);
+  });
+  it("validates editable sharing and booking fields", () => {
+    const update = { ...valid, sessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7", version: 1, visibility: "link", requiresApproval: false, bookingReference: "CP-2048", bookingTotalCents: 240000 };
+    expect(updateSessionSchema.safeParse(update).success).toBe(true);
+    expect(updateSessionSchema.safeParse({ ...update, visibility: "friends" }).success).toBe(false);
   });
   it("returns clear boundaries for unsafe capacity and court quantities", () => {
     expect(createSessionSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
@@ -22,6 +31,11 @@ describe("session roster", () => {
     const roster = [{ id: "host", userId: "user-1", guestTokenHash: null }];
     expect(findRosterIdentity(roster, { userId: null, guestTokenHash: null })).toBeUndefined();
     expect(findRosterIdentity(roster, { guestTokenHash: "guest-hash" })).toBeUndefined();
+  });
+  it("keeps approval deterministic before applying capacity", () => {
+    expect(resolveJoinRsvp({ requested: "going", requiresApproval: true, goingCount: 2, capacity: 8 })).toBe("pending");
+    expect(resolveJoinRsvp({ requested: "going", current: "pending", requiresApproval: true, goingCount: 8, capacity: 8 })).toBe("pending");
+    expect(resolveJoinRsvp({ requested: "going", current: "waitlisted", requiresApproval: true, goingCount: 7, capacity: 8 })).toBe("going");
   });
   it("waitlists a player when capacity is full", () => {
     const roster = [{ id: "a", rsvp: "going" as const }, { id: "b", rsvp: "going" as const }];

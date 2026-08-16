@@ -12,6 +12,10 @@ const variants: Record<Variant, string> = {
 
 const base = "pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-[600] disabled:pointer-events-none disabled:opacity-45";
 
+export function ButtonSpinner({ className = "" }: { className?: string }) {
+  return <span aria-hidden="true" className={`h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent ${className}`} />;
+}
+
 export function Button({ variant = "primary", className = "", ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;
 }

@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const TABLES = ["courts", "matches", "session_queue", "messages"] as const;
+const TABLES = ["courts", "matches", "session_queue", "messages", "message_reactions"] as const;
 
-export function RealtimeRefresh({ sessionId }: { sessionId: string }) {
+export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: string; compact?: boolean }) {
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
@@ -18,5 +18,6 @@ export function RealtimeRefresh({ sessionId }: { sessionId: string }) {
     channel.subscribe((next: string) => setStatus(next === "SUBSCRIBED" ? "connected" : next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting"));
     return () => { if (timer.current) clearTimeout(timer.current); void supabase.removeChannel(channel); };
   }, [router, sessionId]);
-  return <span className={`inline-flex min-h-11 items-center gap-2 text-sm font-medium ${status === "error" ? "text-danger" : "text-muted"}`}><span className={`h-2 w-2 rounded-full ${status === "connected" ? "bg-success" : status === "error" ? "bg-danger" : "bg-warning"}`} />{status === "connected" ? "Everyone is up to date" : status === "error" ? "Live updates paused—refresh to retry" : "Connecting live updates…"}</span>;
+  const text = status === "connected" ? (compact ? "Live" : "Everyone is up to date") : status === "error" ? (compact ? "Reconnect" : "Live updates paused—refresh to retry") : (compact ? "Connecting" : "Connecting live updates…");
+  return <span aria-live="polite" title={compact && status === "error" ? "Live updates paused—refresh to retry" : undefined} className={`inline-flex min-h-11 items-center gap-2 text-sm font-medium ${status === "error" ? "text-danger" : "text-muted"}`}><span className={`h-2 w-2 rounded-full ${status === "connected" ? "bg-success" : status === "error" ? "bg-danger" : "bg-warning"}`} />{text}</span>;
 }

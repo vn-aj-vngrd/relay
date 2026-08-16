@@ -11,12 +11,15 @@ export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
   description: "Plan casual pickleball with friends, share one invite, run the courts, and split the cost.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002"),
+  icons: { icon: "/relay-icon.svg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact'}catch{}` }} /></head>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact'}catch{}` }} />
+      </head>
       <body className={`${inter.variable} ${geistMono.variable}`}><a href="#main-content" className="skip-link">Skip to content</a>{children}</body>
     </html>
   );

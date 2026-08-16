@@ -3,7 +3,9 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getPublicEnv } from "@/lib/env";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "./session";
 
 const emailSchema = z.email();
 const passwordSchema = z.string().min(8).max(72).regex(/[A-Za-z]/).regex(/\d/);
@@ -51,6 +53,23 @@ export async function createPasswordAccount(formData: FormData) {
   if (error) authError(error.message === "User already registered" ? "An account already exists for this email. Log in instead." : "We couldn’t create your account. Please try again.", "/signup");
   if (data.session) redirect(nextPath(formData));
   redirect("/signup?sent=account");
+}
+
+export async function setTemporaryPassword(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?next=/set-password");
+  const password = passwordSchema.safeParse(formData.get("password"));
+  const confirmation = formData.get("confirmation");
+  if (!password.success) redirect(`/set-password?error=${encodeURIComponent("Use at least 8 characters with a letter and number.")}`);
+  if (password.data !== confirmation) redirect(`/set-password?error=${encodeURIComponent("Passwords do not match.")}`);
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password: password.data });
+  if (error) redirect(`/set-password?error=${encodeURIComponent("Your password could not be updated. Try again.")}`);
+  const admin = createSupabaseAdminClient();
+  const { error: metadataError } = await admin.auth.admin.updateUserById(user.id, { app_metadata: { force_password_change: false } });
+  if (metadataError) redirect(`/set-password?error=${encodeURIComponent("Your password changed, but account setup could not finish. Submit it once more.")}`);
+  redirect("/onboarding");
 }
 
 export async function signOut() {

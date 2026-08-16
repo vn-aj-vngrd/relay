@@ -3,12 +3,12 @@
 import { Trash, Warning } from "@phosphor-icons/react";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { deleteSessionAction, type DeleteSessionState } from "./delete-session";
 
 function DeleteButton({ enabled }: { enabled: boolean }) {
   const { pending } = useFormStatus();
-  return <Button type="submit" variant="danger" disabled={!enabled || pending}>{pending ? "Deleting…" : "Delete game"}</Button>;
+  return <Button type="submit" variant="danger" disabled={!enabled || pending}>{pending ? <><ButtonSpinner />Deleting…</> : "Delete game"}</Button>;
 }
 
 export function DeleteSessionControl({ sessionId, title }: { sessionId: string; title: string }) {

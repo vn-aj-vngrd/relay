@@ -27,6 +27,9 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `DATABASE_URL` | Supabase Connect → Transaction pooler | Secret, server-only | Local, Vercel |
 | `SUPABASE_PROJECT_REF` | Supabase project | Local setup metadata | Local only |
 | `SUPABASE_REGION` | Provisioning decision | Local setup metadata | Local only |
+| `GEOAPIFY_API_KEY` | Geoapify project | Secret, server-only | Local, Vercel |
+| `GEOAPIFY_API_URL` | Geoapify API origin | Server-only configuration | Local, Vercel |
+| `ADMIN_EMAILS` | Relay owner | Secret, server-only | Local, Vercel |
 
 `SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
@@ -69,6 +72,12 @@ Initial pages render authoritative server snapshots. Clients subscribe only whil
 ## Database migration
 
 Read [`../drizzle/0000_initial_relay_schema.md`](../drizzle/0000_initial_relay_schema.md) before applying or repairing the baseline migration. Generate later schema changes with `pnpm db:generate -- --name <readable_name>` and add a companion Markdown file when a migration changes authorization, deletion behavior, historical data, or platform configuration.
+
+## Admin console
+
+`ADMIN_EMAILS` is a comma-separated, case-insensitive allowlist for `/admin`. Keep it server-only and configure it independently in Vercel Preview and Production. Every admin page and Server Action checks the allowlist; navigation visibility is only a convenience, never the authorization boundary.
+
+After changing the allowlist, redeploy the affected Vercel environment. Verify an allowlisted account can open `/admin`, a normal account reaches `/admin-access-denied`, and all user suspension, restoration, and game cancellation events appear in the audit log.
 
 ## Credential rotation
 

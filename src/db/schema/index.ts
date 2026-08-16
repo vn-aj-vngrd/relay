@@ -22,7 +22,7 @@ const timestamps = {
 
 export const sessionStatus = pgEnum("session_status", ["draft", "published", "live", "completed", "cancelled"]);
 export const visibility = pgEnum("visibility", ["public", "link", "private"]);
-export const rsvpStatus = pgEnum("rsvp_status", ["invited", "going", "maybe", "waitlisted", "declined"]);
+export const rsvpStatus = pgEnum("rsvp_status", ["invited", "pending", "going", "maybe", "waitlisted", "declined"]);
 export const playerState = pgEnum("player_state", ["available", "playing", "waiting", "resting", "unavailable"]);
 export const memberRole = pgEnum("member_role", ["owner", "admin", "member"]);
 export const sessionRole = pgEnum("session_role", ["host", "cohost", "player"]);
@@ -34,6 +34,9 @@ export const rotationMode = pgEnum("rotation_mode", ["manual", "queue", "random"
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(), // Mirrors auth.users; deletion is handled by an anonymization job.
   email: text("email").notNull().unique(),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  suspensionReason: text("suspension_reason"),
+  suspendedById: uuid("suspended_by_id"),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   ...timestamps,
 });
@@ -109,6 +112,7 @@ export const sessions = pgTable("sessions", {
   venueName: text("venue_name").notNull(),
   venueAddress: text("venue_address"),
   title: text("title").notNull(),
+  accentColor: text("accent_color").notNull().default("violet"),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   timezone: text("timezone").notNull().default("Asia/Manila"),
@@ -122,6 +126,7 @@ export const sessions = pgTable("sessions", {
   rotationMode: rotationMode("rotation_mode").notNull().default("queue"),
   rotationConfig: jsonb("rotation_config").$type<Record<string, unknown>>().notNull().default({}),
   rosterLocked: boolean("roster_locked").notNull().default(false),
+  requiresApproval: boolean("requires_approval").notNull().default(false),
   bookedAt: timestamp("booked_at", { withTimezone: true }),
   bookingReference: text("booking_reference"),
   bookingScreenshotPath: text("booking_screenshot_path"),
@@ -273,11 +278,13 @@ export const messages = pgTable("messages", {
 });
 
 export const messageReactions = pgTable("message_reactions", {
+  id: uuid("id").defaultRandom().primaryKey(),
   messageId: uuid("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionPlayerId: uuid("session_player_id").notNull().references(() => sessionPlayers.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
   reaction: text("reaction").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [primaryKey({ columns: [table.messageId, table.userId, table.reaction] })]);
+}, (table) => [unique("message_player_reaction_unique").on(table.messageId, table.sessionPlayerId, table.reaction)]);
 
 export const memories = pgTable("memories", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -321,3 +328,17 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("notifications_user_unread_idx").on(table.userId, table.readAt)]);
+
+export const adminAuditLogs = pgTable("admin_audit_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  actorUserId: uuid("actor_user_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+  action: text("action").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: text("target_id").notNull(),
+  reason: text("reason"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("admin_audit_created_at_idx").on(table.createdAt),
+  index("admin_audit_target_idx").on(table.targetType, table.targetId),
+]);

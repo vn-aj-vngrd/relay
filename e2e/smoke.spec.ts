@@ -146,11 +146,15 @@ test("login and account creation have distinct entry routes", async ({ page }) =
 
 test("light mode is default and dark mode persists", async ({ page }) => {
   await page.goto("/login");
+  const favicon = page.locator('link[rel~="icon"]');
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await page.getByRole("button", { name: "Use dark mode" }).click();
+  await expect(favicon).toHaveAttribute("href", "/relay-icon.svg");
+  await page.getByRole("button", { name: "Use dark mode" }).evaluate((button: HTMLButtonElement) => button.click());
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(favicon).toHaveAttribute("href", "/relay-icon.svg");
   await page.reload();
   await expect(page.getByRole("button", { name: "Use light mode" })).toBeVisible();
+  await expect(favicon).toHaveAttribute("href", "/relay-icon.svg");
 });
 
 test("public entry pages have no serious accessibility violations", async ({ page }) => {
@@ -175,6 +179,12 @@ test("core public and protected routes fail safely", async ({ page }) => {
   expect(venueSearch.status()).toBe(401);
   await page.goto("/games/new");
   expect(new URL(page.url()).pathname).toBe("/login");
+  await page.goto("/admin");
+  expect(new URL(page.url()).pathname).toBe("/login");
+  expect(new URL(page.url()).searchParams.get("next")).toBe("/admin");
+  await page.goto("/set-password");
+  expect(new URL(page.url()).pathname).toBe("/login");
+  expect(new URL(page.url()).searchParams.get("next")).toBe("/set-password");
   await page.goto("/s/session-that-does-not-exist");
   await expect(page.getByRole("heading", { name: "This game isn’t here." })).toBeVisible({
     timeout: 15_000,

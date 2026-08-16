@@ -23,4 +23,13 @@ describe("CreateSessionForm", () => {
     fireEvent.change(courts, { target: { value: "20" } });
     expect(screen.getByRole("button", { name: "Increase court quantity" })).toBeDisabled();
   });
+
+  it("keeps game color optional and exposes an accessible palette", () => {
+    render(<CreateSessionForm defaults={{ date: "2026-08-22" }} />);
+    expect(screen.queryByRole("radio", { name: "Violet" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /More details/ }));
+    expect(screen.getByRole("radio", { name: "Violet" })).toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "Court blue" }));
+    expect(screen.getByRole("radio", { name: "Court blue" })).toBeChecked();
+  });
 });

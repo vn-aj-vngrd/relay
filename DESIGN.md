@@ -14,7 +14,7 @@ Players stand under bright court lights and share one phone between rallies. The
 
 **The digital court.** Session heroes and match surfaces use a deep blue-black field, crisp white divisions, court-blue action areas, tabular scores, and a single optic-yellow signal. The geometry encodes actual structure—sides, courts, queue order, and live state. It is never a decorative pattern.
 
-The Relay mark is a freestanding top-down court in motion: black boundaries, a blue net, and one optic ball crossing the court. It expresses pickleball and relay without relying on a generic letter, enclosing app-icon tile, paddle silhouette, or social-app glyph.
+The Relay mark is one irreducible pickleball: an optic yellow-green circular silhouette with six asymmetric negative-space holes. It remains freestanding—no border, enclosing tile, decorative background, miniature court, paddle, or motion effect. The same mark is used across themes, and the full mark-plus-wordmark lockup is preferred whenever space allows.
 
 ## Color strategy
 
@@ -52,6 +52,10 @@ Dark mode uses neutral blue-black architecture rather than inverting light color
 - Live coral: live/broadcast state and destructive urgency.
 - Status always includes text or an icon; color never carries meaning alone.
 - Body copy maintains WCAG AA; primary body text targets 7:1.
+
+### Game color
+
+A host may choose one game color from the curated palette in `src/features/sessions/accent.ts`. It scopes the authenticated game workspace and public invite only; global Relay navigation and semantic status colors remain unchanged. The raw selection is mixed toward the current theme’s ink for readable controls and text, while soft fills are mixed into the current surface. Unknown stored values fall back to violet.
 
 ## Typography
 
@@ -107,7 +111,7 @@ Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop n
 
 ### Session identity
 
-A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The CTA occupies a distinct court-blue zone rather than floating as another rounded button.
+A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Public and authenticated session tabs use the same compact segmented control so a shared link feels like the same product, not a marketing microsite.
 
 ### Live court
 

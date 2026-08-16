@@ -36,6 +36,41 @@
       "when": 1786854487464,
       "tag": "0004_profile_onboarding",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786857456798,
+      "tag": "0005_admin_operations",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786864900352,
+      "tag": "0006_roster_approval_and_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786866235109,
+      "tag": "0007_public_session_workspace",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1786866292409,
+      "tag": "0008_guest_chat_reactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786867657122,
+      "tag": "0009_session_accent",
+      "breakpoints": true
     }
   ]
 }

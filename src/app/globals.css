@@ -14,7 +14,7 @@
   --primary: oklch(0.57 0.18 275);
   --primary-hover: oklch(0.52 0.18 275);
   --primary-soft: oklch(0.93 0.04 275);
-  --signal: oklch(0.89 0.18 105);
+  --signal: #c7db00;
   --live: oklch(0.63 0.21 31);
   --success: oklch(0.50 0.145 151);
   --warning: oklch(0.66 0.155 77);
@@ -114,7 +114,7 @@ html[data-theme="dark"] {
   --primary: oklch(0.69 0.14 275);
   --primary-hover: oklch(0.75 0.13 275);
   --primary-soft: oklch(0.27 0.055 275);
-  --signal: oklch(0.86 0.17 104);
+  --signal: #c7db00;
   --live: oklch(0.71 0.18 32);
   --success: oklch(0.69 0.13 151);
   --warning: oklch(0.79 0.14 82);

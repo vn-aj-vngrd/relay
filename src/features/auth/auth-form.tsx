@@ -3,7 +3,7 @@
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { createPasswordAccount, signInWithPassword } from "./actions";
 
 type Mode = "signin" | "create";
@@ -11,7 +11,7 @@ type Mode = "signin" | "create";
 function AuthSubmit({ mode }: { mode: Mode }) {
   const { pending } = useFormStatus();
   const creating = mode === "create";
-  return <Button className="h-12 w-full text-[15px]" disabled={pending} aria-disabled={pending}>{pending ? (creating ? "Creating account…" : "Signing in…") : (creating ? "Create account" : "Sign in")}</Button>;
+  return <Button className="h-12 w-full text-[15px]" disabled={pending} aria-disabled={pending}>{pending ? <><ButtonSpinner />{creating ? "Creating account…" : "Signing in…"}</> : (creating ? "Create account" : "Sign in")}</Button>;
 }
 
 export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: string; initialMode?: Mode }) {

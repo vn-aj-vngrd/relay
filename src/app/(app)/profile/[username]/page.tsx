@@ -1,10 +1,12 @@
-import { CaretRight, Lifebuoy, MapPin, SignOut, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, Lifebuoy, MapPin, ShieldCheck, SignOut, SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/shared/avatar-stack";
+import { PendingSubmit } from "@/components/ui/pending-submit";
 import { db } from "@/db/client";
 import { matchPlayers, matches, profiles, sessionPlayers } from "@/db/schema";
+import { isAdminEmail } from "@/features/admin/auth";
 import { signOut } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/session";
 import { formatSessionDate } from "@/features/sessions/format";
@@ -28,6 +30,6 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
     <section className="py-10" aria-labelledby="recent-title"><div className="mb-3"><h2 id="recent-title" className="text-lg font-[680]">Recent sessions</h2><p className="mt-1 text-sm text-muted">Games you played with friends.</p></div>{recent.length ? <ul className="divide-y divide-line border-y border-line">{recent.map(({ session }) => <li key={session.id}><Link href={`/games/${session.id}`} prefetch={false} className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"><time className="score w-20 shrink-0 text-xs font-semibold text-primary">{formatSessionDate(session.startsAt)}</time><div className="min-w-0 flex-1"><p className="truncate font-semibold">{session.title}</p><p className="mt-1 truncate text-sm text-muted">{session.venueName}</p></div><CaretRight aria-hidden className="text-muted" size={16} /></Link></li>)}</ul> : <div className="border-y border-line py-7"><p className="font-semibold">No sessions yet</p><p className="mt-1 text-sm text-muted">Your first game will show up here.</p></div>}</section>
 
-    {ownProfile ? <section aria-labelledby="account-title" className="pb-6"><h2 id="account-title" className="mb-2 text-sm font-semibold">Account</h2><div className="divide-y divide-line border-y border-line"><Link href="/preferences" className="flex min-h-12 items-center gap-3 py-2 text-sm"><SlidersHorizontal size={18} className="text-muted" /><span className="flex-1">Preferences</span><CaretRight size={15} className="text-muted" /></Link><Link href="/help" className="flex min-h-12 items-center gap-3 py-2 text-sm"><Lifebuoy size={18} className="text-muted" /><span className="flex-1">Help Center</span><CaretRight size={15} className="text-muted" /></Link><form action={signOut}><button className="flex min-h-12 w-full items-center gap-3 py-2 text-sm"><SignOut size={18} className="text-muted" />Sign out</button></form></div></section> : null}
+    {ownProfile ? <section aria-labelledby="account-title" className="pb-6"><h2 id="account-title" className="mb-2 text-sm font-semibold">Account</h2><div className="divide-y divide-line border-y border-line"><Link href="/preferences" className="flex min-h-12 items-center gap-3 py-2 text-sm"><SlidersHorizontal size={18} className="text-muted" /><span className="flex-1">Preferences</span><CaretRight size={15} className="text-muted" /></Link><Link href="/help" className="flex min-h-12 items-center gap-3 py-2 text-sm"><Lifebuoy size={18} className="text-muted" /><span className="flex-1">Help Center</span><CaretRight size={15} className="text-muted" /></Link>{isAdminEmail(viewer?.email) ? <Link href="/admin" className="flex min-h-12 items-center gap-3 py-2 text-sm"><ShieldCheck size={18} className="text-muted" /><span className="flex-1">Admin console</span><CaretRight size={15} className="text-muted" /></Link> : null}<form action={signOut}><PendingSubmit pendingLabel="Signing out…" className="flex min-h-12 w-full items-center gap-3 py-2 text-sm"><SignOut size={18} className="text-muted" />Sign out</PendingSubmit></form></div></section> : null}
   </div>;
 }

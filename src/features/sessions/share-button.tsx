@@ -6,8 +6,16 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
   const [copied, setCopied] = useState(false);
   async function share() {
     const absolute = new URL(url, window.location.origin).toString();
-    if (navigator.share) await navigator.share({ title, url: absolute });
-    else { await navigator.clipboard.writeText(absolute); setCopied(true); }
+    try {
+      if (navigator.share) await navigator.share({ title, url: absolute });
+      else {
+        await navigator.clipboard.writeText(absolute);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2500);
+      }
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
+    }
   }
-  return <button onClick={share} className="pressable inline-flex min-h-11 items-center gap-2 rounded-[10px] border border-line px-4 text-sm font-semibold hover:bg-surface"><ShareNetwork size={17} />{copied ? "Link copied" : "Share"}</button>;
+  return <button type="button" onClick={share} className="pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3.5 text-sm font-semibold hover:bg-surface-strong"><ShareNetwork aria-hidden size={16} /><span aria-live="polite">{copied ? "Link copied" : "Share"}</span></button>;
 }

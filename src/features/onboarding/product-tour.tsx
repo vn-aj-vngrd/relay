@@ -3,6 +3,8 @@
 import { ArrowLeft, ArrowRight, Check, LinkSimple, SquaresFour } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PendingSubmit } from "@/components/ui/pending-submit";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { completeProductTour } from "./actions";
 
 const slides = [
@@ -27,8 +29,8 @@ export function ProductTour({ replay = false }: { replay?: boolean }) {
   const [step, setStep] = useState(0);
   const slide = slides[step];
   return <div className="w-full max-w-[900px]">
-    <div className="mb-9 flex items-center justify-between"><div className="flex gap-1.5" aria-label={`Tour step ${step + 1} of ${slides.length}`}>{slides.map((item, index) => <span key={item.title} className={`h-1.5 w-10 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div><form action={completeProductTour}><input type="hidden" name="destination" value="/home" /><button className="min-h-11 text-sm font-medium text-muted hover:text-ink">{replay ? "Close tour" : "Skip tour"}</button></form></div>
+    <div className="mb-9 flex items-center justify-between"><div className="flex gap-1.5" aria-label={`Tour step ${step + 1} of ${slides.length}`}>{slides.map((item, index) => <span key={item.title} className={`h-1.5 w-10 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div><form action={completeProductTour}><input type="hidden" name="destination" value="/home" /><PendingSubmit pendingLabel={replay ? "Closing…" : "Skipping…"} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink">{replay ? "Close tour" : "Skip tour"}</PendingSubmit></form></div>
     <div className="grid items-center gap-10 lg:grid-cols-[.72fr_1.28fr] lg:gap-16"><section><p className="score text-sm font-semibold text-primary">{step + 1} / {slides.length}</p><h1 className="mt-4 text-[2rem] font-[680] leading-[1.05] tracking-[-0.035em] sm:text-[2.5rem]">{slide.title}</h1><p className="mt-5 text-base leading-7 text-muted">{slide.description}</p>{step === 0 ? <p className="mt-5 flex items-center gap-2 text-sm font-medium"><LinkSimple className="text-primary"/>Guests can RSVP by name</p> : step === 1 ? <p className="mt-5 flex items-center gap-2 text-sm font-medium"><SquaresFour className="text-primary"/>Large, courtside controls</p> : null}</section><div>{step === 0 ? <InviteVisual /> : step === 1 ? <CourtsVisual /> : <MemoryVisual />}</div></div>
-    <div className="mt-10 flex items-center justify-between border-t border-line pt-5">{step ? <Button variant="quiet" onClick={() => setStep((current) => current - 1)}><ArrowLeft size={16}/>Back</Button> : <span/>}{step < slides.length - 1 ? <Button onClick={() => setStep((current) => current + 1)}>Next<ArrowRight size={16}/></Button> : <div className="flex gap-2"><form action={completeProductTour}><input type="hidden" name="destination" value="/home"/><Button variant="secondary">Go to Home</Button></form><form action={completeProductTour}><input type="hidden" name="destination" value="/games/new"/><Button>Create a game<ArrowRight size={16}/></Button></form></div>}</div>
+    <div className="mt-10 flex items-center justify-between border-t border-line pt-5">{step ? <Button variant="quiet" onClick={() => setStep((current) => current - 1)}><ArrowLeft size={16}/>Back</Button> : <span/>}{step < slides.length - 1 ? <Button onClick={() => setStep((current) => current + 1)}>Next<ArrowRight size={16}/></Button> : <div className="flex gap-2"><form action={completeProductTour}><input type="hidden" name="destination" value="/home"/><SubmitButton pendingLabel="Opening Home…" variant="secondary">Go to Home</SubmitButton></form><form action={completeProductTour}><input type="hidden" name="destination" value="/games/new"/><SubmitButton pendingLabel="Opening form…">Create a game<ArrowRight size={16}/></SubmitButton></form></div>}</div>
   </div>;
 }

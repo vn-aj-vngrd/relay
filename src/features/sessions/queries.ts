@@ -5,7 +5,7 @@ import { db } from "@/db/client";
 import { matches, profiles, sessionPlayers, sessions } from "@/db/schema";
 
 export async function getUserSessions(userId: string) {
-  return db.select({ session: sessions, player: sessionPlayers }).from(sessionPlayers).innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id)).where(and(eq(sessionPlayers.userId, userId), inArray(sessionPlayers.rsvp, ["going", "maybe", "waitlisted"]))).orderBy(asc(sessions.startsAt));
+  return db.select({ session: sessions, player: sessionPlayers }).from(sessionPlayers).innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id)).where(and(eq(sessionPlayers.userId, userId), inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]))).orderBy(asc(sessions.startsAt));
 }
 
 export async function getHomeSessions(userId: string) {
@@ -21,7 +21,7 @@ export async function getHomeSessions(userId: string) {
 }
 
 export const getPublicSession = cache(async function getPublicSession(slug: string) {
-  const session = await db.query.sessions.findFirst({ where: and(eq(sessions.slug, slug), inArray(sessions.status, ["published", "live", "completed"])) });
+  const session = await db.query.sessions.findFirst({ where: and(eq(sessions.slug, slug), inArray(sessions.status, ["published", "live", "completed"]), inArray(sessions.visibility, ["public", "link"])) });
   if (!session) return null;
   const roster = await db.select({ player: sessionPlayers, profile: profiles }).from(sessionPlayers).leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId)).where(and(eq(sessionPlayers.sessionId, session.id), inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"]))).orderBy(asc(sessionPlayers.waitlistPosition), asc(sessionPlayers.createdAt));
   const [hostProfile, matchCount] = await Promise.all([db.query.profiles.findFirst({ where: eq(profiles.userId, session.hostId) }), db.$count(matches, and(eq(matches.sessionId, session.id), eq(matches.status, "completed")))]);
@@ -35,4 +35,11 @@ export async function getSessionForUser(sessionId: string, userId: string) {
   if (!membership && session.hostId !== userId) return null;
   const roster = await db.select({ player: sessionPlayers, profile: profiles }).from(sessionPlayers).leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId)).where(eq(sessionPlayers.sessionId, sessionId)).orderBy(asc(sessionPlayers.createdAt));
   return { session, membership, roster };
+}
+
+export async function getSessionForParticipant(sessionId: string, userId: string) {
+  const data = await getSessionForUser(sessionId, userId);
+  if (!data) return null;
+  if (data.session.hostId === userId) return data;
+  return data.membership && ["going", "maybe", "waitlisted"].includes(data.membership.rsvp) ? data : null;
 }

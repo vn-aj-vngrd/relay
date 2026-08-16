@@ -11,6 +11,7 @@ const serverSchema = publicSchema.extend({
   SUPABASE_SECRET_KEY: z.string().min(1),
   GEOAPIFY_API_KEY: z.string().min(20),
   GEOAPIFY_API_URL: z.url().default("https://api.geoapify.com"),
+  ADMIN_EMAILS: z.string().default(""),
 });
 
 export type PublicEnv = z.infer<typeof publicSchema>;
@@ -31,5 +32,6 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
     GEOAPIFY_API_KEY: process.env.GEOAPIFY_API_KEY,
     GEOAPIFY_API_URL: process.env.GEOAPIFY_API_URL,
+    ADMIN_EMAILS: process.env.ADMIN_EMAILS,
   });
 }

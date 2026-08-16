@@ -1,15 +1,23 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { CaretDown, Minus, Plus } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { VenueCombobox } from "@/features/venues/venue-combobox";
 import { createSessionAction, type SessionActionState } from "./actions";
+import { SessionAccentPicker } from "./session-accent-picker";
 
 const labelClass = "block text-sm font-[650]";
 
 function fieldClass(error?: string) {
   return `mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
+}
+
+function SessionFormActions() {
+  const { pending, data } = useFormStatus();
+  const intent = data?.get("intent");
+  return <div className="flex items-center justify-end gap-2 border-t border-line pt-5 sm:border-0 sm:pt-0"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>{pending && intent === "draft" ? <><ButtonSpinner />Saving draft…</> : "Save draft"}</Button><Button type="submit" name="intent" value="publish" className="min-w-36 sm:min-w-40" disabled={pending}>{pending && intent === "publish" ? <><ButtonSpinner />Publishing…</> : "Publish game"}</Button></div>;
 }
 
 function FieldError({ id, message }: { id: string; message?: string }) {
@@ -20,7 +28,7 @@ function errorFor(state: SessionActionState, field: string) {
   return state.fieldErrors?.[field]?.[0];
 }
 
-function QuantityInput({ id, label, hint, min, max, defaultValue, error }: { id: string; label: string; hint: string; min: number; max: number; defaultValue: number; error?: string }) {
+export function QuantityInput({ id, label, hint, min, max, defaultValue, error }: { id: string; label: string; hint: string; min: number; max: number; defaultValue: number; error?: string }) {
   const [value, setValue] = useState(String(defaultValue));
   const numericValue = Number(value);
   const describedBy = `${id}-hint${error ? ` ${id}-error` : ""}`;
@@ -45,7 +53,7 @@ export type CreateSessionDefaults = { date: string; title?: string; venue?: stri
 
 export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefaults }) {
   const [more, setMore] = useState(false);
-  const [state, action, pending] = useActionState(createSessionAction, {});
+  const [state, action] = useActionState(createSessionAction, {});
 
   useEffect(() => {
     const firstInvalid = Object.entries(state.fieldErrors ?? {}).find(([, messages]) => messages.length)?.[0];
@@ -62,7 +70,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
   const costError = errorFor(state, "cost");
   const notesError = errorFor(state, "notes");
   const value = (field: string, fallback = "") => state.values?.[field] ?? fallback;
-  const advancedOpen = more || Boolean(costError || notesError || value("cost") || value("courtNumbers") || value("notes") || value("booked"));
+  const advancedOpen = more || Boolean(costError || notesError || value("cost") || value("courtNumbers") || value("notes") || value("booked") || value("requiresApproval") || value("accentColor"));
 
   return <form className="space-y-8" action={action} autoComplete="off" noValidate>
     {state.error ? <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15">{state.error}</p> : null}
@@ -91,17 +99,18 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
     </section>
 
     <section className="border-y border-line py-2">
-      <button type="button" onClick={() => setMore((open) => !open)} aria-expanded={advancedOpen} className="pressable flex min-h-14 w-full items-center justify-between text-left font-semibold"><span><span className="block">More details</span><span className="mt-0.5 block text-sm font-normal text-muted">Cost, court numbers, booking, and notes</span></span><CaretDown className={`transition-transform ${advancedOpen ? "rotate-180" : ""}`} size={16} /></button>
+      <button type="button" onClick={() => setMore((open) => !open)} aria-expanded={advancedOpen} className="pressable flex min-h-14 w-full items-center justify-between text-left font-semibold"><span><span className="block">More details</span><span className="mt-0.5 block text-sm font-normal text-muted">Approval, cost, court labels, and booking</span></span><CaretDown className={`transition-transform ${advancedOpen ? "rotate-180" : ""}`} size={16} /></button>
       {advancedOpen ? <div className="space-y-6 pb-5 pt-4">
+        <SessionAccentPicker defaultValue={value("accentColor", "violet")} />
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
           <div className="min-w-0"><label className={labelClass} htmlFor="cost">Estimated cost per player</label><div className="relative"><span className="absolute left-3.5 top-[14px] text-muted">₱</span><input className={`${fieldClass(costError)} score pl-8`} id="cost" name="cost" type="number" min="0" step="0.01" inputMode="decimal" placeholder="300" defaultValue={value("cost", defaults.cost == null ? "" : String(defaults.cost))} aria-invalid={Boolean(costError)} aria-describedby={costError ? "cost-error" : undefined} /></div><FieldError id="cost-error" message={costError} /></div>
           <div className="min-w-0"><label className={labelClass} htmlFor="court-numbers">Court labels</label><input className={fieldClass()} id="court-numbers" name="courtNumbers" placeholder="2, 3, Center" defaultValue={value("courtNumbers")} /><p className="mt-1.5 text-sm text-muted">Optional names shown in Live Mode.</p></div>
         </div>
         <div><label className={labelClass} htmlFor="notes">Note for players</label><textarea className={`${fieldClass(notesError)} min-h-28 resize-y py-3`} id="notes" name="notes" maxLength={1200} defaultValue={value("notes")} placeholder="Parking tips, what to bring, or anything your crew should know…" aria-invalid={Boolean(notesError)} aria-describedby={notesError ? "notes-error" : undefined} /><FieldError id="notes-error" message={notesError} /></div>
-        <label className="flex min-h-12 cursor-pointer items-start gap-3 text-sm"><input type="checkbox" name="booked" defaultChecked={value("booked") === "on"} className="mt-0.5 h-5 w-5 accent-[var(--primary)]" /><span><strong className="block">Court is already booked</strong><span className="mt-0.5 block text-muted">You can add a reference or screenshot after publishing.</span></span></label>
+        <div className="space-y-3"><label className="flex min-h-12 cursor-pointer items-start gap-3 text-sm"><input type="checkbox" name="requiresApproval" defaultChecked={value("requiresApproval") === "on"} className="mt-0.5 h-5 w-5 accent-[var(--primary)]" /><span><strong className="block">Approve players before they join</strong><span className="mt-0.5 block text-muted">Useful when the link may be shared beyond the original group.</span></span></label><label className="flex min-h-12 cursor-pointer items-start gap-3 text-sm"><input type="checkbox" name="booked" defaultChecked={value("booked") === "on"} className="mt-0.5 h-5 w-5 accent-[var(--primary)]" /><span><strong className="block">Court is already booked</strong><span className="mt-0.5 block text-muted">You can add a reference or screenshot after publishing.</span></span></label></div>
       </div> : null}
     </section>
 
-    <div className="flex items-center justify-end gap-2 border-t border-line pt-5 sm:border-0 sm:pt-0"><Button type="submit" name="intent" value="draft" variant="quiet" disabled={pending}>Save draft</Button><Button type="submit" name="intent" value="publish" className="min-w-36 sm:min-w-40" disabled={pending}>{pending ? "Publishing…" : "Publish game"}</Button></div>
+    <SessionFormActions />
   </form>;
 }

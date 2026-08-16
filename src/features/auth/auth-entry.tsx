@@ -1,7 +1,7 @@
 import { CalendarBlank, CurrencyCircleDollar, LinkSimple, TennisBall } from "@phosphor-icons/react/dist/ssr";
 import { Brand } from "@/components/shared/brand";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { signInWithGoogle } from "./actions";
 import { AuthForm } from "./auth-form";
 
@@ -24,7 +24,7 @@ export function AuthEntry({ mode, error, sent, next }: { mode: EntryMode; error?
         {error ? <p role="alert" className="mb-5 rounded-lg bg-danger/8 px-3.5 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15">{error}</p> : null}
         {sent ? <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">Check your email for your secure sign-in link.</p> : null}
         <AuthForm next={next} initialMode={mode} />
-        {googleEnabled ? <><div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div><form action={signInWithGoogle}><Button variant="secondary" className="h-11 w-full">Continue with Google</Button></form></> : null}
+        {googleEnabled ? <><div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div><form action={signInWithGoogle}><SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">Continue with Google</SubmitButton></form></> : null}
         <p className="mt-6 text-xs leading-5 text-muted">Have an invite? Open its shared link to view the plan and RSVP without an account.</p>
         <div className="mt-8 border-t border-line pt-5" aria-label="What Relay helps with"><p className="text-xs font-semibold text-muted">Everything around game night</p><ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">{features.map(({ label, icon: Icon }) => <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink"><Icon aria-hidden size={15} className="text-muted" />{label}</li>)}</ul></div>
       </div>

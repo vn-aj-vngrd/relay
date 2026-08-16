@@ -3,7 +3,8 @@
 import { ArrowLeft, ArrowRight, LinkSimple, TennisBall, UserCircle } from "@phosphor-icons/react";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
+import { PendingSubmit } from "@/components/ui/pending-submit";
 import { completeProfileSetup, skipProfileSetup, type OnboardingActionState } from "./actions";
 
 const steps = [
@@ -16,7 +17,7 @@ const fieldClass = "mt-1.5 h-12 w-full rounded-lg border border-line bg-surface 
 
 function SubmitButton() {
   const { pending } = useFormStatus();
-  return <Button type="submit" className="min-w-36" disabled={pending}>{pending ? "Saving…" : "Save and continue"}<ArrowRight aria-hidden size={16} /></Button>;
+  return <Button type="submit" className="min-w-36" disabled={pending}>{pending ? <><ButtonSpinner />Saving…</> : <>Save and continue<ArrowRight aria-hidden size={16} /></>}</Button>;
 }
 
 function Choice({ name, value, label, description, defaultChecked }: { name: string; value: string; label: string; description?: string; defaultChecked?: boolean }) {
@@ -82,6 +83,6 @@ export function SetupWizard({ initial }: { initial: { name: string; username: st
       </div>
     </div>
 
-    <form action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center"><button className="min-h-11 text-sm font-medium text-muted hover:text-ink">Skip setup and use my defaults</button></form>
+    <form action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center"><PendingSubmit pendingLabel="Skipping setup…" className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink">Skip setup and use my defaults</PendingSubmit></form>
   </div>;
 }

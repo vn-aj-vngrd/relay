@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "accent_color" text DEFAULT 'violet' NOT NULL;
