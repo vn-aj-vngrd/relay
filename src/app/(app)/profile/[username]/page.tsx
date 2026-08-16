@@ -9,6 +9,8 @@ import { matchPlayers, matches, profiles, sessionPlayers } from "@/db/schema";
 import { isAdminEmail } from "@/features/admin/auth";
 import { signOut } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/session";
+import { profileAvatarUrl } from "@/features/players/avatar";
+import { ProfileAvatarEditor } from "@/features/players/profile-avatar-editor";
 import { formatSessionDate } from "@/features/sessions/format";
 import { getUserSessions } from "@/features/sessions/queries";
 
@@ -23,8 +25,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const wins = participation.filter(({ match, player }) => match.winningTeam === player.team).length;
   const recent = sessionRows.slice(-5).reverse();
   const ownProfile = viewer?.id === profile.userId;
+  const imageUrl = profileAvatarUrl(profile.avatarPath);
 
-  return <div className="mx-auto max-w-3xl"><header className="flex items-center gap-4 pb-7"><Avatar name={profile.name} size="lg" /><div className="min-w-0 flex-1"><h1 className="truncate text-[1.75rem] font-[680] tracking-[-0.025em]">{profile.name}</h1>{profile.city ? <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><MapPin size={15} />{profile.city}{profile.dominantHand ? ` · ${profile.dominantHand}-handed` : ""}</p> : <p className="mt-1 text-sm text-muted">@{profile.username}</p>}</div></header>
+  return <div className="mx-auto max-w-3xl"><header className="flex items-start gap-4 pb-7">{ownProfile ? <ProfileAvatarEditor name={profile.name} imageUrl={imageUrl} /> : <Avatar name={profile.name} imageUrl={imageUrl} size="xl" />}<div className="min-w-0 flex-1 pt-1"><h1 className="truncate text-[1.75rem] font-[680] tracking-[-0.025em]">{profile.name}</h1>{profile.city ? <p className="mt-1 flex items-center gap-1.5 text-sm text-muted"><MapPin size={15} />{profile.city}{profile.dominantHand ? ` · ${profile.dominantHand}-handed` : ""}</p> : <p className="mt-1 text-sm text-muted">@{profile.username}</p>}</div></header>
 
     <section aria-label="Playing history" className="grid grid-cols-3 border-y border-line py-5 text-center"><div><strong className="score block text-2xl">{sessionCount}</strong><span className="text-xs font-medium text-muted sm:text-sm">Sessions</span></div><div className="border-x border-line"><strong className="score block text-2xl">{participation.length}</strong><span className="text-xs font-medium text-muted sm:text-sm">Matches</span></div><div><strong className="score block text-2xl">{wins}</strong><span className="text-xs font-medium text-muted sm:text-sm">Wins</span></div></section><p className="pt-3 text-center text-xs leading-5 text-muted">For fun, not a competitive rating.</p>
 
