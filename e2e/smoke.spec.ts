@@ -1,25 +1,26 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-test("protected routes send signed-out users to a usable login", async ({ page }, testInfo) => {
+test("the landing page introduces Relay and protected routes open a usable login", async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByRole("heading", { name: "One link for the whole pickleball night." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign up", exact: true }).first()).toHaveAttribute("href", "/signup");
+
+  await page.goto("/home");
   expect(new URL(page.url()).pathname).toBe("/login");
-  expect(new URL(page.url()).searchParams.get("next")).toBe("/");
+  expect(new URL(page.url()).searchParams.get("next")).toBe("/home");
   await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await expect(page.locator("#password-email")).toBeVisible();
   await expect(page.locator("#password")).toBeVisible();
   await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" })).toBeVisible();
-  if (testInfo.project.name.startsWith("mobile")) {
-    await expect(page.getByRole("heading", { name: "Built for friendly game nights" })).toBeVisible();
-    await expect(page.getByText(/Keep the plan, players, courts/)).toBeVisible();
-  } else {
-    await expect(page.getByText(/No leagues, ladders, or ratings/)).toBeVisible();
-  }
-  await page.getByRole("button", { name: "Settle" }).click();
-  await expect(page.getByText("₱300 per player")).toBeVisible();
+  await expect(page.getByText("Everything around game night")).toBeVisible();
+  await expect(page.getByText("Run the courts")).toBeVisible();
   await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
+  await page.getByRole("link", { name: "Relay home" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { name: "One link for the whole pickleball night." })).toBeVisible();
 });
 
 test("a new user can create an account and reach the authenticated home", async ({ page }, testInfo) => {
@@ -32,7 +33,7 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
   await page.locator("form").getByRole("button", { name: "Create account" }).click();
 
-  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
 
   await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
@@ -52,8 +53,12 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
   await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
   await page.locator("form").getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Open app", exact: true }).first()).toHaveAttribute("href", "/home");
+  await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(0);
+  await page.goto("/home");
   const desktopCreate = await page.getByRole("link", { name: "Create game" }).first().boundingBox();
   expect(desktopCreate).not.toBeNull();
   expect(desktopCreate!.x).toBeLessThan(240);
@@ -69,7 +74,7 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page.getByRole("button", { name: "Calendar view" })).toHaveAttribute("aria-pressed", "true");
 
   await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto("/");
+  await page.goto("/home");
   const mobileNav = await page.getByRole("navigation", { name: "Main navigation" }).boundingBox();
   expect(mobileNav).not.toBeNull();
   expect(mobileNav!.x).toBeGreaterThanOrEqual(0);
@@ -116,9 +121,10 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page.getByText("Paid", { exact: true })).toBeVisible();
 });
 
-test("login switches between sign in and account creation", async ({ page }) => {
+test("login and account creation have distinct entry routes", async ({ page }) => {
   await page.goto("/login");
-  await page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await page.goto("/signup");
   await expect(page.getByRole("heading", { name: "Join your next game" })).toBeVisible();
   await expect(page.locator("#password")).toHaveAttribute("autocomplete", "new-password");
 });
@@ -132,10 +138,12 @@ test("light mode is default and dark mode persists", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Use light mode" })).toBeVisible();
 });
 
-test("login has no serious accessibility violations", async ({ page }) => {
-  await page.goto("/login");
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+test("public entry pages have no serious accessibility violations", async ({ page }) => {
+  for (const path of ["/", "/login", "/signup"]) {
+    await page.goto(path);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  }
 });
 
 test("keyboard users can skip directly to the main content", async ({ page }) => {
@@ -158,6 +166,8 @@ test("core public and protected routes fail safely", async ({ page }) => {
 
 test("mobile layout has no horizontal overflow and keeps primary targets usable", async ({ page }, testInfo) => {
   test.skip(!testInfo.project.name.startsWith("mobile"), "mobile-only validation");
+  await page.goto("/");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
   await page.goto("/login");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
   const button = page.locator("form").getByRole("button", { name: "Sign in" });

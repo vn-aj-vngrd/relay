@@ -14,14 +14,14 @@ function AuthSubmit({ mode }: { mode: Mode }) {
   return <Button className="h-12 w-full text-[15px]" disabled={pending} aria-disabled={pending}>{pending ? (creating ? "Creating account…" : "Signing in…") : (creating ? "Create account" : "Sign in")}</Button>;
 }
 
-export function AuthForm({ next = "/" }: { next?: string }) {
-  const [mode, setMode] = useState<Mode>("signin");
+export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: string; initialMode?: Mode }) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
   const creating = mode === "create";
 
   return (
     <div>
-      <div className="mb-7 grid grid-cols-2 rounded-lg bg-surface-strong p-1" aria-label="Authentication method">
+      <div className="mb-5 grid grid-cols-2 rounded-lg bg-surface-strong p-1 sm:mb-7" aria-label="Authentication method">
         <button type="button" onClick={() => setMode("signin")} aria-pressed={!creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Sign in</button>
         <button type="button" onClick={() => setMode("create")} aria-pressed={creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Create account</button>
       </div>
@@ -31,7 +31,7 @@ export function AuthForm({ next = "/" }: { next?: string }) {
         <p className="mt-2 max-w-sm text-[15px] leading-6 text-muted">{creating ? "Create an account to organize sessions and keep your game history." : "Sign in to see your games and court plans."}</p>
       </div>
 
-      <form action={creating ? createPasswordAccount : signInWithPassword} className="space-y-5">
+      <form action={creating ? createPasswordAccount : signInWithPassword} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="password-email" className="text-sm font-[650]">Email</label>

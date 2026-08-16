@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = (username: string) => [
-  { href: "/", label: "Home", icon: House },
+  { href: "/home", label: "Home", icon: House },
   { href: "/games", label: "Games", icon: CalendarBlank },
   { href: "/games/new", label: "Create game", icon: PlusCircle, primary: true },
   { href: "/groups", label: "Groups", icon: UsersThree },
@@ -15,7 +15,7 @@ const items = (username: string) => [
 export function AppNav({ username, mode }: { username: string; mode: "sidebar" | "mobile" }) {
   const pathname = usePathname();
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+    if (href === "/home") return pathname === "/home";
     if (href === "/games") return pathname === "/games" || (pathname.startsWith("/games/") && pathname !== "/games/new");
     if (href === "/games/new") return pathname === "/games/new";
     return pathname.startsWith(href);

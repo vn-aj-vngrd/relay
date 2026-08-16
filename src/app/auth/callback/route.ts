@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const destination = new URL("/", request.url);
+  const destination = new URL("/home", request.url);
   if (!code) return NextResponse.redirect(new URL("/login?error=Missing+authentication+code.", request.url));
 
   const supabase = await createSupabaseServerClient();

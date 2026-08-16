@@ -12,6 +12,6 @@ export const getCurrentUser = cache(async function getCurrentUser() {
 
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/");
+  if (!user) redirect("/login?next=/home");
   return user;
 }
