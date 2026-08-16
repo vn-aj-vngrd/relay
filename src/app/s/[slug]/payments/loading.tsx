@@ -1,0 +1,5 @@
+import { Skeleton } from "@/components/shared/skeleton";
+
+export default function PublicPaymentsLoading() {
+  return <main id="main-content" className="min-h-screen bg-canvas" aria-label="Loading payment details" aria-busy="true"><div className="mx-auto max-w-3xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-8 w-44" /><Skeleton className="mt-2 h-3.5 w-[30rem] max-w-full" /><section className="mt-8 grid gap-6 border-y border-line py-6 sm:grid-cols-[1fr_220px]"><div><Skeleton className="h-3.5 w-20" /><Skeleton className="mt-2 h-9 w-32" /><Skeleton className="mt-2 h-3.5 w-40" /><div className="mt-5 border-t border-line pt-4"><Skeleton className="h-4 w-28" /><Skeleton className="mt-2 h-3.5 w-52 max-w-full" /><Skeleton className="mt-2 h-3.5 w-36" /></div><Skeleton className="mt-6 h-11 w-full" /></div><Skeleton className="aspect-square w-full max-w-[220px] justify-self-center bg-surface-strong" /></section></div></main>;
+}
