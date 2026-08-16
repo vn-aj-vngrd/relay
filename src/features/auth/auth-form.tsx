@@ -22,8 +22,8 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
   return (
     <div>
       <div className="mb-5 grid grid-cols-2 rounded-lg bg-surface-strong p-1 sm:mb-7" aria-label="Authentication method">
-        <button type="button" onClick={() => setMode("signin")} aria-pressed={!creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Sign in</button>
-        <button type="button" onClick={() => setMode("create")} aria-pressed={creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Create account</button>
+        <button type="button" onClick={() => setMode("signin")} aria-pressed={!creating} className={`pressable min-h-9 rounded-md text-[13px] font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Sign in</button>
+        <button type="button" onClick={() => setMode("create")} aria-pressed={creating} className={`pressable min-h-9 rounded-md text-[13px] font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Create account</button>
       </div>
 
       <div className="mb-6">

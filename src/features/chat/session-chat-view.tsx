@@ -11,7 +11,7 @@ import { toggleMessageReaction } from "./actions";
 import { ChatComposer } from "./chat-composer";
 import { ChatThread } from "./chat-thread";
 
-export async function SessionChatView({ sessionId, timezone, viewer, slug }: { sessionId: string; timezone: string; viewer: { userId: string | null; playerId: string; canWrite: boolean }; slug?: string }) {
+export async function SessionChatView({ sessionId, timezone, viewer, slug, className = "" }: { sessionId: string; timezone: string; viewer: { userId: string | null; playerId: string; canWrite: boolean }; slug?: string; className?: string }) {
   const rows = await db.select({ message: messages, player: sessionPlayers, profile: profiles }).from(messages).leftJoin(sessionPlayers, eq(messages.sessionPlayerId, sessionPlayers.id)).leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId)).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.createdAt)).limit(200);
   const reactionRows = rows.length ? await db.select().from(messageReactions).where(inArray(messageReactions.messageId, rows.map(({ message }) => message.id))) : [];
   const reactionCounts = new Map<string, number>();
@@ -24,7 +24,7 @@ export async function SessionChatView({ sessionId, timezone, viewer, slug }: { s
   const day = new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: timezone });
   const dayKey = (date: Date) => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: timezone }).format(date);
 
-  return <div className="border-y border-line bg-surface sm:px-3"><ChatThread messageCount={rows.length}>{rows.length ? rows.map(({ message, player, profile }, index) => {
+  return <div className={`flex min-h-0 flex-col overflow-hidden border-y border-line bg-surface sm:px-3 ${className}`}><ChatThread messageCount={rows.length}>{rows.length ? rows.map(({ message, player, profile }, index) => {
     const own = message.sessionPlayerId === viewer.playerId;
     const system = message.kind === "system";
     const previous = rows[index - 1]?.message;

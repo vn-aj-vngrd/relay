@@ -79,6 +79,32 @@ p { text-wrap: pretty; }
 .message-row { content-visibility: auto; contain-intrinsic-size: 72px; }
 html[data-density="compact"] .sidebar-row { min-height: 2rem; }
 html[data-density="compact"] .collection-row { min-height: 4rem; padding-block: .625rem; }
+
+/* Shared invites stay glanceable; compact mode only tightens repeated information. */
+.public-session-header { min-height: 4rem; }
+.public-session-nav-link { min-height: 2.75rem; }
+.public-session-nav-inline .public-session-nav-link { min-height: 4rem; }
+.public-session-panel { --public-section-space: 1.75rem; }
+.public-session-section { padding-block: var(--public-section-space); }
+.public-session-plan { padding-block: 0 var(--public-section-space); }
+.public-session-notes { padding-block: var(--public-section-space) 0; }
+.public-session-row { min-height: 3.5rem; }
+.public-session-scroll { scrollbar-width: none; }
+.public-session-scroll::-webkit-scrollbar { display: none; }
+html[data-density="compact"] .public-session-panel { --public-section-space: 1.5rem; }
+html[data-density="compact"] .public-session-row { min-height: 3.25rem; }
+html[data-density="compact"] .public-session-chat-thread { padding-block: 1rem; }
+.public-chat-page { height: calc(100dvh - 6.875rem); }
+.authenticated-chat-viewport { height: calc(100dvh - 18.5rem); }
+
+@media (min-width: 768px) {
+  .public-chat-page { height: calc(100dvh - 4.0625rem); }
+}
+
+@media (min-width: 1024px) {
+  .authenticated-chat-viewport { height: calc(100dvh - 13.5rem); }
+}
+
 .field { margin-top: .375rem; height: 3rem; width: 100%; border-radius: .5rem; border: 1px solid var(--line); background: var(--surface); padding: 0 .875rem; color: var(--ink); font-size: 1rem; transition: border-color 170ms cubic-bezier(.22,1,.36,1), box-shadow 170ms cubic-bezier(.22,1,.36,1), background-color 170ms cubic-bezier(.22,1,.36,1); }
 .field::placeholder { color: var(--muted); opacity: 1; }
 .field:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px color-mix(in oklch, var(--primary) 18%, transparent); }

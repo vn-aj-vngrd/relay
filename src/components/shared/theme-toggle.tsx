@@ -28,5 +28,5 @@ export function ThemeToggle({ inverse = false, showLabel = false }: { inverse?: 
   const next = theme === "light" ? "dark" : "light";
   const Icon = theme === "light" ? Moon : Sun;
 
-  return <button type="button" onClick={() => applyTheme(next)} aria-label={`Use ${next} mode`} className={`pressable ${showLabel ? "flex h-10 w-full items-center gap-2.5 px-2" : "grid h-10 w-10 place-items-center"} rounded-md ${inverse ? "text-white/70 hover:bg-white/10 hover:text-white" : "text-muted hover:bg-surface-strong hover:text-ink"}`}><Icon aria-hidden size={18} weight="regular" />{showLabel ? <span className="text-sm font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span> : null}</button>;
+  return <button type="button" onClick={() => applyTheme(next)} aria-label={`Use ${next} mode`} className={`pressable ${showLabel ? "flex h-9 w-full items-center gap-2 px-2" : "grid h-9 w-9 place-items-center"} rounded-md ${inverse ? "text-white/70 hover:bg-white/10 hover:text-white" : "text-muted hover:bg-surface-strong hover:text-ink"}`}><Icon aria-hidden size={18} weight="regular" />{showLabel ? <span className="text-[13px] font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span> : null}</button>;
 }

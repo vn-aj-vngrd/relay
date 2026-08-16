@@ -80,15 +80,15 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 ## Shape
 
-- Controls: 10–12px radius.
+- Controls: 8–10px radius.
 - Discrete session/match objects: 14–16px radius.
 - Compact identity/status: full circle or pill only when its semantics justify the shape.
-- Inputs are 48px high; primary touch controls are at least 44px.
+- Inputs are 48px high. Standard buttons are a compact 36px, large actions are 40px, and courtside score controls remain 64px.
 - Use rows, dividers, and whitespace before cards. Nested cards are not allowed.
 
 ## Layout
 
-- Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation.
+- Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation. Public invites show the plan before the RSVP form so people understand the game before responding.
 - Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions.
 - Mobile: a compact floating tab bar stays inside the safe area and preserves 44px touch targets without obscuring content.
 - Navigation chrome may float and blur; content remains opaque and structurally flat.
@@ -99,7 +99,7 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 ### Buttons
 
-One solid action per decision area. Primary buttons use court blue and a subtle inner highlight; secondary buttons use a white surface and keyline; quiet actions have no container until hover. Labels describe outcomes. Disabled controls retain legible labels.
+One solid action per decision area. Primary buttons use court blue and a subtle inner highlight; secondary buttons use a white surface and keyline; quiet actions have no container until hover. Standard buttons are 36px with restrained horizontal padding and 13px labels; use the 40px large size only for a dominant mobile or full-width action. Labels describe outcomes. Disabled controls retain legible labels.
 
 ### Inputs
 
@@ -111,7 +111,7 @@ Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop n
 
 ### Session identity
 
-A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Public and authenticated session tabs use the same compact segmented control so a shared link feels like the same product, not a marketing microsite.
+A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Public invites use a quiet underlined tab row inside the sticky link header so six destinations remain legible without a heavy segmented container. Authenticated session navigation keeps the compact segmented control; typography, spacing, and active color make both surfaces feel like the same product.
 
 ### Live court
 
@@ -130,6 +130,10 @@ Game history defaults to a compact, Notion-like list for scanning. Users may swi
 
 Queue order uses tabular numbers and rows, not pills. Standings are a compact table with right-aligned numeric columns. Neither imitates a professional rating system.
 
+### Session chat
+
+Chat occupies the remaining viewport below session navigation. The message history scrolls inside that region while the composer stays anchored to its bottom edge, above mobile safe areas and app navigation. New messages scroll the thread—not the page—and reduced-motion users never receive smooth auto-scrolling.
+
 ## Motion
 
 Motion communicates state in 140–220ms using ease-out-quart.
@@ -143,7 +147,7 @@ Motion communicates state in 140–220ms using ease-out-quart.
 
 - WCAG 2.2 AA minimum.
 - Visible 3px focus halo with offset.
-- 44px touch minimum; score controls are 64px.
+- Interactive controls meet WCAG 2.2 target sizing; standard actions are 36–40px and score controls are 64px.
 - Native share, date, time, file, and authentication behavior where available.
 - Semantic headings, lists, tables, forms, and live regions.
 - Light and dark modes are designed separately.

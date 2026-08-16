@@ -3,7 +3,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 export function ChatThread({ children, messageCount }: { children: ReactNode; messageCount: number }) {
-  const endRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: "end", behavior: messageCount > 1 ? "smooth" : "auto" }); }, [messageCount]);
-  return <div role="log" aria-live="polite" aria-relevant="additions" className="min-h-[360px] py-5">{children}<div ref={endRef} /></div>;
+  const threadRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const thread = threadRef.current;
+    if (!thread) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    thread.scrollTo({ top: thread.scrollHeight, behavior: messageCount > 1 && !reduceMotion ? "smooth" : "auto" });
+  }, [messageCount]);
+  return <div ref={threadRef} role="log" aria-live="polite" aria-relevant="additions" className="public-session-chat-thread min-h-0 flex-1 overflow-y-auto overscroll-contain py-5">{children}</div>;
 }

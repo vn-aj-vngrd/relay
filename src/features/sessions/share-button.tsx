@@ -17,5 +17,5 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
       if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
     }
   }
-  return <button type="button" onClick={share} className="pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3.5 text-sm font-semibold hover:bg-surface-strong"><ShareNetwork aria-hidden size={16} /><span aria-live="polite">{copied ? "Link copied" : "Share"}</span></button>;
+  return <button type="button" onClick={share} className="pressable inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold hover:bg-surface-strong"><ShareNetwork aria-hidden size={16} /><span aria-live="polite">{copied ? "Link copied" : "Share"}</span></button>;
 }

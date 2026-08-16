@@ -27,7 +27,7 @@ const steps = [
   ["Settle and remember", "Confirm the payment split, keep photos and results, then bring the setup back next week."],
 ] as const;
 
-const primaryAction = "pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#171719] px-4 text-sm font-semibold text-white hover:bg-[#303034]";
+const primaryAction = "pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-[#171719] px-3.5 text-[13px] font-semibold text-white hover:bg-[#303034]";
 
 export default async function MarketingPage() {
   const user = await getCurrentUser();
@@ -45,7 +45,7 @@ export default async function MarketingPage() {
 
     <section className="overflow-hidden px-5 pb-20 pt-20 sm:px-8 sm:pb-28 sm:pt-28">
       <div className="mx-auto max-w-[1180px]">
-        <div className="max-w-[850px]"><p className="mb-5 flex items-center gap-2 text-sm font-semibold text-[#4f6510]"><span className="h-2 w-2 rounded-full bg-[#b7d62e]"/>Pickleball with friends, organized</p><h1 className="max-w-[820px] text-[clamp(3rem,7vw,5.75rem)] font-[650] leading-[.96] tracking-[-0.04em]">One link for the whole pickleball night.</h1><p className="mt-7 max-w-[640px] text-lg leading-8 text-[#626268] sm:text-xl">Relay keeps the plan, players, payment split, paddle stack, scores, and photos around one shared session. Less group-chat archaeology. More time on court.</p><div className="mt-8 flex flex-wrap gap-3"><Link href={primaryHref} className={`${primaryAction} min-h-12 px-5`}>{user ? "Open Relay" : "Create your first game"} <ArrowRight size={16}/></Link><a href="#how-it-works" className="pressable inline-flex min-h-12 items-center rounded-lg border border-[#d5d5cf] bg-white px-5 text-sm font-semibold hover:border-[#aaa9a3] hover:bg-[#f1f1ee]">See how it works</a></div></div>
+        <div className="max-w-[850px]"><p className="mb-5 flex items-center gap-2 text-sm font-semibold text-[#4f6510]"><span className="h-2 w-2 rounded-full bg-[#b7d62e]"/>Pickleball with friends, organized</p><h1 className="max-w-[820px] text-[clamp(3rem,7vw,5.75rem)] font-[650] leading-[.96] tracking-[-0.04em]">One link for the whole pickleball night.</h1><p className="mt-7 max-w-[640px] text-lg leading-8 text-[#626268] sm:text-xl">Relay keeps the plan, players, payment split, paddle stack, scores, and photos around one shared session. Less group-chat archaeology. More time on court.</p><div className="mt-8 flex flex-wrap gap-3"><Link href={primaryHref} className={`${primaryAction} px-4`}>{user ? "Open Relay" : "Create your first game"} <ArrowRight size={16}/></Link><a href="#how-it-works" className="pressable inline-flex min-h-10 items-center rounded-lg border border-[#d5d5cf] bg-white px-4 text-[13px] font-semibold hover:border-[#aaa9a3] hover:bg-[#f1f1ee]">See how it works</a></div></div>
         <div className="mt-16 sm:mt-20"><HeroProductPreview /></div>
       </div>
     </section>
@@ -67,7 +67,7 @@ export default async function MarketingPage() {
       </div>
     </section>
 
-    <section className="border-t border-[#deded9] px-5 py-24 text-center sm:px-8 sm:py-36"><div className="mx-auto max-w-3xl"><div className="mx-auto mb-7 h-9 w-9"><span className="block h-full w-full rounded-full border-[9px] border-[#171719] border-r-[#b7d62e]" aria-hidden/></div><h2 className="text-4xl font-[620] tracking-[-0.04em] sm:text-6xl">Make the next game the easy one.</h2><p className="mx-auto mt-6 max-w-lg text-lg leading-8 text-[#66666c]">Create the session, send the link, and let Relay carry the plan from group chat to game night.</p><Link href={primaryHref} className={`${primaryAction} mt-9 min-h-12 px-5`}>{user ? "Open Relay" : "Create your account"} <ArrowRight size={16}/></Link></div></section>
+    <section className="border-t border-[#deded9] px-5 py-24 text-center sm:px-8 sm:py-36"><div className="mx-auto max-w-3xl"><div className="mx-auto mb-7 h-9 w-9"><span className="block h-full w-full rounded-full border-[9px] border-[#171719] border-r-[#b7d62e]" aria-hidden/></div><h2 className="text-4xl font-[620] tracking-[-0.04em] sm:text-6xl">Make the next game the easy one.</h2><p className="mx-auto mt-6 max-w-lg text-lg leading-8 text-[#66666c]">Create the session, send the link, and let Relay carry the plan from group chat to game night.</p><Link href={primaryHref} className={`${primaryAction} mt-9 px-4`}>{user ? "Open Relay" : "Create your account"} <ArrowRight size={16}/></Link></div></section>
 
     <footer className="border-t border-[#deded9] px-5 py-8 sm:px-8"><div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-[#66666c] sm:flex-row sm:items-center sm:justify-between"><Brand/><p>Friendly pickleball, clearly organized.</p><div className="flex gap-5"><a href="#why-relay">Why Relay</a><Link href={user ? "/home" : "/login"}>{user ? "Open app" : "Log in"}</Link></div></div></footer>
   </main>;

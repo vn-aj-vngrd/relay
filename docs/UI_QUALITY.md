@@ -18,7 +18,7 @@ Write down the user, physical context, and one job of the surface. For Relay, as
 
 Read `DESIGN.md`. Reuse its tokens, typography, control shapes, spacing rhythm, court geometry, and component vocabulary. Extend a token only when an existing role cannot express real product meaning. Keep Apple influence at the level of hierarchy, material discipline, native behavior, and polish—not imitation.
 
-**Complete when:** colors use semantic tokens, controls match existing affordances, and the visual signature encodes session/court structure.
+**Complete when:** colors use semantic tokens, controls use the shared button sizes and existing affordances, and the visual signature encodes session/court structure.
 
 ### 3. Build hierarchy before decoration
 
@@ -28,7 +28,7 @@ Order content by the decision a person must make. Use type, alignment, whitespac
 
 ### 4. Make interaction explicit
 
-Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Touch targets are at least 44px; score controls are 64px.
+Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Standard actions use the 36–40px button system; score controls remain 64px.
 
 **Complete when:** keyboard, touch, and assistive-technology users can complete the same workflow without guessing.
 
@@ -66,7 +66,7 @@ pnpm build
 
 Use Agent Browser at 390px and 1440px in light and dark mode. Check the accessibility tree, console errors, horizontal overflow, focus order, target sizes, reduced motion, long text, empty data, and a realistic end-to-end workflow.
 
-**Complete when:** automated checks pass, WCAG AA contrast holds, no horizontal overflow exists, every interactive control is labeled, and browser evidence covers the changed workflow.
+**Complete when:** automated checks pass, WCAG AA contrast holds, no horizontal overflow exists, controls meet WCAG 2.2 target sizing, every interactive control is labeled, and browser evidence covers the changed workflow.
 
 ## Review output
 
