@@ -1,8 +1,9 @@
-import { Bell, Search } from "lucide-react";
+import { Bell, Lifebuoy, MagnifyingGlass, PlusCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { and, eq, isNull } from "drizzle-orm";
 import { AppNav } from "@/components/shared/app-nav";
 import { Brand } from "@/components/shared/brand";
+import { SidebarAccount } from "@/components/shared/sidebar-account";
 import { db } from "@/db/client";
 import { notifications } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -13,25 +14,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const [profile, unreadCount] = await Promise.all([ensureProfile(user), db.$count(notifications, and(eq(notifications.userId, user.id), isNull(notifications.readAt)))]);
 
   return <div className="min-h-screen bg-canvas">
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-surface p-4 lg:flex">
-      <div className="px-2 pb-8 pt-1"><Brand /></div>
-      <AppNav username={profile.username} mode="sidebar" />
-      <div className="mt-auto space-y-1 border-t border-line pt-4">
-        <Link href="/search" prefetch={false} className="pressable flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[620] text-muted hover:bg-surface-strong hover:text-ink"><Search aria-hidden size={20} />Search</Link>
-        <Link href="/notifications" prefetch={false} className="pressable relative flex min-h-12 items-center gap-3 rounded-xl px-3 text-sm font-[620] text-muted hover:bg-surface-strong hover:text-ink"><Bell aria-hidden size={20} />Notifications{unreadCount ? <span className="ml-auto h-2 w-2 rounded-full bg-live" aria-label={`${unreadCount} unread`} /> : null}</Link>
-      </div>
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
+      <div className="px-1 pb-3"><Brand /></div>
+      <Link href="/games/new" prefetch={false} className="sidebar-row pressable mb-1 flex min-h-9 items-center gap-2.5 rounded-md bg-primary px-2 text-sm font-medium text-white hover:bg-primary-hover"><PlusCircle aria-hidden size={18} weight="fill" />Create game</Link>
+      <div className="pb-3"><Link href="/search" prefetch={false} className="sidebar-row pressable flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm font-medium text-muted hover:bg-surface-strong/70 hover:text-ink"><MagnifyingGlass aria-hidden size={18} />Search</Link></div>
+      <div className="border-t border-line pt-3"><AppNav username={profile.username} mode="sidebar" /></div>
+      <div className="mt-auto space-y-1"><Link href="/notifications" prefetch={false} className="sidebar-row pressable relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm font-medium text-muted hover:bg-surface-strong/70 hover:text-ink"><Bell aria-hidden size={18} />Notifications{unreadCount ? <span className="ml-auto h-1.5 w-1.5 rounded-full bg-live" aria-label={`${unreadCount} unread`} /> : null}</Link><Link href="/help" prefetch={false} className="sidebar-row pressable flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm font-medium text-muted hover:bg-surface-strong/70 hover:text-ink"><Lifebuoy aria-hidden size={18} />Help</Link><div className="border-t border-line pt-1"><SidebarAccount name={profile.name} username={profile.username} /></div></div>
     </aside>
 
-    <header className="app-chrome sticky top-0 z-20 border-b border-line lg:hidden">
-      <div className="flex h-[60px] items-center justify-between px-4 sm:h-16 sm:px-6">
-        <Brand />
-        <div className="flex items-center"><Link href="/search" prefetch={false} aria-label="Search" className="pressable grid h-11 w-11 place-items-center text-ink hover:text-primary"><Search aria-hidden size={21} strokeWidth={2.2} /></Link><Link href="/notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-11 w-11 place-items-center text-ink hover:text-primary"><Bell aria-hidden size={21} strokeWidth={2.2} />{unreadCount ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-live ring-2 ring-surface" /> : null}</Link></div>
-      </div>
-    </header>
+    <header className="app-chrome sticky top-0 z-20 border-b border-line lg:hidden"><div className="flex h-[56px] items-center justify-between px-4 sm:px-6"><Brand /><div className="flex items-center"><Link href="/search" prefetch={false} aria-label="Search" className="pressable grid h-10 w-10 place-items-center text-muted hover:text-ink"><MagnifyingGlass aria-hidden size={20} /></Link><Link href="/notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-10 w-10 place-items-center text-muted hover:text-ink"><Bell aria-hidden size={20} />{unreadCount ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-live ring-2 ring-surface" /> : null}</Link></div></div></header>
 
-    <div className="lg:pl-60">
-      <main id="main-content" className="mx-auto max-w-[1120px] px-4 pb-32 pt-8 sm:px-8 sm:pt-10 lg:px-10 lg:pb-16 lg:pt-12">{children}</main>
-    </div>
+    <div className="lg:py-2 lg:pl-[240px] lg:pr-2"><div className="min-h-screen bg-surface lg:min-h-[calc(100vh-1rem)] lg:rounded-xl lg:border lg:border-line"><main id="main-content" className="app-content mx-auto max-w-[1120px] px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10">{children}</main></div></div>
     <AppNav username={profile.username} mode="mobile" />
   </div>;
 }

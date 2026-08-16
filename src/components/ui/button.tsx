@@ -10,7 +10,7 @@ const variants: Record<Variant, string> = {
   danger: "bg-danger text-white hover:opacity-90 border-transparent shadow-[inset_0_1px_0_oklch(1_0_0/.18)]",
 };
 
-const base = "pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-[650] disabled:pointer-events-none disabled:opacity-45";
+const base = "pressable inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3.5 text-sm font-[600] disabled:pointer-events-none disabled:opacity-45";
 
 export function Button({ variant = "primary", className = "", ...props }: ComponentProps<"button"> & { variant?: Variant }) {
   return <button className={`${base} ${variants[variant]} ${className}`} {...props} />;

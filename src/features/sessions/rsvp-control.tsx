@@ -1,13 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Check, HelpCircle, Share2, X } from "lucide-react";
+import { Check, Question, ShareNetwork, X } from "@phosphor-icons/react";
 import { rsvpAction } from "./actions";
 
 type Choice = "going" | "maybe" | "declined";
 const choices = [
   { value: "going" as const, label: "Join", icon: Check },
-  { value: "maybe" as const, label: "Maybe", icon: HelpCircle },
+  { value: "maybe" as const, label: "Maybe", icon: Question },
   { value: "declined" as const, label: "Can’t make it", icon: X },
 ];
 
@@ -28,7 +28,7 @@ export function RsvpControl({ sessionId, signedIn = false }: { sessionId: string
       <button type="submit" disabled={pending} className="pressable min-h-12 w-full rounded-[10px] border border-primary bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50">{pending ? "Saving…" : choice === "going" ? "Confirm I’m going" : "Save response"}</button>
       {state.error ? <p role="alert" className="text-sm font-medium text-danger">{state.error}</p> : state.success ? <p aria-live="polite" className="text-sm font-medium text-primary">Response saved.</p> : null}
     </form>
-    <button onClick={share} className="pressable mt-2 min-h-11 w-full rounded-[10px] text-sm font-semibold hover:bg-surface"><Share2 className="mr-2 inline" size={17} />Share game</button>
+    <button onClick={share} className="pressable mt-2 min-h-11 w-full rounded-[10px] text-sm font-semibold hover:bg-surface"><ShareNetwork className="mr-2 inline" size={17} />Share game</button>
     <p aria-live="polite" className="min-h-5 text-center text-xs text-primary">{shareMessage}</p>
   </div>;
 }

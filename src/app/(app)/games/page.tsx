@@ -1,4 +1,4 @@
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { GameCollection, type GameCollectionItem } from "@/features/sessions/game-collection";

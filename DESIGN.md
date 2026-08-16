@@ -4,7 +4,7 @@
 
 Relay should feel like checking a beautifully made sports instrument: immediate, precise, and calm until play becomes live. Light mode is the deliberate default for bright venues and daytime planning; dark mode is an explicit, persistent user choice. The visual world combines **hard-court geometry** with **Apple-like product discipline**—native-feeling typography, strong hierarchy, polished materials, and controls that behave exactly as expected.
 
-Apple is a quality reference, not a skin. Relay does not imitate macOS windows, traffic-light controls, frosted cards, or desktop chrome. The influence appears through legibility, restraint, platform-native behavior, material used only for navigation, and careful state feedback.
+Linear is the current product-UI baseline for hierarchy, density, alignment, icons, theme discipline, and component behavior; see `docs/LINEAR_UI_REFERENCE.md`. It is a temporary foundation, not Relay’s final identity. Apple remains a quality reference for platform-native behavior and careful state feedback.
 
 ## Physical scene
 
@@ -22,16 +22,16 @@ Restrained foundation with a stronger sport mode. Court blue occupies less than 
 
 ```css
 /* Light */
---canvas: oklch(1 0 0);
---surface: oklch(1 0 0);
---surface-raised: oklch(.965 .005 250);
---ink: oklch(.17 .018 255);
---muted: oklch(.43 .018 252);
---line: oklch(.89 .008 250);
+--canvas: oklch(.965 .002 75);
+--surface: oklch(.992 .001 75);
+--surface-raised: oklch(.935 .003 75);
+--ink: oklch(.22 .008 275);
+--muted: oklch(.48 .012 275);
+--line: oklch(.875 .005 75);
 
---primary: oklch(.55 .205 255);      /* court blue */
---primary-hover: oklch(.49 .205 255);
---primary-soft: oklch(.94 .04 252);
+--primary: oklch(.57 .18 275);       /* temporary Linear-like accent */
+--primary-hover: oklch(.52 .18 275);
+--primary-soft: oklch(.93 .04 275);
 --court: oklch(.18 .045 252);        /* scoreboard/court field */
 --court-line: oklch(.84 .095 220);
 --signal: oklch(.89 .18 105);        /* optic ball; sparse */
@@ -55,14 +55,7 @@ Dark mode uses neutral blue-black architecture rather than inverting light color
 
 ## Typography
 
-Relay uses the platform UI stack first:
-
-```css
-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
-  var(--font-geist-sans), "Segoe UI", sans-serif;
-```
-
-This gives Apple devices native SF typography while retaining Geist elsewhere. Geist Mono is reserved for scores, times, currency, queue numbers, and standings.
+Relay currently uses Inter across product UI to match the Linear baseline. Geist Mono is reserved for scores, times, currency, queue numbers, and standings.
 
 - Page title: 30/36 mobile, 36/42 desktop, 720 weight, `-0.025em` tracking.
 - Session title: 28/34 mobile, 36/42 desktop, 720 weight.
@@ -75,7 +68,7 @@ This gives Apple devices native SF typography while retaining Geist elsewhere. G
 
 ## Materials and elevation
 
-- Light mode uses a true-white canvas. Hierarchy comes from typography, spacing, dividers, and sparse neutral fills—not a tinted dashboard background.
+- The shell uses a crisp warm-gray canvas while the work area sits on a near-white foreground panel. Hierarchy comes from typography, spacing, and sparse neutral fills.
 - Introductory and authentication surfaces remain white; sport character comes from court geometry, the optic ball, and precise blue actions rather than large dark marketing panels.
 - Navigation chrome may use `backdrop-filter` because it floats above scrolling content. Content cards never use blur.
 - Elevation is expressed by surface contrast, a 1px keyline, and at most an 8px blur shadow for floating chrome.
@@ -110,7 +103,7 @@ Native controls with 48px height, white surface, cool keyline, and a court-blue 
 
 ### Navigation
 
-Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses quiet rows and primary color only for the current icon; mobile uses a standard edge-to-edge tab bar with no floating container or decorative icon tiles. Create is the only enclosed tab action. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Courts navigation over global navigation.
+Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses a standard edge-to-edge tab bar. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Courts navigation over global navigation.
 
 ### Session identity
 

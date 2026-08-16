@@ -12,10 +12,12 @@ test("protected routes send signed-out users to a usable login", async ({ page }
   await expect(page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" })).toBeVisible();
   if (testInfo.project.name.startsWith("mobile")) {
     await expect(page.getByRole("heading", { name: "Built for friendly game nights" })).toBeVisible();
-    await expect(page.getByText("A little organization, without leagues or rankings.")).toBeVisible();
+    await expect(page.getByText(/Keep the plan, players, courts/)).toBeVisible();
   } else {
     await expect(page.getByText(/No leagues, ladders, or ratings/)).toBeVisible();
   }
+  await page.getByRole("button", { name: "Settle" }).click();
+  await expect(page.getByText("₱300 per player")).toBeVisible();
   await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
 });
@@ -33,11 +35,18 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
 
-  await page.getByRole("link", { name: "Profile" }).click();
+  await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
+  await page.getByRole("menuitem", { name: "Preferences" }).click();
   await page.getByRole("button", { name: "Use dark mode" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("button", { name: "Use light mode" }).click();
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.getByRole("button", { name: "Compact" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
+  await page.getByRole("button", { name: "Default" }).click();
+  await page.getByRole("button", { name: "Monday" }).click();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem("relay-week-start"))).toBe("monday");
+  await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
+  await page.getByRole("menuitem", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
 
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
@@ -45,7 +54,7 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.locator("form").getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
-  const desktopCreate = await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Create" }).boundingBox();
+  const desktopCreate = await page.getByRole("link", { name: "Create game" }).first().boundingBox();
   expect(desktopCreate).not.toBeNull();
   expect(desktopCreate!.x).toBeLessThan(240);
 

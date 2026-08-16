@@ -18,10 +18,10 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "drizzle-orm": "latest",
-    "lucide-react": "latest",
     "next": "latest",
     "postgres": "latest",
     "react": "latest",

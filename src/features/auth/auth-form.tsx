@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,13 @@ export function AuthForm({ next = "/" }: { next?: string }) {
 
   return (
     <div>
-      <div className="mb-8 grid grid-cols-2 border-b border-line" aria-label="Authentication method">
-        <button type="button" onClick={() => setMode("signin")} aria-pressed={!creating} className={`pressable relative min-h-12 text-sm font-[650] ${!creating ? "text-ink after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:bg-primary" : "text-muted hover:text-ink"}`}>Sign in</button>
-        <button type="button" onClick={() => setMode("create")} aria-pressed={creating} className={`pressable relative min-h-12 text-sm font-[650] ${creating ? "text-ink after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:bg-primary" : "text-muted hover:text-ink"}`}>Create account</button>
+      <div className="mb-7 grid grid-cols-2 rounded-lg bg-surface-strong p-1" aria-label="Authentication method">
+        <button type="button" onClick={() => setMode("signin")} aria-pressed={!creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Sign in</button>
+        <button type="button" onClick={() => setMode("create")} aria-pressed={creating} className={`pressable min-h-9 rounded-md text-sm font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>Create account</button>
       </div>
 
-      <div className="mb-7">
-        <h1 className="text-[1.875rem] font-[720] leading-[1.15] tracking-[-0.03em] sm:text-[2rem]">{creating ? "Join your next game" : "Welcome back"}</h1>
+      <div className="mb-6">
+        <h1 className="text-[1.625rem] font-[650] leading-[1.2] tracking-[-0.02em]">{creating ? "Join your next game" : "Welcome back"}</h1>
         <p className="mt-2 max-w-sm text-[15px] leading-6 text-muted">{creating ? "Create an account to organize sessions and keep your game history." : "Sign in to see your games and court plans."}</p>
       </div>
 
@@ -41,7 +41,7 @@ export function AuthForm({ next = "/" }: { next?: string }) {
           <label htmlFor="password" className="text-sm font-[650]">Password</label>
           <div className="relative">
             <input id="password" name="password" type={showPassword ? "text" : "password"} minLength={8} autoComplete={creating ? "new-password" : "current-password"} required className="field pr-12" />
-            <button type="button" onClick={() => setShowPassword((shown) => !shown)} aria-label={showPassword ? "Hide password" : "Show password"} className="pressable absolute right-1 top-2 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink">{showPassword ? <EyeOff aria-hidden size={18} /> : <Eye aria-hidden size={18} />}</button>
+            <button type="button" onClick={() => setShowPassword((shown) => !shown)} aria-label={showPassword ? "Hide password" : "Show password"} className="pressable absolute right-1 top-2 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink">{showPassword ? <EyeSlash aria-hidden size={18} /> : <Eye aria-hidden size={18} />}</button>
           </div>
           {creating ? <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p> : null}
         </div>

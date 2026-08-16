@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { ChevronDown, MapPin, Minus, Plus } from "lucide-react";
+import { CaretDown, MapPin, Minus, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { createSessionAction, type SessionActionState } from "./actions";
 
 const labelClass = "text-sm font-[650]";
 
 function fieldClass(error?: string) {
-  return `mt-1.5 h-12 w-full rounded-xl border bg-surface px-3.5 text-base text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-3 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-3 focus:ring-primary/15"}`;
+  return `mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
 }
 
 function FieldError({ id, message }: { id: string; message?: string }) {
@@ -31,7 +31,7 @@ function QuantityInput({ id, label, hint, min, max, defaultValue, error }: { id:
   return <div className="min-w-0">
     <label className={labelClass} htmlFor={id}>{label}</label>
     <p id={`${id}-hint`} className="mt-1 text-sm text-muted">{hint}</p>
-    <div className={`mt-2 inline-flex h-12 items-stretch overflow-hidden rounded-xl border bg-surface ${error ? "border-danger ring-3 ring-danger/10" : "border-line focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/15"}`}>
+    <div className={`mt-2 inline-flex h-11 items-stretch overflow-hidden rounded-lg border bg-surface ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"}`}>
       <button type="button" onClick={() => changeBy(-1)} disabled={numericValue <= min} aria-label={`Decrease ${label.toLowerCase()}`} className="pressable grid w-12 place-items-center border-r border-line text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-35"><Minus aria-hidden size={17} /></button>
       <input id={id} name={id} type="number" inputMode="numeric" min={min} max={max} step="1" value={value} onChange={(event) => setValue(event.target.value)} required aria-invalid={Boolean(error)} aria-describedby={describedBy} className="score w-20 appearance-none bg-transparent px-2 text-center text-base font-semibold text-ink outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
       <button type="button" onClick={() => changeBy(1)} disabled={numericValue >= max} aria-label={`Increase ${label.toLowerCase()}`} className="pressable grid w-12 place-items-center border-l border-line text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-35"><Plus aria-hidden size={17} /></button>
@@ -64,7 +64,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
   const advancedOpen = more || Boolean(costError || notesError || value("cost") || value("courtNumbers") || value("notes") || value("booked"));
 
   return <form className="space-y-8" action={action} autoComplete="off" noValidate>
-    {state.error ? <p role="alert" className="rounded-xl bg-danger/8 px-4 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15">{state.error}</p> : null}
+    {state.error ? <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15">{state.error}</p> : null}
 
     <section className="space-y-6" aria-labelledby="game-basics-heading">
       <div><h2 id="game-basics-heading" className="text-lg font-[680]">Game details</h2><p className="mt-1 text-sm text-muted">The essentials your friends see on the invite.</p></div>
@@ -90,7 +90,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
     </section>
 
     <section className="border-y border-line py-2">
-      <button type="button" onClick={() => setMore((open) => !open)} aria-expanded={advancedOpen} className="pressable flex min-h-14 w-full items-center justify-between text-left font-semibold"><span><span className="block">More details</span><span className="mt-0.5 block text-sm font-normal text-muted">Cost, court numbers, booking, and notes</span></span><ChevronDown className={`transition-transform ${advancedOpen ? "rotate-180" : ""}`} size={20} /></button>
+      <button type="button" onClick={() => setMore((open) => !open)} aria-expanded={advancedOpen} className="pressable flex min-h-14 w-full items-center justify-between text-left font-semibold"><span><span className="block">More details</span><span className="mt-0.5 block text-sm font-normal text-muted">Cost, court numbers, booking, and notes</span></span><CaretDown className={`transition-transform ${advancedOpen ? "rotate-180" : ""}`} size={16} /></button>
       {advancedOpen ? <div className="space-y-6 pb-5 pt-4">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
           <div className="min-w-0"><label className={labelClass} htmlFor="cost">Estimated cost per player</label><div className="relative"><span className="absolute left-3.5 top-[14px] text-muted">₱</span><input className={`${fieldClass(costError)} score pl-8`} id="cost" name="cost" type="number" min="0" step="0.01" inputMode="decimal" placeholder="300" defaultValue={value("cost", defaults.cost == null ? "" : String(defaults.cost))} aria-invalid={Boolean(costError)} aria-describedby={costError ? "cost-error" : undefined} /></div><FieldError id="cost-error" message={costError} /></div>

@@ -1,13 +1,9 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "@phosphor-icons/react";
 import { useSyncExternalStore } from "react";
 
-const themeColors = {
-  light: "oklch(1 0 0)",
-  dark: "oklch(0.13 0.014 252)",
-} as const;
-
+const themeColors = { light: "oklch(0.965 0.002 75)", dark: "oklch(0.145 0.006 275)" } as const;
 type Theme = keyof typeof themeColors;
 
 function applyTheme(theme: Theme) {
@@ -32,15 +28,5 @@ export function ThemeToggle({ inverse = false, showLabel = false }: { inverse?: 
   const next = theme === "light" ? "dark" : "light";
   const Icon = theme === "light" ? Moon : Sun;
 
-  return (
-    <button
-      type="button"
-      onClick={() => applyTheme(next)}
-      aria-label={`Use ${next} mode`}
-      className={`pressable ${showLabel ? "flex h-12 w-full items-center gap-3 px-3" : "grid h-11 w-11 place-items-center"} rounded-xl border ${inverse ? "border-white/15 text-white hover:bg-white/10" : "border-transparent text-muted hover:bg-surface-strong hover:text-ink"}`}
-    >
-      <Icon aria-hidden size={19} strokeWidth={2} />
-      {showLabel ? <span className="text-sm font-[620]">{theme === "light" ? "Dark mode" : "Light mode"}</span> : null}
-    </button>
-  );
+  return <button type="button" onClick={() => applyTheme(next)} aria-label={`Use ${next} mode`} className={`pressable ${showLabel ? "flex h-10 w-full items-center gap-2.5 px-2" : "grid h-10 w-10 place-items-center"} rounded-md ${inverse ? "text-white/70 hover:bg-white/10 hover:text-white" : "text-muted hover:bg-surface-strong hover:text-ink"}`}><Icon aria-hidden size={18} weight="regular" />{showLabel ? <span className="text-sm font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span> : null}</button>;
 }

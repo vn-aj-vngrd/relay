@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { Bell } from "lucide-react";
+import { Bell } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/db/client";
 import { notifications } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
