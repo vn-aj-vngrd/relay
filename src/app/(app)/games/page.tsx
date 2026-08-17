@@ -8,9 +8,9 @@ import { getHomeSessions } from "@/features/sessions/queries";
 export default async function GamesPage() {
   const user = await requireUser();
   const data = await getHomeSessions(user.id);
-  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, playerCount }) => ({
+  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, player, playerCount }) => ({
     id: session.id,
-    href: `/games/${session.id}`,
+    href: player.rsvp === "invited" ? `/s/${session.slug}` : `/games/${session.id}`,
     title: session.title,
     date: formatSessionDate(session.startsAt),
     dateKey: sessionDateKey(session.startsAt, session.timezone),
@@ -19,6 +19,7 @@ export default async function GamesPage() {
     playerCount,
     capacity: session.capacity,
     status: session.status,
+    accentColor: session.accentColor,
   }));
   const past: GameCollectionItem[] = data.recent.map(({ session, playerCount }) => ({
     id: session.id,
@@ -31,6 +32,7 @@ export default async function GamesPage() {
     playerCount,
     capacity: session.capacity,
     status: session.status,
+    accentColor: session.accentColor,
   }));
   const todayKey = sessionDateKey(new Date());
 

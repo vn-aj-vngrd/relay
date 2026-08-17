@@ -1,11 +1,14 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, count, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { matches, profiles, sessionPlayers, sessions } from "@/db/schema";
 
 export async function getUserSessions(userId: string) {
-  return db.select({ session: sessions, player: sessionPlayers }).from(sessionPlayers).innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id)).where(and(eq(sessionPlayers.userId, userId), inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]))).orderBy(asc(sessions.startsAt));
+  return db.select({ session: sessions, player: sessionPlayers }).from(sessionPlayers).innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id)).where(and(eq(sessionPlayers.userId, userId), or(
+    and(eq(sessionPlayers.rsvp, "invited"), inArray(sessions.status, ["published", "live"])),
+    and(inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]), inArray(sessions.status, ["published", "live", "completed"])),
+  ))).orderBy(asc(sessions.startsAt));
 }
 
 export async function getHomeSessions(userId: string) {

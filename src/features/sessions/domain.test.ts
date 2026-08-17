@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyRsvp, cloneSession, createSessionSchema, findRosterIdentity, promoteWaitlist, resolveJoinRsvp, updateSessionSchema } from "./domain";
+import { applyRsvp, cloneSession, createSessionSchema, findRosterIdentity, promoteWaitlist, resolveJoinRsvp, sessionInviteeIds, updateSessionSchema } from "./domain";
 
 describe("session validation", () => {
   const valid = { title: "Saturday Night Pickle", startsAt: new Date("2026-08-22T11:00:00Z"), endsAt: new Date("2026-08-22T14:00:00Z"), venueName: "Central Pickle", capacity: 8, courtCount: 2 };
@@ -51,9 +51,13 @@ describe("session roster", () => {
 
 describe("session cloning", () => {
   it("copies structure but not transactional session data", () => {
-    const clone = cloneSession({ title: "Night pickle", venueId: "v", durationMinutes: 120, capacity: 8, courtCount: 2, commonInviteeIds: ["a"] });
-    expect(clone).toEqual({ title: "Night pickle", venueId: "v", durationMinutes: 120, capacity: 8, courtCount: 2, suggestedInviteeIds: ["a"] });
+    const clone = cloneSession({ title: "Night pickle", groupId: "g", venueId: "v", durationMinutes: 120, capacity: 8, courtCount: 2, commonInviteeIds: ["a"] });
+    expect(clone).toEqual({ title: "Night pickle", groupId: "g", venueId: "v", durationMinutes: 120, capacity: 8, courtCount: 2, suggestedInviteeIds: ["a"] });
     expect(clone).not.toHaveProperty("startsAt");
     expect(clone).not.toHaveProperty("payments");
+  });
+
+  it("invites the reusable crew without duplicating the host or copying RSVP state", () => {
+    expect(sessionInviteeIds("host", ["host", "mika", "mika", null, "aj"])).toEqual(["mika", "aj"]);
   });
 });

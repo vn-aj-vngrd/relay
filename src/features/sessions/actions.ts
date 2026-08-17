@@ -6,11 +6,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db/client";
-import { courts, matches, messages, notifications, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
+import { courts, groupMembers, matches, messages, notifications, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { ensureProfile } from "@/features/players/profile";
-import { createSessionSchema, findRosterIdentity, resolveJoinRsvp, updateSessionSchema } from "./domain";
+import { createSessionSchema, findRosterIdentity, resolveJoinRsvp, sessionInviteeIds, updateSessionSchema } from "./domain";
 import { sessionSlug } from "./slug";
 
 export type SessionActionState = { error?: string; success?: boolean; rsvp?: "going" | "maybe" | "pending" | "waitlisted" | "declined"; fieldErrors?: Record<string, string[]>; values?: Record<string, string> };
@@ -56,10 +56,23 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
   }
 
   const intent = formData.get("intent") === "draft" ? "draft" : "published";
+  const requestedGroupId = String(formData.get("groupId") ?? "");
+  const sourceSessionId = String(formData.get("sourceSessionId") ?? "");
+  const groupMembership = requestedGroupId ? await db.query.groupMembers.findFirst({ where: and(eq(groupMembers.groupId, requestedGroupId), eq(groupMembers.userId, user.id)) }) : null;
+  if (requestedGroupId && !groupMembership) return { error: "This group is no longer available to you." };
+  const source = sourceSessionId ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, sourceSessionId), eq(sessions.hostId, user.id)) }) : null;
+  if (sourceSessionId && !source) return { error: "Only the original host can replay this game." };
+  const invitedUserIds = intent === "published"
+    ? requestedGroupId
+      ? (await db.select({ userId: groupMembers.userId }).from(groupMembers).where(eq(groupMembers.groupId, requestedGroupId))).map(({ userId }) => userId)
+      : source
+        ? (await db.select({ userId: sessionPlayers.userId }).from(sessionPlayers).where(and(eq(sessionPlayers.sessionId, source.id), eq(sessionPlayers.rsvp, "going")))).map(({ userId }) => userId).filter((id): id is string => Boolean(id))
+        : []
+    : [];
   const courtNumbers = String(formData.get("courtNumbers") ?? "").split(",").map((value) => value.trim()).filter(Boolean);
   const created = await db.transaction(async (tx) => {
     const [session] = await tx.insert(sessions).values({
-      slug: sessionSlug(parsed.data.title), hostId: user.id, title: parsed.data.title, accentColor: parsed.data.accentColor,
+      slug: sessionSlug(parsed.data.title), hostId: user.id, groupId: groupMembership?.groupId ?? null, title: parsed.data.title, accentColor: parsed.data.accentColor,
       venueName: parsed.data.venueName, venueAddress: parsed.data.venueAddress || null, startsAt: parsed.data.startsAt, endsAt: parsed.data.endsAt,
       capacity: parsed.data.capacity, courtCount: parsed.data.courtCount, courtNumbers,
       notes: parsed.data.notes, estimatedCostCents: parsed.data.estimatedCostCents,
@@ -68,10 +81,17 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
       requiresApproval: formData.get("requiresApproval") === "on",
     }).returning();
     await tx.insert(sessionPlayers).values({ sessionId: session.id, userId: user.id, role: "host", rsvp: "going", playState: "waiting", respondedAt: new Date() });
+    const invitees = sessionInviteeIds(user.id, invitedUserIds);
+    if (invitees.length) {
+      await tx.insert(sessionPlayers).values(invitees.map((userId) => ({ sessionId: session.id, userId, role: "player" as const, rsvp: "invited" as const, playState: "unavailable" as const })));
+      await tx.insert(notifications).values(invitees.map((userId) => ({ userId, sessionId: session.id, type: "session_invite", payload: { groupId: groupMembership?.groupId ?? null } })));
+    }
     await tx.insert(courts).values(Array.from({ length: session.courtCount }, (__, index) => ({ sessionId: session.id, label: courtNumbers[index] ? `Court ${courtNumbers[index]}` : `Court ${index + 1}`, position: index + 1 })));
     return session;
   });
-  revalidatePath("/");
+  revalidatePath("/home");
+  revalidatePath("/games");
+  revalidatePath("/groups");
   redirect(`/games/${created.id}`);
 }
 

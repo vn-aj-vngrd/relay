@@ -65,7 +65,7 @@ test("a new user can create an account and reach the authenticated home", async 
   await expect(page.getByRole("link", { name: "Open app", exact: true }).first()).toHaveAttribute("href", "/home");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(0);
   await page.goto("/home");
-  const desktopCreate = await page.getByRole("link", { name: "Create game" }).first().boundingBox();
+  const desktopCreate = await page.getByRole("link", { name: "Create", exact: true }).first().boundingBox();
   expect(desktopCreate).not.toBeNull();
   expect(desktopCreate!.x).toBeLessThan(240);
 
@@ -99,6 +99,11 @@ test("a new user can create an account and reach the authenticated home", async 
   expect(date!.y + date!.height).toBeLessThanOrEqual(capacity!.y);
   expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
 
+  await page.locator("#title").fill("Saturday Night Pickle");
+  await page.locator("#date").fill("2030-08-17");
+  await page.locator("#start").fill("19:00");
+  await page.locator("#end").fill("21:00");
+  await page.locator("#capacity").fill("8");
   await page.locator("#venue").fill("Central Pickle");
   await expect(page.getByRole("listbox", { name: "Venue suggestions" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("option").first().click();
@@ -177,7 +182,11 @@ test("keyboard users can skip directly to the main content", async ({ page }) =>
 test("core public and protected routes fail safely", async ({ page }) => {
   const venueSearch = await page.request.get("/api/venues/search?q=Central");
   expect(venueSearch.status()).toBe(401);
+  const globalSearch = await page.request.get("/api/search?q=v&type=all");
+  expect(globalSearch.status()).toBe(401);
   await page.goto("/games/new");
+  expect(new URL(page.url()).pathname).toBe("/login");
+  await page.goto("/groups/new");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/admin");
   expect(new URL(page.url()).pathname).toBe("/login");

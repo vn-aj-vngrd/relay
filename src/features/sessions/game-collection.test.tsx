@@ -13,6 +13,7 @@ const game: GameCollectionItem = {
   playerCount: 8,
   capacity: 10,
   status: "published",
+  accentColor: "coral",
 };
 
 afterEach(() => {
@@ -24,6 +25,7 @@ describe("GameCollection", () => {
   it("persists the chosen grid or list presentation", () => {
     const { unmount } = render(<GameCollection upcoming={[game]} past={[]} todayKey="2026-08-15" />);
     expect(screen.getByTestId("games-list")).toBeVisible();
+    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).style.getPropertyValue("--primary")).toContain("#bd4545");
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();

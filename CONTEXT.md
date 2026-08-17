@@ -44,6 +44,14 @@ _Avoid_: Admin
 A participant delegated session-management authority by the host.
 _Avoid_: Moderator
 
+**Group**:
+A reusable crew of account players who regularly organize sessions together. A group accelerates invitations and preserves shared session history; it is never required before creating a session.
+_Avoid_: Club, league, community
+
+**Group owner**:
+The account player who creates a group and may add members. Any group member may host a new session for the group.
+_Avoid_: Club administrator
+
 **Platform admin**:
 A Relay operator with platform-management access. Platform administration is separate from session participation and host authority.
 _Avoid_: Session admin

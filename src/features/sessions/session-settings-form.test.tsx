@@ -38,6 +38,8 @@ describe("SessionSettingsForm", () => {
     expect(screen.getByLabelText("Player limit")).toHaveValue(10);
     expect(screen.getByLabelText("Visibility")).toHaveValue("link");
     expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
+    expect(screen.getByRole("heading", { name: "Appearance, sharing, and cost" })).toBeVisible();
+    expect(screen.getByText(/Sets the cover, active tabs, and actions/)).toBeVisible();
     expect(screen.getByRole("checkbox", { name: /Approve new players/ })).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
   });

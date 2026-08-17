@@ -3,6 +3,7 @@
 import { CalendarBlank, CaretLeft, CaretRight, GridFour, List, MapPin, Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
+import { sessionAccentStyle } from "./accent";
 
 export type GameCollectionItem = {
   id: string;
@@ -15,6 +16,7 @@ export type GameCollectionItem = {
   playerCount: number;
   capacity: number;
   status: "draft" | "published" | "live" | "completed" | "cancelled";
+  accentColor: string;
 };
 
 type ViewMode = "list" | "grid" | "calendar";
@@ -51,11 +53,11 @@ function EmptyCollection({ past }: { past?: boolean }) {
 }
 
 function GameList({ items }: { items: GameCollectionItem[] }) {
-  return <div className="divide-y divide-line border-y border-line">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} className="collection-row pressable group flex min-h-20 items-center gap-4 py-4 hover:bg-surface sm:px-3"><time className="score w-20 shrink-0 text-sm font-bold text-primary">{game.date}</time><div className="min-w-0 flex-1"><h3 className="truncate font-[650]">{game.title}</h3><p className="mt-1 truncate text-sm text-muted">{game.time} · {game.venue}</p></div><span className="score hidden text-sm text-muted sm:block">{game.playerCount} / {game.capacity}</span><CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" /></Link>)}</div>;
+  return <div className="divide-y divide-line border-y border-line">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="collection-row pressable group flex min-h-20 items-center gap-4 py-4 hover:bg-surface sm:px-3"><time className="score w-20 shrink-0 text-sm font-bold text-primary">{game.date}</time><div className="min-w-0 flex-1"><h3 className="truncate font-[650]">{game.title}</h3><p className="mt-1 truncate text-sm text-muted">{game.time} · {game.venue}</p></div><span className="score hidden text-sm text-muted sm:block">{game.playerCount} / {game.capacity}</span><CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" /></Link>)}</div>;
 }
 
 function GameGrid({ items }: { items: GameCollectionItem[] }) {
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} className="pressable group rounded-lg border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"><article><div className="flex items-center justify-between gap-4"><time className="score text-xs font-bold text-primary">{game.date}</time><span className="score text-xs text-muted">{game.playerCount} / {game.capacity}</span></div><h3 className="mt-5 truncate text-lg font-[680]">{game.title}</h3><div className="mt-3 space-y-2 text-sm text-muted"><p className="flex items-center gap-2"><CalendarBlank aria-hidden size={16} />{game.time}</p><p className="flex items-center gap-2"><MapPin aria-hidden size={16} /><span className="truncate">{game.venue}</span></p><p className="flex items-center gap-2 sm:hidden"><Users aria-hidden size={16} />{game.playerCount} players</p></div><span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">Open game <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" /></span></article></Link>)}</div>;
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="pressable group rounded-lg border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"><article><div className="flex items-center justify-between gap-4"><time className="score text-xs font-bold text-primary">{game.date}</time><span className="score text-xs text-muted">{game.playerCount} / {game.capacity}</span></div><h3 className="mt-5 truncate text-lg font-[680]">{game.title}</h3><div className="mt-3 space-y-2 text-sm text-muted"><p className="flex items-center gap-2"><CalendarBlank aria-hidden size={16} />{game.time}</p><p className="flex items-center gap-2"><MapPin aria-hidden size={16} /><span className="truncate">{game.venue}</span></p><p className="flex items-center gap-2 sm:hidden"><Users aria-hidden size={16} />{game.playerCount} players</p></div><span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">Open game <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" /></span></article></Link>)}</div>;
 }
 
 function MonthCalendar({ upcoming, past, todayKey, weekStart }: { upcoming: GameCollectionItem[]; past: GameCollectionItem[]; todayKey: string; weekStart: "sunday" | "monday" }) {
@@ -80,7 +82,7 @@ function MonthCalendar({ upcoming, past, todayKey, weekStart }: { upcoming: Game
     const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const dayGames = gamesByDate.get(dateKey) ?? [];
     const fullDate = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(`${dateKey}T00:00:00Z`));
-    return <div key={dateKey} aria-label={`${fullDate}, ${dayGames.length} ${dayGames.length === 1 ? "game" : "games"}`} className={`min-h-14 min-w-0 border-b border-r border-line p-1.5 sm:min-h-28 sm:p-2 ${dateKey === todayKey ? "bg-primary-soft/55" : "bg-surface"}`}><time dateTime={dateKey} className={`score text-xs font-semibold ${dateKey === todayKey ? "text-primary" : "text-muted"}`}>{day}</time><div className="mt-1 space-y-1">{dayGames.slice(0, 2).map((game) => <Link key={game.id} href={game.href} prefetch={false} className={`block min-h-5 rounded-md px-1.5 py-1 text-left text-[11px] font-[650] leading-4 ${game.phase === "live" ? "bg-live/12 text-live" : game.phase === "upcoming" ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}><span className="sr-only sm:not-sr-only sm:line-clamp-1">{game.title}</span><span aria-hidden className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${game.phase === "live" ? "bg-live" : game.phase === "upcoming" ? "bg-primary" : "bg-muted"}`} /></Link>)}{dayGames.length > 2 ? <p className="text-center text-[10px] text-muted">+{dayGames.length - 2}</p> : null}</div></div>;
+    return <div key={dateKey} aria-label={`${fullDate}, ${dayGames.length} ${dayGames.length === 1 ? "game" : "games"}`} className={`min-h-14 min-w-0 border-b border-r border-line p-1.5 sm:min-h-28 sm:p-2 ${dateKey === todayKey ? "bg-primary-soft/55" : "bg-surface"}`}><time dateTime={dateKey} className={`score text-xs font-semibold ${dateKey === todayKey ? "text-primary" : "text-muted"}`}>{day}</time><div className="mt-1 space-y-1">{dayGames.slice(0, 2).map((game) => <Link key={game.id} href={game.href} prefetch={false} style={sessionAccentStyle(game.accentColor)} className={`block min-h-5 rounded-md px-1.5 py-1 text-left text-[11px] font-[650] leading-4 ${game.phase === "live" ? "bg-live/12 text-live" : game.phase === "upcoming" ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}><span className="sr-only sm:not-sr-only sm:line-clamp-1">{game.title}</span><span aria-hidden className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${game.phase === "live" ? "bg-live" : game.phase === "upcoming" ? "bg-primary" : "bg-muted"}`} /></Link>)}{dayGames.length > 2 ? <p className="text-center text-[10px] text-muted">+{dayGames.length - 2}</p> : null}</div></div>;
   })}</div></section>;
 }
 

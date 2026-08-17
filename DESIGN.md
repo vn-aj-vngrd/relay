@@ -55,7 +55,7 @@ Dark mode uses neutral blue-black architecture rather than inverting light color
 
 ### Game color
 
-A host may choose one game color from the curated palette in `src/features/sessions/accent.ts`. It scopes the authenticated game workspace and public invite only; global Relay navigation and semantic status colors remain unchanged. The raw selection is mixed toward the current theme’s ink for readable controls and text, while soft fills are mixed into the current surface. Unknown stored values fall back to violet.
+A host may choose one game color from the curated palette in `src/features/sessions/accent.ts`. It scopes the authenticated game workspace and public invite only; global Relay navigation and semantic status colors remain unchanged. The selection tints the deep court cover, active tabs, primary actions, and compact session markers across Home, Games, Search, and profiles while preserving white cover-text contrast. Soft fills mix into the current surface. Unknown stored values fall back to violet.
 
 ## Typography
 
@@ -90,6 +90,7 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 - Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation. Public invites show the plan before the RSVP form so people understand the game before responding.
 - Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions.
+- Authenticated shells stay fixed to the dynamic viewport. The content surface is the sole vertical scroll container, keeping the desktop rail and mobile chrome stable without locking nested feature scroll areas such as chat. Visible scrollbars use one narrow neutral trackless treatment across themes; horizontal tab rails remain visually hidden.
 - Mobile: a compact floating tab bar stays inside the safe area and preserves 44px touch targets without obscuring content.
 - Navigation chrome may float and blur; content remains opaque and structurally flat.
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
@@ -124,7 +125,7 @@ Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop n
 
 ### Session identity
 
-A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Shared links and authenticated workspaces use the same quiet underlined tab row so the five session destinations remain legible and spatially consistent across both access paths.
+A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained cover tint, edge, selected state, and action color—not a decorative wash. Shared links and authenticated workspaces use the same quiet underlined tab row so the five session destinations remain legible and spatially consistent across both access paths.
 
 ### Live court
 
@@ -138,6 +139,14 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 ### Collections
 
 Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid or a familiar month calendar spanning live, upcoming, and past sessions. The choice is explicit, accessible, and saved locally as `relay-games-view`; it never changes the underlying sort or information hierarchy.
+
+### Global search
+
+Search responds after a short debounce to every non-empty keystroke; Enter is never required. Idle search shows on-device recent searches. Results remain flat rows grouped by Games, Players, Groups, and Venues, with underlined filters and incremental loading rather than cards or a discovery feed. Search preserves session colors as identity markers and exposes only content authorized for the viewer.
+
+### Groups
+
+Groups are a retention shortcut, never onboarding. A completed standalone session may become a group through “Save this crew”; Play Again preserves an existing group; and any member may start a group session using the crew’s latest practical defaults. Group pages prioritize members, the next game, and shared session memories. They do not introduce feeds, club administration, or competitive identity.
 
 ### Queue and standings
 

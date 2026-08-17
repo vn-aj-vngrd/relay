@@ -56,6 +56,8 @@ Relay coordinates everything around a recreational pickleball session; it does n
 /groups/[slug]            group home
 /profile/[username]       participation-oriented profile
 /notifications            in-app notifications
+/search                   debounced global search with local recent searches
+/api/search               authenticated, paginated global search boundary
 /api/webhooks/*            future external boundaries only
 ```
 
@@ -65,6 +67,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **Session workspace:** Overview, Players, Courts, Chat, More; Courts is selected during Live Mode.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** next game → applicable action items → upcoming games → recent games. No generic analytics.
+- **Search:** recent searches when idle → debounced typeahead → Games, Players, Groups, and Venues filters → incremental results. Link-only/private content remains authorization-scoped.
 - **Completed session:** memory summary → media → matches and standings → conversation → Play again.
 
 ## 5. Domain model

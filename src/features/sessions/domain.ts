@@ -71,3 +71,7 @@ export type CloneSource = { title: string; groupId?: string; venueId?: string; d
 export function cloneSession(source: CloneSource) {
   return { title: source.title, groupId: source.groupId, venueId: source.venueId, durationMinutes: source.durationMinutes, capacity: source.capacity, courtCount: source.courtCount, suggestedInviteeIds: [...source.commonInviteeIds] };
 }
+
+export function sessionInviteeIds(hostId: string, candidates: Array<string | null | undefined>) {
+  return [...new Set(candidates.filter((id): id is string => Boolean(id)))].filter((id) => id !== hostId);
+}
