@@ -1,7 +1,9 @@
 "use client";
 
 import { Check, LockKey, LockKeyOpen, UserMinus, UserPlus, X } from "@phosphor-icons/react";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { addGuestPlayerAction, approvePlayerAction, removePlayerAction, toggleRosterLockAction, type SessionActionState } from "./actions";
 
@@ -18,7 +20,12 @@ export function PendingPlayerActions({ sessionId, playerId }: { sessionId: strin
 
 export function RemovePlayerButton({ sessionId, playerId, name }: { sessionId: string; playerId: string; name: string }) {
   const [state, action] = useActionState<SessionActionState, FormData>(removePlayerAction, {});
-  return <form action={action}><input type="hidden" name="sessionId" value={sessionId} /><input type="hidden" name="sessionPlayerId" value={playerId} /><SubmitButton pendingLabel="Removing…" type="submit" variant="quiet" aria-label={`Remove ${name}`} className="min-h-9 px-2 text-danger" onClick={(event) => { if (!window.confirm(`Remove ${name} from this game?`)) event.preventDefault(); }}><UserMinus aria-hidden size={17} /></SubmitButton>{state.error ? <span className="sr-only" role="alert">{state.error}</span> : null}</form>;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => { if (state.success) dialogRef.current?.close(); }, [state.success]);
+  return <>
+    <IconTooltip label={`Remove ${name}`}><button type="button" onClick={() => dialogRef.current?.showModal()} aria-label={`Remove ${name}`} className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-danger/8 hover:text-danger"><UserMinus aria-hidden size={17} /></button></IconTooltip>
+    <dialog ref={dialogRef} aria-labelledby={`remove-${playerId}-title`} aria-describedby={`remove-${playerId}-description`} className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_24px_oklch(0.1_0.02_250/.16)] backdrop:bg-ink/35"><form action={action} className="p-5 sm:p-6"><input type="hidden" name="sessionId" value={sessionId} /><input type="hidden" name="sessionPlayerId" value={playerId} /><div className="flex items-start gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger"><UserMinus aria-hidden size={18} /></span><div><h2 id={`remove-${playerId}-title`} className="text-lg font-[680]">Remove {name}?</h2><p id={`remove-${playerId}-description`} className="mt-2 text-sm leading-6 text-muted">They’ll lose their spot and payment assignment. If there is a waitlist, the next player may be promoted.</p></div></div>{state.error ? <p role="alert" className="mt-4 text-sm font-medium text-danger">{state.error}</p> : null}<div className="mt-7 flex justify-end gap-2"><Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>Cancel</Button><SubmitButton pendingLabel="Removing…" variant="danger">Remove player</SubmitButton></div></form></dialog>
+  </>;
 }
 
 export function RosterLockButton({ sessionId, locked }: { sessionId: string; locked: boolean }) {

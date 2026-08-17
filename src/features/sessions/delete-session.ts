@@ -38,15 +38,17 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
   if (parsed.data.confirmation.trim() !== session.title) return { error: `Type “${session.title}” to confirm.` };
 
   let paymentProofPaths: string[] = [];
+  let expenseReceiptPaths: string[] = [];
   let memoryPaths: string[] = [];
   try {
     await db.transaction(async (tx) => {
       const [expenseRows, matchRows, memoryRows] = await Promise.all([
-        tx.select({ id: expenses.id }).from(expenses).where(eq(expenses.sessionId, session.id)),
+        tx.select({ id: expenses.id, receiptPath: expenses.receiptStoragePath }).from(expenses).where(eq(expenses.sessionId, session.id)),
         tx.select({ id: matches.id }).from(matches).where(eq(matches.sessionId, session.id)),
         tx.select({ id: memories.id }).from(memories).where(eq(memories.sessionId, session.id)),
       ]);
       const expenseIds = expenseRows.map((row) => row.id);
+      expenseReceiptPaths = expenseRows.flatMap((row) => row.receiptPath ? [row.receiptPath] : []);
       const matchIds = matchRows.map((row) => row.id);
       const memoryIds = memoryRows.map((row) => row.id);
       if (expenseIds.length) {
@@ -82,6 +84,7 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
   const supabase = createSupabaseAdminClient();
   await Promise.all([
     paymentProofPaths.length ? supabase.storage.from("payment-proofs").remove(paymentProofPaths) : Promise.resolve(),
+    expenseReceiptPaths.length ? supabase.storage.from("booking-screenshots").remove(expenseReceiptPaths) : Promise.resolve(),
     memoryPaths.length ? supabase.storage.from("session-memories").remove(memoryPaths) : Promise.resolve(),
   ]).catch((error) => console.error("Deleted session storage cleanup failed", error));
 

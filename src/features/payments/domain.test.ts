@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitExpense, validatePaymentProof } from "./domain";
+import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
 
 describe("expense splitting", () => {
   it("preserves every cent deterministically", () => {
@@ -9,6 +9,10 @@ describe("expense splitting", () => {
   it("respects overrides and divides the remainder", () => {
     expect(splitExpense(2400, ["a", "b", "c"], { a: 400 })).toEqual({ a: 400, b: 1000, c: 1000 });
   });
+  it("keeps the host out of a repayment split after they pay upfront", () => {
+    expect(collectFromPlayers([{ id: "host", userId: "user-1" }, { id: "a", userId: "user-2" }, { id: "guest", userId: null }], "user-1")).toEqual(["a", "guest"]);
+  });
+
   it("accepts one compact image as payment proof", () => {
     expect(validatePaymentProof({ type: "image/jpeg", size: 2_000_000 })).toBeNull();
     expect(validatePaymentProof({ type: "application/pdf", size: 500_000 })).toBe("Upload one JPG, PNG, or WebP image.");

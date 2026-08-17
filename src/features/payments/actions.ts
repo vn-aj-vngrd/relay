@@ -8,7 +8,7 @@ import { expenses, paymentAccounts, playerPayments, sessionPlayers, sessions } f
 import { requireUser } from "@/features/auth/session";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { splitExpense, validatePaymentProof } from "./domain";
+import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
 
 export type PaymentActionState = { error?: string; success?: boolean };
 
@@ -22,7 +22,9 @@ export async function createExpense(formData: FormData) {
   const details = z.string().trim().min(2).max(300).parse(formData.get("details"));
   const label = z.string().trim().min(2).max(80).parse(formData.get("label"));
   const qr = formData.get("qr");
+  const receipt = formData.get("receipt");
   let qrStoragePath: string | null = null;
+  let receiptStoragePath: string | null = null;
   if (qr instanceof File && qr.size > 0) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(qr.type) || qr.size > 5 * 1024 * 1024) throw new Error("Use a JPG, PNG, or WebP QR image under 5 MB");
     const extension = qr.type === "image/png" ? "png" : qr.type === "image/webp" ? "webp" : "jpg";
@@ -31,12 +33,22 @@ export async function createExpense(formData: FormData) {
     const { error } = await supabase.storage.from("payment-qrs").upload(qrStoragePath, qr, { contentType: qr.type, upsert: false });
     if (error) throw new Error("The payment QR could not be uploaded");
   }
+  if (receipt instanceof File && receipt.size > 0) {
+    const receiptError = validatePaymentProof(receipt);
+    if (receiptError) throw new Error(receiptError.replace("payment proof", "receipt").replace("Payment proof", "Receipt"));
+    const extension = receipt.type === "image/png" ? "png" : receipt.type === "image/webp" ? "webp" : "jpg";
+    receiptStoragePath = `${sessionId}/expense-${crypto.randomUUID()}.${extension}`;
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.storage.from("booking-screenshots").upload(receiptStoragePath, receipt, { contentType: receipt.type, upsert: false });
+    if (error) throw new Error("The receipt could not be uploaded");
+  }
   await db.transaction(async (tx) => {
     const [account] = await tx.insert(paymentAccounts).values({ ownerId: user.id, method, label: method, details, qrStoragePath }).returning();
-    const [expense] = await tx.insert(expenses).values({ sessionId, kind: "court", label, totalCents, paidById: user.id, paymentAccountId: account.id }).returning();
+    const [expense] = await tx.insert(expenses).values({ sessionId, kind: "court", label, totalCents, paidById: user.id, paymentAccountId: account.id, receiptStoragePath }).returning();
     const players = await tx.select().from(sessionPlayers).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
-    const shares = splitExpense(totalCents, players.map((player) => player.id));
-    if (players.length) await tx.insert(playerPayments).values(players.map((player) => ({ expenseId: expense.id, sessionPlayerId: player.id, amountCents: shares[player.id] })));
+    const payingIds = collectFromPlayers(players, user.id);
+    const shares = splitExpense(totalCents, payingIds);
+    if (payingIds.length) await tx.insert(playerPayments).values(payingIds.map((sessionPlayerId) => ({ expenseId: expense.id, sessionPlayerId, amountCents: shares[sessionPlayerId] })));
   });
   revalidatePath(`/games/${sessionId}/payments`);
 }

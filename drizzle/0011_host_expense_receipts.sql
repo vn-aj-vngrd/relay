@@ -1,0 +1,1 @@
+ALTER TABLE "expenses" ADD COLUMN "receipt_storage_path" text;

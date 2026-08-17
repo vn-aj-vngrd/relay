@@ -52,8 +52,13 @@ export async function toggleMessageReaction(formData: FormData) {
   const viewer = await getSessionViewer(message.sessionId, slug);
   if (!viewer || !canParticipate(viewer.player.rsvp)) return;
   const existing = await db.query.messageReactions.findFirst({ where: and(eq(messageReactions.messageId, message.id), eq(messageReactions.sessionPlayerId, viewer.player.id), eq(messageReactions.reaction, "like")) });
-  if (existing) await db.delete(messageReactions).where(eq(messageReactions.id, existing.id));
-  else await db.insert(messageReactions).values({ messageId: message.id, sessionPlayerId: viewer.player.id, userId: viewer.user?.id ?? null, reaction: "like" });
+  await db.transaction(async (tx) => {
+    if (existing) await tx.delete(messageReactions).where(eq(messageReactions.id, existing.id));
+    else await tx.insert(messageReactions).values({ messageId: message.id, sessionPlayerId: viewer.player.id, userId: viewer.user?.id ?? null, reaction: "like" });
+    // Reactions do not carry session_id, so touching the parent emits a valid
+    // session-scoped realtime event without subscribing to every reaction.
+    await tx.update(messages).set({ updatedAt: new Date() }).where(eq(messages.id, message.id));
+  });
   revalidatePath(`/games/${message.sessionId}/chat`);
   if (slug) revalidatePath(`/s/${slug}/chat`);
 }

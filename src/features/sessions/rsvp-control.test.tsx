@@ -14,7 +14,7 @@ describe("RsvpControl", () => {
     render(<RsvpControl sessionId={sessionId} slug="friends-night" />);
     expect(screen.getByRole("textbox", { name: "Your name" })).toBeRequired();
     expect(screen.getByRole("button", { name: "Confirm I’m going" })).toBeEnabled();
-    expect(screen.getByRole("link", { name: /Use a Relay account instead/ })).toHaveAttribute("href", "/login?next=%2Fs%2Ffriends-night");
+    expect(screen.getByRole("link", { name: /Use a Relay account/ })).toHaveAttribute("href", "/login?next=%2Fs%2Ffriends-night");
   });
 
   it("recognizes a returning guest without asking for their name again", () => {

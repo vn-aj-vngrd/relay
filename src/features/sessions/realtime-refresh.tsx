@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-const TABLES = ["courts", "matches", "session_queue", "messages", "message_reactions"] as const;
+import { SESSION_REALTIME_TABLES } from "./realtime-tables";
 
 export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: string; compact?: boolean }) {
   const router = useRouter();
@@ -14,7 +13,7 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
     const supabase = createSupabaseBrowserClient();
     let channel = supabase.channel(`session:${sessionId}`);
     const refresh = () => { if (timer.current) clearTimeout(timer.current); timer.current = setTimeout(() => router.refresh(), 120); };
-    for (const table of TABLES) channel = channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `session_id=eq.${sessionId}` }, refresh);
+    for (const table of SESSION_REALTIME_TABLES) channel = channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `session_id=eq.${sessionId}` }, refresh);
     channel.subscribe((next: string) => setStatus(next === "SUBSCRIBED" ? "connected" : next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting"));
     return () => { if (timer.current) clearTimeout(timer.current); void supabase.removeChannel(channel); };
   }, [router, sessionId]);

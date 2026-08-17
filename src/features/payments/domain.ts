@@ -6,6 +6,10 @@ export function validatePaymentProof(file: { type: string; size: number }) {
   return null;
 }
 
+export function collectFromPlayers(players: Array<{ id: string; userId: string | null }>, hostId: string): string[] {
+  return players.filter((player) => player.userId !== hostId).map((player) => player.id);
+}
+
 export function splitExpense(totalCents: number, playerIds: string[], overrides: Record<string, number> = {}): Record<string, number> {
   if (!Number.isInteger(totalCents) || totalCents < 0) throw new Error("Total must be a nonnegative integer");
   const uniquePlayers = [...new Set(playerIds)];

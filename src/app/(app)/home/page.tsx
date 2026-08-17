@@ -6,12 +6,14 @@ import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDate, formatSessionTime, peso } from "@/features/sessions/format";
 import { getHomeSessions } from "@/features/sessions/queries";
+import { sessionReadiness } from "@/features/sessions/readiness";
 
 export default async function HomePage() {
   const user = await requireUser();
   const [profile, data] = await Promise.all([ensureProfile(user), getHomeSessions(user.id)]);
   const next = data.upcoming[0];
   const nextHref = next ? next.player.rsvp === "invited" ? `/s/${next.session.slug}` : `/games/${next.session.id}` : "";
+  const nextReadiness = next && next.session.hostId === user.id ? sessionReadiness({ goingCount: next.playerCount, booked: Boolean(next.session.bookedAt), expectsCollection: Boolean(next.session.estimatedCostCents || next.session.bookingTotalCents), collectionCreated: next.hasExpense }) : null;
 
   return <div className="space-y-12 sm:space-y-16">
     <section className="flex items-end justify-between gap-4">
@@ -23,7 +25,7 @@ export default async function HomePage() {
       <article className="overflow-hidden rounded-xl bg-[var(--session-cover)] text-white ring-1 ring-black/5">
         <div className="grid md:grid-cols-[1fr_260px]">
           <div className="p-5 sm:p-7">
-            <div className="mb-7 flex items-center justify-between"><span className="sport-label text-white/65">{formatSessionDate(next.session.startsAt)}</span><span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75"><span className={`h-2 w-2 rounded-full ${next.player.rsvp === "invited" || next.session.bookedAt ? "bg-signal" : "bg-white/35"}`} />{next.player.rsvp === "invited" ? "RSVP needed" : next.session.bookedAt ? "Court confirmed" : "Booking pending"}</span></div>
+            <div className="mb-7 flex items-center justify-between"><span className="sport-label text-white/65">{formatSessionDate(next.session.startsAt)}</span><span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75"><span className={`h-2 w-2 rounded-full ${next.player.rsvp === "invited" || next.session.bookedAt ? "bg-signal" : "bg-white/35"}`} />{next.player.rsvp === "invited" ? "RSVP needed" : nextReadiness ? nextReadiness.ready ? "Ready to play" : `${nextReadiness.percent}% ready` : next.session.bookedAt ? "Court confirmed" : "Booking pending"}</span></div>
             <h3 className="max-w-xl text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl">{next.session.title}</h3>
             <p className="mt-2 text-base text-white/70">{next.session.venueName} · {formatSessionTime(next.session.startsAt, next.session.endsAt)}</p>
             <div className="court-rule mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t pt-5"><span className="inline-flex items-center gap-2 text-sm text-white/75"><Users size={16} />{next.playerCount} / {next.session.capacity} players</span>{next.session.estimatedCostCents ? <span className="score text-sm font-semibold">{peso(next.session.estimatedCostCents)} estimated</span> : null}</div>

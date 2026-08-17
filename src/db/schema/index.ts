@@ -201,6 +201,7 @@ export const expenses = pgTable("expenses", {
   totalCents: integer("total_cents").notNull(),
   paidById: uuid("paid_by_id").references(() => users.id, { onDelete: "restrict" }),
   paymentAccountId: uuid("payment_account_id").references(() => paymentAccounts.id, { onDelete: "set null" }),
+  receiptStoragePath: text("receipt_storage_path"),
   ...timestamps,
 }, (table) => [check("expense_total_nonnegative", sql`${table.totalCents} >= 0`)]);
 

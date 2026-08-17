@@ -4,11 +4,12 @@ import { requireUser } from "@/features/auth/session";
 import { GameCollection, type GameCollectionItem } from "@/features/sessions/game-collection";
 import { formatSessionDate, formatSessionTime, sessionDateKey } from "@/features/sessions/format";
 import { getHomeSessions } from "@/features/sessions/queries";
+import { sessionReadiness } from "@/features/sessions/readiness";
 
 export default async function GamesPage() {
   const user = await requireUser();
   const data = await getHomeSessions(user.id);
-  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, player, playerCount }) => ({
+  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, player, playerCount, hasExpense }) => ({
     id: session.id,
     href: player.rsvp === "invited" ? `/s/${session.slug}` : `/games/${session.id}`,
     title: session.title,
@@ -20,6 +21,7 @@ export default async function GamesPage() {
     capacity: session.capacity,
     status: session.status,
     accentColor: session.accentColor,
+    readiness: session.hostId === user.id ? sessionReadiness({ goingCount: playerCount, booked: Boolean(session.bookedAt), expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents), collectionCreated: hasExpense }) : undefined,
   }));
   const past: GameCollectionItem[] = data.recent.map(({ session, playerCount }) => ({
     id: session.id,

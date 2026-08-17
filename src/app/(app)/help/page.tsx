@@ -16,13 +16,15 @@ const sections = [
   ]},
   { title: "Payments", items: [
     ["Does Relay process money?", "No. Players pay through GCash, Maya, bank transfer, cash, or another method supplied by the host. Relay only coordinates the split and status."],
-    ["How does payment proof work?", "A player uploads one JPG, PNG, or WebP screenshot up to 5 MB. The host can confirm it or request a clearer replacement."],
+    ["How does the payment split work?", "The host records an expense they already paid in full. Relay divides repayment among the other going players; the host is never included in the split. Players pay outside Relay and upload one screenshot for review."],
+    ["Can the host share the original receipt?", "Yes. The host may attach one receipt when creating the collection so players can see that the venue or shared expense was paid upfront."],
     ["Can player amounts be different?", "Hosts can override individual shares when someone is excluded or owes a different amount."],
   ]},
   { title: "Courts and live play", items: [
     ["What is the paddle stack?", "It is the ordered queue of available players. The people waiting longest appear first, while hosts can override the order when needed."],
     ["Do we have to score every point?", "No. Use live point controls during a match or enter only the final result afterward."],
     ["Who can change scores and rotations?", "The host and authorized co-hosts manage shared court state. Players can view assignments, scores, the queue, and what is coming next."],
+    ["Which play setup should I use?", "Paddle Stack is best for drop-ins, Mix It Up rotates partners in social rounds, and Court Climb moves winners toward Court 1. The host chooses before Live Mode starts."],
     ["What happens if the connection drops?", "The current screen remains usable where possible. Collaborative views refresh when the connection returns; confirm important score changes after reconnecting."],
   ]},
   { title: "Profiles, privacy, and history", items: [

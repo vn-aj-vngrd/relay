@@ -118,21 +118,29 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.getByRole("button", { name: "Publish game" }).click();
   await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
+  await page.goto(`/games/${sessionId}/players`);
+  for (const name of ["Mika Reyes", "AJ Santos", "John Cruz"]) {
+    await page.getByPlaceholder("Add a friend by name").fill(name);
+    await page.getByRole("button", { name: "Add" }).click();
+    await expect(page.getByText("Player added.")).toBeVisible();
+  }
+
   await page.goto(`/games/${sessionId}/payments`);
   await page.locator("#total").fill("300");
   await page.locator("#details").fill("0917 123 4567 · Relay host");
-  await page.getByRole("button", { name: "Create payment split" }).click();
-  await page.locator('input[name="proof"]').setInputFiles("e2e/fixtures/payment-proof.png");
-  await page.getByRole("button", { name: "Submit proof" }).click();
-  await expect(page.getByText("Waiting for host review")).toBeVisible({ timeout: 15_000 });
-  await page.getByText("Request new proof", { exact: true }).click();
-  await page.getByLabel("Reason for requesting new proof").fill("Show the amount and recipient.");
-  await page.getByRole("button", { name: "Send request" }).click();
-  await expect(page.getByRole("paragraph").getByText("New proof requested", { exact: true })).toBeVisible();
-  await page.locator('input[name="proof"]').setInputFiles("e2e/fixtures/payment-proof.png");
-  await page.getByRole("button", { name: "Submit proof" }).click();
-  await page.getByRole("button", { name: "Confirm paid" }).click();
-  await expect(page.getByText("Paid", { exact: true })).toBeVisible();
+  await page.locator('#expense-receipt').setInputFiles("e2e/fixtures/payment-proof.png");
+  await page.getByRole("button", { name: "Create collection" }).click();
+  await expect(page.getByText("Host · paid the full amount upfront")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("0 of 3 paid")).toBeVisible();
+  await expect(page.getByText("Mika Reyes")).toBeVisible();
+  await expect(page.getByLabel("Payment screenshot")).toHaveCount(0);
+
+  await page.goto(`/games/${sessionId}/play`);
+  await expect(page.getByRole("heading", { name: "Choose how tonight runs" })).toBeVisible();
+  await page.getByRole("radio", { name: /Mix It Up/ }).check();
+  await page.getByRole("button", { name: "Start Live Mode" }).click();
+  await page.getByRole("button", { name: "Start first round" }).click();
+  await expect(page.getByText("Match in progress")).toBeVisible();
 
   await page.goto(`/games/${sessionId}/more`);
   await page.getByRole("button", { name: "Delete game" }).click();

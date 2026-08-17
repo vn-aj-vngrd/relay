@@ -14,6 +14,7 @@ const game: GameCollectionItem = {
   capacity: 10,
   status: "published",
   accentColor: "coral",
+  readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
 afterEach(() => {
@@ -26,9 +27,11 @@ describe("GameCollection", () => {
     const { unmount } = render(<GameCollection upcoming={[game]} past={[]} todayKey="2026-08-15" />);
     expect(screen.getByTestId("games-list")).toBeVisible();
     expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).style.getPropertyValue("--primary")).toContain("#bd4545");
+    expect(screen.getByText("67% ready")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
+    expect(screen.getByText("Game setup")).toBeVisible();
     expect(localStorage.getItem("relay-games-view")).toBe("grid");
 
     unmount();

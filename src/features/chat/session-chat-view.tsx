@@ -26,7 +26,7 @@ export async function SessionChatView({ sessionId, timezone, viewer, slug, class
   const day = new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: timezone });
   const dayKey = (date: Date) => new Intl.DateTimeFormat("en-CA", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: timezone }).format(date);
 
-  return <div className={`flex min-h-0 flex-col overflow-hidden border-y border-line bg-surface sm:px-3 ${className}`}><ChatThread messageCount={rows.length}>{rows.length ? rows.map(({ message, player, profile }, index) => {
+  return <div className={`flex min-h-0 flex-col overflow-hidden border-t border-line bg-surface sm:px-3 ${className}`}><ChatThread messageCount={rows.length}>{rows.length ? rows.map(({ message, player, profile }, index) => {
     const own = message.sessionPlayerId === viewer.playerId;
     const system = message.kind === "system";
     const previous = rows[index - 1]?.message;

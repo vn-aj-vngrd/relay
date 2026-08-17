@@ -20,6 +20,22 @@ _Avoid_: Plan tab, dashboard
 The courtside part of a session: court assignments, paddle stack, rotations, matches, scores, and session standings.
 _Avoid_: Game tab, Courts tab, Live tab
 
+**Paddle Stack**:
+Continuous open play. Waiting order controls the next match; the host chooses adaptive rotation, four-off/four-on, or winners-stay-and-split before Live Mode.
+_Avoid_: Queue algorithm
+
+**Mix It Up**:
+Synchronized social rounds that prioritize fair rests, new partners, and fewer repeated opponents.
+_Avoid_: Random mode, Americano tournament
+
+**Court Climb**:
+Synchronized multi-court rounds where winners move toward Court 1, losers move down, and former partners split.
+_Avoid_: Ladder, King of the Court tournament
+
+**Session readiness**:
+The host’s concise setup state across roster, court booking, and player repayment collection. It guides preparation; it is not a quality score.
+_Avoid_: Completion score, event health
+
 **Shared game link**:
 The account-optional URL used to understand and join a session. It is the canonical entry point for guests and invitees, not a separate copy of the session.
 _Avoid_: Public version, guest app
@@ -39,6 +55,14 @@ _Avoid_: User
 **Host**:
 The participant who owns the session and may change its plan, roster, payments, courts, scoring, and completion state.
 _Avoid_: Admin
+
+**Host-paid expense**:
+A shared cost the host already paid in full, optionally supported by a receipt. Relay divides repayment among the other going players; the host never owes a share or submits player payment proof.
+_Avoid_: Host payment, invoice
+
+**Player repayment**:
+A player’s assigned share of a host-paid expense. The player pays outside Relay, submits one screenshot, and the host confirms it.
+_Avoid_: Checkout, transaction
 
 **Co-host**:
 A participant delegated session-management authority by the host.

@@ -11,5 +11,21 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
   const sessionId = (await params).id;
   const data = await getSessionForParticipant(sessionId, user.id);
   if (!data || !data.membership) notFound();
-  return <div style={sessionAccentStyle(data.session.accentColor)}><div className="mb-5 flex items-end justify-between gap-3"><div><p className="text-sm font-semibold text-primary">{data.session.title}</p><h1 className="mt-1 app-title">Chat</h1><p className="mt-2 text-sm text-muted">The session conversation for players and guests.</p></div><RealtimeRefresh sessionId={sessionId} compact /></div><SessionNav id={sessionId} active="Chat" /><div className="mx-auto max-w-3xl pt-4"><SessionChatView sessionId={sessionId} timezone={data.session.timezone} viewer={{ userId: user.id, playerId: data.membership.id, canWrite: true }} className="authenticated-chat-viewport" /></div></div>;
+
+  return <div className="authenticated-chat-page flex h-full min-h-0 flex-col overflow-hidden" style={sessionAccentStyle(data.session.accentColor)}>
+    <header className="mb-5 flex shrink-0 items-end justify-between gap-3">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-primary">{data.session.title}</p>
+        <h1 className="mt-1 app-title">Chat</h1>
+        <p className="mt-1 text-sm text-muted">Plans, updates, and photos from the group.</p>
+      </div>
+      <RealtimeRefresh sessionId={sessionId} compact />
+    </header>
+    <div className="shrink-0"><SessionNav id={sessionId} active="Chat" /></div>
+    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 pt-4">
+      <div className="min-h-0 w-full overflow-hidden sm:rounded-xl sm:border sm:border-line">
+        <SessionChatView sessionId={sessionId} timezone={data.session.timezone} viewer={{ userId: user.id, playerId: data.membership.id, canWrite: true }} className="authenticated-chat-viewport h-full" />
+      </div>
+    </div>
+  </div>;
 }

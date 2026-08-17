@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
     <header className="app-chrome z-20 shrink-0 border-b border-line lg:hidden"><div className="flex h-[56px] items-center justify-between px-4 sm:px-6"><Brand href="/home" /><div className="flex items-center"><Link href="/search" prefetch={false} aria-label="Search" className="pressable grid h-10 w-10 place-items-center text-muted hover:text-ink"><MagnifyingGlass aria-hidden size={20} /></Link><Link href="/notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-10 w-10 place-items-center text-muted hover:text-ink"><Bell aria-hidden size={20} />{unreadCount ? <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-live ring-2 ring-surface" /> : null}</Link></div></div></header>
 
-    <div className="min-h-0 flex-1 overflow-hidden lg:h-dvh lg:py-2 lg:pl-[240px] lg:pr-2"><div className="h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line"><main id="main-content" className="app-content mx-auto max-w-[1120px] px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10">{children}</main></div></div>
+    <div className="min-h-0 flex-1 overflow-hidden lg:h-dvh lg:py-2 lg:pl-[240px] lg:pr-2"><div className="app-scroll-surface h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line"><main id="main-content" className="app-content mx-auto max-w-[1120px] px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10">{children}</main></div></div>
     <AppNav username={profile.username} mode="mobile" />
   </div>;
 }

@@ -129,6 +129,8 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 ### Live court
 
+Before Live Mode, the host chooses one of three flat, outcome-labeled rows: Paddle Stack, Mix It Up, or Court Climb. Only Paddle Stack reveals a secondary queue-rule control. Unsupported Court Climb rosters explain the exact player/court requirement inline rather than failing after selection.
+
 - Scores dominate and remain readable from several feet.
 - Teams align directly above their score.
 - Minus and plus controls have separate 64px zones.
@@ -147,6 +149,14 @@ Search responds after a short debounce to every non-empty keystroke; Enter is ne
 ### Groups
 
 Groups are a retention shortcut, never onboarding. A completed standalone session may become a group through “Save this crew”; Play Again preserves an existing group; and any member may start a group session using the crew’s latest practical defaults. Group pages prioritize members, the next game, and shared session memories. They do not introduce feeds, club administration, or competitive identity.
+
+### Host readiness
+
+Readiness appears in the authenticated host overview and compactly on hosted game collection objects. It measures only roster, booking, and repayment setup. The overview owns the actionable checklist; Home and Games show only the resulting percentage or Ready state so the signal is not duplicated.
+
+### Payments
+
+A payment split is framed as repayment to a host who already covered the expense. The host appears first as “paid upfront” and is excluded from player shares and proof submission. Host receipts and player payment screenshots use the same neutral custom image field with filename, preview, removal, format guidance, and no native browser file-button styling.
 
 ### Queue and standings
 

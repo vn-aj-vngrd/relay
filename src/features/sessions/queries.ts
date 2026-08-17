@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { and, asc, count, eq, inArray, or } from "drizzle-orm";
 import { db } from "@/db/client";
-import { matches, profiles, sessionPlayers, sessions } from "@/db/schema";
+import { expenses, matches, profiles, sessionPlayers, sessions } from "@/db/schema";
 
 export async function getUserSessions(userId: string) {
   return db.select({ session: sessions, player: sessionPlayers }).from(sessionPlayers).innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id)).where(and(eq(sessionPlayers.userId, userId), or(
@@ -14,9 +14,14 @@ export async function getUserSessions(userId: string) {
 export async function getHomeSessions(userId: string) {
   const now = new Date();
   const rows = await getUserSessions(userId);
-  const counts = rows.length ? await db.select({ sessionId: sessionPlayers.sessionId, total: count() }).from(sessionPlayers).where(and(inArray(sessionPlayers.sessionId, rows.map(({ session }) => session.id)), eq(sessionPlayers.rsvp, "going"))).groupBy(sessionPlayers.sessionId) : [];
+  const sessionIds = rows.map(({ session }) => session.id);
+  const [counts, expenseRows] = rows.length ? await Promise.all([
+    db.select({ sessionId: sessionPlayers.sessionId, total: count() }).from(sessionPlayers).where(and(inArray(sessionPlayers.sessionId, sessionIds), eq(sessionPlayers.rsvp, "going"))).groupBy(sessionPlayers.sessionId),
+    db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
+  ]) : [[], []];
   const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
-  const enriched = rows.map((row) => ({ ...row, playerCount: playerCounts.get(row.session.id) ?? 0 }));
+  const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
+  const enriched = rows.map((row) => ({ ...row, playerCount: playerCounts.get(row.session.id) ?? 0, hasExpense: sessionsWithExpense.has(row.session.id) }));
   return {
     upcoming: enriched.filter(({ session }) => session.startsAt >= now && session.status !== "cancelled"),
     recent: enriched.filter(({ session }) => session.startsAt < now || session.status === "completed").sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()),

@@ -4,6 +4,7 @@ import { CalendarBlank, CaretLeft, CaretRight, GridFour, List, MapPin, Users } f
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { sessionAccentStyle } from "./accent";
+import type { SessionReadiness } from "./readiness";
 
 export type GameCollectionItem = {
   id: string;
@@ -17,6 +18,7 @@ export type GameCollectionItem = {
   capacity: number;
   status: "draft" | "published" | "live" | "completed" | "cancelled";
   accentColor: string;
+  readiness?: SessionReadiness;
 };
 
 type ViewMode = "list" | "grid" | "calendar";
@@ -53,11 +55,11 @@ function EmptyCollection({ past }: { past?: boolean }) {
 }
 
 function GameList({ items }: { items: GameCollectionItem[] }) {
-  return <div className="divide-y divide-line border-y border-line">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="collection-row pressable group flex min-h-20 items-center gap-4 py-4 hover:bg-surface sm:px-3"><time className="score w-20 shrink-0 text-sm font-bold text-primary">{game.date}</time><div className="min-w-0 flex-1"><h3 className="truncate font-[650]">{game.title}</h3><p className="mt-1 truncate text-sm text-muted">{game.time} · {game.venue}</p></div><span className="score hidden text-sm text-muted sm:block">{game.playerCount} / {game.capacity}</span><CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" /></Link>)}</div>;
+  return <div className="divide-y divide-line border-y border-line">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="collection-row pressable group flex min-h-20 items-center gap-4 py-4 hover:bg-surface sm:px-3"><time className="score w-20 shrink-0 text-sm font-bold text-primary">{game.date}</time><div className="min-w-0 flex-1"><h3 className="truncate font-[650]">{game.title}</h3><p className="mt-1 truncate text-sm text-muted">{game.time} · {game.venue}</p></div>{game.readiness ? <span className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}>{game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}</span> : <span className="score hidden text-sm text-muted sm:block">{game.playerCount} / {game.capacity}</span>}<CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" /></Link>)}</div>;
 }
 
 function GameGrid({ items }: { items: GameCollectionItem[] }) {
-  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="pressable group rounded-lg border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"><article><div className="flex items-center justify-between gap-4"><time className="score text-xs font-bold text-primary">{game.date}</time><span className="score text-xs text-muted">{game.playerCount} / {game.capacity}</span></div><h3 className="mt-5 truncate text-lg font-[680]">{game.title}</h3><div className="mt-3 space-y-2 text-sm text-muted"><p className="flex items-center gap-2"><CalendarBlank aria-hidden size={16} />{game.time}</p><p className="flex items-center gap-2"><MapPin aria-hidden size={16} /><span className="truncate">{game.venue}</span></p><p className="flex items-center gap-2 sm:hidden"><Users aria-hidden size={16} />{game.playerCount} players</p></div><span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">Open game <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" /></span></article></Link>)}</div>;
+  return <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map((game) => <Link href={game.href} prefetch={false} key={game.id} style={sessionAccentStyle(game.accentColor)} className="pressable group rounded-lg border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"><article><div className="flex items-center justify-between gap-4"><time className="score text-xs font-bold text-primary">{game.date}</time><span className="score text-xs text-muted">{game.playerCount} / {game.capacity}</span></div><h3 className="mt-5 truncate text-lg font-[680]">{game.title}</h3><div className="mt-3 space-y-2 text-sm text-muted"><p className="flex items-center gap-2"><CalendarBlank aria-hidden size={16} />{game.time}</p><p className="flex items-center gap-2"><MapPin aria-hidden size={16} /><span className="truncate">{game.venue}</span></p><p className="flex items-center gap-2 sm:hidden"><Users aria-hidden size={16} />{game.playerCount} players</p></div>{game.readiness ? <div className="mt-5"><div className="flex items-center justify-between text-xs"><span className="text-muted">Game setup</span><span className={game.readiness.ready ? "font-semibold text-success" : "score font-semibold text-muted"}>{game.readiness.ready ? "Ready" : `${game.readiness.percent}%`}</span></div><div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-strong"><span className={`block h-full rounded-full ${game.readiness.ready ? "bg-success" : "bg-primary"}`} style={{ width: `${game.readiness.percent}%` }} /></div></div> : null}<span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">Open game <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" /></span></article></Link>)}</div>;
 }
 
 function MonthCalendar({ upcoming, past, todayKey, weekStart }: { upcoming: GameCollectionItem[]; past: GameCollectionItem[]; todayKey: string; weekStart: "sunday" | "monday" }) {

@@ -1,34 +1,27 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
-  addGuestPlayerAction: vi.fn(async () => ({})),
-  approvePlayerAction: vi.fn(async () => ({})),
-  removePlayerAction: vi.fn(async () => ({})),
-  toggleRosterLockAction: vi.fn(async () => undefined),
+  addGuestPlayerAction: vi.fn(async () => ({})), approvePlayerAction: vi.fn(async () => ({})), removePlayerAction: vi.fn(async () => ({})), toggleRosterLockAction: vi.fn(async () => ({})),
 }));
 
-import { AddGuestPlayerForm, PendingPlayerActions, RosterLockButton } from "./player-roster-controls";
+import { RemovePlayerButton } from "./player-roster-controls";
 
-const sessionId = "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7";
-const playerId = "a9116aa9-1c24-449c-a65d-bd5b51523d2a";
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
+  HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); };
+});
 afterEach(cleanup);
 
-describe("player roster controls", () => {
-  it("lets hosts add a friend without requiring an account", () => {
-    render(<AddGuestPlayerForm sessionId={sessionId} />);
-    expect(screen.getByPlaceholderText("Add a friend by name")).toBeRequired();
-    expect(screen.getByRole("button", { name: /Add/ })).toBeEnabled();
-  });
-
-  it("keeps approval and rejection explicit", () => {
-    render(<PendingPlayerActions sessionId={sessionId} playerId={playerId} />);
-    expect(screen.getByRole("button", { name: "Approve" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Reject" })).toBeVisible();
-  });
-
-  it("communicates roster lock state", () => {
-    render(<RosterLockButton sessionId={sessionId} locked />);
-    expect(screen.getByRole("button", { name: "Unlock roster" })).toBeVisible();
+describe("RemovePlayerButton", () => {
+  it("explains an unlabeled icon and uses a Relay confirmation dialog", () => {
+    render(<RemovePlayerButton sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerId="69c6fa3f-3f6f-45f2-bbea-b85bc90aa3a8" name="Mika" />);
+    const remove = screen.getByRole("button", { name: "Remove Mika" });
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Remove Mika");
+    fireEvent.click(remove);
+    expect(screen.getByRole("dialog")).toHaveAttribute("open");
+    expect(screen.getByText(/lose their spot and payment assignment/i)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
   });
 });

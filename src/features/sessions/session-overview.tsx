@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CaretRight, CurrencyCircleDollar, PlayCircle, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, ChatCircleDots, CurrencyCircleDollar, PlayCircle, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { Skeleton } from "@/components/shared/skeleton";
 import type { SessionOverview } from "./overview";
 import { peso } from "./format";
@@ -37,7 +37,7 @@ function paymentCopy(payment: SessionOverview["payment"]) {
 }
 
 export function SessionAtAGlanceSkeleton() {
-  return <section className="border-b border-line py-7"><Skeleton className="h-5 w-28" /><div className="mt-4 divide-y divide-line border-y border-line md:grid md:grid-cols-3 md:divide-x md:divide-y-0">{Array.from({ length: 3 }, (_, index) => <div key={index} className="flex min-h-24 items-center gap-3 py-4 md:px-4 md:first:pl-0 md:last:pr-0"><Skeleton className="h-5 w-5 shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-3 w-16" /><Skeleton className="h-4 w-28" /><Skeleton className="h-3 w-32" /></div></div>)}</div></section>;
+  return <section className="pt-7"><Skeleton className="h-5 w-28" /><div className="mt-4 grid grid-cols-2 border-t border-line">{Array.from({ length: 4 }, (_, index) => <div key={index} className={`flex min-h-28 items-start gap-3 py-4 ${index % 2 ? "border-l border-line pl-4" : "pr-4"} ${index < 2 ? "border-b border-line" : ""}`}><Skeleton className="h-5 w-5 shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-3 w-16" /><Skeleton className="h-4 w-full max-w-32" /><Skeleton className="h-3 w-full max-w-36" /></div></div>)}</div></section>;
 }
 
 export function SessionAtAGlance({
@@ -64,15 +64,16 @@ export function SessionAtAGlance({
     { href: `${hrefBase}/players`, icon: UsersThree, label: "Players", value: `${goingCount} of ${capacity} going`, detail: rosterDetail },
     { href: `${hrefBase}/play`, icon: PlayCircle, label: "Play", value: play.value, detail: play.detail },
     { href: `${hrefBase}/payments`, icon: CurrencyCircleDollar, label: "Payments", value: payment.value, detail: payment.detail },
+    { href: `${hrefBase}/chat`, icon: ChatCircleDots, label: "Chat", value: overview.messageCount ? `${overview.messageCount} ${overview.messageCount === 1 ? "message" : "messages"}` : "No messages yet", detail: overview.messageCount ? "Open the game conversation" : "Start the conversation" },
   ];
 
-  return <section aria-labelledby="session-glance-title" className="border-b border-line py-7">
+  return <section aria-labelledby="session-glance-title" className="pt-7">
     <h2 id="session-glance-title" className="text-lg font-bold">At a glance</h2>
-    <div className="mt-4 divide-y divide-line border-y border-line md:grid md:grid-cols-3 md:divide-x md:divide-y-0">
-      {items.map(({ href, icon: Icon, label, value, detail }) => <Link key={label} href={href} className="group flex min-h-24 items-center gap-3 py-4 md:px-4 md:first:pl-0 md:last:pr-0">
-        <Icon aria-hidden size={19} className="shrink-0 text-primary" />
-        <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-muted">{label}</span><strong className="mt-1 block truncate text-sm font-semibold text-ink">{value}</strong><span className="mt-1 block truncate text-xs text-muted">{detail}</span></span>
-        <CaretRight aria-hidden size={14} className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
+    <div className="mt-4 grid grid-cols-2 border-t border-line">
+      {items.map(({ href, icon: Icon, label, value, detail }, index) => <Link key={label} href={href} className={`group flex min-h-28 min-w-0 items-start gap-2.5 py-4 ${index % 2 ? "border-l border-line pl-3 sm:pl-4" : "pr-3 sm:pr-4"} ${index < 2 ? "border-b border-line" : ""}`}>
+        <Icon aria-hidden size={18} className="mt-0.5 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1"><span className="block text-xs font-medium text-muted">{label}</span><strong className="mt-1 block text-sm font-semibold leading-5 text-ink">{value}</strong><span className="mt-1 block text-xs leading-5 text-muted">{detail}</span></span>
+        <CaretRight aria-hidden size={13} className="mt-0.5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" />
       </Link>)}
     </div>
   </section>;
