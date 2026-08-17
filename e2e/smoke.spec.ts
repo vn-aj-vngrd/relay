@@ -206,7 +206,7 @@ test("an authenticated host and guest can complete the core session flow", async
   const mixItUp = page.getByRole("radio", { name: /Mix It Up/ });
   await page.getByText("Mix It Up", { exact: true }).click();
   await expect(mixItUp).toBeChecked();
-  await page.getByRole("button", { name: "Start Live Mode" }).click();
+  await page.getByRole("button", { name: "Start Play" }).click();
   await page.getByRole("button", { name: "Start first round" }).click();
   await expect(page.getByText("Match in progress")).toBeVisible();
   await guestPage.goto(`${publicHref}/play`);

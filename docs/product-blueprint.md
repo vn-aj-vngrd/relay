@@ -24,7 +24,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 4. Player marks payment sent; host confirms it.
 
 ### Arrive → play live
-1. Host starts Live Mode.
+1. Host starts Play.
 2. Available players enter a deterministic queue; host picks manual, queue, random, winner-stays, or king-of-court rotation.
 3. Active court cards show teams and large scores. Score controls use optimistic version checks.
 4. Completing a match records the result, updates standings, and advances the queue according to the selected rule.
@@ -46,7 +46,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 /games/[id]               private session workspace
 /games/[id]/players       roster and waitlist
 /games/[id]/payments      expenses and payment status
-/games/[id]/live          courts-first Live Mode
+/games/[id]/live          legacy courts-first redirect
 /games/[id]/chat          contextual session chat
 /games/[id]/more          booking, settings, danger actions
 /s/[slug]                 fast public invite / completed memory
@@ -64,7 +64,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 ## 4. Information architecture
 
 - **Global mobile navigation:** Home, Games, Create, Groups, Profile.
-- **Session workspace:** Overview, Players, Courts, Chat, More; Courts is selected during Live Mode.
+- **Session workspace:** Overview, Players, Play, Chat, Payments; Play is prioritized while the session is in progress.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** next game → applicable action items → upcoming games → recent games. No generic analytics.
 - **Search:** recent searches when idle → debounced typeahead → Games, Players, Groups, and Venues filters → incremental results. Link-only/private content remains authorization-scoped.
@@ -115,7 +115,7 @@ Every mutation authenticates or validates a scoped guest token, loads the target
 - Server Components render shells, invite content, home lists, venue/group/profile pages, and initial session snapshots.
 - Small Client Components own RSVP selection, share, create-form progressive disclosure, score controls, queue reorder, chat composer, and realtime reconciliation.
 - Feature folders hold domain rules, schemas, server actions, queries, and UI. Shared components are limited to stable primitives (button, avatar, status, field, app navigation).
-- No global client store in V1. Live Mode uses a route-scoped reducer fed by an initial server snapshot and narrow Supabase channels.
+- No global client store in V1. Active Play uses a route-scoped reducer fed by an initial server snapshot and narrow Supabase channels.
 
 ## 9. Design system and tokens
 

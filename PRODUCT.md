@@ -25,7 +25,7 @@ Not an admin dashboard, sports broadcast, public social feed, court-booking mark
 1. **The session is home.** Every workflow returns to a single understandable session object.
 2. **The link carries the plan.** Public pages provide complete context before authentication and make RSVP lightweight.
 3. **Reveal responsibility progressively.** Common actions stay immediate; host controls and advanced configuration appear only when relevant.
-4. **Courtside beats comprehensive.** Live Mode prioritizes glanceability, touch targets, deterministic rotations, and resilient shared state.
+4. **Courtside beats comprehensive.** Active Play prioritizes glanceability, touch targets, deterministic rotations, and resilient shared state.
 5. **The session becomes the memory.** Scores, people, photos, and reactions accumulate around the event rather than a generic feed.
 
 ## Accessibility & Inclusion

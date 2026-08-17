@@ -18,7 +18,7 @@ The Relay mark is one irreducible game ball: an optic yellow-green circle with a
 
 ## Color strategy
 
-Restrained foundation with a stronger sport mode. Court blue occupies less than 10% of planning surfaces and expands only in session identity, selected state, and Live Mode.
+Restrained foundation with a stronger courtside state. Court blue occupies less than 10% of planning surfaces and expands only in session identity, selected state, and active Play.
 
 ```css
 /* Light */
@@ -102,7 +102,7 @@ The shared game link and authenticated session workspace are two access paths to
 
 - Overview: the at-a-glance session home—plan, roster and waitlist state, current play, payment state, and the viewer’s next useful action.
 - Play: the courtside workspace for assignments, paddle stack, rotations, scores, and session standings.
-- Shared game link: optimized for understanding the invitation and joining as an account player or guest player.
+- Shared game link: optimized for understanding the invitation and joining as an account player or guest player. On desktop, RSVP and a five-person roster preview share the right rail, matching the authenticated Overview; on mobile, both stay in the main reading flow. Full rosters belong in Players.
 - Account player workspace: the shared experience inside Relay’s app shell, plus personal chat, payment, history, and participation actions.
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
@@ -129,7 +129,7 @@ Text and numeric controls use a 44–48px white surface, cool keyline, and court
 
 ### Navigation
 
-Top chrome may use a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses an opaque, standard edge-to-edge bottom tab bar. The desktop rail’s expanded/icon-only choice is saved locally and restored before paint; it does not alter the mobile bar or content density. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Play navigation over global navigation.
+Top chrome may use a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses an opaque, standard edge-to-edge bottom tab bar. The desktop rail’s expanded/icon-only choice is saved locally and restored before paint; it does not alter the mobile bar or content density. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Active Play prioritizes local game navigation over global navigation.
 
 ### Session identity
 
@@ -137,7 +137,7 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 ### Live court
 
-Before Live Mode, the host chooses one of three flat, outcome-labeled rows: Paddle Stack, Mix It Up, or Court Climb. Only Paddle Stack reveals a secondary queue-rule control. Unsupported Court Climb rosters explain the exact player/court requirement inline rather than failing after selection.
+Before Play starts, the host chooses one of three flat, outcome-labeled rows: Paddle Stack, Mix It Up, or Court Climb. Only Paddle Stack reveals a secondary queue-rule control. Unsupported Court Climb rosters explain the exact player/court requirement inline rather than failing after selection.
 
 - Scores dominate and remain readable from several feet.
 - Teams align directly above their score.

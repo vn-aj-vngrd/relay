@@ -39,7 +39,7 @@ Keep only elements that encode hierarchy, state, action, or real sport structure
 Hard guardrails:
 
 - Content uses opaque surfaces; blur belongs to navigation chrome.
-- Color stays restrained outside session identity and Live Mode.
+- Color stays restrained outside session identity and active Play.
 - Cards represent discrete objects; lists and sections carry the rest.
 - Headings use the platform/Geist product stack; display novelty never enters controls.
 - Product motion communicates state in 140–220ms. Marketing chapter reveals may use the deliberate 650–900ms editorial pace defined in `DESIGN.md`; every mode honors reduced motion.

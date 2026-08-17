@@ -17,9 +17,9 @@ async function requireHost(sessionId: string) {
   return session;
 }
 
-export type LiveModeActionState = { error?: string };
+export type StartPlayActionState = { error?: string };
 
-export async function startLiveMode(_: LiveModeActionState, formData: FormData): Promise<LiveModeActionState> {
+export async function startPlay(_: StartPlayActionState, formData: FormData): Promise<StartPlayActionState> {
   const sessionId = String(formData.get("sessionId"));
   const session = await requireHost(sessionId);
   let setup;
@@ -28,9 +28,9 @@ export async function startLiveMode(_: LiveModeActionState, formData: FormData):
   } catch {
     return { error: "Choose a valid play setup." };
   }
-  if (session.status !== "draft" && session.status !== "published") return { error: "Live Mode has already started." };
+  if (session.status !== "draft" && session.status !== "published") return { error: "Play has already started." };
   const goingCount = await db.$count(sessionPlayers, and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
-  if (goingCount < 4) return { error: "At least four players need to be going before Live Mode can start." };
+  if (goingCount < 4) return { error: "At least four players need to be going before Play can start." };
   if (setup.mode === "king_of_court" && (session.courtCount < 2 || goingCount !== session.courtCount * 4)) return { error: `Court Climb needs exactly ${session.courtCount * 4} active players for ${session.courtCount} courts.` };
 
   await db.transaction(async (tx) => {
@@ -44,7 +44,7 @@ export async function startLiveMode(_: LiveModeActionState, formData: FormData):
     if (additions.length) await tx.insert(sessionQueue).values(additions);
     await tx.update(sessionQueue).set({ state: "waiting", enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` }).where(and(eq(sessionQueue.sessionId, sessionId), inArray(sessionQueue.sessionPlayerId, players.map((player) => player.id))));
     await tx.update(sessionPlayers).set({ playState: "waiting" }).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
-    await tx.insert(messages).values({ sessionId, kind: "system", body: `Live Mode started · ${rotationDescription(setup.mode, rotationConfig)}` });
+    await tx.insert(messages).values({ sessionId, kind: "system", body: `Play started · ${rotationDescription(setup.mode, rotationConfig)}` });
   });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);

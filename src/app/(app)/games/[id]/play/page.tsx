@@ -35,7 +35,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   return <div style={sessionAccentStyle(data.session.accentColor)}>
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div><p className="text-sm font-semibold text-primary">{data.session.title}</p><h1 className="mt-1 app-title">Play</h1><p className="mt-2 text-sm text-muted">Court assignments, scores, and who plays next.</p></div>
-      <div className="flex flex-wrap items-center justify-end gap-2">{data.session.status === "live" ? <span className="mr-1 inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Live Mode</span> : null}{isHost ? <ShareButton url={`/s/${data.session.slug}`} title={data.session.title} /> : null}<RealtimeRefresh sessionId={data.session.id} /></div>
+      <div className="flex flex-wrap items-center justify-end gap-2">{data.session.status === "live" ? <span className="mr-1 inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Play in progress</span> : null}{isHost ? <ShareButton url={`/s/${data.session.slug}`} title={data.session.title} /> : null}<RealtimeRefresh sessionId={data.session.id} /></div>
     </div>
     <SessionNav id={data.session.id} active="Play" />
 

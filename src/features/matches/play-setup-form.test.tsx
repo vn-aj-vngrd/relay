@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({ startLiveMode: vi.fn(async () => ({})) }));
+vi.mock("./actions", () => ({ startPlay: vi.fn(async () => ({})) }));
 
 import { PlaySetupForm } from "./play-setup-form";
 
@@ -12,7 +12,7 @@ describe("PlaySetupForm", () => {
     const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />);
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
     expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
-    expect(screen.getByRole("button", { name: "Start Live Mode" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeVisible();
   });
 
   it("explains and selects Mix It Up without showing Paddle Stack rules", () => {

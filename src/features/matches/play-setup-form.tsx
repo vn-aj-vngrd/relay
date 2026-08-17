@@ -4,7 +4,7 @@ import { ArrowsClockwise, CrownSimple, Stack } from "@phosphor-icons/react";
 import { useActionState, useState } from "react";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { startLiveMode, type LiveModeActionState } from "./actions";
+import { startPlay, type StartPlayActionState } from "./actions";
 import type { PlayMode } from "./rotation";
 
 const options: Array<{ mode: PlayMode; title: string; description: string; icon: typeof Stack }> = [
@@ -15,7 +15,7 @@ const options: Array<{ mode: PlayMode; title: string; description: string; icon:
 
 export function PlaySetupForm({ sessionId, playerCount, courtCount }: { sessionId: string; playerCount: number; courtCount: number }) {
   const [mode, setMode] = useState<PlayMode>("queue");
-  const [state, action] = useActionState(startLiveMode, {} as LiveModeActionState);
+  const [state, action] = useActionState(startPlay, {} as StartPlayActionState);
   const climbPlayers = courtCount * 4;
   const climbAvailable = courtCount >= 2 && playerCount === climbPlayers;
 
@@ -36,7 +36,7 @@ export function PlaySetupForm({ sessionId, playerCount, courtCount }: { sessionI
 
     {mode === "queue" ? <div className="mt-5"><SelectField id="queue-rule" name="queueRule" label="Queue rule" defaultValue="adaptive" options={[{ value: "adaptive", label: "Adaptive — Relay responds to the queue" }, { value: "four_off", label: "Four rotate — a fresh group every match" }, { value: "winner_stays", label: "Winners stay — split and take the next two" }]} /><p className="mt-1.5 text-xs leading-5 text-muted">Adaptive uses winners-stay for a short queue and rotates all four when four or more players are waiting.</p></div> : null}
 
-    <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-muted">{playerCount} going · {courtCount} {courtCount === 1 ? "court" : "courts"}</p><SubmitButton pendingLabel="Starting Live Mode…" className="w-full sm:w-auto">Start Live Mode</SubmitButton></div>
+    <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-muted">{playerCount} going · {courtCount} {courtCount === 1 ? "court" : "courts"}</p><SubmitButton pendingLabel="Starting Play…" className="w-full sm:w-auto">Start Play</SubmitButton></div>
     {state.error ? <p role="alert" className="mt-3 text-sm font-medium text-danger">{state.error}</p> : null}
   </form>;
 }

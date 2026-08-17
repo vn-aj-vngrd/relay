@@ -135,7 +135,7 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
   if (!existing) return { error: "This game no longer exists." };
   const membership = await db.query.sessionPlayers.findFirst({ where: and(eq(sessionPlayers.sessionId, existing.id), eq(sessionPlayers.userId, user.id)) });
   if (existing.hostId !== user.id && membership?.role !== "cohost") return { error: "Only the host or co-host can change game settings." };
-  if (existing.status !== "draft" && existing.status !== "published") return { error: "Game details are locked after Live Mode starts." };
+  if (existing.status !== "draft" && existing.status !== "published") return { error: "Game details are locked after Play starts." };
 
   const goingCount = await db.$count(sessionPlayers, and(eq(sessionPlayers.sessionId, existing.id), eq(sessionPlayers.rsvp, "going")));
   if (parsed.data.capacity < goingCount) return { error: `Player limit can’t be lower than the ${goingCount} players already going.`, values: savedValues, fieldErrors: { capacity: ["Increase the player limit or remove players first."] } };

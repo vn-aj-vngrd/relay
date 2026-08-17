@@ -31,6 +31,6 @@ corepack pnpm db:migrate
 2. An approval-enabled invite creates a pending request visible only to session managers.
 3. Approving at capacity moves the requester to the waitlist.
 4. Removing a going player promotes the earliest waitlisted player.
-5. Host-added guests appear in the roster and Live Mode queue.
+5. Host-added guests appear in the roster and Play queue.
 6. A participant can send text, attach one valid image, and react to messages.
 7. A pending or removed player cannot send chat messages.

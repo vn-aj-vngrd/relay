@@ -4,4 +4,4 @@ Adds read-only RLS policies for authenticated session participants on courts, ma
 
 These policies allow Supabase Realtime to deliver committed collaborative state while application mutations remain server-authorized. A user must have a `session_players` row with Going, Maybe, or Waitlisted status. Guest RSVP identities do not receive authenticated Realtime events and use authoritative page refreshes.
 
-Verify by opening the same Live Mode session in two authenticated browsers, changing a score in one, and observing the other refresh without navigation.
+Verify by opening the same active Play session in two authenticated browsers, changing a score in one, and observing the other refresh without navigation.

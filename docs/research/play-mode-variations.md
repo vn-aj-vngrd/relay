@@ -133,7 +133,7 @@ A mode is a tested preset across these concerns:
 
 Relay can recommend a setup, but it should never silently change the rules after play starts.
 
-### Before Live Mode
+### Before Play starts
 
 Use player and court counts to recommend:
 

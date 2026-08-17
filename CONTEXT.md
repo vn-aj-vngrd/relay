@@ -21,7 +21,7 @@ The courtside part of a session: court assignments, paddle stack, rotations, mat
 _Avoid_: Game tab, Courts tab, Live tab
 
 **Paddle Stack**:
-Continuous open play. Waiting order controls the next match; the host chooses adaptive rotation, four-off/four-on, or winners-stay-and-split before Live Mode.
+Continuous open play. Waiting order controls the next match; the host chooses adaptive rotation, four-off/four-on, or winners-stay-and-split before Play starts.
 _Avoid_: Queue algorithm
 
 **Mix It Up**:
