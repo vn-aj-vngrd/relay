@@ -72,7 +72,7 @@ export function SetupWizard({ initial }: { initial: { name: string; username: st
           <fieldset hidden={step !== 2} className="space-y-5">
             <legend className="sr-only">Finish setup</legend>
             <div><label htmlFor="discovery-source" className="text-sm font-semibold">How did you discover Relay? <span className="font-normal text-muted">Optional</span></label><select id="discovery-source" name="discoverySource" className={fieldClass} defaultValue=""><option value="">Choose an answer</option><option value="friend">A friend</option><option value="group_chat">A group chat or shared game</option><option value="social">Social media</option><option value="search">Web search</option><option value="other">Somewhere else</option></select></div>
-            <div className="border-y border-line py-4"><p className="text-sm font-semibold">Next: a 45-second tour</p><p className="mt-1 text-sm leading-6 text-muted">See the invite, courtside view, and post-game flow. You can skip it at any time.</p></div>
+            <div className="border-y border-line py-4"><p className="text-sm font-semibold">Next: a quick look around</p><p className="mt-1 text-sm leading-6 text-muted">Relay will point out Create, Games, Search, notifications, and your profile in the real app.</p></div>
           </fieldset>
 
           <div className="mt-8 flex items-center justify-between gap-3 border-t border-line pt-5">

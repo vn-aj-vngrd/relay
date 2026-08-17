@@ -109,6 +109,14 @@ The shared game link and authenticated session workspace are two access paths to
 
 Management controls sit beside the information they change and render only for hosts or co-hosts. Player screens remain readable and action-light; they are not disabled host dashboards.
 
+## Onboarding
+
+Profile setup asks only for identity and optional recreational context. The following product tour runs over the real authenticated shell rather than a slideshow: it spotlights the visible Create, Games, Search, Notifications, and Profile controls in place, selecting the desktop sidebar or mobile navigation automatically. The rest of the interface is inert while the accessible tour dialog is open. Completion is persistent; Help Center may replay the same tour without resetting account data.
+
+## Notifications
+
+Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
+
 ## Core components
 
 ### Buttons

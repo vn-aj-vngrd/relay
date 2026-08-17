@@ -1,6 +1,7 @@
 "use server";
 
 import { and, eq, ne } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db/client";
@@ -51,14 +52,14 @@ export async function completeProfileSetup(_: OnboardingActionState, formData: F
     console.error("Profile setup failed", error);
     return { error: "Your profile couldn’t be saved. Try again." };
   }
-  redirect("/onboarding/tour");
+  redirect("/home?tour=1");
 }
 
 export async function skipProfileSetup() {
   const user = await requireUser();
   await ensureProfile(user);
   await db.update(profiles).set({ onboardingCompletedAt: new Date(), updatedAt: new Date() }).where(eq(profiles.userId, user.id));
-  redirect("/onboarding/tour");
+  redirect("/home?tour=1");
 }
 
 export async function completeProductTour(formData: FormData) {
@@ -67,5 +68,6 @@ export async function completeProductTour(formData: FormData) {
   const destination = z.enum(["/home", "/games/new"]).catch("/home").parse(formData.get("destination"));
   const now = new Date();
   await db.update(profiles).set({ onboardingCompletedAt: now, productTourCompletedAt: now, updatedAt: now }).where(eq(profiles.userId, user.id));
+  revalidatePath("/", "layout");
   redirect(destination);
 }

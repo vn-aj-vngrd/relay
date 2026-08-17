@@ -68,6 +68,7 @@ Only these collaborative tables belong to `supabase_realtime`:
 - `session_queue`
 - `messages`
 - `message_reactions`
+- `notifications`
 
 Initial pages render authoritative server snapshots. Clients subscribe only while a live/session-chat route is mounted. On reconnect, refetch the snapshot before accepting more local mutations. Score and queue writes must compare the expected `version` to prevent silent overwrites.
 

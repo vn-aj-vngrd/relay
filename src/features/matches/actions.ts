@@ -4,7 +4,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { courts, matches, matchPlayers, memories, messages, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
+import { courts, matches, matchPlayers, memories, messages, notifications, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { parsePlaySetup, planRotation, queueRuleFromConfig, rotationDescription, type RotationHistory } from "./rotation";
 
@@ -85,12 +85,17 @@ export async function createQueueMatch(formData: FormData) {
     if (!plans.length) throw new Error("There are not enough waiting players for another match.");
 
     const playingIds: string[] = [];
+    const assignedCourt = new Map<string, string>();
     for (const plan of plans) {
       const [match] = await tx.insert(matches).values({ sessionId, courtId: plan.courtId, courtLabel: plan.courtLabel, status: "active", startedAt: new Date() }).returning();
       const assignments = [...plan.teamA.map((id, index) => ({ matchId: match.id, sessionPlayerId: id, team: "A", position: index + 1 })), ...plan.teamB.map((id, index) => ({ matchId: match.id, sessionPlayerId: id, team: "B", position: index + 1 }))];
       await tx.insert(matchPlayers).values(assignments);
       playingIds.push(...plan.teamA, ...plan.teamB);
+      for (const playerId of [...plan.teamA, ...plan.teamB]) assignedCourt.set(playerId, plan.courtLabel);
     }
+    const assignedPlayers = await tx.select({ id: sessionPlayers.id, userId: sessionPlayers.userId }).from(sessionPlayers).where(inArray(sessionPlayers.id, playingIds));
+    const recipients = assignedPlayers.filter((player) => player.userId && player.userId !== session.hostId);
+    if (recipients.length) await tx.insert(notifications).values(recipients.map((player) => ({ userId: player.userId!, sessionId, type: "match_assignment", payload: { courtLabel: assignedCourt.get(player.id) } })));
     await tx.update(sessionQueue).set({ state: "playing", version: sql`${sessionQueue.version} + 1` }).where(and(eq(sessionQueue.sessionId, sessionId), inArray(sessionQueue.sessionPlayerId, playingIds)));
     await tx.update(sessionPlayers).set({ playState: "playing" }).where(inArray(sessionPlayers.id, playingIds));
     await tx.insert(messages).values({ sessionId, kind: "system", body: plans.length === 1 ? `${plans[0].courtLabel} match started.` : `A new ${plans.length}-court round started.` });
@@ -120,6 +125,9 @@ export async function completeSession(formData: FormData) {
   await db.transaction(async (tx) => {
     await tx.update(sessions).set({ status: "completed", completedAt: new Date(), version: sql`${sessions.version} + 1` }).where(eq(sessions.id, sessionId));
     await tx.insert(memories).values({ sessionId }).onConflictDoNothing({ target: memories.sessionId });
+    const players = await tx.select({ userId: sessionPlayers.userId }).from(sessionPlayers).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
+    const recipients = players.flatMap((player) => player.userId && player.userId !== session.hostId ? [player.userId] : []);
+    if (recipients.length) await tx.insert(notifications).values(recipients.map((userId) => ({ userId, sessionId, type: "session_completed", payload: {} })));
   });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/games/${sessionId}`);

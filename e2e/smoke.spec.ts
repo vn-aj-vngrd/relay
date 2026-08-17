@@ -36,8 +36,9 @@ test("a new user can create an account and reach the authenticated home", async 
   await page.waitForURL(/\/(home|onboarding)$/, { timeout: 15_000 });
   if (new URL(page.url()).pathname === "/onboarding") {
     await page.getByRole("button", { name: "Skip setup and use my defaults" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/tour$/);
-    await page.getByRole("button", { name: "Skip tour" }).click();
+    await expect(page).toHaveURL(/\/home\?tour=1$/);
+    await expect(page.getByRole("dialog", { name: "Welcome to Relay" })).toBeVisible();
+    await page.getByRole("button", { name: "Skip application tour" }).click();
     await expect(page).toHaveURL(/\/home$/);
   }
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();

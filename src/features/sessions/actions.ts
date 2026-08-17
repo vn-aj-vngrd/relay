@@ -395,6 +395,8 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
         actorPlayerId = createdPlayer.id;
       }
       if (nextRsvp === "pending" && actorPlayerId) await tx.insert(notifications).values({ userId: session.hostId, sessionId: session.id, type: "join_request", payload: { sessionPlayerId: actorPlayerId, guestName: user ? null : parsed.data.guestName ?? null } });
+      if (nextRsvp === "going" && identity?.rsvp !== "going" && user?.id !== session.hostId) await tx.insert(notifications).values({ userId: session.hostId, sessionId: session.id, type: "player_joined", payload: { guestName: user ? null : parsed.data.guestName ?? null } });
+      if (identity?.rsvp === "going" && nextRsvp !== "going" && user?.id !== session.hostId) await tx.insert(notifications).values({ userId: session.hostId, sessionId: session.id, type: "player_left", payload: { guestName: user ? null : parsed.data.guestName ?? identity.guestName ?? null } });
       if (session.status === "live" && actorPlayerId) {
         const queueEntry = await tx.query.sessionQueue.findFirst({ where: and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, actorPlayerId)) });
         if (nextRsvp === "going" && !queueEntry) {
@@ -404,7 +406,10 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       }
       if (identity?.rsvp === "going" && nextRsvp !== "going") {
         const nextWaiting = current.filter((item) => item.rsvp === "waitlisted" && item.id !== identity.id).sort((a, b) => (a.waitlistPosition ?? Infinity) - (b.waitlistPosition ?? Infinity))[0];
-        if (nextWaiting) await tx.update(sessionPlayers).set({ rsvp: "going", waitlistPosition: null, playState: "waiting" }).where(eq(sessionPlayers.id, nextWaiting.id));
+        if (nextWaiting) {
+          await tx.update(sessionPlayers).set({ rsvp: "going", waitlistPosition: null, playState: "waiting" }).where(eq(sessionPlayers.id, nextWaiting.id));
+          if (nextWaiting.userId) await tx.insert(notifications).values({ userId: nextWaiting.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
+        }
       }
       return createdToken;
     });
