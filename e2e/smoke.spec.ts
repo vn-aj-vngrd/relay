@@ -3,8 +3,8 @@ import AxeBuilder from "@axe-core/playwright";
 
 test("the landing page introduces Relay and protected routes open a usable login", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "One link for the whole pickleball night." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign up", exact: true }).first()).toHaveAttribute("href", "/signup");
+  await expect(page.getByRole("heading", { name: "One session. The whole pickleball night." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
 
   await page.goto("/home");
   expect(new URL(page.url()).pathname).toBe("/login");
@@ -20,7 +20,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
   await page.getByRole("link", { name: "Relay home" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "One link for the whole pickleball night." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "One session. The whole pickleball night." })).toBeVisible();
 });
 
 test("a new user can create an account and reach the authenticated home", async ({ page }, testInfo) => {

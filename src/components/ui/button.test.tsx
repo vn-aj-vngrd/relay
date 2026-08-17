@@ -13,7 +13,7 @@ describe("button primitives", () => {
   });
   it("keeps default actions compact and exposes one consistent large size", () => {
     render(<><Button>Compact action</Button><Button size="large">Large action</Button></>);
-    expect(screen.getByRole("button", { name: "Compact action" })).toHaveClass("min-h-9");
+    expect(screen.getByRole("button", { name: "Compact action" })).toHaveClass("min-h-9", "items-center", "justify-center", "leading-none");
     expect(screen.getByRole("button", { name: "Large action" })).toHaveClass("min-h-10");
   });
   it("keeps the loading spinner decorative", () => {

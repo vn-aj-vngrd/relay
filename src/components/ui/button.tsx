@@ -16,7 +16,7 @@ const sizes: Record<Size, string> = {
   large: "min-h-10 px-3.5",
 };
 
-const base = "pressable inline-flex items-center justify-center gap-1.5 rounded-lg border text-[13px] font-[600] disabled:pointer-events-none disabled:opacity-45";
+const base = "pressable inline-flex items-center justify-center gap-1.5 rounded-lg border text-[13px] font-[600] leading-none disabled:pointer-events-none disabled:opacity-45 [&>svg]:block [&>svg]:shrink-0";
 
 export function ButtonSpinner({ className = "" }: { className?: string }) {
   return <span aria-hidden="true" className={`h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent ${className}`} />;

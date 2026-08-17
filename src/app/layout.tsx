@@ -11,7 +11,13 @@ export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
   description: "Plan casual pickleball with friends, share one invite, run the courts, and split the cost.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002"),
-  icons: { icon: "/relay-icon.svg" },
+  icons: {
+    icon: [
+      { url: "/relay-ball.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/relay-ball-32.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

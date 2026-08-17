@@ -14,7 +14,7 @@ Players stand under bright court lights and share one phone between rallies. The
 
 **The digital court.** Session heroes and match surfaces use a deep blue-black field, crisp white divisions, court-blue action areas, tabular scores, and a single optic-yellow signal. The geometry encodes actual structure—sides, courts, queue order, and live state. It is never a decorative pattern.
 
-The Relay mark is one irreducible pickleball: an optic yellow-green circular silhouette with six asymmetric negative-space holes. It remains freestanding—no border, enclosing tile, decorative background, miniature court, paddle, or motion effect. The same mark is used across themes, and the full mark-plus-wordmark lockup is preferred whenever space allows.
+The Relay mark is one irreducible game ball: an optic yellow-green circle with a restrained inset edge that gives it physical presence at small sizes. It remains freestanding—no holes, border, enclosing tile, decorative background, miniature court, paddle, or motion effect. The same mark is used across themes and browser/app icons; the full mark-plus-wordmark lockup is preferred whenever space allows.
 
 ## Color strategy
 
@@ -176,12 +176,13 @@ Chat occupies the remaining viewport below session navigation. The message histo
 
 ## Motion
 
-Motion communicates state in 140–220ms using ease-out-quart.
+Product motion communicates state in 140–220ms using ease-out-quart. Marketing motion has a separate editorial pace: native touch scrolling, gently eased wheel input, and one 650–900ms reveal as each major chapter enters.
 
-- Allowed: score change, queue reorder, RSVP confirmation, payment confirmation, sheet transition, match completion.
+- Product: score change, queue reorder, RSVP confirmation, payment confirmation, sheet transition, and match completion.
+- Marketing: small rise-and-mask, paired horizontal entrances, or short child sequences chosen to match the section’s composition. A section animates once; nearby elements move as one orchestrated moment.
 - Navigation and button feedback may use subtle color and 1–2px press movement.
-- No page-load choreography, ambient motion, bounce, or decorative looping.
-- `prefers-reduced-motion` removes transforms and shortens feedback to near-instant.
+- Avoid ambient motion, bounce, decorative loops, scroll hijacking on touch devices, and identical effects repeated down an entire page.
+- `prefers-reduced-motion` restores native scrolling, removes transforms, and shortens feedback to near-instant.
 
 ## Accessibility and platform behavior
 

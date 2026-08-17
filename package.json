@@ -22,6 +22,7 @@
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "drizzle-orm": "latest",
+    "lenis": "^1.3.26",
     "next": "latest",
     "postgres": "latest",
     "react": "latest",

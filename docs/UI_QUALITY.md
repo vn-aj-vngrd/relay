@@ -42,7 +42,7 @@ Hard guardrails:
 - Color stays restrained outside session identity and Live Mode.
 - Cards represent discrete objects; lists and sections carry the rest.
 - Headings use the platform/Geist product stack; display novelty never enters controls.
-- Motion communicates state in 140–220ms and honors reduced motion.
+- Product motion communicates state in 140–220ms. Marketing chapter reveals may use the deliberate 650–900ms editorial pace defined in `DESIGN.md`; every mode honors reduced motion.
 - Radius stays 10–16px except circles and semantic pills.
 - Shadows are inset highlights or floating-chrome elevation with at most 8px blur.
 - Court lines divide real teams, courts, or information regions.
