@@ -30,6 +30,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `GEOAPIFY_API_KEY` | Geoapify project | Secret, server-only | Local, Vercel |
 | `GEOAPIFY_API_URL` | Geoapify API origin | Server-only configuration | Local, Vercel |
 | `ADMIN_EMAILS` | Relay owner | Secret, server-only | Local, Vercel |
+| `CHAT_IMAGE_MAX_BYTES` | Relay upload policy | Server-only configuration | Local, Vercel |
 
 `SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
@@ -52,6 +53,7 @@ Password authentication is the production baseline and does not depend on email 
 - Private: `payment-qrs`, `payment-proofs`, `booking-screenshots`, `session-memories`.
 - Avatar objects use `<user-id>/<filename>` so the baseline ownership policy can authorize them.
 - Payment proof objects use `<session-id>/<payment-id>` and are replaced in place so each payment has one current proof.
+- Chat photos default to a 1 MiB limit through `CHAT_IMAGE_MAX_BYTES`; increase it only after reviewing Supabase Storage usage and upload latency.
 - Private media stays inaccessible through the Data API until its feature adds participant/host path policies. Server-generated signed URLs must be short-lived.
 
 **Complete when:** anonymous users can read a public test asset, cannot read a private test asset, and an authenticated user can only mutate avatar objects under their own ID prefix.

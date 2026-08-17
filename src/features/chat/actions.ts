@@ -6,10 +6,11 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { messageReactions, messages } from "@/db/schema";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
+import { getServerEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { validateChatImageFile } from "./config";
 
 export type ChatActionState = { error?: string; success?: boolean };
-const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function sendMessage(_: ChatActionState, formData: FormData): Promise<ChatActionState> {
   const sessionId = z.uuid().safeParse(formData.get("sessionId"));
@@ -20,15 +21,15 @@ export async function sendMessage(_: ChatActionState, formData: FormData): Promi
   const hasImage = image instanceof File && image.size > 0;
   if (!body && !hasImage) return { error: "Write a message or attach a photo." };
   if (body.length > 1000) return { error: "Keep messages under 1,000 characters." };
-  if (hasImage && (!imageTypes.has(image.type) || image.size > 8 * 1024 * 1024)) return { error: "Use one JPG, PNG, or WebP image under 8 MB." };
+  const imageValidation = hasImage ? await validateChatImageFile(image, getServerEnv().CHAT_IMAGE_MAX_BYTES) : null;
+  if (imageValidation && "error" in imageValidation) return { error: imageValidation.error };
 
   const viewer = await getSessionViewer(sessionId.data, String(formData.get("slug") ?? ""));
   if (!viewer || !canParticipate(viewer.player.rsvp)) return { error: "Join this session before sending messages." };
 
   const [message] = await db.insert(messages).values({ sessionId: sessionId.data, authorId: viewer.user?.id ?? null, sessionPlayerId: viewer.player.id, body: body || null, kind: hasImage ? "image" : "text" }).returning();
-  if (hasImage) {
-    const extension = image.type === "image/png" ? "png" : image.type === "image/webp" ? "webp" : "jpg";
-    const path = `${sessionId.data}/${message.id}/${crypto.randomUUID()}.${extension}`;
+  if (hasImage && imageValidation && "file" in imageValidation) {
+    const path = `${sessionId.data}/${message.id}/${crypto.randomUUID()}.${imageValidation.extension}`;
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.storage.from("chat-images").upload(path, image, { contentType: image.type, upsert: false });
     if (error) {

@@ -95,6 +95,19 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
 - Desktop never stretches mobile cards; it introduces useful adjacency.
 
+## Session surfaces
+
+The shared game link and authenticated session workspace are two access paths to the same session, not separate products. They use one canonical Overview, Players, Play, Chat, and Payments navigation; the same session hero; and the same session vocabulary. Shared information keeps the same order and labels on both surfaces. Guest RSVP, personal actions, and host management are contextual additions—not alternate page structures.
+
+- Overview: the at-a-glance session home—plan, roster and waitlist state, current play, payment state, and the viewer’s next useful action.
+- Play: the courtside workspace for assignments, paddle stack, rotations, scores, and session standings.
+- Shared game link: optimized for understanding the invitation and joining as an account player or guest player.
+- Account player workspace: the shared experience inside Relay’s app shell, plus personal chat, payment, history, and participation actions.
+- Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
+- Platform administration never appears as a session role.
+
+Management controls sit beside the information they change and render only for hosts or co-hosts. Player screens remain readable and action-light; they are not disabled host dashboards.
+
 ## Core components
 
 ### Buttons
@@ -107,11 +120,11 @@ Native controls with 48px height, white surface, cool keyline, and a court-blue 
 
 ### Navigation
 
-Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses a standard edge-to-edge tab bar. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Courts navigation over global navigation.
+Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses a standard edge-to-edge tab bar. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Play navigation over global navigation.
 
 ### Session identity
 
-A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Public invites use a quiet underlined tab row inside the sticky link header so six destinations remain legible without a heavy segmented container. Authenticated session navigation keeps the compact segmented control; typography, spacing, and active color make both surfaces feel like the same product.
+A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained edge, selected state, and action color—not a decorative wash. Shared links and authenticated workspaces use the same quiet underlined tab row so the five session destinations remain legible and spatially consistent across both access paths.
 
 ### Live court
 
@@ -132,7 +145,7 @@ Queue order uses tabular numbers and rows, not pills. Standings are a compact ta
 
 ### Session chat
 
-Chat occupies the remaining viewport below session navigation. The message history scrolls inside that region while the composer stays anchored to its bottom edge, above mobile safe areas and app navigation. New messages scroll the thread—not the page—and reduced-motion users never receive smooth auto-scrolling.
+Chat occupies the remaining viewport below session navigation. The message history scrolls inside that region while the composer stays anchored to its bottom edge, above mobile safe areas and app navigation. New messages scroll the thread—not the page—and reduced-motion users never receive smooth auto-scrolling. Photo messages render as bounded thumbnails; selecting one opens a focused, keyboard-dismissable viewer instead of expanding the conversation width.
 
 ## Motion
 

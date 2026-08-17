@@ -18,6 +18,6 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
     channel.subscribe((next: string) => setStatus(next === "SUBSCRIBED" ? "connected" : next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting"));
     return () => { if (timer.current) clearTimeout(timer.current); void supabase.removeChannel(channel); };
   }, [router, sessionId]);
-  const text = status === "connected" ? (compact ? "Live" : "Everyone is up to date") : status === "error" ? (compact ? "Reconnect" : "Live updates paused—refresh to retry") : (compact ? "Connecting" : "Connecting live updates…");
+  const text = status === "connected" ? (compact ? "Synced" : "Everyone is up to date") : status === "error" ? (compact ? "Offline" : "Live updates paused—refresh to retry") : (compact ? "Connecting" : "Connecting live updates…");
   return <span aria-live="polite" title={compact && status === "error" ? "Live updates paused—refresh to retry" : undefined} className={`inline-flex min-h-11 items-center gap-2 text-sm font-medium ${status === "error" ? "text-danger" : "text-muted"}`}><span className={`h-2 w-2 rounded-full ${status === "connected" ? "bg-success" : status === "error" ? "bg-danger" : "bg-warning"}`} />{text}</span>;
 }

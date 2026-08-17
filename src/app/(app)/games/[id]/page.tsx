@@ -1,17 +1,25 @@
-import { CalendarBlank, CaretRight, Clock, HourglassMedium, MapPin, PencilSimple, Play } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, HourglassMedium, PencilSimple, Play } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { SessionNav } from "@/components/shared/session-nav";
-import { Status } from "@/components/shared/status";
 import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDateLong, formatSessionTime, peso } from "@/features/sessions/format";
 import { markSessionBookedAction } from "@/features/sessions/actions";
+import { sessionAccentStyle } from "@/features/sessions/accent";
+import { formatSessionDateLong, peso } from "@/features/sessions/format";
+import { getSessionOverview } from "@/features/sessions/overview";
 import { getSessionForUser } from "@/features/sessions/queries";
+import { SessionAtAGlance } from "@/features/sessions/session-overview";
+import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
 import { ShareButton } from "@/features/sessions/share-button";
+
+function responseLabel(rsvp?: string) {
+  if (rsvp === "waitlisted") return "You’re on the waitlist";
+  if (rsvp === "maybe") return "You responded maybe";
+  return "You’re going";
+}
 
 export default async function GameOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -19,17 +27,32 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   if (!data) notFound();
   const { session, membership, roster } = data;
   const going = roster.filter(({ player }) => player.rsvp === "going");
+  const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
+  const pending = roster.filter(({ player }) => player.rsvp === "pending");
   const names = going.map(({ player, profile }) => profile?.name ?? player.guestName ?? "Guest");
   const playerAvatarUrls = going.map(({ profile }) => profileAvatarUrl(profile?.avatarPath));
+  const hostName = roster.find(({ player }) => player.role === "host")?.profile?.name ?? "the host";
   const isHost = session.hostId === user.id || membership?.role === "cohost";
   if (membership?.rsvp === "declined") notFound();
-  if (membership?.rsvp === "pending") return <div className="mx-auto max-w-2xl"><p className="sport-label text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p><h1 className="mt-2 app-title">{session.title}</h1><section className="mt-8 border-y border-line py-10 text-center"><HourglassMedium aria-hidden size={26} className="mx-auto text-warning" /><h2 className="mt-4 text-xl font-bold">Waiting for host approval</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">Your request is with the host. Once approved, this page unlocks the roster, chat, payments, courts, and live scores.</p><div className="mt-6"><ButtonLink href={`/s/${session.slug}`} variant="secondary">View public game page</ButtonLink></div></section></div>;
-  return <div style={sessionAccentStyle(session.accentColor)}><div className="mb-5 flex flex-wrap items-start justify-between gap-4"><div><p className="sport-label mb-2 text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p><h1 className="app-title">{session.title}</h1><p className="mt-2 text-muted">{isHost ? "Hosted by you" : "You’re going"}</p></div><div className="flex items-center gap-2">{isHost ? <ButtonLink href={`/games/${session.id}/settings`} variant="secondary"><PencilSimple aria-hidden size={16} />Edit game</ButtonLink> : null}{!(isHost && going.length === 1) ? <ShareButton url={`/s/${session.slug}`} title={session.title} /> : null}</div></div><SessionNav id={session.id} />
-    {isHost && going.length === 1 ? <section className="mt-6 flex flex-col gap-4 border-y border-line py-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="sport-label text-primary">Game ready</p><h2 className="mt-1 text-lg font-bold">Bring your crew in</h2><p className="mt-1 max-w-xl text-sm text-muted">Share the invite. Friends will see the full plan and can RSVP without creating an account.</p></div><ShareButton url={`/s/${session.slug}`} title={session.title} /></section> : null}
-    <div className="grid gap-10 pt-7 lg:grid-cols-[1fr_360px]"><div className="space-y-9"><section aria-labelledby="plan-title"><h2 id="plan-title" className="mb-4 text-lg font-bold">The plan</h2><div className="divide-y divide-line border-y border-line"><div className="flex items-center gap-3 py-4"><CalendarBlank aria-hidden className="shrink-0 text-primary" size={19} /><div><p className="font-semibold">{formatSessionDateLong(session.startsAt)}</p><p className="mt-1 text-sm text-muted">{formatSessionTime(session.startsAt, session.endsAt)}</p></div></div><div className="flex items-center gap-3 py-4"><MapPin aria-hidden className="shrink-0 text-primary" size={20} /><div className="flex-1"><p className="font-semibold">{session.venueName}</p><p className="mt-1 text-sm text-muted">{session.courtNumbers?.length ? `Courts ${session.courtNumbers.join(" and ")}` : `${session.courtCount} ${session.courtCount === 1 ? "court" : "courts"}`}</p></div></div><div className="flex items-center gap-3 py-4"><Clock aria-hidden className="shrink-0 text-primary" size={19} /><div><p className="font-semibold">Arrive 15 minutes early</p><p className="mt-1 text-sm text-muted">Warm up and sort the first rotation</p></div></div></div></section>
-      <section aria-labelledby="booking-title"><h2 id="booking-title" className="mb-4 text-lg font-bold">Booking</h2><div className={`flex items-start justify-between gap-4 rounded-lg p-4 ${session.bookedAt ? "bg-primary-soft" : "bg-surface"}`}><div><Status kind={session.bookedAt ? "confirmed" : "pending"} /><p className="mt-2 text-sm text-muted">{session.bookingReference ? `Reference ${session.bookingReference}` : session.bookedAt ? "Marked booked by the host" : "The host hasn’t confirmed the court yet"}</p></div><div className="flex shrink-0 flex-col items-end gap-2">{session.bookingTotalCents ? <span className="score text-sm font-semibold">{peso(session.bookingTotalCents)}</span> : null}{isHost ? session.bookedAt ? <ButtonLink href={`/games/${session.id}/settings#settings-booking`} variant="quiet" className="min-h-9">Edit booking</ButtonLink> : <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…" className="min-h-9">Confirm booking</SubmitButton></form> : null}</div></div></section>
-      {session.notes ? <section><h2 className="text-lg font-bold">Note for players</h2><p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p></section> : null}</div>
-      <aside className="space-y-7"><section><div className="mb-4 flex items-end justify-between"><div><h2 className="text-lg font-bold">Players</h2><p className="mt-1 text-sm text-muted">{going.length} of {session.capacity} going</p></div><AvatarStack names={names.slice(0, 3)} imageUrls={playerAvatarUrls.slice(0, 3)} total={going.length} /></div><ul className="divide-y divide-line border-y border-line">{going.slice(0, 5).map(({ player, profile }, index) => { const name = profile?.name ?? player.guestName ?? "Guest"; return <li className="flex min-h-14 items-center gap-3 py-2" key={player.id}><Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" /><span className="flex-1 text-sm font-medium">{name}</span><span className="text-xs text-muted">{player.role === "host" ? "Host" : "Going"}</span></li>; })}</ul><ButtonLink href={`/games/${session.id}/players`} variant="quiet" className="mt-2 w-full">View all players <CaretRight size={14} /></ButtonLink></section>
-      {session.estimatedCostCents ? <section className="rounded-lg border border-line p-4"><Status kind="due" /><p className="score mt-2 text-2xl font-bold">{peso(session.estimatedCostCents)}</p><p className="mt-1 text-sm text-muted">Estimated share</p><ButtonLink href={`/games/${session.id}/payments`} variant="secondary" className="mt-4 w-full">Payment details</ButtonLink></section> : null}
-      {isHost ? <ButtonLink href={`/games/${session.id}/live`} className="w-full"><Play weight="fill" size={16} />Start Live Mode</ButtonLink> : null}</aside></div></div>;
+  if (membership?.rsvp === "pending") return <div className="mx-auto max-w-2xl"><p className="sport-label text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p><h1 className="mt-2 app-title">{session.title}</h1><section className="mt-8 border-y border-line py-10 text-center"><HourglassMedium aria-hidden size={26} className="mx-auto text-warning" /><h2 className="mt-4 text-xl font-bold">Waiting for host approval</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">Your request is with the host. Once approved, this page unlocks the roster, chat, payments, Play, and live scores.</p><div className="mt-6"><ButtonLink href={`/s/${session.slug}`} variant="secondary">View shared game</ButtonLink></div></section></div>;
+
+  const overview = await getSessionOverview(session.id, { sessionPlayerId: membership?.id ?? "", canManage: isHost });
+  const bookingAction = isHost ? session.bookedAt
+    ? <ButtonLink href={`/games/${session.id}/settings#settings-booking`} variant="quiet">Edit booking</ButtonLink>
+    : <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…">Confirm booking</SubmitButton></form>
+    : null;
+
+  return <div style={sessionAccentStyle(session.accentColor)}>
+    <div className="mb-2 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-primary">{isHost ? "Host workspace" : "Player workspace"}</p><p className="mt-0.5 text-sm text-muted">{isHost ? "Plan and manage the same game your friends see." : responseLabel(membership?.rsvp)}</p></div><div className="flex items-center gap-2">{isHost ? <ButtonLink href={`/games/${session.id}/settings`} variant="secondary"><PencilSimple aria-hidden size={15} />Edit game</ButtonLink> : null}<ShareButton url={`/s/${session.slug}`} title={session.title} /></div></div>
+    <SessionNav id={session.id} />
+    <div className="grid gap-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <article className="min-w-0 overflow-hidden rounded-xl border border-line bg-surface"><SessionHero session={session} hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`} /><div className="px-5 py-6 sm:px-8 sm:py-8"><SessionPlanDetails session={session} bookingAction={bookingAction} /><SessionAtAGlance overview={overview} hrefBase={`/games/${session.id}`} status={session.status} goingCount={going.length} capacity={session.capacity} waitlistCount={waitlisted.length} pendingCount={isHost ? pending.length : 0} />{session.notes ? <section className="pt-7"><h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2><p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p></section> : null}</div></article>
+
+      <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
+        <section className="rounded-xl border border-line bg-surface p-5"><p className="text-sm font-semibold text-primary">{isHost ? "Host access" : "Your response"}</p><h2 className="mt-1 text-lg font-bold">{isHost ? "You manage this game" : responseLabel(membership?.rsvp)}</h2><p className="mt-2 text-sm leading-6 text-muted">{isHost ? "Editing, roster controls, payments, Play, and scoring appear only for hosts." : "You can view the plan and scores, chat with the group, and manage your own payment."}</p>{isHost ? <ButtonLink href={`/games/${session.id}/play`} className="mt-5 w-full"><Play aria-hidden weight="fill" size={15} />{session.status === "live" ? "Open Live Mode" : "Start Live Mode"}</ButtonLink> : session.estimatedCostCents ? <ButtonLink href={`/games/${session.id}/payments`} variant="secondary" className="mt-5 w-full">View payment · {peso(session.estimatedCostCents)}</ButtonLink> : null}</section>
+
+        <section><div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-bold">Who’s playing</h2><p className="mt-1 text-sm text-muted">{going.length} of {session.capacity} going</p></div><AvatarStack names={names.slice(0, 3)} imageUrls={playerAvatarUrls.slice(0, 3)} total={going.length} /></div><ul className="divide-y divide-line border-y border-line">{going.slice(0, 5).map(({ player, profile }, index) => { const name = profile?.name ?? player.guestName ?? "Guest"; return <li className="flex min-h-14 items-center gap-3 py-2" key={player.id}><Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" /><span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span><span className="text-xs text-muted">{player.role === "host" ? "Host" : "Going"}</span></li>; })}</ul><ButtonLink href={`/games/${session.id}/players`} variant="quiet" className="mt-2 w-full">View all players <CaretRight aria-hidden size={14} /></ButtonLink></section>
+      </aside>
+    </div>
+  </div>;
 }

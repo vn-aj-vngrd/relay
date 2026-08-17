@@ -28,10 +28,14 @@ export const getPublicSession = cache(async function getPublicSession(slug: stri
   return { session, roster, hostProfile, matchCount };
 });
 
+export async function getSessionMembership(sessionId: string, userId: string) {
+  return db.query.sessionPlayers.findFirst({ where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)) });
+}
+
 export async function getSessionForUser(sessionId: string, userId: string) {
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) return null;
-  const membership = await db.query.sessionPlayers.findFirst({ where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)) });
+  const membership = await getSessionMembership(sessionId, userId);
   if (!membership && session.hostId !== userId) return null;
   const roster = await db.select({ player: sessionPlayers, profile: profiles }).from(sessionPlayers).leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId)).where(eq(sessionPlayers.sessionId, sessionId)).orderBy(asc(sessionPlayers.createdAt));
   return { session, membership, roster };

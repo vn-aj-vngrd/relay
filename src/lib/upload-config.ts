@@ -1,0 +1,1 @@
+export const DEFAULT_CHAT_IMAGE_MAX_BYTES = 1024 * 1024;

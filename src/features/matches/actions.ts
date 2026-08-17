@@ -28,7 +28,7 @@ export async function startLiveMode(formData: FormData) {
     if (additions.length) await tx.insert(sessionQueue).values(additions);
     await tx.update(sessionPlayers).set({ playState: "waiting" }).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
   });
-  revalidatePath(`/games/${sessionId}/live`);
+  revalidatePath(`/games/${sessionId}/play`);
 }
 
 export async function createQueueMatch(formData: FormData) {
@@ -48,7 +48,7 @@ export async function createQueueMatch(formData: FormData) {
     await tx.update(sessionQueue).set({ state: "playing" }).where(and(eq(sessionQueue.sessionId, sessionId), inArray(sessionQueue.sessionPlayerId, waiting.map((item) => item.sessionPlayerId))));
     await tx.update(sessionPlayers).set({ playState: "playing" }).where(inArray(sessionPlayers.id, waiting.map((item) => item.sessionPlayerId)));
   });
-  revalidatePath(`/games/${sessionId}/live`);
+  revalidatePath(`/games/${sessionId}/play`);
 }
 
 export async function changeScore(formData: FormData) {
@@ -61,7 +61,7 @@ export async function changeScore(formData: FormData) {
   const scoreColumn = team === "A" ? matches.teamAScore : matches.teamBScore;
   const updated = await db.update(matches).set({ [team === "A" ? "teamAScore" : "teamBScore"]: sql`greatest(0, ${scoreColumn} + ${amount})`, version: sql`${matches.version} + 1` }).where(and(eq(matches.id, matchId), eq(matches.sessionId, sessionId), eq(matches.status, "active"), eq(matches.version, version))).returning({ id: matches.id });
   if (!updated.length) throw new Error("Score changed on another device. Refresh and try again.");
-  revalidatePath(`/games/${sessionId}/live`);
+  revalidatePath(`/games/${sessionId}/play`);
 }
 
 export async function completeSession(formData: FormData) {
@@ -73,7 +73,7 @@ export async function completeSession(formData: FormData) {
     await tx.update(sessions).set({ status: "completed", completedAt: new Date(), version: sql`${sessions.version} + 1` }).where(eq(sessions.id, sessionId));
     await tx.insert(memories).values({ sessionId }).onConflictDoNothing({ target: memories.sessionId });
   });
-  revalidatePath(`/games/${sessionId}/live`);
+  revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/games/${sessionId}`);
   redirect(`/s/${session.slug}`);
 }
@@ -92,5 +92,5 @@ export async function finishMatch(formData: FormData) {
     for (const [index, player] of players.entries()) await tx.update(sessionQueue).set({ state: "waiting", position: (lastPosition ?? 0) + index + 1, enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` }).where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.sessionPlayerId, player.sessionPlayerId)));
     await tx.update(sessionPlayers).set({ playState: "waiting" }).where(inArray(sessionPlayers.id, players.map((item) => item.sessionPlayerId)));
   });
-  revalidatePath(`/games/${sessionId}/live`);
+  revalidatePath(`/games/${sessionId}/play`);
 }
