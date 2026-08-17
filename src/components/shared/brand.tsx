@@ -10,7 +10,7 @@ export function Brand({ inverse = false, href = "/" }: { inverse?: boolean; href
       aria-label="Relay home"
     >
       <RelayMark inverse={inverse} />
-      <span>Relay</span>
+      <span className="brand-wordmark">Relay</span>
     </a>
   );
 }

@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CaretDown, Minus, Plus } from "@phosphor-icons/react";
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { DatePickerField, TimePickerField } from "@/components/ui/date-time-picker";
 import { VenueCombobox } from "@/features/venues/venue-combobox";
 import { createSessionAction, type SessionActionState } from "./actions";
 import { SessionAccentPicker } from "./session-accent-picker";
@@ -104,10 +105,10 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
 
     <section className="space-y-6 border-t border-line pt-8" aria-labelledby="schedule-heading">
       <div><h2 id="schedule-heading" className="text-lg font-[680]">When</h2><p className="mt-1 text-sm text-muted">Set the schedule shown on the invite.</p></div>
-      <div className="min-w-0"><label className={labelClass} htmlFor="date">Date</label><input className={fieldClass(dateError)} id="date" name="date" type="date" defaultValue={value("date", defaults.date)} required aria-invalid={Boolean(dateError)} aria-describedby={dateError ? "date-error" : undefined} /><FieldError id="date-error" message={dateError} /></div>
+      <div className="min-w-0"><DatePickerField key={value("date", defaults.date)} id="date" label="Date" defaultValue={value("date", defaults.date)} error={dateError} describedBy={dateError ? "date-error" : undefined} /><FieldError id="date-error" message={dateError} /></div>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
-        <div className="min-w-0"><label className={labelClass} htmlFor="start">Start time</label><input className={`${fieldClass(startError)} score`} id="start" name="start" type="time" defaultValue={value("start", defaults.start)} required aria-invalid={Boolean(startError)} aria-describedby={startError ? "start-error" : undefined} /><FieldError id="start-error" message={startError} /></div>
-        <div className="min-w-0"><label className={labelClass} htmlFor="end">End time</label><input className={`${fieldClass(endError)} score`} id="end" name="end" type="time" defaultValue={value("end", defaults.end)} required aria-invalid={Boolean(endError)} aria-describedby={endError ? "end-error" : undefined} /><FieldError id="end-error" message={endError} /></div>
+        <div className="min-w-0"><TimePickerField key={value("start", defaults.start)} id="start" label="Start time" defaultValue={value("start", defaults.start)} error={startError} describedBy={startError ? "start-error" : undefined} /><FieldError id="start-error" message={startError} /></div>
+        <div className="min-w-0"><TimePickerField key={value("end", defaults.end)} id="end" label="End time" defaultValue={value("end", defaults.end)} error={endError} describedBy={endError ? "end-error" : undefined} /><FieldError id="end-error" message={endError} /></div>
       </div>
     </section>
 

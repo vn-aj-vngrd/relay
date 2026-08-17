@@ -70,7 +70,7 @@ Only these collaborative tables belong to `supabase_realtime`:
 - `message_reactions`
 - `notifications`
 
-Initial pages render authoritative server snapshots. Clients subscribe only while a live/session-chat route is mounted. On reconnect, refetch the snapshot before accepting more local mutations. Score and queue writes must compare the expected `version` to prevent silent overwrites.
+Initial pages render authoritative server snapshots. Clients subscribe only while a live/session-chat route is mounted and refetch the authoritative snapshot whenever a channel subscribes or reconnects. Authenticated delivery depends on the self-membership `SELECT` policy from migration `0013_realtime_participant_membership`; without it, nested participant policies silently reject chat, court, match, and queue events. Score and queue writes must compare the expected `version` to prevent silent overwrites.
 
 ## Database migration
 

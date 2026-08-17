@@ -21,9 +21,9 @@ describe("admin user forms", () => {
   });
 
   it("loads an existing recreational profile for editing", () => {
-    render(<UpdateUserForm userId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" profile={{ name: "Mika Santos", username: "mika-santos", city: "Manila", skillLevel: "intermediate", dominantHand: "right" }} />);
+    const { container } = render(<UpdateUserForm userId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" profile={{ name: "Mika Santos", username: "mika-santos", city: "Manila", skillLevel: "intermediate", dominantHand: "right" }} />);
     expect(screen.getByLabelText("Display name")).toHaveValue("Mika Santos");
-    expect(screen.getByLabelText("Playing experience")).toHaveValue("intermediate");
-    expect(screen.getByLabelText("Dominant hand")).toHaveValue("right");
+    expect(container.querySelector('input[name="skillLevel"]')).toHaveValue("intermediate");
+    expect(container.querySelector('input[name="dominantHand"]')).toHaveValue("right");
   });
 });

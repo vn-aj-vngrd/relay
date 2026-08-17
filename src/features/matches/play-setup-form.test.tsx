@@ -9,9 +9,9 @@ afterEach(cleanup);
 
 describe("PlaySetupForm", () => {
   it("starts with the flexible Paddle Stack setup and reveals its queue rule", () => {
-    render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />);
+    const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />);
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
-    expect(screen.getByLabelText("Queue rule")).toHaveValue("adaptive");
+    expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
     expect(screen.getByRole("button", { name: "Start Live Mode" })).toBeVisible();
   });
 

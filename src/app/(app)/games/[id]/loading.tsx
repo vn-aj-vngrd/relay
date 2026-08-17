@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 
 export default function SessionLoading() {
-  return <div aria-label="Loading session" aria-busy="true">
+  return <div role="status" aria-label="Loading session" aria-busy="true">
     <div className="mb-2 flex items-center justify-between gap-4"><div className="space-y-2"><Skeleton className="h-4 w-28" /><Skeleton className="h-3.5 w-52" /></div><div className="flex gap-2"><Skeleton className="h-9 w-24" /><Skeleton className="h-9 w-20" /></div></div>
     <div className="h-11 border-b border-line" />
     <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">

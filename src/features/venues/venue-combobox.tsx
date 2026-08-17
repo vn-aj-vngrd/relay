@@ -9,6 +9,7 @@ type SearchState = "idle" | "loading" | "ready" | "empty" | "error";
 
 export function VenueCombobox({ defaultValue = "", defaultAddress = "", error }: { defaultValue?: string; defaultAddress?: string; error?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const userEditedRef = useRef(false);
   const [query, setQuery] = useState(defaultValue);
   const [address, setAddress] = useState(defaultAddress);
   const [suggestions, setSuggestions] = useState<VenueSuggestion[]>([]);
@@ -19,7 +20,7 @@ export function VenueCombobox({ defaultValue = "", defaultAddress = "", error }:
 
   useEffect(() => {
     const term = query.trim();
-    if (term.length < 3 || address) return;
+    if (!userEditedRef.current || term.length < 3 || address) return;
 
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
@@ -97,6 +98,7 @@ export function VenueCombobox({ defaultValue = "", defaultAddress = "", error }:
       placeholder="Search or enter a venue…"
       value={query}
       onChange={(event) => {
+        userEditedRef.current = true;
         setQuery(event.target.value);
         setAddress("");
         setSuggestions([]);

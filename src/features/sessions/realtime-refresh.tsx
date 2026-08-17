@@ -23,7 +23,12 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
       let nextChannel = supabase.channel(`session:${sessionId}`);
       for (const table of SESSION_REALTIME_TABLES) nextChannel = nextChannel.on("postgres_changes", { event: "*", schema: "public", table, filter: `session_id=eq.${sessionId}` }, refresh);
       channel = nextChannel;
-      nextChannel.subscribe((next: string) => setStatus(next === "SUBSCRIBED" ? "connected" : next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting"));
+      nextChannel.subscribe((next: string) => {
+        if (next === "SUBSCRIBED") {
+          setStatus("connected");
+          refresh();
+        } else setStatus(next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting");
+      });
     })();
 
     return () => {
@@ -32,6 +37,7 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
       if (channel) void supabase.removeChannel(channel);
     };
   }, [router, sessionId]);
-  const text = status === "connected" ? (compact ? "Synced" : "Everyone is up to date") : status === "error" ? (compact ? "Offline" : "Live updates paused—refresh to retry") : (compact ? "Connecting" : "Connecting live updates…");
-  return <span aria-live="polite" title={compact && status === "error" ? "Live updates paused—refresh to retry" : undefined} className={`inline-flex min-h-11 items-center gap-2 text-sm font-medium ${status === "error" ? "text-danger" : "text-muted"}`}><span className={`h-2 w-2 rounded-full ${status === "connected" ? "bg-success" : status === "error" ? "bg-danger" : "bg-warning"}`} />{text}</span>;
+  if (status === "connected") return <span className="sr-only" aria-live="polite">Live updates connected</span>;
+  const text = status === "error" ? (compact ? "Offline" : "Live updates paused—refresh to retry") : (compact ? "Connecting" : "Connecting live updates…");
+  return <span aria-live="polite" title={compact && status === "error" ? "Live updates paused—refresh to retry" : undefined} className={`inline-flex min-h-9 items-center gap-2 text-[13px] font-medium ${status === "error" ? "text-danger" : "text-muted"}`}><span className={`h-2 w-2 rounded-full ${status === "error" ? "bg-danger" : "bg-warning"}`} />{text}</span>;
 }

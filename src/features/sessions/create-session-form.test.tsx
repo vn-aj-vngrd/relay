@@ -15,9 +15,9 @@ describe("CreateSessionForm", () => {
 
     expect(screen.getByLabelText("Game name")).toHaveValue("");
     expect(screen.getByLabelText("Venue")).toHaveValue("");
-    expect(screen.getByLabelText("Date")).toHaveValue("");
-    expect(screen.getByLabelText("Start time")).toHaveValue("");
-    expect(screen.getByLabelText("End time")).toHaveValue("");
+    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
+    expect(screen.getByRole("button", { name: "Start time" })).toHaveTextContent("Choose a time");
+    expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent("Choose a time");
     expect(screen.getByRole("spinbutton", { name: "Player limit" })).toHaveValue(null);
     expect(screen.getByRole("spinbutton", { name: "Court quantity" })).toHaveValue(null);
     expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();

@@ -92,6 +92,13 @@
       "when": 1786958402000,
       "tag": "0012_realtime_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786960382339,
+      "tag": "0013_realtime_participant_membership",
+      "breakpoints": true
     }
   ]
 }

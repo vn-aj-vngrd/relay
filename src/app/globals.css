@@ -10,9 +10,9 @@
   --court-line: oklch(0.84 0.095 220);
   --muted: oklch(0.48 0.012 275);
   --line: oklch(0.875 0.005 75);
-  --brand: oklch(0.57 0.18 275);
-  --primary: oklch(0.57 0.18 275);
-  --primary-hover: oklch(0.52 0.18 275);
+  --brand: oklch(0.55 0.18 275);
+  --primary: oklch(0.55 0.18 275);
+  --primary-hover: oklch(0.50 0.18 275);
   --primary-soft: oklch(0.93 0.04 275);
   --signal: #b7d62e;
   --live: oklch(0.63 0.21 31);
@@ -88,13 +88,76 @@ p { text-wrap: pretty; }
 .text-pretty { text-wrap: pretty; }
 .app-title { font-size: 1.75rem; line-height: 2.125rem; font-weight: 680; letter-spacing: -0.022em; }
 .sport-label { font-family: var(--score); font-size: 0.75rem; line-height: 1rem; font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
-.app-chrome, .mobile-chrome { background: color-mix(in oklch, var(--surface) 91%, transparent); backdrop-filter: saturate(1.2) blur(18px); -webkit-backdrop-filter: saturate(1.2) blur(18px); }
+.app-chrome { background: color-mix(in oklch, var(--surface) 91%, transparent); backdrop-filter: saturate(1.2) blur(18px); -webkit-backdrop-filter: saturate(1.2) blur(18px); }
+.mobile-chrome { background: var(--surface); }
 .court-rule { border-color: color-mix(in oklch, var(--court-line) 26%, transparent); }
 .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 50; min-height: 44px; display: inline-flex; align-items: center; border-radius: .75rem; background: var(--ink); color: var(--canvas); padding: 0 1rem; font-weight: 650; transform: translateY(-180%); }
 .skip-link:focus { transform: translateY(0); }
 .message-row { content-visibility: auto; contain-intrinsic-size: 72px; }
 html[data-density="compact"] .sidebar-row { min-height: 2rem; }
 html[data-density="compact"] .collection-row { min-height: 4rem; padding-block: .625rem; }
+
+/* The desktop rail can collapse to an icon dock without changing mobile navigation. */
+.sidebar-item-tooltip, .compact-sidebar-back { display: none; }
+@media (min-width: 64rem) {
+  .app-sidebar, .app-workspace-frame { transition: width 180ms cubic-bezier(.16,1,.3,1), padding-left 180ms cubic-bezier(.16,1,.3,1); }
+  html[data-sidebar="compact"] .app-sidebar { width: 4rem; }
+  html[data-sidebar="compact"] .app-workspace-frame { padding-left: 4.5rem; }
+  html[data-sidebar="compact"] .compact-sidebar-back { display: inline-flex; }
+  html[data-sidebar="compact"] .sidebar-header { justify-content: center; padding-inline: 0; }
+  html[data-sidebar="compact"] .sidebar-label,
+  html[data-sidebar="compact"] .sidebar-account-copy,
+  html[data-sidebar="compact"] .sidebar-account-caret,
+  html[data-sidebar="compact"] .sidebar-brand .brand-wordmark { display: none; }
+  html[data-sidebar="compact"] .sidebar-header { position: relative; }
+  html[data-sidebar="compact"] .sidebar-brand,
+  html[data-sidebar="compact"] .sidebar-collapse-toggle { transition: opacity 140ms ease-out; }
+  html[data-sidebar="compact"] .sidebar-collapse-toggle { position: absolute; opacity: 0; }
+  html[data-sidebar="compact"] .sidebar-header:hover .sidebar-brand,
+  html[data-sidebar="compact"] .sidebar-header:has(.sidebar-collapse-toggle:focus-visible) .sidebar-brand { opacity: 0; }
+  html[data-sidebar="compact"] .sidebar-header:hover .sidebar-collapse-toggle,
+  html[data-sidebar="compact"] .sidebar-header:has(.sidebar-collapse-toggle:focus-visible) .sidebar-collapse-toggle { opacity: 1; }
+  html[data-sidebar="compact"] .sidebar-nav-item,
+  html[data-sidebar="compact"] .sidebar-account-trigger { justify-content: center; width: 2.5rem; padding-inline: 0; }
+  html[data-sidebar="compact"] .sidebar-item-tooltip {
+    position: absolute;
+    left: calc(100% + .625rem);
+    top: 50%;
+    z-index: 50;
+    display: none;
+    width: max-content;
+    max-width: 14rem;
+    transform: translateY(-50%);
+    border-radius: .375rem;
+    background: var(--ink);
+    color: var(--surface);
+    padding: .375rem .5rem;
+    font-size: .75rem;
+    line-height: 1rem;
+    font-weight: 550;
+    pointer-events: none;
+    box-shadow: 0 2px 6px oklch(0.1 0.01 275 / .16);
+  }
+  html[data-sidebar="compact"] .sidebar-nav-item:hover .sidebar-item-tooltip,
+  html[data-sidebar="compact"] .sidebar-nav-item:focus-visible .sidebar-item-tooltip,
+  html[data-sidebar="compact"] .sidebar-account-trigger:hover .sidebar-item-tooltip,
+  html[data-sidebar="compact"] .sidebar-account-trigger:focus-visible .sidebar-item-tooltip { display: block; }
+  html[data-sidebar="compact"] .sidebar-badge {
+    position: absolute;
+    right: -.2rem;
+    top: -.2rem;
+    height: 1rem;
+    min-width: 1rem;
+    padding-inline: .2rem;
+    font-size: .5rem;
+    line-height: 1;
+    box-shadow: 0 0 0 2px var(--canvas);
+  }
+  html[data-sidebar="compact"] .sidebar-account-menu { left: calc(100% + .625rem); bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar, .app-workspace-frame, .sidebar-brand, .sidebar-collapse-toggle { transition-duration: 1ms; }
+}
 
 /* Marketing motion follows the portfolio's calm wheel easing, with one entrance per chapter. */
 .marketing-page { overflow-x: clip; }
@@ -138,8 +201,8 @@ html.lenis.lenis-smooth iframe { pointer-events: none; }
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="final"] { transform: translate3d(0, 0, 0) scale(1); }
 .marketing-back-to-top { pointer-events: none; opacity: 0; transform: translateY(8px); transition: opacity 320ms cubic-bezier(.16,1,.3,1), transform 420ms cubic-bezier(.16,1,.3,1); }
 .marketing-back-to-top.is-visible { pointer-events: auto; opacity: 1; transform: translateY(0); }
-@keyframes marketing-enter { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
-@keyframes marketing-product-enter { from { opacity: 0; clip-path: inset(0 0 6%); transform: translate3d(0, 28px, 0) scale(.99); } to { opacity: 1; clip-path: inset(0); transform: translate3d(0, 0, 0) scale(1); } }
+@keyframes marketing-enter { from { transform: translate3d(0, 20px, 0); } to { transform: translate3d(0, 0, 0); } }
+@keyframes marketing-product-enter { from { clip-path: inset(0 0 6%); transform: translate3d(0, 28px, 0) scale(.99); } to { clip-path: inset(0); transform: translate3d(0, 0, 0) scale(1); } }
 
 /* Shared invites stay glanceable; compact mode only tightens repeated information. */
 .public-session-header { min-height: 4rem; }

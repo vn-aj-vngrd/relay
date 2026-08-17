@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatSessionDate, formatSessionDateLong, formatSessionTime, peso, sessionDateKey } from "./format";
+import { formatSessionDate, formatSessionDateLong, formatSessionTime, peso, sessionDateKey, spotsRemainingLabel } from "./format";
 
 describe("session formatting", () => {
   const start = new Date("2026-08-22T11:00:00Z");
@@ -13,5 +13,9 @@ describe("session formatting", () => {
   it("formats Philippine peso amounts from integer cents", () => {
     expect(peso(30000)).toContain("300");
     expect(peso(null)).toBeNull();
+  });
+  it("uses singular and plural spot labels", () => {
+    expect(spotsRemainingLabel(1)).toBe("1 spot left");
+    expect(spotsRemainingLabel(2)).toBe("2 spots left");
   });
 });

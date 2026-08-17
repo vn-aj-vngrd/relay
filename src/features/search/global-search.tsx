@@ -32,7 +32,7 @@ function SearchResultRow({ result, index, onOpen }: { result: SearchResult; inde
 }
 
 function ResultSkeleton() {
-  return <div aria-label="Searching" aria-busy="true" className="divide-y divide-line border-y border-line">{Array.from({ length: 6 }, (_, index) => <div key={index} className="flex min-h-16 items-center gap-3 py-3"><span className="h-9 w-9 animate-pulse rounded-full bg-surface-strong" /><span className="flex-1"><span className="block h-4 w-40 max-w-[55%] animate-pulse rounded bg-surface-strong" /><span className="mt-2 block h-3 w-64 max-w-[75%] animate-pulse rounded bg-surface-strong" /></span></div>)}</div>;
+  return <div role="status" aria-label="Searching" aria-busy="true" className="divide-y divide-line border-y border-line">{Array.from({ length: 6 }, (_, index) => <div key={index} className="flex min-h-16 items-center gap-3 py-3"><span className="h-9 w-9 animate-pulse rounded-full bg-surface-strong" /><span className="flex-1"><span className="block h-4 w-40 max-w-[55%] animate-pulse rounded bg-surface-strong" /><span className="mt-2 block h-3 w-64 max-w-[75%] animate-pulse rounded bg-surface-strong" /></span></div>)}</div>;
 }
 
 export function GlobalSearch({ initialQuery = "", initialFilter = "all" }: { initialQuery?: string; initialFilter?: SearchFilter }) {

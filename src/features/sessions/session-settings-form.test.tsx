@@ -32,11 +32,11 @@ afterEach(cleanup);
 
 describe("SessionSettingsForm", () => {
   it("loads the current shared plan and exposes one save action", () => {
-    render(<SessionSettingsForm defaults={defaults} />);
+    const { container } = render(<SessionSettingsForm defaults={defaults} />);
     expect(screen.getByLabelText("Game name")).toHaveValue("Saturday Night Pickle");
     expect(screen.getByLabelText("Venue")).toHaveValue("Central Pickle");
     expect(screen.getByLabelText("Player limit")).toHaveValue(10);
-    expect(screen.getByLabelText("Visibility")).toHaveValue("link");
+    expect(container.querySelector('input[name="visibility"]')).toHaveValue("link");
     expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
     expect(screen.getByRole("heading", { name: "Appearance, sharing, and cost" })).toBeVisible();
     expect(screen.getByText(/Sets the cover, active tabs, and actions/)).toBeVisible();

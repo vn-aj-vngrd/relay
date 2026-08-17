@@ -1,4 +1,6 @@
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import Link from "next/link";
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -34,5 +36,5 @@ export default async function NewGamePage({ searchParams }: { searchParams: Prom
     sourceSessionId: source?.id,
     inviteeCount,
   } : { groupId: group?.id, groupName: group?.name, title: group ? `${group.name} Pickle` : undefined, inviteeCount };
-  return <div className="mx-auto max-w-[720px]"><header className="mb-10 border-b border-line pb-7"><h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1><p className="mt-2 max-w-xl text-pretty text-muted">{source ? "The familiar setup is ready. Choose when you’ll play, review the plan, and publish." : group ? "Start with your crew’s usual setup, then adjust this game as needed." : "Set the plan, publish one link, and let your friends take it from there."}</p></header><CreateSessionForm defaults={defaults} /></div>;
+  return <div className="mx-auto max-w-[720px]"><Link href="/home" className="compact-sidebar-back pressable mb-5 min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"><ArrowLeft aria-hidden size={15} />Back to Home</Link><header className="mb-10 border-b border-line pb-7"><h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1><p className="mt-2 max-w-xl text-pretty text-muted">{source ? "The familiar setup is ready. Choose when you’ll play, review the plan, and publish." : group ? "Start with your crew’s usual setup, then adjust this game as needed." : "Set the plan, publish one link, and let your friends take it from there."}</p></header><CreateSessionForm defaults={defaults} /></div>;
 }

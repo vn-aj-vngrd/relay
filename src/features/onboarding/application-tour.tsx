@@ -9,11 +9,13 @@ import { completeProductTour } from "./actions";
 
 const steps = [
   { key: "welcome", target: null, title: "Welcome to Relay", description: "This is the shared home for game night. Here’s where to create a game, find the plan, and catch anything that needs you." },
-  { key: "create", target: "create", title: "Start with a game", description: "Create sets the date, venue, player limit, and courts. Publish once, then send the shared link to your crew." },
-  { key: "games", target: "games", title: "Every session stays here", description: "Games keeps upcoming plans, completed nights, and your calendar together. Open one for its roster, payments, Play, and chat." },
-  { key: "search", target: "search", title: "Find what you already know", description: "Search across games, players, groups, and venues. It’s focused on your pickleball plans—not a public social feed." },
+  { key: "create", target: "create", title: "Start with a game", description: "Set the date, venue, player limit, and courts. Publishing creates the shared link your friends can open without an account." },
+  { key: "home", target: "home", title: "See what needs you next", description: "Home keeps your next game and its useful setup signals upfront—booking, roster, repayments, and the next action." },
+  { key: "games", target: "games", title: "Every session stays here", description: "Games keeps upcoming plans, completed nights, and your calendar together. Open one for its players, Play, chat, and payments." },
+  { key: "groups", target: "groups", title: "Reuse the regular crew", description: "Groups are optional shortcuts for friends who play repeatedly. Save a crew after a game, then invite them again in one step." },
+  { key: "search", target: "search", title: "Find the plan quickly", description: "Search across your games, players, groups, and venues. It stays focused on real sessions—not a public social feed." },
   { key: "notifications", target: "notifications", title: "Only useful updates", description: "Invites, waitlist movement, payment reviews, and court assignments appear here. The number shows what you haven’t read." },
-  { key: "profile", target: "profile", title: "Make Relay yours", description: "Open your profile for session history and preferences. Theme and layout density stay saved on this device." },
+  { key: "profile", target: "profile", title: "Your pickleball history", description: "Profile keeps sessions, matches, groups, and memories attached to you. Preferences for theme and layout live here too." },
 ] as const;
 
 type TargetRect = { top: number; right: number; bottom: number; left: number; width: number; height: number };
@@ -93,10 +95,10 @@ export function ApplicationTour({ required }: { required: boolean }) {
     <div className="absolute inset-0 bg-transparent" aria-hidden />
     {spotlight ? <div data-tour-spotlight aria-hidden className="pointer-events-none fixed rounded-[10px] ring-2 ring-white/95 shadow-[0_0_0_9999px_rgb(13_15_20/.56)] transition-[top,left,width,height] duration-200 motion-reduce:transition-none" style={spotlight} /> : <div aria-hidden className="fixed inset-0 bg-[rgb(13_15_20/.56)]" />}
     <section ref={dialog} data-tour-dialog role="dialog" aria-modal="true" aria-labelledby="application-tour-title" aria-describedby="application-tour-description" className="fixed rounded-xl border border-line bg-surface p-5 text-ink shadow-[0_8px_24px_rgb(13_15_20/.18)]" style={popoverPosition(targetRect)}>
-      <div className="flex items-center justify-between gap-4"><p className="score text-xs font-semibold text-primary">{step + 1} / {steps.length}</p><form ref={closeForm} action={completeProductTour}><input type="hidden" name="destination" value="/home" /><PendingSubmit pendingLabel="Closing…" aria-label={replay ? "Close application tour" : "Skip application tour"} className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"><X aria-hidden size={17} /></PendingSubmit></form></div>
+      <div className="flex items-center justify-between gap-4"><p className="score text-xs font-semibold text-primary">{step + 1} / {steps.length}</p><form ref={closeForm} action={completeProductTour}><input type="hidden" name="destination" value="/home" /><button type="submit" aria-label={replay ? "Close application tour" : "Skip application tour"} className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"><X aria-hidden size={17} /></button></form></div>
       <h2 id="application-tour-title" className="mt-3 text-xl font-bold tracking-[-0.025em]">{current.title}</h2>
       <p id="application-tour-description" className="mt-2 text-sm leading-6 text-muted">{current.description}</p>
-      <div className="mt-5 flex gap-1" aria-label={`Tour step ${step + 1} of ${steps.length}`}>{steps.map((item, index) => <span key={item.key} className={`h-1 flex-1 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div>
+      <div role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={step + 1} className="mt-5 flex gap-1" aria-label={`Tour step ${step + 1} of ${steps.length}`}>{steps.map((item, index) => <span key={item.key} className={`h-1 flex-1 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div>
       <div className="mt-5 flex items-center justify-between gap-3">{step ? <Button variant="quiet" onClick={() => setStep((value) => value - 1)}><ArrowLeft aria-hidden size={15} />Back</Button> : <span />}{finalStep ? <form action={completeProductTour}><input type="hidden" name="destination" value="/home" /><PendingSubmit data-tour-primary pendingLabel="Finishing…" className="pressable inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"><Check aria-hidden size={15} />Finish tour</PendingSubmit></form> : <Button data-tour-primary onClick={() => setStep((value) => value + 1)}>Next<ArrowRight aria-hidden size={15} /></Button>}</div>
     </section>
   </div>;

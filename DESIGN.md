@@ -29,8 +29,8 @@ Restrained foundation with a stronger sport mode. Court blue occupies less than 
 --muted: oklch(.48 .012 275);
 --line: oklch(.875 .005 75);
 
---primary: oklch(.57 .18 275);       /* temporary Linear-like accent */
---primary-hover: oklch(.52 .18 275);
+--primary: oklch(.55 .18 275);       /* accessible court-blue action */
+--primary-hover: oklch(.50 .18 275);
 --primary-soft: oklch(.93 .04 275);
 --court: oklch(.18 .045 252);        /* scoreboard/court field */
 --court-line: oklch(.84 .095 220);
@@ -89,9 +89,9 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 ## Layout
 
 - Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation. Public invites show the plan before the RSVP form so people understand the game before responding.
-- Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions.
+- Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions. A top-rail control collapses it to a persistent 64px icon dock for focused work. The compact dock keeps Relay’s ball visible; hovering or keyboard-focusing that header swaps the mark for the expand control, avoiding a permanently generic utility icon. Compact navigation icons retain labels through accessible names and restrained hover/focus tooltips; the content island expands into the released space.
 - Authenticated shells stay fixed to the dynamic viewport. The content surface is the sole vertical scroll container, keeping the desktop rail and mobile chrome stable without locking nested feature scroll areas such as chat. Visible scrollbars use one narrow neutral trackless treatment across themes; horizontal tab rails remain visually hidden.
-- Mobile: a compact floating tab bar stays inside the safe area and preserves 44px touch targets without obscuring content.
+- Mobile: a compact bottom tab bar uses an opaque surface inside the safe area and preserves 44px touch targets without letting scrolling content show through or reducing label contrast.
 - Navigation chrome may float and blur; content remains opaque and structurally flat.
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
 - Desktop never stretches mobile cards; it introduces useful adjacency.
@@ -107,11 +107,11 @@ The shared game link and authenticated session workspace are two access paths to
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
 
-Management controls sit beside the information they change and render only for hosts or co-hosts. Player screens remain readable and action-light; they are not disabled host dashboards.
+Management controls sit beside the information they change and render only for hosts or co-hosts. Sharing is the one persistent host action: the compact Share control remains in the heading of Overview, Players, Play, Chat, and Payments so inviting someone never requires returning to another tab. Player screens remain readable and action-light; they are not disabled host dashboards.
 
 ## Onboarding
 
-Profile setup asks only for identity and optional recreational context. The following product tour runs over the real authenticated shell rather than a slideshow: it spotlights the visible Create, Games, Search, Notifications, and Profile controls in place, selecting the desktop sidebar or mobile navigation automatically. The rest of the interface is inert while the accessible tour dialog is open. Completion is persistent; Help Center may replay the same tour without resetting account data.
+Profile setup asks only for identity and optional recreational context. The following product tour runs over the real authenticated shell rather than a slideshow: it spotlights Create, Home, Games, Groups, Search, Notifications, and Profile in place, selecting the visible desktop or mobile control automatically. Each step explains one practical part of the create → share → play loop. The rest of the interface is inert while the accessible tour dialog is open. Closing stays visually immediate—no spinner or exit effect. Completion is persistent; Help Center may replay the same tour without resetting account data.
 
 ## Notifications
 
@@ -121,15 +121,15 @@ Notifications are a contextual inbox, not an activity feed. Group updates by rec
 
 ### Buttons
 
-One solid action per decision area. Primary buttons use court blue and a subtle inner highlight; secondary buttons use a white surface and keyline; quiet actions have no container until hover. Standard buttons are 36px with restrained horizontal padding and 13px labels; use the 40px large size only for a dominant mobile or full-width action. Labels describe outcomes. Disabled controls retain legible labels.
+One solid action per decision area. Primary buttons use court blue and a subtle inner highlight; secondary buttons use a white surface and keyline; quiet actions have no container until hover. Standard buttons are 36px with restrained horizontal padding, 13px labels, centered icon-label alignment, and one shared radius; use the 40px large size only for a dominant mobile action. RSVP choices use the same 36px rhythm as adjacent Update response and Share game actions. Labels describe outcomes and remain consistent across surfaces (for example, always “Share game,” never a mix of “Share” and “Share game”). Disabled controls retain legible labels.
 
 ### Inputs
 
-Native controls with 48px height, white surface, cool keyline, and a court-blue focus halo. Labels sit above inputs. Validation appears inline and names the corrective action.
+Text and numeric controls use a 44–48px white surface, cool keyline, and court-blue focus halo. Labels sit above inputs. Date, time, and select fields use Relay-owned accessible popovers rather than browser-native pickers so their hierarchy, spacing, and error treatment remain consistent across iOS, Android, and desktop. Mobile popovers become compact bottom sheets; desktop popovers stay anchored to their trigger. Validation appears inline and names the corrective action.
 
 ### Navigation
 
-Sticky chrome uses a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses a standard edge-to-edge tab bar. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Play navigation over global navigation.
+Top chrome may use a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses an opaque, standard edge-to-edge bottom tab bar. The desktop rail’s expanded/icon-only choice is saved locally and restored before paint; it does not alter the mobile bar or content density. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Live Mode prioritizes local Play navigation over global navigation.
 
 ### Session identity
 
@@ -148,7 +148,7 @@ Before Live Mode, the host chooses one of three flat, outcome-labeled rows: Padd
 
 ### Collections
 
-Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid or a familiar month calendar spanning live, upcoming, and past sessions. The choice is explicit, accessible, and saved locally as `relay-games-view`; it never changes the underlying sort or information hierarchy.
+Game history defaults to a compact, Notion-like list for scanning. Users may switch to a two- or three-column grid or a familiar month calendar spanning live, upcoming, and past sessions. Groups use the same count-and-view toolbar with list and grid options, so recurring crews behave like the Games collection rather than a separate mini-product. Each choice is explicit, accessible, saved locally (`relay-games-view` and `relay-groups-view`), and never changes the underlying sort or information hierarchy.
 
 ### Global search
 

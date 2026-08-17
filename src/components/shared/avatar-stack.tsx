@@ -9,7 +9,7 @@ export function Avatar({ name, imageUrl, index = 0, size = "md" }: { name: strin
 }
 
 export function AvatarStack({ names, imageUrls = [], total }: { names: string[]; imageUrls?: Array<string | undefined>; total?: number }) {
-  return <div className="flex items-center" aria-label={`${total ?? names.length} players`}>
+  return <div role="group" className="flex items-center" aria-label={`${total ?? names.length} players`}>
     {names.slice(0, 5).map((name, index) => <span className="-ml-2 first:ml-0" key={`${name}-${index}`}><Avatar name={name} imageUrl={imageUrls[index]} index={index} /></span>)}
     {(total ?? names.length) > names.length ? <span className="-ml-2 inline-flex h-10 min-w-10 items-center justify-center rounded-full border-2 border-canvas bg-surface-strong px-2 text-xs font-bold">+{(total ?? names.length) - names.length}</span> : null}
   </div>;

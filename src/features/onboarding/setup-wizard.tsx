@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, LinkSimple, TennisBall, UserCircle } from "@phos
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { SelectField } from "@/components/ui/select-field";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { completeProfileSetup, skipProfileSetup, type OnboardingActionState } from "./actions";
 
@@ -47,7 +48,7 @@ export function SetupWizard({ initial }: { initial: { name: string; username: st
   }
 
   return <div className="w-full max-w-[720px]">
-    <div className="mb-8 flex items-center justify-between gap-4"><div className="flex gap-1.5" aria-label={`Step ${step + 1} of ${steps.length}`}>{steps.map((item, index) => <span key={item.title} className={`h-1.5 w-10 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div><span className="score text-xs font-semibold text-muted">{step + 1} / {steps.length}</span></div>
+    <div className="mb-8 flex items-center justify-between gap-4"><div role="progressbar" aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={step + 1} className="flex gap-1.5" aria-label={`Step ${step + 1} of ${steps.length}`}>{steps.map((item, index) => <span key={item.title} className={`h-1.5 w-10 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`} />)}</div><span className="score text-xs font-semibold text-muted">{step + 1} / {steps.length}</span></div>
 
     <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
       <header><StepIcon aria-hidden size={24} className="text-primary" /><h1 className="mt-5 text-[1.75rem] font-[680] leading-tight tracking-[-0.03em]">{steps[step].title}</h1><p className="mt-3 text-sm leading-6 text-muted">{steps[step].description}</p><p className="mt-4 text-xs text-muted">Usually under a minute.</p></header>
@@ -71,7 +72,7 @@ export function SetupWizard({ initial }: { initial: { name: string; username: st
 
           <fieldset hidden={step !== 2} className="space-y-5">
             <legend className="sr-only">Finish setup</legend>
-            <div><label htmlFor="discovery-source" className="text-sm font-semibold">How did you discover Relay? <span className="font-normal text-muted">Optional</span></label><select id="discovery-source" name="discoverySource" className={fieldClass} defaultValue=""><option value="">Choose an answer</option><option value="friend">A friend</option><option value="group_chat">A group chat or shared game</option><option value="social">Social media</option><option value="search">Web search</option><option value="other">Somewhere else</option></select></div>
+            <SelectField id="discovery-source" name="discoverySource" label="How did you discover Relay? (optional)" defaultValue="" options={[{ value: "", label: "Choose an answer" }, { value: "friend", label: "A friend" }, { value: "group_chat", label: "A group chat or shared game" }, { value: "social", label: "Social media" }, { value: "search", label: "Web search" }, { value: "other", label: "Somewhere else" }]} />
             <div className="border-y border-line py-4"><p className="text-sm font-semibold">Next: a quick look around</p><p className="mt-1 text-sm leading-6 text-muted">Relay will point out Create, Games, Search, notifications, and your profile in the real app.</p></div>
           </fieldset>
 

@@ -9,7 +9,7 @@ type GameView = "list" | "grid" | "calendar";
 type WeekStart = "sunday" | "monday";
 
 function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string; icon?: ComponentType<{ size?: number }> }[]; onChange: (value: T) => void; label: string }) {
-  return <div aria-label={label} className="inline-flex rounded-lg bg-surface-strong p-1">{options.map((option) => { const Icon = option.icon; return <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onChange(option.value)} className={`pressable flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>{Icon ? <Icon size={15} /> : null}{option.label}</button>; })}</div>;
+  return <div role="group" aria-label={label} className="inline-flex rounded-lg bg-surface-strong p-1">{options.map((option) => { const Icon = option.icon; return <button key={option.value} type="button" aria-pressed={value === option.value} onClick={() => onChange(option.value)} className={`pressable flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}>{Icon ? <Icon size={15} /> : null}{option.label}</button>; })}</div>;
 }
 
 function getPreferences() {

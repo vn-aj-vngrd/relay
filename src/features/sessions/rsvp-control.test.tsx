@@ -13,7 +13,9 @@ describe("RsvpControl", () => {
   it("offers a new visitor both guest and account join paths", () => {
     render(<RsvpControl sessionId={sessionId} slug="friends-night" />);
     expect(screen.getByRole("textbox", { name: "Your name" })).toBeRequired();
-    expect(screen.getByRole("button", { name: "Confirm I’m going" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Confirm I’m going" })).toHaveClass("min-h-9", "text-[13px]");
+    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("min-h-9", "text-[13px]");
+    expect(screen.getByRole("button", { name: "Going" })).toHaveClass("min-h-9", "text-[13px]");
     expect(screen.getByRole("link", { name: /Use a Relay account/ })).toHaveAttribute("href", "/login?next=%2Fs%2Ffriends-night");
   });
 

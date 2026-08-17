@@ -52,7 +52,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
             <input type="hidden" name="notificationId" value={notification.id} />
             <button type="submit" className="pressable group relative flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left hover:bg-surface-strong/45 sm:px-3">
               <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}><Icon aria-hidden size={17} weight={unread ? "fill" : "regular"} /></span>
-              <span className="min-w-0 flex-1"><span className="flex items-start gap-2"><strong className="text-sm font-semibold leading-5 text-ink">{presentation.title}</strong>{unread ? <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}</span><span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">{presentation.body}</span></span>
+              <span className="min-w-0 flex-1"><span className="flex items-start gap-2"><strong className="text-sm font-semibold leading-5 text-ink">{presentation.title}</strong>{unread ? <span role="img" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}</span><span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">{presentation.body}</span></span>
               <span className="flex shrink-0 items-center gap-2 pt-0.5"><time dateTime={notification.createdAt.toISOString()} className="score text-[11px] text-muted">{notificationTime(notification.createdAt, group)}</time><CaretRight aria-hidden size={13} className="text-muted transition-transform group-hover:translate-x-0.5" /></span>
             </button>
           </form>;

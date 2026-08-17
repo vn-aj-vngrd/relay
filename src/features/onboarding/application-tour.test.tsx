@@ -17,19 +17,23 @@ function Target({ name }: { name: string }) {
 
 describe("ApplicationTour", () => {
   it("walks through controls in the real application navigation", () => {
-    render(<><Target name="create" /><Target name="games" /><Target name="search" /><Target name="notifications" /><Target name="profile" /><ApplicationTour required /></>);
+    render(<><Target name="create" /><Target name="home" /><Target name="games" /><Target name="groups" /><Target name="search" /><Target name="notifications" /><Target name="profile" /><ApplicationTour required /></>);
 
     expect(screen.getByRole("dialog", { name: "Welcome to Relay" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Start with a game" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("dialog", { name: "See what needs you next" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Every session stays here" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Find what you already know" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Reuse the regular crew" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("dialog", { name: "Find the plan quickly" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Only useful updates" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Make Relay yours" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Your pickleball history" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Finish tour" })).toBeVisible();
   });
 

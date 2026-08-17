@@ -10,6 +10,23 @@ afterEach(() => {
 });
 
 describe("VenueCombobox", () => {
+  it("does not search or open suggestions for an existing venue until the user edits it", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ suggestions: [{
+      id: "venue-1",
+      name: "Central Pickle",
+      address: "Greenfield District, Mandaluyong, Philippines",
+      latitude: 14.5794,
+      longitude: 121.0359,
+    }] }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<><label htmlFor="venue">Venue</label><VenueCombobox defaultValue="Central Pickle" /></>);
+    await act(() => vi.advanceTimersByTimeAsync(300));
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
   it("debounces Philippine venue suggestions and saves the selected address", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ suggestions: [{
       id: "venue-1",

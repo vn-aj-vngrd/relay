@@ -10,7 +10,7 @@ describe("SidebarSupportNav", () => {
 
   it("shows the active support page and a useful unread count", () => {
     render(<SidebarSupportNav unreadCount={12} isAdmin={false} />);
-    expect(screen.getByRole("link", { name: /Notifications12/ })).toHaveAttribute("href", "/notifications");
+    expect(screen.getByRole("link", { name: "Notifications, 12 unread" })).toHaveAttribute("href", "/notifications");
     expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
     expect(screen.getByRole("link", { name: "Help Center" })).toHaveAttribute("aria-current", "page");
   });

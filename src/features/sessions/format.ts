@@ -14,3 +14,4 @@ export function formatSessionTime(start: Date, end: Date, timeZone = "Asia/Manil
   return `${formatter.format(start)}–${formatter.format(end)}`;
 }
 export function peso(cents?: number | null) { return cents == null ? null : new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 0 }).format(cents / 100); }
+export function spotsRemainingLabel(count: number) { return `${count} ${count === 1 ? "spot" : "spots"} left`; }

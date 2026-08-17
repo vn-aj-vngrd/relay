@@ -14,6 +14,7 @@ import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
+import { ShareButton } from "@/features/sessions/share-button";
 
 function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
   return profile?.name ?? player.guestName ?? "Guest";
@@ -34,7 +35,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   return <div style={sessionAccentStyle(data.session.accentColor)}>
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div><p className="text-sm font-semibold text-primary">{data.session.title}</p><h1 className="mt-1 app-title">Play</h1><p className="mt-2 text-sm text-muted">Court assignments, scores, and who plays next.</p></div>
-      <div className="flex items-center gap-3">{data.session.status === "live" ? <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Live Mode</span> : null}<RealtimeRefresh sessionId={data.session.id} /></div>
+      <div className="flex flex-wrap items-center justify-end gap-2">{data.session.status === "live" ? <span className="mr-1 inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Live Mode</span> : null}{isHost ? <ShareButton url={`/s/${data.session.slug}`} title={data.session.title} /> : null}<RealtimeRefresh sessionId={data.session.id} /></div>
     </div>
     <SessionNav id={data.session.id} active="Play" />
 

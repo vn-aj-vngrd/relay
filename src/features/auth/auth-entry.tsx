@@ -26,7 +26,7 @@ export function AuthEntry({ mode, error, sent, next }: { mode: EntryMode; error?
         <AuthForm next={next} initialMode={mode} />
         {googleEnabled ? <><div className="my-5 flex items-center gap-3 text-xs text-muted"><span className="h-px flex-1 bg-line" />or<span className="h-px flex-1 bg-line" /></div><form action={signInWithGoogle}><SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">Continue with Google</SubmitButton></form></> : null}
         <p className="mt-6 text-xs leading-5 text-muted">Have an invite? Open its shared link to view the plan and RSVP without an account.</p>
-        <div className="mt-8 border-t border-line pt-5" aria-label="What Relay helps with"><p className="text-xs font-semibold text-muted">Everything around game night</p><ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">{features.map(({ label, icon: Icon }) => <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink"><Icon aria-hidden size={15} className="text-muted" />{label}</li>)}</ul></div>
+        <section className="mt-8 border-t border-line pt-5" aria-label="What Relay helps with"><p className="text-xs font-semibold text-muted">Everything around game night</p><ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">{features.map(({ label, icon: Icon }) => <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink"><Icon aria-hidden size={15} className="text-muted" />{label}</li>)}</ul></section>
       </div>
     </section>
   </main>;

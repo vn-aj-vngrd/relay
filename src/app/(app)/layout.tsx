@@ -6,6 +6,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { AppNav } from "@/components/shared/app-nav";
 import { Brand } from "@/components/shared/brand";
 import { SidebarAccount } from "@/components/shared/sidebar-account";
+import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
 import { SidebarSupportNav } from "@/components/shared/sidebar-support-nav";
 import { SidebarUtilityNav } from "@/components/shared/sidebar-utility-nav";
 import { db } from "@/db/client";
@@ -27,8 +28,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return <div className="flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
     <NotificationRealtimeRefresh userId={user.id} />
     <Suspense fallback={null}><ApplicationTour required={!profile.productTourCompletedAt} /></Suspense>
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
-      <div className="mb-3 border-b border-line px-1 pb-3"><Brand href="/home" /></div>
+    <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
+      <div className="sidebar-header mb-3 flex h-11 items-center justify-between gap-2 border-b border-line px-1 pb-3"><span className="sidebar-brand"><Brand href="/home" /></span><SidebarCollapseToggle /></div>
       <SidebarUtilityNav />
       <AppNav username={profile.username} mode="sidebar" />
       <div className="mt-auto"><SidebarSupportNav unreadCount={unreadCount} isAdmin={isAdmin} /><div className="mt-1 border-t border-line pt-1"><SidebarAccount name={profile.name} username={profile.username} avatarUrl={profileAvatarUrl(profile.avatarPath)} isAdmin={isAdmin} /></div></div>
@@ -36,7 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
     <header className="app-chrome z-20 shrink-0 border-b border-line lg:hidden"><div className="flex h-[56px] items-center justify-between px-4 sm:px-6"><Brand href="/home" /><div className="flex items-center"><Link href="/search" data-tour="search" prefetch={false} aria-label="Search" className="pressable grid h-10 w-10 place-items-center text-muted hover:text-ink"><MagnifyingGlass aria-hidden size={20} /></Link><Link href="/notifications" data-tour="notifications" prefetch={false} aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"} className="pressable relative grid h-10 w-10 place-items-center text-muted hover:text-ink"><Bell aria-hidden size={20} />{unreadCount ? <span className="score absolute right-0 top-0 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white ring-2 ring-surface">{unreadCount > 99 ? "99+" : unreadCount}</span> : null}</Link></div></div></header>
 
-    <div className="min-h-0 flex-1 overflow-hidden lg:h-dvh lg:py-2 lg:pl-[240px] lg:pr-2"><div className="app-scroll-surface h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line"><main id="main-content" data-tour="workspace" className="app-content mx-auto max-w-[1120px] px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10">{children}</main></div></div>
+    <div className="app-workspace-frame min-h-0 flex-1 overflow-hidden lg:h-dvh lg:py-2 lg:pl-[240px] lg:pr-2"><div className="app-scroll-surface h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line"><main id="main-content" data-tour="workspace" className="app-content mx-auto max-w-[1120px] px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10">{children}</main></div></div>
     <AppNav username={profile.username} mode="mobile" />
   </div>;
 }
