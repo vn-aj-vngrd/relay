@@ -24,6 +24,9 @@ jobs:
     env:
       CI: "true"
       E2E_BASE_URL: ${{ inputs.base_url }}
+      E2E_AUTH_EMAIL: ${{ secrets.E2E_AUTH_EMAIL }}
+      E2E_AUTH_PASSWORD: ${{ secrets.E2E_AUTH_PASSWORD }}
+      E2E_AUTH_EXISTING: ${{ secrets.E2E_AUTH_EXISTING }}
 
     steps:
       - name: Check out repository
