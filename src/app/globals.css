@@ -348,16 +348,16 @@ html.lenis.lenis-smooth iframe {
   animation: marketing-product-enter 900ms 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .marketing-reveal-ready {
+  opacity: 0;
   transform: translate3d(0, 28px, 0);
-  clip-path: inset(0 0 5%);
   transition:
-    clip-path 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: clip-path, transform;
+  will-change: opacity, transform;
 }
 .marketing-reveal-ready.marketing-reveal-visible {
+  opacity: 1;
   transform: translate3d(0, 0, 0);
-  clip-path: inset(0);
 }
 .marketing-reveal-ready:is(
   [data-marketing-reveal="sequence"],
@@ -372,12 +372,12 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready[data-marketing-reveal="split"] > *,
 .marketing-reveal-ready[data-marketing-reveal="split-reverse"] > *,
 .marketing-reveal-ready[data-marketing-reveal="workflow"] > div > * {
+  opacity: 0;
   transform: translate3d(0, 24px, 0);
-  clip-path: inset(0 0 6%);
   transition:
-    clip-path 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: clip-path, transform;
+  will-change: opacity, transform;
 }
 .marketing-reveal-ready[data-marketing-reveal="sequence"] > :nth-child(2) {
   transition-delay: 90ms;
@@ -409,8 +409,8 @@ html.lenis.lenis-smooth iframe {
   )
   > *,
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="workflow"] > div > * {
+  opacity: 1;
   transform: translate3d(0, 0, 0);
-  clip-path: inset(0);
 }
 .marketing-reveal-ready[data-marketing-reveal="mask"] {
   transform: scale(0.985);
@@ -625,6 +625,7 @@ html[data-density="compact"] .public-session-chat-thread {
   }
   .marketing-reveal-ready[data-marketing-reveal] > *,
   .marketing-reveal-ready[data-marketing-reveal="workflow"] > div > * {
+    opacity: 1;
     clip-path: none;
     transform: none;
     transition: none;
