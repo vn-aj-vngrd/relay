@@ -21,6 +21,8 @@ export function sessionAccentStyle(value: string | null | undefined): CSSPropert
     "--session-accent": accent.solid,
     "--session-accent-soft": `color-mix(in oklch, ${accent.solid} 13%, var(--surface))`,
     "--session-cover": `color-mix(in srgb, ${accent.solid} 32%, var(--court))`,
+    "--scoreboard-field": `color-mix(in srgb, ${accent.solid} 24%, var(--court))`,
+    "--scoreboard-line": `color-mix(in oklch, ${accent.solid} 26%, white)`,
     "--primary": `color-mix(in oklch, ${accent.solid} 82%, var(--ink))`,
     "--primary-hover": `color-mix(in oklch, ${accent.solid} 72%, var(--ink))`,
     "--primary-soft": `color-mix(in oklch, ${accent.solid} 13%, var(--surface))`,

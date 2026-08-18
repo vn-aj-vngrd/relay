@@ -8,6 +8,8 @@
   --ink: oklch(0.22 0.008 275);
   --court: oklch(0.18 0.045 252);
   --court-line: oklch(0.84 0.095 220);
+  --scoreboard-field: var(--court);
+  --scoreboard-line: var(--court-line);
   --muted: oklch(0.48 0.012 275);
   --line: oklch(0.875 0.005 75);
   --brand: oklch(0.55 0.18 275);
@@ -90,7 +92,7 @@ p { text-wrap: pretty; }
 .sport-label { font-family: var(--score); font-size: 0.75rem; line-height: 1rem; font-weight: 700; letter-spacing: 0.035em; text-transform: uppercase; }
 .app-chrome { background: color-mix(in oklch, var(--surface) 91%, transparent); backdrop-filter: saturate(1.2) blur(18px); -webkit-backdrop-filter: saturate(1.2) blur(18px); }
 .mobile-chrome { background: var(--surface); }
-.court-rule { border-color: color-mix(in oklch, var(--court-line) 26%, transparent); }
+.court-rule { border-color: color-mix(in oklch, var(--scoreboard-line) 28%, transparent); }
 .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 50; min-height: 44px; display: inline-flex; align-items: center; border-radius: .75rem; background: var(--ink); color: var(--canvas); padding: 0 1rem; font-weight: 650; transform: translateY(-180%); }
 .skip-link:focus { transform: translateY(0); }
 .message-row { content-visibility: auto; contain-intrinsic-size: 72px; }

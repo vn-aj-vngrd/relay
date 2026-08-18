@@ -144,7 +144,9 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 Before Play starts, the host chooses one of four flat, outcome-labeled rows: Paddle Stack, Mix It Up, Court Climb, or Team Round Robin. Paddle Stack progressively reveals queue rules and Partner style; Keep pairs together then reveals a compact pair builder. Team Round Robin requires fixed pairs and schedules every pair against every other pair once, using byes when the team count is odd. Unsupported rosters explain the exact player/court requirement inline rather than failing after selection.
 
-- Scores dominate and remain readable from several feet.
+- Scores dominate and remain readable from several feet. The standard scoreboard fills its available court column; multiple courts stack instead of squeezing into narrow desktop cards.
+- The neutral outer shell follows the planning UI while the deep court field carries teams, scores, and controls. Its dark field and court lines inherit the game’s curated accent without weakening white-score contrast. Player names remain intact and fixed partners stack as two explicit names.
+- Every scoreboard offers an expanded, viewport-filling view for courtside use. It preserves score state and permissions, closes with Escape or a labeled control, and works for read-only public viewers.
 - Teams align directly above their score.
 - Minus and plus controls have separate 64px zones.
 - Live state combines a coral mark with the word “Live.”
@@ -198,7 +200,7 @@ Product motion communicates state in 140–220ms using ease-out-quart. Marketing
 - Native share, date, time, file, and authentication behavior where available.
 - Semantic headings, lists, tables, forms, and live regions.
 - Light and dark modes are designed separately.
-- Loading skeletons match real layout; offline/reconnecting state is explicit in collaborative routes.
+- Loading skeletons match real layout; Play skeletons preserve the scoreboard shell, two score sides, host controls when applicable, and adjacent queue. Offline/reconnecting state is explicit in collaborative routes.
 
 ## Anti-slop review
 

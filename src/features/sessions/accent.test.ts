@@ -6,6 +6,8 @@ describe("sessionAccentStyle", () => {
     const style = sessionAccentStyle("coral") as Record<string, string>;
 
     expect(style["--session-cover"]).toContain("#bd4545");
+    expect(style["--scoreboard-field"]).toContain("#bd4545");
+    expect(style["--scoreboard-line"]).toContain("#bd4545");
     expect(style["--primary"]).toContain("#bd4545");
   });
 

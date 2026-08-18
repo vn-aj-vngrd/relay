@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_APP_URL: http://localhost:3002
+  NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-publishable-key
+  SUPABASE_SECRET_KEY: ci-secret-key
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/relay
+  GEOAPIFY_API_KEY: ci-placeholder-key-000000000
+  GEOAPIFY_API_URL: https://api.geoapify.com
+  ADMIN_EMAILS: ""
+  CHAT_IMAGE_MAX_BYTES: "1048576"
+
+jobs:
+  validate:
+    name: Lint, types, tests, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Run unit and integration tests
+        run: pnpm test
+
+      - name: Build production application
+        run: pnpm build

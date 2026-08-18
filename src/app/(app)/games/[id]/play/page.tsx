@@ -32,7 +32,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   const roundRobinMatchCount = data.pairs.length * (data.pairs.length - 1) / 2;
   const roundRobinComplete = data.session.rotationMode === "round_robin" && data.completedMatchCount >= roundRobinMatchCount;
   const canStartRotation = !roundRobinComplete && waiting.length >= 4 && (roundMode ? data.activeMatches.length === 0 : data.activeMatches.length < data.courts.length);
-  const rotationLabel = roundMode ? (data.completedMatchCount ? "Start next round" : "Start first round") : startMatchLabel(data.completedMatchCount);
+  const rotationLabel = roundMode
+    ? (data.completedMatchCount ? "Start next round" : "Start first round")
+    : data.activeMatches.length ? "Start another match" : startMatchLabel(data.completedMatchCount);
 
   return <><GamePageIntro title="Play" description="Court assignments, scores, partner rotations, and who plays next." action={<div className="flex items-center gap-2">{data.session.status === "live" ? <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Play in progress</span> : null}<RealtimeRefresh sessionId={data.session.id} /></div>} />
     {data.session.status !== "live" ? <section className="mx-auto w-full max-w-4xl py-10 sm:py-14">
@@ -40,8 +42,8 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
       {isHost ? <PlaySetupForm sessionId={data.session.id} playerCount={goingCount} courtCount={data.courts.length} players={data.roster.filter(({ player }) => player.rsvp === "going").map(({ player, profile }) => ({ id: player.id, name: playerName(player, profile) }))} /> : <p className="mt-7 text-center text-sm font-medium text-muted">The host is choosing the play setup.</p>}
     </section> : <div className="grid gap-7 pt-6 lg:grid-cols-[1fr_330px]">
       <section>
-        <div className="mb-4 flex items-center justify-between gap-4"><div><h2 className="text-lg font-bold">Active courts</h2><p className="mt-1 text-sm text-muted">{rotationName(data.session.rotationMode)} · scores update for everyone</p></div>{isHost && canStartRotation && data.activeMatches.length > 0 ? <form action={createQueueMatch}><input type="hidden" name="sessionId" value={data.session.id} /><SubmitButton pendingLabel="Creating match…" variant="secondary"><Shuffle size={17} />{rotationLabel}</SubmitButton></form> : null}</div>
-        {data.activeMatches.length ? <div className="grid gap-5 xl:grid-cols-2">{data.activeMatches.map((match) => {
+        <div className="mb-4 flex items-center justify-between gap-4"><div><h2 className="text-lg font-bold">Active courts</h2><p className="mt-1 text-sm text-muted">{rotationName(data.session.rotationMode)} · scores update for everyone</p></div>{isHost && canStartRotation && data.activeMatches.length > 0 ? <form action={createQueueMatch}><input type="hidden" name="sessionId" value={data.session.id} /><SubmitButton pendingLabel="Creating match…" variant="secondary" className="whitespace-nowrap"><Shuffle size={17} />{rotationLabel}</SubmitButton></form> : null}</div>
+        {data.activeMatches.length ? <div className="grid gap-5">{data.activeMatches.map((match) => {
           const teamA = match.players.filter(({ matchPlayer }) => matchPlayer.team === "A").map(({ player, profile }) => playerName(player, profile)).join(" + ");
           const teamB = match.players.filter(({ matchPlayer }) => matchPlayer.team === "B").map(({ player, profile }) => playerName(player, profile)).join(" + ");
           return <LiveCourt key={match.id} sessionId={data.session.id} matchId={match.id} number={match.courtLabel} teams={[teamA, teamB]} scores={[match.teamAScore, match.teamBScore]} version={match.version} canScore={isHost} />;

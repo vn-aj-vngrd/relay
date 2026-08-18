@@ -39,9 +39,8 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
 
   const overview = await getSessionOverview(session.id, { sessionPlayerId: membership?.id ?? "", canManage: isHost });
   const readiness = sessionReadiness({ goingCount: going.length, booked: Boolean(session.bookedAt), expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents), collectionCreated: overview.payment.view === "host" });
-  const bookingAction = isHost ? session.bookedAt
-    ? <ButtonLink href={`/games/${session.id}/settings#settings-booking`} variant="quiet">Edit booking</ButtonLink>
-    : <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…"><CalendarCheck aria-hidden size={15} />Confirm booking</SubmitButton></form>
+  const bookingAction = isHost && !session.bookedAt
+    ? <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…"><CalendarCheck aria-hidden size={15} />Confirm booking</SubmitButton></form>
     : null;
 
   return <>
