@@ -33,7 +33,7 @@ const sections = [
     ["What is the paddle stack?", "It is the ordered queue of available players. The people waiting longest appear first, while hosts can override the order when needed."],
     ["Do we have to score every point?", "No. Use live point controls during a match or enter only the final result afterward."],
     ["Who can change scores and rotations?", "The host and authorized co-hosts manage shared court state. Players can view assignments, scores, the queue, and what is coming next."],
-    ["Which play setup should I use?", "Paddle Stack is best for drop-ins, Mix It Up rotates partners in social rounds, and Court Climb moves winners toward Court 1. The host chooses before Play starts."],
+    ["Which play setup should I use?", "Paddle Stack keeps drop-ins moving, Mix It Up rotates partners, Court Climb moves winners between courts, and Team Round Robin lets fixed pairs play everyone once. Paddle Stack can also keep chosen partners together."],
     ["What happens if the connection drops?", "The current screen remains usable where possible. Collaborative views refresh when the connection returns; confirm important score changes after reconnecting."],
   ]},
   { title: "Profiles, privacy, and history", items: [

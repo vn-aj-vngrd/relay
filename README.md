@@ -10,6 +10,7 @@ A mobile-first social pickleball session app built with Next.js, TypeScript, Sup
 - Fast create-session flow with progressive disclosure
 - Polished public invite page with guest-friendly RSVP interaction and Open Graph metadata
 - Session overview, roster, coordinated payment view, and courtside Play
+- Paddle Stack with mixed or fixed partners, Mix It Up, Court Climb, and Team Round Robin
 - Accessible touch scoring controls and queue presentation
 - Explicit Drizzle schema for the complete V1 domain
 - Tested RSVP/waitlist, expense split, queue assignment, standings, cloning, and permission rules

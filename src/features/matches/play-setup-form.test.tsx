@@ -7,12 +7,43 @@ import { PlaySetupForm } from "./play-setup-form";
 
 afterEach(cleanup);
 
+const players = [
+  { id: "00000000-0000-4000-8000-000000000001", name: "Van" },
+  { id: "00000000-0000-4000-8000-000000000002", name: "AJ" },
+  { id: "00000000-0000-4000-8000-000000000003", name: "Mika" },
+  { id: "00000000-0000-4000-8000-000000000004", name: "John" },
+];
+
 describe("PlaySetupForm", () => {
   it("starts with the flexible Paddle Stack setup and reveals its queue rule", () => {
     const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />);
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
     expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
     expect(screen.getByRole("button", { name: "Start Play" })).toBeVisible();
+  });
+
+  it("lets the host keep partners together and edit every pair", () => {
+    const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={4} courtCount={1} players={players} />);
+    fireEvent.click(screen.getByRole("radio", { name: /^Keep pairs together/ }));
+    expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
+    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(players[0].id);
+    expect(container.querySelector('input[name="pair-0-b"]')).toHaveValue(players[1].id);
+    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(players[2].id);
+    expect(container.querySelector('input[name="pair-1-b"]')).toHaveValue(players[3].id);
+    fireEvent.click(screen.getByRole("button", { name: "Pair 1, first player" }));
+    fireEvent.click(screen.getByRole("option", { name: "Mika" }));
+    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(players[2].id);
+    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(players[0].id);
+  });
+
+  it("offers Team Round Robin for an even roster and explains odd-roster byes", () => {
+    const { rerender } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={4} courtCount={1} players={players} />);
+    fireEvent.click(screen.getByRole("radio", { name: /Team Round Robin/ }));
+    expect(screen.getByText(/every other pair once/i)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
+    rerender(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={5} courtCount={1} players={[...players, { id: "00000000-0000-4000-8000-000000000005", name: "Chris" }]} />);
+    expect(screen.getByRole("radio", { name: /Team Round Robin/ })).toBeDisabled();
+    expect(screen.getByText("Needs an even number of active players.")).toBeVisible();
   });
 
   it("explains and selects Mix It Up without showing Paddle Stack rules", () => {

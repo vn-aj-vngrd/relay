@@ -1,13 +1,12 @@
-import { CaretRight, HourglassMedium, PencilSimple, Play } from "@phosphor-icons/react/dist/ssr";
+import { CalendarCheck, CaretRight, HourglassMedium, Play } from "@phosphor-icons/react/dist/ssr";
 import { notFound, redirect } from "next/navigation";
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
-import { SessionNav } from "@/components/shared/session-nav";
+import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { markSessionBookedAction } from "@/features/sessions/actions";
-import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDateLong, peso } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
 import { sessionReadiness } from "@/features/sessions/readiness";
@@ -15,7 +14,6 @@ import { SessionReadinessPanel } from "@/features/sessions/session-readiness";
 import { getSessionForUser } from "@/features/sessions/queries";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
-import { ShareButton } from "@/features/sessions/share-button";
 
 function responseLabel(rsvp?: string) {
   if (rsvp === "waitlisted") return "You’re on the waitlist";
@@ -43,14 +41,13 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   const readiness = sessionReadiness({ goingCount: going.length, booked: Boolean(session.bookedAt), expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents), collectionCreated: overview.payment.view === "host" });
   const bookingAction = isHost ? session.bookedAt
     ? <ButtonLink href={`/games/${session.id}/settings#settings-booking`} variant="quiet">Edit booking</ButtonLink>
-    : <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…">Confirm booking</SubmitButton></form>
+    : <form action={markSessionBookedAction}><input type="hidden" name="sessionId" value={session.id} /><SubmitButton pendingLabel="Confirming…"><CalendarCheck aria-hidden size={15} />Confirm booking</SubmitButton></form>
     : null;
 
-  return <div style={sessionAccentStyle(session.accentColor)}>
-    <div className="mb-2 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-primary">{isHost ? "Host workspace" : "Player workspace"}</p><p className="mt-0.5 text-sm text-muted">{isHost ? "Plan and manage the same game your friends see." : responseLabel(membership?.rsvp)}</p></div><div className="flex items-center gap-2">{isHost ? <ButtonLink href={`/games/${session.id}/settings`} variant="secondary"><PencilSimple aria-hidden size={15} />Edit game</ButtonLink> : null}<ShareButton url={`/s/${session.slug}`} title={session.title} /></div></div>
-    <SessionNav id={session.id} />
-    <div className="grid gap-6 pt-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface"><SessionHero session={session} hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`} /><div className="px-5 py-6 sm:px-8 sm:py-8"><SessionPlanDetails session={session} bookingAction={bookingAction} /><SessionAtAGlance overview={overview} hrefBase={`/games/${session.id}`} status={session.status} goingCount={going.length} capacity={session.capacity} waitlistCount={waitlisted.length} pendingCount={isHost ? pending.length : 0} />{session.notes ? <section className="pt-7"><h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2><p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p></section> : null}</div></article>
+  return <>
+    <GamePageIntro title="Overview" description={isHost ? "The plan, roster, setup progress, and next action for this game." : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`} />
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface"><SessionHero session={session} hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`} headingLevel="h2" /><div className="px-5 py-6 sm:px-8 sm:py-8"><SessionPlanDetails session={session} bookingAction={bookingAction} /><SessionAtAGlance overview={overview} hrefBase={`/games/${session.id}`} status={session.status} goingCount={going.length} capacity={session.capacity} waitlistCount={waitlisted.length} pendingCount={isHost ? pending.length : 0} />{session.notes ? <section className="pt-7"><h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2><p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p></section> : null}</div></article>
 
       <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
         <section className="rounded-xl border border-line bg-surface p-5"><p className="text-sm font-semibold text-primary">{isHost ? "Host access" : "Your response"}</p><h2 className="mt-1 text-lg font-bold">{isHost ? "You manage this game" : responseLabel(membership?.rsvp)}</h2><p className="mt-2 text-sm leading-6 text-muted">{isHost ? "Editing, roster controls, payments, Play, and scoring appear only for hosts." : "You can view the plan and scores, chat with the group, and manage your own payment."}</p>{isHost ? <SessionReadinessPanel readiness={readiness} sessionId={session.id} /> : null}{isHost ? <ButtonLink href={`/games/${session.id}/play`} className="mt-5 w-full"><Play aria-hidden weight="fill" size={15} />{session.status === "live" ? "Open Play" : "Set up Play"}</ButtonLink> : session.estimatedCostCents ? <ButtonLink href={`/games/${session.id}/payments`} variant="secondary" className="mt-5 w-full">View payment · {peso(session.estimatedCostCents)}</ButtonLink> : null}</section>
@@ -58,5 +55,5 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
         <section><div className="mb-3 flex items-end justify-between"><div><h2 className="text-lg font-bold">Who’s playing</h2><p className="mt-1 text-sm text-muted">{going.length} of {session.capacity} going</p></div><AvatarStack names={names.slice(0, 3)} imageUrls={playerAvatarUrls.slice(0, 3)} total={going.length} /></div><ul className="divide-y divide-line border-y border-line">{going.slice(0, 5).map(({ player, profile }, index) => { const name = profile?.name ?? player.guestName ?? "Guest"; return <li className="flex min-h-14 items-center gap-3 py-2" key={player.id}><Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" /><span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span><span className="text-xs text-muted">{player.role === "host" ? "Host" : "Going"}</span></li>; })}</ul><ButtonLink href={`/games/${session.id}/players`} variant="quiet" className="mt-2 w-full">View all players <CaretRight aria-hidden size={14} /></ButtonLink></section>
       </aside>
     </div>
-  </div>;
+  </>;
 }

@@ -5,8 +5,10 @@ import { useEffect, useRef, useState } from "react";
 
 type Option = { value: string; label: string };
 
-export function SelectField({ id, name = id, label, options, defaultValue = "", hideLabel = false, className = "" }: { id: string; name?: string; label: string; options: readonly Option[]; defaultValue?: string; hideLabel?: boolean; className?: string }) {
-  const [value, setValue] = useState(defaultValue);
+export function SelectField({ id, name = id, label, options, defaultValue = "", value: controlledValue, onValueChange, hideLabel = false, className = "" }: { id: string; name?: string; label: string; options: readonly Option[]; defaultValue?: string; value?: string; onValueChange?: (value: string) => void; hideLabel?: boolean; className?: string }) {
+  const [localValue, setLocalValue] = useState(defaultValue);
+  const value = controlledValue ?? localValue;
+  const setValue = (next: string) => { if (controlledValue === undefined) setLocalValue(next); onValueChange?.(next); };
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const selected = options.find((option) => option.value === value) ?? options[0];

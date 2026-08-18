@@ -4,7 +4,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { db } from "@/db/client";
-import { courts, matches, matchPlayers, memories, messages, notifications, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
+import { courts, matches, matchPlayers, memories, messages, notifications, sessionPairMembers, sessionPairs, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { parsePlaySetup, planRotation, queueRuleFromConfig, rotationDescription, type RotationHistory } from "./rotation";
 
@@ -24,20 +24,35 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
   const session = await requireHost(sessionId);
   let setup;
   try {
-    setup = parsePlaySetup({ mode: formData.get("mode"), queueRule: formData.get("queueRule") || undefined });
+    const pairCount = Math.max(0, Math.min(20, Number(formData.get("pairCount")) || 0));
+    const pairs = Array.from({ length: pairCount }, (_, index) => [String(formData.get(`pair-${index}-a`) ?? ""), String(formData.get(`pair-${index}-b`) ?? "")] as [string, string]);
+    setup = parsePlaySetup({ mode: formData.get("mode"), queueRule: formData.get("queueRule") || undefined, partnerPolicy: formData.get("partnerPolicy") || undefined, pairs });
   } catch {
-    return { error: "Choose a valid play setup." };
+    const fixed = formData.get("mode") === "round_robin" || formData.get("partnerPolicy") === "fixed";
+    return { error: fixed ? "Assign each active player to one pair." : "Choose a valid play setup." };
   }
   if (session.status !== "draft" && session.status !== "published") return { error: "Play has already started." };
-  const goingCount = await db.$count(sessionPlayers, and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
+  const goingPlayers = await db.select({ id: sessionPlayers.id }).from(sessionPlayers).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
+  const goingCount = goingPlayers.length;
   if (goingCount < 4) return { error: "At least four players need to be going before Play can start." };
+  const setupPairs = "pairs" in setup ? setup.pairs : [];
+  if (setupPairs.length) {
+    const assigned = setupPairs.flat().toSorted();
+    const eligible = goingPlayers.map((player) => player.id).toSorted();
+    if (assigned.length !== eligible.length || assigned.some((id, index) => id !== eligible[index])) return { error: "Assign every active player to exactly one pair." };
+  }
   if (setup.mode === "king_of_court" && (session.courtCount < 2 || goingCount !== session.courtCount * 4)) return { error: `Court Climb needs exactly ${session.courtCount * 4} active players for ${session.courtCount} courts.` };
 
   await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
-    const rotationConfig = setup.mode === "queue" ? { queueRule: setup.queueRule } : {};
-    await tx.update(sessions).set({ status: "live", rotationMode: setup.mode, rotationConfig, version: sql`${sessions.version} + 1` }).where(and(eq(sessions.id, sessionId), inArray(sessions.status, ["draft", "published"])));
+    const rotationConfig = setup.mode === "queue" ? { queueRule: setup.queueRule, partnerPolicy: setup.partnerPolicy } : {};
+    const activated = await tx.update(sessions).set({ status: "live", rotationMode: setup.mode, rotationConfig, version: sql`${sessions.version} + 1` }).where(and(eq(sessions.id, sessionId), inArray(sessions.status, ["draft", "published"]))).returning({ id: sessions.id });
+    if (!activated.length) throw new Error("Play has already started.");
     const players = await tx.select().from(sessionPlayers).where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going"))).orderBy(asc(sessionPlayers.createdAt));
+    if (setupPairs.length) {
+      const createdPairs = await tx.insert(sessionPairs).values(setupPairs.map((_, index) => ({ sessionId, position: index + 1 }))).returning({ id: sessionPairs.id, position: sessionPairs.position });
+      await tx.insert(sessionPairMembers).values(createdPairs.flatMap((pair) => setupPairs[pair.position - 1].map((sessionPlayerId, index) => ({ pairId: pair.id, sessionPlayerId, position: index + 1 }))));
+    }
     const existing = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, sessionId));
     const existingIds = new Set(existing.map((item) => item.sessionPlayerId));
     const additions = players.filter((item) => !existingIds.has(item.id)).map((item, index) => ({ sessionId, sessionPlayerId: item.id, position: existing.length + index + 1, state: "waiting" as const }));
@@ -56,11 +71,12 @@ export async function createQueueMatch(formData: FormData) {
   const session = await requireHost(sessionId);
   await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
-    const [active, sessionCourts, waiting, completed] = await Promise.all([
+    const [active, sessionCourts, waiting, completed, pairRows] = await Promise.all([
       tx.select().from(matches).where(and(eq(matches.sessionId, sessionId), eq(matches.status, "active"))),
       tx.select().from(courts).where(eq(courts.sessionId, sessionId)).orderBy(asc(courts.position)),
       tx.select().from(sessionQueue).where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.state, "waiting"))).orderBy(asc(sessionQueue.position)),
       tx.select().from(matches).where(and(eq(matches.sessionId, sessionId), eq(matches.status, "completed"))).orderBy(asc(matches.finishedAt)),
+      tx.select({ pairId: sessionPairs.id, pairPosition: sessionPairs.position, sessionPlayerId: sessionPairMembers.sessionPlayerId, memberPosition: sessionPairMembers.position }).from(sessionPairs).innerJoin(sessionPairMembers, eq(sessionPairMembers.pairId, sessionPairs.id)).where(eq(sessionPairs.sessionId, sessionId)).orderBy(asc(sessionPairs.position), asc(sessionPairMembers.position)),
     ]);
     if (session.rotationMode !== "queue" && active.length) throw new Error("Finish every court before starting the next round.");
     const used = new Set(active.map((match) => match.courtId));
@@ -80,9 +96,11 @@ export async function createQueueMatch(formData: FormData) {
       winner: match.winningTeam === "B" ? "B" : "A",
       finishedAt: match.finishedAt?.getTime() ?? 0,
     }));
-    const mode = session.rotationMode === "random" || session.rotationMode === "king_of_court" ? session.rotationMode : "queue";
-    const plans = planRotation({ mode, courts: availableCourts, waiting: waiting.map((item) => ({ id: item.sessionPlayerId, position: item.position })), history });
-    if (!plans.length) throw new Error("There are not enough waiting players for another match.");
+    const pairIds = [...new Set(pairRows.map((row) => row.pairId))];
+    const fixedPairs = pairIds.map((pairId) => pairRows.filter((row) => row.pairId === pairId).map((row) => row.sessionPlayerId) as [string, string]);
+    const mode = session.rotationMode === "random" || session.rotationMode === "king_of_court" || session.rotationMode === "round_robin" ? session.rotationMode : "queue";
+    const plans = planRotation({ mode, courts: availableCourts, waiting: waiting.map((item) => ({ id: item.sessionPlayerId, position: item.position })), history, fixedPairs });
+    if (!plans.length) throw new Error(mode === "round_robin" ? "Every pair has completed the round robin." : "There are not enough waiting players for another match.");
 
     const playingIds: string[] = [];
     const assignedCourt = new Map<string, string>();

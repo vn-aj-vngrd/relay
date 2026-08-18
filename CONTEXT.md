@@ -21,8 +21,16 @@ The courtside part of a session: court assignments, paddle stack, rotations, mat
 _Avoid_: Game tab, Courts tab, Live tab
 
 **Paddle Stack**:
-Continuous open play. Waiting order controls the next match; the host chooses adaptive rotation, four-off/four-on, or winners-stay-and-split before Play starts.
+Continuous open play. Waiting order controls the next match; the host chooses adaptive rotation, four-off/four-on, or winner-stays, then may mix partners or keep pairs together.
 _Avoid_: Queue algorithm
+
+**Keep pairs together**:
+A Paddle Stack partner policy where two-player teams enter, play, and rotate through the queue as one unit.
+_Avoid_: Adjacent paddles, tournament team
+
+**Team Round Robin**:
+Synchronized fixed-pair rounds where every pair plays every other pair once; an odd number of pairs receives deterministic byes.
+_Avoid_: Tournament, bracket, league
 
 **Mix It Up**:
 Synchronized social rounds that prioritize fair rests, new partners, and fewer repeated opponents.

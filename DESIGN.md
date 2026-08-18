@@ -107,7 +107,9 @@ The shared game link and authenticated session workspace are two access paths to
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
 
-Management controls sit beside the information they change and render only for hosts or co-hosts. Sharing is the one persistent host action: the compact Share control remains in the heading of Overview, Players, Play, Chat, and Payments so inviting someone never requires returning to another tab. Player screens remain readable and action-light; they are not disabled host dashboards.
+Authenticated game chrome is persistent across navigation: the tab rail stays left, while Edit game (host/co-host) and Share game stay right. On narrow screens, actions occupy a compact row above the full-width tab rail. The session name, destination title, and destination subtitle render before the data boundary; only each tab’s content becomes a layout-accurate skeleton. This prevents navigation, actions, and headings from flashing between tabs.
+
+Management controls sit beside the information they change and render only for hosts or co-hosts. Sharing is the persistent session action, so inviting someone never requires returning to another tab. Player screens remain readable and action-light; they are not disabled host dashboards.
 
 ## Onboarding
 
@@ -137,7 +139,7 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 ### Live court
 
-Before Play starts, the host chooses one of three flat, outcome-labeled rows: Paddle Stack, Mix It Up, or Court Climb. Only Paddle Stack reveals a secondary queue-rule control. Unsupported Court Climb rosters explain the exact player/court requirement inline rather than failing after selection.
+Before Play starts, the host chooses one of four flat, outcome-labeled rows: Paddle Stack, Mix It Up, Court Climb, or Team Round Robin. Paddle Stack progressively reveals queue rules and Partner style; Keep pairs together then reveals a compact pair builder. Team Round Robin requires fixed pairs and schedules every pair against every other pair once, using byes when the team count is odd. Unsupported rosters explain the exact player/court requirement inline rather than failing after selection.
 
 - Scores dominate and remain readable from several feet.
 - Teams align directly above their score.
@@ -145,6 +147,7 @@ Before Play starts, the host chooses one of three flat, outcome-labeled rows: Pa
 - Live state combines a coral mark with the word “Live.”
 - Score mutations temporarily disable repeat input and explain concurrency conflicts.
 - A finished match collapses into history; it does not linger as an active card.
+- Fixed partners appear as one team row in the queue and remain together across future assignments. Pair identity is explicit session data, never inferred from adjacent paddles.
 
 ### Collections
 

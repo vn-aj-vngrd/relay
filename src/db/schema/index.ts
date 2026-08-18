@@ -29,7 +29,7 @@ export const sessionRole = pgEnum("session_role", ["host", "cohost", "player"]);
 export const matchStatus = pgEnum("match_status", ["scheduled", "active", "completed", "cancelled"]);
 export const paymentStatus = pgEnum("payment_status", ["unpaid", "sent", "confirmed", "excluded"]);
 export const expenseKind = pgEnum("expense_kind", ["court", "ball", "paddle_rental", "drinks", "other"]);
-export const rotationMode = pgEnum("rotation_mode", ["manual", "queue", "random", "winner_stays", "king_of_court"]);
+export const rotationMode = pgEnum("rotation_mode", ["manual", "queue", "random", "winner_stays", "king_of_court", "round_robin"]);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey(), // Mirrors auth.users; deletion is handled by an anonymization job.
@@ -265,6 +265,27 @@ export const sessionQueue = pgTable("session_queue", {
 }, (table) => [
   primaryKey({ columns: [table.sessionId, table.sessionPlayerId] }),
   unique("session_queue_position_unique").on(table.sessionId, table.position),
+]);
+
+export const sessionPairs = pgTable("session_pairs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sessionId: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "restrict" }),
+  position: integer("position").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("session_pair_position_unique").on(table.sessionId, table.position),
+  check("session_pair_position_positive", sql`${table.position} >= 1`),
+]);
+
+export const sessionPairMembers = pgTable("session_pair_members", {
+  pairId: uuid("pair_id").notNull().references(() => sessionPairs.id, { onDelete: "cascade" }),
+  sessionPlayerId: uuid("session_player_id").notNull().references(() => sessionPlayers.id, { onDelete: "restrict" }),
+  position: integer("position").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.pairId, table.sessionPlayerId] }),
+  unique("session_pair_member_position_unique").on(table.pairId, table.position),
+  unique("session_pair_player_unique").on(table.sessionPlayerId),
+  check("session_pair_member_position_valid", sql`${table.position} in (1, 2)`),
 ]);
 
 export const messages = pgTable("messages", {

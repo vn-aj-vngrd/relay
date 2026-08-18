@@ -17,6 +17,7 @@ import {
   notifications,
   playerPayments,
   sessionInvites,
+  sessionPairs,
   sessionPlayers,
   sessionQueue,
   sessions,
@@ -72,6 +73,7 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
       await tx.delete(expenses).where(eq(expenses.sessionId, session.id));
       await tx.delete(sessionInvites).where(eq(sessionInvites.sessionId, session.id));
       await tx.delete(courts).where(eq(courts.sessionId, session.id));
+      await tx.delete(sessionPairs).where(eq(sessionPairs.sessionId, session.id));
       await tx.delete(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       await tx.delete(notifications).where(eq(notifications.sessionId, session.id));
       await tx.delete(sessions).where(eq(sessions.id, session.id));

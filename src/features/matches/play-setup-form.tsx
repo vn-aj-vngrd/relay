@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowsClockwise, CrownSimple, Stack } from "@phosphor-icons/react";
+import { ArrowsClockwise, CrownSimple, Stack, UsersFour } from "@phosphor-icons/react";
 import { useActionState, useState } from "react";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -11,30 +11,52 @@ const options: Array<{ mode: PlayMode; title: string; description: string; icon:
   { mode: "queue", title: "Paddle Stack", description: "Keep courts moving as players arrive, rest, or leave.", icon: Stack },
   { mode: "random", title: "Mix It Up", description: "Rotate together with new partners and fair rests each round.", icon: ArrowsClockwise },
   { mode: "king_of_court", title: "Court Climb", description: "Winners move toward Court 1 and partners split every round.", icon: CrownSimple },
+  { mode: "round_robin", title: "Team Round Robin", description: "Keep pairs together and play every other pair once.", icon: UsersFour },
 ];
 
-export function PlaySetupForm({ sessionId, playerCount, courtCount }: { sessionId: string; playerCount: number; courtCount: number }) {
+type SetupPlayer = { id: string; name: string };
+
+function PairBuilder({ players }: { players: SetupPlayer[] }) {
+  const choices = players.map((player) => ({ value: player.id, label: player.name }));
+  const [assignments, setAssignments] = useState(() => players.map((player) => player.id));
+  const pairCount = Math.floor(players.length / 2);
+  const choose = (index: number, next: string) => setAssignments((current) => {
+    const swapped = [...current];
+    const other = swapped.indexOf(next);
+    if (other >= 0) swapped[other] = swapped[index];
+    swapped[index] = next;
+    return swapped;
+  });
+  return <section aria-labelledby="pair-builder-title" className="mt-6 border-t border-line pt-6"><h3 id="pair-builder-title" className="text-base font-[680]">Set the pairs</h3><p className="mt-1 text-sm leading-5 text-muted">Choose a player to swap positions. Everyone stays assigned once.</p><input type="hidden" name="pairCount" value={pairCount} /><div className="mt-4 space-y-5">{Array.from({ length: pairCount }, (_, index) => <div key={index} className="rounded-lg bg-surface-strong p-3"><p className="score mb-2 text-xs font-semibold text-muted">Pair {index + 1}</p><div className="grid gap-3 sm:grid-cols-2"><SelectField id={`pair-${index}-a`} name={`pair-${index}-a`} label={`Pair ${index + 1}, first player`} hideLabel value={assignments[index * 2]} onValueChange={(value) => choose(index * 2, value)} options={choices} /><SelectField id={`pair-${index}-b`} name={`pair-${index}-b`} label={`Pair ${index + 1}, second player`} hideLabel value={assignments[index * 2 + 1]} onValueChange={(value) => choose(index * 2 + 1, value)} options={choices} /></div></div>)}</div></section>;
+}
+
+export function PlaySetupForm({ sessionId, playerCount, courtCount, players = [] }: { sessionId: string; playerCount: number; courtCount: number; players?: SetupPlayer[] }) {
   const [mode, setMode] = useState<PlayMode>("queue");
+  const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
   const [state, action] = useActionState(startPlay, {} as StartPlayActionState);
   const climbPlayers = courtCount * 4;
   const climbAvailable = courtCount >= 2 && playerCount === climbPlayers;
+  const pairsAvailable = playerCount >= 4 && playerCount % 2 === 0 && players.length === playerCount;
+  const fixedPartners = mode === "round_robin" || (mode === "queue" && partnerPolicy === "fixed");
 
   return <form action={action} className="mt-8 text-left">
     <input type="hidden" name="sessionId" value={sessionId} />
     <fieldset>
       <legend className="sr-only">Play setup</legend>
       <div className="divide-y divide-line border-y border-line">{options.map(({ mode: value, title, description, icon: Icon }) => {
-        const disabled = value === "king_of_court" && !climbAvailable;
+        const disabled = (value === "king_of_court" && !climbAvailable) || (value === "round_robin" && !pairsAvailable);
         const selected = mode === value;
         return <label key={value} className={`flex min-h-20 gap-3 py-4 ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}>
           <input type="radio" name="mode" value={value} checked={selected} disabled={disabled} onChange={() => setMode(value)} className="sr-only" />
           <span aria-hidden className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selected ? "bg-primary text-white" : "bg-surface-strong text-muted"}`}><Icon size={18} weight={selected ? "bold" : "regular"} /></span>
-          <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-3"><strong className="font-[680]">{title}</strong><span aria-hidden className={`h-4 w-4 rounded-full border-4 ${selected ? "border-primary bg-surface" : "border-line bg-surface"}`} /></span><span className="mt-1 block text-sm leading-5 text-muted">{description}</span>{value === "king_of_court" && !climbAvailable ? <span className="mt-1.5 block text-xs font-medium text-warning">{courtCount < 2 ? "Needs at least 2 courts." : `Needs exactly ${climbPlayers} active players for ${courtCount} courts.`}</span> : null}</span>
+          <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-3"><strong className="font-[680]">{title}</strong><span aria-hidden className={`h-4 w-4 rounded-full border-4 ${selected ? "border-primary bg-surface" : "border-line bg-surface"}`} /></span><span className="mt-1 block text-sm leading-5 text-muted">{description}</span>{value === "king_of_court" && !climbAvailable ? <span className="mt-1.5 block text-xs font-medium text-warning">{courtCount < 2 ? "Needs at least 2 courts." : `Needs exactly ${climbPlayers} active players for ${courtCount} courts.`}</span> : value === "round_robin" && !pairsAvailable ? <span className="mt-1.5 block text-xs font-medium text-warning">{playerCount % 2 ? "Needs an even number of active players." : "Needs at least 4 active players."}</span> : null}</span>
         </label>;
       })}</div>
     </fieldset>
 
-    {mode === "queue" ? <div className="mt-5"><SelectField id="queue-rule" name="queueRule" label="Queue rule" defaultValue="adaptive" options={[{ value: "adaptive", label: "Adaptive — Relay responds to the queue" }, { value: "four_off", label: "Four rotate — a fresh group every match" }, { value: "winner_stays", label: "Winners stay — split and take the next two" }]} /><p className="mt-1.5 text-xs leading-5 text-muted">Adaptive uses winners-stay for a short queue and rotates all four when four or more players are waiting.</p></div> : null}
+    {mode === "queue" ? <div className="mt-5 space-y-5"><div><p className="text-sm font-[650]">Partner style</p><div className="mt-2 grid gap-2 sm:grid-cols-2"><label className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-lg border px-3 ${partnerPolicy === "mix" ? "border-primary bg-primary-soft" : "border-line bg-surface"}`}><input type="radio" name="partnerPolicy" value="mix" checked={partnerPolicy === "mix"} onChange={() => setPartnerPolicy("mix")} className="h-4 w-4 accent-[var(--primary)]" /><span><strong className="block text-sm">Mix partners</strong><span className="block text-xs text-muted">Relay balances variety.</span></span></label><label className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 ${pairsAvailable ? "cursor-pointer" : "cursor-not-allowed opacity-55"} ${partnerPolicy === "fixed" ? "border-primary bg-primary-soft" : "border-line bg-surface"}`}><input type="radio" name="partnerPolicy" value="fixed" checked={partnerPolicy === "fixed"} disabled={!pairsAvailable} onChange={() => setPartnerPolicy("fixed")} className="h-4 w-4 accent-[var(--primary)]" /><span><strong className="block text-sm">Keep pairs together</strong><span className="block text-xs text-muted">Queue and rotate as teams.</span></span></label></div>{!pairsAvailable ? <p className="mt-2 text-xs font-medium text-warning">Fixed pairs need an even roster of at least 4 active players.</p> : null}</div><div><SelectField id="queue-rule" name="queueRule" label="Queue rule" defaultValue="adaptive" options={[{ value: "adaptive", label: "Adaptive — Relay responds to the queue" }, { value: "four_off", label: fixedPartners ? "Both pairs rotate — two fresh teams" : "Four rotate — a fresh group every match" }, { value: "winner_stays", label: fixedPartners ? "Winning pair stays — up to two games" : "Winners stay — split and take the next two" }]} /><p className="mt-1.5 text-xs leading-5 text-muted">{fixedPartners ? "Adaptive keeps the winning pair for a short queue and rotates both pairs when another two teams are waiting." : "Adaptive uses winners-stay for a short queue and rotates all four when four or more players are waiting."}</p></div></div> : null}
+
+    {fixedPartners && pairsAvailable ? <PairBuilder key={players.map((player) => player.id).join(":")} players={players} /> : null}
 
     <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-muted">{playerCount} going · {courtCount} {courtCount === 1 ? "court" : "courts"}</p><SubmitButton pendingLabel="Starting Play…" className="w-full sm:w-auto">Start Play</SubmitButton></div>
     {state.error ? <p role="alert" className="mt-3 text-sm font-medium text-danger">{state.error}</p> : null}

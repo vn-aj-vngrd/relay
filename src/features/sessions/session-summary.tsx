@@ -5,13 +5,14 @@ import { formatSessionDateLong, formatSessionTime, peso } from "./format";
 
 type SessionSummary = typeof sessions.$inferSelect;
 
-export function SessionHero({ session, hostLabel }: { session: SessionSummary; hostLabel: string }) {
+export function SessionHero({ session, hostLabel, headingLevel = "h1" }: { session: SessionSummary; hostLabel: string; headingLevel?: "h1" | "h2" }) {
+  const Heading = headingLevel;
   return <div className="public-session-hero relative overflow-hidden px-5 pb-8 pt-7 text-white sm:rounded-t-xl sm:px-8 sm:pb-10" style={{ backgroundColor: "var(--session-cover, var(--court))" }}>
     <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
     <div className="absolute inset-y-0 right-[18%] w-px bg-court-line/20" />
     <div className="absolute right-0 top-[68%] h-px w-[36%] bg-court-line/20" />
     <p className="sport-label text-white/65">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
-    <h1 className="relative mt-4 max-w-xl text-4xl font-[720] tracking-[-0.025em] sm:text-5xl">{session.title}</h1>
+    <Heading className="relative mt-4 max-w-xl text-4xl font-[720] tracking-[-0.025em] sm:text-5xl">{session.title}</Heading>
     <p className="relative mt-3 text-white/70">{hostLabel}</p>
   </div>;
 }

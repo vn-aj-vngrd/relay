@@ -1,6 +1,6 @@
 # Play mode variations for Relay
 
-Research only — no implementation decision has been made.
+Historical research. Relay initially shipped the three recommended social setups. A later focused decision added **Keep pairs together** and **Team Round Robin**; see [`fixed-partners-and-tournament-play.md`](./fixed-partners-and-tournament-play.md).
 
 ## Question
 
@@ -197,7 +197,7 @@ Avoid achievement spam, permanent skill movement, random power-ups, punishments,
 1. Refine the existing Paddle Stack into clear **Four rotate**, **Winners stay and split**, and **Adaptive** presets.
 2. Add **Mix It Up** with synchronized rounds and deterministic low-repeat assignments.
 3. Add **Court Climb** only after round synchronization is reliable.
-4. Defer Mexicano/performance balancing and fixed-team round robins until actual friend groups request them.
+4. Add fixed partners and Team Round Robin when requested; continue deferring Mexicano, performance balancing, and elimination brackets.
 
 This sequence deepens Relay’s hero feature without introducing leagues, tournaments, or ratings.
 

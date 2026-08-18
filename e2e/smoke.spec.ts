@@ -132,15 +132,16 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await expect(page.getByText("Host workspace", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   const hostAccessibility = await new AxeBuilder({ page }).analyze();
   expect(hostAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
   for (const path of ["", "/players", "/play", "/chat", "/payments"]) {
     await page.goto(`/games/${sessionId}${path}`);
+    await expect(page.getByRole("link", { name: "Edit game" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Share game" })).toBeVisible();
   }
   await page.goto(`/games/${sessionId}/players`);
-  for (const name of ["Mika Reyes", "AJ Santos", "John Cruz"]) {
+  for (const name of ["Mika Reyes", "AJ Santos"]) {
     await page.getByPlaceholder("Add a friend by name").fill(name);
     await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText(name, { exact: true })).toBeVisible();
@@ -172,6 +173,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.goto(`/games/${sessionId}/chat`);
   await guestPage.getByRole("link", { name: "Chat", exact: true }).click();
   await expect(guestPage).toHaveURL(`${publicHref}/chat`);
+  await guestPage.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
   await guestPage.getByRole("textbox", { name: "Message", exact: true }).fill("Guest Bea is bringing pickleballs.");
   await guestPage.getByRole("button", { name: "Send message" }).click();
   await expect(guestPage.getByText("Guest Bea is bringing pickleballs.", { exact: true })).toBeVisible();
@@ -183,7 +185,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.locator('#expense-receipt').setInputFiles("e2e/fixtures/payment-proof.png");
   await page.getByRole("button", { name: "Create collection" }).click();
   await expect(page.getByText("Host · paid the full amount upfront")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("0 of 4 paid")).toBeVisible();
+  await expect(page.getByText("0 of 3 paid")).toBeVisible();
   await expect(page.getByText("Mika Reyes", { exact: true })).toBeVisible();
   await expect(page.getByText("Guest Bea", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Payment screenshot")).toHaveCount(0);
@@ -197,15 +199,17 @@ test("an authenticated host and guest can complete the core session flow", async
   const guestPaymentRow = page.getByRole("listitem").filter({ hasText: "Guest Bea" });
   await expect(guestPaymentRow.getByText("Waiting for host review")).toBeVisible();
   await guestPaymentRow.getByRole("button", { name: "Confirm paid" }).click();
-  await expect(page.getByText("1 of 4 paid")).toBeVisible();
+  await expect(page.getByText("1 of 3 paid")).toBeVisible();
   await guestPage.reload();
   await expect(guestPage.getByText("Payment confirmed")).toBeVisible();
 
   await page.goto(`/games/${sessionId}/play`);
   await expect(page.getByRole("heading", { name: "Choose how tonight runs" })).toBeVisible();
-  const mixItUp = page.getByRole("radio", { name: /Mix It Up/ });
-  await page.getByText("Mix It Up", { exact: true }).click();
-  await expect(mixItUp).toBeChecked();
+  await page.getByRole("radio", { name: /^Keep pairs together/ }).click();
+  await expect(page.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
+  const teamRoundRobin = page.getByRole("radio", { name: /Team Round Robin/ });
+  await page.getByText("Team Round Robin", { exact: true }).click();
+  await expect(teamRoundRobin).toBeChecked();
   await page.getByRole("button", { name: "Start Play" }).click();
   await page.getByRole("button", { name: "Start first round" }).click();
   await expect(page.getByText("Match in progress")).toBeVisible();

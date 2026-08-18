@@ -1,10 +1,8 @@
-import { ArrowLeft, LockKey } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
+import { LockKey } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
-import { SessionNav } from "@/components/shared/session-nav";
+import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
-import { sessionAccentStyle } from "@/features/sessions/accent";
 import { SessionSettingsForm, type SessionSettingsDefaults } from "@/features/sessions/session-settings-form";
 import { getSessionForUser } from "@/features/sessions/queries";
 
@@ -47,5 +45,5 @@ export default async function GameSettingsPage({ params }: { params: Promise<{ i
     bookingNotes: data.session.bookingNotes ?? "",
   };
 
-  return <div style={sessionAccentStyle(data.session.accentColor)}><div className="mb-5"><Link href={`/games/${sessionId}`} className="mb-3 inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-muted hover:text-ink"><ArrowLeft aria-hidden size={16} />Overview</Link><p className="text-sm font-semibold text-primary">{data.session.title}</p><h1 className="mt-1 app-title">Game settings</h1><p className="mt-2 max-w-2xl text-muted">Keep the shared plan accurate for everyone with the invite.</p></div><SessionNav id={sessionId} active={null} /><div className="mx-auto max-w-3xl py-7">{locked ? <section className="border-y border-line py-10 text-center"><LockKey aria-hidden size={24} className="mx-auto text-muted" /><h2 className="mt-4 text-xl font-bold">Settings are locked</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">Game details stop changing once Play begins or the session is complete. This protects court assignments, results, and the shared memory.</p><ButtonLink href={`/games/${sessionId}`} className="mt-6">Back to game</ButtonLink></section> : <SessionSettingsForm defaults={defaults} />}</div></div>;
+  return <><GamePageIntro title="Game settings" description="Keep the shared plan accurate for everyone with the invite." /><div className="mx-auto max-w-3xl">{locked ? <section className="border-y border-line py-10 text-center"><LockKey aria-hidden size={24} className="mx-auto text-muted" /><h2 className="mt-4 text-xl font-bold">Settings are locked</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">Game details stop changing once Play begins or the session is complete. This protects court assignments, results, and the shared memory.</p><ButtonLink href={`/games/${sessionId}`} className="mt-6">Back to game</ButtonLink></section> : <SessionSettingsForm defaults={defaults} />}</div></>;
 }
