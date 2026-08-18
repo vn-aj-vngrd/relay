@@ -35,7 +35,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   const rotationLabel = roundMode ? (data.completedMatchCount ? "Start next round" : "Start first round") : startMatchLabel(data.completedMatchCount);
 
   return <><GamePageIntro title="Play" description="Court assignments, scores, partner rotations, and who plays next." action={<div className="flex items-center gap-2">{data.session.status === "live" ? <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live"><Broadcast aria-hidden size={17} />Play in progress</span> : null}<RealtimeRefresh sessionId={data.session.id} /></div>} />
-    {data.session.status !== "live" ? <section className="mx-auto max-w-2xl py-10 sm:py-14">
+    {data.session.status !== "live" ? <section className="mx-auto w-full max-w-4xl py-10 sm:py-14">
       <div className="text-center"><Broadcast className="mx-auto text-primary" size={26} /><h2 className="mt-4 text-2xl font-bold">Choose how tonight runs</h2><p className="mx-auto mt-2 max-w-lg text-pretty text-muted">Set the court flow before play starts. Everyone will see the same assignments, queue, and scores.</p></div>
       {isHost ? <PlaySetupForm sessionId={data.session.id} playerCount={goingCount} courtCount={data.courts.length} players={data.roster.filter(({ player }) => player.rsvp === "going").map(({ player, profile }) => ({ id: player.id, name: playerName(player, profile) }))} /> : <p className="mt-7 text-center text-sm font-medium text-muted">The host is choosing the play setup.</p>}
     </section> : <div className="grid gap-7 pt-6 lg:grid-cols-[1fr_330px]">

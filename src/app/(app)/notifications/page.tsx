@@ -25,7 +25,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
     groups.set(group, [...(groups.get(group) ?? []), row]);
   }
 
-  return <div className="mx-auto max-w-3xl">
+  return <div className="mx-auto w-full max-w-4xl">
     <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
         <h1 className="app-title">Notifications</h1>
