@@ -9,6 +9,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 ## 2. Primary user flows
 
 ### Create → share → join
+
 1. Authenticated host selects **Create game**.
 2. Enters the seven required fields; sensible defaults are prefilled.
 3. Optionally expands booking, cost, court, group, notes, and visibility.
@@ -18,12 +19,14 @@ Relay coordinates everything around a recreational pickleball session; it does n
 7. Going RSVPs fill capacity; later Going responses become ordered waitlist entries.
 
 ### Book externally → coordinate payment
+
 1. Host follows the venue's external booking link.
 2. Returns and marks the session booked with optional courts, reference, screenshot, total, and notes.
 3. Relay divides included expenses among included players, preserving explicit overrides.
 4. Player marks payment sent; host confirms it.
 
 ### Arrive → play live
+
 1. Host starts Play.
 2. Available players enter a deterministic queue; host picks manual, queue, random, winner-stays, or king-of-court rotation.
 3. Active court cards show teams and large scores. Score controls use optimistic version checks.
@@ -31,6 +34,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 5. Realtime subscriptions cover only court, match, queue, score, and chat changes.
 
 ### Complete → remember → play again
+
 1. Host ends the session after confirming active matches.
 2. The same URL transitions to a memory view with results, standings, and media.
 3. Players add photos, captions, comments, and reactions.
@@ -95,18 +99,18 @@ Supabase RLS should mirror application authorization for defense in depth. Drizz
 
 ## 7. Authorization matrix
 
-| Capability | Host | Group admin/co-host | Player | Guest | Public |
-|---|---:|---:|---:|---:|---:|
-| View public session | Yes | Yes | Yes | Yes | If visibility permits |
-| Edit session / booking | Yes | If assigned | No | No | No |
-| Manage capacity/roster | Yes | If assigned | No | No | No |
-| Update own RSVP | Yes | Yes | Yes | Own invite identity | No |
-| Manage courts/queue/matches | Yes | If assigned | No | No | No |
-| Update live score | Yes | If assigned scorer | If assigned scorer | No | No |
-| Mark own payment sent | Yes | Yes | Yes | If claim token valid | No |
-| Confirm/override payment | Yes | If assigned | No | No | No |
-| Chat/react/upload memories | Yes | Yes | Participant | Participant guest | No |
-| Complete/cancel/delete | Yes | No by default | No | No | No |
+| Capability                  | Host | Group admin/co-host |             Player |                Guest |                Public |
+| --------------------------- | ---: | ------------------: | -----------------: | -------------------: | --------------------: |
+| View public session         |  Yes |                 Yes |                Yes |                  Yes | If visibility permits |
+| Edit session / booking      |  Yes |         If assigned |                 No |                   No |                    No |
+| Manage capacity/roster      |  Yes |         If assigned |                 No |                   No |                    No |
+| Update own RSVP             |  Yes |                 Yes |                Yes |  Own invite identity |                    No |
+| Manage courts/queue/matches |  Yes |         If assigned |                 No |                   No |                    No |
+| Update live score           |  Yes |  If assigned scorer | If assigned scorer |                   No |                    No |
+| Mark own payment sent       |  Yes |                 Yes |                Yes | If claim token valid |                    No |
+| Confirm/override payment    |  Yes |         If assigned |                 No |                   No |                    No |
+| Chat/react/upload memories  |  Yes |                 Yes |        Participant |    Participant guest |                    No |
+| Complete/cancel/delete      |  Yes |       No by default |                 No |                   No |                    No |
 
 Every mutation authenticates or validates a scoped guest token, loads the target session, checks role and lifecycle, validates with Zod, and performs the write transactionally.
 

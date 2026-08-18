@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { mergeRecentSearches, searchRequestSchema } from "./domain";
 
 describe("global search input", () => {
@@ -12,7 +13,11 @@ describe("global search input", () => {
     const first = mergeRecentSearches([], { query: "  Central Pickle ", filter: "venues" }, 1);
     const replaced = mergeRecentSearches(first, { query: "central pickle", filter: "venues" }, 2);
     expect(replaced).toEqual([{ query: "central pickle", filter: "venues", savedAt: 2 }]);
-    const many = Array.from({ length: 10 }, (_, index) => ({ query: `q${index}`, filter: "all" as const, savedAt: index }));
+    const many = Array.from({ length: 10 }, (_, index) => ({
+      query: `q${index}`,
+      filter: "all" as const,
+      savedAt: index,
+    }));
     expect(mergeRecentSearches(many, { query: "latest", filter: "players" }, 20)).toHaveLength(8);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { can } from "./permissions";
 
 describe("session authorization", () => {

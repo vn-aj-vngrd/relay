@@ -1,6 +1,8 @@
 import "server-only";
+
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+
 import { getPublicEnv } from "@/lib/env";
 
 export async function createSupabaseServerClient() {
@@ -10,8 +12,11 @@ export async function createSupabaseServerClient() {
     cookies: {
       getAll: () => cookieStore.getAll(),
       setAll(values) {
-        try { values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }
-        catch { /* Server Components cannot set cookies; proxy refreshes sessions. */ }
+        try {
+          values.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        } catch {
+          /* Server Components cannot set cookies; proxy refreshes sessions. */
+        }
       },
     },
   });

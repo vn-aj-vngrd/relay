@@ -10,7 +10,11 @@ export function collectFromPlayers(players: Array<{ id: string; userId: string |
   return players.filter((player) => player.userId !== hostId).map((player) => player.id);
 }
 
-export function splitExpense(totalCents: number, playerIds: string[], overrides: Record<string, number> = {}): Record<string, number> {
+export function splitExpense(
+  totalCents: number,
+  playerIds: string[],
+  overrides: Record<string, number> = {},
+): Record<string, number> {
   if (!Number.isInteger(totalCents) || totalCents < 0) throw new Error("Total must be a nonnegative integer");
   const uniquePlayers = [...new Set(playerIds)];
   if (uniquePlayers.length === 0) return {};

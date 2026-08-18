@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { PublicSessionHeader } from "./public-session-header";
 import { PublicSessionNav } from "./public-session-nav";
 
@@ -23,8 +24,12 @@ describe("PublicSessionNav", () => {
   });
 
   it("scopes the active state to the session accent", () => {
-    const { container } = render(<PublicSessionHeader slug="saturday-night-pickle" signedIn={false} accentColor="coral" />);
+    const { container } = render(
+      <PublicSessionHeader slug="saturday-night-pickle" signedIn={false} accentColor="coral" />,
+    );
 
-    expect(container.querySelector<HTMLElement>(".app-chrome")?.style.getPropertyValue("--primary")).toContain("#bd4545");
+    expect(container.querySelector<HTMLElement>(".app-chrome")?.style.getPropertyValue("--primary")).toContain(
+      "#bd4545",
+    );
   });
 });

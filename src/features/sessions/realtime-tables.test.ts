@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { SESSION_REALTIME_TABLES } from "./realtime-tables";
 
 describe("session realtime subscriptions", () => {

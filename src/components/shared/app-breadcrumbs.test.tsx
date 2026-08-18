@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { buildBreadcrumbItems } from "./app-breadcrumbs";
 
 describe("buildBreadcrumbItems", () => {
@@ -17,6 +18,13 @@ describe("buildBreadcrumbItems", () => {
     expect(buildBreadcrumbItems("/profile/vanajvanguardia")).toEqual([
       { href: "/home", label: "Home" },
       { href: undefined, label: "Profile" },
+    ]);
+  });
+
+  it("labels feedback as an authenticated support destination", () => {
+    expect(buildBreadcrumbItems("/feedback")).toEqual([
+      { href: "/home", label: "Home" },
+      { href: undefined, label: "Feedback" },
     ]);
   });
 

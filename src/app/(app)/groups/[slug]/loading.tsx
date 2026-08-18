@@ -1,5 +1,52 @@
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function GroupLoading() {
-  return <div role="status" className="mx-auto max-w-4xl" aria-label="Loading group" aria-busy="true"><header className="flex items-end justify-between border-b border-line pb-7"><div><Skeleton className="h-4 w-16" /><Skeleton className="mt-2 h-9 w-56" /><Skeleton className="mt-3 h-4 w-80 max-w-full" /></div><Skeleton className="h-9 w-28" /></header><div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="space-y-10"><section><Skeleton className="h-5 w-36" /><div className="mt-3 divide-y divide-line border-y border-line">{Array.from({ length: 2 }, (_, index) => <div key={index} className="flex min-h-20 items-center gap-3"><Skeleton className="h-8 w-1" /><div className="flex-1"><Skeleton className="h-4 w-40" /><Skeleton className="mt-2 h-3 w-64 max-w-full" /></div></div>)}</div></section><section><Skeleton className="h-5 w-36" /><div className="mt-4 grid gap-4 sm:grid-cols-2"><Skeleton className="aspect-[16/9]" /><Skeleton className="aspect-[16/9]" /></div></section></div><aside><Skeleton className="h-5 w-24" /><div className="mt-4 divide-y divide-line border-y border-line">{Array.from({ length: 4 }, (_, index) => <div key={index} className="flex min-h-14 items-center gap-3"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 flex-1" /></div>)}</div></aside></div></div>;
+  return (
+    <div role="status" className="mx-auto max-w-4xl" aria-label="Loading group" aria-busy="true">
+      <header className="flex items-end justify-between border-b border-line pb-7">
+        <div>
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="mt-2 h-9 w-56" />
+          <Skeleton className="mt-3 h-4 w-80 max-w-full" />
+        </div>
+        <Skeleton className="h-9 w-28" />
+      </header>
+      <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="space-y-10">
+          <section>
+            <Skeleton className="h-5 w-36" />
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              {Array.from({ length: 2 }, (_, index) => (
+                <div key={index} className="flex min-h-20 items-center gap-3">
+                  <Skeleton className="h-8 w-1" />
+                  <div className="flex-1">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="mt-2 h-3 w-64 max-w-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+          <section>
+            <Skeleton className="h-5 w-36" />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <Skeleton className="aspect-[16/9]" />
+              <Skeleton className="aspect-[16/9]" />
+            </div>
+          </section>
+        </div>
+        <aside>
+          <Skeleton className="h-5 w-24" />
+          <div className="mt-4 divide-y divide-line border-y border-line">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div key={index} className="flex min-h-14 items-center gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
 }

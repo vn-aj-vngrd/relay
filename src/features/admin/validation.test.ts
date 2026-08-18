@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { adminCreateUserSchema, adminReasonSchema, adminSessionActionSchema, adminUpdateProfileSchema, adminUserActionSchema } from "./validation";
+
+import {
+  adminCreateUserSchema,
+  adminReasonSchema,
+  adminSessionActionSchema,
+  adminUpdateProfileSchema,
+  adminUserActionSchema,
+} from "./validation";
 
 const id = "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7";
 
@@ -16,13 +23,28 @@ describe("admin action validation", () => {
 
   it("accepts valid moderation requests", () => {
     expect(adminUserActionSchema.safeParse({ userId: id, reason: "Repeated abuse reports" }).success).toBe(true);
-    expect(adminSessionActionSchema.safeParse({ sessionId: id, reason: "Host requested cancellation" }).success).toBe(true);
+    expect(adminSessionActionSchema.safeParse({ sessionId: id, reason: "Host requested cancellation" }).success).toBe(
+      true,
+    );
   });
 
   it("normalizes new accounts and validates profile edits", () => {
-    const created = adminCreateUserSchema.parse({ email: " Player@Example.com ", name: " Mika Santos ", username: "mika-santos" });
+    const created = adminCreateUserSchema.parse({
+      email: " Player@Example.com ",
+      name: " Mika Santos ",
+      username: "mika-santos",
+    });
     expect(created).toMatchObject({ email: "player@example.com", name: "Mika Santos" });
     expect(adminCreateUserSchema.safeParse({ email: "bad", name: "M", username: "Bad Name" }).success).toBe(false);
-    expect(adminUpdateProfileSchema.safeParse({ userId: id, name: "Mika Santos", username: "mika-santos", city: "Manila", skillLevel: "intermediate", dominantHand: "right" }).success).toBe(true);
+    expect(
+      adminUpdateProfileSchema.safeParse({
+        userId: id,
+        name: "Mika Santos",
+        username: "mika-santos",
+        city: "Manila",
+        skillLevel: "intermediate",
+        dominantHand: "right",
+      }).success,
+    ).toBe(true);
   });
 });

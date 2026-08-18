@@ -1,7 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import OverviewLoading from "@/app/(app)/games/[id]/loading";
+
 import ChatLoading from "@/app/(app)/games/[id]/chat/loading";
+import OverviewLoading from "@/app/(app)/games/[id]/loading";
 import PaymentsLoading from "@/app/(app)/games/[id]/payments/loading";
 import PlayLoading from "@/app/(app)/games/[id]/play/loading";
 import PlayersLoading from "@/app/(app)/games/[id]/players/loading";

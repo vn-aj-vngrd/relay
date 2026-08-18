@@ -1,7 +1,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({ completeProfileSetup: vi.fn(async () => ({})), skipProfileSetup: vi.fn(async () => undefined) }));
+vi.mock("./actions", () => ({
+  completeProfileSetup: vi.fn(async () => ({})),
+  skipProfileSetup: vi.fn(async () => undefined),
+}));
 
 import { SetupWizard } from "./setup-wizard";
 

@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { Avatar, AvatarStack } from "./avatar-stack";
 import { Status } from "./status";
 

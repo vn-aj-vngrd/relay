@@ -1,6 +1,7 @@
+import "./globals.css";
+
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
 
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -24,9 +25,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}` }} />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
+          }}
+        />
       </head>
-      <body className={`${inter.variable} ${geistMono.variable}`}><a href="#main-content" className="skip-link">Skip to content</a>{children}</body>
+      <body className={`${inter.variable} ${geistMono.variable}`}>
+        <a href="#main-content" className="skip-link">
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

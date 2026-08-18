@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { parsePlaySetup, planRotation, rotationDescription } from "./rotation";
 
 const courts = [
@@ -9,10 +10,23 @@ const waiting = (ids: string[]) => ids.map((id, index) => ({ id, position: index
 
 describe("play rotation", () => {
   it("validates the host setup and keeps queue rules scoped to Paddle Stack", () => {
-    expect(parsePlaySetup({ mode: "queue", queueRule: "adaptive" })).toEqual({ mode: "queue", queueRule: "adaptive", partnerPolicy: "mix", pairs: [] });
+    expect(parsePlaySetup({ mode: "queue", queueRule: "adaptive" })).toEqual({
+      mode: "queue",
+      queueRule: "adaptive",
+      partnerPolicy: "mix",
+      pairs: [],
+    });
     expect(parsePlaySetup({ mode: "random", queueRule: "winner_stays" })).toEqual({ mode: "random" });
-    const pairs: [string, string][] = [["00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"], ["00000000-0000-4000-8000-000000000003", "00000000-0000-4000-8000-000000000004"]];
-    expect(parsePlaySetup({ mode: "queue", partnerPolicy: "fixed", pairs })).toEqual({ mode: "queue", queueRule: "adaptive", partnerPolicy: "fixed", pairs });
+    const pairs: [string, string][] = [
+      ["00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"],
+      ["00000000-0000-4000-8000-000000000003", "00000000-0000-4000-8000-000000000004"],
+    ];
+    expect(parsePlaySetup({ mode: "queue", partnerPolicy: "fixed", pairs })).toEqual({
+      mode: "queue",
+      queueRule: "adaptive",
+      partnerPolicy: "fixed",
+      pairs,
+    });
     expect(() => parsePlaySetup({ mode: "manual" })).toThrow();
   });
 
@@ -23,20 +37,54 @@ describe("play rotation", () => {
   });
 
   it("keeps declared pairs together in Paddle Stack even when player queue positions interleave", () => {
-    expect(planRotation({ mode: "queue", courts, waiting: waiting(["a", "c", "b", "d", "e", "f"]), history: [], fixedPairs: [["a", "b"], ["c", "d"], ["e", "f"]] })).toEqual([
-      { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] },
-    ]);
+    expect(
+      planRotation({
+        mode: "queue",
+        courts,
+        waiting: waiting(["a", "c", "b", "d", "e", "f"]),
+        history: [],
+        fixedPairs: [
+          ["a", "b"],
+          ["c", "d"],
+          ["e", "f"],
+        ],
+      }),
+    ).toEqual([{ courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] }]);
   });
 
   it("schedules every fixed pair once per Team Round Robin round without repeats", () => {
-    const fixedPairs: [string, string][] = [["a", "b"], ["c", "d"], ["e", "f"], ["g", "h"]];
-    const first = planRotation({ mode: "round_robin", courts, waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]), history: [], fixedPairs });
+    const fixedPairs: [string, string][] = [
+      ["a", "b"],
+      ["c", "d"],
+      ["e", "f"],
+      ["g", "h"],
+    ];
+    const first = planRotation({
+      mode: "round_robin",
+      courts,
+      waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]),
+      history: [],
+      fixedPairs,
+    });
     expect(first).toEqual([
       { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["g", "h"] },
       { courtId: "court-2", courtLabel: "Court 2", teamA: ["c", "d"], teamB: ["e", "f"] },
     ]);
-    const history = first.map((match, index) => ({ courtId: match.courtId, courtPosition: index + 1, teamA: match.teamA, teamB: match.teamB, winner: "A" as const, finishedAt: index + 1 }));
-    const second = planRotation({ mode: "round_robin", courts, waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]), history, fixedPairs });
+    const history = first.map((match, index) => ({
+      courtId: match.courtId,
+      courtPosition: index + 1,
+      teamA: match.teamA,
+      teamB: match.teamB,
+      winner: "A" as const,
+      finishedAt: index + 1,
+    }));
+    const second = planRotation({
+      mode: "round_robin",
+      courts,
+      waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]),
+      history,
+      fixedPairs,
+    });
     expect(second).toEqual([
       { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["e", "f"] },
       { courtId: "court-2", courtLabel: "Court 2", teamA: ["g", "h"], teamB: ["c", "d"] },
@@ -44,20 +92,52 @@ describe("play rotation", () => {
   });
 
   it("gives one pair a bye when Team Round Robin has an odd number of teams", () => {
-    const fixedPairs: [string, string][] = [["a", "b"], ["c", "d"], ["e", "f"]];
+    const fixedPairs: [string, string][] = [
+      ["a", "b"],
+      ["c", "d"],
+      ["e", "f"],
+    ];
     const allWaiting = waiting(["a", "b", "c", "d", "e", "f"]);
-    const history: Array<{ courtId: string; courtPosition: number; teamA: string[]; teamB: string[]; winner: "A"; finishedAt: number }> = [];
+    const history: Array<{
+      courtId: string;
+      courtPosition: number;
+      teamA: string[];
+      teamB: string[];
+      winner: "A";
+      finishedAt: number;
+    }> = [];
     for (let round = 0; round < 3; round += 1) {
-      const [plan] = planRotation({ mode: "round_robin", courts: courts.slice(0, 1), waiting: allWaiting, history, fixedPairs });
+      const [plan] = planRotation({
+        mode: "round_robin",
+        courts: courts.slice(0, 1),
+        waiting: allWaiting,
+        history,
+        fixedPairs,
+      });
       expect(plan).toBeDefined();
-      history.push({ courtId: plan.courtId, courtPosition: 1, teamA: plan.teamA, teamB: plan.teamB, winner: "A", finishedAt: round + 1 });
+      history.push({
+        courtId: plan.courtId,
+        courtPosition: 1,
+        teamA: plan.teamA,
+        teamB: plan.teamB,
+        winner: "A",
+        finishedAt: round + 1,
+      });
     }
     expect(new Set(history.map((match) => [match.teamA.join(""), match.teamB.join("")].sort().join("-"))).size).toBe(3);
     expect(planRotation({ mode: "round_robin", courts, waiting: allWaiting, history, fixedPairs })).toEqual([]);
   });
 
   it("rejects duplicate players in fixed partner setup", () => {
-    expect(() => parsePlaySetup({ mode: "round_robin", pairs: [["a", "b"], ["a", "c"]] })).toThrow();
+    expect(() =>
+      parsePlaySetup({
+        mode: "round_robin",
+        pairs: [
+          ["a", "b"],
+          ["a", "c"],
+        ],
+      }),
+    ).toThrow();
   });
 
   it("mixes a round across every court while prioritizing players with fewer games", () => {
@@ -65,7 +145,9 @@ describe("play rotation", () => {
       mode: "random",
       courts,
       waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h", "i"]),
-      history: [{ courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 }],
+      history: [
+        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 },
+      ],
     });
     const selected = plans.flatMap((match) => [...match.teamA, ...match.teamB]);
     expect(plans).toHaveLength(2);
@@ -94,7 +176,9 @@ describe("play rotation", () => {
       mode: "random",
       courts: courts.slice(0, 1),
       waiting: waiting(["a", "b", "c", "d"]),
-      history: [{ courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 }],
+      history: [
+        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 },
+      ],
     });
     expect([plan.teamA, plan.teamB]).not.toContainEqual(["a", "b"]);
     expect([plan.teamA, plan.teamB]).not.toContainEqual(["c", "d"]);

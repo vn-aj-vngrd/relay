@@ -26,8 +26,17 @@ export type SearchResponse = {
 
 export type RecentSearch = { query: string; filter: SearchFilter; savedAt: number };
 
-export function mergeRecentSearches(current: RecentSearch[], next: Omit<RecentSearch, "savedAt">, now = Date.now()): RecentSearch[] {
+export function mergeRecentSearches(
+  current: RecentSearch[],
+  next: Omit<RecentSearch, "savedAt">,
+  now = Date.now(),
+): RecentSearch[] {
   const normalized = next.query.trim();
   if (!normalized) return current;
-  return [{ query: normalized, filter: next.filter, savedAt: now }, ...current.filter((item) => item.query.toLocaleLowerCase() !== normalized.toLocaleLowerCase() || item.filter !== next.filter)].slice(0, 8);
+  return [
+    { query: normalized, filter: next.filter, savedAt: now },
+    ...current.filter(
+      (item) => item.query.toLocaleLowerCase() !== normalized.toLocaleLowerCase() || item.filter !== next.filter,
+    ),
+  ].slice(0, 8);
 }

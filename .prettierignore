@@ -1,0 +1,10 @@
+.next
+.vercel
+coverage
+dogfood-output
+node_modules
+playwright-report
+public
+test-results
+drizzle
+pnpm-lock.yaml

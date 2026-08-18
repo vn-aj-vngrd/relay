@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { validateAvatarFile } from "./avatar-validation";
 
 describe("validateAvatarFile", () => {
@@ -11,7 +12,9 @@ describe("validateAvatarFile", () => {
     const text = new File(["hello"], "avatar.txt", { type: "text/plain" });
     const spoofed = new File(["not an image"], "avatar.png", { type: "image/png" });
     await expect(validateAvatarFile(text)).resolves.toEqual({ error: "Use a JPG, PNG, or WebP photo." });
-    await expect(validateAvatarFile(spoofed)).resolves.toEqual({ error: "That file doesn’t appear to be a valid image." });
+    await expect(validateAvatarFile(spoofed)).resolves.toEqual({
+      error: "That file doesn’t appear to be a valid image.",
+    });
   });
 
   it("enforces the storage bucket size limit before upload", async () => {

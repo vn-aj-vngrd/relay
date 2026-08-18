@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { DEFAULT_CHAT_IMAGE_MAX_BYTES } from "@/lib/upload-config";
 
 const publicSchema = z.object({
@@ -13,7 +14,12 @@ const serverSchema = publicSchema.extend({
   GEOAPIFY_API_KEY: z.string().min(20),
   GEOAPIFY_API_URL: z.url().default("https://api.geoapify.com"),
   ADMIN_EMAILS: z.string().default(""),
-  CHAT_IMAGE_MAX_BYTES: z.coerce.number().int().min(1024).max(10 * 1024 * 1024).default(DEFAULT_CHAT_IMAGE_MAX_BYTES),
+  CHAT_IMAGE_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1024)
+    .max(10 * 1024 * 1024)
+    .default(DEFAULT_CHAT_IMAGE_MAX_BYTES),
 });
 
 export type PublicEnv = z.infer<typeof publicSchema>;

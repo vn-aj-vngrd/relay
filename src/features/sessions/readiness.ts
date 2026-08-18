@@ -8,7 +8,12 @@ export type SessionReadiness = {
   missing: ReadinessTask[];
 };
 
-export function sessionReadiness(input: { goingCount: number; booked: boolean; expectsCollection: boolean; collectionCreated: boolean }): SessionReadiness {
+export function sessionReadiness(input: {
+  goingCount: number;
+  booked: boolean;
+  expectsCollection: boolean;
+  collectionCreated: boolean;
+}): SessionReadiness {
   const complete: Record<ReadinessTask, boolean> = {
     roster: input.goingCount >= 4,
     booking: input.booked,

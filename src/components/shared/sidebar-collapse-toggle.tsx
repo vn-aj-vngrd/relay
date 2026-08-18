@@ -31,8 +31,21 @@ export function SidebarCollapseToggle() {
   };
 
   const label = compact ? "Open sidebar" : "Close sidebar";
-  return <button type="button" onClick={toggle} aria-label={label} aria-expanded={!compact} className="sidebar-collapse-toggle pressable group relative grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink">
-    <SidebarSimple aria-hidden size={19} weight="regular" />
-    <span role="tooltip" className="sidebar-toggle-tooltip pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1.5 text-xs font-medium text-surface shadow-sm group-hover:block group-focus-visible:block">{label}</span>
-  </button>;
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={label}
+      aria-expanded={!compact}
+      className="sidebar-collapse-toggle pressable group relative grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
+    >
+      <SidebarSimple aria-hidden size={19} weight="regular" />
+      <span
+        role="tooltip"
+        className="sidebar-toggle-tooltip pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1.5 text-xs font-medium text-surface shadow-sm group-hover:block group-focus-visible:block"
+      >
+        {label}
+      </span>
+    </button>
+  );
 }

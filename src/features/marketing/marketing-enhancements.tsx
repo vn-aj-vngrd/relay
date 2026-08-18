@@ -13,17 +13,28 @@ export function MarketingEnhancements() {
     document.documentElement.classList.add("marketing-scroll-active");
     const elements = [...document.querySelectorAll<HTMLElement>("[data-marketing-reveal]")];
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const lenis = reduceMotion ? null : new Lenis({
-      autoRaf: true,
-      lerp: 0.085,
-      smoothWheel: true,
-      syncTouch: false,
-      wheelMultiplier: 0.88,
-      prevent: (node) => Boolean(node.closest("[data-lenis-prevent]")),
-    });
+    const lenis = reduceMotion
+      ? null
+      : new Lenis({
+          autoRaf: true,
+          lerp: 0.085,
+          smoothWheel: true,
+          syncTouch: false,
+          wheelMultiplier: 0.88,
+          prevent: (node) => Boolean(node.closest("[data-lenis-prevent]")),
+        });
     lenisRef.current = lenis;
     const onAnchorClick = (event: MouseEvent) => {
-      if (!lenis || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (
+        !lenis ||
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      )
+        return;
       const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]');
       const hash = link?.hash;
       if (!hash) return;
@@ -45,18 +56,22 @@ export function MarketingEnhancements() {
       };
     }
 
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        const element = entry.target as HTMLElement;
-        element.classList.add("marketing-reveal-visible");
-        observer.unobserve(element);
-      }
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const element = entry.target as HTMLElement;
+          element.classList.add("marketing-reveal-visible");
+          observer.unobserve(element);
+        }
+      },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+    );
 
     for (const element of elements) {
       element.classList.add("marketing-reveal-ready");
-      if (element.getBoundingClientRect().top < window.innerHeight * 0.92) element.classList.add("marketing-reveal-visible");
+      if (element.getBoundingClientRect().top < window.innerHeight * 0.92)
+        element.classList.add("marketing-reveal-visible");
       else observer.observe(element);
     }
 
@@ -91,5 +106,16 @@ export function MarketingEnhancements() {
     else window.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  return <button type="button" onClick={returnToTop} aria-label="Back to top" aria-hidden={!showTop} tabIndex={showTop ? 0 : -1} className={`marketing-back-to-top pressable fixed bottom-5 right-5 z-30 grid h-10 w-10 place-items-center rounded-lg border border-[#d5d5cf] bg-white text-[#55555b] shadow-[0_4px_8px_rgb(20_20_23/.08)] hover:border-[#aaa9a3] hover:text-[#171719] ${showTop ? "is-visible" : ""}`}><ArrowUp aria-hidden size={17} /></button>;
+  return (
+    <button
+      type="button"
+      onClick={returnToTop}
+      aria-label="Back to top"
+      aria-hidden={!showTop}
+      tabIndex={showTop ? 0 : -1}
+      className={`marketing-back-to-top pressable fixed bottom-5 right-5 z-30 grid h-10 w-10 place-items-center rounded-lg border border-[#d5d5cf] bg-white text-[#55555b] shadow-[0_4px_8px_rgb(20_20_23/.08)] hover:border-[#aaa9a3] hover:text-[#171719] ${showTop ? "is-visible" : ""}`}
+    >
+      <ArrowUp aria-hidden size={17} />
+    </button>
+  );
 }

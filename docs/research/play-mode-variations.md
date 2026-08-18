@@ -113,21 +113,21 @@ The host should always be able to end a round early or finish a late court manua
 
 Do not model ten named algorithms. Separate four concerns:
 
-| Concern | Examples | Why it is separate |
-|---|---|---|
-| Court flow | continuous or synchronized rounds | Determines whether courts wait for one another |
-| Seat rotation | four-off/four-on, winners stay and split, court climb | Determines who leaves or changes courts |
-| Matchmaking | queue order, least-played, low-repeat mix, manual | Determines the next four and their teams |
-| Result rule | result only, live score, timed, first to 9/11 | Determines when a match finishes |
+| Concern       | Examples                                              | Why it is separate                             |
+| ------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| Court flow    | continuous or synchronized rounds                     | Determines whether courts wait for one another |
+| Seat rotation | four-off/four-on, winners stay and split, court climb | Determines who leaves or changes courts        |
+| Matchmaking   | queue order, least-played, low-repeat mix, manual     | Determines the next four and their teams       |
+| Result rule   | result only, live score, timed, first to 9/11         | Determines when a match finishes               |
 
 A mode is a tested preset across these concerns:
 
-| Relay mode | Flow | Rotation | Matchmaking | Best for |
-|---|---|---|---|---|
-| Paddle Stack | Continuous | Adaptive queue | Longest waiting first | Drop-ins and uneven attendance |
-| Mix It Up | Rounds | Everyone rotates | Least-played + avoid repeats | Social variety and fair court time |
-| Court Climb | Rounds | Winners up, losers down, partners split | Court position | Energetic multi-court sessions |
-| Manual | Either | Host decides | Host decides | Any unusual group |
+| Relay mode   | Flow       | Rotation                                | Matchmaking                  | Best for                           |
+| ------------ | ---------- | --------------------------------------- | ---------------------------- | ---------------------------------- |
+| Paddle Stack | Continuous | Adaptive queue                          | Longest waiting first        | Drop-ins and uneven attendance     |
+| Mix It Up    | Rounds     | Everyone rotates                        | Least-played + avoid repeats | Social variety and fair court time |
+| Court Climb  | Rounds     | Winners up, losers down, partners split | Court position               | Energetic multi-court sessions     |
+| Manual       | Either     | Host decides                            | Host decides                 | Any unusual group                  |
 
 ## “Smart” behavior without surprise
 

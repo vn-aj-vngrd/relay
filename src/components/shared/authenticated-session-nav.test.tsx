@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
 import { AuthenticatedSessionNav } from "./authenticated-session-nav";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/games/session-1/chat" }));

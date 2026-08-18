@@ -1,5 +1,10 @@
 export function RelayMark({ className = "h-7 w-7" }: { inverse?: boolean; className?: string }) {
-  return <span aria-hidden="true" className={`block shrink-0 rounded-full bg-signal shadow-[inset_-0.16em_0_0_rgb(23_23_25/.18)] ${className}`} />;
+  return (
+    <span
+      aria-hidden="true"
+      className={`block shrink-0 rounded-full bg-signal shadow-[inset_-0.16em_0_0_rgb(23_23_25/.18)] ${className}`}
+    />
+  );
 }
 
 export function Brand({ inverse = false, href = "/" }: { inverse?: boolean; href?: string }) {

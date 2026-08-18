@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { formatSessionDate, formatSessionDateLong, formatSessionTime, peso, sessionDateKey, spotsRemainingLabel } from "./format";
+
+import {
+  formatSessionDate,
+  formatSessionDateLong,
+  formatSessionTime,
+  peso,
+  sessionDateKey,
+  spotsRemainingLabel,
+} from "./format";
 
 describe("session formatting", () => {
   const start = new Date("2026-08-22T11:00:00Z");

@@ -25,13 +25,13 @@ A shared route and its authenticated counterpart must expose the same session fa
 
 ## Viewer capabilities
 
-| Capability | Host or co-host | Signed-in player | Guest player | Link viewer |
-| --- | --- | --- | --- | --- |
-| Read plan, roster, Play, and scores | Yes | Yes | Yes | Yes |
-| RSVP or update own response | Own response | Own response | Own response | Join by name first |
-| Chat and upload payment proof | Yes | Yes | Yes | Join first |
-| Edit plan, roster, booking, payments, and matches | Yes | No | No | No |
-| Keep account history | Yes | Yes | No | No |
+| Capability                                        | Host or co-host | Signed-in player | Guest player | Link viewer        |
+| ------------------------------------------------- | --------------- | ---------------- | ------------ | ------------------ |
+| Read plan, roster, Play, and scores               | Yes             | Yes              | Yes          | Yes                |
+| RSVP or update own response                       | Own response    | Own response     | Own response | Join by name first |
+| Chat and upload payment proof                     | Yes             | Yes              | Yes          | Join first         |
+| Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
+| Keep account history                              | Yes             | Yes              | No           | No                 |
 
 Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls.
 

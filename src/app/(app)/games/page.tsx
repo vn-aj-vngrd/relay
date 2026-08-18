@@ -1,8 +1,9 @@
 import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
+
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
-import { GameCollection, type GameCollectionItem } from "@/features/sessions/game-collection";
 import { formatSessionDate, formatSessionTime, sessionDateKey } from "@/features/sessions/format";
+import { GameCollection, type GameCollectionItem } from "@/features/sessions/game-collection";
 import { getHomeSessions } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 
@@ -21,7 +22,15 @@ export default async function GamesPage() {
     capacity: session.capacity,
     status: session.status,
     accentColor: session.accentColor,
-    readiness: session.hostId === user.id ? sessionReadiness({ goingCount: playerCount, booked: Boolean(session.bookedAt), expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents), collectionCreated: hasExpense }) : undefined,
+    readiness:
+      session.hostId === user.id
+        ? sessionReadiness({
+            goingCount: playerCount,
+            booked: Boolean(session.bookedAt),
+            expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents),
+            collectionCreated: hasExpense,
+          })
+        : undefined,
   }));
   const past: GameCollectionItem[] = data.recent.map(({ session, playerCount }) => ({
     id: session.id,
@@ -38,5 +47,21 @@ export default async function GamesPage() {
   }));
   const todayKey = sessionDateKey(new Date());
 
-  return <div><div className="flex items-end justify-between gap-4"><div><h1 className="app-title">Games</h1><p className="mt-2 max-w-xl text-muted">Every plan, active session, and game-night memory in one place.</p></div><span className="hidden sm:block"><ButtonLink href="/games/new"><CalendarPlus size={17} />Create game</ButtonLink></span></div><GameCollection upcoming={upcoming} past={past} todayKey={todayKey} /></div>;
+  return (
+    <div>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="app-title">Games</h1>
+          <p className="mt-2 max-w-xl text-muted">Every plan, active session, and game-night memory in one place.</p>
+        </div>
+        <span className="hidden sm:block">
+          <ButtonLink href="/games/new">
+            <CalendarPlus size={17} />
+            Create game
+          </ButtonLink>
+        </span>
+      </div>
+      <GameCollection upcoming={upcoming} past={past} todayKey={todayKey} />
+    </div>
+  );
 }

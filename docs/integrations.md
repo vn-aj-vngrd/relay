@@ -16,21 +16,21 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 
 ## Environment contract
 
-| Variable | Source | Exposure | Destination |
-|---|---|---|---|
-| `NEXT_PUBLIC_APP_URL` | Localhost or Vercel project alias | Public | Local, Vercel |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project reference | Public | Local, Vercel |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys | Public | Local, Vercel |
-| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | `true` after Google provider setup | Public | Local, Vercel |
-| `NEXT_PUBLIC_MAGIC_LINK_ENABLED` | `true` only after production SMTP is verified | Public | Local, Vercel |
-| `SUPABASE_SECRET_KEY` | Supabase API Keys | Secret, server-only | Local, Vercel |
-| `DATABASE_URL` | Supabase Connect → Transaction pooler | Secret, server-only | Local, Vercel |
-| `SUPABASE_PROJECT_REF` | Supabase project | Local setup metadata | Local only |
-| `SUPABASE_REGION` | Provisioning decision | Local setup metadata | Local only |
-| `GEOAPIFY_API_KEY` | Geoapify project | Secret, server-only | Local, Vercel |
-| `GEOAPIFY_API_URL` | Geoapify API origin | Server-only configuration | Local, Vercel |
-| `ADMIN_EMAILS` | Relay owner | Secret, server-only | Local, Vercel |
-| `CHAT_IMAGE_MAX_BYTES` | Relay upload policy | Server-only configuration | Local, Vercel |
+| Variable                               | Source                                        | Exposure                  | Destination   |
+| -------------------------------------- | --------------------------------------------- | ------------------------- | ------------- |
+| `NEXT_PUBLIC_APP_URL`                  | Localhost or Vercel project alias             | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project reference                    | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys                             | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`      | `true` after Google provider setup            | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_MAGIC_LINK_ENABLED`       | `true` only after production SMTP is verified | Public                    | Local, Vercel |
+| `SUPABASE_SECRET_KEY`                  | Supabase API Keys                             | Secret, server-only       | Local, Vercel |
+| `DATABASE_URL`                         | Supabase Connect → Transaction pooler         | Secret, server-only       | Local, Vercel |
+| `SUPABASE_PROJECT_REF`                 | Supabase project                              | Local setup metadata      | Local only    |
+| `SUPABASE_REGION`                      | Provisioning decision                         | Local setup metadata      | Local only    |
+| `GEOAPIFY_API_KEY`                     | Geoapify project                              | Secret, server-only       | Local, Vercel |
+| `GEOAPIFY_API_URL`                     | Geoapify API origin                           | Server-only configuration | Local, Vercel |
+| `ADMIN_EMAILS`                         | Relay owner                                   | Secret, server-only       | Local, Vercel |
+| `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                           | Server-only configuration | Local, Vercel |
 
 `SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
@@ -74,7 +74,7 @@ Initial pages render authoritative server snapshots. Clients subscribe only whil
 
 ## Database migration
 
-Read [`../drizzle/0000_initial_relay_schema.md`](../drizzle/0000_initial_relay_schema.md) before applying or repairing the baseline migration. Generate later schema changes with `pnpm db:generate -- --name <readable_name>` and add a companion Markdown file when a migration changes authorization, deletion behavior, historical data, or platform configuration.
+Read [`../drizzle/0000_initial_relay_schema.md`](../drizzle/0000_initial_relay_schema.md) before applying or repairing the baseline migration. Generate later schema changes with `pnpm db:generate --name <readable_name>` and add a companion Markdown file when a migration changes authorization, deletion behavior, historical data, or platform configuration.
 
 ## Admin console
 

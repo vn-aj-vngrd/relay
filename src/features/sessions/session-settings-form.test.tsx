@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ updateSessionAction: vi.fn(async () => ({})) }));
 
-import { SessionSettingsForm, type SessionSettingsDefaults } from "./session-settings-form";
+import { type SessionSettingsDefaults, SessionSettingsForm } from "./session-settings-form";
 
 const defaults: SessionSettingsDefaults = {
   id: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",

@@ -2,5 +2,49 @@ import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PlayersLoading() {
-  return <><GamePageIntro title="Players" description="Manage who’s going, join requests, waitlist movement, and roster access." /><div role="status" aria-label="Loading players" aria-busy="true" className="mx-auto w-full max-w-4xl"><section className="mb-9 border-y border-line py-5"><div className="flex items-start gap-3"><Skeleton className="h-5 w-5" /><div className="flex-1"><Skeleton className="h-4 w-44" /><Skeleton className="mt-2 h-3.5 w-full max-w-md" /><div className="mt-4 flex gap-2"><Skeleton className="h-11 flex-1" /><Skeleton className="h-9 w-20" /></div></div></div></section><section><div className="flex items-end justify-between"><div><Skeleton className="h-5 w-20" /><Skeleton className="mt-2 h-3.5 w-32" /></div><Skeleton className="h-7 w-14" /></div><div className="mt-4 divide-y divide-line border-y border-line">{Array.from({ length: 5 }, (_, index) => <div key={index} className="flex min-h-16 items-center gap-3"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-4 flex-1" /><Skeleton className="h-9 w-9" /></div>)}</div></section><section className="mt-9"><Skeleton className="h-5 w-24" /><Skeleton className="mt-3 h-14 w-full" /></section></div></>;
+  return (
+    <>
+      <GamePageIntro
+        title="Players"
+        description="Manage who’s going, join requests, waitlist movement, and roster access."
+      />
+      <div role="status" aria-label="Loading players" aria-busy="true" className="mx-auto w-full max-w-4xl">
+        <section className="mb-9 border-y border-line py-5">
+          <div className="flex items-start gap-3">
+            <Skeleton className="h-5 w-5" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="mt-2 h-3.5 w-full max-w-md" />
+              <div className="mt-4 flex gap-2">
+                <Skeleton className="h-11 flex-1" />
+                <Skeleton className="h-9 w-20" />
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div className="flex items-end justify-between">
+            <div>
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="mt-2 h-3.5 w-32" />
+            </div>
+            <Skeleton className="h-7 w-14" />
+          </div>
+          <div className="mt-4 divide-y divide-line border-y border-line">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div key={index} className="flex min-h-16 items-center gap-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 flex-1" />
+                <Skeleton className="h-9 w-9" />
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="mt-9">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="mt-3 h-14 w-full" />
+        </section>
+      </div>
+    </>
+  );
 }

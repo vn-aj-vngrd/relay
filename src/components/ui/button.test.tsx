@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+
 import { Button, ButtonLink, ButtonSpinner } from "./button";
 
 describe("button primitives", () => {
@@ -12,12 +13,27 @@ describe("button primitives", () => {
     expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute("href", "/games/new");
   });
   it("keeps default actions compact and exposes one consistent large size", () => {
-    render(<><Button>Compact action</Button><Button size="large">Large action</Button></>);
-    expect(screen.getByRole("button", { name: "Compact action" })).toHaveClass("min-h-9", "items-center", "justify-center", "leading-none");
+    render(
+      <>
+        <Button>Compact action</Button>
+        <Button size="large">Large action</Button>
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Compact action" })).toHaveClass(
+      "min-h-9",
+      "items-center",
+      "justify-center",
+      "leading-none",
+    );
     expect(screen.getByRole("button", { name: "Large action" })).toHaveClass("min-h-10");
   });
   it("keeps the loading spinner decorative", () => {
-    const { container } = render(<Button><ButtonSpinner />Signing in…</Button>);
+    const { container } = render(
+      <Button>
+        <ButtonSpinner />
+        Signing in…
+      </Button>,
+    );
     expect(screen.getByRole("button", { name: "Signing in…" })).toBeVisible();
     expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
   });

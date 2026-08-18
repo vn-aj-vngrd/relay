@@ -22,24 +22,24 @@ Restrained foundation with a stronger courtside state. Court blue occupies less 
 
 ```css
 /* Light */
---canvas: oklch(.965 .002 75);
---surface: oklch(.992 .001 75);
---surface-raised: oklch(.935 .003 75);
---ink: oklch(.22 .008 275);
---muted: oklch(.48 .012 275);
---line: oklch(.875 .005 75);
+--canvas: oklch(0.965 0.002 75);
+--surface: oklch(0.992 0.001 75);
+--surface-raised: oklch(0.935 0.003 75);
+--ink: oklch(0.22 0.008 275);
+--muted: oklch(0.48 0.012 275);
+--line: oklch(0.875 0.005 75);
 
---primary: oklch(.55 .18 275);       /* accessible court-blue action */
---primary-hover: oklch(.50 .18 275);
---primary-soft: oklch(.93 .04 275);
---court: oklch(.18 .045 252);        /* scoreboard/court field */
---court-line: oklch(.84 .095 220);
---signal: oklch(.89 .18 105);        /* optic ball; sparse */
---live: oklch(.64 .20 32);
+--primary: oklch(0.55 0.18 275); /* accessible court-blue action */
+--primary-hover: oklch(0.5 0.18 275);
+--primary-soft: oklch(0.93 0.04 275);
+--court: oklch(0.18 0.045 252); /* scoreboard/court field */
+--court-line: oklch(0.84 0.095 220);
+--signal: oklch(0.89 0.18 105); /* optic ball; sparse */
+--live: oklch(0.64 0.2 32);
 
---success: oklch(.52 .14 150);
---warning: oklch(.69 .15 78);
---danger: oklch(.56 .20 26);
+--success: oklch(0.52 0.14 150);
+--warning: oklch(0.69 0.15 78);
+--danger: oklch(0.56 0.2 26);
 ```
 
 Dark mode uses neutral blue-black architecture rather than inverting light colors. The app never follows the operating-system theme implicitly: it starts light, exposes a labeled toggle, and stores the user’s choice. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
@@ -121,6 +121,10 @@ Profile setup asks only for identity and optional recreational context. The foll
 ## Notifications
 
 Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
+
+## Product feedback
+
+Feedback is one support workflow with three clear intents: bug report, feature request, and general feedback. Players choose the affected product area, provide specific context, and see only the public review status of their own submissions. Private triage notes stay in the admin console. The admin inbox groups work by lifecycle—New, Reviewing, Planned, Resolved, and Closed—without implying that Planned is a public delivery commitment. Feedback surfaces use rows, dividers, and the standard form system rather than support-ticket dashboards or voting mechanics.
 
 ## Core components
 

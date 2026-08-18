@@ -1,10 +1,21 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { ChatPhotoViewer } from "./chat-photo-viewer";
 
 beforeEach(() => {
-  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: vi.fn(function showModal(this: HTMLDialogElement) { this.setAttribute("open", ""); }) });
-  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: vi.fn(function close(this: HTMLDialogElement) { this.removeAttribute("open"); }) });
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+    configurable: true,
+    value: vi.fn(function showModal(this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+    }),
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {
+    configurable: true,
+    value: vi.fn(function close(this: HTMLDialogElement) {
+      this.removeAttribute("open");
+    }),
+  });
 });
 
 describe("ChatPhotoViewer", () => {

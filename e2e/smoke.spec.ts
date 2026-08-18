@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test("the landing page introduces Relay and protected routes open a usable login", async ({ page }) => {
   await page.goto("/");
@@ -13,7 +13,9 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(page.locator("#password-email")).toBeVisible();
   await expect(page.locator("#password")).toBeVisible();
   await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
-  await expect(page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" })).toBeVisible();
+  await expect(
+    page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }),
+  ).toBeVisible();
   await expect(page.getByText("Everything around game night")).toBeVisible();
   await expect(page.getByText("Run the courts")).toBeVisible();
   await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
@@ -34,7 +36,10 @@ test("an authenticated host and guest can complete the core session flow", async
   }
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
   await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
-  await page.locator("form").getByRole("button", { name: process.env.E2E_AUTH_EXISTING === "true" ? "Sign in" : "Create account" }).click();
+  await page
+    .locator("form")
+    .getByRole("button", { name: process.env.E2E_AUTH_EXISTING === "true" ? "Sign in" : "Create account" })
+    .click();
 
   await expect(page).toHaveURL(/\/onboarding$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Your player profile" })).toBeVisible();
@@ -44,6 +49,11 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.getByRole("button", { name: "Skip application tour" }).click();
   await expect(page).toHaveURL(/\/home$/);
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
+  await page.goto("/feedback");
+  await expect(page.getByRole("heading", { name: "Send feedback" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: /Bug report/ })).toBeChecked();
+  await expect(page.getByRole("button", { name: "Send feedback" })).toBeVisible();
+  await page.goto("/home");
 
   await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
   await page.getByRole("menuitem", { name: "Preferences" }).click();
@@ -92,7 +102,9 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.goto("/games/new");
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
   await page.getByRole("button", { name: "Publish game" }).click();
-  await expect(page.getByText("A few details need attention. Check the fields marked below.", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("A few details need attention. Check the fields marked below.", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Choose a valid date and start time.", { exact: true }).first()).toBeVisible();
   const date = await page.locator("#date").boundingBox();
   const capacity = await page.locator("#capacity").boundingBox();
@@ -108,7 +120,12 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.locator("#title").fill("Saturday Night Pickle");
   const gameDate = new Date();
   gameDate.setDate(gameDate.getDate() + 7);
-  const gameDateLabel = new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(gameDate);
+  const gameDateLabel = new Intl.DateTimeFormat("en-PH", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(gameDate);
   await page.getByRole("button", { name: "Date" }).click();
   await page.getByRole("button", { name: gameDateLabel }).click();
   await page.getByRole("button", { name: "Start time" }).click();
@@ -134,7 +151,9 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   const hostAccessibility = await new AxeBuilder({ page }).analyze();
-  expect(hostAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  expect(hostAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual(
+    [],
+  );
   for (const path of ["", "/players", "/play", "/chat", "/payments"]) {
     await page.goto(`/games/${sessionId}${path}`);
     await expect(page.getByRole("link", { name: "Edit game" })).toBeVisible();
@@ -156,9 +175,13 @@ test("an authenticated host and guest can complete the core session flow", async
   await guestPage.goto(publicHref!);
   await expect(guestPage.getByRole("heading", { name: "Saturday Night Pickle" })).toBeVisible();
   const guestAccessibility = await new AxeBuilder({ page: guestPage }).analyze();
-  expect(guestAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+  expect(guestAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual(
+    [],
+  );
   for (const label of ["Overview", "Players", "Play", "Chat", "Payments"]) {
-    await expect(guestPage.getByRole("navigation", { name: "Game navigation" }).getByRole("link", { name: label, exact: true })).toBeVisible();
+    await expect(
+      guestPage.getByRole("navigation", { name: "Game navigation" }).getByRole("link", { name: label, exact: true }),
+    ).toBeVisible();
   }
   expect(await guestPage.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
   await guestPage.locator('input[name="guestName"]:visible').fill("Guest Bea");
@@ -182,7 +205,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.goto(`/games/${sessionId}/payments`);
   await page.locator("#total").fill("300");
   await page.locator("#details").fill("0917 123 4567 · Relay host");
-  await page.locator('#expense-receipt').setInputFiles("e2e/fixtures/payment-proof.png");
+  await page.locator("#expense-receipt").setInputFiles("e2e/fixtures/payment-proof.png");
   await page.getByRole("button", { name: "Create collection" }).click();
   await expect(page.getByText("Host · paid the full amount upfront")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("0 of 3 paid")).toBeVisible();
@@ -217,7 +240,10 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(guestPage.getByText("Match in progress")).toBeVisible();
   const guestScore = guestPage.locator("output").first();
   const scoreBefore = Number(await guestScore.textContent());
-  await page.getByRole("button", { name: /^Add a point to/ }).first().click();
+  await page
+    .getByRole("button", { name: /^Add a point to/ })
+    .first()
+    .click();
   await expect(guestScore).toHaveText(String(scoreBefore + 1), { timeout: 15_000 });
   await page.getByRole("button", { name: "Finish match" }).first().click();
   await expect(guestPage.getByText("No match is active")).toBeVisible({ timeout: 15_000 });
@@ -277,6 +303,10 @@ test("core public and protected routes fail safely", async ({ page }) => {
   await page.goto("/games/new");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/groups/new");
+  expect(new URL(page.url()).pathname).toBe("/login");
+  await page.goto("/feedback");
+  expect(new URL(page.url()).pathname).toBe("/login");
+  await page.goto("/admin/feedback");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/admin");
   expect(new URL(page.url()).pathname).toBe("/login");

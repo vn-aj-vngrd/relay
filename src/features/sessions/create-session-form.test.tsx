@@ -30,7 +30,9 @@ describe("CreateSessionForm", () => {
     expect(courts).toHaveValue(2);
     expect(courts.parentElement?.nextElementSibling).toHaveTextContent("1–20 courts. You can label them later.");
     const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
-    expect(capacity.parentElement?.nextElementSibling).toHaveTextContent("2–40 players. Extra players join the waitlist.");
+    expect(capacity.parentElement?.nextElementSibling).toHaveTextContent(
+      "2–40 players. Extra players join the waitlist.",
+    );
     fireEvent.click(screen.getByRole("button", { name: "Increase court quantity" }));
     expect(courts).toHaveValue(3);
     fireEvent.change(courts, { target: { value: "20" } });
@@ -38,7 +40,16 @@ describe("CreateSessionForm", () => {
   });
 
   it("shows who will be invited when starting from a group", () => {
-    render(<CreateSessionForm defaults={{ date: "2026-08-22", groupId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7", groupName: "Tuesday Dink Club", inviteeCount: 7 }} />);
+    render(
+      <CreateSessionForm
+        defaults={{
+          date: "2026-08-22",
+          groupId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
+          groupName: "Tuesday Dink Club",
+          inviteeCount: 7,
+        }}
+      />,
+    );
     expect(screen.getByText("For Tuesday Dink Club")).toBeVisible();
     expect(screen.getByText("7 group members will be invited when you publish.")).toBeVisible();
   });

@@ -4,12 +4,13 @@ import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+
 import { db } from "@/db/client";
 import {
   courts,
   expenses,
-  matchPlayers,
   matches,
+  matchPlayers,
   matchScores,
   memories,
   memoryMedia,
@@ -31,10 +32,15 @@ const inputSchema = z.object({ sessionId: z.uuid(), confirmation: z.string().max
 
 export async function deleteSessionAction(_: DeleteSessionState, formData: FormData): Promise<DeleteSessionState> {
   const user = await requireUser();
-  const parsed = inputSchema.safeParse({ sessionId: formData.get("sessionId"), confirmation: formData.get("confirmation") });
+  const parsed = inputSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    confirmation: formData.get("confirmation"),
+  });
   if (!parsed.success) return { error: "Enter the game title exactly as shown." };
 
-  const session = await db.query.sessions.findFirst({ where: and(eq(sessions.id, parsed.data.sessionId), eq(sessions.hostId, user.id)) });
+  const session = await db.query.sessions.findFirst({
+    where: and(eq(sessions.id, parsed.data.sessionId), eq(sessions.hostId, user.id)),
+  });
   if (!session) return { error: "Only the host can delete this game." };
   if (parsed.data.confirmation.trim() !== session.title) return { error: `Type “${session.title}” to confirm.` };
 
@@ -44,17 +50,23 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
   try {
     await db.transaction(async (tx) => {
       const [expenseRows, matchRows, memoryRows] = await Promise.all([
-        tx.select({ id: expenses.id, receiptPath: expenses.receiptStoragePath }).from(expenses).where(eq(expenses.sessionId, session.id)),
+        tx
+          .select({ id: expenses.id, receiptPath: expenses.receiptStoragePath })
+          .from(expenses)
+          .where(eq(expenses.sessionId, session.id)),
         tx.select({ id: matches.id }).from(matches).where(eq(matches.sessionId, session.id)),
         tx.select({ id: memories.id }).from(memories).where(eq(memories.sessionId, session.id)),
       ]);
       const expenseIds = expenseRows.map((row) => row.id);
-      expenseReceiptPaths = expenseRows.flatMap((row) => row.receiptPath ? [row.receiptPath] : []);
+      expenseReceiptPaths = expenseRows.flatMap((row) => (row.receiptPath ? [row.receiptPath] : []));
       const matchIds = matchRows.map((row) => row.id);
       const memoryIds = memoryRows.map((row) => row.id);
       if (expenseIds.length) {
-        const proofs = await tx.select({ path: playerPayments.proofStoragePath }).from(playerPayments).where(inArray(playerPayments.expenseId, expenseIds));
-        paymentProofPaths = proofs.flatMap((row) => row.path ? [row.path] : []);
+        const proofs = await tx
+          .select({ path: playerPayments.proofStoragePath })
+          .from(playerPayments)
+          .where(inArray(playerPayments.expenseId, expenseIds));
+        paymentProofPaths = proofs.flatMap((row) => (row.path ? [row.path] : []));
         await tx.delete(playerPayments).where(inArray(playerPayments.expenseId, expenseIds));
       }
       if (matchIds.length) {
@@ -62,7 +74,10 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
         await tx.delete(matchPlayers).where(inArray(matchPlayers.matchId, matchIds));
       }
       if (memoryIds.length) {
-        const media = await tx.select({ path: memoryMedia.storagePath }).from(memoryMedia).where(inArray(memoryMedia.memoryId, memoryIds));
+        const media = await tx
+          .select({ path: memoryMedia.storagePath })
+          .from(memoryMedia)
+          .where(inArray(memoryMedia.memoryId, memoryIds));
         memoryPaths = media.map((row) => row.path);
       }
 
@@ -86,7 +101,9 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
   const supabase = createSupabaseAdminClient();
   await Promise.all([
     paymentProofPaths.length ? supabase.storage.from("payment-proofs").remove(paymentProofPaths) : Promise.resolve(),
-    expenseReceiptPaths.length ? supabase.storage.from("booking-screenshots").remove(expenseReceiptPaths) : Promise.resolve(),
+    expenseReceiptPaths.length
+      ? supabase.storage.from("booking-screenshots").remove(expenseReceiptPaths)
+      : Promise.resolve(),
     memoryPaths.length ? supabase.storage.from("session-memories").remove(memoryPaths) : Promise.resolve(),
   ]).catch((error) => console.error("Deleted session storage cleanup failed", error));
 

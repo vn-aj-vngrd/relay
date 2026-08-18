@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 

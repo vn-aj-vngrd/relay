@@ -9,13 +9,31 @@ const statusStyles: Record<string, string> = {
 };
 
 export function AdminStatus({ value }: { value: string }) {
-  return <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold capitalize ${statusStyles[value] ?? "bg-surface-strong text-muted"}`}>{value}</span>;
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold capitalize ${statusStyles[value] ?? "bg-surface-strong text-muted"}`}
+    >
+      {value}
+    </span>
+  );
 }
 
 export function AdminDate({ value, includeTime = false }: { value: Date; includeTime?: boolean }) {
-  return <time dateTime={value.toISOString()} className="whitespace-nowrap text-sm text-muted">{new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", ...(includeTime ? { timeStyle: "short" } : {}) }).format(value)}</time>;
+  return (
+    <time dateTime={value.toISOString()} className="whitespace-nowrap text-sm text-muted">
+      {new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", ...(includeTime ? { timeStyle: "short" } : {}) }).format(
+        value,
+      )}
+    </time>
+  );
 }
 
 export function EmptyAdminRows({ message, colSpan }: { message: string; colSpan: number }) {
-  return <tr><td colSpan={colSpan} className="px-4 py-12 text-center text-sm text-muted">{message}</td></tr>;
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-4 py-12 text-center text-sm text-muted">
+        {message}
+      </td>
+    </tr>
+  );
 }

@@ -3,11 +3,13 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+
 import { db } from "@/db/client";
 import { messageReactions, messages } from "@/db/schema";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getServerEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
 import { validateChatImageFile } from "./config";
 
 export type ChatActionState = { error?: string; success?: boolean };
@@ -27,11 +29,22 @@ export async function sendMessage(_: ChatActionState, formData: FormData): Promi
   const viewer = await getSessionViewer(sessionId.data, String(formData.get("slug") ?? ""));
   if (!viewer || !canParticipate(viewer.player.rsvp)) return { error: "Join this session before sending messages." };
 
-  const [message] = await db.insert(messages).values({ sessionId: sessionId.data, authorId: viewer.user?.id ?? null, sessionPlayerId: viewer.player.id, body: body || null, kind: hasImage ? "image" : "text" }).returning();
+  const [message] = await db
+    .insert(messages)
+    .values({
+      sessionId: sessionId.data,
+      authorId: viewer.user?.id ?? null,
+      sessionPlayerId: viewer.player.id,
+      body: body || null,
+      kind: hasImage ? "image" : "text",
+    })
+    .returning();
   if (hasImage && imageValidation && "file" in imageValidation) {
     const path = `${sessionId.data}/${message.id}/${crypto.randomUUID()}.${imageValidation.extension}`;
     const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.storage.from("chat-images").upload(path, image, { contentType: image.type, upsert: false });
+    const { error } = await supabase.storage
+      .from("chat-images")
+      .upload(path, image, { contentType: image.type, upsert: false });
     if (error) {
       await db.delete(messages).where(eq(messages.id, message.id));
       return { error: "The photo could not be uploaded. Check your connection and try again." };
@@ -51,10 +64,22 @@ export async function toggleMessageReaction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const viewer = await getSessionViewer(message.sessionId, slug);
   if (!viewer || !canParticipate(viewer.player.rsvp)) return;
-  const existing = await db.query.messageReactions.findFirst({ where: and(eq(messageReactions.messageId, message.id), eq(messageReactions.sessionPlayerId, viewer.player.id), eq(messageReactions.reaction, "like")) });
+  const existing = await db.query.messageReactions.findFirst({
+    where: and(
+      eq(messageReactions.messageId, message.id),
+      eq(messageReactions.sessionPlayerId, viewer.player.id),
+      eq(messageReactions.reaction, "like"),
+    ),
+  });
   await db.transaction(async (tx) => {
     if (existing) await tx.delete(messageReactions).where(eq(messageReactions.id, existing.id));
-    else await tx.insert(messageReactions).values({ messageId: message.id, sessionPlayerId: viewer.player.id, userId: viewer.user?.id ?? null, reaction: "like" });
+    else
+      await tx.insert(messageReactions).values({
+        messageId: message.id,
+        sessionPlayerId: viewer.player.id,
+        userId: viewer.user?.id ?? null,
+        reaction: "like",
+      });
     // Reactions do not carry session_id, so touching the parent emits a valid
     // session-scoped realtime event without subscribing to every reaction.
     await tx.update(messages).set({ updatedAt: new Date() }).where(eq(messages.id, message.id));

@@ -12,12 +12,43 @@ beforeEach(() => {
 });
 
 function Target({ name }: { name: string }) {
-  return <button data-tour={name} ref={(element) => { if (element) element.getBoundingClientRect = () => ({ x: 12, y: 100, top: 100, left: 12, right: 212, bottom: 140, width: 200, height: 40, toJSON: () => ({}) }); }}>{name}</button>;
+  return (
+    <button
+      data-tour={name}
+      ref={(element) => {
+        if (element)
+          element.getBoundingClientRect = () => ({
+            x: 12,
+            y: 100,
+            top: 100,
+            left: 12,
+            right: 212,
+            bottom: 140,
+            width: 200,
+            height: 40,
+            toJSON: () => ({}),
+          });
+      }}
+    >
+      {name}
+    </button>
+  );
 }
 
 describe("ApplicationTour", () => {
   it("walks through controls in the real application navigation", () => {
-    render(<><Target name="create" /><Target name="home" /><Target name="games" /><Target name="groups" /><Target name="search" /><Target name="notifications" /><Target name="profile" /><ApplicationTour required /></>);
+    render(
+      <>
+        <Target name="create" />
+        <Target name="home" />
+        <Target name="games" />
+        <Target name="groups" />
+        <Target name="search" />
+        <Target name="notifications" />
+        <Target name="profile" />
+        <ApplicationTour required />
+      </>,
+    );
 
     expect(screen.getByRole("dialog", { name: "Welcome to Relay" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));

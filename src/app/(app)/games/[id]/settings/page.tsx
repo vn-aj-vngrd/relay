@@ -1,13 +1,22 @@
 import { LockKey } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
+
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
-import { SessionSettingsForm, type SessionSettingsDefaults } from "@/features/sessions/session-settings-form";
 import { getSessionForUser } from "@/features/sessions/queries";
+import { type SessionSettingsDefaults, SessionSettingsForm } from "@/features/sessions/session-settings-form";
 
 function dateParts(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
   const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
   return { date: `${value("year")}-${value("month")}-${value("day")}`, time: `${value("hour")}:${value("minute")}` };
 }
@@ -45,5 +54,26 @@ export default async function GameSettingsPage({ params }: { params: Promise<{ i
     bookingNotes: data.session.bookingNotes ?? "",
   };
 
-  return <><GamePageIntro title="Game settings" description="Keep the shared plan accurate for everyone with the invite." /><div className="mx-auto w-full max-w-4xl">{locked ? <section className="border-y border-line py-10 text-center"><LockKey aria-hidden size={24} className="mx-auto text-muted" /><h2 className="mt-4 text-xl font-bold">Settings are locked</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">Game details stop changing once Play begins or the session is complete. This protects court assignments, results, and the shared memory.</p><ButtonLink href={`/games/${sessionId}`} className="mt-6">Back to game</ButtonLink></section> : <SessionSettingsForm defaults={defaults} />}</div></>;
+  return (
+    <>
+      <GamePageIntro title="Game settings" description="Keep the shared plan accurate for everyone with the invite." />
+      <div className="mx-auto w-full max-w-4xl">
+        {locked ? (
+          <section className="border-y border-line py-10 text-center">
+            <LockKey aria-hidden size={24} className="mx-auto text-muted" />
+            <h2 className="mt-4 text-xl font-bold">Settings are locked</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+              Game details stop changing once Play begins or the session is complete. This protects court assignments,
+              results, and the shared memory.
+            </p>
+            <ButtonLink href={`/games/${sessionId}`} className="mt-6">
+              Back to game
+            </ButtonLink>
+          </section>
+        ) : (
+          <SessionSettingsForm defaults={defaults} />
+        )}
+      </div>
+    </>
+  );
 }

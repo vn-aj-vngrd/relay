@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+
 import { LiveCourt } from "./live-court";
 
 vi.mock("./actions", () => ({
@@ -8,8 +9,12 @@ vi.mock("./actions", () => ({
 }));
 
 beforeAll(() => {
-  HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
-  HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); };
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute("open");
+  };
 });
 
 const props = {

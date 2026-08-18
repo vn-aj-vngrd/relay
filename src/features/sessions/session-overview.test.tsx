@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { SessionAtAGlance } from "./session-overview";
+
 import type { SessionOverview } from "./overview";
+import { SessionAtAGlance } from "./session-overview";
 
 const play: SessionOverview["play"] = {
   activeMatchCount: 0,
@@ -10,8 +11,21 @@ const play: SessionOverview["play"] = {
   featuredMatch: null,
 };
 
-function renderOverview(overview: Omit<SessionOverview, "messageCount"> & { messageCount?: number }, status = "published") {
-  return render(<SessionAtAGlance overview={{ ...overview, messageCount: overview.messageCount ?? 0 }} hrefBase="/games/session-1" status={status} goingCount={8} capacity={10} waitlistCount={2} pendingCount={1} />);
+function renderOverview(
+  overview: Omit<SessionOverview, "messageCount"> & { messageCount?: number },
+  status = "published",
+) {
+  return render(
+    <SessionAtAGlance
+      overview={{ ...overview, messageCount: overview.messageCount ?? 0 }}
+      hrefBase="/games/session-1"
+      status={status}
+      goingCount={8}
+      capacity={10}
+      waitlistCount={2}
+      pendingCount={1}
+    />,
+  );
 }
 
 describe("SessionAtAGlance", () => {
@@ -27,11 +41,19 @@ describe("SessionAtAGlance", () => {
   });
 
   it("surfaces the active score and host payment work", () => {
-    renderOverview({
-      play: { activeMatchCount: 2, completedMatchCount: 3, waitingCount: 4, featuredMatch: { courtLabel: "Court 1", teamAScore: 8, teamBScore: 6 } },
-      messageCount: 12,
-      payment: { view: "host", proofCount: 2, unpaidCount: 3 },
-    }, "live");
+    renderOverview(
+      {
+        play: {
+          activeMatchCount: 2,
+          completedMatchCount: 3,
+          waitingCount: 4,
+          featuredMatch: { courtLabel: "Court 1", teamAScore: 8, teamBScore: 6 },
+        },
+        messageCount: 12,
+        payment: { view: "host", proofCount: 2, unpaidCount: 3 },
+      },
+      "live",
+    );
 
     expect(screen.getByText("8–6 · Court 1")).toBeVisible();
     expect(screen.getByText("2 active · 4 waiting")).toBeVisible();

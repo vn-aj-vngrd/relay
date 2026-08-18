@@ -1,40 +1,95 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import Link from "next/link";
+
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
-import { CreateSessionForm, type CreateSessionDefaults } from "@/features/sessions/create-session-form";
+import { type CreateSessionDefaults, CreateSessionForm } from "@/features/sessions/create-session-form";
 
-export default async function NewGamePage({ searchParams }: { searchParams: Promise<{ from?: string; group?: string }> }) {
+export default async function NewGamePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; group?: string }>;
+}) {
   const user = await requireUser();
   const params = await searchParams;
-  const source = params.from ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id)) }) : null;
+  const source = params.from
+    ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id)) })
+    : null;
   const requestedGroupId = params.group ?? source?.groupId ?? undefined;
-  const groupMembership = requestedGroupId ? await db.query.groupMembers.findFirst({ where: and(eq(groupMembers.groupId, requestedGroupId), eq(groupMembers.userId, user.id)) }) : null;
-  const group = groupMembership ? await db.query.groups.findFirst({ where: eq(groups.id, groupMembership.groupId) }) : null;
-  const groupTemplate = group && !source ? await db.query.sessions.findFirst({ where: eq(sessions.groupId, group.id), orderBy: [desc(sessions.startsAt)] }) : null;
+  const groupMembership = requestedGroupId
+    ? await db.query.groupMembers.findFirst({
+        where: and(eq(groupMembers.groupId, requestedGroupId), eq(groupMembers.userId, user.id)),
+      })
+    : null;
+  const group = groupMembership
+    ? await db.query.groups.findFirst({ where: eq(groups.id, groupMembership.groupId) })
+    : null;
+  const groupTemplate =
+    group && !source
+      ? await db.query.sessions.findFirst({ where: eq(sessions.groupId, group.id), orderBy: [desc(sessions.startsAt)] })
+      : null;
   const template = source ?? groupTemplate;
-  const time = (value: Date) => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: template?.timezone ?? "Asia/Manila" }).format(value);
+  const time = (value: Date) =>
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+      timeZone: template?.timezone ?? "Asia/Manila",
+    }).format(value);
   const inviteeCount = group
     ? Math.max(0, (await db.$count(groupMembers, eq(groupMembers.groupId, group.id))) - 1)
     : source
-      ? Math.max(0, (await db.$count(sessionPlayers, and(eq(sessionPlayers.sessionId, source.id), eq(sessionPlayers.rsvp, "going"), isNotNull(sessionPlayers.userId)))) - 1)
+      ? Math.max(
+          0,
+          (await db.$count(
+            sessionPlayers,
+            and(
+              eq(sessionPlayers.sessionId, source.id),
+              eq(sessionPlayers.rsvp, "going"),
+              isNotNull(sessionPlayers.userId),
+            ),
+          )) - 1,
+        )
       : 0;
-  const defaults: CreateSessionDefaults = template ? {
-    title: source?.title ?? `${group?.name ?? template.title} Pickle`,
-    venue: template.venueName,
-    venueAddress: template.venueAddress ?? undefined,
-    capacity: template.capacity,
-    courts: template.courtCount,
-    start: time(template.startsAt),
-    end: time(template.endsAt),
-    cost: template.estimatedCostCents ? template.estimatedCostCents / 100 : undefined,
-    accentColor: template.accentColor,
-    groupId: group?.id,
-    groupName: group?.name,
-    sourceSessionId: source?.id,
-    inviteeCount,
-  } : { groupId: group?.id, groupName: group?.name, title: group ? `${group.name} Pickle` : undefined, inviteeCount };
-  return <div className="w-full"><Link href="/home" className="compact-sidebar-back pressable mb-5 min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"><ArrowLeft aria-hidden size={15} />Back to Home</Link><header className="mb-10 border-b border-line pb-7"><h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1><p className="mt-2 max-w-xl text-pretty text-muted">{source ? "The familiar setup is ready. Choose when you’ll play, review the plan, and publish." : group ? "Start with your crew’s usual setup, then adjust this game as needed." : "Set the plan, publish one link, and let your friends take it from there."}</p></header><CreateSessionForm defaults={defaults} /></div>;
+  const defaults: CreateSessionDefaults = template
+    ? {
+        title: source?.title ?? `${group?.name ?? template.title} Pickle`,
+        venue: template.venueName,
+        venueAddress: template.venueAddress ?? undefined,
+        capacity: template.capacity,
+        courts: template.courtCount,
+        start: time(template.startsAt),
+        end: time(template.endsAt),
+        cost: template.estimatedCostCents ? template.estimatedCostCents / 100 : undefined,
+        accentColor: template.accentColor,
+        groupId: group?.id,
+        groupName: group?.name,
+        sourceSessionId: source?.id,
+        inviteeCount,
+      }
+    : { groupId: group?.id, groupName: group?.name, title: group ? `${group.name} Pickle` : undefined, inviteeCount };
+  return (
+    <div className="w-full">
+      <Link
+        href="/home"
+        className="compact-sidebar-back pressable mb-5 min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+      >
+        <ArrowLeft aria-hidden size={15} />
+        Back to Home
+      </Link>
+      <header className="mb-10 border-b border-line pb-7">
+        <h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1>
+        <p className="mt-2 max-w-xl text-pretty text-muted">
+          {source
+            ? "The familiar setup is ready. Choose when you’ll play, review the plan, and publish."
+            : group
+              ? "Start with your crew’s usual setup, then adjust this game as needed."
+              : "Set the plan, publish one link, and let your friends take it from there."}
+        </p>
+      </header>
+      <CreateSessionForm defaults={defaults} />
+    </div>
+  );
 }

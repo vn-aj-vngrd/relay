@@ -15,6 +15,7 @@ const labels: Record<string, string> = {
   chat: "Chat",
   courts: "Play",
   edit: "Edit",
+  feedback: "Feedback",
   games: "Games",
   groups: "Groups",
   help: "Help Center",
@@ -46,13 +47,21 @@ function isGameId(segments: string[], index: number) {
 }
 
 function isAdminRecord(segments: string[], index: number) {
-  return segments[0] === "admin" && ["sessions", "users"].includes(segments[index - 1]) && segments[index] !== "new";
+  return (
+    segments[0] === "admin" &&
+    ["feedback", "sessions", "users"].includes(segments[index - 1]) &&
+    segments[index] !== "new"
+  );
 }
 
 function segmentLabel(segments: string[], index: number) {
   const segment = segments[index];
   if (isGameId(segments, index)) return "Game";
-  if (isAdminRecord(segments, index)) return segments[index - 1] === "users" ? "User" : "Game";
+  if (isAdminRecord(segments, index)) {
+    if (segments[index - 1] === "users") return "User";
+    if (segments[index - 1] === "feedback") return "Submission";
+    return "Game";
+  }
   if (segments[index - 1] === "profile") return "Profile";
   return labels[segment] ?? titleCase(segment);
 }
@@ -63,9 +72,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   if (segments[0] === "home") return [{ label: "Home" }];
   if (segments[0] === "games" && segments[1] && segments[1] !== "new") return [];
 
-  const items: BreadcrumbItem[] = segments[0] === "admin"
-    ? []
-    : [{ href: "/home", label: "Home" }];
+  const items: BreadcrumbItem[] = segments[0] === "admin" ? [] : [{ href: "/home", label: "Home" }];
 
   segments.forEach((segment, index) => {
     if (segment === "profile" && index < segments.length - 1) return;
@@ -84,12 +91,30 @@ export function AppBreadcrumbs({ items: providedItems }: { items?: BreadcrumbIte
   const items = providedItems ?? routeItems;
   if (!items.length) return null;
 
-  return <nav aria-label="Breadcrumb" className="mb-4 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    <ol className="flex min-w-max items-center text-[13px] text-muted">
-      {items.map((item, index) => <li key={`${item.label}-${index}`} className="flex items-center">
-        {index ? <CaretRight aria-hidden size={12} className="mx-1 shrink-0 text-muted/65" /> : null}
-        {item.href ? <Link href={item.href} className="pressable inline-flex h-8 items-center rounded-md px-1.5 font-medium hover:bg-surface-strong hover:text-ink">{item.label}</Link> : <span aria-current="page" className="inline-flex h-8 items-center px-1.5 font-medium text-ink">{item.label}</span>}
-      </li>)}
-    </ol>
-  </nav>;
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-4 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <ol className="flex min-w-max items-center text-[13px] text-muted">
+        {items.map((item, index) => (
+          <li key={`${item.label}-${index}`} className="flex items-center">
+            {index ? <CaretRight aria-hidden size={12} className="mx-1 shrink-0 text-muted/65" /> : null}
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="pressable inline-flex h-8 items-center rounded-md px-1.5 font-medium hover:bg-surface-strong hover:text-ink"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span aria-current="page" className="inline-flex h-8 items-center px-1.5 font-medium text-ink">
+                {item.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }

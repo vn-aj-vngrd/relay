@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { sessionAccentStyle } from "./accent";
 
 describe("sessionAccentStyle", () => {

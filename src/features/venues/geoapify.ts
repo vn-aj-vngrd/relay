@@ -33,9 +33,12 @@ export function parseGeoapifyResults(value: unknown): VenueSuggestion[] {
     const name = result.name || result.address_line1 || result.formatted.split(",")[0]?.trim();
     if (!name || seen.has(result.place_id)) return [];
     seen.add(result.place_id);
-    const address = result.formatted === name
-      ? [result.address_line2, result.city, result.state].filter(Boolean).join(", ")
-      : result.formatted.startsWith(`${name}, `) ? result.formatted.slice(name.length + 2) : result.formatted;
+    const address =
+      result.formatted === name
+        ? [result.address_line2, result.city, result.state].filter(Boolean).join(", ")
+        : result.formatted.startsWith(`${name}, `)
+          ? result.formatted.slice(name.length + 2)
+          : result.formatted;
     return [{ id: result.place_id, name, address, latitude: result.lat, longitude: result.lon }];
   });
 }

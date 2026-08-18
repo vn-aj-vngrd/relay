@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { SidebarSupportNav } from "./sidebar-support-nav";
 
 const usePathname = vi.fn();
@@ -13,6 +14,7 @@ describe("SidebarSupportNav", () => {
     expect(screen.getByRole("link", { name: "Notifications, 12 unread" })).toHaveAttribute("href", "/notifications");
     expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
     expect(screen.getByRole("link", { name: "Help Center" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Send feedback" })).toHaveAttribute("href", "/feedback");
   });
 
   it("only shows the admin console to platform admins", () => {

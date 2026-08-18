@@ -11,5 +11,10 @@ const styles = {
 export function Status({ kind, label }: { kind: keyof typeof styles; label?: string }) {
   const item = styles[kind];
   const Icon = item.icon;
-  return <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${item.className}`}><Icon aria-hidden size={16} weight="regular" /><span>{label ?? item.label}</span></span>;
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-sm font-medium ${item.className}`}>
+      <Icon aria-hidden size={16} weight="regular" />
+      <span>{label ?? item.label}</span>
+    </span>
+  );
 }

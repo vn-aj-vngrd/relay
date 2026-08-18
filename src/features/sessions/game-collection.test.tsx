@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+
 import { GameCollection, type GameCollectionItem } from "./game-collection";
 
 const game: GameCollectionItem = {
@@ -26,7 +27,9 @@ describe("GameCollection", () => {
   it("persists the chosen grid or list presentation", () => {
     const { unmount } = render(<GameCollection upcoming={[game]} past={[]} todayKey="2026-08-15" />);
     expect(screen.getByTestId("games-list")).toBeVisible();
-    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).style.getPropertyValue("--primary")).toContain("#bd4545");
+    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).style.getPropertyValue("--primary")).toContain(
+      "#bd4545",
+    );
     expect(screen.getByText("67% ready")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));

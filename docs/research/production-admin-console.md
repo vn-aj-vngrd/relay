@@ -36,4 +36,4 @@ Source: [Shopify Polaris resource index layout](https://polaris.shopify.com/patt
 4. V1 supports the operational jobs that matter now: overview health, user lookup, managed account creation, recreational profile editing, user suspension/restoration, session lookup/cancellation, and an audit trail.
 5. Admin-created accounts receive a one-time temporary password and must replace it before entering the app. The temporary credential is never stored in Relay’s database or audit log.
 6. Hard account deletion, user impersonation, arbitrary database editing, bulk actions, and analytics dashboards remain out of scope. Relay preserves hosts and players in historical sessions; suspension provides the safe operational off-switch.
-6. Suspension is reversible and requires a reason. Session moderation changes status to `cancelled`; it does not hard-delete history.
+7. Suspension is reversible and requires a reason. Session moderation changes status to `cancelled`; it does not hard-delete history.

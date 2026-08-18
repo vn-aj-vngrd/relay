@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
 import { getCurrentUser } from "@/features/auth/session";
 import { parseGeoapifyResults, venueSearchQuerySchema } from "@/features/venues/geoapify";
 import { getServerEnv } from "@/lib/env";
@@ -8,7 +9,8 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Sign in to search venues." }, { status: 401 });
 
   const query = venueSearchQuerySchema.safeParse(request.nextUrl.searchParams.get("q"));
-  if (!query.success) return NextResponse.json({ suggestions: [] }, { headers: { "Cache-Control": "private, no-store" } });
+  if (!query.success)
+    return NextResponse.json({ suggestions: [] }, { headers: { "Cache-Control": "private, no-store" } });
 
   const env = getServerEnv();
   const endpoint = new URL("/v1/geocode/autocomplete", env.GEOAPIFY_API_URL);

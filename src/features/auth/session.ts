@@ -1,7 +1,9 @@
 import "server-only";
-import { cache } from "react";
+
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { cache } from "react";
+
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";

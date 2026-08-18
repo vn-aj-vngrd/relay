@@ -6,8 +6,13 @@ vi.mock("./delete-session", () => ({ deleteSessionAction: vi.fn(async () => ({})
 import { DeleteSessionControl } from "./delete-session-control";
 
 beforeEach(() => {
-  HTMLDialogElement.prototype.showModal = function showModal() { this.setAttribute("open", ""); };
-  HTMLDialogElement.prototype.close = function close() { this.removeAttribute("open"); this.dispatchEvent(new Event("close")); };
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute("open");
+    this.dispatchEvent(new Event("close"));
+  };
 });
 afterEach(cleanup);
 

@@ -1,14 +1,22 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
+
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
 import { db } from "@/db/client";
 import { adminAuditLogs, profiles, sessions, users } from "@/db/schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
 import { requireAdmin } from "./auth";
-import { adminCreateUserSchema, adminSessionActionSchema, adminUpdateProfileSchema, adminUserActionSchema } from "./validation";
+import {
+  adminCreateUserSchema,
+  adminSessionActionSchema,
+  adminUpdateProfileSchema,
+  adminUserActionSchema,
+} from "./validation";
 
 export type AdminActionState = { error?: string; success?: string; temporaryPassword?: string; accountEmail?: string };
 
@@ -20,7 +28,11 @@ function refreshAdminUser(userId: string) {
 
 export async function createUserAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
   const actor = await requireAdmin();
-  const parsed = adminCreateUserSchema.safeParse({ email: formData.get("email"), name: formData.get("name"), username: formData.get("username") });
+  const parsed = adminCreateUserSchema.safeParse({
+    email: formData.get("email"),
+    name: formData.get("name"),
+    username: formData.get("username"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the account details." };
 
   const [emailExists, usernameExists] = await Promise.all([
@@ -39,12 +51,21 @@ export async function createUserAction(_: AdminActionState, formData: FormData):
     user_metadata: { name: parsed.data.name },
     app_metadata: { force_password_change: true },
   });
-  if (error || !data.user) return { error: "Supabase could not create this account. Confirm the email is not already registered." };
+  if (error || !data.user)
+    return { error: "Supabase could not create this account. Confirm the email is not already registered." };
 
   try {
     await db.transaction(async (tx) => {
-      await tx.insert(profiles).values({ userId: data.user.id, name: parsed.data.name, username: parsed.data.username });
-      await tx.insert(adminAuditLogs).values({ actorUserId: actor.id, action: "user.created", targetType: "user", targetId: data.user.id, metadata: { source: "admin_console" } });
+      await tx
+        .insert(profiles)
+        .values({ userId: data.user.id, name: parsed.data.name, username: parsed.data.username });
+      await tx.insert(adminAuditLogs).values({
+        actorUserId: actor.id,
+        action: "user.created",
+        targetType: "user",
+        targetId: data.user.id,
+        metadata: { source: "admin_console" },
+      });
     });
   } catch {
     await supabase.auth.admin.deleteUser(data.user.id);
@@ -70,27 +91,45 @@ export async function updateUserProfileAction(_: AdminActionState, formData: For
 
   const target = await db.query.users.findFirst({ columns: { id: true }, where: eq(users.id, parsed.data.userId) });
   if (!target) return { error: "This account no longer exists." };
-  const duplicate = await db.query.profiles.findFirst({ columns: { userId: true }, where: and(eq(profiles.username, parsed.data.username), ne(profiles.userId, target.id)) });
+  const duplicate = await db.query.profiles.findFirst({
+    columns: { userId: true },
+    where: and(eq(profiles.username, parsed.data.username), ne(profiles.userId, target.id)),
+  });
   if (duplicate) return { error: "This username is already taken." };
 
-  const existing = await db.query.profiles.findFirst({ columns: { username: true }, where: eq(profiles.userId, target.id) });
+  const existing = await db.query.profiles.findFirst({
+    columns: { username: true },
+    where: eq(profiles.userId, target.id),
+  });
   await db.transaction(async (tx) => {
-    await tx.insert(profiles).values({
-      userId: target.id,
-      name: parsed.data.name,
-      username: parsed.data.username,
-      city: parsed.data.city || null,
-      skillLevel: parsed.data.skillLevel || null,
-      dominantHand: parsed.data.dominantHand || null,
-    }).onConflictDoUpdate({ target: profiles.userId, set: {
-      name: parsed.data.name,
-      username: parsed.data.username,
-      city: parsed.data.city || null,
-      skillLevel: parsed.data.skillLevel || null,
-      dominantHand: parsed.data.dominantHand || null,
-      updatedAt: new Date(),
-    } });
-    await tx.insert(adminAuditLogs).values({ actorUserId: actor.id, action: "user.profile_updated", targetType: "user", targetId: target.id, metadata: { fields: ["name", "username", "city", "skill_level", "dominant_hand"] } });
+    await tx
+      .insert(profiles)
+      .values({
+        userId: target.id,
+        name: parsed.data.name,
+        username: parsed.data.username,
+        city: parsed.data.city || null,
+        skillLevel: parsed.data.skillLevel || null,
+        dominantHand: parsed.data.dominantHand || null,
+      })
+      .onConflictDoUpdate({
+        target: profiles.userId,
+        set: {
+          name: parsed.data.name,
+          username: parsed.data.username,
+          city: parsed.data.city || null,
+          skillLevel: parsed.data.skillLevel || null,
+          dominantHand: parsed.data.dominantHand || null,
+          updatedAt: new Date(),
+        },
+      });
+    await tx.insert(adminAuditLogs).values({
+      actorUserId: actor.id,
+      action: "user.profile_updated",
+      targetType: "user",
+      targetId: target.id,
+      metadata: { fields: ["name", "username", "city", "skill_level", "dominant_hand"] },
+    });
   });
   refreshAdminUser(target.id);
   if (existing?.username) revalidatePath(`/profile/${existing.username}`);
@@ -114,8 +153,22 @@ export async function suspendUserAction(_: AdminActionState, formData: FormData)
 
   try {
     await db.transaction(async (tx) => {
-      await tx.update(users).set({ suspendedAt: new Date(), suspensionReason: parsed.data.reason, suspendedById: actor.id, updatedAt: new Date() }).where(eq(users.id, target.id));
-      await tx.insert(adminAuditLogs).values({ actorUserId: actor.id, action: "user.suspended", targetType: "user", targetId: target.id, reason: parsed.data.reason });
+      await tx
+        .update(users)
+        .set({
+          suspendedAt: new Date(),
+          suspensionReason: parsed.data.reason,
+          suspendedById: actor.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, target.id));
+      await tx.insert(adminAuditLogs).values({
+        actorUserId: actor.id,
+        action: "user.suspended",
+        targetType: "user",
+        targetId: target.id,
+        reason: parsed.data.reason,
+      });
     });
   } catch {
     await supabase.auth.admin.updateUserById(target.id, { ban_duration: "none" });
@@ -140,8 +193,17 @@ export async function restoreUserAction(_: AdminActionState, formData: FormData)
 
   try {
     await db.transaction(async (tx) => {
-      await tx.update(users).set({ suspendedAt: null, suspensionReason: null, suspendedById: null, updatedAt: new Date() }).where(eq(users.id, target.id));
-      await tx.insert(adminAuditLogs).values({ actorUserId: actor.id, action: "user.restored", targetType: "user", targetId: target.id, reason: parsed.data.reason });
+      await tx
+        .update(users)
+        .set({ suspendedAt: null, suspensionReason: null, suspendedById: null, updatedAt: new Date() })
+        .where(eq(users.id, target.id));
+      await tx.insert(adminAuditLogs).values({
+        actorUserId: actor.id,
+        action: "user.restored",
+        targetType: "user",
+        targetId: target.id,
+        reason: parsed.data.reason,
+      });
     });
   } catch {
     await supabase.auth.admin.updateUserById(target.id, { ban_duration: "876000h" });
@@ -153,7 +215,10 @@ export async function restoreUserAction(_: AdminActionState, formData: FormData)
 
 export async function cancelSessionAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
   const actor = await requireAdmin();
-  const parsed = adminSessionActionSchema.safeParse({ sessionId: formData.get("sessionId"), reason: formData.get("reason") });
+  const parsed = adminSessionActionSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    reason: formData.get("reason"),
+  });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the cancellation details." };
 
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
@@ -162,8 +227,18 @@ export async function cancelSessionAction(_: AdminActionState, formData: FormDat
   if (session.status === "completed") return { error: "Completed games cannot be cancelled from the admin console." };
 
   await db.transaction(async (tx) => {
-    await tx.update(sessions).set({ status: "cancelled", updatedAt: new Date(), version: session.version + 1 }).where(eq(sessions.id, session.id));
-    await tx.insert(adminAuditLogs).values({ actorUserId: actor.id, action: "session.cancelled", targetType: "session", targetId: session.id, reason: parsed.data.reason, metadata: { title: session.title, previousStatus: session.status } });
+    await tx
+      .update(sessions)
+      .set({ status: "cancelled", updatedAt: new Date(), version: session.version + 1 })
+      .where(eq(sessions.id, session.id));
+    await tx.insert(adminAuditLogs).values({
+      actorUserId: actor.id,
+      action: "session.cancelled",
+      targetType: "session",
+      targetId: session.id,
+      reason: parsed.data.reason,
+      metadata: { title: session.title, previousStatus: session.status },
+    });
   });
   revalidatePath("/admin");
   revalidatePath("/admin/sessions");

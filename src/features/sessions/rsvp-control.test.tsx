@@ -16,7 +16,10 @@ describe("RsvpControl", () => {
     expect(screen.getByRole("button", { name: "Confirm I’m going" })).toHaveClass("min-h-9", "text-[13px]");
     expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("min-h-9", "text-[13px]");
     expect(screen.getByRole("button", { name: "Going" })).toHaveClass("min-h-9", "text-[13px]");
-    expect(screen.getByRole("link", { name: /Use a Relay account/ })).toHaveAttribute("href", "/login?next=%2Fs%2Ffriends-night");
+    expect(screen.getByRole("link", { name: /Use a Relay account/ })).toHaveAttribute(
+      "href",
+      "/login?next=%2Fs%2Ffriends-night",
+    );
   });
 
   it("recognizes a returning guest without asking for their name again", () => {

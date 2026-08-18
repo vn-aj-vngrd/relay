@@ -16,14 +16,23 @@ const players = [
 
 describe("PlaySetupForm", () => {
   it("starts with the flexible Paddle Stack setup and reveals its queue rule", () => {
-    const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />);
+    const { container } = render(
+      <PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />,
+    );
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
     expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
     expect(screen.getByRole("button", { name: "Start Play" })).toBeVisible();
   });
 
   it("lets the host keep partners together and edit every pair", () => {
-    const { container } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={4} courtCount={1} players={players} />);
+    const { container } = render(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={4}
+        courtCount={1}
+        players={players}
+      />,
+    );
     fireEvent.click(screen.getByRole("radio", { name: /^Keep pairs together/ }));
     expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
     expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(players[0].id);
@@ -37,11 +46,25 @@ describe("PlaySetupForm", () => {
   });
 
   it("offers Team Round Robin for an even roster and explains odd-roster byes", () => {
-    const { rerender } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={4} courtCount={1} players={players} />);
+    const { rerender } = render(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={4}
+        courtCount={1}
+        players={players}
+      />,
+    );
     fireEvent.click(screen.getByRole("radio", { name: /Team Round Robin/ }));
     expect(screen.getByText(/every other pair once/i)).toBeVisible();
     expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
-    rerender(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={5} courtCount={1} players={[...players, { id: "00000000-0000-4000-8000-000000000005", name: "Chris" }]} />);
+    rerender(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={5}
+        courtCount={1}
+        players={[...players, { id: "00000000-0000-4000-8000-000000000005", name: "Chris" }]}
+      />,
+    );
     expect(screen.getByRole("radio", { name: /Team Round Robin/ })).toBeDisabled();
     expect(screen.getByText("Needs an even number of active players.")).toBeVisible();
   });
@@ -54,7 +77,9 @@ describe("PlaySetupForm", () => {
   });
 
   it("only enables Court Climb when every court has exactly four players", () => {
-    const { rerender } = render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={7} courtCount={2} />);
+    const { rerender } = render(
+      <PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={7} courtCount={2} />,
+    );
     expect(screen.getByRole("radio", { name: /Court Climb/ })).toBeDisabled();
     expect(screen.getByText("Needs exactly 8 active players for 2 courts.")).toBeVisible();
     rerender(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={8} courtCount={2} />);

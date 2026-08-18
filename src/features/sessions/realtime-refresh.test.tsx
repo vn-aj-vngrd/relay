@@ -1,5 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { RealtimeRefresh } from "./realtime-refresh";
 
 const { refresh, removeChannel, setAuth, channel } = vi.hoisted(() => {
@@ -38,7 +39,9 @@ beforeEach(() => {
 describe("RealtimeRefresh", () => {
   it("refetches the authoritative snapshot after the channel connects", async () => {
     render(<RealtimeRefresh sessionId="session-1" compact />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(screen.getByText("Live updates connected")).toHaveClass("sr-only");
     expect(screen.queryByText("Synced")).not.toBeInTheDocument();
     expect(screen.queryByText("Everyone is up to date")).not.toBeInTheDocument();

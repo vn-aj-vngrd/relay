@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
 import { ShareNetwork } from "@phosphor-icons/react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 
 export function ShareButton({ url, title }: { url: string; title: string }) {
@@ -18,5 +19,10 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
       if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
     }
   }
-  return <Button type="button" variant="secondary" onClick={share}><ShareNetwork aria-hidden size={16} /><span aria-live="polite">{copied ? "Link copied" : "Share game"}</span></Button>;
+  return (
+    <Button type="button" variant="secondary" onClick={share}>
+      <ShareNetwork aria-hidden size={16} />
+      <span aria-live="polite">{copied ? "Link copied" : "Share game"}</span>
+    </Button>
+  );
 }

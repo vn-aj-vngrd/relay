@@ -45,21 +45,21 @@ The Play screen should state this directly: **“Pairs stay together · winners 
 
 Partner policy and court flow are separate decisions:
 
-| Concern | Choices | Meaning |
-|---|---|---|
-| Play setup | Paddle Stack, Mix It Up, Court Climb | How courts and rounds progress |
-| Partner policy | Mix partners, Keep pairs together | Whether partnerships change |
-| Queue rule | Adaptive, four rotate, winners stay | Who leaves after a match |
-| Scoring | Result only, point-by-point | How a result is recorded |
+| Concern        | Choices                              | Meaning                        |
+| -------------- | ------------------------------------ | ------------------------------ |
+| Play setup     | Paddle Stack, Mix It Up, Court Climb | How courts and rounds progress |
+| Partner policy | Mix partners, Keep pairs together    | Whether partnerships change    |
+| Queue rule     | Adaptive, four rotate, winners stay  | Who leaves after a match       |
+| Scoring        | Result only, point-by-point          | How a result is recorded       |
 
 ### Compatibility
 
-| Play setup | Mix partners | Keep pairs together | Recommendation |
-|---|---:|---:|---|
-| Paddle Stack | Yes | Yes | Best first place for fixed pairs |
-| Mix It Up | Yes | No | Keeping pairs contradicts the purpose of the mode |
-| Court Climb | Yes | Later | Fixed teams moving between courts is valid, but requires synchronized team movement |
-| Manual | Yes | Yes | Host may preserve or change pairs directly |
+| Play setup   | Mix partners | Keep pairs together | Recommendation                                                                      |
+| ------------ | -----------: | ------------------: | ----------------------------------------------------------------------------------- |
+| Paddle Stack |          Yes |                 Yes | Best first place for fixed pairs                                                    |
+| Mix It Up    |          Yes |                  No | Keeping pairs contradicts the purpose of the mode                                   |
+| Court Climb  |          Yes |               Later | Fixed teams moving between courts is valid, but requires synchronized team movement |
+| Manual       |          Yes |                 Yes | Host may preserve or change pairs directly                                          |
 
 The UI should reveal **Partner style** only after the host chooses a compatible setup. This preserves the fast default.
 
