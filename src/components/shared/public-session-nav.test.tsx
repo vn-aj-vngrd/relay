@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
 
 describe("PublicSessionNav", () => {
   it("uses the same session destinations as the account workspace", () => {
-    render(<PublicSessionNav slug="saturday-night-pickle" inline />);
+    render(<PublicSessionNav slug="saturday-night-pickle" />);
 
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
       "Overview",

@@ -205,9 +205,7 @@ html.lenis.lenis-smooth iframe { pointer-events: none; }
 @keyframes marketing-product-enter { from { clip-path: inset(0 0 6%); transform: translate3d(0, 28px, 0) scale(.99); } to { clip-path: inset(0); transform: translate3d(0, 0, 0) scale(1); } }
 
 /* Shared invites stay glanceable; compact mode only tightens repeated information. */
-.public-session-header { min-height: 4rem; }
 .public-session-nav-link { min-height: 2.75rem; }
-.public-session-nav-inline .public-session-nav-link { min-height: 4rem; }
 .public-session-panel { --public-section-space: 1.75rem; }
 .public-session-section { padding-block: var(--public-section-space); }
 .public-session-plan { padding-block: 0 var(--public-section-space); }

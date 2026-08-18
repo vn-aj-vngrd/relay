@@ -1,3 +1,4 @@
+import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 
@@ -14,8 +15,11 @@ function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
 }
 
 export default function PublicPlanLoading() {
-  return <main id="main-content" role="status" className="public-session-page min-h-screen bg-canvas" aria-label="Loading game plan" aria-busy="true"><div className="mx-auto grid max-w-[1040px] gap-6 pb-12 sm:px-6 sm:pt-8 lg:grid-cols-[1fr_350px]">
-    <article className="public-session-panel min-w-0 overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-line"><div className="public-session-hero min-h-48 bg-canvas px-5 pb-8 pt-7 sm:min-h-52 sm:px-8 sm:pb-10"><Skeleton className="h-3 w-36" /><Skeleton className="mt-8 h-10 w-3/4" /><Skeleton className="mt-3 h-4 w-32" /></div><div className="public-session-content px-5 py-6 sm:px-8 sm:py-8"><div className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line">{Array.from({ length: 4 }, (_, index) => <div key={index} className={`flex gap-3 ${index < 2 ? "col-span-2 sm:col-span-1" : "col-span-2 min-[360px]:col-span-1"}`}><Skeleton className="h-5 w-5 shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3.5 w-1/2" /></div></div>)}</div><SessionAtAGlanceSkeleton /><JoinPanelSkeleton mobile /><RosterSkeleton mobile /></div></article>
-    <aside className="hidden space-y-7 self-start lg:block"><JoinPanelSkeleton /><RosterSkeleton /></aside>
+  return <main id="main-content" role="status" className="public-session-page min-h-screen bg-surface" aria-label="Loading game plan" aria-busy="true"><div className="mx-auto w-full max-w-4xl pb-12 pt-8 sm:px-6">
+    <div className="px-4 sm:px-0"><Skeleton className="h-4 w-40" /><GamePageIntro title="Overview" description="The plan, roster, availability, and what you need before the game." action={<Skeleton className="h-9 w-24 lg:hidden" />} /></div>
+    <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
+      <article className="public-session-panel min-w-0 overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-line"><div className="public-session-hero min-h-48 bg-canvas px-5 pb-8 pt-7 sm:min-h-52 sm:px-8 sm:pb-10"><Skeleton className="h-3 w-36" /><Skeleton className="mt-8 h-10 w-3/4" /><Skeleton className="mt-3 h-4 w-32" /></div><div className="public-session-content px-5 py-6 sm:px-8 sm:py-8"><div className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line">{Array.from({ length: 4 }, (_, index) => <div key={index} className={`flex gap-3 ${index < 2 ? "col-span-2 sm:col-span-1" : "col-span-2 min-[360px]:col-span-1"}`}><Skeleton className="h-5 w-5 shrink-0" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-3/4" /><Skeleton className="h-3.5 w-1/2" /></div></div>)}</div><SessionAtAGlanceSkeleton /><JoinPanelSkeleton mobile /><RosterSkeleton mobile /></div></article>
+      <aside className="hidden space-y-7 self-start lg:block"><JoinPanelSkeleton /><RosterSkeleton /></aside>
+    </div>
   </div></main>;
 }
