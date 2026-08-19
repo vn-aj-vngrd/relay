@@ -43,6 +43,7 @@ describe("ApplicationTour", () => {
         <Target name="home" />
         <Target name="games" />
         <Target name="groups" />
+        <Target name="courts" />
         <Target name="search" />
         <Target name="notifications" />
         <Target name="profile" />
@@ -59,6 +60,8 @@ describe("ApplicationTour", () => {
     expect(screen.getByRole("dialog", { name: "Every session stays here" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Reuse the regular crew" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("dialog", { name: "Find a court" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Find the plan quickly" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getPublicEnv } from "@/lib/env";
+import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -30,10 +31,46 @@ function authError(message: string, destination = "/login", next?: string): neve
   redirect(`${destination}?${params}`);
 }
 
+async function guardAuthAttempt(input: {
+  scope: string;
+  email?: string;
+  ipLimit: number;
+  accountLimit?: number;
+  windowSeconds: number;
+  destination?: string;
+  next?: string;
+}) {
+  const ipResult = await checkRateLimit(
+    { scope: `${input.scope}:ip`, limit: input.ipLimit, windowSeconds: input.windowSeconds },
+    await requestIdentity(),
+  );
+  const accountResult = input.email
+    ? await checkRateLimit(
+        {
+          scope: `${input.scope}:account`,
+          limit: input.accountLimit ?? input.ipLimit,
+          windowSeconds: input.windowSeconds,
+        },
+        `email:${input.email.toLowerCase()}`,
+      )
+    : null;
+  if (!ipResult.allowed || accountResult?.allowed === false)
+    authError("Too many attempts. Wait a few minutes and try again.", input.destination, input.next);
+}
+
 export async function sendMagicLink(formData: FormData) {
   const next = nextPath(formData);
   const parsed = emailSchema.safeParse(formData.get("email"));
   if (!parsed.success) authError("Enter a valid email address.", "/login", next);
+  await guardAuthAttempt({
+    scope: "magic-link",
+    email: parsed.data,
+    ipLimit: 8,
+    accountLimit: 3,
+    windowSeconds: 3600,
+    destination: "/login",
+    next,
+  });
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data,
@@ -61,6 +98,15 @@ export async function signInWithPassword(formData: FormData) {
       "/login",
       next,
     );
+  await guardAuthAttempt({
+    scope: "password-sign-in",
+    email: email.data,
+    ipLimit: 25,
+    accountLimit: 12,
+    windowSeconds: 600,
+    destination: "/login",
+    next,
+  });
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email: email.data, password: password.data });
   if (error || !data.user) authError("Email or password is incorrect.", "/login", next);
@@ -77,6 +123,15 @@ export async function createPasswordAccount(formData: FormData) {
       "/signup",
       next,
     );
+  await guardAuthAttempt({
+    scope: "password-sign-up",
+    email: email.data,
+    ipLimit: 8,
+    accountLimit: 3,
+    windowSeconds: 3600,
+    destination: "/signup",
+    next,
+  });
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
     email: email.data,
@@ -125,6 +180,7 @@ export async function signOut() {
 
 export async function signInWithGoogle(formData: FormData) {
   const next = nextPath(formData);
+  await guardAuthAttempt({ scope: "google-sign-in", ipLimit: 20, windowSeconds: 600, destination: "/login", next });
   const cookieStore = await cookies();
   cookieStore.set("relay_auth_next", next, {
     httpOnly: true,

@@ -1,4 +1,4 @@
-import { ArrowRight, ChatText, ClockCounterClockwise, Users, Volleyball } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, ChatText, ClockCounterClockwise, MapPin, Users, Volleyball } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
@@ -92,6 +92,17 @@ export default async function AdminOverviewPage() {
               <div className="flex-1">
                 <p className="font-semibold">Games</p>
                 <p className="mt-1 text-sm text-muted">Inspect active and historical sessions</p>
+              </div>
+              <ArrowRight aria-hidden size={17} className="text-muted" />
+            </Link>
+            <Link
+              href="/admin/venues"
+              className="pressable flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:px-2"
+            >
+              <MapPin aria-hidden size={20} className="text-primary" />
+              <div className="flex-1">
+                <p className="font-semibold">Venues</p>
+                <p className="mt-1 text-sm text-muted">Verify Cebu courts and submissions</p>
               </div>
               <ArrowRight aria-hidden size={17} className="text-muted" />
             </Link>

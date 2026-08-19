@@ -1,18 +1,9 @@
-import { ArrowRight, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 import { SelectField } from "@/components/ui/select-field";
+import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
-import { AdminDate } from "@/features/admin/presentation";
-import {
-  type FeedbackArea,
-  feedbackAreaLabels,
-  feedbackStatuses,
-  feedbackStatusLabels,
-  feedbackTypeLabels,
-  feedbackTypes,
-} from "@/features/feedback/domain";
-import { FeedbackStatusBadge } from "@/features/feedback/feedback-status";
+import { feedbackStatuses, feedbackStatusLabels, feedbackTypeLabels, feedbackTypes } from "@/features/feedback/domain";
 import { getAdminFeedback } from "@/features/feedback/queries";
 
 export default async function AdminFeedbackPage({
@@ -24,13 +15,7 @@ export default async function AdminFeedbackPage({
   const query = params.q?.slice(0, 100) ?? "";
   const type = params.type ?? "";
   const status = params.status ?? "";
-  const data = await getAdminFeedback({ query, type, status });
-  const grouped = feedbackStatuses
-    .map((groupStatus) => ({
-      status: groupStatus,
-      items: data.items.filter((item) => item.status === groupStatus),
-    }))
-    .filter((group) => group.items.length);
+  const page = await getAdminFeedback({ query, type, status });
 
   return (
     <div>
@@ -49,7 +34,7 @@ export default async function AdminFeedbackPage({
             className="flex items-center justify-between gap-3 border-t border-line py-3 first:border-t-0 sm:block sm:border-t-0 sm:px-4 sm:py-4 sm:first:pl-0"
           >
             <p className="text-sm font-medium text-muted">{feedbackStatusLabels[value]}</p>
-            <p className="score text-xl font-bold sm:mt-2">{data.statusCounts[value] ?? 0}</p>
+            <p className="score text-xl font-bold sm:mt-2">{page.statusCounts[value] ?? 0}</p>
           </div>
         ))}
       </section>
@@ -99,53 +84,15 @@ export default async function AdminFeedbackPage({
         </button>
       </form>
 
-      {grouped.length ? (
-        <div className="space-y-8">
-          {grouped.map((group) => (
-            <section key={group.status} aria-labelledby={`feedback-${group.status}`}>
-              <div className="flex items-center justify-between gap-4">
-                <h2 id={`feedback-${group.status}`} className="text-base font-bold">
-                  {feedbackStatusLabels[group.status]}
-                </h2>
-                <span className="score text-xs text-muted">{group.items.length}</span>
-              </div>
-              <ol className="mt-2 divide-y divide-line border-y border-line">
-                {group.items.map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      href={`/admin/feedback/${item.id}`}
-                      className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-semibold">{item.title}</p>
-                          <span className="text-xs font-semibold text-muted">{feedbackTypeLabels[item.type]}</span>
-                        </div>
-                        <p className="mt-1 truncate text-sm text-muted">
-                          {feedbackAreaLabels[item.area as FeedbackArea]} · {item.submitterName ?? item.submitterEmail}
-                        </p>
-                        <div className="mt-2 sm:hidden">
-                          <FeedbackStatusBadge status={item.status} />
-                        </div>
-                      </div>
-                      <div className="hidden text-right sm:block">
-                        <AdminDate value={item.createdAt} />
-                        <p className="mt-1 text-xs text-muted">{item.submitterEmail}</p>
-                      </div>
-                      <ArrowRight aria-hidden size={17} className="shrink-0 text-muted" />
-                    </Link>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <div className="border-y border-line py-10 text-center">
-          <p className="text-sm font-semibold">No feedback matches these filters</p>
-          <p className="mt-1 text-sm text-muted">Clear a filter or try a shorter search.</p>
-        </div>
-      )}
+      <AdminInfiniteRecords
+        key={`feedback:${query}:${type}:${status}`}
+        resource="feedback"
+        initialPage={{ items: page.items, nextCursor: page.nextCursor }}
+        query={query}
+        type={type}
+        status={status}
+        emptyMessage="No feedback matches these filters."
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { adminAuditLogs, feedbackSubmissions } from "@/db/schema";
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 import { submitFeedbackSchema, updateFeedbackSchema } from "./validation";
 
@@ -18,6 +19,8 @@ export type FeedbackActionState = {
 
 export async function submitFeedbackAction(_: FeedbackActionState, formData: FormData): Promise<FeedbackActionState> {
   const user = await requireUser("/feedback");
+  const limit = await checkRateLimit({ scope: "feedback-submit", limit: 5, windowSeconds: 3600 }, `user:${user.id}`);
+  if (!limit.allowed) return { error: "You’ve sent several submissions recently. Try again later." };
   const parsed = submitFeedbackSchema.safeParse({
     type: formData.get("type"),
     area: formData.get("area"),

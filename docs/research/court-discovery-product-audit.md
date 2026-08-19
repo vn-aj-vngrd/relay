@@ -2,6 +2,10 @@
 
 Research date: 2026-08-19
 
+## Implementation status
+
+The first constrained slice is implemented as a Cebu pilot: authenticated `/venues`, a server-proxied Cebu map, searchable and filterable sourced listings, selectable pins, directions, external booking, **Create game here**, community submissions, and admin verification. The initial factual import stores source URLs but no third-party photos or editorial copy. Expansion beyond Cebu, corrections, and data partnerships remain gated by real usage.
+
 ## Decision
 
 Relay should add court discovery, but it should **not** become a court-directory or booking marketplace.
@@ -191,7 +195,7 @@ Use three data tiers:
 
 #### Tier A — Relay verified
 
-Start with 15–30 Metro Cebu venues across Cebu City, Mandaue, Lapu-Lapu, and nearby municipalities, checked against venue-owned websites, booking pages, official social accounts, or direct venue confirmation. Store source URL and last verification date internally.
+Start with Cebu venues across Cebu City, Mandaue, Lapu-Lapu, Talisay, Consolacion, Liloan, and nearby municipalities. Imported public facts remain unverified until checked against venue-owned websites, booking pages, official social accounts, or direct venue confirmation. Store source URL and last verification date internally.
 
 #### Tier B — Provider fallback
 

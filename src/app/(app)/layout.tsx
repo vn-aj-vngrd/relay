@@ -6,6 +6,7 @@ import { Suspense } from "react";
 
 import { AppBreadcrumbs } from "@/components/shared/app-breadcrumbs";
 import { AppNav } from "@/components/shared/app-nav";
+import { Avatar } from "@/components/shared/avatar-stack";
 import { Brand } from "@/components/shared/brand";
 import { SidebarAccount } from "@/components/shared/sidebar-account";
 import { SidebarCollapseToggle } from "@/components/shared/sidebar-collapse-toggle";
@@ -44,7 +45,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <SidebarCollapseToggle />
         </div>
         <SidebarUtilityNav />
-        <AppNav username={profile.username} mode="sidebar" />
+        <AppNav mode="sidebar" />
         <div className="mt-auto">
           <SidebarSupportNav unreadCount={unreadCount} isAdmin={isAdmin} />
           <div className="mt-1 border-t border-line pt-1">
@@ -85,6 +86,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </span>
               ) : null}
             </Link>
+            <span className="ml-1">
+              <Link
+                href={`/profile/${profile.username}`}
+                data-tour="profile"
+                prefetch={false}
+                aria-label={`Open ${profile.name}'s profile`}
+                className="pressable grid h-10 w-10 place-items-center rounded-full"
+              >
+                <Avatar name={profile.name} imageUrl={profileAvatarUrl(profile.avatarPath)} size="sm" />
+              </Link>
+            </span>
           </div>
         </div>
       </header>
@@ -101,7 +113,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
-      <AppNav username={profile.username} mode="mobile" />
+      <AppNav mode="mobile" />
     </div>
   );
 }

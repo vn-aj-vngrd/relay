@@ -34,7 +34,7 @@ const labels: Record<string, string> = {
   sessions: "Games",
   settings: "Settings",
   users: "Users",
-  venues: "Venues",
+  venues: "Find a court",
 };
 
 function titleCase(value: string) {
@@ -50,17 +50,19 @@ function isGameId(segments: string[], index: number) {
 function isAdminRecord(segments: string[], index: number) {
   return (
     segments[0] === "admin" &&
-    ["feedback", "sessions", "users"].includes(segments[index - 1]) &&
+    ["feedback", "sessions", "users", "venues"].includes(segments[index - 1]) &&
     segments[index] !== "new"
   );
 }
 
 function segmentLabel(segments: string[], index: number) {
   const segment = segments[index];
+  if (segments[0] === "admin" && segment === "venues") return "Venues";
   if (isGameId(segments, index)) return "Game";
   if (isAdminRecord(segments, index)) {
     if (segments[index - 1] === "users") return "User";
     if (segments[index - 1] === "feedback") return "Submission";
+    if (segments[index - 1] === "venues") return "Venue";
     return "Game";
   }
   if (segments[index - 1] === "profile") return "Profile";
@@ -80,7 +82,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     const current = index === segments.length - 1;
     const path = `/${segments.slice(0, index + 1).join("/")}`;
     let href = current ? undefined : path;
-    if (segment === "venues") href = current ? undefined : "/search";
+    if (segment === "venues") href = current ? undefined : "/venues";
     items.push({ href, label: segmentLabel(segments, index) });
   });
 

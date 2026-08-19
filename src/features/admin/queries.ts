@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, count, desc, eq, gte, ilike, isNotNull, or, type SQL } from "drizzle-orm";
+import { and, type AnyColumn, count, desc, eq, gte, ilike, isNotNull, lt, or, type SQL, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -14,7 +14,17 @@ import {
   sessionPlayers,
   sessions,
   users,
+  venues,
 } from "@/db/schema";
+import {
+  ADMIN_PAGE_SIZE,
+  type AdminPage,
+  type AdminSessionRecord,
+  type AdminUserRecord,
+  type AdminVenueRecord,
+} from "@/features/admin/records";
+
+import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
 export async function getAdminOverview() {
   const now = new Date();
@@ -66,12 +76,30 @@ export async function getAdminOverview() {
   };
 }
 
-export async function getAdminUsers(query = "") {
-  const pattern = `%${query.trim()}%`;
-  const where = query.trim()
-    ? or(ilike(users.email, pattern), ilike(profiles.name, pattern), ilike(profiles.username, pattern))
-    : undefined;
-  return db
+function afterCursor(column: AnyColumn, idColumn: AnyColumn, cursor: AdminCursor | null) {
+  return cursor ? or(lt(column, cursor.at), and(eq(column, cursor.at), lt(idColumn, cursor.id))) : undefined;
+}
+
+function paged<T extends { id: string }>(rows: T[], dateFor: (item: T) => Date): AdminPage<T> {
+  const items = rows.slice(0, ADMIN_PAGE_SIZE);
+  const last = items.at(-1);
+  return {
+    items,
+    nextCursor: rows.length > ADMIN_PAGE_SIZE && last ? encodeAdminCursor({ at: dateFor(last), id: last.id }) : null,
+  };
+}
+
+export async function getAdminUsers(input: { query?: string; cursor?: AdminCursor | null } = {}) {
+  const conditions: SQL[] = [];
+  if (input.query?.trim()) {
+    const pattern = `%${input.query.trim()}%`;
+    const search = or(ilike(users.email, pattern), ilike(profiles.name, pattern), ilike(profiles.username, pattern));
+    if (search) conditions.push(search);
+  }
+  const cursorCondition = afterCursor(users.createdAt, users.id, input.cursor ?? null);
+  if (cursorCondition) conditions.push(cursorCondition);
+
+  const rows: AdminUserRecord[] = await db
     .select({
       id: users.id,
       email: users.email,
@@ -79,15 +107,15 @@ export async function getAdminUsers(query = "") {
       suspendedAt: users.suspendedAt,
       name: profiles.name,
       username: profiles.username,
-      sessionsHosted: count(sessions.id),
+      sessionsHosted: sql<number>`(select count(*)::int from ${sessions} hosted where hosted.host_id = ${users.id})`,
     })
     .from(users)
     .leftJoin(profiles, eq(profiles.userId, users.id))
-    .leftJoin(sessions, eq(sessions.hostId, users.id))
-    .where(where)
-    .groupBy(users.id, profiles.name, profiles.username)
-    .orderBy(desc(users.createdAt))
-    .limit(50);
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(users.createdAt), desc(users.id))
+    .limit(ADMIN_PAGE_SIZE + 1);
+
+  return paged(rows, (item) => new Date(item.createdAt));
 }
 
 export async function getAdminUser(userId: string) {
@@ -106,21 +134,27 @@ export async function getAdminUser(userId: string) {
 
 const validStatuses = new Set(["draft", "published", "live", "completed", "cancelled"]);
 
-export async function getAdminSessions(query = "", status = "") {
+export async function getAdminSessions(
+  input: {
+    query?: string;
+    status?: string;
+    cursor?: AdminCursor | null;
+  } = {},
+) {
   const conditions: SQL[] = [];
-  if (query.trim()) {
-    const pattern = `%${query.trim()}%`;
+  if (input.query?.trim()) {
+    const pattern = `%${input.query.trim()}%`;
     const search = or(ilike(sessions.title, pattern), ilike(sessions.venueName, pattern), ilike(users.email, pattern));
     if (search) conditions.push(search);
   }
-  if (validStatuses.has(status))
-    conditions.push(eq(sessions.status, status as (typeof sessions.status.enumValues)[number]));
-  const where = conditions.length ? and(...conditions) : undefined;
+  if (input.status && validStatuses.has(input.status))
+    conditions.push(eq(sessions.status, input.status as (typeof sessions.status.enumValues)[number]));
+  const cursorCondition = afterCursor(sessions.startsAt, sessions.id, input.cursor ?? null);
+  if (cursorCondition) conditions.push(cursorCondition);
 
-  return db
+  const rows: AdminSessionRecord[] = await db
     .select({
       id: sessions.id,
-      slug: sessions.slug,
       title: sessions.title,
       venueName: sessions.venueName,
       startsAt: sessions.startsAt,
@@ -128,16 +162,16 @@ export async function getAdminSessions(query = "", status = "") {
       capacity: sessions.capacity,
       hostEmail: users.email,
       hostName: profiles.name,
-      playerCount: count(sessionPlayers.id),
+      playerCount: sql<number>`(select count(*)::int from ${sessionPlayers} roster where roster.session_id = ${sessions.id})`,
     })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.hostId))
     .leftJoin(profiles, eq(profiles.userId, users.id))
-    .leftJoin(sessionPlayers, eq(sessionPlayers.sessionId, sessions.id))
-    .where(where)
-    .groupBy(sessions.id, users.email, profiles.name)
-    .orderBy(desc(sessions.startsAt))
-    .limit(75);
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(sessions.startsAt), desc(sessions.id))
+    .limit(ADMIN_PAGE_SIZE + 1);
+
+  return paged(rows, (item) => new Date(item.startsAt));
 }
 
 export async function getAdminSession(sessionId: string) {
@@ -157,12 +191,92 @@ export async function getAdminSession(sessionId: string) {
   return record[0] ? { ...record[0], playerCount, matchCount, messageCount, expenseCount } : null;
 }
 
-export async function getAdminAuditLog() {
-  return db
-    .select({ log: adminAuditLogs, actorEmail: users.email, actorName: profiles.name })
+const venueStatuses = new Set(["unverified", "pending", "verified", "rejected", "archived"]);
+
+export async function getAdminVenues(
+  input: {
+    query?: string;
+    status?: string;
+    cursor?: AdminCursor | null;
+  } = {},
+) {
+  const conditions: SQL[] = [];
+  if (input.query?.trim()) {
+    const pattern = `%${input.query.trim()}%`;
+    const search = or(ilike(venues.name, pattern), ilike(venues.address, pattern));
+    if (search) conditions.push(search);
+  }
+  if (input.status && venueStatuses.has(input.status))
+    conditions.push(eq(venues.listingStatus, input.status as (typeof venues.listingStatus.enumValues)[number]));
+  const priority = sql<number>`case when ${venues.listingStatus} = 'pending' then 1 else 0 end`;
+  if (input.cursor) {
+    const dateCursor = afterCursor(venues.updatedAt, venues.id, input.cursor);
+    const cursorCondition = or(
+      lt(priority, input.cursor.priority ?? 0),
+      and(eq(priority, input.cursor.priority ?? 0), dateCursor),
+    );
+    if (cursorCondition) conditions.push(cursorCondition);
+  }
+
+  const rows = await db
+    .select({
+      priority,
+      id: venues.id,
+      name: venues.name,
+      address: venues.address,
+      source: venues.source,
+      listingStatus: venues.listingStatus,
+      courtCount: venues.courtCount,
+      updatedAt: venues.updatedAt,
+    })
+    .from(venues)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(desc(priority), desc(venues.updatedAt), desc(venues.id))
+    .limit(ADMIN_PAGE_SIZE + 1);
+
+  const pageRows = rows.slice(0, ADMIN_PAGE_SIZE);
+  const last = pageRows.at(-1);
+  const items: AdminVenueRecord[] = pageRows.map((item) => ({
+    id: item.id,
+    name: item.name,
+    address: item.address,
+    source: item.source,
+    listingStatus: item.listingStatus,
+    courtCount: item.courtCount,
+    updatedAt: item.updatedAt,
+  }));
+  return {
+    items,
+    nextCursor:
+      rows.length > ADMIN_PAGE_SIZE && last
+        ? encodeAdminCursor({ at: last.updatedAt, id: last.id, priority: last.priority })
+        : null,
+  };
+}
+
+export async function getAdminVenue(venueId: string) {
+  return db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+}
+
+export async function getAdminAuditLog(cursor: AdminCursor | null = null) {
+  const cursorCondition = afterCursor(adminAuditLogs.createdAt, adminAuditLogs.id, cursor);
+  const rows = await db
+    .select({
+      id: adminAuditLogs.id,
+      action: adminAuditLogs.action,
+      targetType: adminAuditLogs.targetType,
+      targetId: adminAuditLogs.targetId,
+      reason: adminAuditLogs.reason,
+      createdAt: adminAuditLogs.createdAt,
+      actorEmail: users.email,
+      actorName: profiles.name,
+    })
     .from(adminAuditLogs)
     .innerJoin(users, eq(users.id, adminAuditLogs.actorUserId))
     .leftJoin(profiles, eq(profiles.userId, users.id))
-    .orderBy(desc(adminAuditLogs.createdAt))
-    .limit(100);
+    .where(cursorCondition)
+    .orderBy(desc(adminAuditLogs.createdAt), desc(adminAuditLogs.id))
+    .limit(ADMIN_PAGE_SIZE + 1);
+
+  return paged(rows, (item) => item.createdAt);
 }

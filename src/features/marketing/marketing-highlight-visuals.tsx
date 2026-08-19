@@ -1,4 +1,4 @@
-type HighlightVisualName = "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
+type HighlightVisualName = "find" | "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
 
 const avatarColors = ["bg-[#635bde]", "bg-[#1f7898]", "bg-[#b14a42]", "bg-[#39764e]"];
 
@@ -24,6 +24,66 @@ function MiniField({ label, value }: { label: string; value: string }) {
   );
 }
 
+function FindVisual() {
+  const courts = [
+    ["All Day Dink", "Consolacion"],
+    ["Court District Cebu", "Mandaue"],
+    ["Pickle at The Kiln", "Banilad"],
+  ] as const;
+
+  return (
+    <div className="grid h-full grid-cols-[1.35fr_.85fr] bg-[#f7f7f5] text-[#171719]">
+      <div className="relative overflow-hidden border-r border-[#deded9] bg-[#edf1ec]">
+        <svg aria-hidden viewBox="0 0 220 260" className="absolute inset-0 h-full w-full text-[#c9cec8]">
+          <path d="M-15 48 C45 28 62 82 122 54 S198 26 238 52" fill="none" stroke="currentColor" strokeWidth="4" />
+          <path d="M18 -10 C26 46 78 73 61 128 S74 207 42 278" fill="none" stroke="white" strokeWidth="8" />
+          <path d="M18 -10 C26 46 78 73 61 128 S74 207 42 278" fill="none" stroke="#d7d2c8" strokeWidth="2" />
+          <path d="M112 -14 C91 58 146 85 122 142 S144 216 116 276" fill="none" stroke="white" strokeWidth="7" />
+          <path d="M112 -14 C91 58 146 85 122 142 S144 216 116 276" fill="none" stroke="#d7d2c8" strokeWidth="2" />
+          <path d="M-10 188 C48 160 92 198 132 176 S202 151 236 170" fill="none" stroke="white" strokeWidth="8" />
+          <path d="M-10 188 C48 160 92 198 132 176 S202 151 236 170" fill="none" stroke="#d7d2c8" strokeWidth="2" />
+        </svg>
+        {[
+          ["22%", "68%"],
+          ["38%", "45%"],
+          ["55%", "59%"],
+          ["67%", "31%"],
+          ["78%", "50%"],
+        ].map(([left, top], index) => (
+          <span
+            key={`${left}-${top}`}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm ${index === 2 ? "h-4 w-4 bg-[#5962d9]" : "h-2.5 w-2.5 bg-[#30343b]"}`}
+            style={{ left, top }}
+          />
+        ))}
+        <div className="absolute inset-x-2.5 bottom-2.5 rounded-lg border border-[#deded9] bg-white p-2.5 shadow-sm">
+          <p className="text-[7px] font-semibold text-[#6b6b70]">SELECTED COURT</p>
+          <p className="mt-1 text-[10px] font-bold">All Day Dink</p>
+          <div className="mt-2 flex gap-1.5 text-[7px] font-semibold">
+            <span className="rounded bg-[#5962d9] px-2 py-1 text-white">Create game</span>
+            <span className="rounded border border-[#deded9] px-2 py-1">Directions</span>
+          </div>
+        </div>
+      </div>
+      <div className="bg-white">
+        <div className="border-b border-[#deded9] p-2.5">
+          <p className="text-[10px] font-bold">Courts</p>
+          <p className="mt-0.5 text-[7px] text-[#6b6b70]">51 places</p>
+        </div>
+        <ul className="divide-y divide-[#deded9]">
+          {courts.map(([name, area], index) => (
+            <li key={name} className={`p-2.5 ${index === 0 ? "border-l-2 border-[#5962d9] bg-[#f0efff]" : ""}`}>
+              <p className="text-[8px] font-bold leading-tight">{name}</p>
+              <p className="mt-1 text-[7px] text-[#6b6b70]">{area}</p>
+              <p className="mt-1 text-[7px] font-medium">{index === 1 ? "Indoor · 2 courts" : "Outdoor · 2 courts"}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function PlanVisual() {
   return (
     <div className="h-full bg-[#f7f7f5] p-4 text-[#171719]">
@@ -31,7 +91,7 @@ function PlanVisual() {
       <p className="mt-1 text-[9px] text-[#6b6b70]">Set the plan. Share the link.</p>
       <div className="mt-3 space-y-2.5">
         <MiniField label="GAME NAME" value="Saturday Night Pickle" />
-        <MiniField label="VENUE" value="Central Pickle · BGC" />
+        <MiniField label="VENUE" value="All Day Dink · Consolacion" />
         <div className="grid grid-cols-3 gap-2">
           <MiniField label="DATE" value="Aug 22" />
           <MiniField label="START" value="7:00 PM" />
@@ -260,6 +320,7 @@ function RememberVisual() {
 }
 
 export function MarketingHighlightVisual({ name }: { name: HighlightVisualName }) {
+  if (name === "find") return <FindVisual />;
   if (name === "plan") return <PlanVisual />;
   if (name === "invite") return <InviteVisual />;
   if (name === "organize") return <OrganizeVisual />;

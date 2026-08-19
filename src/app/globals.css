@@ -68,6 +68,97 @@
 *::-webkit-scrollbar-thumb:hover {
   background-color: color-mix(in oklch, var(--muted) 58%, transparent);
 }
+
+.relay-interactive-map {
+  position: absolute !important;
+  inset: 0;
+}
+.relay-map-marker {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  place-items: center;
+  border: 0;
+  background: transparent;
+}
+.relay-map-marker > span {
+  width: 12px;
+  height: 12px;
+  border: 2px solid white;
+  border-radius: 999px;
+  background: #30343b;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+  transition:
+    width 160ms ease-out,
+    height 160ms ease-out,
+    background-color 160ms ease-out;
+}
+.relay-map-marker:hover > span,
+.relay-map-marker:focus-visible > span {
+  background: var(--primary);
+}
+.relay-map-marker[data-active="true"] > span {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  background: var(--primary);
+  box-shadow: 0 2px 5px rgb(0 0 0 / 30%);
+}
+.relay-map-marker:focus-visible {
+  border-radius: 999px;
+  outline: 3px solid color-mix(in oklch, var(--primary) 45%, white);
+  outline-offset: -3px;
+}
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 2px 6px rgb(13 15 20 / 10%);
+}
+.maplibregl-ctrl-group button {
+  width: 40px;
+  height: 40px;
+  background-color: var(--surface);
+}
+.maplibregl-ctrl-group button + button {
+  border-top-color: var(--line);
+}
+.maplibregl-ctrl-group button:hover,
+.maplibregl-ctrl-group button:focus-visible {
+  background-color: var(--surface-strong);
+}
+.maplibregl-ctrl-group button:focus-visible {
+  outline: 3px solid color-mix(in oklch, var(--primary) 38%, transparent);
+  outline-offset: -3px;
+}
+.maplibregl-ctrl-icon {
+  filter: var(--map-control-filter, none);
+}
+.maplibregl-ctrl-attrib {
+  color: var(--muted);
+  background: color-mix(in oklch, var(--surface) 92%, transparent);
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--ink);
+}
+.maplibregl-cooperative-gesture-screen {
+  background: rgb(13 15 20 / 62%);
+  font:
+    600 13px/1.4 var(--font-geist-sans),
+    Inter,
+    sans-serif;
+}
+html[data-theme="dark"] {
+  --map-control-filter: invert(1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .relay-map-marker > span {
+    transition: none;
+  }
+}
+
 html {
   background: var(--canvas);
   color: var(--ink);
@@ -177,6 +268,7 @@ p {
 }
 .mobile-chrome {
   background: var(--surface);
+  color: var(--ink);
 }
 .court-rule {
   border-color: color-mix(in oklch, var(--scoreboard-line) 28%, transparent);
@@ -574,14 +666,6 @@ html[data-density="compact"] .public-session-chat-thread {
   .app-title {
     font-size: 2rem;
     line-height: 2.375rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .mobile-chrome {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
   }
 }
 

@@ -6,6 +6,11 @@ const statusStyles: Record<string, string> = {
   completed: "bg-surface-strong text-muted",
   cancelled: "bg-danger/10 text-danger",
   draft: "bg-warning/12 text-warning",
+  verified: "bg-success/10 text-success",
+  pending: "bg-warning/12 text-warning",
+  rejected: "bg-danger/10 text-danger",
+  unverified: "bg-surface-strong text-muted",
+  archived: "bg-surface-strong text-muted",
 };
 
 export function AdminStatus({ value }: { value: string }) {
@@ -18,11 +23,12 @@ export function AdminStatus({ value }: { value: string }) {
   );
 }
 
-export function AdminDate({ value, includeTime = false }: { value: Date; includeTime?: boolean }) {
+export function AdminDate({ value, includeTime = false }: { value: Date | string; includeTime?: boolean }) {
+  const date = value instanceof Date ? value : new Date(value);
   return (
-    <time dateTime={value.toISOString()} className="whitespace-nowrap text-sm text-muted">
+    <time dateTime={date.toISOString()} className="whitespace-nowrap text-sm text-muted">
       {new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", ...(includeTime ? { timeStyle: "short" } : {}) }).format(
-        value,
+        date,
       )}
     </time>
   );

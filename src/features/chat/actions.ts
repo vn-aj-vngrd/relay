@@ -8,6 +8,7 @@ import { db } from "@/db/client";
 import { messageReactions, messages } from "@/db/schema";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getServerEnv } from "@/lib/env";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { validateChatImageFile } from "./config";
@@ -28,6 +29,11 @@ export async function sendMessage(_: ChatActionState, formData: FormData): Promi
 
   const viewer = await getSessionViewer(sessionId.data, String(formData.get("slug") ?? ""));
   if (!viewer || !canParticipate(viewer.player.rsvp)) return { error: "Join this session before sending messages." };
+  const limit = await checkRateLimit(
+    { scope: "session-chat", limit: 30, windowSeconds: 60 },
+    `player:${viewer.player.id}`,
+  );
+  if (!limit.allowed) return { error: "Messages are sending too quickly. Wait a moment and try again." };
 
   const [message] = await db
     .insert(messages)

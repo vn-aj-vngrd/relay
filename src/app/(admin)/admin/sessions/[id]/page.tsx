@@ -42,6 +42,7 @@ export default async function AdminSessionPage({ params }: { params: Promise<{ i
             <Link
               href={`/s/${game.slug}`}
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-primary"
             >
               Public page <ArrowSquareOut size={16} />

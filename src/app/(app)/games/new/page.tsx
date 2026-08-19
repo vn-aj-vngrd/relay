@@ -10,7 +10,7 @@ import { type CreateSessionDefaults, CreateSessionForm } from "@/features/sessio
 export default async function NewGamePage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; group?: string }>;
+  searchParams: Promise<{ from?: string; group?: string; venue?: string; address?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -69,7 +69,14 @@ export default async function NewGamePage({
         sourceSessionId: source?.id,
         inviteeCount,
       }
-    : { groupId: group?.id, groupName: group?.name, title: group ? `${group.name} Pickle` : undefined, inviteeCount };
+    : {
+        groupId: group?.id,
+        groupName: group?.name,
+        title: group ? `${group.name} Pickle` : undefined,
+        inviteeCount,
+        venue: params.venue?.slice(0, 120),
+        venueAddress: params.address?.slice(0, 240),
+      };
   return (
     <div className="w-full">
       <Link

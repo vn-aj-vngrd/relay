@@ -121,12 +121,12 @@ Use for fixed crews and private paid reservations.
 
 Hosts should choose an outcome-labeled preset, then optionally refine it under Advanced:
 
-| Preset | Identity | Confirmation | Best for |
-| --- | --- | --- | --- |
-| Friends with the link | Guest or account | Instant | Normal friend sessions |
-| Approve requests | Guest or account | Host approval | Controlled rosters |
-| Payment confirms spot | Account recommended | Proof + host confirmation | Cost-sensitive open play |
-| Invite only | Invited accounts/group | Invitation | Fixed crews |
+| Preset                | Identity               | Confirmation              | Best for                 |
+| --------------------- | ---------------------- | ------------------------- | ------------------------ |
+| Friends with the link | Guest or account       | Instant                   | Normal friend sessions   |
+| Approve requests      | Guest or account       | Host approval             | Controlled rosters       |
+| Payment confirms spot | Account recommended    | Proof + host confirmation | Cost-sensitive open play |
+| Invite only           | Invited accounts/group | Invitation                | Fixed crews              |
 
 The UI should explain the consequence in one sentence and preview what invitees will experience.
 

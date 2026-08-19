@@ -43,11 +43,15 @@ export function ButtonLink({
   variant = "primary",
   size = "default",
   className = "",
+  target,
+  rel,
   ...props
 }: Omit<ComponentProps<typeof Link>, "href"> & { href: string; children: ReactNode; variant?: Variant; size?: Size }) {
   return (
     <Link
       href={href}
+      target={target}
+      rel={target === "_blank" ? (rel ?? "noopener noreferrer") : rel}
       prefetch={false}
       className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
       {...props}

@@ -33,6 +33,7 @@ Implemented immediately after the audit:
 - Session-specific 1200×630 Open Graph images, canonical metadata, Twitter cards, Event JSON-LD, and `noindex` protection for link-only games.
 - Guest-to-account claim and redirect into the authenticated version of the same game.
 - Public Privacy and Terms pages, installable web-app metadata, a launch plan, and a reusable messaging kit.
+- A restrained Cebu court finder with a selectable map, sourced listings, admin verification, community submissions, and a direct handoff into Create while keeping booking external.
 
 Lightweight recurrence, recent venue reuse, groups, Play Again, realtime scoring/chat, repayment, and session recaps were already present and remain the deliberate alternative to league or club automation.
 
@@ -139,9 +140,9 @@ Next.js explicitly supports generated `opengraph-image` routes for social and me
 
 Pickleheads already has sophisticated recurring schedules and automatic invite lists. Relay should first make **Play Again** exceptionally fast and automatically suggest the last crew. Only add “repeat weekly” after users repeatedly clone games; do not build a series-management product preemptively.
 
-#### P2 — Venue discovery is not a defensible early acquisition channel
+#### P2 — Venue discovery is a workflow bridge, not an acquisition channel
 
-Pickleheads and booking products have established venue datasets. Relay’s venue autocomplete and external booking boundary are enough for the core loop. Invest in location accuracy and saved recent venues, not a broad directory.
+Pickleheads and booking products have established venue datasets. Relay now offers a Cebu-only **Find a court** branch from Create, pairing a selectable map with sourced listings labeled unverified until admin review. **Create game here** carries the result into Create; booking remains external. Invest next in Cebu data accuracy and recent venues—not a broad directory, ratings, promoted listings, or internal availability.
 
 ## Positioning that can win
 
@@ -197,7 +198,7 @@ A free no-account **fair teams / paddle stack generator** can solve an immediate
 
 ### Beachhead
 
-Start in Metro Manila with friend-group organizers, venue community chats, and casual open-play hosts who already collect with GCash/Maya. The product is localized to their actual flow without requiring venue or club adoption.
+Start in Metro Cebu with friend-group organizers, venue community chats, and casual open-play hosts who already collect with GCash/Maya. Cebu City, Mandaue, and Lapu-Lapu are the first operating area because the founder can verify venues and observe real sessions without requiring venue or club adoption.
 
 ### Launch motion
 

@@ -92,14 +92,14 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 - Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions. A top-rail control collapses it to a persistent 64px icon dock for focused work. The compact dock keeps Relay’s ball visible; hovering or keyboard-focusing that header swaps the mark for the expand control, avoiding a permanently generic utility icon. Compact navigation icons retain labels through accessible names and restrained hover/focus tooltips; the content island expands into the released space.
 - Every product destination uses the same centered 1152px content canvas. Home, Games, Groups, Search, Create, Notifications, Help Center, profiles, game tabs, shared game links, and Admin Console share the same outer edges. Forms, prose, filters, and empty messages may be narrower inside that canvas for usability, but breadcrumbs, page headings, primary content sections, and loading states never shift to a different page width. Tables and multi-column session layouts may use the full canvas so desktop space carries useful information rather than empty margins.
 - Authenticated shells stay fixed to the dynamic viewport. The content surface is the sole vertical scroll container, keeping the desktop rail and mobile chrome stable without locking nested feature scroll areas such as chat. Visible scrollbars use one narrow neutral trackless treatment across themes; horizontal tab rails remain visually hidden.
-- Mobile: a compact bottom tab bar uses an opaque surface inside the safe area and preserves 44px touch targets without letting scrolling content show through or reducing label contrast.
+- Mobile: a compact bottom tab bar exposes Home, Games, Create, Court, and Groups. Profile moves to the top header as the player’s avatar beside Search and Notifications, preserving a familiar account affordance without crowding primary destinations. The tab bar uses the opaque surface token inside the safe area—white in light mode and the designed dark surface in dark mode—with high-contrast navigation states and 44px touch targets. Scrolling content never shows through it at phone or tablet widths.
 - Navigation chrome may float and blur; content remains opaque and structurally flat.
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
 - Desktop never stretches mobile cards; it introduces useful adjacency.
 
 ### Marketing highlights
 
-The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Each large horizontal card makes one claim, names the concrete capability set, and uses a crisp component snapshot of the real Relay interface rather than a scaled screenshot. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
+The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Find → Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Find is the optional Court Finder branch and is clearly labeled as a Cebu pilot rather than implied to have national coverage. Each large horizontal card makes one claim, names the concrete capability set, and uses a crisp component snapshot of the real Relay interface rather than a scaled screenshot. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
 
 ## Session surfaces
 
@@ -125,6 +125,10 @@ Profile setup asks only for identity and optional recreational context. The foll
 ## Notifications
 
 Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
+
+## Admin console
+
+Admin collections render one server-side 30-record page, then append stable cursor pages as the bottom sentinel approaches. Existing rows and table geometry stay fixed while a compact progress status loads the next page; incremental failure stays below existing rows with one Retry action. Completion names the exact number loaded and never implies a fixed cap. Search and filters reset the collection rather than mixing cursors from different result sets.
 
 ## Product feedback
 
@@ -176,6 +180,10 @@ Search responds after a short debounce to every non-empty keystroke; Enter is ne
 ### Groups
 
 Groups are a retention shortcut, never onboarding. A completed standalone session may become a group through “Save this crew”; Play Again preserves an existing group; and any member may start a group session using the crew’s latest practical defaults. Group pages prioritize members, the next game, and shared session memories. They do not introduce feeds, club administration, or competitive identity.
+
+### Court discovery
+
+Court is a concise desktop-sidebar destination and a contextual branch of Create on mobile, not a booking marketplace. Its label stays distinct from global Search. V1 is a **Cebu pilot**: one interactive map anchors a searchable court list. Desktop uses a full-height locator workspace with an independently scrollable results rail on the left and the dominant map on the right; mobile keeps the map before a bounded results list. Selecting a pin or row synchronizes both surfaces and opens one concise, closable court overlay on the map. The map supports restrained pan, pinch/wheel zoom, explicit zoom controls, and fullscreen while cooperative touch gestures preserve page scrolling. The defining action is **Create game here**; directions, copy location, source, official website, and external booking are secondary. Imported listings say **Community listing · Confirm details** until an admin verifies them. Player suggestions stay private until admin review. Cebu pilot scope lives in one focusable question-mark tooltip beside the page title rather than a persistent banner. Relay never implies live availability, and manual venue entry remains available so discovery cannot block session creation. Server-proxied Cebu tiles preserve Geoapify/OpenMapTiles/OpenStreetMap attribution without exposing the provider key.
 
 ### Host readiness
 

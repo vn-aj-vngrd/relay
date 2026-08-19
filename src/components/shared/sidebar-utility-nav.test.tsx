@@ -11,6 +11,8 @@ describe("SidebarUtilityNav", () => {
 
     expect(screen.getByRole("link", { name: "Create" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Search" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute("href", "/venues");
+    expect(screen.getByRole("link", { name: "Court" })).not.toHaveAttribute("aria-current");
     expect(screen.queryByText("Create game")).not.toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 
 import { Analytics } from "@vercel/analytics/next";

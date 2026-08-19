@@ -6,6 +6,8 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { comments, memories, memoryMedia, reactions, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 async function requireCompletedParticipant(sessionId: string) {
@@ -29,12 +31,11 @@ export async function uploadMemoryPhoto(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const { user, session, memory } = await requireCompletedParticipant(sessionId);
   const file = formData.get("photo");
-  if (
-    !(file instanceof File) ||
-    !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-    file.size > 10 * 1024 * 1024
-  )
+  if (!(file instanceof File) || !isSupportedImageType(file.type) || file.size === 0 || file.size > 10 * 1024 * 1024)
     throw new Error("Choose a JPG, PNG, or WebP image under 10 MB");
+  if (!(await hasValidImageSignature(file))) throw new Error("That file doesn’t appear to be a valid image.");
+  const limit = await checkRateLimit({ scope: "memory-photo", limit: 20, windowSeconds: 86400 }, `user:${user.id}`);
+  if (!limit.allowed) throw new Error("Photo uploads are temporarily limited. Try again tomorrow.");
   const caption = z
     .string()
     .trim()
@@ -47,14 +48,20 @@ export async function uploadMemoryPhoto(formData: FormData) {
     .from("session-memories")
     .upload(path, file, { contentType: file.type, upsert: false });
   if (error) throw new Error("The photo could not be uploaded");
-  await db.insert(memoryMedia).values({
-    memoryId: memory.id,
-    uploaderId: user.id,
-    storagePath: path,
-    mediaType: "image",
-    caption: caption || null,
-    altText: caption || `Photo from ${session.title}`,
-  });
+  try {
+    await db.insert(memoryMedia).values({
+      memoryId: memory.id,
+      uploaderId: user.id,
+      storagePath: path,
+      mediaType: "image",
+      caption: caption || null,
+      altText: caption || `Photo from ${session.title}`,
+    });
+  } catch (uploadRecordError) {
+    await supabase.storage.from("session-memories").remove([path]);
+    console.error("Memory photo record failed", uploadRecordError);
+    throw new Error("The photo could not be saved. Try again.");
+  }
   revalidatePath(`/games/${session.id}/recap`);
   revalidatePath(`/s/${session.slug}/recap`);
   revalidatePath(`/s/${session.slug}`);
@@ -63,6 +70,8 @@ export async function uploadMemoryPhoto(formData: FormData) {
 export async function addMemoryComment(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const { user, session, memory } = await requireCompletedParticipant(sessionId);
+  const limit = await checkRateLimit({ scope: "memory-comment", limit: 30, windowSeconds: 60 }, `user:${user.id}`);
+  if (!limit.allowed) throw new Error("Comments are being added too quickly. Try again shortly.");
   const body = z.string().trim().min(1).max(500).parse(formData.get("body"));
   await db.insert(comments).values({ memoryId: memory.id, authorId: user.id, body });
   revalidatePath(`/games/${session.id}/recap`);

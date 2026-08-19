@@ -7,6 +7,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { validateAvatarFile } from "./avatar-validation";
@@ -61,6 +62,8 @@ export async function uploadAvatarAction(_: AvatarActionState, formData: FormDat
   const profile = await ensureProfile(user);
   const validated = await validateAvatarFile(formData.get("avatar"));
   if ("error" in validated) return { error: validated.error };
+  const limit = await checkRateLimit({ scope: "avatar-upload", limit: 10, windowSeconds: 86400 }, `user:${user.id}`);
+  if (!limit.allowed) return { error: "Profile photo changes are temporarily limited. Try again tomorrow." };
   const image = validated.file;
   const path = `${user.id}/${crypto.randomUUID()}.${validated.extension}`;
   const supabase = createSupabaseAdminClient();

@@ -364,6 +364,14 @@ export function GlobalSearch({
             <MagnifyingGlass aria-hidden size={22} className="text-primary" />
             <h2 className="mt-4 text-xl font-bold">No results for “{debouncedQuery}”</h2>
             <p className="mt-2 text-sm text-muted">Try a player username, venue name, or a shorter phrase.</p>
+            {filter === "venues" ? (
+              <Link
+                href="/venues"
+                className="pressable mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
+              >
+                <MapPin aria-hidden size={15} /> Browse the Cebu court map
+              </Link>
+            ) : null}
           </section>
         ) : filter === "all" ? (
           <div className="space-y-8">

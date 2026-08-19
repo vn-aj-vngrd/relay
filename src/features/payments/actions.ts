@@ -8,6 +8,8 @@ import { db } from "@/db/client";
 import { expenses, notifications, paymentAccounts, playerPayments, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { getSessionViewer } from "@/features/sessions/viewer";
+import { hasValidImageSignature } from "@/lib/image-file";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
@@ -112,6 +114,12 @@ export async function markPaymentSent(_: PaymentActionState, formData: FormData)
   if (!(proof instanceof File)) return { error: "Add one payment screenshot before submitting." };
   const proofError = validatePaymentProof(proof);
   if (proofError) return { error: proofError };
+  if (!(await hasValidImageSignature(proof))) return { error: "That file doesn’t appear to be a valid image." };
+  const limit = await checkRateLimit(
+    { scope: "payment-proof", limit: 20, windowSeconds: 86400 },
+    `player:${viewer.player.id}`,
+  );
+  if (!limit.allowed) return { error: "Payment proof uploads are temporarily limited. Try again tomorrow." };
 
   const path = `${row.expense.sessionId}/${row.payment.id}`;
   const supabase = createSupabaseAdminClient();

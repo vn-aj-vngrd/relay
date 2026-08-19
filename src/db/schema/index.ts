@@ -12,6 +12,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -40,16 +41,27 @@ export const rotationMode = pgEnum("rotation_mode", [
 ]);
 export const feedbackType = pgEnum("feedback_type", ["bug", "feature", "general"]);
 export const feedbackStatus = pgEnum("feedback_status", ["new", "reviewing", "planned", "resolved", "closed"]);
+export const venueListingStatus = pgEnum("venue_listing_status", [
+  "unverified",
+  "pending",
+  "verified",
+  "rejected",
+  "archived",
+]);
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey(), // Mirrors auth.users; deletion is handled by an anonymization job.
-  email: text("email").notNull().unique(),
-  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
-  suspensionReason: text("suspension_reason"),
-  suspendedById: uuid("suspended_by_id"),
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  ...timestamps,
-});
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey(), // Mirrors auth.users; deletion is handled by an anonymization job.
+    email: text("email").notNull().unique(),
+    suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+    suspensionReason: text("suspension_reason"),
+    suspendedById: uuid("suspended_by_id"),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [index("users_created_id_idx").on(table.createdAt.desc(), table.id.desc())],
+);
 
 export const profiles = pgTable("profiles", {
   userId: uuid("user_id")
@@ -68,26 +80,42 @@ export const profiles = pgTable("profiles", {
   ...timestamps,
 });
 
-export const venues = pgTable("venues", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  slug: text("slug").notNull().unique(),
-  name: text("name").notNull(),
-  address: text("address").notNull(),
-  latitude: numeric("latitude", { precision: 9, scale: 6 }),
-  longitude: numeric("longitude", { precision: 9, scale: 6 }),
-  environment: text("environment"),
-  courtCount: integer("court_count"),
-  hours: jsonb("hours").$type<Record<string, string>>(),
-  priceRange: text("price_range"),
-  parking: text("parking"),
-  amenities: text("amenities").array(),
-  paddleRental: boolean("paddle_rental").notNull().default(false),
-  contact: text("contact"),
-  websiteUrl: text("website_url"),
-  socialUrl: text("social_url"),
-  bookingUrl: text("booking_url"),
-  ...timestamps,
-});
+export const venues = pgTable(
+  "venues",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    slug: text("slug").notNull().unique(),
+    name: text("name").notNull(),
+    address: text("address").notNull(),
+    latitude: numeric("latitude", { precision: 9, scale: 6 }),
+    longitude: numeric("longitude", { precision: 9, scale: 6 }),
+    environment: text("environment"),
+    courtCount: integer("court_count"),
+    hours: jsonb("hours").$type<Record<string, string>>(),
+    priceRange: text("price_range"),
+    parking: text("parking"),
+    amenities: text("amenities").array(),
+    paddleRental: boolean("paddle_rental").notNull().default(false),
+    contact: text("contact"),
+    websiteUrl: text("website_url"),
+    socialUrl: text("social_url"),
+    bookingUrl: text("booking_url"),
+    listingStatus: venueListingStatus("listing_status").notNull().default("verified"),
+    source: text("source").notNull().default("manual"),
+    sourceExternalId: text("source_external_id"),
+    sourceUrl: text("source_url"),
+    submittedById: uuid("submitted_by_id").references(() => users.id, { onDelete: "set null" }),
+    verificationNote: text("verification_note"),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
+    verifiedById: uuid("verified_by_id").references(() => users.id, { onDelete: "set null" }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("venues_source_external_id_idx").on(table.source, table.sourceExternalId),
+    index("venues_updated_id_idx").on(table.updatedAt.desc(), table.id.desc()),
+  ],
+);
 
 export const venuePhotos = pgTable("venue_photos", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -175,6 +203,7 @@ export const sessions = pgTable(
     ),
     check("session_time_valid", sql`${table.endsAt} > ${table.startsAt}`),
     index("sessions_starts_at_idx").on(table.startsAt),
+    index("sessions_starts_id_idx").on(table.startsAt.desc(), table.id.desc()),
   ],
 );
 
@@ -539,7 +568,19 @@ export const feedbackSubmissions = pgTable(
     index("feedback_status_created_idx").on(table.status, table.createdAt),
     index("feedback_type_created_idx").on(table.type, table.createdAt),
     index("feedback_user_created_idx").on(table.userId, table.createdAt),
+    index("feedback_created_id_idx").on(table.createdAt.desc(), table.id.desc()),
   ],
+);
+
+export const rateLimitBuckets = pgTable(
+  "rate_limit_buckets",
+  {
+    key: text("key").primaryKey(),
+    count: integer("count").notNull().default(1),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("rate_limit_buckets_expires_idx").on(table.expiresAt)],
 );
 
 export const adminAuditLogs = pgTable(
@@ -558,6 +599,7 @@ export const adminAuditLogs = pgTable(
   },
   (table) => [
     index("admin_audit_created_at_idx").on(table.createdAt),
+    index("admin_audit_created_id_idx").on(table.createdAt.desc(), table.id.desc()),
     index("admin_audit_target_idx").on(table.targetType, table.targetId),
   ],
 );

@@ -46,6 +46,13 @@ const steps = [
       "Groups are optional shortcuts for friends who play repeatedly. Save a crew after a game, then invite them again in one step.",
   },
   {
+    key: "courts",
+    target: "courts",
+    title: "Find a court",
+    description:
+      "Browse the court map, check practical venue details, then carry a court directly into a new game. Listings stay clearly marked until Relay verifies them.",
+  },
+  {
     key: "search",
     target: "search",
     title: "Find the plan quickly",

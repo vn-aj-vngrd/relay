@@ -1,6 +1,7 @@
 "use client";
 
-import { CaretDown, Minus, Plus } from "@phosphor-icons/react";
+import { CaretDown, MapPin, Minus, Plus } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -244,9 +245,17 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
           <FieldError id="title-error" message={titleError} />
         </div>
         <div>
-          <label className={labelClass} htmlFor="venue">
-            Venue
-          </label>
+          <div className="flex items-center justify-between gap-3">
+            <label className={labelClass} htmlFor="venue">
+              Venue
+            </label>
+            <Link
+              href="/venues"
+              className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-primary hover:bg-primary-soft"
+            >
+              <MapPin aria-hidden size={15} /> Find a court
+            </Link>
+          </div>
           <VenueCombobox
             key={`${value("venue", defaults.venue)}:${value("venueAddress", defaults.venueAddress)}`}
             defaultValue={value("venue", defaults.venue)}

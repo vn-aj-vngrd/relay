@@ -16,6 +16,14 @@ const sections = [
         "No. Standalone games are the fastest way to start. Groups are useful only when the same crew plays regularly.",
       ],
       [
+        "Can Relay help me find a court?",
+        "Yes. Court Finder currently covers Cebu. Open it from Create, select a pin or court row, then choose Create game here. Each listing includes directions and available official or booking links. Confirm details directly with the venue.",
+      ],
+      [
+        "How do I add a missing Cebu court?",
+        "Choose Suggest a court in Court Finder. Send the name, location, and an official or Google Maps link when available. The submission stays private until a Relay admin verifies and publishes it.",
+      ],
+      [
         "Can I use Relay without booking through it?",
         "Yes. Court booking happens with the venue. Add the booking details or mark the court booked after you return to Relay.",
       ],

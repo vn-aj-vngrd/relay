@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { sessions } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
+import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
 import { trackProductEvent } from "./events";
 
@@ -22,6 +23,11 @@ export async function trackSharedSessionEvent(input: z.input<typeof sharedEventI
     getCurrentUser(),
   ]);
   if (!session) return;
+  const limit = await checkRateLimit(
+    { scope: "shared-event", limit: 60, windowSeconds: 60 },
+    user ? `user:${user.id}` : await requestIdentity(),
+  );
+  if (!limit.allowed) return;
   await trackProductEvent({
     name: parsed.data.event,
     sessionId: session.id,

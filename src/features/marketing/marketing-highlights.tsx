@@ -9,15 +9,23 @@ type MarketingHighlight = {
   stage: string;
   title: string;
   detail: string;
-  visual: "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
+  visual: "find" | "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
   dark?: boolean;
 };
 
 const highlights: readonly MarketingHighlight[] = [
   {
+    stage: "Find",
+    title: "Start with a court that works.",
+    detail:
+      "Explore the map, compare practical details, and carry a venue straight into Create. Court Finder is currently a Cebu pilot.",
+    visual: "find",
+  },
+  {
     stage: "Plan",
     title: "Plan it before the chat gets noisy.",
-    detail: "Venue search, date and time, courts, capacity, booking, and readiness.",
+    detail:
+      "Set the schedule, player limit, courts, booking details, and readiness without opening every option at once.",
     visual: "plan",
   },
   {

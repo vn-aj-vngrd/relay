@@ -23,6 +23,7 @@ import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
+import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
 import {
   createSessionSchema,
@@ -48,6 +49,8 @@ function manilaDate(date: FormDataEntryValue | null, time: FormDataEntryValue | 
 
 export async function createSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
+  const limit = await checkRateLimit({ scope: "session-create", limit: 20, windowSeconds: 3600 }, `user:${user.id}`);
+  if (!limit.allowed) return { error: "You’ve created several games recently. Try again later." };
   const hostProfile = await ensureProfile(user);
   const rawCost = formData.get("cost");
   const parsed = createSessionSchema.safeParse({
@@ -847,6 +850,11 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
         .digest("SHA-256", new TextEncoder().encode(guestToken))
         .then((value) => Buffer.from(value).toString("hex"))
     : null;
+  const limit = await checkRateLimit(
+    { scope: "session-rsvp", limit: 20, windowSeconds: 600 },
+    user ? `user:${user.id}` : guestHash ? `guest:${guestHash}` : await requestIdentity(),
+  );
+  if (!limit.allowed) return { error: "Responses are being updated too quickly. Wait a moment and try again." };
   if (!user && !parsed.data.guestName && !guestToken) return { error: "Add your name before responding." };
   const accountProfile = user
     ? await db.query.profiles.findFirst({ columns: { skillLevel: true }, where: eq(profiles.userId, user.id) })

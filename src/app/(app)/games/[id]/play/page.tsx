@@ -353,7 +353,10 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                 <ConfirmSubmitButton
                   variant="secondary"
                   className="w-full"
-                  confirmText="End this session? Active play will close and the game will become a shared memory."
+                  confirmTitle="End this session?"
+                  confirmText="You won’t be able to add more matches or scores. The recap, standings, photos, and game history will stay available as a shared memory."
+                  confirmLabel="End session"
+                  cancelLabel="Keep playing"
                   pendingLabel="Ending session…"
                 >
                   End session

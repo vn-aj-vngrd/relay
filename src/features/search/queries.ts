@@ -120,10 +120,13 @@ async function findVenues(query: string, offset: number, limit: number) {
     .select()
     .from(venues)
     .where(
-      or(
-        ilike(venues.name, pattern),
-        ilike(venues.address, pattern),
-        sql<boolean>`array_to_string(${venues.amenities}, ' ') ilike ${pattern}`,
+      and(
+        inArray(venues.listingStatus, ["unverified", "verified"]),
+        or(
+          ilike(venues.name, pattern),
+          ilike(venues.address, pattern),
+          sql<boolean>`array_to_string(${venues.amenities}, ' ') ilike ${pattern}`,
+        ),
       ),
     )
     .orderBy(sql`case when lower(${venues.name}) like lower(${prefix}) then 0 else 1 end`, asc(venues.name))

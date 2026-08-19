@@ -1,12 +1,13 @@
 "use client";
 
-import { MagnifyingGlass, PlusCircle } from "@phosphor-icons/react";
+import { MagnifyingGlass, MapPin, PlusCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/games/new", label: "Create", icon: PlusCircle, tour: "create" },
-  { href: "/search", label: "Search", icon: MagnifyingGlass, tour: "search" },
+  { href: "/games/new", label: "Create", icon: PlusCircle, tour: "create", includeSubpaths: false },
+  { href: "/search", label: "Search", icon: MagnifyingGlass, tour: "search", includeSubpaths: false },
+  { href: "/venues", label: "Court", icon: MapPin, tour: "courts", includeSubpaths: true },
 ];
 
 export function SidebarUtilityNav() {
@@ -14,8 +15,8 @@ export function SidebarUtilityNav() {
   return (
     <nav aria-label="Quick actions">
       <ul className="space-y-0.5">
-        {items.map(({ href, label, icon: Icon, tour }) => {
-          const active = pathname === href;
+        {items.map(({ href, label, icon: Icon, tour, includeSubpaths }) => {
+          const active = includeSubpaths ? pathname.startsWith(href) : pathname === href;
           return (
             <li key={href}>
               <Link

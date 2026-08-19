@@ -16,17 +16,18 @@ describe("MarketingHighlights", () => {
     render(<MarketingHighlights />);
 
     const cards = Array.from(screen.getByRole("list", { name: "Relay product highlights" }).children);
-    expect(cards).toHaveLength(7);
-    expect(cards[3]).toHaveTextContent("Play");
-    expect(cards[4]).toHaveTextContent("Repay");
+    expect(cards).toHaveLength(8);
+    expect(cards[0]).toHaveTextContent("Find");
+    expect(cards[4]).toHaveTextContent("Play");
+    expect(cards[5]).toHaveTextContent("Repay");
     expect(screen.getByRole("button", { name: "Previous highlight" })).toBeDisabled();
-    expect(screen.getByText(/01 \/ 07/)).toBeInTheDocument();
+    expect(screen.getByText(/01 \/ 08/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Next highlight" }));
-    expect(screen.getByText(/02 \/ 07/)).toBeInTheDocument();
+    expect(screen.getByText(/02 \/ 08/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous highlight" })).toBeEnabled();
 
     fireEvent.keyDown(screen.getByRole("list", { name: "Relay product highlights" }), { key: "ArrowRight" });
-    expect(screen.getByText(/03 \/ 07/)).toBeInTheDocument();
+    expect(screen.getByText(/03 \/ 08/)).toBeInTheDocument();
   });
 });

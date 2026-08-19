@@ -3,10 +3,18 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/features/auth/session";
 import { parseGeoapifyResults, venueSearchQuerySchema } from "@/features/venues/geoapify";
 import { getServerEnv } from "@/lib/env";
+import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Sign in to search venues." }, { status: 401 });
+
+  const limit = await checkRateLimit({ scope: "venue-autocomplete", limit: 60, windowSeconds: 60 }, `user:${user.id}`);
+  if (!limit.allowed)
+    return NextResponse.json(
+      { error: "Venue search is temporarily limited. Try again shortly." },
+      { status: 429, headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
+    );
 
   const query = venueSearchQuerySchema.safeParse(request.nextUrl.searchParams.get("q"));
   if (!query.success)
@@ -30,7 +38,10 @@ export async function GET(request: NextRequest) {
     });
     if (!response.ok) throw new Error(`Geoapify returned ${response.status}`);
     const suggestions = parseGeoapifyResults(await response.json());
-    return NextResponse.json({ suggestions }, { headers: { "Cache-Control": "private, no-store" } });
+    return NextResponse.json(
+      { suggestions },
+      { headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
     console.error("Venue search failed", error instanceof Error ? error.message : "Unknown provider error");
     return NextResponse.json({ error: "Venue search is temporarily unavailable." }, { status: 502 });

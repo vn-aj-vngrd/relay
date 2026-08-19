@@ -1,9 +1,8 @@
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
 
 import { SelectField } from "@/components/ui/select-field";
+import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
-import { AdminDate, AdminStatus, EmptyAdminRows } from "@/features/admin/presentation";
 import { getAdminSessions } from "@/features/admin/queries";
 
 const statuses = ["", "draft", "published", "live", "completed", "cancelled"];
@@ -16,7 +15,7 @@ export default async function AdminSessionsPage({
   const params = await searchParams;
   const query = params.q?.slice(0, 100) ?? "";
   const status = params.status ?? "";
-  const games = await getAdminSessions(query, status);
+  const page = await getAdminSessions({ query, status });
 
   return (
     <div>
@@ -56,57 +55,14 @@ export default async function AdminSessionsPage({
           Apply
         </button>
       </form>
-      <p className="mb-2 text-xs text-muted">Showing up to 75 games.</p>
-      <div className="overflow-x-auto border-y border-line">
-        <table className="w-full min-w-[820px] border-collapse text-left">
-          <thead>
-            <tr className="border-b border-line text-xs font-semibold text-muted">
-              <th className="px-3 py-3">Game</th>
-              <th className="px-3 py-3">Host</th>
-              <th className="px-3 py-3">Status</th>
-              <th className="px-3 py-3 text-right">Players</th>
-              <th className="w-16 px-3 py-3">
-                <span className="sr-only">Open</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {games.length ? (
-              games.map((game) => (
-                <tr key={game.id} className="hover:bg-surface-strong/60">
-                  <td className="px-3 py-3.5">
-                    <p className="font-semibold">{game.title}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      {game.venueName} · <AdminDate value={game.startsAt} />
-                    </p>
-                  </td>
-                  <td className="px-3 py-3.5">
-                    <p className="text-sm font-medium">{game.hostName ?? "Profile not finished"}</p>
-                    <p className="mt-1 text-xs text-muted">{game.hostEmail}</p>
-                  </td>
-                  <td className="px-3 py-3.5">
-                    <AdminStatus value={game.status} />
-                  </td>
-                  <td className="score px-3 py-3.5 text-right text-sm">
-                    {game.playerCount} / {game.capacity}
-                  </td>
-                  <td className="px-3 py-3.5 text-right">
-                    <Link
-                      href={`/admin/sessions/${game.id}`}
-                      aria-label={`Open ${game.title}`}
-                      className="inline-flex min-h-10 items-center font-semibold text-primary"
-                    >
-                      Open
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <EmptyAdminRows colSpan={5} message="No games match these filters." />
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminInfiniteRecords
+        key={`sessions:${query}:${status}`}
+        resource="sessions"
+        initialPage={page}
+        query={query}
+        status={status}
+        emptyMessage="No games match these filters."
+      />
     </div>
   );
 }

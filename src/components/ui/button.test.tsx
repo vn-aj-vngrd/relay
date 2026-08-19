@@ -12,6 +12,14 @@ describe("button primitives", () => {
     render(<ButtonLink href="/games/new">Create game</ButtonLink>);
     expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute("href", "/games/new");
   });
+  it("isolates external tabs by default", () => {
+    render(
+      <ButtonLink href="https://example.com" target="_blank">
+        External venue
+      </ButtonLink>,
+    );
+    expect(screen.getByRole("link", { name: "External venue" })).toHaveAttribute("rel", "noopener noreferrer");
+  });
   it("keeps default actions compact and exposes one consistent large size", () => {
     render(
       <>

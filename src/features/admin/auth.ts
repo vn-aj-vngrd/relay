@@ -3,13 +3,18 @@ import "server-only";
 import type { User } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 
-import { requireUser } from "@/features/auth/session";
+import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { getServerEnv } from "@/lib/env";
 
 import { parseAdminEmails } from "./validation";
 
 export function isAdminEmail(email: string | null | undefined) {
   return Boolean(email && parseAdminEmails(getServerEnv().ADMIN_EMAILS).has(email.toLowerCase()));
+}
+
+export async function getAuthorizedAdmin(): Promise<User | null> {
+  const user = await getCurrentUser();
+  return user && isAdminEmail(user.email) ? user : null;
 }
 
 export async function requireAdmin(): Promise<User> {

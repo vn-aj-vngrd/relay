@@ -304,7 +304,8 @@ export function SetupWizard({
               <div className="border-y border-line py-4">
                 <p className="text-sm font-semibold">Next: a quick look around</p>
                 <p className="mt-1 text-sm leading-6 text-muted">
-                  Relay will point out Create, Games, Search, notifications, and your profile in the real app.
+                  Relay will point out Create, Games, the court finder, Search, notifications, and your profile in the
+                  real app.
                 </p>
               </div>
             </fieldset>
