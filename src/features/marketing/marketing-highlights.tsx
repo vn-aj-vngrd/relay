@@ -35,7 +35,7 @@ const highlights: readonly MarketingHighlight[] = [
   {
     stage: "Play",
     title: "Run every court from one phone.",
-    detail: "Five play formats, paddle stack, fixed pairs, multi-court scoring, and standings.",
+    detail: "Arrival check-in, five play formats, shared timer, paddle stack, multi-court scores, and standings.",
     visual: "play",
     dark: true,
   },

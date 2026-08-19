@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessionPlayers, sessions } from "@/db/schema";
+import { trackProductEvent } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 
 import { addGroupMemberSchema, createGroupSchema, groupSlug } from "./domain";
@@ -70,6 +71,14 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
     return created;
   });
 
+  if (parsed.data.sourceSessionId)
+    await trackProductEvent({
+      name: "group_saved",
+      userId: user.id,
+      sessionId: parsed.data.sourceSessionId,
+      source: "authenticated",
+      metadata: { memberCount: sourcePlayerIds.length },
+    });
   revalidatePath("/groups");
   if (parsed.data.sourceSessionId) revalidatePath(`/games/${parsed.data.sourceSessionId}`);
   redirect(`/groups/${group.slug}`);

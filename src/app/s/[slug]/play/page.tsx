@@ -5,8 +5,10 @@ import { Avatar } from "@/components/shared/avatar-stack";
 import { LiveCourt } from "@/features/matches/live-court";
 import { getPublicLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
+import { RoundTimer } from "@/features/matches/round-timer";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
 import { getSessionViewer } from "@/features/sessions/viewer";
 
 function name(player: { guestName: string | null }, profile: { name: string } | null) {
@@ -31,6 +33,9 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
         Math.min(...left.players.map((item) => item.queue.position)) -
         Math.min(...right.players.map((item) => item.queue.position)),
     );
+  const roundStartedAt = data.activeMatches
+    .flatMap((match) => (match.startedAt ? [match.startedAt] : []))
+    .toSorted((left, right) => left.getTime() - right.getTime())[0];
   const roundMode =
     data.session.rotationMode === "random" ||
     data.session.rotationMode === "balanced" ||
@@ -57,11 +62,31 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
             <p className="mt-2 text-sm text-muted">
               The host will start courts and the paddle stack when everyone arrives.
             </p>
+            {viewer?.player.rsvp === "going" ? (
+              <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5">
+                <p className="mb-3 text-sm text-muted">At the venue? Let the host know you’re ready.</p>
+                <AttendanceToggle
+                  sessionId={data.session.id}
+                  sessionPlayerId={viewer.player.id}
+                  name="yourself"
+                  present={Boolean(viewer.player.checkedInAt)}
+                  compact
+                />
+              </div>
+            ) : null}
           </section>
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
             <section>
               <h2 className="mb-4 text-lg font-bold">Active courts</h2>
+              {data.session.roundDurationMinutes && roundStartedAt ? (
+                <div className="mb-5">
+                  <RoundTimer
+                    startedAt={roundStartedAt.toISOString()}
+                    durationMinutes={data.session.roundDurationMinutes}
+                  />
+                </div>
+              ) : null}
               {data.activeMatches.length ? (
                 <div className="grid gap-5">
                   {data.activeMatches.map((match) => {

@@ -41,6 +41,32 @@ export default async function AdminOverviewPage() {
         </div>
       </section>
 
+      <section className="mt-10" aria-labelledby="product-loop-title">
+        <div>
+          <h2 id="product-loop-title" className="text-lg font-bold">
+            Product loop · 30 days
+          </h2>
+          <p className="mt-1 text-sm text-muted">Lifecycle events only—no names, chat, payment details, or scores.</p>
+        </div>
+        <dl className="mt-4 grid border-y border-line sm:grid-cols-5 sm:divide-x sm:divide-line">
+          {[
+            ["Published", "session_published"],
+            ["RSVPs", "rsvp_saved"],
+            ["Play started", "play_started"],
+            ["Completed", "session_completed"],
+            ["Recaps shared", "recap_shared"],
+          ].map(([label, event]) => (
+            <div
+              key={event}
+              className="flex items-center justify-between border-t border-line py-3 first:border-t-0 sm:block sm:border-t-0 sm:px-4 sm:py-4 sm:first:pl-0"
+            >
+              <dt className="text-xs font-medium text-muted">{label}</dt>
+              <dd className="score text-xl font-bold sm:mt-2">{data.lifecycle.get(event) ?? 0}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
       <div className="mt-10 grid gap-10 lg:grid-cols-[.85fr_1.15fr]">
         <section aria-labelledby="admin-shortcuts">
           <h2 id="admin-shortcuts" className="text-lg font-bold">

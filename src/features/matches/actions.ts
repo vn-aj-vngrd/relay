@@ -20,6 +20,7 @@ import {
   sessionQueue,
   sessions,
 } from "@/db/schema";
+import { trackProductEvent } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
 
@@ -39,7 +40,7 @@ async function requireHost(sessionId: string) {
     where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, user.id)),
   });
   if (session.hostId !== user.id && player?.role !== "cohost") throw new Error("Only a host can manage live play");
-  return session;
+  return { session, user };
 }
 
 async function requireScorekeeper(sessionId: string, matchId: string) {
@@ -63,7 +64,7 @@ export type StartPlayActionState = { error?: string };
 
 export async function startPlay(_: StartPlayActionState, formData: FormData): Promise<StartPlayActionState> {
   const sessionId = String(formData.get("sessionId"));
-  const session = await requireHost(sessionId);
+  const { session, user } = await requireHost(sessionId);
   let setup;
   try {
     const pairCount = Math.max(0, Math.min(20, Number(formData.get("pairCount")) || 0));
@@ -85,17 +86,26 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
     const fixed = formData.get("mode") === "round_robin" || formData.get("partnerPolicy") === "fixed";
     return { error: fixed ? "Assign each active player to one pair." : "Choose a valid play setup." };
   }
+  const rawRoundDuration = formData.get("roundDuration");
+  const roundDuration =
+    rawRoundDuration === null || rawRoundDuration === ""
+      ? null
+      : z.coerce.number().int().min(5).max(60).safeParse(rawRoundDuration);
+  if (roundDuration && !roundDuration.success) return { error: "Choose a round timer between 5 and 60 minutes." };
+  const roundDurationMinutes = setup.mode === "queue" ? null : (roundDuration?.data ?? null);
   if (session.status !== "draft" && session.status !== "published") return { error: "Play has already started." };
   const goingPlayers = await db
-    .select({ id: sessionPlayers.id })
+    .select({ id: sessionPlayers.id, checkedInAt: sessionPlayers.checkedInAt })
     .from(sessionPlayers)
     .where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
-  const goingCount = goingPlayers.length;
+  const checkedInPlayers = goingPlayers.filter((player) => player.checkedInAt);
+  const activePlayers = checkedInPlayers.length ? checkedInPlayers : goingPlayers;
+  const goingCount = activePlayers.length;
   if (goingCount < 4) return { error: "At least four players need to be going before Play can start." };
   const setupPairs = "pairs" in setup ? setup.pairs : [];
   if (setupPairs.length) {
     const assigned = setupPairs.flat().toSorted();
-    const eligible = goingPlayers.map((player) => player.id).toSorted();
+    const eligible = activePlayers.map((player) => player.id).toSorted();
     if (assigned.length !== eligible.length || assigned.some((id, index) => id !== eligible[index]))
       return { error: "Assign every active player to exactly one pair." };
   }
@@ -110,14 +120,25 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
       setup.mode === "queue" ? { queueRule: setup.queueRule, partnerPolicy: setup.partnerPolicy } : {};
     const activated = await tx
       .update(sessions)
-      .set({ status: "live", rotationMode: setup.mode, rotationConfig, version: sql`${sessions.version} + 1` })
+      .set({
+        status: "live",
+        rotationMode: setup.mode,
+        rotationConfig,
+        roundDurationMinutes,
+        version: sql`${sessions.version} + 1`,
+      })
       .where(and(eq(sessions.id, sessionId), inArray(sessions.status, ["draft", "published"])))
       .returning({ id: sessions.id });
     if (!activated.length) throw new Error("Play has already started.");
     const players = await tx
       .select()
       .from(sessionPlayers)
-      .where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")))
+      .where(
+        inArray(
+          sessionPlayers.id,
+          activePlayers.map((player) => player.id),
+        ),
+      )
       .orderBy(asc(sessionPlayers.createdAt));
     if (setupPairs.length) {
       const createdPairs = await tx
@@ -160,10 +181,27 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
     await tx
       .update(sessionPlayers)
       .set({ playState: "waiting" })
-      .where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
+      .where(
+        inArray(
+          sessionPlayers.id,
+          players.map((player) => player.id),
+        ),
+      );
     await tx
       .insert(messages)
       .values({ sessionId, kind: "system", body: `Play started · ${rotationDescription(setup.mode, rotationConfig)}` });
+  });
+  await trackProductEvent({
+    name: "play_started",
+    userId: user.id,
+    sessionId,
+    source: "authenticated",
+    metadata: {
+      mode: setup.mode,
+      playerCount: goingCount,
+      courtCount: session.courtCount,
+      timed: Boolean(roundDurationMinutes),
+    },
   });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
@@ -172,7 +210,7 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
 
 export async function createQueueMatch(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  const session = await requireHost(sessionId);
+  const { session } = await requireHost(sessionId);
   await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
     const [active, sessionCourts, waiting, completed, pairRows] = await Promise.all([
@@ -365,7 +403,7 @@ export async function saveScore(input: z.input<typeof scoreInput>) {
 
 export async function completeSession(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  const session = await requireHost(sessionId);
+  const { session, user } = await requireHost(sessionId);
   const activeCount = await db.$count(matches, and(eq(matches.sessionId, sessionId), eq(matches.status, "active")));
   if (activeCount) throw new Error("Finish active matches before ending the session");
   await db.transaction(async (tx) => {
@@ -386,6 +424,12 @@ export async function completeSession(formData: FormData) {
         .insert(notifications)
         .values(recipients.map((userId) => ({ userId, sessionId, type: "session_completed", payload: {} })));
   });
+  await trackProductEvent({
+    name: "session_completed",
+    userId: user.id,
+    sessionId,
+    source: "authenticated",
+  });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/games/${sessionId}`);
   redirect(`/games/${session.id}/recap`);
@@ -394,9 +438,13 @@ export async function completeSession(formData: FormData) {
 export async function finishMatch(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
   const matchId = String(formData.get("matchId"));
-  const { session } = await requireScorekeeper(sessionId, matchId);
-  await db.transaction(async (tx) => {
+  const { session, user } = await requireScorekeeper(sessionId, matchId);
+  const wasFirstCompletedMatch = await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
+    const [{ completedCount }] = await tx
+      .select({ completedCount: sql<number>`count(*)::int` })
+      .from(matches)
+      .where(and(eq(matches.sessionId, sessionId), eq(matches.status, "completed")));
     const match = await tx.query.matches.findFirst({
       where: and(eq(matches.id, matchId), eq(matches.sessionId, sessionId), eq(matches.status, "active")),
     });
@@ -472,7 +520,15 @@ export async function finishMatch(formData: FormData) {
       kind: "system",
       body: `${match.courtLabel} finished ${match.teamAScore}–${match.teamBScore}.`,
     });
+    return completedCount === 0;
   });
+  if (wasFirstCompletedMatch)
+    await trackProductEvent({
+      name: "first_match_completed",
+      userId: user.id,
+      sessionId,
+      source: "authenticated",
+    });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
 }

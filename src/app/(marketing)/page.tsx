@@ -10,12 +10,12 @@ import { HeroProductShot, InviteProductShot, ProductShot } from "@/features/mark
 import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
 
 export const metadata: Metadata = {
-  title: "Relay — The shared home for pickleball with friends",
+  title: "Relay — From group chat to pickleball night",
   description:
-    "Create the game, share one link, organize the crew, run the courts, settle the cost, and keep the night together.",
+    "Share one link for the plan, guest RSVP, courts, scores, repayment, chat, and recap—built for pickleball with friends.",
   openGraph: {
-    title: "Relay — One session for the whole pickleball night",
-    description: "Plan, invite, organize, play, repay, and remember—with one shared game link.",
+    title: "Relay — One shared link for the whole pickleball night",
+    description: "Friends join without an account. Relay keeps the plan, play, repayment, and recap together.",
     type: "website",
   },
 };
@@ -76,14 +76,15 @@ export default async function MarketingPage() {
           <div className="marketing-hero-copy mx-auto max-w-[1100px] text-center">
             <p className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#526415]">
               <span className="h-2 w-2 rounded-full bg-[#b7d62e]" />
-              Built for friendly games, not rankings
+              From group chat to game night
             </p>
             <h1 className="text-[clamp(3rem,7vw,5.5rem)] font-[650] leading-[.98] tracking-[-0.052em] sm:leading-[.92]">
               <span className="block">One session.</span>
               <span className="block">The whole pickleball night.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-[720px] text-lg leading-8 text-[#626268] sm:text-xl">
-              Create one game, send one link, run every court, settle the cost, and turn the night into a shared memory.
+              Friends join without an account. Relay keeps the plan, roster, courts, repayment, chat, and recap in one
+              shared game.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href={primaryHref} className={primaryAction}>
@@ -195,8 +196,8 @@ export default async function MarketingPage() {
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Start with the format your crew understands. Relay explains the rule, validates the roster, builds pairs
-              when needed, and turns the setup into courts, a queue, scores, and standings everyone can follow.
+              Mark who is actually here, choose the format your crew understands, and add an optional shared round
+              timer. Relay turns that setup into courts, a queue, scores, and standings everyone can follow.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
@@ -316,8 +317,8 @@ export default async function MarketingPage() {
             </h2>
             <p className="mt-5 max-w-md leading-7 text-[#66666c]">
               Session chat keeps arrival plans, parking tips, photos, reactions, and system updates beside the plan.
-              Notifications pull out only the moments that need attention: invitations, waitlist movement, payment
-              review, and court assignments.
+              Notifications pull out only moments that need attention: invitations, waitlist movement, tomorrow’s game,
+              payment review, and court assignments.
             </p>
           </div>
         </div>
@@ -368,10 +369,12 @@ export default async function MarketingPage() {
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-[#66666c] sm:flex-row sm:items-center sm:justify-between">
           <Brand />
           <p>The shared home for pickleball with friends.</p>
-          <div className="flex gap-5">
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
             <a href="#highlights">Highlights</a>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
             <Link href={user ? "/home" : "/login"}>{user ? "Open app" : "Log in"}</Link>
-          </div>
+          </nav>
         </div>
       </footer>
     </main>

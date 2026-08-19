@@ -163,6 +163,21 @@ export function notificationPresentation({
         href: `${gameHref}/play`,
         tone: "play",
       };
+    case "session_starting_soon":
+      return {
+        title: customTitle ?? "Game starting soon",
+        body: customBody ?? `${game} starts in about an hour. Check the venue and mark yourself here when you arrive.`,
+        href: `${gameHref}/play`,
+        tone: "play",
+      };
+    case "session_tomorrow":
+      return {
+        title: customTitle ?? "Game tomorrow",
+        body:
+          customBody ?? `${game} is coming up tomorrow. Check the time, venue, and anything you still need to settle.`,
+        href: gameHref,
+        tone: "session",
+      };
     case "session_completed":
       return {
         title: customTitle ?? "Game wrapped",

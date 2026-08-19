@@ -153,6 +153,7 @@ export const sessions = pgTable(
     visibility: visibility("visibility").notNull().default("link"),
     rotationMode: rotationMode("rotation_mode").notNull().default("queue"),
     rotationConfig: jsonb("rotation_config").$type<Record<string, unknown>>().notNull().default({}),
+    roundDurationMinutes: integer("round_duration_minutes"),
     rosterLocked: boolean("roster_locked").notNull().default(false),
     requiresApproval: boolean("requires_approval").notNull().default(false),
     bookedAt: timestamp("booked_at", { withTimezone: true }),
@@ -168,6 +169,10 @@ export const sessions = pgTable(
   (table) => [
     check("session_capacity_positive", sql`${table.capacity} >= 2`),
     check("session_courts_positive", sql`${table.courtCount} >= 1`),
+    check(
+      "session_round_duration_valid",
+      sql`${table.roundDurationMinutes} is null or ${table.roundDurationMinutes} between 5 and 60`,
+    ),
     check("session_time_valid", sql`${table.endsAt} > ${table.startsAt}`),
     index("sessions_starts_at_idx").on(table.startsAt),
   ],
@@ -187,6 +192,7 @@ export const sessionPlayers = pgTable(
     role: sessionRole("role").notNull().default("player"),
     rsvp: rsvpStatus("rsvp").notNull().default("invited"),
     playState: playerState("play_state").notNull().default("unavailable"),
+    checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
     waitlistPosition: integer("waitlist_position"),
     invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
@@ -485,10 +491,28 @@ export const notifications = pgTable(
     sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "cascade" }),
     type: text("type").notNull(),
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull().default({}),
+    dedupeKey: text("dedupe_key").unique(),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("notifications_user_unread_idx").on(table.userId, table.readAt)],
+);
+
+export const productEvents = pgTable(
+  "product_events",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
+    source: text("source").notNull().default("server"),
+    metadata: jsonb("metadata").$type<Record<string, string | number | boolean | null>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("product_events_name_created_idx").on(table.name, table.createdAt),
+    index("product_events_session_created_idx").on(table.sessionId, table.createdAt),
+  ],
 );
 
 export const feedbackSubmissions = pgTable(

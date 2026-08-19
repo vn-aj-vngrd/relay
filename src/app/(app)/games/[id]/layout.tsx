@@ -45,7 +45,7 @@ export default async function GameWorkspaceLayout({
               Edit game
             </ButtonLink>
           ) : null}
-          <ShareButton url={`/s/${data.session.slug}`} title={data.session.title} />
+          <ShareButton url={`/s/${data.session.slug}`} title={data.session.title} sessionId={data.session.id} />
         </div>
       </div>
       <div className="min-h-0 flex-1">{children}</div>

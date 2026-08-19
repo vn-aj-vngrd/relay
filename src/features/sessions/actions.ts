@@ -18,6 +18,7 @@ import {
   sessionQueue,
   sessions,
 } from "@/db/schema";
+import { trackProductEvent } from "@/features/analytics/events";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
@@ -204,6 +205,14 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     );
     return session;
   });
+  if (intent === "published")
+    await trackProductEvent({
+      name: source ? "play_again_published" : "session_published",
+      userId: user.id,
+      sessionId: created.id,
+      source: "authenticated",
+      metadata: { courtCount: created.courtCount, capacity: created.capacity, fromGroup: Boolean(created.groupId) },
+    });
   revalidatePath("/home");
   revalidatePath("/games");
   revalidatePath("/groups");
@@ -621,7 +630,13 @@ export async function removePlayerAction(_: SessionActionState, formData: FormDa
       if (!player || player.role === "host") throw new Error("CANNOT_REMOVE");
       await tx
         .update(sessionPlayers)
-        .set({ rsvp: "declined", playState: "unavailable", waitlistPosition: null, leftAt: new Date() })
+        .set({
+          rsvp: "declined",
+          playState: "unavailable",
+          checkedInAt: null,
+          waitlistPosition: null,
+          leftAt: new Date(),
+        })
         .where(eq(sessionPlayers.id, player.id));
       await tx
         .update(sessionQueue)
@@ -706,6 +721,98 @@ export async function toggleRosterLockAction(formData: FormData) {
     .where(and(eq(sessions.id, session.id), eq(sessions.version, session.version)));
   revalidatePath(`/games/${session.id}/players`);
   revalidatePath(`/s/${session.slug}`);
+}
+
+const attendanceInput = z.object({
+  sessionId: z.uuid(),
+  sessionPlayerId: z.uuid(),
+  present: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
+
+export type AttendanceActionState = { error?: string; success?: boolean };
+
+export async function setAttendanceAction(
+  _: AttendanceActionState,
+  formData: FormData,
+): Promise<AttendanceActionState> {
+  const parsed = attendanceInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    sessionPlayerId: formData.get("sessionPlayerId"),
+    present: formData.get("present"),
+  });
+  if (!parsed.success) return { error: "This player could not be updated." };
+  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
+  if (!session || !["published", "live"].includes(session.status))
+    return { error: "Check-in is closed for this game." };
+  const target = await db.query.sessionPlayers.findFirst({
+    where: and(eq(sessionPlayers.id, parsed.data.sessionPlayerId), eq(sessionPlayers.sessionId, parsed.data.sessionId)),
+  });
+  if (!target || target.rsvp !== "going") return { error: "Only going players can check in." };
+
+  const user = await getCurrentUser();
+  const manager = user ? await requireSessionManager(session.id, user.id) : null;
+  let isSelf = Boolean(user && target.userId === user.id);
+  if (!user && target.guestTokenHash) {
+    const guestToken = (await cookies()).get(`relay_guest_${session.id}`)?.value;
+    if (guestToken) {
+      const guestHash = await crypto.subtle
+        .digest("SHA-256", new TextEncoder().encode(guestToken))
+        .then((value) => Buffer.from(value).toString("hex"));
+      isSelf = guestHash === target.guestTokenHash;
+    }
+  }
+  if (!manager && !isSelf) return { error: "You can only update your own arrival." };
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
+      const currentQueue = await tx.query.sessionQueue.findFirst({
+        where: and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, target.id)),
+      });
+      if (!parsed.data.present && currentQueue?.state === "playing") throw new Error("PLAYER_ACTIVE");
+
+      await tx
+        .update(sessionPlayers)
+        .set({
+          checkedInAt: parsed.data.present ? new Date() : null,
+          playState: parsed.data.present ? (session.status === "live" ? "waiting" : "available") : "unavailable",
+          updatedAt: new Date(),
+        })
+        .where(eq(sessionPlayers.id, target.id));
+
+      if (session.status === "live") {
+        if (parsed.data.present && !currentQueue) {
+          const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+          await tx.insert(sessionQueue).values({
+            sessionId: session.id,
+            sessionPlayerId: target.id,
+            position: Math.max(0, ...queue.map((item) => item.position)) + 1,
+            state: "waiting",
+          });
+        } else if (currentQueue) {
+          await tx
+            .update(sessionQueue)
+            .set({
+              state: parsed.data.present ? "waiting" : "unavailable",
+              enteredAt: parsed.data.present ? new Date() : currentQueue.enteredAt,
+              version: sql`${sessionQueue.version} + 1`,
+            })
+            .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, target.id)));
+        }
+      }
+    });
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error && error.message === "PLAYER_ACTIVE"
+          ? "Finish this player’s active match before marking them unavailable."
+          : "Arrival status could not be saved. Try again.",
+    };
+  }
+
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return { success: true };
 }
 
 const rsvpInput = z.object({
@@ -793,6 +900,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             waitlistPosition: nextPosition,
             respondedAt: new Date(),
             playState: nextRsvp === "going" ? "waiting" : "unavailable",
+            checkedInAt: nextRsvp === "going" ? identity.checkedInAt : null,
           })
           .where(eq(sessionPlayers.id, identity.id));
       } else {
@@ -884,9 +992,16 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 90,
-      path: `/s/${session.slug}`,
+      path: "/",
     });
   await reconcileUnpaidExpenseShares(session.id);
+  await trackProductEvent({
+    name: "rsvp_saved",
+    userId: user?.id,
+    sessionId: session.id,
+    source: user ? "authenticated" : "guest",
+    metadata: { response: resolvedRsvp ?? "unknown" },
+  });
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/s/${session.slug}`);
   return { success: true, rsvp: resolvedRsvp };

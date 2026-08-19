@@ -59,6 +59,7 @@ export function AuthEntry({
                 <span className="h-px flex-1 bg-line" />
               </div>
               <form action={signInWithGoogle}>
+                <input type="hidden" name="next" value={next ?? "/home"} />
                 <SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">
                   Continue with Google
                 </SubmitButton>

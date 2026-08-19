@@ -42,7 +42,7 @@ const sections = [
       ],
       [
         "How does guest RSVP work?",
-        "A guest enters their name and chooses Join, Maybe, or Can’t make it. Relay remembers that response on the same device without creating an account.",
+        "A guest enters their name and chooses Going, Maybe, or Can’t go. Relay remembers that response on the same device without creating an account. If they later sign in from that link, Relay claims the guest spot and opens the account version of the same game.",
       ],
       [
         "What happens when the game is full?",
@@ -71,7 +71,7 @@ const sections = [
       ],
       [
         "What appears in notifications?",
-        "Relay collects useful game activity such as invitations, join requests, waitlist movement, booking changes, payment updates, and court assignments. Open a notification to mark it read and go directly to the relevant part of the game.",
+        "Relay collects useful game activity such as invitations, join requests, waitlist movement, booking changes, tomorrow and starting-soon reminders, payment updates, and court assignments. Open a notification to mark it read and go directly to the relevant part of the game.",
       ],
       [
         "How do I clear unread notifications?",
@@ -104,8 +104,16 @@ const sections = [
     title: "Courts and live play",
     items: [
       [
+        "How does arrival check-in work?",
+        "Before Play starts, players can mark themselves here and hosts can update anyone. Check-in is optional: with no check-ins, all going players are eligible; once someone checks in, only players marked here enter the first rotation.",
+      ],
+      [
         "What is the paddle stack?",
         "It is the ordered queue of available players. The people waiting longest appear first, while hosts can override the order when needed.",
+      ],
+      [
+        "Can every court use the same timer?",
+        "Yes. Round-based formats can use an optional shared 10, 12, 15, or 20 minute timer. It survives refresh and never finishes a match automatically—finish the rally, then enter the result.",
       ],
       [
         "Do we have to score every point?",

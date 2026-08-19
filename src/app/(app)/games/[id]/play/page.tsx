@@ -12,7 +12,9 @@ import { PlaySetupForm } from "@/features/matches/play-setup-form";
 import { startMatchLabel } from "@/features/matches/presentation";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
+import { RoundTimer } from "@/features/matches/round-timer";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
 
 function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
   return profile?.name ?? player.guestName ?? "Guest";
@@ -37,7 +39,10 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
         Math.min(...left.players.map((item) => item.queue.position)) -
         Math.min(...right.players.map((item) => item.queue.position)),
     );
-  const goingCount = data.roster.filter(({ player }) => player.rsvp === "going").length;
+  const going = data.roster.filter(({ player }) => player.rsvp === "going");
+  const checkedIn = going.filter(({ player }) => player.checkedInAt);
+  const activeRoster = checkedIn.length ? checkedIn : going;
+  const goingCount = activeRoster.length;
   const roundMode =
     data.session.rotationMode === "random" ||
     data.session.rotationMode === "balanced" ||
@@ -54,6 +59,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     Math.max(0, data.courts.length - data.activeMatches.length),
     Math.floor(waiting.length / 4),
   );
+  const roundStartedAt = data.activeMatches
+    .flatMap((match) => (match.startedAt ? [match.startedAt] : []))
+    .toSorted((left, right) => left.getTime() - right.getTime())[0];
   const rotationLabel = roundMode
     ? data.completedMatchCount
       ? "Start next round"
@@ -89,18 +97,52 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
               Set the court flow before play starts. Everyone will see the same assignments, queue, and scores.
             </p>
           </div>
+          <section className="mx-auto mt-9 max-w-2xl text-left" aria-labelledby="arrival-title">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <h2 id="arrival-title" className="text-lg font-bold">
+                  Who’s here
+                </h2>
+                <p className="mt-1 text-sm leading-5 text-muted">
+                  {checkedIn.length
+                    ? `${checkedIn.length} checked in · only players marked here enter the first rotation.`
+                    : "Optional until the first check-in. With no check-ins, everyone going enters the first rotation."}
+                </p>
+              </div>
+            </div>
+            {isHost ? (
+              <div className="mt-3 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
+                {going.map(({ player, profile }) => (
+                  <AttendanceToggle
+                    key={player.id}
+                    sessionId={data.session.id}
+                    sessionPlayerId={player.id}
+                    name={playerName(player, profile)}
+                    present={Boolean(player.checkedInAt)}
+                  />
+                ))}
+              </div>
+            ) : data.membership?.rsvp === "going" ? (
+              <div className="mt-3 border-y border-line">
+                <AttendanceToggle
+                  sessionId={data.session.id}
+                  sessionPlayerId={data.membership.id}
+                  name="yourself"
+                  present={Boolean(data.membership.checkedInAt)}
+                />
+              </div>
+            ) : null}
+          </section>
           {isHost ? (
             <PlaySetupForm
               sessionId={data.session.id}
               playerCount={goingCount}
               courtCount={data.courts.length}
-              players={data.roster
-                .filter(({ player }) => player.rsvp === "going")
-                .map(({ player, profile }) => ({
-                  id: player.id,
-                  name: playerName(player, profile),
-                  skillLevel: player.skillLevel,
-                }))}
+              players={activeRoster.map(({ player, profile }) => ({
+                id: player.id,
+                name: playerName(player, profile),
+                skillLevel: player.skillLevel,
+              }))}
             />
           ) : (
             <p className="mt-7 text-center text-sm font-medium text-muted">The host is choosing the play setup.</p>
@@ -126,6 +168,14 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                 </form>
               ) : null}
             </div>
+            {data.session.roundDurationMinutes && roundStartedAt ? (
+              <div className="mb-5">
+                <RoundTimer
+                  startedAt={roundStartedAt.toISOString()}
+                  durationMinutes={data.session.roundDurationMinutes}
+                />
+              </div>
+            ) : null}
             {data.activeMatches.length ? (
               <div className="grid gap-5">
                 {data.activeMatches.map((match) => {

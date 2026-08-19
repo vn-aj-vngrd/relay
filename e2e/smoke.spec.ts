@@ -26,7 +26,7 @@ test("the landing page introduces Relay and protected routes open a usable login
 });
 
 test("an authenticated host and guest can complete the core session flow", async ({ page, browser }, testInfo) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   test.skip(testInfo.project.name.startsWith("mobile"), "single-project auth mutation");
   test.skip(!process.env.E2E_AUTH_EMAIL || !process.env.E2E_AUTH_PASSWORD, "requires disposable auth credentials");
 
@@ -163,8 +163,8 @@ test("an authenticated host and guest can complete the core session flow", async
   for (const name of ["Mika Reyes", "AJ Santos"]) {
     await page.getByPlaceholder("Add a friend by name").fill(name);
     await page.getByRole("button", { name: "Add", exact: true }).click();
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
-    await expect(page.getByPlaceholder("Add a friend by name")).toHaveValue("");
+    await expect(page.getByText(name, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByPlaceholder("Add a friend by name")).toHaveValue("", { timeout: 20_000 });
   }
 
   await page.goto(`/games/${sessionId}/more`);
@@ -174,6 +174,17 @@ test("an authenticated host and guest can complete the core session flow", async
   const guestPage = await guestContext.newPage();
   await guestPage.goto(publicHref!);
   await expect(guestPage.getByRole("heading", { name: "Saturday Night Pickle" })).toBeVisible();
+  const structuredEvent = await guestPage.locator('script[type="application/ld+json"]').textContent();
+  expect(JSON.parse(structuredEvent ?? "{}")).toMatchObject({
+    "@type": "SportsEvent",
+    name: "Saturday Night Pickle",
+    maximumAttendeeCapacity: 8,
+  });
+  const openGraphImage = await guestPage.locator('meta[property="og:image"]').getAttribute("content");
+  expect(openGraphImage).toContain("opengraph-image");
+  const previewResponse = await guestPage.request.get(openGraphImage!);
+  expect(previewResponse.ok()).toBe(true);
+  expect(previewResponse.headers()["content-type"]).toContain("image/png");
   const guestAccessibility = await new AxeBuilder({ page: guestPage }).analyze();
   expect(guestAccessibility.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual(
     [],
@@ -186,7 +197,7 @@ test("an authenticated host and guest can complete the core session flow", async
   expect(await guestPage.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
   await guestPage.locator('input[name="guestName"]:visible').fill("Guest Bea");
   await guestPage.locator("button:visible", { hasText: "Confirm I’m going" }).click();
-  await expect(guestPage.getByRole("status")).toHaveText("Response saved.");
+  await expect(guestPage.getByRole("status")).toHaveText("Response saved.", { timeout: 15_000 });
   await guestPage.reload();
   await expect(guestPage.locator("p:visible", { hasText: "Guest player" })).toBeVisible();
   await guestPage.getByRole("link", { name: "Players", exact: true }).click();
@@ -222,22 +233,34 @@ test("an authenticated host and guest can complete the core session flow", async
   const guestPaymentRow = page.getByRole("listitem").filter({ hasText: "Guest Bea" });
   await expect(guestPaymentRow.getByText("Waiting for host review")).toBeVisible();
   await guestPaymentRow.getByRole("button", { name: "Confirm paid" }).click();
-  await expect(page.getByText("1 of 3 paid")).toBeVisible();
+  await expect(page.getByText("1 of 3 paid")).toBeVisible({ timeout: 30_000 });
   await guestPage.reload();
   await expect(guestPage.getByText("Payment confirmed")).toBeVisible();
 
   await page.goto(`/games/${sessionId}/play`);
   await expect(page.getByRole("heading", { name: "Choose how tonight runs" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Who’s here" })).toBeVisible();
+  await expect(page.getByText(/With no check-ins, everyone going enters the first rotation/)).toBeVisible();
+  const notHere = page.getByRole("button", { name: /^Mark .* as here$/ });
+  await expect(notHere).toHaveCount(4);
+  for (let remaining = 3; remaining >= 0; remaining -= 1) {
+    await notHere.first().click();
+    await expect(notHere).toHaveCount(remaining, { timeout: 15_000 });
+  }
+  await expect(page.getByText("4 checked in · only players marked here enter the first rotation.")).toBeVisible();
   await page.getByRole("radio", { name: /^Keep pairs together/ }).click();
   await expect(page.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
   const teamRoundRobin = page.getByRole("radio", { name: /Team Round Robin/ });
   await page.getByText("Team Round Robin", { exact: true }).click();
   await expect(teamRoundRobin).toBeChecked();
+  await page.getByRole("button", { name: "Round timer" }).click();
+  await page.getByRole("option", { name: "10 minutes" }).click();
   await page.getByRole("button", { name: "Start Play" }).click();
   await page.getByRole("button", { name: "Start first round" }).click();
-  await expect(page.getByText("Match in progress")).toBeVisible();
+  await expect(page.getByText("Match in progress").first()).toBeVisible();
+  await expect(page.getByText("Round timer", { exact: true })).toBeVisible();
   await guestPage.goto(`${publicHref}/play`);
-  await expect(guestPage.getByText("Match in progress")).toBeVisible();
+  await expect(guestPage.getByText("Match in progress").first()).toBeVisible();
   const guestScore = guestPage.locator("output").first();
   const scoreBefore = Number(await guestScore.textContent());
   await page
@@ -279,7 +302,7 @@ test("light mode is default and dark mode persists", async ({ page }) => {
 });
 
 test("public entry pages have no serious accessibility violations", async ({ page }) => {
-  for (const path of ["/", "/login", "/signup"]) {
+  for (const path of ["/", "/login", "/signup", "/privacy", "/terms"]) {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);

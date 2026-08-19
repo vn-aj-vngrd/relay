@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
+import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import { playingExperienceOptions } from "@/features/players/playing-experience";
 
 import { rsvpAction } from "./actions";
@@ -31,6 +32,7 @@ export function RsvpControl({
   currentRsvp,
   currentSkillLevel,
   locked = false,
+  full = false,
   instance = "default",
 }: {
   sessionId: string;
@@ -41,6 +43,7 @@ export function RsvpControl({
   currentRsvp?: CurrentRsvp;
   currentSkillLevel?: string | null;
   locked?: boolean;
+  full?: boolean;
   instance?: "mobile" | "desktop" | "default";
 }) {
   const [choice, setChoice] = useState<Choice>(() => initialChoice(currentRsvp));
@@ -58,6 +61,7 @@ export function RsvpControl({
         setShareMessage("Link copied");
         window.setTimeout(() => setShareMessage(""), 2500);
       }
+      await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
         setShareMessage("Copy the address from your browser to share.");
@@ -161,7 +165,11 @@ export function RsvpControl({
               ) : currentRsvp ? (
                 "Update response"
               ) : choice === "going" ? (
-                "Confirm I’m going"
+                full ? (
+                  "Join waitlist"
+                ) : (
+                  "Confirm I’m going"
+                )
               ) : (
                 "Save response"
               )}

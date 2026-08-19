@@ -125,7 +125,11 @@ function PlayVisual() {
           <span className="h-1.5 w-1.5 rounded-full bg-[#e45b4f]" /> Live
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-5 text-center">
+      <div className="mt-2.5 flex items-center justify-between border-y border-white/15 bg-white/5 px-2.5 py-1.5">
+        <span className="text-[8px] text-white/60">Round timer</span>
+        <strong className="font-mono text-[11px]">11:42</strong>
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3.5 text-center">
         <div>
           <p className="text-[10px] font-semibold">Van + AJ</p>
           <strong className="mt-2 block font-mono text-5xl leading-none">8</strong>

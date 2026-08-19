@@ -38,6 +38,25 @@ describe("notificationPresentation", () => {
     ).toMatchObject({ body: "Head to Court 2 for your next match.", href: "/games/session-1/play", tone: "play" });
   });
 
+  it("routes scheduled reminders to the plan and arrival flow", () => {
+    expect(
+      notificationPresentation({
+        type: "session_tomorrow",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      }).href,
+    ).toBe("/games/session-1");
+    expect(
+      notificationPresentation({
+        type: "session_starting_soon",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      }),
+    ).toMatchObject({ href: "/games/session-1/play", tone: "play" });
+  });
+
   it("never links a removed player back into an inaccessible session", () => {
     expect(
       notificationPresentation({

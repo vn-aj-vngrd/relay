@@ -3,8 +3,9 @@ import { ShareNetwork } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { trackSharedSessionEvent } from "@/features/analytics/actions";
 
-export function ShareButton({ url, title }: { url: string; title: string }) {
+export function ShareButton({ url, title, sessionId }: { url: string; title: string; sessionId?: string }) {
   const [copied, setCopied] = useState(false);
   async function share() {
     const absolute = new URL(url, window.location.origin).toString();
@@ -15,6 +16,7 @@ export function ShareButton({ url, title }: { url: string; title: string }) {
         setCopied(true);
         window.setTimeout(() => setCopied(false), 2500);
       }
+      if (sessionId) await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
     }

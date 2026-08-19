@@ -20,6 +20,7 @@ import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
+import { getPublicEnv } from "@/lib/env";
 
 function RosterPreview({
   id,
@@ -51,7 +52,7 @@ function RosterPreview({
           <p className="mt-1 text-sm text-muted">
             {names.length} of {capacity} going ·{" "}
             <strong className="text-primary">
-              {spots ? spotsRemainingLabel(spots) : `${waitlistCount} waitlisted`}
+              {spots ? spotsRemainingLabel(spots) : waitlistCount ? `${waitlistCount} waitlisted` : "Waitlist open"}
             </strong>
           </p>
         </div>
@@ -81,13 +82,40 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const data = await getPublicSession((await params).slug);
   if (!data) return { title: "Game not found" };
   const going = data.roster.filter(({ player }) => player.rsvp === "going").length;
+  const spots = Math.max(0, data.session.capacity - going);
+  const availability =
+    data.session.status === "completed"
+      ? `${data.matchCount} ${data.matchCount === 1 ? "match" : "matches"} played`
+      : spots
+        ? spotsRemainingLabel(spots)
+        : "Waitlist open";
+  const description = `${formatSessionDateLong(data.session.startsAt)}, ${formatSessionTime(data.session.startsAt, data.session.endsAt)} at ${data.session.venueName}. ${going} of ${data.session.capacity} going · ${availability}.`;
   return {
     title: data.session.title,
-    description: `${formatSessionDateLong(data.session.startsAt)}, ${formatSessionTime(data.session.startsAt, data.session.endsAt)} at ${data.session.venueName}. ${going} of ${data.session.capacity} players.`,
+    description,
+    alternates: { canonical: `/s/${data.session.slug}` },
+    robots: { index: data.session.visibility === "public", follow: true },
     openGraph: {
       title: data.session.title,
-      description: `${formatSessionDateLong(data.session.startsAt)} · ${data.session.venueName} · ${spotsRemainingLabel(Math.max(0, data.session.capacity - going))}`,
+      description: `${formatSessionDateLong(data.session.startsAt)} · ${data.session.venueName} · ${availability}`,
       type: "website",
+      url: `/s/${data.session.slug}`,
+      siteName: "Relay",
+      images: [
+        {
+          url: `/s/${data.session.slug}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: `${data.session.title} pickleball game invitation`,
+        },
+      ],
+      locale: "en_PH",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: data.session.title,
+      description,
+      images: [`/s/${data.session.slug}/opengraph-image`],
     },
   };
 }
@@ -115,6 +143,25 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   const currentSkillLevel =
     viewer?.player.skillLevel ?? data.roster.find(({ player }) => player.userId === user?.id)?.profile?.skillLevel;
   const canManage = Boolean(user && (user.id === session.hostId || viewer?.player.role === "cohost"));
+  const publicUrl = `${getPublicEnv().NEXT_PUBLIC_APP_URL}/s/${session.slug}`;
+  const eventJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    name: session.title,
+    url: publicUrl,
+    startDate: session.startsAt.toISOString(),
+    endDate: session.endsAt.toISOString(),
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    eventStatus: "https://schema.org/EventScheduled",
+    location: {
+      "@type": "Place",
+      name: session.venueName,
+      ...(session.venueAddress ? { address: session.venueAddress } : {}),
+    },
+    organizer: { "@type": "Person", name: hostProfile?.name ?? "Relay host" },
+    maximumAttendeeCapacity: session.capacity,
+    remainingAttendeeCapacity: spots,
+  };
   const overview = await getSessionOverview(
     session.id,
     viewer && canParticipate(viewer.player.rsvp) ? { sessionPlayerId: viewer.player.id, canManage } : undefined,
@@ -124,20 +171,32 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
     : spots
       ? spotsRemainingLabel(spots)
       : "Waitlist open";
-  const joinTitle = session.rosterLocked ? "Roster closed" : currentRsvp ? "Your response" : "Join this game";
+  const joinTitle = session.rosterLocked
+    ? "Roster closed"
+    : currentRsvp
+      ? "Your response"
+      : spots
+        ? "Join this game"
+        : "Join the waitlist";
   const joinHelp = session.rosterLocked
     ? "The host has paused new responses"
     : currentRsvp
       ? "Review or update your response"
-      : user
-        ? "Use your Relay account to RSVP"
-        : "No account needed";
+      : spots
+        ? user
+          ? "Use your Relay account to RSVP"
+          : "No account needed"
+        : "The game is full. We’ll save your place in line.";
   return (
     <main
       id="main-content"
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(session.accentColor)}
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replaceAll("<", "\\u003c") }}
+      />
       <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
         <div className="px-4 sm:px-0">
           <p className="text-sm font-semibold text-primary">{session.title}</p>
@@ -147,7 +206,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
             action={
               session.status !== "completed" ? (
                 <ButtonLink href="#public-rsvp-title" className="lg:hidden">
-                  {currentRsvp ? "Update response" : "Join game"}
+                  {currentRsvp ? "Update response" : spots ? "Join game" : "Join waitlist"}
                 </ButtonLink>
               ) : undefined
             }
@@ -193,6 +252,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     currentRsvp={currentRsvp}
                     currentSkillLevel={currentSkillLevel}
                     locked={session.rosterLocked}
+                    full={spots === 0}
                     instance="mobile"
                   />
                 </section>
@@ -375,6 +435,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                   currentRsvp={currentRsvp}
                   currentSkillLevel={currentSkillLevel}
                   locked={session.rosterLocked}
+                  full={spots === 0}
                   instance="desktop"
                 />
               </section>

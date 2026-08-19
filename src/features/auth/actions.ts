@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -7,6 +8,8 @@ import { getPublicEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
+import { resolvePostAuthDestination } from "./destination";
+import { safeNextPath } from "./destination-path";
 import { getCurrentUser } from "./session";
 
 const emailSchema = z.email();
@@ -18,44 +21,61 @@ const passwordSchema = z
   .regex(/\d/);
 
 function nextPath(formData: FormData) {
-  const value = formData.get("next");
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/home";
+  return safeNextPath(formData.get("next"));
 }
 
-function authError(message: string, destination = "/login"): never {
-  redirect(`${destination}?error=${encodeURIComponent(message)}`);
+function authError(message: string, destination = "/login", next?: string): never {
+  const params = new URLSearchParams({ error: message });
+  if (next && next !== "/home") params.set("next", next);
+  redirect(`${destination}?${params}`);
 }
 
 export async function sendMagicLink(formData: FormData) {
+  const next = nextPath(formData);
   const parsed = emailSchema.safeParse(formData.get("email"));
-  if (!parsed.success) authError("Enter a valid email address.");
+  if (!parsed.success) authError("Enter a valid email address.", "/login", next);
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data,
     options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
   });
-  if (error) authError(error.message);
+  if (error) authError(error.message, "/login", next);
+  const cookieStore = await cookies();
+  cookieStore.set("relay_auth_next", next, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 600,
+    path: "/",
+  });
   redirect("/login?sent=1");
 }
 
 export async function signInWithPassword(formData: FormData) {
+  const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   if (!email.success || !password.success)
-    authError("Enter a valid email and a password with at least 8 characters, including a letter and number.");
+    authError(
+      "Enter a valid email and a password with at least 8 characters, including a letter and number.",
+      "/login",
+      next,
+    );
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email: email.data, password: password.data });
-  if (error) authError("Email or password is incorrect.");
-  redirect(nextPath(formData));
+  const { data, error } = await supabase.auth.signInWithPassword({ email: email.data, password: password.data });
+  if (error || !data.user) authError("Email or password is incorrect.", "/login", next);
+  redirect(await resolvePostAuthDestination(next, data.user.id));
 }
 
 export async function createPasswordAccount(formData: FormData) {
+  const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   if (!email.success || !password.success)
     authError(
       "Enter a valid email and a password with at least 8 characters, including a letter and number.",
       "/signup",
+      next,
     );
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
@@ -68,8 +88,9 @@ export async function createPasswordAccount(formData: FormData) {
         ? "An account already exists for this email. Log in instead."
         : "We couldn’t create your account. Please try again.",
       "/signup",
+      next,
     );
-  if (data.session) redirect(nextPath(formData));
+  if (data.session && data.user) redirect(await resolvePostAuthDestination(next, data.user.id));
   redirect("/signup?sent=account");
 }
 
@@ -102,7 +123,16 @@ export async function signOut() {
   redirect("/login");
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
+  const next = nextPath(formData);
+  const cookieStore = await cookies();
+  cookieStore.set("relay_auth_next", next, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 600,
+    path: "/",
+  });
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

@@ -216,6 +216,7 @@ export function SessionRecap({
             </div>
             <div className="mt-5 border-y border-line py-6">
               <RecapShareCard
+                sessionId={session.id}
                 title={session.title}
                 venue={session.venueName}
                 date={date}

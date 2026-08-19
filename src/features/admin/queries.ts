@@ -9,6 +9,7 @@ import {
   feedbackSubmissions,
   matches,
   messages,
+  productEvents,
   profiles,
   sessionPlayers,
   sessions,
@@ -18,6 +19,7 @@ import {
 export async function getAdminOverview() {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const [
     userCount,
     newUsers,
@@ -27,6 +29,7 @@ export async function getAdminOverview() {
     liveSessions,
     newFeedbackCount,
     recentActions,
+    lifecycleEvents,
   ] = await Promise.all([
     db.$count(users),
     db.$count(users, gte(users.createdAt, weekAgo)),
@@ -44,6 +47,11 @@ export async function getAdminOverview() {
       .innerJoin(users, eq(adminAuditLogs.actorUserId, users.id))
       .orderBy(desc(adminAuditLogs.createdAt))
       .limit(6),
+    db
+      .select({ name: productEvents.name, total: count() })
+      .from(productEvents)
+      .where(gte(productEvents.createdAt, monthAgo))
+      .groupBy(productEvents.name),
   ]);
   return {
     userCount,
@@ -54,6 +62,7 @@ export async function getAdminOverview() {
     liveSessions,
     newFeedbackCount,
     recentActions,
+    lifecycle: new Map(lifecycleEvents.map(({ name, total }) => [name, Number(total)])),
   };
 }
 

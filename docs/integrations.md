@@ -68,6 +68,12 @@ Broadcast covers roster, courts, matches, score events, queue, pair assignments,
 
 Authenticated Data API access still depends on the self-membership `SELECT` policy from migration `0013_realtime_participant_membership`; without it, participant-scoped table reads fail even when an invalidation arrives.
 
+## Scheduled reminders
+
+Supabase Cron runs `public.create_session_reminders()` every 15 minutes through the `relay-session-reminders` job. It creates account-only in-app notifications for tomorrow’s games and games starting in roughly one hour. `notifications.dedupe_key` makes overlapping windows and retries idempotent. Inspect runs in Supabase Dashboard → Integrations → Cron.
+
+**Complete when:** calling the function once creates reminders for eligible going players, calling it again creates none, and the Cron history shows successful 15-minute runs.
+
 ## Database migration
 
 Read [`../drizzle/0000_initial_relay_schema.md`](../drizzle/0000_initial_relay_schema.md) before applying or repairing the baseline migration. Generate later schema changes with `pnpm db:generate --name <readable_name>` and add a companion Markdown file when a migration changes authorization, deletion behavior, historical data, or platform configuration.

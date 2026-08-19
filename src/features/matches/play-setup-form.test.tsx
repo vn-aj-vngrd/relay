@@ -21,6 +21,7 @@ describe("PlaySetupForm", () => {
     );
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
     expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
+    expect(screen.queryByRole("button", { name: "Round timer" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Play" })).toBeVisible();
   });
 
@@ -73,6 +74,7 @@ describe("PlaySetupForm", () => {
     render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={8} courtCount={2} />);
     fireEvent.click(screen.getByRole("radio", { name: /Mix It Up/ }));
     expect(screen.queryByLabelText("Queue rule")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Round timer" })).toBeVisible();
     expect(screen.getByText(/new partners and fair rests/i)).toBeVisible();
   });
 

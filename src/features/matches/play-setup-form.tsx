@@ -173,6 +173,27 @@ export function PlaySetupForm({
         </div>
       </fieldset>
 
+      {mode !== "queue" ? (
+        <div className="mt-5">
+          <SelectField
+            id="round-duration"
+            name="roundDuration"
+            label="Round timer"
+            defaultValue=""
+            options={[
+              { value: "", label: "No timer — finish by score" },
+              { value: "10", label: "10 minutes" },
+              { value: "12", label: "12 minutes" },
+              { value: "15", label: "15 minutes" },
+              { value: "20", label: "20 minutes" },
+            ]}
+          />
+          <p className="mt-1.5 text-xs leading-5 text-muted">
+            Optional. Every court sees the same countdown; time running out never finishes a score automatically.
+          </p>
+        </div>
+      ) : null}
+
       {mode === "balanced" && missingExperience ? (
         <p className="mt-3 text-xs leading-5 text-muted">
           {missingExperience} {missingExperience === 1 ? "player has" : "players have"} no experience set. Relay uses a

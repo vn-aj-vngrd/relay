@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { trackSharedSessionEvent } from "@/features/analytics/actions";
 
 import type { SessionRecap } from "./recap";
 import { type RecapShareTemplateId, recapShareTemplates, viewerStanding } from "./recap-share";
@@ -55,6 +56,7 @@ function drawRule(context: CanvasRenderingContext2D, y: number, color: string) {
 }
 
 export function RecapShareCard({
+  sessionId,
   title,
   venue,
   date,
@@ -63,6 +65,7 @@ export function RecapShareCard({
   photos,
   viewerPlayerId,
 }: {
+  sessionId?: string;
   title: string;
   venue: string;
   date: string;
@@ -298,6 +301,7 @@ export function RecapShareCard({
         URL.revokeObjectURL(url);
         setMessage("Recap downloaded.");
       }
+      if (sessionId) await trackSharedSessionEvent({ sessionId, event: "recap_shared" });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
         setMessage("The recap image couldn’t be created. Try again.");

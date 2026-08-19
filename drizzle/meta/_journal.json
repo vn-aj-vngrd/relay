@@ -120,6 +120,20 @@
       "when": 1787075522958,
       "tag": "0016_session_recap_balanced_realtime",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1787106946467,
+      "tag": "0017_market_readiness",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787106946468,
+      "tag": "0018_supabase_session_reminders",
+      "breakpoints": true
     }
   ]
 }
