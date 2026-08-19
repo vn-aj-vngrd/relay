@@ -99,7 +99,7 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 ### Marketing highlights
 
-The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Each large horizontal card makes one claim, names the concrete capability set, and uses an actual Relay product image. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
+The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Each large horizontal card makes one claim, names the concrete capability set, and uses a crisp component snapshot of the real Relay interface rather than a scaled screenshot. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
 
 ## Session surfaces
 

@@ -1,17 +1,15 @@
 "use client";
 
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
-import Image from "next/image";
 import { useRef, useState } from "react";
+
+import { MarketingHighlightVisual } from "./marketing-highlight-visuals";
 
 type MarketingHighlight = {
   stage: string;
   title: string;
   detail: string;
-  image: string;
-  alt: string;
-  imageWidth: number;
-  imageHeight: number;
+  visual: "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
   dark?: boolean;
 };
 
@@ -20,65 +18,44 @@ const highlights: readonly MarketingHighlight[] = [
     stage: "Plan",
     title: "Plan it before the chat gets noisy.",
     detail: "Venue search, date and time, courts, capacity, booking, and readiness.",
-    image: "/images/product/create.webp",
-    alt: "Relay Create game form with venue, schedule, player capacity, court quantity, and optional details",
-    imageWidth: 2880,
-    imageHeight: 2000,
+    visual: "plan",
   },
   {
     stage: "Invite",
     title: "One link answers every question.",
     detail: "Guest RSVP, host approval, capacity, and an automatic waitlist—no account required.",
-    image: "/images/product/invite-desktop.webp",
-    alt: "Relay public invitation with the session plan, player roster, and guest RSVP",
-    imageWidth: 2880,
-    imageHeight: 1800,
+    visual: "invite",
   },
   {
     stage: "Organize",
     title: "Keep the crew, not the admin.",
     detail: "Roster controls, recurring groups, calendar, global search, and Play Again.",
-    image: "/images/product/overview.webp",
-    alt: "Relay session overview with readiness, plan, roster, and next actions",
-    imageWidth: 2880,
-    imageHeight: 1800,
+    visual: "organize",
   },
   {
     stage: "Play",
     title: "Run every court from one phone.",
     detail: "Five play formats, paddle stack, fixed pairs, multi-court scoring, and standings.",
-    image: "/images/product/play.webp",
-    alt: "Relay Play view with two active court scoreboards, teams, scores, and waiting players",
-    imageWidth: 2880,
-    imageHeight: 2000,
+    visual: "play",
     dark: true,
   },
   {
     stage: "Repay",
     title: "Split what the host already covered.",
     detail: "GCash, Maya, bank or cash, proof review, exclusions, and adjusted shares.",
-    image: "/images/product/payments.webp",
-    alt: "Relay payment collection showing the host-paid total, player shares, and proof review",
-    imageWidth: 2880,
-    imageHeight: 1800,
+    visual: "repay",
   },
   {
     stage: "Stay in sync",
     title: "The conversation stays with the game.",
     detail: "Realtime chat, photos, reactions, system updates, and useful notifications.",
-    image: "/images/product/chat.webp",
-    alt: "Relay session chat with messages, reactions, photos, and the anchored composer",
-    imageWidth: 2880,
-    imageHeight: 1800,
+    visual: "sync",
   },
   {
     stage: "Remember",
     title: "Turn the night into a story.",
     detail: "Seven portrait recaps, chosen backgrounds, standings, photos, and shared memories.",
-    image: "/images/product/recap.webp",
-    alt: "Relay completed-session recap with highlights, standings, photos, and portrait sharing",
-    imageWidth: 2880,
-    imageHeight: 2000,
+    visual: "remember",
   },
 ];
 
@@ -157,15 +134,7 @@ export function MarketingHighlights() {
               <div
                 className={`absolute inset-x-5 bottom-5 h-[235px] overflow-hidden rounded-xl border sm:inset-x-6 sm:bottom-6 sm:h-[260px] ${highlight.dark ? "border-white/15 bg-[#111827]" : "border-[#deded9] bg-[#f7f7f5]"}`}
               >
-                <Image
-                  src={highlight.image}
-                  alt={highlight.alt}
-                  width={highlight.imageWidth}
-                  height={highlight.imageHeight}
-                  unoptimized
-                  sizes="(min-width: 640px) 340px, 74vw"
-                  className="h-full w-full object-cover object-top"
-                />
+                <MarketingHighlightVisual name={highlight.visual} />
               </div>
             </li>
           ))}

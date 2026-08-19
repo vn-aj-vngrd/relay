@@ -15,7 +15,7 @@ describe("MarketingHighlights", () => {
   it("summarizes the full session lifecycle in a manual carousel", () => {
     render(<MarketingHighlights />);
 
-    const cards = screen.getAllByRole("listitem");
+    const cards = Array.from(screen.getByRole("list", { name: "Relay product highlights" }).children);
     expect(cards).toHaveLength(7);
     expect(cards[3]).toHaveTextContent("Play");
     expect(cards[4]).toHaveTextContent("Repay");

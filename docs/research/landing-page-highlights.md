@@ -22,7 +22,7 @@ Place one seven-card highlight rail immediately after the hero:
 6. Stay in sync
 7. Remember
 
-Each card makes one plain-language claim, names the concrete capabilities supporting it, and displays an actual Relay product image. The gallery is manual: swipe, horizontal scrolling, keyboard arrows, and previous/next buttons. It never auto-advances.
+Each card makes one plain-language claim, names the concrete capabilities supporting it, and displays a crisp component snapshot of the real Relay interface. Component snapshots preserve readable type and controls at card size better than shrinking a full-page screenshot. The gallery is manual: swipe, horizontal scrolling, keyboard arrows, and previous/next buttons. It never auto-advances.
 
 The gallery replaces the separate numbered workflow and the repeated “Everything inside” inventory. Combine the previous Create and Shared Link chapters into one Plan and Invite chapter. Keep detailed chapters only where a screenshot and explanation add evidence: plan/invite, repayment, Play, chat, and recap. This gives the landing page two levels of information:
 
