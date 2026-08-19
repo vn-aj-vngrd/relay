@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { playingExperienceLabel } from "@/features/players/playing-experience";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 
@@ -17,7 +18,7 @@ export default async function PublicPlayersPage({ params }: { params: Promise<{ 
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <article className="public-session-panel public-session-content mx-auto max-w-4xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <article className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <p className="text-sm font-semibold text-primary">{data.session.title}</p>
         <div className="mt-1 flex min-w-0 items-end justify-between gap-4">
           <div className="min-w-0">
@@ -36,7 +37,10 @@ export default async function PublicPlayersPage({ params }: { params: Promise<{ 
             return (
               <li key={player.id} className="public-session-row flex min-h-16 items-center gap-3 py-2">
                 <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" />
-                <span className="flex-1 font-medium">{name}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{name}</span>
+                  <span className="mt-0.5 block text-xs text-muted">{playingExperienceLabel(player.skillLevel)}</span>
+                </span>
                 <span className="text-xs text-muted">{player.role === "host" ? "Host" : "Going"}</span>
               </li>
             );

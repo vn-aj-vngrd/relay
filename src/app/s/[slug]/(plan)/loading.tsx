@@ -69,7 +69,7 @@ export default function PublicPlanLoading() {
       aria-label="Loading game plan"
       aria-busy="true"
     >
-      <div className="mx-auto w-full max-w-4xl pb-12 pt-8 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
         <div className="px-4 sm:px-0">
           <Skeleton className="h-4 w-40" />
           <GamePageIntro

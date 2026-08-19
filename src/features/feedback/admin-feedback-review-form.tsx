@@ -41,7 +41,7 @@ export function AdminFeedbackReviewForm({
             maxLength={2000}
             defaultValue={adminNote ?? ""}
             placeholder="Decision, reproduction notes, or follow-up context…"
-            className="field min-h-28 resize-y py-3 leading-6"
+            className="field min-h-28 resize-y !p-3.5 leading-6"
           />
           <p className="mt-1.5 text-xs text-muted">Visible only to Relay administrators.</p>
         </div>

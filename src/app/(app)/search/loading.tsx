@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function SearchLoading() {
   return (
-    <div role="status" className="mx-auto w-full max-w-4xl" aria-label="Loading search" aria-busy="true">
+    <div role="status" className="mx-auto w-full max-w-6xl" aria-label="Loading search" aria-busy="true">
       <Skeleton className="h-8 w-40" />
       <Skeleton className="mt-3 h-4 w-80 max-w-full" />
       <Skeleton className="mt-6 h-12 w-full" />

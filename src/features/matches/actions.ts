@@ -3,12 +3,14 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { db } from "@/db/client";
 import {
   courts,
   matches,
   matchPlayers,
+  matchScores,
   memories,
   messages,
   notifications,
@@ -19,6 +21,7 @@ import {
   sessions,
 } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { playingExperienceWeight } from "@/features/players/playing-experience";
 
 import {
   parsePlaySetup,
@@ -37,6 +40,23 @@ async function requireHost(sessionId: string) {
   });
   if (session.hostId !== user.id && player?.role !== "cohost") throw new Error("Only a host can manage live play");
   return session;
+}
+
+async function requireScorekeeper(sessionId: string, matchId: string) {
+  const user = await requireUser();
+  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
+  if (!session) throw new Error("Session not found");
+  if (session.hostId === user.id) return { session, user };
+  const player = await db.query.sessionPlayers.findFirst({
+    where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, user.id)),
+  });
+  if (!player || player.rsvp !== "going") throw new Error("Only active players can change this score");
+  if (player.role === "cohost") return { session, user };
+  const assignment = await db.query.matchPlayers.findFirst({
+    where: and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.sessionPlayerId, player.id)),
+  });
+  if (!assignment) throw new Error("Only players on this court can change its score");
+  return { session, user };
 }
 
 export type StartPlayActionState = { error?: string };
@@ -162,8 +182,13 @@ export async function createQueueMatch(formData: FormData) {
         .where(and(eq(matches.sessionId, sessionId), eq(matches.status, "active"))),
       tx.select().from(courts).where(eq(courts.sessionId, sessionId)).orderBy(asc(courts.position)),
       tx
-        .select()
+        .select({
+          sessionPlayerId: sessionQueue.sessionPlayerId,
+          position: sessionQueue.position,
+          skillLevel: sessionPlayers.skillLevel,
+        })
         .from(sessionQueue)
+        .innerJoin(sessionPlayers, eq(sessionPlayers.id, sessionQueue.sessionPlayerId))
         .where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.state, "waiting")))
         .orderBy(asc(sessionQueue.position)),
       tx
@@ -218,6 +243,7 @@ export async function createQueueMatch(formData: FormData) {
     );
     const mode =
       session.rotationMode === "random" ||
+      session.rotationMode === "balanced" ||
       session.rotationMode === "king_of_court" ||
       session.rotationMode === "round_robin"
         ? session.rotationMode
@@ -225,7 +251,11 @@ export async function createQueueMatch(formData: FormData) {
     const plans = planRotation({
       mode,
       courts: availableCourts,
-      waiting: waiting.map((item) => ({ id: item.sessionPlayerId, position: item.position })),
+      waiting: waiting.map((item) => ({
+        id: item.sessionPlayerId,
+        position: item.position,
+        experience: playingExperienceWeight(item.skillLevel),
+      })),
       history,
       fixedPairs,
     });
@@ -286,31 +316,51 @@ export async function createQueueMatch(formData: FormData) {
   revalidatePath(`/s/${session.slug}/play`);
 }
 
-export async function changeScore(formData: FormData) {
-  const sessionId = String(formData.get("sessionId"));
-  await requireHost(sessionId);
-  const matchId = String(formData.get("matchId"));
-  const team = formData.get("team") === "B" ? "B" : "A";
-  const amount = Number(formData.get("amount")) === -1 ? -1 : 1;
-  const version = Number(formData.get("version"));
-  const scoreColumn = team === "A" ? matches.teamAScore : matches.teamBScore;
-  const updated = await db
-    .update(matches)
-    .set({
-      [team === "A" ? "teamAScore" : "teamBScore"]: sql`greatest(0, ${scoreColumn} + ${amount})`,
-      version: sql`${matches.version} + 1`,
-    })
-    .where(
-      and(
-        eq(matches.id, matchId),
-        eq(matches.sessionId, sessionId),
-        eq(matches.status, "active"),
-        eq(matches.version, version),
-      ),
-    )
-    .returning({ id: matches.id });
-  if (!updated.length) throw new Error("Score changed on another device. Refresh and try again.");
-  revalidatePath(`/games/${sessionId}/play`);
+const scoreInput = z.object({
+  sessionId: z.uuid(),
+  matchId: z.uuid(),
+  teamAScore: z.number().int().min(0).max(99),
+  teamBScore: z.number().int().min(0).max(99),
+  version: z.number().int().positive(),
+});
+
+export async function saveScore(input: z.input<typeof scoreInput>) {
+  const parsed = scoreInput.parse(input);
+  const { session, user } = await requireScorekeeper(parsed.sessionId, parsed.matchId);
+  const updated = await db.transaction(async (tx) => {
+    const [match] = await tx
+      .update(matches)
+      .set({
+        teamAScore: parsed.teamAScore,
+        teamBScore: parsed.teamBScore,
+        version: sql`${matches.version} + 1`,
+      })
+      .where(
+        and(
+          eq(matches.id, parsed.matchId),
+          eq(matches.sessionId, parsed.sessionId),
+          eq(matches.status, "active"),
+          eq(matches.version, parsed.version),
+        ),
+      )
+      .returning({
+        teamAScore: matches.teamAScore,
+        teamBScore: matches.teamBScore,
+        version: matches.version,
+      });
+    if (!match) throw new Error("SCORE_CONFLICT");
+    await tx.insert(matchScores).values({
+      matchId: parsed.matchId,
+      teamAScore: match.teamAScore,
+      teamBScore: match.teamBScore,
+      recordedById: user.id,
+      sequence: match.version,
+    });
+    return match;
+  });
+  revalidatePath(`/games/${parsed.sessionId}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return updated;
 }
 
 export async function completeSession(formData: FormData) {
@@ -338,13 +388,13 @@ export async function completeSession(formData: FormData) {
   });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/games/${sessionId}`);
-  redirect(`/s/${session.slug}`);
+  redirect(`/games/${session.id}/recap`);
 }
 
 export async function finishMatch(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  const session = await requireHost(sessionId);
   const matchId = String(formData.get("matchId"));
+  const { session } = await requireScorekeeper(sessionId, matchId);
   await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
     const match = await tx.query.matches.findFirst({

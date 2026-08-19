@@ -2,7 +2,7 @@ import { PageHeaderSkeleton, RowsSkeleton, Skeleton } from "@/components/shared/
 
 export default function HelpLoading() {
   return (
-    <div role="status" className="mx-auto max-w-4xl" aria-label="Loading Help Center" aria-busy="true">
+    <div role="status" className="mx-auto max-w-6xl" aria-label="Loading Help Center" aria-busy="true">
       <PageHeaderSkeleton />
       <Skeleton className="mt-5 h-10 w-full max-w-xl" />
       <div className="mt-10 grid gap-10 lg:grid-cols-[180px_1fr]">

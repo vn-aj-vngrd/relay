@@ -13,7 +13,6 @@ import { startMatchLabel } from "@/features/matches/presentation";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
 
 function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
   return profile?.name ?? player.guestName ?? "Guest";
@@ -41,6 +40,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   const goingCount = data.roster.filter(({ player }) => player.rsvp === "going").length;
   const roundMode =
     data.session.rotationMode === "random" ||
+    data.session.rotationMode === "balanced" ||
     data.session.rotationMode === "king_of_court" ||
     data.session.rotationMode === "round_robin";
   const roundRobinMatchCount = (data.pairs.length * (data.pairs.length - 1)) / 2;
@@ -50,13 +50,19 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     !roundRobinComplete &&
     waiting.length >= 4 &&
     (roundMode ? data.activeMatches.length === 0 : data.activeMatches.length < data.courts.length);
+  const nextCourtCount = Math.min(
+    Math.max(0, data.courts.length - data.activeMatches.length),
+    Math.floor(waiting.length / 4),
+  );
   const rotationLabel = roundMode
     ? data.completedMatchCount
       ? "Start next round"
       : "Start first round"
-    : data.activeMatches.length
-      ? "Start another match"
-      : startMatchLabel(data.completedMatchCount);
+    : nextCourtCount > 1
+      ? `Start ${nextCourtCount} courts`
+      : data.activeMatches.length
+        ? "Start another match"
+        : startMatchLabel(data.completedMatchCount);
 
   return (
     <>
@@ -71,12 +77,11 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                 Play in progress
               </span>
             ) : null}
-            <RealtimeRefresh sessionId={data.session.id} />
           </div>
         }
       />
       {data.session.status !== "live" ? (
-        <section className="mx-auto w-full max-w-4xl py-10 sm:py-14">
+        <section className="mx-auto w-full max-w-6xl py-10 sm:py-14">
           <div className="text-center">
             <Broadcast className="mx-auto text-primary" size={26} />
             <h2 className="mt-4 text-2xl font-bold">Choose how tonight runs</h2>
@@ -91,7 +96,11 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
               courtCount={data.courts.length}
               players={data.roster
                 .filter(({ player }) => player.rsvp === "going")
-                .map(({ player, profile }) => ({ id: player.id, name: playerName(player, profile) }))}
+                .map(({ player, profile }) => ({
+                  id: player.id,
+                  name: playerName(player, profile),
+                  skillLevel: player.skillLevel,
+                }))}
             />
           ) : (
             <p className="mt-7 text-center text-sm font-medium text-muted">The host is choosing the play setup.</p>
@@ -137,7 +146,12 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                       teams={[teamA, teamB]}
                       scores={[match.teamAScore, match.teamBScore]}
                       version={match.version}
-                      canScore={isHost}
+                      canScore={
+                        isHost ||
+                        Boolean(
+                          data.membership && match.players.some(({ player }) => player.id === data.membership?.id),
+                        )
+                      }
                     />
                   );
                 })}

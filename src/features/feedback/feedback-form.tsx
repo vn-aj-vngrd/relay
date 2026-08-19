@@ -122,7 +122,7 @@ export function FeedbackForm() {
                   ? "What are you trying to do, and how would this make game night easier?"
                   : "Tell us what worked well or what could be clearer."
             }
-            className="field min-h-36 resize-y py-3 leading-6"
+            className="field min-h-36 resize-y !p-3.5 leading-6"
             aria-describedby={state.fieldErrors?.description ? "feedback-description-error" : undefined}
           />
           <div id="feedback-description-error">

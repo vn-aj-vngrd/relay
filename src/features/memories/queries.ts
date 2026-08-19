@@ -1,10 +1,21 @@
 import "server-only";
 
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { comments, memories, memoryMedia, profiles, reactions } from "@/db/schema";
+import {
+  comments,
+  matches,
+  matchPlayers,
+  memories,
+  memoryMedia,
+  profiles,
+  reactions,
+  sessionPlayers,
+} from "@/db/schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+
+import { buildSessionRecap } from "./recap";
 
 export async function getSessionMemory(sessionId: string) {
   const memory = await db.query.memories.findFirst({ where: eq(memories.sessionId, sessionId) });
@@ -29,4 +40,48 @@ export async function getSessionMemory(sessionId: string) {
     })),
   );
   return { memory, media: withUrls, comments: notes, reactionCount: loves };
+}
+
+export async function getSessionRecap(sessionId: string) {
+  const sessionMatches = await db
+    .select()
+    .from(matches)
+    .where(and(eq(matches.sessionId, sessionId), eq(matches.status, "completed")))
+    .orderBy(asc(matches.finishedAt));
+  const matchIds = sessionMatches.map((match) => match.id);
+  const members = matchIds.length
+    ? await db
+        .select({ matchPlayer: matchPlayers, player: sessionPlayers, profile: profiles })
+        .from(matchPlayers)
+        .innerJoin(sessionPlayers, eq(sessionPlayers.id, matchPlayers.sessionPlayerId))
+        .leftJoin(profiles, eq(profiles.userId, sessionPlayers.userId))
+        .where(inArray(matchPlayers.matchId, matchIds))
+    : [];
+  const playerById = new Map(
+    members.map(({ player, profile }) => [
+      player.id,
+      { id: player.id, name: profile?.name ?? player.guestName ?? "Guest" },
+    ]),
+  );
+  const recap = buildSessionRecap(
+    sessionMatches.map((match) => ({
+      id: match.id,
+      courtLabel: match.courtLabel,
+      teamA: members
+        .filter(({ matchPlayer }) => matchPlayer.matchId === match.id && matchPlayer.team === "A")
+        .sort((a, b) => a.matchPlayer.position - b.matchPlayer.position)
+        .map(({ player }) => player.id),
+      teamB: members
+        .filter(({ matchPlayer }) => matchPlayer.matchId === match.id && matchPlayer.team === "B")
+        .sort((a, b) => a.matchPlayer.position - b.matchPlayer.position)
+        .map(({ player }) => player.id),
+      scoreA: match.teamAScore,
+      scoreB: match.teamBScore,
+      status: "completed" as const,
+      startedAt: match.startedAt,
+      finishedAt: match.finishedAt,
+    })),
+    [...playerById.values()],
+  );
+  return { recap, memory: await getSessionMemory(sessionId) };
 }

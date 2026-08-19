@@ -5,7 +5,9 @@ import { useActionState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
+import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { playingExperienceOptions } from "@/features/players/playing-experience";
 
 import {
   addGuestPlayerAction,
@@ -20,21 +22,35 @@ export function AddGuestPlayerForm({ sessionId }: { sessionId: string }) {
   return (
     <form action={action} className="mt-4">
       <input type="hidden" name="sessionId" value={sessionId} />
-      <div className="flex gap-2">
-        <label htmlFor="guest-player-name" className="sr-only">
-          Player name
-        </label>
-        <input
-          id="guest-player-name"
-          name="guestName"
-          required
-          minLength={2}
-          maxLength={60}
-          autoComplete="off"
-          placeholder="Add a friend by name"
-          className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_190px_auto] sm:items-end">
+        <div>
+          <label htmlFor="guest-player-name" className="sr-only">
+            Player name
+          </label>
+          <input
+            id="guest-player-name"
+            name="guestName"
+            required
+            minLength={2}
+            maxLength={60}
+            autoComplete="off"
+            placeholder="Add a friend by name"
+            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          />
+        </div>
+        <SelectField
+          id="guest-player-experience"
+          name="skillLevel"
+          label="Playing experience"
+          hideLabel
+          defaultValue=""
+          className="!mt-0"
+          options={[
+            { value: "", label: "Experience (optional)" },
+            ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+          ]}
         />
-        <SubmitButton pendingLabel="Adding…" variant="secondary">
+        <SubmitButton pendingLabel="Adding…" variant="secondary" className="w-full sm:w-auto">
           <UserPlus aria-hidden size={17} />
           Add
         </SubmitButton>

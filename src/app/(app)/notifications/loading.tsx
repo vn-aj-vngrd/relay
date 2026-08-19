@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function NotificationsLoading() {
   return (
-    <div role="status" className="mx-auto w-full max-w-4xl" aria-label="Loading notifications" aria-busy="true">
+    <div role="status" className="mx-auto w-full max-w-6xl" aria-label="Loading notifications" aria-busy="true">
       <header className="flex items-end justify-between border-b border-line pb-6">
         <div>
           <Skeleton className="h-8 w-44" />

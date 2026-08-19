@@ -58,7 +58,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
   const avatars = members.map(({ profile }) => profileAvatarUrl(profile.avatarPath));
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <header className="flex flex-col gap-5 border-b border-line pb-7 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-primary">Group</p>

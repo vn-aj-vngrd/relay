@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getSessionForUser } from "@/features/sessions/queries";
+import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
 import { ShareButton } from "@/features/sessions/share-button";
 
 export default async function GameWorkspaceLayout({
@@ -28,6 +29,7 @@ export default async function GameWorkspaceLayout({
 
   return (
     <div className="flex h-full min-h-0 flex-col" style={sessionAccentStyle(data.session.accentColor)}>
+      <RealtimeRefresh sessionId={id} silent />
       <AppBreadcrumbs
         items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
       />

@@ -15,7 +15,7 @@ export default async function PublicMorePage({ params }: { params: Promise<{ slu
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-4xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <p className="text-sm font-semibold text-primary">{data.session.title}</p>
         <h1 className="mt-1 app-title">More</h1>
         <p className="mt-2 text-sm text-muted">Appearance and information for this shared game.</p>

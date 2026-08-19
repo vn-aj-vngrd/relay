@@ -1,6 +1,7 @@
 import { PublicSessionHeader } from "@/components/shared/public-session-header";
 import { getCurrentUser } from "@/features/auth/session";
 import { getPublicSession, getSessionMembership } from "@/features/sessions/queries";
+import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
 import { canParticipate } from "@/features/sessions/viewer";
 
 export default async function PublicSessionLayout({
@@ -18,6 +19,7 @@ export default async function PublicSessionLayout({
   );
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
+      {data ? <RealtimeRefresh sessionId={data.session.id} silent /> : null}
       <PublicSessionHeader
         slug={slug}
         signedIn={Boolean(user)}

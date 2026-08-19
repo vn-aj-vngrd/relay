@@ -112,6 +112,8 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
     typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : user?.email?.split("@")[0];
   const guestName = viewer?.isGuest ? viewer.player.guestName : null;
   const currentRsvp = viewer?.player.rsvp;
+  const currentSkillLevel =
+    viewer?.player.skillLevel ?? data.roster.find(({ player }) => player.userId === user?.id)?.profile?.skillLevel;
   const canManage = Boolean(user && (user.id === session.hostId || viewer?.player.role === "cohost"));
   const overview = await getSessionOverview(
     session.id,
@@ -136,7 +138,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(session.accentColor)}
     >
-      <div className="mx-auto w-full max-w-4xl pb-12 pt-8 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
         <div className="px-4 sm:px-0">
           <p className="text-sm font-semibold text-primary">{session.title}</p>
           <GamePageIntro
@@ -189,6 +191,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     accountName={accountName}
                     guestName={guestName}
                     currentRsvp={currentRsvp}
+                    currentSkillLevel={currentSkillLevel}
                     locked={session.rosterLocked}
                     instance="mobile"
                   />
@@ -217,6 +220,9 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                   <p className="score text-sm font-bold text-primary">SESSION COMPLETE</p>
                   <h2 className="mt-2 text-xl font-bold">{`${matchCount} ${matchCount === 1 ? "match" : "matches"} played`}</h2>
                   <p className="mt-2 text-sm text-muted">This session is now part of the group’s history.</p>
+                  <ButtonLink href={`/s/${session.slug}/recap`} className="mt-5">
+                    Open session recap
+                  </ButtonLink>
                   {user?.id === session.hostId ? (
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Link
@@ -367,6 +373,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                   accountName={accountName}
                   guestName={guestName}
                   currentRsvp={currentRsvp}
+                  currentSkillLevel={currentSkillLevel}
                   locked={session.rosterLocked}
                   instance="desktop"
                 />

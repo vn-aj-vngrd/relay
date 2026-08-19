@@ -12,7 +12,7 @@ export default async function FeedbackPage() {
   const submissions = await getOwnFeedback(user.id);
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-6xl">
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-6">
         <div>
           <h1 className="app-title">Send feedback</h1>

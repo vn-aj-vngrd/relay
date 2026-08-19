@@ -113,11 +113,11 @@ const sections = [
       ],
       [
         "Who can change scores and rotations?",
-        "The host and authorized co-hosts manage shared court state. Players can view assignments, scores, the queue, and what is coming next.",
+        "The host and co-hosts manage every court. A signed-in player assigned to an active match can also update that scoreboard; guests and other viewers remain read-only.",
       ],
       [
         "Which play setup should I use?",
-        "Paddle Stack keeps drop-ins moving, Mix It Up rotates partners, Court Climb moves winners between courts, and Team Round Robin lets fixed pairs play everyone once. Paddle Stack can also keep chosen partners together.",
+        "Paddle Stack keeps drop-ins moving, Mix It Up rotates partners, Balanced Mix creates closer teams from self-described experience, Court Climb moves winners between courts, and Team Round Robin lets fixed pairs play everyone once. Paddle Stack can also keep chosen partners together.",
       ],
       [
         "What happens if the connection drops?",
@@ -142,7 +142,7 @@ const sections = [
       ],
       [
         "What happens after a session ends?",
-        "The session keeps its plan, players, results, standings, and shared memories together. Play Again copies the reusable setup without copying RSVPs, payments, scores, or photos.",
+        "The session adds a Recap with true match highlights, standings, photos, and comments. Swipe through portrait stories for the whole night, your own record, the winning team, session leader, standings, closest finish, or busiest court; choose a Relay color or session photo before sharing. Play Again copies the reusable setup without copying RSVPs, payments, scores, or photos.",
       ],
     ],
   },
@@ -161,7 +161,7 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
     .filter((section) => section.items.length);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-6xl">
       <header className="border-b border-line pb-6">
         <div className="flex items-start justify-between gap-4">
           <div>

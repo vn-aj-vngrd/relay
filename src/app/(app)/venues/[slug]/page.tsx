@@ -10,7 +10,7 @@ export default async function VenuePage({ params }: { params: Promise<{ slug: st
   const venue = await db.query.venues.findFirst({ where: eq(venues.slug, (await params).slug) });
   if (!venue) notFound();
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-6xl">
       <p className="text-sm font-semibold text-primary">Venue</p>
       <h1 className="mt-2 app-title">{venue.name}</h1>
       <p className="mt-3 flex items-start gap-2 text-muted">

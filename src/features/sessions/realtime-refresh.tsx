@@ -6,9 +6,15 @@ import { useEffect, useRef, useState } from "react";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-import { SESSION_REALTIME_TABLES } from "./realtime-tables";
-
-export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: string; compact?: boolean }) {
+export function RealtimeRefresh({
+  sessionId,
+  compact = false,
+  silent = false,
+}: {
+  sessionId: string;
+  compact?: boolean;
+  silent?: boolean;
+}) {
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
@@ -22,16 +28,8 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
     };
 
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) supabase.realtime.setAuth(data.session.access_token);
       if (cancelled) return;
-      let nextChannel = supabase.channel(`session:${sessionId}`);
-      for (const table of SESSION_REALTIME_TABLES)
-        nextChannel = nextChannel.on(
-          "postgres_changes",
-          { event: "*", schema: "public", table, filter: `session_id=eq.${sessionId}` },
-          refresh,
-        );
+      const nextChannel = supabase.channel(`session:${sessionId}`).on("broadcast", { event: "changed" }, refresh);
       channel = nextChannel;
       nextChannel.subscribe((next: string) => {
         if (next === "SUBSCRIBED") {
@@ -61,6 +59,12 @@ export function RealtimeRefresh({ sessionId, compact = false }: { sessionId: str
       : compact
         ? "Connecting"
         : "Connecting live updates…";
+  if (silent)
+    return (
+      <span className="sr-only" aria-live="polite">
+        {text}
+      </span>
+    );
   return (
     <span
       aria-live="polite"

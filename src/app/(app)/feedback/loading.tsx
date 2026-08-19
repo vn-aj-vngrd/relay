@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function FeedbackLoading() {
   return (
-    <div role="status" aria-label="Loading feedback" className="mx-auto w-full max-w-4xl">
+    <div role="status" aria-label="Loading feedback" className="mx-auto w-full max-w-6xl">
       <header className="border-b border-line pb-6">
         <Skeleton className="h-9 w-52" />
         <Skeleton className="mt-3 h-4 w-full max-w-xl" />

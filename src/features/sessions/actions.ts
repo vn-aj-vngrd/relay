@@ -13,12 +13,14 @@ import {
   matches,
   messages,
   notifications,
+  profiles,
   sessionPlayers,
   sessionQueue,
   sessions,
 } from "@/db/schema";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
+import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
 
 import {
@@ -45,7 +47,7 @@ function manilaDate(date: FormDataEntryValue | null, time: FormDataEntryValue | 
 
 export async function createSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
-  await ensureProfile(user);
+  const hostProfile = await ensureProfile(user);
   const rawCost = formData.get("cost");
   const parsed = createSessionSchema.safeParse({
     title: formData.get("title"),
@@ -128,6 +130,13 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
               .filter((id): id is string => Boolean(id))
           : []
       : [];
+  const inviteeExperience = invitedUserIds.length
+    ? await db
+        .select({ userId: profiles.userId, skillLevel: profiles.skillLevel })
+        .from(profiles)
+        .where(inArray(profiles.userId, invitedUserIds))
+    : [];
+  const experienceByUser = new Map(inviteeExperience.map((profile) => [profile.userId, profile.skillLevel]));
   const courtNumbers = String(formData.get("courtNumbers") ?? "")
     .split(",")
     .map((value) => value.trim())
@@ -159,6 +168,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     await tx.insert(sessionPlayers).values({
       sessionId: session.id,
       userId: user.id,
+      skillLevel: hostProfile.skillLevel,
       role: "host",
       rsvp: "going",
       playState: "waiting",
@@ -170,6 +180,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
         invitees.map((userId) => ({
           sessionId: session.id,
           userId,
+          skillLevel: experienceByUser.get(userId) ?? null,
           role: "player" as const,
           rsvp: "invited" as const,
           playState: "unavailable" as const,
@@ -434,6 +445,7 @@ const rosterManagerInput = z.object({
   sessionId: z.uuid(),
   sessionPlayerId: z.uuid().optional(),
   guestName: z.string().trim().min(2, "Enter a player name.").max(60).optional(),
+  skillLevel: z.enum(playingExperienceValues).optional(),
 });
 
 async function requireSessionManager(sessionId: string, userId: string) {
@@ -455,6 +467,7 @@ export async function addGuestPlayerAction(_: SessionActionState, formData: Form
   const parsed = rosterManagerInput.safeParse({
     sessionId: formData.get("sessionId"),
     guestName: formData.get("guestName"),
+    skillLevel: formData.get("skillLevel") || undefined,
   });
   if (!parsed.success || !parsed.data.guestName)
     return { error: parsed.success ? "Enter a player name." : parsed.error.issues[0]?.message };
@@ -481,6 +494,7 @@ export async function addGuestPlayerAction(_: SessionActionState, formData: Form
         .values({
           sessionId: session.id,
           guestName: parsed.data.guestName,
+          skillLevel: parsed.data.skillLevel ?? null,
           role: "player",
           rsvp,
           playState: rsvp === "going" ? "waiting" : "unavailable",
@@ -698,6 +712,7 @@ const rsvpInput = z.object({
   sessionId: z.uuid(),
   choice: z.enum(["going", "maybe", "declined"]),
   guestName: z.string().trim().min(2).max(60).optional(),
+  skillLevel: z.enum(playingExperienceValues).optional(),
 });
 
 export async function rsvpAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -705,6 +720,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
     sessionId: formData.get("sessionId"),
     choice: formData.get("choice"),
     guestName: formData.get("guestName") || undefined,
+    skillLevel: formData.get("skillLevel") || undefined,
   });
   if (!parsed.success) return { error: "Add your name before responding." };
   const session = await db.query.sessions.findFirst({
@@ -725,6 +741,10 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
         .then((value) => Buffer.from(value).toString("hex"))
     : null;
   if (!user && !parsed.data.guestName && !guestToken) return { error: "Add your name before responding." };
+  const accountProfile = user
+    ? await db.query.profiles.findFirst({ columns: { skillLevel: true }, where: eq(profiles.userId, user.id) })
+    : null;
+  const selectedExperience = parsed.data.skillLevel ?? accountProfile?.skillLevel ?? null;
   let newGuestToken: string | null = null;
   let resolvedRsvp: SessionActionState["rsvp"];
 
@@ -768,6 +788,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
           .update(sessionPlayers)
           .set({
             guestTokenHash: claimedTokenHash,
+            skillLevel: selectedExperience ?? identity.skillLevel,
             rsvp: nextRsvp,
             waitlistPosition: nextPosition,
             respondedAt: new Date(),
@@ -788,6 +809,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             userId: user?.id,
             guestName: user ? null : parsed.data.guestName,
             guestTokenHash: tokenHash,
+            skillLevel: selectedExperience,
             rsvp: nextRsvp,
             waitlistPosition: nextPosition,
             respondedAt: new Date(),

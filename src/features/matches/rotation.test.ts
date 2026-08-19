@@ -17,6 +17,7 @@ describe("play rotation", () => {
       pairs: [],
     });
     expect(parsePlaySetup({ mode: "random", queueRule: "winner_stays" })).toEqual({ mode: "random" });
+    expect(parsePlaySetup({ mode: "balanced" })).toEqual({ mode: "balanced" });
     const pairs: [string, string][] = [
       ["00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"],
       ["00000000-0000-4000-8000-000000000003", "00000000-0000-4000-8000-000000000004"],
@@ -34,6 +35,12 @@ describe("play rotation", () => {
     expect(planRotation({ mode: "queue", courts, waiting: waiting(["a", "b", "c", "d", "e"]), history: [] })).toEqual([
       { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] },
     ]);
+  });
+
+  it("fills every open court when enough paddles are waiting", () => {
+    expect(
+      planRotation({ mode: "queue", courts, waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]), history: [] }),
+    ).toHaveLength(2);
   });
 
   it("keeps declared pairs together in Paddle Stack even when player queue positions interleave", () => {
@@ -184,6 +191,30 @@ describe("play rotation", () => {
     expect([plan.teamA, plan.teamB]).not.toContainEqual(["c", "d"]);
   });
 
+  it("balances team experience without overriding queue selection", () => {
+    const [plan] = planRotation({
+      mode: "balanced",
+      courts: courts.slice(0, 1),
+      waiting: [
+        { id: "a", position: 1, experience: 4 },
+        { id: "b", position: 2, experience: 4 },
+        { id: "c", position: 3, experience: 1 },
+        { id: "d", position: 4, experience: 1 },
+        { id: "later", position: 5, experience: 2 },
+      ],
+      history: [],
+    });
+    const experience = new Map([
+      ["a", 4],
+      ["b", 4],
+      ["c", 1],
+      ["d", 1],
+    ]);
+    const total = (team: string[]) => team.reduce((sum, id) => sum + (experience.get(id) ?? 0), 0);
+    expect(Math.abs(total(plan.teamA) - total(plan.teamB))).toBe(0);
+    expect([...plan.teamA, ...plan.teamB]).not.toContain("later");
+  });
+
   it("moves winners up and losers down in Court Climb while splitting partners", () => {
     const plans = planRotation({
       mode: "king_of_court",
@@ -203,6 +234,7 @@ describe("play rotation", () => {
   it("explains the active setup in player language", () => {
     expect(rotationDescription("queue", { queueRule: "adaptive" })).toContain("queue gets busy");
     expect(rotationDescription("random", {})).toContain("new partners");
+    expect(rotationDescription("balanced", {})).toContain("playing experience");
     expect(rotationDescription("king_of_court", {})).toContain("Court 1");
     expect(rotationDescription("round_robin", {})).toContain("every other pair");
   });

@@ -40,6 +40,6 @@ export const adminUpdateProfileSchema = z.object({
   name: z.string().trim().min(2, "Enter the player’s name.").max(80),
   username: usernameSchema,
   city: z.string().trim().max(80).optional(),
-  skillLevel: z.enum(["", "new", "beginner", "intermediate", "advanced"]),
-  dominantHand: z.enum(["", "left", "right"]),
+  skillLevel: z.enum(["", "new", "casual", "regular", "experienced"]),
+  dominantHand: z.enum(["", "left", "right", "both"]),
 });

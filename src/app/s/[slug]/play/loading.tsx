@@ -9,7 +9,7 @@ export default function PublicPlayLoading() {
       aria-label="Loading play and scores"
       aria-busy="true"
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-4xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <div className="flex min-w-0 items-end justify-between gap-4">
           <div className="min-w-0">
             <Skeleton className="h-4 w-40 max-w-full" />

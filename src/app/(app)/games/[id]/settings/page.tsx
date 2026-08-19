@@ -57,7 +57,7 @@ export default async function GameSettingsPage({ params }: { params: Promise<{ i
   return (
     <>
       <GamePageIntro title="Game settings" description="Keep the shared plan accurate for everyone with the invite." />
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         {locked ? (
           <section className="border-y border-line py-10 text-center">
             <LockKey aria-hidden size={24} className="mx-auto text-muted" />

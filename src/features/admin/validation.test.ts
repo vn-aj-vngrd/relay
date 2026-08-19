@@ -42,7 +42,7 @@ describe("admin action validation", () => {
         name: "Mika Santos",
         username: "mika-santos",
         city: "Manila",
-        skillLevel: "intermediate",
+        skillLevel: "regular",
         dominantHand: "right",
       }).success,
     ).toBe(true);

@@ -5,6 +5,7 @@ import { Avatar } from "@/components/shared/avatar-stack";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { playingExperienceLabel } from "@/features/players/playing-experience";
 import {
   AddGuestPlayerForm,
   PendingPlayerActions,
@@ -29,7 +30,7 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
         title="Players"
         description="Manage who’s going, join requests, waitlist movement, and roster access."
       />
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         {isHost ? (
           <section className="mb-9 border-y border-line py-5" aria-labelledby="add-player-title">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -106,13 +107,16 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
               return (
                 <li key={player.id} className="flex min-h-16 items-center gap-3 py-2">
                   <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" />
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {name}
-                    {player.role === "host" ? (
-                      <span className="ml-2 text-xs font-normal text-muted">Host</span>
-                    ) : player.role === "cohost" ? (
-                      <span className="ml-2 text-xs font-normal text-muted">Co-host</span>
-                    ) : null}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">
+                      {name}
+                      {player.role === "host" ? (
+                        <span className="ml-2 text-xs font-normal text-muted">Host</span>
+                      ) : player.role === "cohost" ? (
+                        <span className="ml-2 text-xs font-normal text-muted">Co-host</span>
+                      ) : null}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">{playingExperienceLabel(player.skillLevel)}</span>
                   </span>
                   {isHost && player.role !== "host" ? (
                     <RemovePlayerButton sessionId={data.session.id} playerId={player.id} name={name} />

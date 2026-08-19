@@ -36,6 +36,7 @@ export const rotationMode = pgEnum("rotation_mode", [
   "winner_stays",
   "king_of_court",
   "round_robin",
+  "balanced",
 ]);
 export const feedbackType = pgEnum("feedback_type", ["bug", "feature", "general"]);
 export const feedbackStatus = pgEnum("feedback_status", ["new", "reviewing", "planned", "resolved", "closed"]);
@@ -182,6 +183,7 @@ export const sessionPlayers = pgTable(
     userId: uuid("user_id").references(() => users.id, { onDelete: "restrict" }),
     guestName: text("guest_name"),
     guestTokenHash: text("guest_token_hash"),
+    skillLevel: text("skill_level"),
     role: sessionRole("role").notNull().default("player"),
     rsvp: rsvpStatus("rsvp").notNull().default("invited"),
     playState: playerState("play_state").notNull().default("unavailable"),

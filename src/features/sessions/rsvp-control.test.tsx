@@ -16,6 +16,7 @@ describe("RsvpControl", () => {
     expect(screen.getByRole("button", { name: "Confirm I’m going" })).toHaveClass("min-h-9", "text-[13px]");
     expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("min-h-9", "text-[13px]");
     expect(screen.getByRole("button", { name: "Going" })).toHaveClass("min-h-9", "text-[13px]");
+    expect(screen.getByRole("button", { name: "Playing experience (optional)" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Use a Relay account/ })).toHaveAttribute(
       "href",
       "/login?next=%2Fs%2Ffriends-night",

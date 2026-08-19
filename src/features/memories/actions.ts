@@ -55,6 +55,8 @@ export async function uploadMemoryPhoto(formData: FormData) {
     caption: caption || null,
     altText: caption || `Photo from ${session.title}`,
   });
+  revalidatePath(`/games/${session.id}/recap`);
+  revalidatePath(`/s/${session.slug}/recap`);
   revalidatePath(`/s/${session.slug}`);
 }
 
@@ -63,6 +65,8 @@ export async function addMemoryComment(formData: FormData) {
   const { user, session, memory } = await requireCompletedParticipant(sessionId);
   const body = z.string().trim().min(1).max(500).parse(formData.get("body"));
   await db.insert(comments).values({ memoryId: memory.id, authorId: user.id, body });
+  revalidatePath(`/games/${session.id}/recap`);
+  revalidatePath(`/s/${session.slug}/recap`);
   revalidatePath(`/s/${session.slug}`);
 }
 
@@ -77,5 +81,7 @@ export async function toggleMemoryReaction(formData: FormData) {
       .delete(reactions)
       .where(and(eq(reactions.memoryId, memory.id), eq(reactions.userId, user.id), eq(reactions.reaction, "love")));
   else await db.insert(reactions).values({ memoryId: memory.id, userId: user.id, reaction: "love" });
+  revalidatePath(`/games/${session.id}/recap`);
+  revalidatePath(`/s/${session.slug}/recap`);
   revalidatePath(`/s/${session.slug}`);
 }

@@ -9,7 +9,7 @@ export default function ChatLoading() {
         role="status"
         aria-label="Loading chat"
         aria-busy="true"
-        className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col overflow-hidden sm:rounded-xl sm:border sm:border-line"
+        className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden sm:rounded-xl sm:border sm:border-line"
       >
         <div className="min-h-0 flex-1 space-y-5 px-3 py-5 sm:px-5">
           <div className="flex items-center gap-3">

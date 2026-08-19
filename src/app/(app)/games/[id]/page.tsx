@@ -38,7 +38,7 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   if (membership?.rsvp === "invited") redirect(`/s/${session.slug}`);
   if (membership?.rsvp === "pending")
     return (
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         <p className="sport-label text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
         <h1 className="mt-2 app-title">{session.title}</h1>
         <section className="mt-8 border-y border-line py-10 text-center">

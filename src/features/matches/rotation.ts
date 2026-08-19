@@ -4,17 +4,17 @@ export const queueRules = ["adaptive", "four_off", "winner_stays"] as const;
 export type QueueRule = (typeof queueRules)[number];
 export type PartnerPolicy = "mix" | "fixed";
 export type FixedPair = [string, string];
-export type PlayMode = "queue" | "random" | "king_of_court" | "round_robin";
+export type PlayMode = "queue" | "random" | "balanced" | "king_of_court" | "round_robin";
 export type PlaySetup =
   | { mode: "queue"; queueRule: QueueRule; partnerPolicy: PartnerPolicy; pairs: FixedPair[] }
   | { mode: "round_robin"; pairs: FixedPair[] }
-  | { mode: "random" | "king_of_court" };
+  | { mode: "random" | "balanced" | "king_of_court" };
 
 const pairSchema = z
   .tuple([z.string().uuid(), z.string().uuid()])
   .refine(([first, second]) => first !== second, "A pair needs two different players");
 const setupSchema = z.object({
-  mode: z.enum(["queue", "random", "king_of_court", "round_robin"]),
+  mode: z.enum(["queue", "random", "balanced", "king_of_court", "round_robin"]),
   queueRule: z.enum(queueRules).optional(),
   partnerPolicy: z.enum(["mix", "fixed"]).optional(),
   pairs: z.array(pairSchema).optional(),
@@ -50,6 +50,7 @@ export function queueRuleFromConfig(config: Record<string, unknown>): QueueRule 
 
 export function rotationName(mode: string): string {
   if (mode === "random") return "Mix It Up";
+  if (mode === "balanced") return "Balanced Mix";
   if (mode === "king_of_court") return "Court Climb";
   if (mode === "round_robin") return "Team Round Robin";
   return "Paddle Stack";
@@ -57,6 +58,8 @@ export function rotationName(mode: string): string {
 
 export function rotationDescription(mode: string, config: Record<string, unknown>): string {
   if (mode === "random") return "Everyone rotates together with new partners and fair rests each round.";
+  if (mode === "balanced")
+    return "Fair rests come first, then self-described playing experience keeps each court close and social.";
   if (mode === "king_of_court") return "Winners move toward Court 1, losers move down, and partners split each round.";
   if (mode === "round_robin") return "Fixed pairs play every other pair once, with automatic byes when needed.";
   const rule = queueRuleFromConfig(config);
@@ -71,7 +74,7 @@ export function rotationDescription(mode: string, config: Record<string, unknown
 }
 
 export type RotationCourt = { id: string; label: string; position: number };
-export type WaitingPlayer = { id: string; position: number };
+export type WaitingPlayer = { id: string; position: number; experience?: number };
 export type RotationHistory = {
   courtId: string;
   courtPosition: number;
@@ -94,17 +97,36 @@ function partnershipCounts(history: RotationHistory[]) {
   return counts;
 }
 
-function pairFour(players: string[], history: RotationHistory[]) {
+function pairingOptions(players: string[]) {
   const [a, b, c, d] = players;
-  const options = [
+  return [
     { teamA: [a, b], teamB: [c, d] },
     { teamA: [a, c], teamB: [b, d] },
     { teamA: [a, d], teamB: [b, c] },
   ];
+}
+
+function pairFour(players: string[], history: RotationHistory[]) {
+  const options = pairingOptions(players);
   const counts = partnershipCounts(history);
   const cost = ({ teamA, teamB }: { teamA: string[]; teamB: string[] }) =>
     [teamA, teamB].reduce((total, team) => total + (counts.get([...team].sort().join(":")) ?? 0), 0);
   return options.sort((left, right) => cost(left) - cost(right))[0];
+}
+
+function pairBalancedFour(players: WaitingPlayer[], history: RotationHistory[]) {
+  const experience = new Map(players.map((player) => [player.id, player.experience ?? 2.5]));
+  const counts = partnershipCounts(history);
+  const partnershipCost = ({ teamA, teamB }: { teamA: string[]; teamB: string[] }) =>
+    [teamA, teamB].reduce((total, team) => total + (counts.get(pairKey(team)) ?? 0), 0);
+  const balanceCost = ({ teamA, teamB }: { teamA: string[]; teamB: string[] }) =>
+    Math.abs(
+      teamA.reduce((total, id) => total + (experience.get(id) ?? 2.5), 0) -
+        teamB.reduce((total, id) => total + (experience.get(id) ?? 2.5), 0),
+    );
+  return pairingOptions(players.map((player) => player.id)).sort(
+    (left, right) => balanceCost(left) - balanceCost(right) || partnershipCost(left) - partnershipCost(right),
+  )[0];
 }
 
 function encounterCounts(history: RotationHistory[]) {
@@ -263,11 +285,16 @@ export function planRotation(input: {
   if (input.mode === "queue") {
     const fixed = availablePairs(input.fixedPairs ?? [], waiting);
     if (fixed.length)
-      return fixed.length < 2
-        ? []
-        : [{ courtId: courts[0].id, courtLabel: courts[0].label, teamA: [...fixed[0]], teamB: [...fixed[1]] }];
-    const group = waiting.slice(0, 4).map((player) => player.id);
-    return [{ courtId: courts[0].id, courtLabel: courts[0].label, ...pairFour(group, input.history) }];
+      return courts.slice(0, Math.floor(fixed.length / 2)).map((court, index) => ({
+        courtId: court.id,
+        courtLabel: court.label,
+        teamA: [...fixed[index * 2]],
+        teamB: [...fixed[index * 2 + 1]],
+      }));
+    return courts.slice(0, Math.floor(waiting.length / 4)).map((court, index) => {
+      const group = waiting.slice(index * 4, index * 4 + 4).map((player) => player.id);
+      return { courtId: court.id, courtLabel: court.label, ...pairFour(group, input.history) };
+    });
   }
 
   const games = new Map<string, number>();
@@ -278,7 +305,14 @@ export function planRotation(input: {
     .slice(0, courts.length * 4);
   const groups = mixAcrossCourts(selected, input.history);
   return courts.slice(0, groups.length).map((court, index) => {
-    const group = groups[index].map((player) => player.id);
-    return { courtId: court.id, courtLabel: court.label, ...pairFour(group, input.history) };
+    const group = groups[index];
+    const teams =
+      input.mode === "balanced"
+        ? pairBalancedFour(group, input.history)
+        : pairFour(
+            group.map((player) => player.id),
+            input.history,
+          );
+    return { courtId: court.id, courtLabel: court.label, ...teams };
   });
 }

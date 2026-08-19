@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowsClockwise, CrownSimple, Stack, UsersFour } from "@phosphor-icons/react";
+import { ArrowsClockwise, CrownSimple, Scales, Stack, UsersFour } from "@phosphor-icons/react";
 import { useActionState, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
@@ -23,6 +23,12 @@ const options: Array<{ mode: PlayMode; title: string; description: string; icon:
     icon: ArrowsClockwise,
   },
   {
+    mode: "balanced",
+    title: "Balanced Mix",
+    description: "Build close teams from everyone’s self-described playing experience.",
+    icon: Scales,
+  },
+  {
     mode: "king_of_court",
     title: "Court Climb",
     description: "Winners move toward Court 1 and partners split every round.",
@@ -36,7 +42,7 @@ const options: Array<{ mode: PlayMode; title: string; description: string; icon:
   },
 ];
 
-type SetupPlayer = { id: string; name: string };
+type SetupPlayer = { id: string; name: string; skillLevel?: string | null };
 
 function PairBuilder({ players }: { players: SetupPlayer[] }) {
   const choices = players.map((player) => ({ value: player.id, label: player.name }));
@@ -108,6 +114,7 @@ export function PlaySetupForm({
   const climbAvailable = courtCount >= 2 && playerCount === climbPlayers;
   const pairsAvailable = playerCount >= 4 && playerCount % 2 === 0 && players.length === playerCount;
   const fixedPartners = mode === "round_robin" || (mode === "queue" && partnerPolicy === "fixed");
+  const missingExperience = players.filter((player) => !player.skillLevel).length;
 
   return (
     <form action={action} className="mt-8 text-left">
@@ -165,6 +172,13 @@ export function PlaySetupForm({
           })}
         </div>
       </fieldset>
+
+      {mode === "balanced" && missingExperience ? (
+        <p className="mt-3 text-xs leading-5 text-muted">
+          {missingExperience} {missingExperience === 1 ? "player has" : "players have"} no experience set. Relay uses a
+          neutral middle value so play can still start.
+        </p>
+      ) : null}
 
       {mode === "queue" ? (
         <div className="mt-5 space-y-5">

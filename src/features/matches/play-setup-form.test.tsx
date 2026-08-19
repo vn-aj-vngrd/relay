@@ -76,6 +76,20 @@ describe("PlaySetupForm", () => {
     expect(screen.getByText(/new partners and fair rests/i)).toBeVisible();
   });
 
+  it("offers Balanced Mix and explains missing experience without blocking play", () => {
+    render(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={4}
+        courtCount={1}
+        players={[...players.slice(0, 3).map((player) => ({ ...player, skillLevel: "regular" })), players[3]]}
+      />,
+    );
+    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
+    expect(screen.getByText(/1 player has no experience set/)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeEnabled();
+  });
+
   it("only enables Court Climb when every court has exactly four players", () => {
     const { rerender } = render(
       <PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={7} courtCount={2} />,

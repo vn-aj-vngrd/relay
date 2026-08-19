@@ -28,13 +28,13 @@ describe("admin user forms", () => {
           name: "Mika Santos",
           username: "mika-santos",
           city: "Manila",
-          skillLevel: "intermediate",
+          skillLevel: "regular",
           dominantHand: "right",
         }}
       />,
     );
     expect(screen.getByLabelText("Display name")).toHaveValue("Mika Santos");
-    expect(container.querySelector('input[name="skillLevel"]')).toHaveValue("intermediate");
+    expect(container.querySelector('input[name="skillLevel"]')).toHaveValue("regular");
     expect(container.querySelector('input[name="dominantHand"]')).toHaveValue("right");
   });
 });

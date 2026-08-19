@@ -236,9 +236,16 @@ export default async function HomePage() {
 
       {data.recent.length ? (
         <section aria-labelledby="recent-heading">
-          <h2 id="recent-heading" className="text-lg font-bold">
-            Recent games
-          </h2>
+          <div className="flex items-center justify-between gap-4">
+            <h2 id="recent-heading" className="text-lg font-bold">
+              Recent games
+            </h2>
+            {data.recent.length > 4 ? (
+              <Link href="/games" className="inline-flex min-h-9 items-center text-[13px] font-semibold text-primary">
+                See all
+              </Link>
+            ) : null}
+          </div>
           <div className="mt-3 divide-y divide-line border-y border-line">
             {data.recent.slice(0, 4).map(({ session, playerCount }) => (
               <Link

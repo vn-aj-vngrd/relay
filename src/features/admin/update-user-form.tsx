@@ -90,10 +90,10 @@ export function UpdateUserForm({
           defaultValue={profile?.skillLevel ?? ""}
           options={[
             { value: "", label: "Not set" },
-            { value: "new", label: "New to pickleball" },
-            { value: "beginner", label: "Beginner" },
-            { value: "intermediate", label: "Intermediate" },
-            { value: "advanced", label: "Advanced" },
+            { value: "new", label: "Just starting" },
+            { value: "casual", label: "Casual" },
+            { value: "regular", label: "Regular" },
+            { value: "experienced", label: "Experienced" },
           ]}
         />
         <SelectField
@@ -105,6 +105,7 @@ export function UpdateUserForm({
             { value: "", label: "Not set" },
             { value: "right", label: "Right" },
             { value: "left", label: "Left" },
+            { value: "both", label: "Both" },
           ]}
         />
       </div>

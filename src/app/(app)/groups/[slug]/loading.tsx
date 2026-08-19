@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function GroupLoading() {
   return (
-    <div role="status" className="mx-auto max-w-4xl" aria-label="Loading group" aria-busy="true">
+    <div role="status" className="mx-auto max-w-6xl" aria-label="Loading group" aria-busy="true">
       <header className="flex items-end justify-between border-b border-line pb-7">
         <div>
           <Skeleton className="h-4 w-16" />

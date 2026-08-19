@@ -18,9 +18,15 @@ describe("PublicSessionNav", () => {
       "Play",
       "Chat",
       "Payments",
+      "Recap",
     ]);
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("href", "/s/saturday-night-pickle/play");
+  });
+
+  it("links to the recap before the game is complete", () => {
+    render(<PublicSessionNav slug="saturday-night-pickle" />);
+    expect(screen.getByRole("link", { name: "Recap" })).toHaveAttribute("href", "/s/saturday-night-pickle/recap");
   });
 
   it("scopes the active state to the session accent", () => {

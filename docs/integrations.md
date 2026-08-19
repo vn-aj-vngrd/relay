@@ -60,17 +60,13 @@ Password authentication is the production baseline and does not depend on email 
 
 ## Realtime contract
 
-Only these collaborative tables belong to `supabase_realtime`:
+Session collaboration uses one public Broadcast topic per mounted session: `session:<session-id>`. Database triggers from migration `0016_session_recap_balanced_realtime` resolve direct and nested session records and send only `{ table, operation }` invalidations through `realtime.send()`—never row data. The shared link needs account-optional updates, so topic secrecy is not an authorization mechanism. Every client refetches authoritative server queries after subscription, reconnect, or a coalesced invalidation.
 
-- `courts`
-- `matches`
-- `match_scores`
-- `session_queue`
-- `messages`
-- `message_reactions`
-- `notifications`
+Broadcast covers roster, courts, matches, score events, queue, pair assignments, chat, payments, and memories. Score writes remain version-checked and are debounced client-side into absolute score snapshots. Presence is intentionally absent until online state improves a real session decision.
 
-Initial pages render authoritative server snapshots. Clients subscribe only while a live/session-chat route is mounted and refetch the authoritative snapshot whenever a channel subscribes or reconnects. Authenticated delivery depends on the self-membership `SELECT` policy from migration `0013_realtime_participant_membership`; without it, nested participant policies silently reject chat, court, match, and queue events. Score and queue writes must compare the expected `version` to prevent silent overwrites.
+`notifications` remains in `supabase_realtime` and uses user-filtered Postgres Changes. Existing collaborative tables may remain in the publication for migration compatibility, but session clients do not open one logical-replication subscription per table.
+
+Authenticated Data API access still depends on the self-membership `SELECT` policy from migration `0013_realtime_participant_membership`; without it, participant-scoped table reads fail even when an invalidation arrives.
 
 ## Database migration
 

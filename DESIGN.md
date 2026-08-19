@@ -90,20 +90,24 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 - Mobile: 16px page gutter, edge-to-edge data sections, safe-area bottom navigation. Public invites show the plan before the RSVP form so people understand the game before responding.
 - Desktop: a quiet 240px left rail keeps primary actions in a stable, familiar position; content uses the remaining space for overview/roster and courts/queue compositions. A top-rail control collapses it to a persistent 64px icon dock for focused work. The compact dock keeps Relay’s ball visible; hovering or keyboard-focusing that header swaps the mark for the expand control, avoiding a permanently generic utility icon. Compact navigation icons retain labels through accessible names and restrained hover/focus tooltips; the content island expands into the released space.
-- Every authenticated player destination uses the same centered 896px content canvas. Home, Games, Groups, Search, Create, Notifications, Help Center, profiles, and game tabs share the same outer edges. Forms, prose, filters, and empty messages may be narrower inside that canvas for usability, but breadcrumbs, page headings, primary content sections, and loading states never shift to a different page width. Admin Console uses a wider 1152px operational canvas so user, game, and audit tables fit without desktop horizontal scrolling; its headings and loading states still align to that canvas.
+- Every product destination uses the same centered 1152px content canvas. Home, Games, Groups, Search, Create, Notifications, Help Center, profiles, game tabs, shared game links, and Admin Console share the same outer edges. Forms, prose, filters, and empty messages may be narrower inside that canvas for usability, but breadcrumbs, page headings, primary content sections, and loading states never shift to a different page width. Tables and multi-column session layouts may use the full canvas so desktop space carries useful information rather than empty margins.
 - Authenticated shells stay fixed to the dynamic viewport. The content surface is the sole vertical scroll container, keeping the desktop rail and mobile chrome stable without locking nested feature scroll areas such as chat. Visible scrollbars use one narrow neutral trackless treatment across themes; horizontal tab rails remain visually hidden.
 - Mobile: a compact bottom tab bar uses an opaque surface inside the safe area and preserves 44px touch targets without letting scrolling content show through or reducing label contrast.
 - Navigation chrome may float and blur; content remains opaque and structurally flat.
 - Vertical rhythm uses 8, 12, 16, 24, 32, 48, and 64px steps.
 - Desktop never stretches mobile cards; it introduces useful adjacency.
 
+### Marketing highlights
+
+The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Each large horizontal card makes one claim, names the concrete capability set, and uses an actual Relay product image. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
+
 ## Session surfaces
 
-The shared game link and authenticated session workspace are two access paths to the same session, not separate products. They use one canonical Overview, Players, Play, Chat, and Payments navigation; the same session hero; and the same session vocabulary. Shared information keeps the same order and labels on both surfaces. Guest RSVP, personal actions, and host management are contextual additions—not alternate page structures.
+The shared game link and authenticated session workspace are two access paths to the same session, not separate products. They use one canonical Overview, Players, Play, Chat, Payments, and Recap navigation throughout the session. Both paths share the same session hero and session vocabulary. Shared information keeps the same order and labels on both surfaces. Guest RSVP, personal actions, and host management are contextual additions—not alternate page structures.
 
 - Overview: the at-a-glance session home—plan, roster and waitlist state, current play, payment state, and the viewer’s next useful action.
 - Play: the courtside workspace for assignments, paddle stack, rotations, scores, and session standings.
-- Shared game link: optimized for understanding the invitation and joining as an account player or guest player. It uses the authenticated app’s 896px content canvas, left-aligned game tabs, destination title hierarchy, section rhythm, and opaque surface rather than presenting a separate microsite aesthetic. On desktop, RSVP and a five-person roster preview share the right rail, matching the authenticated Overview; on mobile, both stay in the main reading flow and Overview exposes an immediate Join game shortcut. Full rosters belong in Players.
+- Shared game link: optimized for understanding the invitation and joining as an account player or guest player. It uses the authenticated app’s 1152px content canvas, left-aligned game tabs, destination title hierarchy, section rhythm, and opaque surface rather than presenting a separate microsite aesthetic. On desktop, RSVP and a five-person roster preview share the right rail, matching the authenticated Overview; on mobile, both stay in the main reading flow and Overview exposes an immediate Join game shortcut. Full rosters belong in Players.
 - Account player workspace: the shared experience inside Relay’s app shell, plus personal chat, payment, history, and participation actions.
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
@@ -146,9 +150,10 @@ A deep court field carries date, title, plan, capacity, and status. White court 
 
 ### Live court
 
-Before Play starts, the host chooses one of four flat, outcome-labeled rows: Paddle Stack, Mix It Up, Court Climb, or Team Round Robin. Paddle Stack progressively reveals queue rules and Partner style; Keep pairs together then reveals a compact pair builder. Team Round Robin requires fixed pairs and schedules every pair against every other pair once, using byes when the team count is odd. Unsupported rosters explain the exact player/court requirement inline rather than failing after selection.
+Before Play starts, the host chooses one of five flat, outcome-labeled rows: Paddle Stack, Mix It Up, Balanced Mix, Court Climb, or Team Round Robin. Paddle Stack progressively reveals queue rules and Partner style; Keep pairs together then reveals a compact pair builder. Team Round Robin requires fixed pairs and schedules every pair against every other pair once, using byes when the team count is odd. Unsupported rosters explain the exact player/court requirement inline rather than failing after selection.
 
-- Scores dominate and remain readable from several feet. The standard scoreboard fills its available court column; multiple courts stack instead of squeezing into narrow desktop cards.
+- Scores dominate and remain readable from several feet. The standard scoreboard fills its available court column; every active court gets its own scoreboard and multiple courts stack instead of squeezing into narrow desktop cards.
+- Score taps update immediately and debounce into one version-checked write. Host, co-host, or a signed-in player assigned to that court may score; all other viewers remain read-only.
 - The neutral outer shell follows the planning UI while the deep court field carries teams, scores, and controls. Its dark field and court lines inherit the game’s curated accent without weakening white-score contrast. Player names remain intact and fixed partners stack as two explicit names.
 - Every scoreboard offers an expanded, viewport-filling view for courtside use. It preserves score state and permissions, closes with Escape or a labeled control, and works for read-only public viewers.
 - Teams align directly above their score.
@@ -185,6 +190,14 @@ Queue order uses tabular numbers and rows, not pills. Standings are a compact ta
 ### Session chat
 
 Chat occupies the remaining viewport below session navigation. The message history scrolls inside that region while the composer stays anchored to its bottom edge, above mobile safe areas and app navigation. New messages scroll the thread—not the page—and reduced-motion users never receive smooth auto-scrolling. Photo messages render as bounded thumbnails; selecting one opens a focused, keyboard-dismissable viewer instead of expanding the conversation width.
+
+## Session recap
+
+Recap remains the final shared destination before, during, and after play. Before play it explains what will appear; during play it clearly marks provisional highlights and standings as in progress; after the host ends the session it becomes the final memory and unlocks sharing, photos, and reactions. It opens with one deep-court story surface, then reveals only defensible highlights from persisted results: match and point totals, court time, top session standing, strongest repeated pair, closest finish, and busiest court. Full Session Standings remain available below. With no completed scores, the recap celebrates the crew and photos without inventing a winner.
+
+A participant may share the recap as a short, manually controlled 9:16 story reel. Available scenes are Night recap, My game, Winning team, Top of the table, Session Standings, Closest finish, and Busiest court; a scene renders only when persisted session data supports it. The portrait carousel never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct scene selection. One scene makes one clear claim rather than shrinking the full recap into a poster.
+
+The participant chooses a quiet Relay background or a photo already attached to the session memory. The preview and exported PNG must match. Sharing uses the native share sheet when file sharing is available and downloads the selected scene otherwise. The recap stays part of the session; it never becomes a generic post composer, a competitive report, or a template editor.
 
 ## Motion
 

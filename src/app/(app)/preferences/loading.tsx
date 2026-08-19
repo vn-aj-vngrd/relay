@@ -2,7 +2,7 @@ import { PageHeaderSkeleton, RowsSkeleton, Skeleton } from "@/components/shared/
 
 export default function PreferencesLoading() {
   return (
-    <div role="status" className="mx-auto w-full max-w-4xl" aria-label="Loading preferences" aria-busy="true">
+    <div role="status" className="mx-auto w-full max-w-6xl" aria-label="Loading preferences" aria-busy="true">
       <PageHeaderSkeleton />
       <div className="mt-9 space-y-8">
         <div>

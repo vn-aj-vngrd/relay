@@ -17,7 +17,7 @@ export default async function MorePage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <GamePageIntro title="More" description="Session access, public link, current setup, and account controls." />
-      <div className="mx-auto w-full max-w-4xl">
+      <div className="mx-auto w-full max-w-6xl">
         <section className="divide-y divide-line border-y border-line">
           {isHost ? (
             <Link href={`/games/${sessionId}/settings`} className="flex min-h-16 items-center gap-3 py-3">

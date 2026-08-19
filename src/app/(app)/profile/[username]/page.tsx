@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   SignOut,
   SlidersHorizontal,
+  TennisBall,
 } from "@phosphor-icons/react/dist/ssr";
 import { and, eq } from "drizzle-orm";
 import Link from "next/link";
@@ -19,7 +20,9 @@ import { isAdminEmail } from "@/features/admin/auth";
 import { signOut } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { playingExperienceLabel } from "@/features/players/playing-experience";
 import { ProfileAvatarEditor } from "@/features/players/profile-avatar-editor";
+import { ProfileDetailsForm } from "@/features/players/profile-details-form";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDate } from "@/features/sessions/format";
 import { getUserSessions } from "@/features/sessions/queries";
@@ -43,10 +46,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const wins = participation.filter(({ match, player }) => match.winningTeam === player.team).length;
   const recent = sessionRows.slice(-5).reverse();
   const ownProfile = viewer?.id === profile.userId;
+  const canSeeAllSessions = ownProfile && sessionRows.length > recent.length;
   const imageUrl = profileAvatarUrl(profile.avatarPath);
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-6xl">
       <header className="flex items-start gap-4 pb-7">
         {ownProfile ? (
           <ProfileAvatarEditor name={profile.name} imageUrl={imageUrl} />
@@ -64,6 +68,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           ) : (
             <p className="mt-1 text-sm text-muted">@{profile.username}</p>
           )}
+          {profile.skillLevel ? (
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
+              <TennisBall aria-hidden size={15} />
+              {playingExperienceLabel(profile.skillLevel)}
+            </p>
+          ) : null}
+          {profile.bio ? <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{profile.bio}</p> : null}
         </div>
       </header>
 
@@ -83,12 +94,36 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </section>
       <p className="pt-3 text-center text-xs leading-5 text-muted">For fun, not a competitive rating.</p>
 
-      <section className="py-10" aria-labelledby="recent-title">
-        <div className="mb-3">
-          <h2 id="recent-title" className="text-lg font-[680]">
-            Recent sessions
+      {ownProfile ? (
+        <section className="pt-9" aria-labelledby="player-details-title">
+          <h2 id="player-details-title" className="text-lg font-[680]">
+            Player details
           </h2>
-          <p className="mt-1 text-sm text-muted">Games you played with friends.</p>
+          <p className="mt-1 text-sm text-muted">
+            Keep the social context friends see and Relay uses for team balancing.
+          </p>
+          <div className="mt-4">
+            <ProfileDetailsForm profile={profile} />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="py-10" aria-labelledby="recent-title">
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <div>
+            <h2 id="recent-title" className="text-lg font-[680]">
+              Recent sessions
+            </h2>
+            <p className="mt-1 text-sm text-muted">Games you played with friends.</p>
+          </div>
+          {canSeeAllSessions ? (
+            <Link
+              href="/games"
+              className="inline-flex min-h-9 shrink-0 items-center text-[13px] font-semibold text-primary"
+            >
+              See all
+            </Link>
+          ) : null}
         </div>
         {recent.length ? (
           <ul className="divide-y divide-line border-y border-line">

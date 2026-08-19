@@ -1,12 +1,19 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCourt } from "./live-court";
 
-vi.mock("./actions", () => ({
-  changeScore: vi.fn(),
-  finishMatch: vi.fn(),
+const { saveScore, refresh } = vi.hoisted(() => ({
+  saveScore: vi.fn(async (input: { teamAScore: number; teamBScore: number; version: number }) => ({
+    teamAScore: input.teamAScore,
+    teamBScore: input.teamBScore,
+    version: input.version + 1,
+  })),
+  refresh: vi.fn(),
 }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+vi.mock("./actions", () => ({ saveScore, finishMatch: vi.fn() }));
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
@@ -15,6 +22,11 @@ beforeAll(() => {
   HTMLDialogElement.prototype.close = function close() {
     this.removeAttribute("open");
   };
+});
+
+beforeEach(() => {
+  saveScore.mockClear();
+  refresh.mockClear();
 });
 
 const props = {
@@ -27,13 +39,29 @@ const props = {
 };
 
 describe("LiveCourt", () => {
-  it("keeps team members readable and exposes host scoring controls", () => {
+  it("keeps team members readable and exposes scoring controls", () => {
     render(<LiveCourt {...props} canScore />);
 
     expect(screen.getAllByText("Van Rivera")[0]).toBeVisible();
     expect(screen.getAllByText("Mika Reyes")[0]).toBeVisible();
     expect(screen.getByRole("button", { name: "Add a point to Van Rivera + Mika Reyes" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Finish match" })).toBeEnabled();
+  });
+
+  it("updates immediately and debounces rapid score changes into one durable write", async () => {
+    vi.useFakeTimers();
+    render(<LiveCourt {...props} canScore />);
+    const add = screen.getByRole("button", { name: "Add a point to Van Rivera + Mika Reyes" });
+
+    fireEvent.click(add);
+    fireEvent.click(add);
+    expect(screen.getAllByLabelText("Van Rivera + Mika Reyes score 10")[0]).toHaveTextContent("10");
+    expect(saveScore).not.toHaveBeenCalled();
+
+    await act(async () => vi.advanceTimersByTime(421));
+    expect(saveScore).toHaveBeenCalledTimes(1);
+    expect(saveScore).toHaveBeenCalledWith(expect.objectContaining({ teamAScore: 10, teamBScore: 6, version: 1 }));
+    vi.useRealTimers();
   });
 
   it("opens a focused scoreboard for hosts and public viewers", () => {

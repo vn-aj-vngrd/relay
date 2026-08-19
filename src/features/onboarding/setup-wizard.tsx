@@ -254,7 +254,9 @@ export function SetupWizard({
                     defaultChecked={initial.skillLevel === "experienced"}
                   />
                 </div>
-                <p className="mt-2 text-xs leading-5 text-muted">This is social context, not a competitive rating.</p>
+                <p className="mt-2 text-xs leading-5 text-muted">
+                  This is social context, not a competitive rating. It helps Balanced Mix make closer teams.
+                </p>
               </div>
               <div>
                 <p className="text-sm font-semibold">

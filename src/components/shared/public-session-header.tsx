@@ -20,7 +20,7 @@ export function PublicSessionHeader({
 
   return (
     <header className="app-chrome sticky top-0 z-20" style={sessionAccentStyle(accentColor)}>
-      <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Brand />
         <ButtonLink href={destination} variant={signedIn ? "primary" : "secondary"}>
           {label}

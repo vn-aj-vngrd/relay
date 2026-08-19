@@ -1,88 +1,24 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
 import { getCurrentUser } from "@/features/auth/session";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
+import { MarketingHighlights } from "@/features/marketing/marketing-highlights";
 import { HeroProductShot, InviteProductShot, ProductShot } from "@/features/marketing/product-previews";
+import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
 
 export const metadata: Metadata = {
   title: "Relay — The shared home for pickleball with friends",
   description:
-    "Create the game, share one link, organize the crew, settle the cost, run the courts, and keep the night together.",
+    "Create the game, share one link, organize the crew, run the courts, settle the cost, and keep the night together.",
   openGraph: {
     title: "Relay — One session for the whole pickleball night",
-    description: "Plan, invite, organize, pay, play, score, and remember—with one shared game link.",
+    description: "Plan, invite, organize, play, repay, and remember—with one shared game link.",
     type: "website",
   },
 };
-
-const workflow = ["Create", "Share", "Organize", "Repay", "Play", "Remember"] as const;
-
-const capabilities = [
-  {
-    stage: "Plan",
-    title: "A clear game before anyone leaves the group chat",
-    items: [
-      "Focused session creation",
-      "Custom date and time pickers",
-      "Venue suggestions and directions",
-      "Court confirmation and readiness",
-    ],
-  },
-  {
-    stage: "Invite",
-    title: "One link that answers the usual questions",
-    items: [
-      "Account-optional public page",
-      "Guest and account RSVP",
-      "Capacity and automatic waitlist",
-      "Host approval when needed",
-    ],
-  },
-  {
-    stage: "Organize",
-    title: "The right amount of structure for a recurring crew",
-    items: [
-      "Roster and manual players",
-      "Groups and Play Again",
-      "Calendar and global search",
-      "Game-specific colors and notes",
-    ],
-  },
-  {
-    stage: "Pay",
-    title: "Repay the host without turning Relay into a bank",
-    items: [
-      "GCash, Maya, bank, cash, or custom",
-      "Host-paid expense split",
-      "One proof image per player",
-      "Confirm, return, exclude, or adjust",
-    ],
-  },
-  {
-    stage: "Play",
-    title: "Court management that still works beside the court",
-    items: [
-      "Four clear play formats",
-      "Mixed partners or fixed pairs",
-      "Live scoring or result only",
-      "Queues, rounds, and session standings",
-    ],
-  },
-  {
-    stage: "Remember",
-    title: "The session becomes the record of the night",
-    items: [
-      "Realtime chat, reactions, and photos",
-      "Useful in-app notifications",
-      "Results, standings, and memories",
-      "Profiles, history, groups, and Play Again",
-    ],
-  },
-] as const;
 
 const primaryAction =
   "pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-primary px-4 text-[13px] font-semibold leading-none text-white shadow-[inset_0_1px_0_oklch(1_0_0/.22)] hover:bg-primary-hover";
@@ -103,20 +39,20 @@ export default async function MarketingPage() {
             aria-label="Marketing navigation"
             className="hidden items-center gap-6 text-[13px] text-[#66666c] md:flex"
           >
-            <a href="#product" className="hover:text-[#171719]">
-              Product
+            <a href="#highlights" className="hover:text-[#171719]">
+              Highlights
             </a>
-            <a href="#create" className="hover:text-[#171719]">
-              Create
-            </a>
-            <a href="#invite" className="hover:text-[#171719]">
-              Shared link
+            <a href="#plan" className="hover:text-[#171719]">
+              Plan & invite
             </a>
             <a href="#play" className="hover:text-[#171719]">
-              Play formats
+              Play
             </a>
-            <a href="#everything" className="hover:text-[#171719]">
-              Everything inside
+            <a href="#payments" className="hover:text-[#171719]">
+              Repay
+            </a>
+            <a href="#recap" className="hover:text-[#171719]">
+              Recap
             </a>
           </nav>
           <div className="flex items-center gap-1">
@@ -147,16 +83,15 @@ export default async function MarketingPage() {
               <span className="block">The whole pickleball night.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-[720px] text-lg leading-8 text-[#626268] sm:text-xl">
-              Relay carries the plan from the first group-chat message to the last score: invite friends, organize the
-              roster, collect their share, run the courts, and keep the night together afterward.
+              Create one game, send one link, run every court, settle the cost, and turn the night into a shared memory.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href={primaryHref} className={primaryAction}>
                 {user ? "Open Relay" : "Create your first game"}
                 <ArrowRight aria-hidden size={16} />
               </Link>
-              <a href="#workflow" className={secondaryAction}>
-                See the full flow
+              <a href="#highlights" className={secondaryAction}>
+                See the highlights
               </a>
             </div>
           </div>
@@ -166,7 +101,9 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      <section className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-28">
+      <MarketingHighlights />
+
+      <section className="border-b border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-28">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
           <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr]">
             <h2 className="max-w-xl text-3xl font-[620] leading-tight tracking-[-0.038em] sm:text-5xl">
@@ -200,103 +137,117 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      <section id="workflow" className="px-5 py-20 sm:px-8 sm:py-32">
-        <div data-marketing-reveal="workflow" className="mx-auto max-w-[1180px]">
-          <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
-            <div>
-              <p className="text-sm font-semibold text-[#526415]">One continuous workflow</p>
-              <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                From “Who’s free?” to “Same time next week?”
-              </h2>
-            </div>
-            <ol className="grid grid-cols-2 border-y border-[#dcdcd7] sm:grid-cols-3">
-              {workflow.map((step, index) => (
-                <li
-                  key={step}
-                  className={`min-h-24 px-4 py-5 ${index % 2 ? "border-l border-[#dcdcd7]" : ""} ${index >= 2 ? "border-t border-[#dcdcd7] sm:border-t-0" : ""} ${index >= 3 ? "sm:border-t sm:border-[#dcdcd7]" : ""} ${index % 3 ? "sm:border-l sm:border-[#dcdcd7]" : "sm:border-l-0"}`}
-                >
-                  <span className="font-mono text-[10px] text-[#66666c]">0{index + 1}</span>
-                  <strong className="mt-3 block text-sm">{step}</strong>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section id="create" className="border-t border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
+      <section id="plan" className="border-t border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
           <div className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]">
             <div>
-              <p className="text-sm font-semibold text-[#526415]">Start with the plan</p>
+              <p className="text-sm font-semibold text-[#526415]">Plan once. Share once.</p>
               <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                Create the game before the group chat gets noisy.
+                Make the game clear before anyone asks.
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Name the game, find the venue, choose the date and time, then set players and courts with clear quantity
-              controls. Approval, cost, booking, notes, court labels, and game color stay tucked under More details
-              until they matter.
+              Set the venue, schedule, capacity, courts, and booking details. The public link then gives every friend
+              the same plan and lets them respond by name without creating an account.
             </p>
           </div>
-          <div className="mt-12">
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
             <ProductShot
               src="/images/product/create.webp"
-              alt="Relay Create game form with venue suggestions, custom date and time controls, player and court quantities, game color, cost, court labels, and booking options"
-              caption="A focused form with progressive details"
+              alt="Relay Create game form with venue suggestions, schedule, player capacity, courts, and progressive details"
+              caption="A focused plan with optional details when needed"
               mobileFocus="center"
               width={2880}
               height={2000}
             />
+            <InviteProductShot />
           </div>
           <dl className="mt-10 grid border-y border-[#deded9] sm:grid-cols-3">
             <div className="py-6 sm:pr-8">
-              <dt className="text-sm font-semibold">Fast by default</dt>
+              <dt className="text-sm font-semibold">Quick to publish</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Only the plan, time, player limit, and court quantity lead the flow.
+                Venue suggestions, custom schedule controls, court quantity, and sensible progressive details.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-6 sm:border-l sm:border-t-0 sm:px-8">
-              <dt className="text-sm font-semibold">Venue-aware</dt>
+              <dt className="text-sm font-semibold">Easy to join</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Search Philippine venues, preserve the address, and keep external booking separate.
+                Guest RSVP, optional approval, capacity, and automatic waitlisting from the shared link.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-6 sm:border-l sm:border-t-0 sm:pl-8">
-              <dt className="text-sm font-semibold">Ready to share</dt>
+              <dt className="text-sm font-semibold">One shared place</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Publish directly into the host workspace and send one public link.
+                The plan, players, Play, chat, payments, and recap keep the same structure for everyone.
               </dd>
             </div>
           </dl>
         </div>
       </section>
 
-      <section id="invite" className="border-t border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
-        <div
-          data-marketing-reveal="split"
-          className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[.72fr_1.28fr] lg:gap-20"
-        >
-          <div>
-            <p className="text-sm font-semibold text-[#526415]">Share once</p>
-            <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">
-              The invitation does the explaining.
-            </h2>
-            <p className="mt-5 max-w-md leading-7 text-[#66666c]">
-              Time, venue, directions, open spots, cost, booking status, roster, and host—all visible from the Messenger
-              link. Guests can join by name, choose Maybe, or decline without an account.
+      <section id="play" className="border-t border-[#deded9] px-5 py-20 sm:px-8 sm:py-32">
+        <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
+          <div className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]">
+            <div>
+              <p className="text-sm font-semibold text-[#526415]">When everyone arrives</p>
+              <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
+                Choose the rhythm, then keep everyone moving.
+              </h2>
+            </div>
+            <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
+              Start with the format your crew understands. Relay explains the rule, validates the roster, builds pairs
+              when needed, and turns the setup into courts, a queue, scores, and standings everyone can follow.
             </p>
-            <ul className="mt-7 divide-y divide-[#deded9] border-y border-[#deded9] text-sm">
-              <li className="py-3">Capacity and automatic waitlist</li>
-              <li className="py-3">Optional host approval</li>
-              <li className="py-3">The same Overview, Players, Play, Chat, and Payments structure</li>
-            </ul>
           </div>
-          <InviteProductShot />
+          <div className="mt-12 grid gap-6 lg:grid-cols-2">
+            <ProductShot
+              src="/images/product/play-setup.webp"
+              alt="Relay Play setup showing Paddle Stack, Mix It Up, Balanced Mix, Court Climb, Team Round Robin, and partner controls"
+              caption="Choose from five understandable ways to run the courts"
+              mobileFocus="center"
+              width={2880}
+              height={2000}
+            />
+            <ProductShot
+              src="/images/product/play.webp"
+              alt="Relay Play showing two active court scoreboards, balanced teams, large scores, touch controls, and the waiting area"
+              caption="Every active court gets a realtime scoreboard"
+              mobileFocus="center"
+              width={2880}
+              height={2000}
+            />
+          </div>
+          <div className="mt-6">
+            <ProductShot
+              src="/images/product/play-expanded.webp"
+              alt="Relay expanded scoreboard filling the viewport with two teams, large scores, touch controls, and a close action"
+              caption="Expand any scoreboard for a focused courtside display"
+              mobileFocus="center"
+              width={2880}
+              height={1800}
+            />
+          </div>
+          <div className="mt-10 grid border-y border-[#deded9] sm:grid-cols-2 lg:grid-cols-5">
+            {[
+              ["Paddle Stack", "Continuous play with mixed partners or pairs that stay together."],
+              ["Mix It Up", "Fair rests, new partners, and fewer repeated matchups."],
+              ["Balanced Mix", "Close teams from self-described experience—not ratings."],
+              ["Court Climb", "Winners move toward Court 1 while partners split."],
+              ["Team Round Robin", "Fixed pairs play every other pair once, with automatic byes."],
+            ].map(([title, description], index) => (
+              <div
+                key={title}
+                className={`py-6 lg:px-5 ${index ? "border-t border-[#deded9] sm:border-l sm:border-t-0" : "lg:pl-0"} ${index % 2 ? "sm:pl-6" : "sm:pr-6"}`}
+              >
+                <h3 className="font-semibold">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#66666c]">{description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 sm:py-32">
+      <section id="payments" className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
           <div className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]">
             <div>
@@ -343,78 +294,7 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      <section id="play" className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
-        <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
-          <div className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]">
-            <div>
-              <p className="text-sm font-semibold text-[#526415]">When everyone arrives</p>
-              <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                Choose the rhythm, then keep everyone moving.
-              </h2>
-            </div>
-            <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Start with the format your crew understands. Relay explains the rule, validates the roster, builds pairs
-              when needed, and turns the setup into courts, a queue, scores, and standings everyone can follow.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <ProductShot
-              src="/images/product/play-setup.webp"
-              alt="Relay Play setup showing Paddle Stack, Mix It Up, Court Climb, Team Round Robin, and a fixed-pair builder"
-              caption="Choose a format and set fixed pairs when needed"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
-            <ProductShot
-              src="/images/product/play.webp"
-              alt="Relay Play showing a full-width active match with intact player names, large scores, touch controls, and the team queue"
-              caption="The same setup becomes the courtside view"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
-          </div>
-          <div className="mt-6">
-            <ProductShot
-              src="/images/product/play-expanded.webp"
-              alt="Relay expanded scoreboard filling the viewport with two teams, large scores, touch controls, and a close action"
-              caption="Expand any scoreboard for a focused courtside display"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
-          </div>
-          <div className="mt-10 grid border-y border-[#deded9] sm:grid-cols-2 lg:grid-cols-4">
-            <div className="py-6 sm:pr-8">
-              <h3 className="font-semibold">Paddle Stack</h3>
-              <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Continuous play with mixed partners or pairs that stay together.
-              </p>
-            </div>
-            <div className="border-t border-[#deded9] py-6 sm:border-l sm:border-t-0 sm:pl-8 lg:px-8">
-              <h3 className="font-semibold">Mix It Up</h3>
-              <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Social rounds that prioritize fair rests and reduce repeated partners.
-              </p>
-            </div>
-            <div className="border-t border-[#deded9] py-6 sm:pr-8 lg:border-l lg:border-t-0 lg:px-8">
-              <h3 className="font-semibold">Court Climb</h3>
-              <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Winners move toward Court 1, losers move down, and partners split.
-              </p>
-            </div>
-            <div className="border-t border-[#deded9] py-6 sm:border-l sm:pl-8 lg:border-t-0">
-              <h3 className="font-semibold">Team Round Robin</h3>
-              <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Keep partners and play every other pair once, with automatic byes.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-5 py-20 sm:px-8 sm:py-32">
+      <section id="sync" className="px-5 py-20 sm:px-8 sm:py-32">
         <div
           data-marketing-reveal="split-reverse"
           className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[1.25fr_.75fr] lg:gap-20"
@@ -443,68 +323,26 @@ export default async function MarketingPage() {
         </div>
       </section>
 
-      <section className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
+      <section id="recap" className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
         <div
-          data-marketing-reveal="mask"
-          className="mx-auto grid max-w-[1180px] overflow-hidden rounded-xl border border-[#d9d9d4] bg-[#f7f7f5] lg:grid-cols-[1.05fr_.95fr]"
+          data-marketing-reveal="split"
+          className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[.78fr_1.22fr] lg:gap-20"
         >
-          <div className="relative min-h-[360px] lg:min-h-[520px]">
-            <Image
-              src="/images/pickleball-friends.jpg"
-              alt="Four friends playing doubles pickleball together"
-              fill
-              sizes="(min-width: 1024px) 52vw, 100vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="flex flex-col justify-between p-7 sm:p-10 lg:p-12">
-            <div>
-              <p className="text-sm font-semibold text-[#526415]">After the last point</p>
-              <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">
-                The session becomes the memory.
-              </h2>
-              <p className="mt-5 leading-7 text-[#66666c]">
-                Players, scores, standings, photos, reactions, and comments remain together. Save the crew as a group,
-                see shared history, or choose Play Again to reuse the venue and setup without copying RSVPs, payments,
-                or results.
-              </p>
-            </div>
-            <p className="mt-12 border-t border-[#d9d9d4] pt-5 text-sm font-semibold">
-              Real participation, without turning recreation into a rating.
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[#526415]">After the last point</p>
+            <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">The night gets its own recap.</h2>
+            <p className="mt-5 leading-7 text-[#66666c]">
+              Relay turns real match data into a portrait story reel. Share the whole night, your own record, the
+              winning team, session leader, standings, closest finish, or busiest court—then choose a clean background
+              or add a game photo. Recreation stays celebratory, never a rating.
             </p>
+            <ul className="mt-7 divide-y divide-[#deded9] border-y border-[#deded9] text-sm">
+              <li className="py-3">Seven focused stories, shown only when the scores support them</li>
+              <li className="py-3">Swipe through 9:16 portraits made for social sharing</li>
+              <li className="py-3">Choose a Relay background or one of the crew’s photos</li>
+            </ul>
           </div>
-        </div>
-      </section>
-
-      <section id="everything" className="px-5 py-20 sm:px-8 sm:py-32">
-        <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-[#526415]">Everything inside</p>
-            <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-              A complete session, in six understandable parts.
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-[#66666c]">
-              Advanced controls appear when the game needs them. The basic path stays create, share, join, and play.
-            </p>
-          </div>
-          <div className="mt-14 border-t border-[#d9d9d4]">
-            {capabilities.map(({ stage, title, items }, index) => (
-              <section
-                key={stage}
-                className="grid gap-5 border-b border-[#d9d9d4] py-7 md:grid-cols-[100px_1fr_1.2fr] md:gap-8"
-              >
-                <p className="font-mono text-xs text-[#66666c]">
-                  0{index + 1} · {stage}
-                </p>
-                <h3 className="max-w-sm font-semibold leading-6">{title}</h3>
-                <ul className="grid gap-x-6 gap-y-2 text-sm leading-6 text-[#66666c] sm:grid-cols-2">
-                  {items.map((item) => (
-                    <li key={item}>— {item}</li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <RecapTemplatePreview />
         </div>
       </section>
 
@@ -531,7 +369,7 @@ export default async function MarketingPage() {
           <Brand />
           <p>The shared home for pickleball with friends.</p>
           <div className="flex gap-5">
-            <a href="#product">Product</a>
+            <a href="#highlights">Highlights</a>
             <Link href={user ? "/home" : "/login"}>{user ? "Open app" : "Log in"}</Link>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { getPublicLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
+import { getSessionViewer } from "@/features/sessions/viewer";
 
 function name(player: { guestName: string | null }, profile: { name: string } | null) {
   return profile?.name ?? player.guestName ?? "Guest";
@@ -17,6 +17,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
   const slug = (await params).slug;
   const data = await getPublicLiveSession(slug);
   if (!data) notFound();
+  const viewer = await getSessionViewer(data.session.id, slug);
   const waiting = data.queue.filter(({ queue }) => queue.state === "waiting");
   const waitingById = new Map(waiting.map((item) => [item.player.id, item]));
   const waitingPairs = data.pairs
@@ -32,6 +33,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
     );
   const roundMode =
     data.session.rotationMode === "random" ||
+    data.session.rotationMode === "balanced" ||
     data.session.rotationMode === "king_of_court" ||
     data.session.rotationMode === "round_robin";
   return (
@@ -40,14 +42,13 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
       className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-4xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-primary">{data.session.title}</p>
             <h1 className="mt-1 app-title">Play</h1>
             <p className="mt-2 text-sm text-muted">Court assignments, scores, and who plays next.</p>
           </div>
-          <RealtimeRefresh sessionId={data.session.id} compact />
         </div>
         {data.session.status !== "live" && !data.activeMatches.length ? (
           <section className="mt-10 border-y border-line py-12 text-center">
@@ -81,7 +82,12 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
                         teams={[teamA, teamB]}
                         scores={[match.teamAScore, match.teamBScore]}
                         version={match.version}
-                        canScore={false}
+                        canScore={Boolean(
+                          viewer?.user &&
+                          (data.session.hostId === viewer.user.id ||
+                            viewer.player.role === "cohost" ||
+                            match.players.some(({ player }) => player.id === viewer.player.id)),
+                        )}
                       />
                     );
                   })}

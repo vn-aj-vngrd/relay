@@ -1,12 +1,13 @@
 "use client";
 
 import { ArrowsOutSimple, Minus, Plus, X } from "@phosphor-icons/react";
-import { useOptimistic, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SubmitButton } from "@/components/ui/submit-button";
 
-import { changeScore, finishMatch } from "./actions";
+import { finishMatch, saveScore } from "./actions";
 
 type LiveCourtProps = {
   sessionId: string;
@@ -21,7 +22,7 @@ type LiveCourtProps = {
 type ScoreboardProps = Omit<LiveCourtProps, "scores" | "version"> & {
   expanded?: boolean;
   scores: [number, number];
-  pending: boolean;
+  scorePending: boolean;
   error: string;
   onScore: (side: 0 | 1, amount: number) => void;
   onExpand?: () => void;
@@ -53,7 +54,7 @@ function Scoreboard({
   teams,
   scores,
   canScore,
-  pending,
+  scorePending,
   error,
   onScore,
   onExpand,
@@ -125,18 +126,16 @@ function Scoreboard({
             {canScore ? (
               <div className="court-rule grid shrink-0 grid-cols-2 border-t">
                 <button
-                  disabled={pending}
                   onClick={() => onScore(side, -1)}
                   aria-label={`Subtract a point from ${teams[side]}`}
-                  className={`pressable grid place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white disabled:opacity-40 ${expanded ? "min-h-20" : "min-h-16"}`}
+                  className={`pressable grid place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
                   <Minus aria-hidden size={expanded ? 24 : 20} />
                 </button>
                 <button
-                  disabled={pending}
                   onClick={() => onScore(side, 1)}
                   aria-label={`Add a point to ${teams[side]}`}
-                  className={`pressable grid place-items-center text-white hover:bg-white/10 disabled:opacity-40 ${expanded ? "min-h-20" : "min-h-16"}`}
+                  className={`pressable grid place-items-center text-white hover:bg-white/10 ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
                   <Plus aria-hidden size={expanded ? 24 : 20} />
                 </button>
@@ -150,6 +149,10 @@ function Scoreboard({
         <p role="alert" className="shrink-0 border-t border-line px-4 py-3 text-sm text-danger">
           {error}
         </p>
+      ) : scorePending ? (
+        <p className="sr-only" aria-live="polite">
+          Saving score…
+        </p>
       ) : null}
       {canScore ? (
         <footer className={`shrink-0 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}>
@@ -160,7 +163,7 @@ function Scoreboard({
               pendingLabel="Finishing match…"
               variant="secondary"
               className="w-full"
-              disabled={scores[0] === scores[1]}
+              disabled={scores[0] === scores[1] || scorePending}
             >
               Finish match
             </SubmitButton>
@@ -172,34 +175,90 @@ function Scoreboard({
 }
 
 export function LiveCourt({ sessionId, matchId, number, teams, scores, version, canScore }: LiveCourtProps) {
+  const router = useRouter();
+  const serverScoreA = scores[0];
+  const serverScoreB = scores[1];
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [pending, startTransition] = useTransition();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const desiredRef = useRef<[number, number]>(scores);
+  const versionRef = useRef(version);
+  const dirtyRef = useRef(false);
+  const savingRef = useRef(false);
+  const [localScores, setLocalScores] = useState<[number, number]>(scores);
+  const [scorePending, setScorePending] = useState(false);
   const [error, setError] = useState("");
-  const [optimistic, updateOptimistic] = useOptimistic(scores, (current, change: { side: 0 | 1; amount: number }) => {
-    const next: [number, number] = [...current];
-    next[change.side] = Math.max(0, next[change.side] + change.amount);
-    return next;
-  });
 
-  function score(side: 0 | 1, amount: number) {
-    startTransition(async () => {
-      updateOptimistic({ side, amount });
-      const form = new FormData();
-      form.set("sessionId", sessionId);
-      form.set("matchId", matchId);
-      form.set("team", side === 0 ? "A" : "B");
-      form.set("amount", String(amount));
-      form.set("version", String(version));
-      try {
-        setError("");
-        await changeScore(form);
-      } catch {
-        setError("Score changed elsewhere. The latest score has been loaded.");
+  useEffect(() => {
+    if (dirtyRef.current || savingRef.current) return;
+    const next: [number, number] = [serverScoreA, serverScoreB];
+    desiredRef.current = next;
+    versionRef.current = version;
+    setLocalScores(next);
+  }, [serverScoreA, serverScoreB, version]);
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
+
+  async function flushScore() {
+    if (savingRef.current || !dirtyRef.current) return;
+    savingRef.current = true;
+    const savingScores: [number, number] = [...desiredRef.current];
+    try {
+      const saved = await saveScore({
+        sessionId,
+        matchId,
+        teamAScore: savingScores[0],
+        teamBScore: savingScores[1],
+        version: versionRef.current,
+      });
+      versionRef.current = saved.version;
+      setError("");
+      if (desiredRef.current[0] !== savingScores[0] || desiredRef.current[1] !== savingScores[1]) {
+        timerRef.current = setTimeout(() => void flushScore(), 120);
+      } else {
+        dirtyRef.current = false;
+        setLocalScores([saved.teamAScore, saved.teamBScore]);
+        setScorePending(false);
       }
-    });
+    } catch {
+      dirtyRef.current = false;
+      setScorePending(false);
+      setError("This score changed on another device. Relay is loading the latest version.");
+      router.refresh();
+    } finally {
+      savingRef.current = false;
+    }
   }
 
-  const shared = { sessionId, matchId, number, teams, scores: optimistic, canScore, pending, error, onScore: score };
+  function score(side: 0 | 1, amount: number) {
+    setLocalScores((current) => {
+      const next: [number, number] = [...current];
+      next[side] = Math.min(99, Math.max(0, next[side] + amount));
+      desiredRef.current = next;
+      return next;
+    });
+    dirtyRef.current = true;
+    setScorePending(true);
+    setError("");
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => void flushScore(), 420);
+  }
+
+  const shared = {
+    sessionId,
+    matchId,
+    number,
+    teams,
+    scores: localScores,
+    canScore,
+    scorePending,
+    error,
+    onScore: score,
+  };
 
   return (
     <>

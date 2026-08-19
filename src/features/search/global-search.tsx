@@ -231,7 +231,7 @@ export function GlobalSearch({
     .map((type) => ({ type, items: items.filter((item) => item.type === type) }))
     .filter((section) => section.items.length);
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-6xl">
       <header>
         <h1 className="app-title">Search Relay</h1>
         <p className="mt-2 text-muted">Find games, players, groups, and places to play.</p>

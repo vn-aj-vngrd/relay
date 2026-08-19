@@ -36,6 +36,10 @@ _Avoid_: Tournament, bracket, league
 Synchronized social rounds that prioritize fair rests, new partners, and fewer repeated opponents.
 _Avoid_: Random mode, Americano tournament
 
+**Balanced Mix**:
+Synchronized social rounds that use each participant’s self-described playing experience to create teams with similar combined experience while still prioritizing fair rests. It is a session aid, never a rating or ranking.
+_Avoid_: Skill matchmaking, rated play, competitive balance
+
 **Court Climb**:
 Synchronized multi-court rounds where winners move toward Court 1, losers move down, and former partners split.
 _Avoid_: Ladder, King of the Court tournament
@@ -43,6 +47,14 @@ _Avoid_: Ladder, King of the Court tournament
 **Session readiness**:
 The host’s concise setup state across roster, court booking, and player repayment collection. It guides preparation; it is not a quality score.
 _Avoid_: Completion score, event health
+
+**Session recap**:
+The completed session’s celebratory data story: matches, standings, standout pairings, shared photos, and a manually controlled portrait reel. A participant chooses one defensible story and a Relay or memory-photo background to share. It remains part of the session memory rather than becoming a separate post.
+_Avoid_: Wrapped, performance report, social post
+
+**Playing experience**:
+A participant’s optional self-description—Just starting, Casual, Regular, or Experienced—used only to help friends form enjoyable teams. An account profile supplies a default; a session participant may use a session-specific value.
+_Avoid_: Rating, rank, proficiency score
 
 **Shared game link**:
 The account-optional URL used to understand and join a session. It is the canonical entry point for guests and invitees, not a separate copy of the session.

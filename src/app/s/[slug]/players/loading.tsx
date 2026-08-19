@@ -8,7 +8,7 @@ export default function PublicPlayersLoading() {
       aria-label="Loading players"
       aria-busy="true"
     >
-      <article className="public-session-panel public-session-content mx-auto max-w-4xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <article className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <Skeleton className="h-4 w-40" />
         <div className="mt-2 flex items-end justify-between gap-4">
           <div>

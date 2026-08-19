@@ -2,7 +2,7 @@ import { RowsSkeleton, Skeleton } from "@/components/shared/skeleton";
 
 export default function ProfileLoading() {
   return (
-    <div role="status" className="mx-auto w-full max-w-4xl" aria-label="Loading profile" aria-busy="true">
+    <div role="status" className="mx-auto w-full max-w-6xl" aria-label="Loading profile" aria-busy="true">
       <div className="flex items-center gap-4 pb-7">
         <Skeleton className="h-12 w-12 rounded-full" />
         <div className="flex-1 space-y-2">

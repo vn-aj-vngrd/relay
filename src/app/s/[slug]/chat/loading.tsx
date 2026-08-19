@@ -8,7 +8,7 @@ export default function PublicChatLoading() {
       aria-label="Loading session chat"
       aria-busy="true"
     >
-      <div className="public-session-panel public-chat-panel mx-auto flex h-full min-h-0 max-w-4xl flex-col overflow-hidden bg-surface px-4 pt-6 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-session-panel public-chat-panel mx-auto flex h-full min-h-0 max-w-6xl flex-col overflow-hidden bg-surface px-4 pt-6 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <Skeleton className="h-4 w-40 max-w-full" />

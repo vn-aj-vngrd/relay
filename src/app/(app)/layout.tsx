@@ -94,7 +94,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <main
             id="main-content"
             data-tour="workspace"
-            className="app-content mx-auto flex w-full max-w-4xl flex-col px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10"
+            className="app-content mx-auto flex w-full max-w-6xl flex-col px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10"
           >
             <AppBreadcrumbs />
             <div className="min-h-0 flex-1">{children}</div>
