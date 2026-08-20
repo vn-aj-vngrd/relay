@@ -1,11 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
-
-vi.mock("./actions", () => ({
-  addMemoryComment: vi.fn(),
-  toggleMemoryReaction: vi.fn(),
-  uploadMemoryPhoto: vi.fn(),
-}));
+import { describe, expect, it } from "vitest";
 
 import { buildSessionRecap, type RecapMatch } from "./recap";
 import { SessionRecap } from "./session-recap";

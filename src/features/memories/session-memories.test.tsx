@@ -1,11 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({
-  addMemoryComment: vi.fn(),
-  toggleMemoryReaction: vi.fn(),
-  uploadMemoryPhoto: vi.fn(),
-}));
+vi.mock("./actions", () => ({ uploadMemoryPhoto: vi.fn() }));
 vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: vi.fn() }));
 
 import { buildSessionRecap, type RecapMatch } from "./recap";
@@ -55,11 +51,11 @@ describe("SessionMemories", () => {
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
   });
 
-  it("groups story creation, photos, and crew notes after completion", () => {
+  it("shows story creation and photos after completion", () => {
     renderMemories("completed");
     expect(screen.getByRole("heading", { name: "Share the night" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Photos from the game" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "From the crew" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "From the crew" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
   });
 });

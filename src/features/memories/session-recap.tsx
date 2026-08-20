@@ -190,7 +190,7 @@ export function SessionRecap({
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
           {completed
             ? "Build a story-ready highlight, add photos, and leave notes with the crew in Story."
-            : "When the host ends the session, Story unlocks portrait scenes, photos, reactions, and crew notes."}
+            : "When the host ends the session, Story shows the final scores and game photos."}
         </p>
         <ButtonLink href={storyHref} variant="secondary" className="mt-4">
           Open story <ArrowRight aria-hidden size={16} />

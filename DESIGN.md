@@ -205,7 +205,7 @@ Chat occupies the remaining viewport below session navigation. The message histo
 
 **Play** owns the game’s full lifecycle. Before play it explains what will appear; during play it runs courts and marks provisional highlights; when the host ends the session, the same Play URL becomes **Recap** and locks the final results. The recap opens with one deep-court result surface, then reveals only defensible highlights from persisted data: match and point totals, court time, top session standing, strongest repeated pair, closest finish, and busiest court. Full Session Standings remain below. With no completed scores, Recap says so rather than inventing a winner. Legacy Recap URLs redirect to Play.
 
-**Story** is the expressive destination. It opens after the host ends the session and groups the social story composer, photos, reactions, and crew notes. Before completion it explains what will unlock without exposing inactive controls. Public and authenticated URLs use the same Story label and order.
+**Story** is the expressive destination. It opens after the host ends the session and groups the social story composer and game photos. Before completion it explains what will unlock without exposing inactive controls. Public and authenticated URLs use the same Story label and order.
 
 A participant may turn the night into a manually controlled 9:16 story. Available focuses include Night recap, My game, Winning team, Top of the table, Session Standings, Closest finish, Busiest court, Points played, Court time, The crew, and a photo-first custom story; a focus renders only when persisted session data supports it. The portrait never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct selection.
 

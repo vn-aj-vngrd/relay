@@ -14,8 +14,8 @@ export default async function GameStoryPage({ params }: { params: Promise<{ id: 
   const canContribute = data.session.hostId === user.id || data.membership?.rsvp === "going";
   const description =
     data.session.status === "completed"
-      ? "Story-ready highlights, photos, reactions, and notes from the crew."
-      : "Stories and crew photos open when the host ends the session.";
+      ? "Make a shareable recap and add photos from the game."
+      : "Scores and game photos appear after the host ends the session.";
 
   return (
     <>

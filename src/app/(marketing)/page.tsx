@@ -17,6 +17,7 @@ import {
   PlaySetupProductPreview,
 } from "@/features/marketing/product-previews";
 import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
+import { getCebuVenues } from "@/features/venues/queries";
 
 export const metadata: Metadata = {
   title: "Relay — Plan pickleball with friends",
@@ -34,7 +35,7 @@ const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-[#d5d5cf] bg-white px-4 text-[13px] font-semibold hover:border-[#aaa9a3] hover:bg-[#f1f1ee]";
 
 export default async function MarketingPage() {
-  const user = await getCurrentUser();
+  const [user, courts] = await Promise.all([getCurrentUser(), getCebuVenues()]);
   const primaryHref = user ? "/home" : "/signup";
 
   return (
@@ -115,7 +116,7 @@ export default async function MarketingPage() {
 
       <MarketingHighlights />
 
-      <CourtFinderShowcase />
+      <CourtFinderShowcase courts={courts} />
 
       <section className="border-b border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-28">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">

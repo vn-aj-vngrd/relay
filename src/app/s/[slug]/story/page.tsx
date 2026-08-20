@@ -15,8 +15,8 @@ export default async function PublicStoryPage({ params }: { params: Promise<{ sl
   const canContribute = Boolean(user && (data.session.hostId === user.id || viewerPlayer?.rsvp === "going"));
   const description =
     data.session.status === "completed"
-      ? "Story-ready highlights, photos, reactions, and notes from the crew."
-      : "Stories and crew photos open when the host ends the session.";
+      ? "View the final scores and photos from the game."
+      : "Scores and game photos appear after the host ends the session.";
 
   return (
     <main

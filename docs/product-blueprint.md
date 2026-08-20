@@ -37,7 +37,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 
 1. Host ends the session after confirming active matches.
 2. The same URL transitions to a memory view with results, standings, and media.
-3. Players add photos, captions, comments, and reactions.
+3. Players add photos and captions. Conversation stays in Chat.
 4. **Play again** clones venue, group, duration, capacity, court count, and suggested invitees, then asks for a new date.
 
 ## 3. Route map
@@ -87,7 +87,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **MatchScore** is an append-only score event when live scoring is used; the match also stores current/final score and a lock version.
 - **SessionQueue** is an ordered, unique set of eligible session players with play state.
 - **Expense** and **PlayerPayment** coordinate obligations; no payment transaction is processed.
-- **Memory** is the completed session's content container; media, comments, and reactions attach to it.
+- **Memory** is the completed session's photo container; media attaches to it while conversation stays in Chat.
 
 Deletion policy: use restrictive foreign keys for historical participation and soft lifecycle status for sessions/matches. User deletion anonymizes retained participation. Ephemeral invitations and notifications may cascade. Completed session facts remain immutable except audited host corrections.
 
@@ -144,7 +144,7 @@ Every mutation authenticates or validates a scoped guest token, loads the target
 4. **Payments:** expenses, splits, statuses, host confirmation.
 5. **Live play:** courts, queue, rotations, matches, scoring, standings, realtime/reconnect.
 6. **Groups + social:** groups, chat/system events, notifications.
-7. **Memory + retention:** media, reactions/comments, profile/history, Play again.
+7. **Memory + retention:** photos, profile/history, Play again.
 8. **Production pass:** RLS policies, observability, migrations, browser E2E, a11y/performance/offline hardening.
 
 ## Resolved ambiguities

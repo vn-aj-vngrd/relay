@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { comments, memories, memoryMedia, reactions, sessionPlayers, sessions } from "@/db/schema";
+import { memories, memoryMedia, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -62,34 +62,6 @@ export async function uploadMemoryPhoto(formData: FormData) {
     console.error("Memory photo record failed", uploadRecordError);
     throw new Error("The photo could not be saved. Try again.");
   }
-  revalidatePath(`/games/${session.id}/story`);
-  revalidatePath(`/s/${session.slug}/story`);
-  revalidatePath(`/s/${session.slug}`);
-}
-
-export async function addMemoryComment(formData: FormData) {
-  const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const { user, session, memory } = await requireCompletedParticipant(sessionId);
-  const limit = await checkRateLimit({ scope: "memory-comment", limit: 30, windowSeconds: 60 }, `user:${user.id}`);
-  if (!limit.allowed) throw new Error("Comments are being added too quickly. Try again shortly.");
-  const body = z.string().trim().min(1).max(500).parse(formData.get("body"));
-  await db.insert(comments).values({ memoryId: memory.id, authorId: user.id, body });
-  revalidatePath(`/games/${session.id}/story`);
-  revalidatePath(`/s/${session.slug}/story`);
-  revalidatePath(`/s/${session.slug}`);
-}
-
-export async function toggleMemoryReaction(formData: FormData) {
-  const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const { user, session, memory } = await requireCompletedParticipant(sessionId);
-  const existing = await db.query.reactions.findFirst({
-    where: and(eq(reactions.memoryId, memory.id), eq(reactions.userId, user.id), eq(reactions.reaction, "love")),
-  });
-  if (existing)
-    await db
-      .delete(reactions)
-      .where(and(eq(reactions.memoryId, memory.id), eq(reactions.userId, user.id), eq(reactions.reaction, "love")));
-  else await db.insert(reactions).values({ memoryId: memory.id, userId: user.id, reaction: "love" });
   revalidatePath(`/games/${session.id}/story`);
   revalidatePath(`/s/${session.slug}/story`);
   revalidatePath(`/s/${session.slug}`);

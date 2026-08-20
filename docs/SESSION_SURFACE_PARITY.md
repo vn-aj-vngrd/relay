@@ -20,7 +20,7 @@ Keep these destinations and labels in this order:
 3. Play, which becomes the factual Recap after the host ends the session
 4. Chat
 5. Payments
-6. Story, visible throughout the session with a locked preview before completion and story, photo, reaction, and note tools afterward
+6. Story, visible throughout the session with a locked preview before completion and story and photo tools afterward
 
 A shared route and its authenticated counterpart must expose the same session facts. The public link may add RSVP and sign-in prompts. The authenticated workspace may add host controls and personal history.
 

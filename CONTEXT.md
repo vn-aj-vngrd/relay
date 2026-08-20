@@ -53,7 +53,7 @@ The session’s factual result record: matches, points, court time, standings, a
 _Avoid_: Wrapped, rating, performance report
 
 **Session story**:
-The Story destination and completed session’s expressive layer: a manually controlled portrait story, crew photos, reactions, and notes. A participant chooses one supported focus, a bounded layout, background, crop, contrast, and personal line. It remains part of the session rather than becoming a feed post.
+The Story destination and completed session’s expressive layer: a manually controlled portrait story and game photos. A participant chooses one supported focus, a bounded layout, background, crop, contrast, and personal line. It remains part of the session rather than becoming a feed post.
 _Avoid_: Social feed, freeform design editor, fabricated highlight
 
 **Playing experience**:

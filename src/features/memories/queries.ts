@@ -3,16 +3,7 @@ import "server-only";
 import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import {
-  comments,
-  matches,
-  matchPlayers,
-  memories,
-  memoryMedia,
-  profiles,
-  reactions,
-  sessionPlayers,
-} from "@/db/schema";
+import { matches, matchPlayers, memories, memoryMedia, profiles, sessionPlayers } from "@/db/schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { buildSessionRecap } from "./recap";
@@ -20,16 +11,11 @@ import { buildSessionRecap } from "./recap";
 export async function getSessionMemory(sessionId: string) {
   const memory = await db.query.memories.findFirst({ where: eq(memories.sessionId, sessionId) });
   if (!memory) return null;
-  const [media, notes, loves] = await Promise.all([
-    db.select().from(memoryMedia).where(eq(memoryMedia.memoryId, memory.id)).orderBy(asc(memoryMedia.createdAt)),
-    db
-      .select({ comment: comments, profile: profiles })
-      .from(comments)
-      .leftJoin(profiles, eq(comments.authorId, profiles.userId))
-      .where(eq(comments.memoryId, memory.id))
-      .orderBy(asc(comments.createdAt)),
-    db.$count(reactions, eq(reactions.memoryId, memory.id)),
-  ]);
+  const media = await db
+    .select()
+    .from(memoryMedia)
+    .where(eq(memoryMedia.memoryId, memory.id))
+    .orderBy(asc(memoryMedia.createdAt));
   const supabase = createSupabaseAdminClient();
   const withUrls = await Promise.all(
     media.map(async (item) => ({
@@ -39,7 +25,7 @@ export async function getSessionMemory(sessionId: string) {
         null,
     })),
   );
-  return { memory, media: withUrls, comments: notes, reactionCount: loves };
+  return { memory, media: withUrls };
 }
 
 export async function getSessionRecapData(sessionId: string) {

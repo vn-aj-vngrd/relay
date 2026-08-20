@@ -1,6 +1,5 @@
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
@@ -121,7 +120,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   const [data, user] = await Promise.all([getPublicSession(slug), getCurrentUser()]);
   if (!data) notFound();
   const viewer = await getSessionViewer(data.session.id, slug);
-  const { session, roster, hostProfile, matchCount } = data;
+  const { session, roster, hostProfile } = data;
   const going = roster.filter(({ player }) => player.rsvp === "going");
   const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
   const names = going.map(({ player, profile }) => profile?.name ?? player.guestName ?? "Guest");
@@ -265,37 +264,6 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     A note from {hostProfile?.name?.split(" ")[0] ?? "the host"}
                   </h2>
                   <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p>
-                </section>
-              ) : null}
-              {session.status === "completed" ? (
-                <section className="mt-7 border-t border-line pt-7">
-                  <p className="score text-sm font-bold text-primary">SESSION COMPLETE</p>
-                  <h2 className="mt-2 text-xl font-bold">{`${matchCount} ${matchCount === 1 ? "match" : "matches"} played`}</h2>
-                  <p className="mt-2 text-sm text-muted">This session is now part of the group’s history.</p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <ButtonLink href={`/s/${session.slug}/play`}>View recap</ButtonLink>
-                    <ButtonLink href={`/s/${session.slug}/story`} variant="secondary">
-                      Open story
-                    </ButtonLink>
-                  </div>
-                  {user?.id === session.hostId ? (
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <Link
-                        href={`/games/new?from=${session.id}`}
-                        className="inline-flex min-h-9 items-center rounded-lg bg-primary px-3 text-[13px] font-semibold text-white"
-                      >
-                        Play again
-                      </Link>
-                      {!session.groupId ? (
-                        <Link
-                          href={`/groups/new?from=${session.id}`}
-                          className="inline-flex min-h-9 items-center rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold text-ink hover:bg-surface-strong"
-                        >
-                          Save crew as a group
-                        </Link>
-                      ) : null}
-                    </div>
-                  ) : null}
                 </section>
               ) : null}
             </div>
