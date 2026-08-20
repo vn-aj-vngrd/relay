@@ -38,7 +38,10 @@ export function SessionHero({
       <div className="absolute inset-y-0 right-[18%] w-px bg-court-line/20" />
       <div className="absolute right-0 top-[68%] h-px w-[36%] bg-court-line/20" />
       <p className="sport-label text-white/65">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
-      <Heading className="relative mt-4 max-w-xl text-4xl font-[720] tracking-[-0.025em] sm:text-5xl">
+      <Heading
+        title={session.title}
+        className="relative mt-4 max-w-xl truncate text-4xl font-[720] tracking-[-0.025em] sm:text-5xl"
+      >
         {session.title}
       </Heading>
       <p className="relative mt-3 text-white/70">{hostLabel}</p>

@@ -71,7 +71,10 @@ export default async function HomePage() {
                           : "Booking pending"}
                   </span>
                 </div>
-                <h3 className="max-w-xl text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl">
+                <h3
+                  title={next.session.title}
+                  className="max-w-xl truncate text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl"
+                >
                   {next.session.title}
                 </h3>
                 <p className="mt-2 text-base text-white/70">
@@ -255,9 +258,11 @@ export default async function HomePage() {
                 style={sessionAccentStyle(session.accentColor)}
                 className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
               >
-                <MapPin className="text-primary" size={19} />
-                <div className="flex-1">
-                  <h3 className="font-semibold">{session.title}</h3>
+                <MapPin className="shrink-0 text-primary" size={19} />
+                <div className="min-w-0 flex-1">
+                  <h3 title={session.title} className="truncate font-semibold">
+                    {session.title}
+                  </h3>
                   <p className="mt-1 text-sm text-muted">
                     {formatSessionDate(session.startsAt)} · {session.venueName} · {playerCount} players
                   </p>

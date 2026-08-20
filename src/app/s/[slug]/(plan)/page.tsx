@@ -190,7 +190,9 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
       />
       <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
         <div className="px-4 sm:px-0">
-          <p className="text-sm font-semibold text-primary">{session.title}</p>
+          <p title={session.title} className="truncate text-sm font-semibold text-primary">
+            {session.title}
+          </p>
           <GamePageIntro
             title="Overview"
             description="The plan, roster, availability, and what you need before the game."

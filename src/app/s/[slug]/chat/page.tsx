@@ -20,7 +20,9 @@ export default async function PublicChatPage({ params }: { params: Promise<{ slu
     >
       <div className="public-session-panel public-chat-panel mx-auto flex h-full min-h-0 max-w-6xl flex-col overflow-hidden bg-surface px-4 pt-6 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-primary">{data.session.title}</p>
+          <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+            {data.session.title}
+          </p>
           <h1 className="mt-1 app-title">Chat</h1>
           <p className="mt-2 text-sm text-muted">The session conversation for players and guests.</p>
         </div>

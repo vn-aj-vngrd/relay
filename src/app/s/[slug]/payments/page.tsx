@@ -67,7 +67,9 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+        <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+          {data.session.title}
+        </p>
         <h1 className="mt-1 app-title">Your payment</h1>
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
           The host paid upfront. Repay your share through their listed app or bank, then upload one screenshot. Relay

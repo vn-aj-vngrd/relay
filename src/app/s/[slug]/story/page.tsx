@@ -25,7 +25,9 @@ export default async function PublicStoryPage({ params }: { params: Promise<{ sl
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+        <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+          {data.session.title}
+        </p>
         <h1 className="mt-1 app-title">Story</h1>
         <p className="mt-2 text-sm text-muted">{description}</p>
         <div className="mt-7">

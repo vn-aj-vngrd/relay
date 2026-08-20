@@ -62,7 +62,7 @@ export function DeleteSessionControl({ sessionId, title }: { sessionId: string; 
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">
               <Warning aria-hidden size={19} weight="fill" />
             </span>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-lg font-[680]">Delete this game?</h2>
               <p id="delete-session-description" className="mt-2 text-sm leading-6 text-muted">
                 This permanently removes the roster, payments, chat, matches, scores, and memories. This action cannot
@@ -72,7 +72,7 @@ export function DeleteSessionControl({ sessionId, title }: { sessionId: string; 
           </div>
           <div className="mt-6">
             <label htmlFor="delete-confirmation" className="text-sm font-semibold">
-              Type <span className="font-mono">{title}</span> to confirm
+              Type <span className="break-all font-mono">{title}</span> to confirm
             </label>
             <input
               ref={inputRef}

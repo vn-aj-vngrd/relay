@@ -94,7 +94,9 @@ export function RecapStoryCard({
         <div className={contentFrame}>
           {template === "overview" ? (
             <>
-              <p className="text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">{title}</p>
+              <p className="line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+                {title}
+              </p>
               <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
                 {date} · {venue}
               </p>

@@ -30,14 +30,18 @@ export default async function GameWorkspaceLayout({
   return (
     <div className="flex h-full min-h-0 flex-col" style={sessionAccentStyle(data.session.accentColor)}>
       <RealtimeRefresh sessionId={id} silent />
-      <AppBreadcrumbs
-        items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
-      />
-      <div className="shrink-0 border-b border-line">
+      <div className="hidden shrink-0 sm:block">
+        <AppBreadcrumbs
+          items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
+        />
+      </div>
+      <div className="-mx-4 shrink-0 border-b border-line sm:mx-0">
         <AuthenticatedSessionNav id={id} />
       </div>
       <div className="flex shrink-0 items-center justify-between gap-3 pt-5">
-        <p className="min-w-0 truncate text-sm font-semibold text-primary">{data.session.title}</p>
+        <p title={data.session.title} className="min-w-0 flex-1 truncate text-sm font-semibold text-primary">
+          {data.session.title}
+        </p>
         <div className="flex shrink-0 items-center gap-2">
           {canManage ? (
             <ButtonLink href={`/games/${id}/settings`} variant="secondary">

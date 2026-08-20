@@ -40,7 +40,9 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
     return (
       <div className="mx-auto w-full max-w-6xl">
         <p className="sport-label text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
-        <h1 className="mt-2 app-title">{session.title}</h1>
+        <h1 title={session.title} className="mt-2 truncate app-title">
+          {session.title}
+        </h1>
         <section className="mt-8 border-y border-line py-10 text-center">
           <HourglassMedium aria-hidden size={26} className="mx-auto text-warning" />
           <h2 className="mt-4 text-xl font-bold">Waiting for host approval</h2>

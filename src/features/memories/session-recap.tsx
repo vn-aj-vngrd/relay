@@ -36,7 +36,7 @@ export function SessionRecap({
           <p className="text-sm font-medium text-white/65">
             {date} · {session.venueName}
           </p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
+          <h2 className="mt-3 line-clamp-2 max-w-2xl break-words text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
             {completed
               ? `That was ${session.title}.`
               : inProgress

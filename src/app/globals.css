@@ -229,9 +229,9 @@ select {
 button:disabled {
   cursor: not-allowed;
 }
-h1,
-h2,
-h3 {
+h1:not(.truncate),
+h2:not(.truncate),
+h3:not(.truncate) {
   text-wrap: balance;
   font-family:
     var(--font-geist-sans),
@@ -241,7 +241,7 @@ h3 {
     "Segoe UI",
     sans-serif;
 }
-p {
+p:not(.truncate) {
   text-wrap: pretty;
 }
 ::selection {

@@ -136,7 +136,7 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
                       key={session.id}
                       href={`/s/${session.slug}`}
                       style={sessionAccentStyle(session.accentColor)}
-                      className="group overflow-hidden rounded-xl border border-line bg-surface hover:border-primary/40"
+                      className="group min-w-0 overflow-hidden rounded-xl border border-line bg-surface hover:border-primary/40"
                     >
                       {cover?.url ? (
                         <Image
@@ -149,11 +149,13 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
                       ) : (
                         <div className="aspect-[16/9] bg-[var(--session-cover)] p-5 text-white">
                           <p className="sport-label text-white/65">{formatSessionDate(session.startsAt)}</p>
-                          <p className="mt-4 text-xl font-bold">{session.title}</p>
+                          <p className="mt-4 line-clamp-2 break-words text-xl font-bold">{session.title}</p>
                         </div>
                       )}
                       <div className="p-4">
-                        <p className="font-semibold">{session.title}</p>
+                        <p title={session.title} className="truncate font-semibold">
+                          {session.title}
+                        </p>
                         <p className="mt-1 text-sm text-muted">{session.venueName}</p>
                         <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">
                           Open memory <CaretRight aria-hidden size={14} />

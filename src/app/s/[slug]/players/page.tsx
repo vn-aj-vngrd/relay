@@ -19,7 +19,9 @@ export default async function PublicPlayersPage({ params }: { params: Promise<{ 
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <article className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+        <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+          {data.session.title}
+        </p>
         <div className="mt-1 flex min-w-0 items-end justify-between gap-4">
           <div className="min-w-0">
             <h1 className="app-title">Players</h1>

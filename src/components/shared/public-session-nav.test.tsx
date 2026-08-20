@@ -22,6 +22,7 @@ describe("PublicSessionNav", () => {
     ]);
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("href", "/s/saturday-night-pickle/play");
+    expect(screen.getByRole("navigation", { name: "Game navigation" })).toHaveClass("border-b", "border-line");
   });
 
   it("keeps Play as the live and completed result surface and links to Story", () => {

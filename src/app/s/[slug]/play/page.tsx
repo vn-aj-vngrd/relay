@@ -31,7 +31,9 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
         style={sessionAccentStyle(data.session.accentColor)}
       >
         <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-          <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+          <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+            {data.session.title}
+          </p>
           <h1 className="mt-1 app-title">Recap</h1>
           <p className="mt-2 text-sm text-muted">
             The final scores, pairings, highlights, and standings from this game.
@@ -74,8 +76,10 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
     >
       <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+          <div className="min-w-0">
+            <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
+              {data.session.title}
+            </p>
             <h1 className="mt-1 app-title">Play</h1>
             <p className="mt-2 text-sm text-muted">Court assignments, scores, and who plays next.</p>
           </div>
