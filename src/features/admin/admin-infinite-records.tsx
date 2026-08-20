@@ -260,7 +260,7 @@ export function AdminInfiniteRecords({
       (entries) => {
         if (entries[0]?.isIntersecting) void loadMore();
       },
-      { rootMargin: "320px 0px" },
+      { root: target.closest<HTMLElement>("[data-admin-scroll]"), rootMargin: "320px 0px" },
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -309,6 +309,17 @@ export function AdminInfiniteRecords({
             <span>{error}</span>
             <button type="button" onClick={() => void loadMore()} className="font-semibold text-primary">
               Retry
+            </button>
+          </div>
+        ) : null}
+        {nextCursor && !loading && !error ? (
+          <div className="flex justify-center py-3">
+            <button
+              type="button"
+              onClick={() => void loadMore()}
+              className="min-h-9 rounded-lg px-3 text-[13px] font-semibold text-primary hover:bg-primary-soft"
+            >
+              Load more records
             </button>
           </div>
         ) : null}

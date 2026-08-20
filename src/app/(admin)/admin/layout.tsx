@@ -49,7 +49,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       <div className="min-h-0 flex-1 overflow-hidden lg:h-dvh lg:py-2 lg:pl-[240px] lg:pr-2">
-        <div className="h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line">
+        <div
+          data-admin-scroll
+          className="h-full overflow-y-auto overscroll-y-contain bg-surface lg:rounded-xl lg:border lg:border-line"
+        >
           <main
             id="main-content"
             className="mx-auto flex w-full max-w-6xl flex-col px-4 pb-20 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10"

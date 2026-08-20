@@ -210,10 +210,9 @@ export async function getAdminVenues(
     conditions.push(eq(venues.listingStatus, input.status as (typeof venues.listingStatus.enumValues)[number]));
   const priority = sql<number>`case when ${venues.listingStatus} = 'pending' then 1 else 0 end`;
   if (input.cursor) {
-    const dateCursor = afterCursor(venues.updatedAt, venues.id, input.cursor);
     const cursorCondition = or(
       lt(priority, input.cursor.priority ?? 0),
-      and(eq(priority, input.cursor.priority ?? 0), dateCursor),
+      and(eq(priority, input.cursor.priority ?? 0), lt(venues.id, input.cursor.id)),
     );
     if (cursorCondition) conditions.push(cursorCondition);
   }
@@ -231,7 +230,7 @@ export async function getAdminVenues(
     })
     .from(venues)
     .where(conditions.length ? and(...conditions) : undefined)
-    .orderBy(desc(priority), desc(venues.updatedAt), desc(venues.id))
+    .orderBy(desc(priority), desc(venues.id))
     .limit(ADMIN_PAGE_SIZE + 1);
 
   const pageRows = rows.slice(0, ADMIN_PAGE_SIZE);

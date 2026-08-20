@@ -4,13 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AdminInfiniteRecords } from "./admin-infinite-records";
 
 let observerCallback: IntersectionObserverCallback;
+let observerOptions: IntersectionObserverInit | undefined;
 
 beforeEach(() => {
   vi.stubGlobal(
     "IntersectionObserver",
     class {
-      constructor(callback: IntersectionObserverCallback) {
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
         observerCallback = callback;
+        observerOptions = options;
       }
       observe() {}
       disconnect() {}
@@ -72,12 +74,17 @@ describe("AdminInfiniteRecords", () => {
       }),
     );
     render(
-      <AdminInfiniteRecords
-        resource="users"
-        initialPage={{ items: [first], nextCursor: "next-page" }}
-        emptyMessage="No users"
-      />,
+      <div data-admin-scroll data-testid="admin-scroll-root">
+        <AdminInfiniteRecords
+          resource="users"
+          initialPage={{ items: [first], nextCursor: "next-page" }}
+          emptyMessage="No users"
+        />
+      </div>,
     );
+
+    expect(observerOptions?.root).toBe(screen.getByTestId("admin-scroll-root"));
+    expect(screen.getByRole("button", { name: "Load more records" })).toBeVisible();
 
     await act(async () => {
       observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
@@ -86,5 +93,6 @@ describe("AdminInfiniteRecords", () => {
     await waitFor(() => expect(screen.getByText("Two Player")).toBeVisible());
     expect(screen.getAllByText("One Player")).toHaveLength(1);
     expect(screen.getByText("All 2 matching records loaded.")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Load more records" })).not.toBeInTheDocument();
   });
 });

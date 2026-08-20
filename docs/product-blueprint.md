@@ -73,7 +73,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **Session workspace:** Overview, Players, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** next game → applicable action items → upcoming games → recent games. No generic analytics.
-- **Search:** recent searches when idle → debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. Link-only/private content remains authorization-scoped.
+- **Search:** recent searches when idle → two-character minimum → 280 ms debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. A bounded in-memory cache reuses filter results during the current search visit. PostgreSQL trigram indexes back searchable names and addresses; queries select only result-row fields. Link-only/private content remains authorization-scoped.
 - **Completed session:** memory summary → media → matches and standings → conversation → Play again.
 
 ## 5. Domain model

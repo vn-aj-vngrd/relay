@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 describe("GlobalSearch", () => {
-  it("uses recent searches instead of a minimum-character instruction", async () => {
+  it("shows recent searches while idle", async () => {
     localStorage.setItem(
       "relay-recent-searches-v1",
       JSON.stringify([{ query: "Central Pickle", filter: "courts", savedAt: 1 }]),
@@ -37,21 +37,38 @@ describe("GlobalSearch", () => {
     expect(screen.queryByText(/at least two characters/i)).not.toBeInTheDocument();
   });
 
-  it("searches after one debounced keystroke without submitting a form", async () => {
+  it("waits for a useful query before searching", async () => {
     vi.useFakeTimers();
     render(<GlobalSearch />);
     fireEvent.change(screen.getByLabelText("Search Relay"), { target: { value: "v" } });
     await act(async () => {
-      vi.advanceTimersByTime(181);
+      vi.advanceTimersByTime(300);
     });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(screen.getByText("Type at least 2 characters to search.")).toBeVisible();
+
+    fireEvent.change(screen.getByLabelText("Search Relay"), { target: { value: "va" } });
     await act(async () => {
+      vi.advanceTimersByTime(281);
       await Promise.resolve();
     });
 
     expect(fetch).toHaveBeenCalledWith(
-      expect.stringContaining("q=v"),
+      expect.stringContaining("q=va"),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it("reuses results when switching back to a recent filter", async () => {
+    render(<GlobalSearch initialQuery="van" />);
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: "Players" }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
+    await act(async () => Promise.resolve());
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("loads another bounded page without replacing current results", async () => {
@@ -66,7 +83,7 @@ describe("GlobalSearch", () => {
       };
       return new Response(JSON.stringify({ items: [item], nextCursor: cursor === "0" ? 20 : null }), { status: 200 });
     });
-    render(<GlobalSearch initialQuery="a" initialFilter="players" />);
+    render(<GlobalSearch initialQuery="va" initialFilter="players" />);
     expect(await screen.findByText("Van")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Load more results" }));
     expect(await screen.findByText("Mika")).toBeVisible();

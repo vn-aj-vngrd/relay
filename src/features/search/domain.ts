@@ -1,10 +1,11 @@
 import { z } from "zod";
 
+export const minimumSearchLength = 2;
 export const searchFilters = ["all", "games", "players", "groups", "courts"] as const;
 export type SearchFilter = (typeof searchFilters)[number];
 
 export const searchRequestSchema = z.object({
-  q: z.string().trim().min(1).max(80),
+  q: z.string().trim().min(minimumSearchLength).max(80),
   type: z.enum(searchFilters).default("all"),
   cursor: z.coerce.number().int().min(0).max(10_000).default(0),
 });

@@ -10,6 +10,7 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 
 import {
   mergeRecentSearches,
+  minimumSearchLength,
   type RecentSearch,
   type SearchFilter,
   searchFilters,
@@ -106,16 +107,22 @@ export function GlobalSearch({
   initialQuery?: string;
   initialFilter?: SearchFilter;
 }) {
+  const initialSearch = initialQuery.trim();
   const [query, setQuery] = useState(initialQuery);
-  const [debouncedQuery, setDebouncedQuery] = useState(initialQuery.trim());
+  const [debouncedQuery, setDebouncedQuery] = useState(
+    initialSearch.length >= minimumSearchLength ? initialSearch : "",
+  );
   const [filter, setFilter] = useState<SearchFilter>(initialFilter);
   const [items, setItems] = useState<SearchResult[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(initialQuery ? "loading" : "idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
+    initialSearch.length >= minimumSearchLength ? "loading" : "idle",
+  );
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
   const [recent, setRecent] = useState<RecentSearch[]>([]);
   const requestRef = useRef<AbortController | null>(null);
+  const responseCacheRef = useRef(new Map<string, SearchResponse>());
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -124,8 +131,8 @@ export function GlobalSearch({
   }, []);
   useEffect(() => {
     const normalized = query.trim();
-    if (!normalized) return;
-    const timer = window.setTimeout(() => setDebouncedQuery(normalized), 180);
+    if (normalized.length < minimumSearchLength) return;
+    const timer = window.setTimeout(() => setDebouncedQuery(normalized), 280);
     return () => window.clearTimeout(timer);
   }, [query]);
 
@@ -140,13 +147,22 @@ export function GlobalSearch({
         setLoadMoreError(false);
       }
       try {
-        const params = new URLSearchParams({ q: debouncedQuery, type: filter, cursor: String(cursor) });
-        const response = await fetch(`/api/search?${params}`, {
-          signal: controller.signal,
-          headers: { Accept: "application/json" },
-        });
-        if (!response.ok) throw new Error("SEARCH_FAILED");
-        const data = (await response.json()) as SearchResponse;
+        const params = new URLSearchParams({ q: debouncedQuery.toLowerCase(), type: filter, cursor: String(cursor) });
+        const cacheKey = params.toString();
+        let data = responseCacheRef.current.get(cacheKey);
+        if (!data) {
+          const response = await fetch(`/api/search?${params}`, {
+            signal: controller.signal,
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) throw new Error("SEARCH_FAILED");
+          data = (await response.json()) as SearchResponse;
+          responseCacheRef.current.set(cacheKey, data);
+          if (responseCacheRef.current.size > 24) {
+            const oldest = responseCacheRef.current.keys().next().value;
+            if (oldest) responseCacheRef.current.delete(oldest);
+          }
+        }
         setItems((current) => (append ? [...current, ...data.items] : data.items));
         setNextCursor(data.nextCursor);
         setStatus("ready");
@@ -157,7 +173,10 @@ export function GlobalSearch({
           else setStatus("error");
         }
       } finally {
-        setLoadingMore(false);
+        if (requestRef.current === controller) {
+          requestRef.current = null;
+          setLoadingMore(false);
+        }
       }
     },
     [debouncedQuery, filter],
@@ -196,7 +215,7 @@ export function GlobalSearch({
     setItems([]);
     setNextCursor(null);
     setLoadMoreError(false);
-    if (next.trim()) setStatus("loading");
+    if (next.trim().length >= minimumSearchLength) setStatus("loading");
     else {
       setDebouncedQuery("");
       setStatus("idle");
@@ -226,6 +245,7 @@ export function GlobalSearch({
     updateQuery(saved.query);
   }
 
+  const normalizedQuery = query.trim();
   const grouped = searchFilters
     .slice(1)
     .map((type) => ({ type, items: items.filter((item) => item.type === type) }))
@@ -294,7 +314,7 @@ export function GlobalSearch({
                 ? "Search unavailable"
                 : ""}
         </span>
-        {!query.trim() ? (
+        {!normalizedQuery ? (
           recent.length ? (
             <section aria-labelledby="recent-searches">
               <div className="flex items-center justify-between">
@@ -345,6 +365,10 @@ export function GlobalSearch({
               </p>
             </section>
           )
+        ) : normalizedQuery.length < minimumSearchLength ? (
+          <section className="border-y border-line py-8">
+            <p className="text-sm text-muted">Type at least {minimumSearchLength} characters to search.</p>
+          </section>
         ) : status === "loading" && !items.length ? (
           <ResultSkeleton />
         ) : status === "error" ? (
@@ -409,7 +433,7 @@ export function GlobalSearch({
             ))}
           </div>
         )}
-        {query.trim() && nextCursor !== null && status === "ready" ? (
+        {normalizedQuery.length >= minimumSearchLength && nextCursor !== null && status === "ready" ? (
           <div ref={sentinelRef} className="flex min-h-20 items-center justify-center">
             <button
               type="button"

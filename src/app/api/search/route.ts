@@ -29,9 +29,15 @@ export async function GET(request: NextRequest) {
       { status: 400, headers: { "Cache-Control": "private, no-store" } },
     );
   try {
+    const startedAt = performance.now();
     const result = await searchRelay(user.id, parsed.data.q, parsed.data.type, parsed.data.cursor);
+    const duration = performance.now() - startedAt;
     return Response.json(result, {
-      headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" },
+      headers: {
+        ...rateLimitHeaders(limit),
+        "Cache-Control": "private, no-store",
+        "Server-Timing": `search;dur=${duration.toFixed(1)}`,
+      },
     });
   } catch (error) {
     console.error("Global search failed", error);

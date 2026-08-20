@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import { mergeRecentSearches, searchRequestSchema } from "./domain";
 
 describe("global search input", () => {
-  it("accepts a single keystroke and bounds pagination", () => {
-    expect(searchRequestSchema.safeParse({ q: "v", type: "all", cursor: "0" }).success).toBe(true);
+  it("skips broad single-character searches and bounds pagination", () => {
+    expect(searchRequestSchema.safeParse({ q: "va", type: "all", cursor: "0" }).success).toBe(true);
+    expect(searchRequestSchema.safeParse({ q: "v", type: "all" }).success).toBe(false);
     expect(searchRequestSchema.safeParse({ q: "", type: "all" }).success).toBe(false);
     expect(searchRequestSchema.safeParse({ q: "van", type: "private-messages" }).success).toBe(false);
   });

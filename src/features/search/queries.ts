@@ -21,7 +21,16 @@ async function findGames(userId: string, query: string, offset: number, limit: n
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
-    .select({ session: sessions, membershipId: sessionPlayers.id })
+    .select({
+      id: sessions.id,
+      title: sessions.title,
+      startsAt: sessions.startsAt,
+      venueName: sessions.venueName,
+      visibility: sessions.visibility,
+      slug: sessions.slug,
+      accentColor: sessions.accentColor,
+      membershipId: sessionPlayers.id,
+    })
     .from(sessions)
     .leftJoin(
       sessionPlayers,
@@ -44,12 +53,12 @@ async function findGames(userId: string, query: string, offset: number, limit: n
   const result = page(rows, limit);
   return {
     more: result.more,
-    items: result.rows.map(({ session, membershipId }): SearchResult => ({
+    items: result.rows.map((session): SearchResult => ({
       id: session.id,
       type: "games",
       title: session.title,
       subtitle: `${formatSessionDate(session.startsAt)} · ${session.venueName}`,
-      href: session.visibility === "private" || membershipId ? `/games/${session.id}` : `/s/${session.slug}`,
+      href: session.visibility === "private" || session.membershipId ? `/games/${session.id}` : `/s/${session.slug}`,
       accentColor: session.accentColor,
     })),
   };
@@ -59,7 +68,13 @@ async function findPlayers(query: string, offset: number, limit: number) {
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
-    .select({ profile: profiles })
+    .select({
+      userId: profiles.userId,
+      name: profiles.name,
+      username: profiles.username,
+      city: profiles.city,
+      avatarPath: profiles.avatarPath,
+    })
     .from(profiles)
     .innerJoin(users, eq(profiles.userId, users.id))
     .where(
@@ -78,7 +93,7 @@ async function findPlayers(query: string, offset: number, limit: number) {
   const result = page(rows, limit);
   return {
     more: result.more,
-    items: result.rows.map(({ profile }): SearchResult => ({
+    items: result.rows.map((profile): SearchResult => ({
       id: profile.userId,
       type: "players",
       title: profile.name,
@@ -93,7 +108,7 @@ async function findGroups(userId: string, query: string, offset: number, limit: 
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
-    .select({ group: groups })
+    .select({ id: groups.id, name: groups.name, description: groups.description, slug: groups.slug })
     .from(groupMembers)
     .innerJoin(groups, eq(groupMembers.groupId, groups.id))
     .where(and(eq(groupMembers.userId, userId), or(ilike(groups.name, pattern), ilike(groups.description, pattern))))
@@ -103,11 +118,11 @@ async function findGroups(userId: string, query: string, offset: number, limit: 
   const result = page(rows, limit);
   return {
     more: result.more,
-    items: result.rows.map(({ group }): SearchResult => ({
+    items: result.rows.map((group): SearchResult => ({
       id: group.id,
       type: "groups",
       title: group.name,
-      subtitle: group.description || "Your regular crew",
+      subtitle: group.description || "Your regular group",
       href: `/groups/${group.slug}`,
     })),
   };
@@ -117,16 +132,12 @@ async function findCourts(query: string, offset: number, limit: number) {
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
-    .select()
+    .select({ id: venues.id, name: venues.name, address: venues.address, slug: venues.slug })
     .from(venues)
     .where(
       and(
         inArray(venues.listingStatus, ["unverified", "verified"]),
-        or(
-          ilike(venues.name, pattern),
-          ilike(venues.address, pattern),
-          sql<boolean>`array_to_string(${venues.amenities}, ' ') ilike ${pattern}`,
-        ),
+        or(ilike(venues.name, pattern), ilike(venues.address, pattern)),
       ),
     )
     .orderBy(sql`case when lower(${venues.name}) like lower(${prefix}) then 0 else 1 end`, asc(venues.name))
