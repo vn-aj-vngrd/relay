@@ -363,7 +363,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
               id="expense-receipt"
               name="receipt"
               label="Receipt (optional)"
-              hint="Show players that you already paid the venue or expense."
+              hint="Show players that you already paid for the court or shared expense."
               buttonLabel="Choose receipt"
             />
             <SubmitButton pendingLabel="Creating split…" className="w-full">

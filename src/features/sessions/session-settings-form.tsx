@@ -88,7 +88,7 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
           </div>
           <div>
             <label htmlFor="venue" className={label}>
-              Venue
+              Court
             </label>
             <VenueCombobox
               key={`${value("venue")}:${value("venueAddress")}`}
@@ -319,7 +319,7 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                 maxLength={600}
                 defaultValue={value("bookingNotes")}
                 className={`${field} min-h-24 resize-y py-3`}
-                placeholder="Court access, reservation name, or venue instructions…"
+                placeholder="Court access, reservation name, or arrival instructions…"
               />
               <ErrorText id="settings-booking-notes-error" message={error("bookingNotes")} />
             </div>

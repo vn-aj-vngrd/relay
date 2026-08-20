@@ -1,8 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
+
+vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: vi.fn() }));
 
 const recap = buildSessionRecap(
   [
@@ -41,22 +43,43 @@ function renderCard() {
 }
 
 describe("RecapShareCard", () => {
-  it("lets a participant move through supported portrait stories", () => {
+  it("offers many truthful portrait stories", () => {
     renderCard();
 
-    expect(screen.getByText("Night recap · 1 of 7")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Next recap story" }));
-    expect(screen.getByText("My game · 2 of 7")).toBeInTheDocument();
+    expect(screen.getByText("Night recap · 1 of 11")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Points played/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Court time/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /The crew/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Your story/ })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Next story" }));
+    expect(screen.getByText("My game · 2 of 11")).toBeInTheDocument();
 
-    fireEvent.keyDown(screen.getByRole("region", { name: "Shareable recap stories" }), { key: "ArrowRight" });
-    expect(screen.getByText("Winning team · 3 of 7")).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("region", { name: "Shareable memory stories" }), { key: "ArrowRight" });
+    expect(screen.getByText("Winning team · 3 of 11")).toBeInTheDocument();
   });
 
-  it("offers clean backgrounds and explains how to add a photo", () => {
+  it("combines layout, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
     expect(screen.getByRole("radio", { name: "Court background" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "Paper background" })).toBeEnabled();
-    expect(screen.getByText("Add a photo below to use it as the story background.")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Optic background" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Snapshot/ })).toBeEnabled();
+    expect(screen.getByLabelText(/Personal line/)).toHaveAttribute("maxlength", "72");
+    expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
+    expect(screen.getByText(/1080 × 1920/)).toBeVisible();
+  });
+
+  it("uses a valid device photo without uploading it", async () => {
+    const objectUrl = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:story-photo");
+    renderCard();
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "court.png", { type: "image/png" });
+
+    fireEvent.change(screen.getByLabelText("Choose background photo file"), { target: { files: [file] } });
+
+    await waitFor(() => expect(objectUrl).toHaveBeenCalledWith(file));
+    expect(screen.getByRole("status")).toHaveTextContent("hasn’t been uploaded");
+    expect(screen.getByLabelText(/Photo position/)).toBeVisible();
+    expect(screen.getByRole("button", { name: /Snapshot/ })).toHaveAttribute("aria-pressed", "true");
   });
 });

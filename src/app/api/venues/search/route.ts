@@ -7,12 +7,12 @@ import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: "Sign in to search venues." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "Sign in to search courts." }, { status: 401 });
 
   const limit = await checkRateLimit({ scope: "venue-autocomplete", limit: 60, windowSeconds: 60 }, `user:${user.id}`);
   if (!limit.allowed)
     return NextResponse.json(
-      { error: "Venue search is temporarily limited. Try again shortly." },
+      { error: "Court search is temporarily limited. Try again shortly." },
       { status: 429, headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
     );
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       { headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
-    console.error("Venue search failed", error instanceof Error ? error.message : "Unknown provider error");
-    return NextResponse.json({ error: "Venue search is temporarily unavailable." }, { status: 502 });
+    console.error("Court search failed", error instanceof Error ? error.message : "Unknown provider error");
+    return NextResponse.json({ error: "Court search is temporarily unavailable." }, { status: 502 });
   }
 }

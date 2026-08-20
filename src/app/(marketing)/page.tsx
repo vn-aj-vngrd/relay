@@ -4,18 +4,26 @@ import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
 import { getCurrentUser } from "@/features/auth/session";
+import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
 import { MarketingHighlights } from "@/features/marketing/marketing-highlights";
-import { HeroProductShot, InviteProductShot, ProductShot } from "@/features/marketing/product-previews";
+import {
+  ChatProductPreview,
+  CreateProductPreview,
+  HeroProductShot,
+  InviteProductShot,
+  LivePlayProductPreview,
+  PaymentsProductPreview,
+  PlaySetupProductPreview,
+} from "@/features/marketing/product-previews";
 import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
 
 export const metadata: Metadata = {
-  title: "Relay — From group chat to pickleball night",
-  description:
-    "Share one link for the plan, guest RSVP, courts, scores, repayment, chat, and recap—built for pickleball with friends.",
+  title: "Relay — Plan pickleball with friends",
+  description: "Plan a pickleball game, share the link, manage RSVPs and courts, split costs, and record scores.",
   openGraph: {
-    title: "Relay — One shared link for the whole pickleball night",
-    description: "Friends join without an account. Relay keeps the plan, play, repayment, and recap together.",
+    title: "Relay — Plan pickleball with friends",
+    description: "Set the time and court, then share one link for RSVPs, payments, scores, chat, and photos.",
     type: "website",
   },
 };
@@ -42,6 +50,9 @@ export default async function MarketingPage() {
             <a href="#highlights" className="hover:text-[#171719]">
               Highlights
             </a>
+            <a href="#court-finder" className="hover:text-[#171719]">
+              Court
+            </a>
             <a href="#plan" className="hover:text-[#171719]">
               Plan & invite
             </a>
@@ -51,8 +62,8 @@ export default async function MarketingPage() {
             <a href="#payments" className="hover:text-[#171719]">
               Repay
             </a>
-            <a href="#recap" className="hover:text-[#171719]">
-              Recap
+            <a href="#story" className="hover:text-[#171719]">
+              Story
             </a>
           </nav>
           <div className="flex items-center gap-1">
@@ -76,23 +87,23 @@ export default async function MarketingPage() {
           <div className="marketing-hero-copy mx-auto max-w-[1100px] text-center">
             <p className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[#526415]">
               <span className="h-2 w-2 rounded-full bg-[#b7d62e]" />
-              From group chat to game night
+              Pickleball plans in one link
             </p>
             <h1 className="text-[clamp(3rem,7vw,5.5rem)] font-[650] leading-[.98] tracking-[-0.052em] sm:leading-[.92]">
-              <span className="block">One session.</span>
-              <span className="block">The whole pickleball night.</span>
+              <span className="block">Plan the game.</span>
+              <span className="block">Share the link. Play.</span>
             </h1>
             <p className="mx-auto mt-7 max-w-[720px] text-lg leading-8 text-[#626268] sm:text-xl">
-              Friends join without an account. Relay keeps the plan, roster, courts, repayment, chat, and recap in one
-              shared game.
+              Set the time and court, invite players, run the games, and split the cost. Friends can RSVP without an
+              account.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href={primaryHref} className={primaryAction}>
-                {user ? "Open Relay" : "Create your first game"}
+                {user ? "Open Relay" : "Create a game"}
                 <ArrowRight aria-hidden size={16} />
               </Link>
               <a href="#highlights" className={secondaryAction}>
-                See the highlights
+                See how it works
               </a>
             </div>
           </div>
@@ -104,34 +115,36 @@ export default async function MarketingPage() {
 
       <MarketingHighlights />
 
+      <CourtFinderShowcase />
+
       <section className="border-b border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-28">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
           <div className="grid gap-8 lg:grid-cols-[.9fr_1.1fr]">
             <h2 className="max-w-xl text-3xl font-[620] leading-tight tracking-[-0.038em] sm:text-5xl">
-              Enough structure to keep the game moving. Nothing that makes it feel official.
+              Everything your group needs for one game.
             </h2>
             <p className="max-w-xl self-end text-base leading-7 text-[#66666c] sm:justify-self-end sm:text-lg">
-              Relay is not court-booking software, a league platform, or a rating system. It is the capable friend who
-              keeps one real-world session clear for everyone.
+              Relay does not book courts or run a league. It keeps the plan, players, games, payments, and photos in one
+              place.
             </p>
           </div>
           <dl className="mt-16 grid border-y border-[#deded9] md:grid-cols-3">
             <div className="py-7 md:pr-8">
-              <dt className="text-sm font-semibold">The session is home</dt>
+              <dt className="text-sm font-semibold">One page for the game</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Plan, roster, payments, Play, chat, results, and photos stay attached to the same game.
+                The plan, roster, payments, scores, chat, and photos stay together.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-7 md:border-l md:border-t-0 md:px-8">
-              <dt className="text-sm font-semibold">The link works first</dt>
+              <dt className="text-sm font-semibold">Guests can RSVP</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Friends understand the invitation and can RSVP by name before deciding whether they need an account.
+                Friends can open the link and RSVP by name without creating an account.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-7 md:border-l md:border-t-0 md:pl-8">
-              <dt className="text-sm font-semibold">The court stays legible</dt>
+              <dt className="text-sm font-semibold">Easy to use courtside</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Scores, assignments, and who is next remain clear from a phone beside the court.
+                See court assignments, scores, and who plays next from your phone.
               </dd>
             </div>
           </dl>
@@ -144,42 +157,35 @@ export default async function MarketingPage() {
             <div>
               <p className="text-sm font-semibold text-[#526415]">Plan once. Share once.</p>
               <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                Make the game clear before anyone asks.
+                Set the plan and send one link.
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Set the venue, schedule, capacity, courts, and booking details. The public link then gives every friend
-              the same plan and lets them respond by name without creating an account.
+              Add the court, time, player limit, and booking details. Share the game link so everyone sees the same
+              plan.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <ProductShot
-              src="/images/product/create.webp"
-              alt="Relay Create game form with venue suggestions, schedule, player capacity, courts, and progressive details"
-              caption="A focused plan with optional details when needed"
-              mobileFocus="center"
-              width={2880}
-              height={2000}
-            />
+            <CreateProductPreview />
             <InviteProductShot />
           </div>
           <dl className="mt-10 grid border-y border-[#deded9] sm:grid-cols-3">
             <div className="py-6 sm:pr-8">
               <dt className="text-sm font-semibold">Quick to publish</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Venue suggestions, custom schedule controls, court quantity, and sensible progressive details.
+                Add the court, schedule, player limit, and cost.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-6 sm:border-l sm:border-t-0 sm:px-8">
               <dt className="text-sm font-semibold">Easy to join</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                Guest RSVP, optional approval, capacity, and automatic waitlisting from the shared link.
+                Players can RSVP from the link. Relay handles the player limit and waitlist.
               </dd>
             </div>
             <div className="border-t border-[#deded9] py-6 sm:border-l sm:border-t-0 sm:pl-8">
               <dt className="text-sm font-semibold">One shared place</dt>
               <dd className="mt-2 text-sm leading-6 text-[#66666c]">
-                The plan, players, Play, chat, payments, and recap keep the same structure for everyone.
+                The plan, players, scores, chat, payments, and photos stay on the game page.
               </dd>
             </div>
           </dl>
@@ -192,41 +198,20 @@ export default async function MarketingPage() {
             <div>
               <p className="text-sm font-semibold text-[#526415]">When everyone arrives</p>
               <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                Choose the rhythm, then keep everyone moving.
+                Set up the courts and start playing.
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Mark who is actually here, choose the format your crew understands, and add an optional shared round
-              timer. Relay turns that setup into courts, a queue, scores, and standings everyone can follow.
+              Mark who arrived, choose a play format, and start the timer if you need one. Relay shows the courts,
+              queue, scores, and standings.
             </p>
           </div>
           <div className="mt-12 grid gap-6 lg:grid-cols-2">
-            <ProductShot
-              src="/images/product/play-setup.webp"
-              alt="Relay Play setup showing Paddle Stack, Mix It Up, Balanced Mix, Court Climb, Team Round Robin, and partner controls"
-              caption="Choose from five understandable ways to run the courts"
-              mobileFocus="center"
-              width={2880}
-              height={2000}
-            />
-            <ProductShot
-              src="/images/product/play.webp"
-              alt="Relay Play showing two active court scoreboards, balanced teams, large scores, touch controls, and the waiting area"
-              caption="Every active court gets a realtime scoreboard"
-              mobileFocus="center"
-              width={2880}
-              height={2000}
-            />
+            <PlaySetupProductPreview />
+            <LivePlayProductPreview />
           </div>
           <div className="mt-6">
-            <ProductShot
-              src="/images/product/play-expanded.webp"
-              alt="Relay expanded scoreboard filling the viewport with two teams, large scores, touch controls, and a close action"
-              caption="Expand any scoreboard for a focused courtside display"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
+            <LivePlayProductPreview expanded />
           </div>
           <div className="mt-10 grid border-y border-[#deded9] sm:grid-cols-2 lg:grid-cols-5">
             {[
@@ -254,41 +239,33 @@ export default async function MarketingPage() {
             <div>
               <p className="text-sm font-semibold text-[#526415]">Organize and settle</p>
               <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
-                The host pays the venue. Relay makes repayment clear.
+                Split the court cost.
               </h2>
             </div>
             <p className="max-w-xl text-base leading-7 text-[#66666c] lg:justify-self-end">
-              Record the total, share GCash, Maya, bank, cash, or custom details, and optionally attach the original
-              receipt. Players upload one proof image; the host confirms or asks for a replacement.
+              Enter the total and payment method. Players can upload proof, and the host can mark each share as paid.
             </p>
           </div>
           <div className="mt-12">
-            <ProductShot
-              src="/images/product/payments.webp"
-              alt="Relay host payment screen showing a court total, repayment account, player shares, paid status, and proofs waiting for review"
-              caption="Host-paid collection and proof review"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
+            <PaymentsProductPreview />
           </div>
           <div className="mt-10 grid gap-6 border-y border-[#deded9] py-7 sm:grid-cols-3">
             <div>
               <h3 className="text-sm font-semibold">Before payment</h3>
               <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Booking confirmation and session readiness show what the host still needs to finish.
+                The host can see whether the court is booked and what still needs to be done.
               </p>
             </div>
             <div>
               <h3 className="text-sm font-semibold">For every player</h3>
               <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Individual shares can be adjusted or excluded without changing everyone else.
+                Adjust a player’s share without changing the rest.
               </p>
             </div>
             <div>
               <h3 className="text-sm font-semibold">No money moves here</h3>
               <p className="mt-2 text-sm leading-6 text-[#66666c]">
-                Relay coordinates status while payment stays in the method the group already uses.
+                Pay through GCash, Maya, bank transfer, cash, or another method.
               </p>
             </div>
           </div>
@@ -301,46 +278,37 @@ export default async function MarketingPage() {
           className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[1.25fr_.75fr] lg:gap-20"
         >
           <div>
-            <ProductShot
-              src="/images/product/chat.webp"
-              alt="Relay session chat showing realtime sync, grouped messages, reactions, and a persistent photo and message composer"
-              caption="Realtime conversation attached to the game"
-              mobileFocus="center"
-              width={2880}
-              height={1800}
-            />
+            <ChatProductPreview />
           </div>
           <div>
             <p className="text-sm font-semibold text-[#526415]">Stay in sync</p>
             <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">
-              No separate thread to reconstruct later.
+              Keep game messages with the game.
             </h2>
             <p className="mt-5 max-w-md leading-7 text-[#66666c]">
-              Session chat keeps arrival plans, parking tips, photos, reactions, and system updates beside the plan.
-              Notifications pull out only moments that need attention: invitations, waitlist movement, tomorrow’s game,
-              payment review, and court assignments.
+              Use the game chat for arrival updates, parking notes, photos, and reactions. Notifications cover invites,
+              waitlist changes, payments, and court assignments.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="recap" className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
+      <section id="story" className="border-y border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-32">
         <div
           data-marketing-reveal="split"
           className="mx-auto grid max-w-[1180px] items-center gap-12 lg:grid-cols-[.78fr_1.22fr] lg:gap-20"
         >
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[#526415]">After the last point</p>
-            <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">The night gets its own recap.</h2>
+            <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">Save the scores and photos.</h2>
             <p className="mt-5 leading-7 text-[#66666c]">
-              Relay turns real match data into a portrait story reel. Share the whole night, your own record, the
-              winning team, session leader, standings, closest finish, or busiest court—then choose a clean background
-              or add a game photo. Recreation stays celebratory, never a rating.
+              End Play to save the final scores. Make a vertical image from the results and your photos, then share it
+              to Instagram, Facebook, or your group chat.
             </p>
             <ul className="mt-7 divide-y divide-[#deded9] border-y border-[#deded9] text-sm">
-              <li className="py-3">Seven focused stories, shown only when the scores support them</li>
-              <li className="py-3">Swipe through 9:16 portraits made for social sharing</li>
-              <li className="py-3">Choose a Relay background or one of the crew’s photos</li>
+              <li className="py-3">Choose from the results available for that game</li>
+              <li className="py-3">Pick a layout, color, and photo</li>
+              <li className="py-3">Share or download a 1080 × 1920 image</li>
             </ul>
           </div>
           <RecapTemplatePreview />
@@ -352,14 +320,12 @@ export default async function MarketingPage() {
           <div className="mx-auto mb-7 grid h-10 w-10 place-items-center">
             <RelayMark className="h-8 w-8" />
           </div>
-          <h2 className="text-4xl font-[620] tracking-[-0.045em] sm:text-6xl">
-            Make the next game easier for everyone.
-          </h2>
+          <h2 className="text-4xl font-[620] tracking-[-0.045em] sm:text-6xl">Plan your next game in Relay.</h2>
           <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-[#66666c]">
-            Create the session, send the link, and let Relay carry the details from the group chat to the court.
+            Add the court and time, then send one link to your players.
           </p>
           <Link href={primaryHref} className={`${primaryAction} mt-9`}>
-            {user ? "Open Relay" : "Create your account"}
+            {user ? "Open Relay" : "Create a game"}
             <ArrowRight aria-hidden size={16} />
           </Link>
         </div>
@@ -368,7 +334,7 @@ export default async function MarketingPage() {
       <footer className="border-t border-[#deded9] px-5 py-8 sm:px-8">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-[#66666c] sm:flex-row sm:items-center sm:justify-between">
           <Brand />
-          <p>The shared home for pickleball with friends.</p>
+          <p>Plan games, invite players, and record scores.</p>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
             <a href="#highlights">Highlights</a>
             <Link href="/privacy">Privacy</Link>

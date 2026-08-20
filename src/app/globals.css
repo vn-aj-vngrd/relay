@@ -69,6 +69,13 @@
   background-color: color-mix(in oklch, var(--muted) 58%, transparent);
 }
 
+.marketing-highlight-rail {
+  scrollbar-width: none;
+}
+.marketing-highlight-rail::-webkit-scrollbar {
+  display: none;
+}
+
 .relay-interactive-map {
   position: absolute !important;
   inset: 0;
@@ -109,6 +116,16 @@
   border-radius: 999px;
   outline: 3px solid color-mix(in oklch, var(--primary) 45%, white);
   outline-offset: -3px;
+}
+.relay-user-location-marker {
+  width: 16px;
+  height: 16px;
+  border: 3px solid white;
+  border-radius: 999px;
+  background: var(--primary);
+  box-shadow:
+    0 0 0 5px color-mix(in oklch, var(--primary) 22%, transparent),
+    0 1px 4px rgb(0 0 0 / 30%);
 }
 .maplibregl-ctrl-group {
   overflow: hidden;

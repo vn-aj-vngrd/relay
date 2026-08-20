@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
+import { safeNextPath } from "@/features/auth/destination-path";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 
@@ -30,6 +31,11 @@ const setupSchema = z.object({
 });
 
 export type OnboardingActionState = { error?: string; fieldErrors?: Record<string, string[]> };
+
+function destinationAfterSetup(formData: FormData) {
+  const next = safeNextPath(formData.get("next"));
+  return next === "/home" ? "/home?tour=1" : next;
+}
 
 export async function completeProfileSetup(
   _: OnboardingActionState,
@@ -74,17 +80,17 @@ export async function completeProfileSetup(
     console.error("Profile setup failed", error);
     return { error: "Your profile couldn’t be saved. Try again." };
   }
-  redirect("/home?tour=1");
+  redirect(destinationAfterSetup(formData));
 }
 
-export async function skipProfileSetup() {
+export async function skipProfileSetup(formData: FormData) {
   const user = await requireUser();
   await ensureProfile(user);
   await db
     .update(profiles)
     .set({ onboardingCompletedAt: new Date(), updatedAt: new Date() })
     .where(eq(profiles.userId, user.id));
-  redirect("/home?tour=1");
+  redirect(destinationAfterSetup(formData));
 }
 
 export async function completeProductTour(formData: FormData) {

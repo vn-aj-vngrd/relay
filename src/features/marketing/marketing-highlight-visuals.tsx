@@ -279,10 +279,10 @@ function RememberVisual() {
     <div className="h-full bg-[#ecece8] p-3.5 text-[#171719]">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[8px] font-semibold text-[#5f5f64]">SESSION RECAP</p>
-          <h4 className="mt-1 text-xs font-bold">Choose your story</h4>
+          <p className="text-[8px] font-semibold text-[#5f5f64]">STORY</p>
+          <h4 className="mt-1 text-xs font-bold">Make it yours</h4>
         </div>
-        <span className="text-[8px] text-[#5f5f64]">3 of 7</span>
+        <span className="text-[8px] text-[#5f5f64]">3 of 11</span>
       </div>
       <div className="mt-3 grid grid-cols-3 items-center gap-2">
         <div className="aspect-[9/16] rounded-md border border-[#d8d8d3] bg-[#f7f6f1] p-2">

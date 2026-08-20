@@ -103,7 +103,7 @@ The landing page explains Relay twice: first as a concise promise, then as an ea
 
 ## Session surfaces
 
-The shared game link and authenticated session workspace are two access paths to the same session, not separate products. They use one canonical Overview, Players, Play, Chat, Payments, and Recap navigation throughout the session. Both paths share the same session hero and session vocabulary. Shared information keeps the same order and labels on both surfaces. Guest RSVP, personal actions, and host management are contextual additions—not alternate page structures.
+The shared game link and authenticated session workspace are two access paths to the same session, not separate products. They use one canonical Overview, Players, Play, Chat, Payments, and Story navigation throughout the session. Play becomes the factual recap after completion rather than adding another destination. Both paths share the same session hero and session vocabulary. Shared information keeps the same order and labels on both surfaces. Guest RSVP, personal actions, and host management are contextual additions—not alternate page structures.
 
 - Overview: the at-a-glance session home—plan, roster and waitlist state, current play, payment state, and the viewer’s next useful action.
 - Play: the courtside workspace for assignments, paddle stack, rotations, scores, and session standings.
@@ -112,7 +112,7 @@ The shared game link and authenticated session workspace are two access paths to
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
 
-Authenticated destinations begin with one compact breadcrumb trail that anchors the current surface in Home or Admin Console. Ancestors are links, the current destination is text, and database identifiers never appear as labels. A game always uses the stable `Home / Games / [game name]` trail; its local tabs already communicate Overview, Players, Play, Chat, and Payments. Trails scroll quietly on narrow screens rather than wrapping into a second navigation row.
+Authenticated destinations begin with one compact breadcrumb trail that anchors the current surface in Home or Admin Console. Ancestors are links, the current destination is text, and database identifiers never appear as labels. A game always uses the stable `Home / Games / [game name]` trail; its local tabs already communicate Overview, Players, Play, Chat, Payments, and Story. Trails scroll quietly on narrow screens rather than wrapping into a second navigation row.
 
 Authenticated game chrome is persistent across navigation: the tab rail stays left, while Edit game (host/co-host) and Share game sit beside the session name. The session name, destination title, and destination subtitle render before the data boundary; only each tab’s content becomes a layout-accurate skeleton. This prevents navigation, actions, and headings from flashing between tabs.
 
@@ -128,7 +128,7 @@ Notifications are a contextual inbox, not an activity feed. Group updates by rec
 
 ## Admin console
 
-Admin collections render one server-side 30-record page, then append stable cursor pages as the bottom sentinel approaches. Existing rows and table geometry stay fixed while a compact progress status loads the next page; incremental failure stays below existing rows with one Retry action. Completion names the exact number loaded and never implies a fixed cap. Search and filters reset the collection rather than mixing cursors from different result sets.
+The admin directory uses **Courts**, matching the player-facing Court Finder; `venue` remains an internal data and audit term only. Admin collections render one server-side 30-record page, then append stable cursor pages as the bottom sentinel approaches. Existing rows and table geometry stay fixed while a compact progress status loads the next page; incremental failure stays below existing rows with one Retry action. Completion names the exact number loaded and never implies a fixed cap. Search and filters reset the collection rather than mixing cursors from different result sets.
 
 ## Product feedback
 
@@ -150,7 +150,7 @@ Top chrome may use a slightly translucent canvas plus controlled blur. Desktop n
 
 ### Session identity
 
-A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained cover tint, edge, selected state, and action color—not a decorative wash. Shared links and authenticated workspaces use the same quiet underlined tab row so the five session destinations remain legible and spatially consistent across both access paths.
+A deep court field carries date, title, plan, capacity, and status. White court divisions organize the object. The game color appears as a restrained cover tint, edge, selected state, and action color—not a decorative wash. Shared links and authenticated workspaces use the same quiet underlined tab row so the six session destinations remain legible and spatially consistent across both access paths.
 
 ### Live court
 
@@ -183,7 +183,7 @@ Groups are a retention shortcut, never onboarding. A completed standalone sessio
 
 ### Court discovery
 
-Court is a concise desktop-sidebar destination and a contextual branch of Create on mobile, not a booking marketplace. Its label stays distinct from global Search. V1 is a **Cebu pilot**: one interactive map anchors a searchable court list. Desktop uses a full-height locator workspace with an independently scrollable results rail on the left and the dominant map on the right; mobile keeps the map before a bounded results list. Selecting a pin or row synchronizes both surfaces and opens one concise, closable court overlay on the map. The map supports restrained pan, pinch/wheel zoom, explicit zoom controls, and fullscreen while cooperative touch gestures preserve page scrolling. The defining action is **Create game here**; directions, copy location, source, official website, and external booking are secondary. Imported listings say **Community listing · Confirm details** until an admin verifies them. Player suggestions stay private until admin review. Cebu pilot scope lives in one focusable question-mark tooltip beside the page title rather than a persistent banner. Relay never implies live availability, and manual venue entry remains available so discovery cannot block session creation. Server-proxied Cebu tiles preserve Geoapify/OpenMapTiles/OpenStreetMap attribution without exposing the provider key.
+Court is a concise desktop-sidebar destination and a contextual branch of Create on mobile, not a booking marketplace. Its label stays distinct from global Search. V1 is a **Cebu pilot**: one interactive map anchors a searchable court list. Search covers court name, neighborhood, price text, and amenities; setting, paddle-rental, and verification filters stay visible without opening a filter drawer. **Use my location** is optional, remains on-device, marks the approximate position, and sorts rather than hiding courts. Desktop uses a full-height locator workspace with an independently scrollable results rail on the left and the dominant map on the right; mobile keeps the map before a bounded results list. Selecting a pin or row synchronizes both surfaces and opens one concise, closable court overlay on the map with distance, practical details, and one dominant Create game action. The map supports restrained pan, pinch/wheel zoom, explicit zoom controls, and fullscreen while cooperative touch gestures preserve page scrolling. The defining action is **Create game**; directions, court details, copy location, and external booking are secondary. Imported listings say **Community listing · Confirm details** until an admin verifies them. Player suggestions stay private until admin review. Cebu pilot scope lives in one focusable question-mark tooltip beside the page title rather than a persistent banner. Relay never implies live availability, and manual venue entry remains available so discovery cannot block session creation. Server-proxied Cebu tiles preserve Geoapify/OpenMapTiles/OpenStreetMap attribution without exposing the provider key. The landing page may embed a small, real Court Finder preview with representative Cebu listings so the feature is understood before signup; it preserves attribution and clearly labels the pilot.
 
 ### Host readiness
 
@@ -201,13 +201,15 @@ Queue order uses tabular numbers and rows, not pills. Standings are a compact ta
 
 Chat occupies the remaining viewport below session navigation. The message history scrolls inside that region while the composer stays anchored to its bottom edge, above mobile safe areas and app navigation. New messages scroll the thread—not the page—and reduced-motion users never receive smooth auto-scrolling. Photo messages render as bounded thumbnails; selecting one opens a focused, keyboard-dismissable viewer instead of expanding the conversation width.
 
-## Session recap
+## Session recap and story
 
-Recap remains the final shared destination before, during, and after play. Before play it explains what will appear; during play it clearly marks provisional highlights and standings as in progress; after the host ends the session it becomes the final memory and unlocks sharing, photos, and reactions. It opens with one deep-court story surface, then reveals only defensible highlights from persisted results: match and point totals, court time, top session standing, strongest repeated pair, closest finish, and busiest court. Full Session Standings remain available below. With no completed scores, the recap celebrates the crew and photos without inventing a winner.
+**Play** owns the game’s full lifecycle. Before play it explains what will appear; during play it runs courts and marks provisional highlights; when the host ends the session, the same Play URL becomes **Recap** and locks the final results. The recap opens with one deep-court result surface, then reveals only defensible highlights from persisted data: match and point totals, court time, top session standing, strongest repeated pair, closest finish, and busiest court. Full Session Standings remain below. With no completed scores, Recap says so rather than inventing a winner. Legacy Recap URLs redirect to Play.
 
-A participant may share the recap as a short, manually controlled 9:16 story reel. Available scenes are Night recap, My game, Winning team, Top of the table, Session Standings, Closest finish, and Busiest court; a scene renders only when persisted session data supports it. The portrait carousel never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct scene selection. One scene makes one clear claim rather than shrinking the full recap into a poster.
+**Story** is the expressive destination. It opens after the host ends the session and groups the social story composer, photos, reactions, and crew notes. Before completion it explains what will unlock without exposing inactive controls. Public and authenticated URLs use the same Story label and order.
 
-The participant chooses a quiet Relay background or a photo already attached to the session memory. The preview and exported PNG must match. Sharing uses the native share sheet when file sharing is available and downloads the selected scene otherwise. The recap stays part of the session; it never becomes a generic post composer, a competitive report, or a template editor.
+A participant may turn the night into a manually controlled 9:16 story. Available focuses include Night recap, My game, Winning team, Top of the table, Session Standings, Closest finish, Busiest court, Points played, Court time, The crew, and a photo-first custom story; a focus renders only when persisted session data supports it. The portrait never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct selection.
+
+Customization is broad but bounded: four structural layouts, Relay palettes, persisted session photos, a local device photo, vertical crop, text contrast, a short custom headline, and one personal line. Local background photos stay on-device unless separately added to the session. Preview and exported 1080 × 1920 PNG must carry the same focus, layout, crop, contrast, and words. Native file sharing is used only when supported; explicit PNG download remains available. Story never becomes a competitive report or an unconstrained drag-and-drop editor that can fabricate results or break export parity.
 
 ## Motion
 
@@ -221,6 +223,9 @@ Product motion communicates state in 140–220ms using ease-out-quart. Marketing
 
 ## Accessibility and platform behavior
 
+- `/courts` is the public Cebu finder; `/court` is the signed-in app version. Public court CTAs preserve the selected court through signup and onboarding, then open a prefilled game.
+- Relay is installable as a standalone PWA with the same light-first theme, ball mark, and responsive app shell. Preferences owns the install affordance; browsers without a programmatic prompt receive platform-appropriate manual guidance.
+- Offline state is explicit and restrained. Network-backed navigation and mutations remain pending when supported, live data never pretends to be current, and a full offline load shows one branded recovery page rather than cached private content.
 - WCAG 2.2 AA minimum.
 - Visible 3px focus halo with offset.
 - Interactive controls meet WCAG 2.2 target sizing; standard actions are 36–40px and score controls are 64px.

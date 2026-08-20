@@ -26,7 +26,7 @@ const labels: Record<SearchFilter, string> = {
   games: "Games",
   players: "Players",
   groups: "Groups",
-  venues: "Venues",
+  courts: "Courts",
 };
 
 function readRecentSearches(): RecentSearch[] {
@@ -252,7 +252,7 @@ export function GlobalSearch({
             }}
             autoComplete="off"
             spellCheck={false}
-            placeholder="Search games, players, groups, venues…"
+            placeholder="Search games, players, groups, courts…"
             className="h-12 w-full rounded-[10px] border border-line bg-surface pl-11 pr-12 text-[15px] placeholder:text-muted focus:border-primary focus:outline-none"
           />
           {query ? (
@@ -341,7 +341,7 @@ export function GlobalSearch({
               <TennisBall aria-hidden size={23} className="text-primary" />
               <h2 className="mt-4 text-xl font-bold">Find your next game</h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-muted">
-                Search a friend’s name, a regular group, a venue, or a game title. Results appear as you type.
+                Search a friend’s name, a regular group, a court, or a game title. Results appear as you type.
               </p>
             </section>
           )
@@ -363,10 +363,10 @@ export function GlobalSearch({
           <section className="border-y border-line py-10">
             <MagnifyingGlass aria-hidden size={22} className="text-primary" />
             <h2 className="mt-4 text-xl font-bold">No results for “{debouncedQuery}”</h2>
-            <p className="mt-2 text-sm text-muted">Try a player username, venue name, or a shorter phrase.</p>
-            {filter === "venues" ? (
+            <p className="mt-2 text-sm text-muted">Try a player username, court name, or a shorter phrase.</p>
+            {filter === "courts" ? (
               <Link
-                href="/venues"
+                href="/court"
                 className="pressable mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
               >
                 <MapPin aria-hidden size={15} /> Browse the Cebu court map

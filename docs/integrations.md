@@ -34,7 +34,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 
 `SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
-Geoapify remains server-only. Venue autocomplete is restricted to the Philippines; the V1 court directory and interactive map are restricted to Cebu. `/api/venues/tiles/[z]/[x]/[y]` accepts only tile coordinates intersecting Cebu, proxies Geoapify raster tiles, and applies CDN caching so the provider key never enters the browser. The UI must retain Geoapify/OpenMapTiles/OpenStreetMap attribution. Never move `GEOAPIFY_API_KEY` into a public variable or browser map bundle.
+Geoapify remains server-only. Court autocomplete is restricted to the Philippines; the V1 court directory and interactive map are restricted to Cebu. `/courts` is the public finder and `/court` is the signed-in finder; legacy `/venues` links redirect permanently to the signed-in route. The internal `/api/venues/tiles/[z]/[x]/[y]` endpoint retains the database-era identifier for compatibility, accepts only tile coordinates intersecting Cebu, proxies Geoapify raster tiles, and applies CDN caching so the provider key never enters the browser. The UI must retain Geoapify/OpenMapTiles/OpenStreetMap attribution. Never move `GEOAPIFY_API_KEY` into a public variable or browser map bundle.
 
 `pnpm venues:import-cebu` performs the reviewed, idempotent factual import after migration `0019_cebu_court_directory`. It reads the permitted Cebu Pickleball Courts API and reviewed first-party venue announcements. Imported listings start unverified, retain their source URL, and exclude third-party photos and editorial copy. Run it manually after reviewing every source and its robots policy; continuous scraping is intentionally absent. Community submissions remain pending until an allowlisted admin supplies coordinates and approves them.
 
@@ -90,9 +90,19 @@ Supabase Cron runs `public.create_session_reminders()` every 15 minutes through 
 
 Read [`../drizzle/0000_initial_relay_schema.md`](../drizzle/0000_initial_relay_schema.md) before applying or repairing the baseline migration. Generate later schema changes with `pnpm db:generate --name <readable_name>` and add a companion Markdown file when a migration changes authorization, deletion behavior, historical data, or platform configuration.
 
+## Progressive Web App
+
+Relay publishes `/manifest.webmanifest`, standard and maskable PNG icons, and a root-scoped `/sw.js`. The service worker caches only the offline document, app icons, the manifest, and immutable `/_next/static/` assets. It never caches authenticated HTML, API responses, RSC payloads, payment proof images, chat images, map tiles, or third-party requests. Navigation remains network-first and falls back to `/offline` only when the network fails.
+
+`experimental.useOffline` keeps supported Next.js navigations and Server Actions pending until connectivity returns. The global offline indicator communicates that state; direct client `fetch()` calls retain their own error behavior. Test offline behavior with `pnpm build && pnpm start`, not `next dev`. Development unregisters any production worker left on the localhost origin and clears Relay’s service-worker caches before hydration; this prevents cached development chunks from causing hydration mismatches.
+
+When changing service-worker caching behavior, bump `VERSION` in `public/sw.js`, deploy, and verify the old cache is removed during activation. Keep `/sw.js` on `no-cache, no-store` and never add private application routes to `PRECACHE`.
+
 ## Admin console
 
 `ADMIN_EMAILS` is a comma-separated, case-insensitive allowlist for `/admin`. Keep it server-only and configure it independently in Vercel Preview and Production. Every admin page and Server Action checks the allowlist; navigation visibility is only a convenience, never the authorization boundary.
+
+The admin directory uses **Courts** as its product label and `/admin/courts` as its canonical route; database, audit, and API identifiers remain `venues` for compatibility. Legacy `/admin/venues` links redirect to Courts.
 
 After changing the allowlist, redeploy the affected Vercel environment. Verify an allowlisted account can open `/admin`, a normal account reaches `/admin-access-denied`, and all user suspension, restoration, and game cancellation events appear in the audit log.
 

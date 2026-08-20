@@ -36,13 +36,10 @@ function renderRecap(status: "published" | "live" | "completed", matches: RecapM
         title: "Saturday Night Pickle",
         venueName: "Central Pickle",
         startsAt: new Date("2026-08-19T10:00:00Z"),
-        accentColor: "violet",
         status,
       }}
       recap={buildSessionRecap(matches, players)}
-      memory={null}
-      canContribute={false}
-      viewerPlayerId="a"
+      storyHref="/games/session/story"
     />,
   );
 }
@@ -67,11 +64,12 @@ describe("SessionRecap states", () => {
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
   });
 
-  it("unlocks the final memory and sharing after completion", () => {
+  it("keeps completed results factual and links to Story", () => {
     renderRecap("completed", [match]);
 
     expect(screen.getByText("Final recap")).toBeInTheDocument();
     expect(screen.getByText("Session highlights")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Open story/ })).toHaveAttribute("href", "/games/session/story");
   });
 });

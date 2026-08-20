@@ -1,46 +1,26 @@
-import { Heart } from "@phosphor-icons/react/dist/ssr";
-import Image from "next/image";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 
-import { PendingSubmit } from "@/components/ui/pending-submit";
-import { sessionAccent } from "@/features/sessions/accent";
+import { ButtonLink } from "@/components/ui/button";
 import { formatSessionDateLong } from "@/features/sessions/format";
 
-import { addMemoryComment, toggleMemoryReaction } from "./actions";
-import { MemoryPhotoForm } from "./memory-photo-form";
 import type { SessionRecap as SessionRecapData } from "./recap";
-import { RecapShareCard } from "./recap-share-card";
-
-type MemoryData = {
-  media: Array<{ id: string; url: string | null; altText: string | null; caption: string | null }>;
-  comments: Array<{ comment: { id: string; body: string }; profile: { name: string } | null }>;
-  reactionCount: number;
-} | null;
 
 export function SessionRecap({
   session,
   recap,
-  memory,
-  canContribute,
-  viewerPlayerId,
+  storyHref,
 }: {
   session: {
     id: string;
     title: string;
     venueName: string;
     startsAt: Date;
-    accentColor: string;
     status: "draft" | "published" | "live" | "completed" | "cancelled";
   };
   recap: SessionRecapData;
-  memory: MemoryData;
-  canContribute: boolean;
-  viewerPlayerId?: string | null;
+  storyHref: string;
 }) {
-  const photos = (memory?.media ?? []).flatMap((item) =>
-    item.url ? [{ id: item.id, url: item.url, alt: item.altText ?? `Photo from ${session.title}` }] : [],
-  );
   const date = formatSessionDateLong(session.startsAt);
-  const accent = sessionAccent(session.accentColor);
   const completed = session.status === "completed";
   const inProgress = session.status === "live";
 
@@ -65,10 +45,10 @@ export function SessionRecap({
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/70 sm:text-base">
             {completed
-              ? "The rallies, pairings, and moments the crew made together."
+              ? "The final scores, pairings, and court time from the night."
               : inProgress
-                ? "Completed matches are already becoming part of the night’s story."
-                : "Scores, pairings, photos, and shareable stories will collect here as the game unfolds."}
+                ? "Completed matches are already filling the night’s results."
+                : "Scores, pairings, and standings will collect here as the game unfolds."}
           </p>
           <div className="mt-8 grid grid-cols-3 border-y border-white/15 py-5 text-center sm:max-w-2xl sm:text-left">
             <div>
@@ -98,7 +78,7 @@ export function SessionRecap({
               <p className="mt-1 text-sm leading-6 text-muted">
                 {inProgress
                   ? recap.matchCount
-                    ? `${recap.matchCount} completed ${recap.matchCount === 1 ? "match is" : "matches are"} included so far. The final recap unlocks when the host ends the session.`
+                    ? `${recap.matchCount} completed ${recap.matchCount === 1 ? "match is" : "matches are"} included so far. The final recap locks when the host ends the session.`
                     : "Finish the first match to start filling the highlights and standings."
                   : "Once play begins, completed matches will fill the highlights and standings automatically."}
               </p>
@@ -156,7 +136,7 @@ export function SessionRecap({
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted">
             {completed
-              ? "Add a crew photo and keep the session as a memory without inventing results."
+              ? "The crew can still keep photos and notes in Story without inventing results."
               : "This space will update after the first final score. Nothing needs to be prepared here."}
           </p>
         </section>
@@ -203,150 +183,19 @@ export function SessionRecap({
         </section>
       ) : null}
 
-      {completed ? (
-        <>
-          <section aria-labelledby="share-recap-title">
-            <div>
-              <h2 id="share-recap-title" className="text-xl font-bold">
-                Share the night
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                Choose a true highlight, add a background, and share it in a story-ready format.
-              </p>
-            </div>
-            <div className="mt-5 border-y border-line py-6">
-              <RecapShareCard
-                sessionId={session.id}
-                title={session.title}
-                venue={session.venueName}
-                date={date}
-                accent={accent.solid}
-                recap={recap}
-                photos={photos}
-                viewerPlayerId={viewerPlayerId}
-              />
-            </div>
-          </section>
-
-          <section aria-labelledby="memory-photos-title">
-            <div>
-              <h2 id="memory-photos-title" className="text-xl font-bold">
-                Photos from the game
-              </h2>
-              <p className="mt-1 text-sm text-muted">
-                The session itself is the memory. Add moments from the crew here.
-              </p>
-            </div>
-            {photos.length ? (
-              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {memory?.media.map((item) =>
-                  item.url ? (
-                    <figure key={item.id}>
-                      <Image
-                        src={item.url}
-                        alt={item.altText ?? "Session photo"}
-                        width={640}
-                        height={640}
-                        className="aspect-square w-full rounded-[10px] object-cover"
-                      />
-                      {item.caption ? (
-                        <figcaption className="mt-1 text-xs text-muted">{item.caption}</figcaption>
-                      ) : null}
-                    </figure>
-                  ) : null,
-                )}
-              </div>
-            ) : (
-              <p className="mt-4 border-y border-line py-7 text-sm text-muted">
-                No photos yet. Add the first memory from the night.
-              </p>
-            )}
-            {canContribute ? (
-              <div className="mt-5">
-                <MemoryPhotoForm sessionId={session.id} />
-              </div>
-            ) : null}
-          </section>
-
-          <section aria-labelledby="recap-reactions-title" className="pb-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 id="recap-reactions-title" className="text-xl font-bold">
-                  From the crew
-                </h2>
-                <p className="mt-1 text-sm text-muted">Small reactions and the details people want to remember.</p>
-              </div>
-              {canContribute ? (
-                <form action={toggleMemoryReaction}>
-                  <input type="hidden" name="sessionId" value={session.id} />
-                  <PendingSubmit
-                    pendingLabel="Saving…"
-                    aria-label="React to this session"
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold text-primary hover:bg-primary-soft"
-                  >
-                    <Heart aria-hidden size={18} />
-                    {memory?.reactionCount ?? 0}
-                  </PendingSubmit>
-                </form>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-sm text-muted">
-                  <Heart aria-hidden size={16} />
-                  {memory?.reactionCount ?? 0}
-                </span>
-              )}
-            </div>
-            {memory?.comments.length ? (
-              <ul className="mt-4 divide-y divide-line border-y border-line">
-                {memory.comments.map(({ comment, profile }) => (
-                  <li key={comment.id} className="py-4">
-                    <p className="text-sm font-semibold">{profile?.name ?? "Player"}</p>
-                    <p className="mt-1 break-words text-sm leading-6 text-muted">{comment.body}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {canContribute ? (
-              <form action={addMemoryComment} className="mt-4 flex gap-2">
-                <input type="hidden" name="sessionId" value={session.id} />
-                <label className="sr-only" htmlFor="recap-comment">
-                  Comment
-                </label>
-                <input
-                  id="recap-comment"
-                  name="body"
-                  required
-                  maxLength={500}
-                  autoComplete="off"
-                  placeholder="Add something worth remembering…"
-                  className="h-11 min-w-0 flex-1 rounded-[10px] border border-line bg-canvas px-3 placeholder:text-muted"
-                />
-                <SubmitButtonProxy />
-              </form>
-            ) : null}
-          </section>
-        </>
-      ) : (
-        <section className="border-y border-line py-8" aria-labelledby="recap-final-title">
-          <h2 id="recap-final-title" className="text-lg font-bold">
-            The final story comes after play
-          </h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-            When the host ends the session, Relay will lock the final standings and open portrait sharing, photos, and
-            crew reactions here.
-          </p>
-        </section>
-      )}
+      <section className="border-t border-line pb-8 pt-6" aria-labelledby="recap-story-title">
+        <h2 id="recap-story-title" className="text-lg font-bold">
+          {completed ? "Keep what happened off the scoreboard" : "Story opens after the last point"}
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+          {completed
+            ? "Build a story-ready highlight, add photos, and leave notes with the crew in Story."
+            : "When the host ends the session, Story unlocks portrait scenes, photos, reactions, and crew notes."}
+        </p>
+        <ButtonLink href={storyHref} variant="secondary" className="mt-4">
+          Open story <ArrowRight aria-hidden size={16} />
+        </ButtonLink>
+      </section>
     </div>
-  );
-}
-
-function SubmitButtonProxy() {
-  return (
-    <PendingSubmit
-      pendingLabel="Posting…"
-      className="inline-flex min-h-9 items-center rounded-lg border border-line px-3 text-[13px] font-semibold"
-    >
-      Post
-    </PendingSubmit>
   );
 }

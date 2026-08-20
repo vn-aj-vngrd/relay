@@ -32,7 +32,7 @@ describe("VenueCombobox", () => {
 
     render(
       <>
-        <label htmlFor="venue">Venue</label>
+        <label htmlFor="venue">Court</label>
         <VenueCombobox defaultValue="Central Pickle" />
       </>,
     );
@@ -42,7 +42,7 @@ describe("VenueCombobox", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
-  it("debounces Philippine venue suggestions and saves the selected address", async () => {
+  it("debounces Philippine court suggestions and saves the selected address", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -63,11 +63,11 @@ describe("VenueCombobox", () => {
 
     render(
       <>
-        <label htmlFor="venue">Venue</label>
+        <label htmlFor="venue">Court</label>
         <VenueCombobox />
       </>,
     );
-    const input = screen.getByRole("combobox", { name: "Venue" });
+    const input = screen.getByRole("combobox", { name: "Court" });
     fireEvent.change(input, { target: { value: "Central" } });
     expect(fetchMock).not.toHaveBeenCalled();
 

@@ -17,7 +17,7 @@ const sections = [
       ],
       [
         "Can Relay help me find a court?",
-        "Yes. Court Finder currently covers Cebu. Open it from Create, select a pin or court row, then choose Create game here. Each listing includes directions and available official or booking links. Confirm details directly with the venue.",
+        "Yes. Court Finder currently covers Cebu. Open it from Create, select a pin or court row, then choose Create game here. Each listing includes directions and available official or booking links. Confirm details directly with the court.",
       ],
       [
         "How do I add a missing Cebu court?",
@@ -25,7 +25,7 @@ const sections = [
       ],
       [
         "Can I use Relay without booking through it?",
-        "Yes. Court booking happens with the venue. Add the booking details or mark the court booked after you return to Relay.",
+        "Yes. Court booking happens with the court. Add the booking details or mark the court booked after you return to Relay.",
       ],
       [
         "How do I know a game is ready?",
@@ -46,7 +46,7 @@ const sections = [
     items: [
       [
         "Can friends view a game without an account?",
-        "Yes. A public session link shows the date, time, venue, host, roster, open spots, estimated cost, and booking status before sign-in.",
+        "Yes. A public session link shows the date, time, court, host, roster, open spots, estimated cost, and booking status before sign-in.",
       ],
       [
         "How does guest RSVP work?",
@@ -62,7 +62,7 @@ const sections = [
       ],
       [
         "When should I create a group?",
-        "Start with a standalone game. After the same crew plays together, save them as a group to reuse members, see upcoming games, and keep shared history together.",
+        "Start with a game. If the same people play again, save them as a group to reuse the roster and see past games.",
       ],
     ],
   },
@@ -100,7 +100,7 @@ const sections = [
       ],
       [
         "Can the host share the original receipt?",
-        "Yes. The host may attach one receipt when creating the collection so players can see that the venue or shared expense was paid upfront.",
+        "Yes. The host may attach one receipt when creating the collection so players can see that the court or shared expense was paid upfront.",
       ],
       [
         "Can player amounts be different?",

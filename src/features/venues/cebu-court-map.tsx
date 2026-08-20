@@ -11,6 +11,7 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 type CebuCourtMapProps = {
   venues: CebuVenue[];
   selectedId: string | null;
+  userLocation?: { latitude: number; longitude: number } | null;
   onSelect: (id: string) => void;
   children?: ReactNode;
 };
@@ -73,10 +74,11 @@ function setMarkerState(element: HTMLButtonElement, active: boolean) {
   element.setAttribute("aria-pressed", String(active));
 }
 
-export function CebuCourtMap({ venues, selectedId, onSelect, children }: CebuCourtMapProps) {
+export function CebuCourtMap({ venues, selectedId, userLocation, onSelect, children }: CebuCourtMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef(new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement }>());
+  const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
   const selectedRef = useRef(selectedId);
   const previousSelectionRef = useRef(selectedId);
@@ -139,6 +141,8 @@ export function CebuCourtMap({ venues, selectedId, onSelect, children }: CebuCou
       resizeObserver?.disconnect();
       markers.forEach(({ marker }) => marker.remove());
       markers.clear();
+      locationMarkerRef.current?.remove();
+      locationMarkerRef.current = null;
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -197,9 +201,40 @@ export function CebuCourtMap({ venues, selectedId, onSelect, children }: CebuCou
     });
   }, [ready, selectedId, venues]);
 
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    locationMarkerRef.current?.remove();
+    locationMarkerRef.current = null;
+    if (!userLocation) return;
+    let cancelled = false;
+    void import("maplibre-gl").then(({ Marker }) => {
+      if (cancelled) return;
+      const marker = document.createElement("span");
+      marker.className = "relay-user-location-marker";
+      marker.setAttribute("aria-label", "Your approximate location");
+      locationMarkerRef.current = new Marker({ element: marker, anchor: "center" })
+        .setLngLat([userLocation.longitude, userLocation.latitude])
+        .addTo(map);
+      map.easeTo({
+        center: [userLocation.longitude, userLocation.latitude],
+        zoom: Math.max(map.getZoom(), 12),
+        duration: window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, userLocation]);
+
   return (
     <div className="relative h-[min(68dvh,620px)] min-h-[460px] w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0">
-      <div ref={containerRef} aria-label="Interactive map of pickleball courts" className="relay-interactive-map" />
+      <div
+        ref={containerRef}
+        role="region"
+        aria-label="Interactive map of pickleball courts"
+        className="relay-interactive-map"
+      />
       {!ready && !failed ? (
         <div className="absolute inset-0 grid place-items-center bg-surface-raised" role="status">
           <div className="text-center">

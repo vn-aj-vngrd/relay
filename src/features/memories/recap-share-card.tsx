@@ -1,15 +1,16 @@
 "use client";
 
-import { CaretLeft, CaretRight, Check, ShareNetwork } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, Check, DownloadSimple, ImageSquare, ShareNetwork } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
+import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
 import type { SessionRecap } from "./recap";
 import { type RecapShareTemplateId, recapShareTemplates, viewerStanding } from "./recap-share";
-import { type RecapBackground, RecapStoryCard } from "./recap-story-card";
+import { type RecapBackground, RecapStoryCard, type RecapStoryLayout } from "./recap-story-card";
 
 type RecapPhoto = { id: string; url: string; alt: string };
 
@@ -17,6 +18,16 @@ const baseBackgrounds: RecapBackground[] = [
   { id: "court", label: "Court", color: "#18233b" },
   { id: "ink", label: "Ink", color: "#11131a" },
   { id: "paper", label: "Paper", color: "#f4f3ef", light: true },
+  { id: "electric", label: "Electric", color: "#4f56c9" },
+  { id: "coral", label: "Coral", color: "#a9433f" },
+  { id: "optic", label: "Optic", color: "#b7d62e", light: true },
+];
+
+const storyLayouts: Array<{ id: RecapStoryLayout; label: string; description: string }> = [
+  { id: "courtside", label: "Courtside", description: "Low and bold" },
+  { id: "center", label: "Center court", description: "Balanced focus" },
+  { id: "poster", label: "Poster", description: "Headline first" },
+  { id: "snapshot", label: "Snapshot", description: "Framed over a photo" },
 ];
 
 function setFont(context: CanvasRenderingContext2D, size: number, weight = 700, mono = false) {
@@ -33,13 +44,20 @@ function fitText(context: CanvasRenderingContext2D, text: string, maxWidth: numb
   return size;
 }
 
-async function drawPhoto(context: CanvasRenderingContext2D, url: string, width: number, height: number) {
+async function drawPhoto(
+  context: CanvasRenderingContext2D,
+  url: string,
+  width: number,
+  height: number,
+  photoPosition: number,
+) {
   const response = await fetch(url);
   const bitmap = await createImageBitmap(await response.blob());
   const scale = Math.max(width / bitmap.width, height / bitmap.height);
   const drawWidth = bitmap.width * scale;
   const drawHeight = bitmap.height * scale;
-  context.drawImage(bitmap, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+  const overflow = Math.max(0, drawHeight - height);
+  context.drawImage(bitmap, (width - drawWidth) / 2, -overflow * (photoPosition / 100), drawWidth, drawHeight);
 }
 
 function signed(value: number) {
@@ -75,21 +93,54 @@ export function RecapShareCard({
   viewerPlayerId?: string | null;
 }) {
   const templates = useMemo(() => recapShareTemplates(recap, viewerPlayerId), [recap, viewerPlayerId]);
+  const [customBackground, setCustomBackground] = useState<RecapBackground | null>(null);
   const backgrounds = useMemo<RecapBackground[]>(
     () => [
       ...baseBackgrounds,
       ...photos.map((photo) => ({ id: `photo:${photo.id}`, label: photo.alt, imageUrl: photo.url })),
+      ...(customBackground ? [customBackground] : []),
     ],
-    [photos],
+    [customBackground, photos],
   );
   const [template, setTemplate] = useState<RecapShareTemplateId>(templates[0].id);
+  const [layout, setLayout] = useState<RecapStoryLayout>("courtside");
   const [backgroundId, setBackgroundId] = useState("court");
+  const [overlay, setOverlay] = useState(55);
+  const [photoPosition, setPhotoPosition] = useState(50);
+  const [customHeadline, setCustomHeadline] = useState("Our kind of night.");
+  const [customNote, setCustomNote] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const touchStart = useRef<number | null>(null);
+  const customPhotoInput = useRef<HTMLInputElement>(null);
   const background = backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
   const templateIndex = templates.findIndex((item) => item.id === template);
   const activeTemplate = templates[templateIndex] ?? templates[0];
+
+  useEffect(
+    () => () => {
+      if (customBackground?.imageUrl?.startsWith("blob:")) URL.revokeObjectURL(customBackground.imageUrl);
+    },
+    [customBackground],
+  );
+
+  async function chooseCustomPhoto(file: File | undefined) {
+    if (!file) return;
+    if (
+      !isSupportedImageType(file.type) ||
+      file.size === 0 ||
+      file.size > 10 * 1024 * 1024 ||
+      !(await hasValidImageSignature(file))
+    ) {
+      setMessage("Choose a JPG, PNG, or WebP photo under 10 MB.");
+      return;
+    }
+    const imageUrl = URL.createObjectURL(file);
+    setCustomBackground({ id: "custom-photo", label: file.name, imageUrl });
+    setBackgroundId("custom-photo");
+    setLayout("snapshot");
+    setMessage("Photo added to this story only. It hasn’t been uploaded.");
+  }
 
   function chooseTemplate(id: RecapShareTemplateId) {
     setTemplate(id);
@@ -112,11 +163,11 @@ export function RecapShareCard({
     context.fillRect(0, 0, canvas.width, canvas.height);
     if (background.imageUrl) {
       try {
-        await drawPhoto(context, background.imageUrl, canvas.width, canvas.height);
+        await drawPhoto(context, background.imageUrl, canvas.width, canvas.height, photoPosition);
       } catch {
         // Keep the card shareable if a signed image expires while the page is open.
       }
-      context.fillStyle = "rgba(8,10,16,.58)";
+      context.fillStyle = `rgba(8,10,16,${overlay / 100})`;
       context.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -131,7 +182,18 @@ export function RecapShareCard({
     context.fill();
     context.fillStyle = foreground;
     setFont(context, 30);
-    context.fillText("RELAY · SESSION RECAP", 112, 94);
+    context.fillText("RELAY · NIGHT MEMORY", 112, 94);
+
+    const contentOffset = layout === "poster" ? -500 : layout === "center" ? -250 : 0;
+    if (layout === "snapshot") {
+      context.fillStyle = light ? "rgba(255,255,255,.82)" : "rgba(8,10,16,.62)";
+      context.fillRect(48, 900, 984, 720);
+      context.strokeStyle = rule;
+      context.lineWidth = 2;
+      context.strokeRect(48, 900, 984, 720);
+    }
+    context.save();
+    context.translate(0, contentOffset);
 
     if (template === "overview") {
       context.fillStyle = foreground;
@@ -273,6 +335,63 @@ export function RecapShareCard({
       context.fillText(recap.busiestCourt.matches === 1 ? "match played here" : "matches played here", 72, 1490);
     }
 
+    if (template === "points") {
+      context.fillStyle = secondary;
+      setFont(context, 28);
+      context.fillText("POINTS PLAYED", 72, 1080);
+      context.fillStyle = foreground;
+      setFont(context, 190, 700, true);
+      context.fillText(String(recap.totalPoints), 72, 1330);
+      context.fillStyle = secondary;
+      setFont(context, 31, 500);
+      context.fillText(`across ${recap.matchCount} ${recap.matchCount === 1 ? "match" : "matches"}`, 72, 1400);
+    }
+
+    if (template === "court-time") {
+      context.fillStyle = secondary;
+      setFont(context, 28);
+      context.fillText("COURT TIME", 72, 1080);
+      context.fillStyle = foreground;
+      setFont(context, 190, 700, true);
+      context.fillText(String(recap.playMinutes), 72, 1330);
+      context.fillStyle = secondary;
+      setFont(context, 31, 500);
+      context.fillText("minutes of play together", 72, 1400);
+    }
+
+    if (template === "crew") {
+      context.fillStyle = secondary;
+      setFont(context, 28);
+      context.fillText("THE CREW", 72, 1060);
+      const names = recap.standings.map((row) => row.name).join(" · ");
+      context.fillStyle = foreground;
+      setFont(context, fitText(context, names, 936, 76, 34));
+      context.fillText(names, 72, 1190, 936);
+      context.fillStyle = secondary;
+      setFont(context, 31, 500);
+      context.fillText(`${recap.standings.length} players · one night`, 72, 1390);
+    }
+
+    if (template === "custom") {
+      context.fillStyle = secondary;
+      setFont(context, 28);
+      context.fillText("OUR NIGHT", 72, 1060);
+      context.fillStyle = foreground;
+      setFont(context, fitText(context, customHeadline || title, 936, 88, 42));
+      context.fillText(customHeadline || title, 72, 1190, 936);
+      context.fillStyle = secondary;
+      setFont(context, 31, 500);
+      context.fillText(`${date} · ${venue}`, 72, 1280, 936);
+    }
+
+    if (customNote) {
+      drawRule(context, 1580, rule);
+      context.fillStyle = foreground;
+      setFont(context, fitText(context, customNote, 936, 34, 26), 600);
+      context.fillText(customNote, 72, 1650, 936);
+    }
+    context.restore();
+
     context.fillStyle = secondary;
     setFont(context, 26, 500);
     context.fillText("Pickleball with friends, kept together in Relay.", 72, 1810, 936);
@@ -281,30 +400,51 @@ export function RecapShareCard({
     );
   }
 
+  function storyFile(blob: Blob) {
+    return new File([blob], `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-relay-memory.png`, {
+      type: "image/png",
+    });
+  }
+
+  function saveFile(file: File) {
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.name;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function download() {
+    setPending(true);
+    setMessage("");
+    try {
+      const file = storyFile(await createCard());
+      saveFile(file);
+      setMessage("Story downloaded at 1080 × 1920.");
+    } catch {
+      setMessage("The story image couldn’t be created. Try another photo or background.");
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function share() {
     setPending(true);
     setMessage("");
     try {
-      const blob = await createCard();
-      const file = new File([blob], `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-relay-recap.png`, {
-        type: "image/png",
-      });
+      const file = storyFile(await createCard());
       if (navigator.share && navigator.maxTouchPoints > 0 && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: `${title} · Relay recap`, files: [file] });
-        setMessage("Recap ready to share.");
+        await navigator.share({ title: `${title} · Relay memory`, files: [file] });
+        setMessage("Story ready to share.");
       } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = file.name;
-        link.click();
-        URL.revokeObjectURL(url);
-        setMessage("Recap downloaded.");
+        saveFile(file);
+        setMessage("Sharing isn’t available here, so the story was downloaded.");
       }
       if (sessionId) await trackSharedSessionEvent({ sessionId, event: "recap_shared" });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
-        setMessage("The recap image couldn’t be created. Try again.");
+        setMessage("The story image couldn’t be created. Try another photo or background.");
     } finally {
       setPending(false);
     }
@@ -315,7 +455,7 @@ export function RecapShareCard({
       <div
         role="region"
         aria-roledescription="carousel"
-        aria-label="Shareable recap stories"
+        aria-label="Shareable memory stories"
         tabIndex={0}
         onKeyDown={(event) => {
           if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
@@ -332,7 +472,7 @@ export function RecapShareCard({
           touchStart.current = null;
           if (Math.abs(distance) > 44) moveTemplate(distance > 0 ? -1 : 1);
         }}
-        className="rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25"
+        className="mx-auto w-full max-w-[280px] rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25 md:sticky md:top-4 md:max-w-none"
       >
         <div className="mb-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${templates.length}, minmax(0, 1fr))` }}>
           {templates.map((item) => (
@@ -352,6 +492,11 @@ export function RecapShareCard({
           template={template}
           background={background}
           viewerPlayerId={viewerPlayerId}
+          layout={layout}
+          overlay={overlay}
+          photoPosition={photoPosition}
+          customHeadline={customHeadline}
+          customNote={customNote}
           className="w-full shadow-[0_3px_8px_rgb(20_24_34_/_0.12)]"
         />
         <div className="mt-3 grid grid-cols-[36px_1fr_36px] items-center gap-2">
@@ -359,7 +504,7 @@ export function RecapShareCard({
             type="button"
             onClick={() => moveTemplate(-1)}
             className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-            aria-label="Previous recap story"
+            aria-label="Previous story"
           >
             <CaretLeft aria-hidden size={17} />
           </button>
@@ -370,7 +515,7 @@ export function RecapShareCard({
             type="button"
             onClick={() => moveTemplate(1)}
             className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-            aria-label="Next recap story"
+            aria-label="Next story"
           >
             <CaretRight aria-hidden size={17} />
           </button>
@@ -379,15 +524,17 @@ export function RecapShareCard({
       <div className="min-w-0">
         <fieldset>
           <legend className="font-bold">Choose a story</legend>
-          <p className="mt-1 text-sm leading-6 text-muted">Swipe the portrait or choose one true highlight.</p>
-          <div className="mt-3 divide-y divide-line border-y border-line">
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Start with a true session highlight, or use Your story for a photo-first post.
+          </p>
+          <div className="mt-3 grid border-y border-line sm:grid-cols-2 sm:gap-x-5">
             {templates.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 aria-pressed={template === item.id}
                 onClick={() => chooseTemplate(item.id)}
-                className="flex min-h-12 w-full items-center gap-3 py-2 text-left"
+                className="flex min-h-14 w-full items-center gap-3 border-b border-line py-2 text-left last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
               >
                 <span
                   className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${template === item.id ? "border-primary bg-primary text-white" : "border-line"}`}
@@ -396,17 +543,38 @@ export function RecapShareCard({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{item.label}</span>
-                  <span className="block truncate text-xs text-muted">{item.description}</span>
+                  <span className="block text-xs leading-5 text-muted">{item.description}</span>
                 </span>
               </button>
             ))}
           </div>
         </fieldset>
 
-        <fieldset className="mt-6">
+        <fieldset className="mt-7">
+          <legend className="font-bold">Choose a layout</legend>
+          <p className="mt-1 text-sm leading-6 text-muted">Move the same story without changing what happened.</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {storyLayouts.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={layout === item.id}
+                onClick={() => setLayout(item.id)}
+                className={`min-h-14 rounded-lg border px-3 py-2 text-left ${layout === item.id ? "border-primary bg-primary-soft" : "border-line bg-surface hover:bg-surface-strong"}`}
+              >
+                <span className="block text-sm font-semibold">{item.label}</span>
+                <span className="mt-0.5 block text-xs text-muted">{item.description}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset className="mt-7">
           <legend className="font-bold">Choose a background</legend>
-          <p className="mt-1 text-sm leading-6 text-muted">Use a clean Relay color or one of the session’s photos.</p>
-          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Recap background">
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Pick a Relay color, a session photo, or a private photo from this device.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Story background">
             {backgrounds.map((item) => (
               <button
                 key={item.id}
@@ -418,7 +586,16 @@ export function RecapShareCard({
                 className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
                 style={{ backgroundColor: item.color }}
               >
-                {item.imageUrl ? <Image src={item.imageUrl} alt="" fill sizes="56px" className="object-cover" /> : null}
+                {item.imageUrl ? (
+                  <Image
+                    src={item.imageUrl}
+                    alt=""
+                    fill
+                    sizes="56px"
+                    unoptimized={item.imageUrl.startsWith("blob:")}
+                    className="object-cover"
+                  />
+                ) : null}
                 {backgroundId === item.id ? (
                   <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
                     <Check aria-hidden size={17} weight="bold" />
@@ -426,16 +603,97 @@ export function RecapShareCard({
                 ) : null}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => customPhotoInput.current?.click()}
+              className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
+              aria-label="Add a background photo"
+            >
+              <ImageSquare aria-hidden size={21} />
+            </button>
+            <input
+              ref={customPhotoInput}
+              type="file"
+              aria-label="Choose background photo file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => void chooseCustomPhoto(event.target.files?.[0])}
+            />
           </div>
-          {!photos.length ? (
-            <p className="mt-2 text-xs text-muted">Add a photo below to use it as the story background.</p>
-          ) : null}
+          <p className="mt-2 text-xs leading-5 text-muted">
+            Device photos stay local unless you separately add them to the session below.
+          </p>
         </fieldset>
 
-        <Button type="button" onClick={share} disabled={pending} className="mt-6 w-full sm:w-auto">
-          {pending ? <ButtonSpinner /> : <ShareNetwork aria-hidden size={16} />}
-          {pending ? "Creating story…" : "Share story"}
-        </Button>
+        {background.imageUrl ? (
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <label className="text-sm font-semibold">
+              Photo position
+              <input
+                type="range"
+                aria-label="Photo position"
+                min="0"
+                max="100"
+                value={photoPosition}
+                onChange={(event) => setPhotoPosition(Number(event.target.value))}
+                className="mt-3 w-full accent-primary"
+              />
+              <span className="mt-1 block text-xs font-normal text-muted">Move the crop from top to bottom.</span>
+            </label>
+            <label className="text-sm font-semibold">
+              Text contrast
+              <input
+                type="range"
+                aria-label="Text contrast"
+                min="20"
+                max="80"
+                value={overlay}
+                onChange={(event) => setOverlay(Number(event.target.value))}
+                className="mt-3 w-full accent-primary"
+              />
+              <span className="mt-1 block text-xs font-normal text-muted">Darken the photo behind the story.</span>
+            </label>
+          </div>
+        ) : null}
+
+        <fieldset className="mt-7">
+          <legend className="font-bold">Add your words</legend>
+          <p className="mt-1 text-sm leading-6 text-muted">Keep it short enough to read before the story advances.</p>
+          {template === "custom" ? (
+            <label className="mt-3 block text-sm font-semibold">
+              Headline
+              <input
+                value={customHeadline}
+                onChange={(event) => setCustomHeadline(event.target.value)}
+                maxLength={56}
+                className="field"
+                placeholder="Our kind of night."
+              />
+            </label>
+          ) : null}
+          <label className="mt-3 block text-sm font-semibold">
+            Personal line <span className="font-normal text-muted">(optional)</span>
+            <input
+              value={customNote}
+              onChange={(event) => setCustomNote(event.target.value)}
+              maxLength={72}
+              className="field"
+              placeholder="Same time next Saturday?"
+            />
+          </label>
+        </fieldset>
+
+        <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+          <Button type="button" onClick={share} disabled={pending} className="w-full sm:w-auto">
+            {pending ? <ButtonSpinner /> : <ShareNetwork aria-hidden size={16} />}
+            {pending ? "Creating story…" : "Share story"}
+          </Button>
+          <Button type="button" variant="secondary" onClick={download} disabled={pending} className="w-full sm:w-auto">
+            <DownloadSimple aria-hidden size={16} />
+            Download PNG
+          </Button>
+        </div>
+        <p className="mt-2 text-xs text-muted">Exports a 1080 × 1920 image for Instagram, Facebook, and chat apps.</p>
         {message ? (
           <p role="status" className="mt-2 text-sm font-medium text-muted">
             {message}

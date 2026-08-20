@@ -1,7 +1,7 @@
 "use client";
 
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MarketingHighlightVisual } from "./marketing-highlight-visuals";
 
@@ -16,53 +16,51 @@ type MarketingHighlight = {
 const highlights: readonly MarketingHighlight[] = [
   {
     stage: "Find",
-    title: "Start with a court that works.",
-    detail:
-      "Explore the map, compare practical details, and carry a venue straight into Create. Court Finder is currently a Cebu pilot.",
+    title: "Find a court in Cebu.",
+    detail: "Search by court or neighborhood, check the details, and use it in a new game.",
     visual: "find",
   },
   {
     stage: "Plan",
-    title: "Plan it before the chat gets noisy.",
-    detail:
-      "Set the schedule, player limit, courts, booking details, and readiness without opening every option at once.",
+    title: "Set the plan.",
+    detail: "Add the time, court, player limit, cost, and booking details.",
     visual: "plan",
   },
   {
     stage: "Invite",
-    title: "One link answers every question.",
-    detail: "Guest RSVP, host approval, capacity, and an automatic waitlist—no account required.",
+    title: "Invite players with one link.",
+    detail: "Guests can see the plan and RSVP by name. Relay handles the player limit and waitlist.",
     visual: "invite",
   },
   {
     stage: "Organize",
-    title: "Keep the crew, not the admin.",
-    detail: "Roster controls, recurring groups, calendar, global search, and Play Again.",
+    title: "Keep regular players together.",
+    detail: "Save groups, manage the roster, use the calendar, and set up another game.",
     visual: "organize",
   },
   {
     stage: "Play",
-    title: "Run every court from one phone.",
-    detail: "Arrival check-in, five play formats, shared timer, paddle stack, multi-court scores, and standings.",
+    title: "Run the courts from one phone.",
+    detail: "Check players in, choose a format, run a timer, and record scores.",
     visual: "play",
     dark: true,
   },
   {
     stage: "Repay",
-    title: "Split what the host already covered.",
-    detail: "GCash, Maya, bank or cash, proof review, exclusions, and adjusted shares.",
+    title: "Split the cost.",
+    detail: "Share payment details, adjust each share, and review proof of payment.",
     visual: "repay",
   },
   {
     stage: "Stay in sync",
-    title: "The conversation stays with the game.",
-    detail: "Realtime chat, photos, reactions, system updates, and useful notifications.",
+    title: "Keep messages with the game.",
+    detail: "Send messages, photos, and reactions. Get updates about the game.",
     visual: "sync",
   },
   {
     stage: "Remember",
-    title: "Turn the night into a story.",
-    detail: "Seven portrait recaps, chosen backgrounds, standings, photos, and shared memories.",
+    title: "Save and share the result.",
+    detail: "Keep the final scores and photos, then make an image to share.",
     visual: "remember",
   },
 ];
@@ -70,6 +68,23 @@ const highlights: readonly MarketingHighlight[] = [
 export function MarketingHighlights() {
   const railRef = useRef<HTMLUListElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [canScrollPrevious, setCanScrollPrevious] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(true);
+
+  function updateScrollState() {
+    const rail = railRef.current;
+    if (!rail) return;
+    const maximum = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    setCanScrollPrevious(rail.scrollLeft > 2);
+    setCanScrollNext(rail.scrollLeft < maximum - 2);
+  }
+
+  useEffect(() => {
+    updateScrollState();
+    const update = () => updateScrollState();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   function moveTo(index: number) {
     const nextIndex = Math.max(0, Math.min(highlights.length - 1, index));
@@ -77,8 +92,12 @@ export function MarketingHighlights() {
     const card = rail?.children.item(nextIndex) as HTMLElement | null;
     if (!rail || !card) return;
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    rail.scrollTo({ left: card.offsetLeft - rail.offsetLeft, behavior: reducedMotion ? "auto" : "smooth" });
+    const maximum = Math.max(0, rail.scrollWidth - rail.clientWidth);
+    const target = Math.max(0, Math.min(card.offsetLeft - rail.offsetLeft, maximum));
+    rail.scrollTo({ left: target, behavior: reducedMotion ? "auto" : "smooth" });
     setActiveIndex(nextIndex);
+    setCanScrollPrevious(target > 2);
+    setCanScrollNext(target < maximum - 2);
   }
 
   function updateActiveCard() {
@@ -93,6 +112,7 @@ export function MarketingHighlights() {
       { index: 0, distance: Number.POSITIVE_INFINITY },
     );
     setActiveIndex(nearest.index);
+    updateScrollState();
   }
 
   return (
@@ -100,11 +120,11 @@ export function MarketingHighlights() {
       <div className="mx-auto max-w-[1180px] px-5 sm:px-8">
         <div data-marketing-reveal="split" className="flex items-end justify-between gap-6">
           <div>
-            <p className="text-sm font-semibold text-[#526415]">Relay at a glance</p>
-            <h2 className="mt-3 text-4xl font-[620] tracking-[-0.045em] sm:text-6xl">Get the highlights.</h2>
+            <p className="text-sm font-semibold text-[#526415]">What Relay does</p>
+            <h2 className="mt-3 text-4xl font-[620] tracking-[-0.045em] sm:text-6xl">See what Relay does.</h2>
           </div>
           <p className="hidden max-w-sm text-right text-sm leading-6 text-[#66666c] md:block">
-            One continuous path from making the plan to sharing the night afterward.
+            Plan the game, invite players, run the courts, and save the result.
           </p>
         </div>
 
@@ -116,11 +136,13 @@ export function MarketingHighlights() {
           onKeyDown={(event) => {
             if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
               event.preventDefault();
-              moveTo(activeIndex + (event.key === "ArrowLeft" ? -1 : 1));
+              const direction = event.key === "ArrowLeft" ? -1 : 1;
+              if ((direction < 0 && canScrollPrevious) || (direction > 0 && canScrollNext))
+                moveTo(activeIndex + direction);
             }
           }}
           onScroll={updateActiveCard}
-          className="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 pr-[12vw] outline-none [scrollbar-width:none] focus-visible:ring-3 focus-visible:ring-[#5962d9]/25 [&::-webkit-scrollbar]:hidden sm:mt-14 sm:gap-5 sm:pr-24"
+          className="marketing-highlight-rail mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain pb-3 outline-none [scrollbar-width:none] focus-visible:ring-3 focus-visible:ring-[#5962d9]/25 [&::-webkit-scrollbar]:hidden sm:mt-14 sm:gap-5"
         >
           {highlights.map((highlight, index) => (
             <li
@@ -156,7 +178,7 @@ export function MarketingHighlights() {
             <button
               type="button"
               aria-label="Previous highlight"
-              disabled={activeIndex === 0}
+              disabled={!canScrollPrevious}
               onClick={() => moveTo(activeIndex - 1)}
               className="grid h-10 w-10 place-items-center rounded-full bg-[#dedfe3] text-[#313238] transition-colors hover:bg-[#d1d2d6] disabled:opacity-35"
             >
@@ -165,7 +187,7 @@ export function MarketingHighlights() {
             <button
               type="button"
               aria-label="Next highlight"
-              disabled={activeIndex === highlights.length - 1}
+              disabled={!canScrollNext}
               onClick={() => moveTo(activeIndex + 1)}
               className="grid h-10 w-10 place-items-center rounded-full bg-[#dedfe3] text-[#313238] transition-colors hover:bg-[#d1d2d6] disabled:opacity-35"
             >

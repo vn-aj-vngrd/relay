@@ -9,8 +9,8 @@ const sessionDetailsSchema = z.object({
   accentColor: z.enum(["violet", "blue", "teal", "green", "orange", "coral"]).default("violet"),
   startsAt: z.coerce.date({ error: "Choose a valid date and start time." }),
   endsAt: z.coerce.date({ error: "Choose a valid end time." }),
-  venueName: z.string().trim().min(2, "Add the venue name.").max(120, "Keep the venue name under 120 characters."),
-  venueAddress: z.string().trim().max(240, "Keep the venue address under 240 characters.").optional(),
+  venueName: z.string().trim().min(2, "Add the court name.").max(120, "Keep the court name under 120 characters."),
+  venueAddress: z.string().trim().max(240, "Keep the court address under 240 characters.").optional(),
   capacity: z.coerce
     .number()
     .int("Player limit must be a whole number.")

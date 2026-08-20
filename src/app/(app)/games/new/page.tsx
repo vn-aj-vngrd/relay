@@ -90,10 +90,10 @@ export default async function NewGamePage({
         <h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1>
         <p className="mt-2 max-w-xl text-pretty text-muted">
           {source
-            ? "The familiar setup is ready. Choose when you’ll play, review the plan, and publish."
+            ? "Review the copied details, choose a time, and publish."
             : group
-              ? "Start with your crew’s usual setup, then adjust this game as needed."
-              : "Set the plan, publish one link, and let your friends take it from there."}
+              ? "Start with this group’s last setup and change what you need."
+              : "Add the court, time, player limit, and cost. Then publish the game link."}
         </p>
       </header>
       <CreateSessionForm defaults={defaults} />

@@ -1,7 +1,17 @@
 import type { SessionRecap } from "./recap";
 
 export type RecapShareTemplateId =
-  "overview" | "personal" | "winning-team" | "leader" | "standings" | "closest" | "court";
+  | "overview"
+  | "personal"
+  | "winning-team"
+  | "leader"
+  | "standings"
+  | "closest"
+  | "court"
+  | "points"
+  | "court-time"
+  | "crew"
+  | "custom";
 
 export type RecapShareTemplate = {
   id: RecapShareTemplateId;
@@ -17,6 +27,10 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   standings: { id: "standings", label: "Standings", description: "The session table" },
   closest: { id: "closest", label: "Closest finish", description: "The tightest score of the night" },
   court: { id: "court", label: "Busiest court", description: "Where the most games happened" },
+  points: { id: "points", label: "Points played", description: "One big number from the night" },
+  "court-time": { id: "court-time", label: "Court time", description: "How long the games kept moving" },
+  crew: { id: "crew", label: "The crew", description: "The names that made the night" },
+  custom: { id: "custom", label: "Your story", description: "A photo and a line in your own words" },
 };
 
 export function recapShareTemplates(recap: SessionRecap, viewerPlayerId?: string | null) {
@@ -28,6 +42,10 @@ export function recapShareTemplates(recap: SessionRecap, viewerPlayerId?: string
     ...(recap.standings.length ? [templates.standings] : []),
     ...(recap.closestMatch ? [templates.closest] : []),
     ...(recap.busiestCourt ? [templates.court] : []),
+    ...(recap.totalPoints ? [templates.points] : []),
+    ...(recap.playMinutes ? [templates["court-time"]] : []),
+    ...(recap.standings.length ? [templates.crew] : []),
+    templates.custom,
   ];
 }
 

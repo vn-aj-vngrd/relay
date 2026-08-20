@@ -24,7 +24,7 @@ export default async function MorePage({ params }: { params: Promise<{ id: strin
               <PencilSimple aria-hidden className="text-primary" size={18} />
               <div className="flex-1">
                 <p className="font-semibold">Game settings</p>
-                <p className="mt-1 text-sm text-muted">Edit the plan, venue, player limit, courts, and booking.</p>
+                <p className="mt-1 text-sm text-muted">Edit the plan, court, player limit, court count, and booking.</p>
               </div>
               <CaretRight aria-hidden className="text-muted" size={17} />
             </Link>

@@ -10,7 +10,10 @@ export function PublicSessionNav({ slug }: { slug: string }) {
   const pathname = usePathname();
   const activeRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
-    activeRef.current?.scrollIntoView?.({ block: "nearest", inline: "center" });
+    const frame = requestAnimationFrame(() =>
+      activeRef.current?.scrollIntoView?.({ block: "nearest", inline: "center", behavior: "auto" }),
+    );
+    return () => cancelAnimationFrame(frame);
   }, [pathname]);
 
   return (

@@ -10,9 +10,9 @@ describe("global search input", () => {
   });
 
   it("keeps recent searches useful and bounded", () => {
-    const first = mergeRecentSearches([], { query: "  Central Pickle ", filter: "venues" }, 1);
-    const replaced = mergeRecentSearches(first, { query: "central pickle", filter: "venues" }, 2);
-    expect(replaced).toEqual([{ query: "central pickle", filter: "venues", savedAt: 2 }]);
+    const first = mergeRecentSearches([], { query: "  Central Pickle ", filter: "courts" }, 1);
+    const replaced = mergeRecentSearches(first, { query: "central pickle", filter: "courts" }, 2);
+    expect(replaced).toEqual([{ query: "central pickle", filter: "courts", savedAt: 2 }]);
     const many = Array.from({ length: 10 }, (_, index) => ({
       query: `q${index}`,
       filter: "all" as const,

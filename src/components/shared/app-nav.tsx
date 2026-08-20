@@ -8,7 +8,7 @@ const items = [
   { href: "/home", label: "Home", icon: House, primary: false, mobileOnly: false },
   { href: "/games", label: "Games", icon: CalendarBlank, primary: false, mobileOnly: false },
   { href: "/games/new", label: "Create game", icon: PlusCircle, primary: true, mobileOnly: false },
-  { href: "/venues", label: "Court", icon: MapPin, primary: false, mobileOnly: true },
+  { href: "/court", label: "Court", icon: MapPin, primary: false, mobileOnly: true },
   { href: "/groups", label: "Groups", icon: UsersThree, primary: false, mobileOnly: false },
 ];
 

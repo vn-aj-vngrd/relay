@@ -103,7 +103,7 @@ The audit combined production browser review at 390px and desktop, the public in
 | Game-day depth      | Strong for V1  | Five recreational play modes, multi-court scoring, optimistic writes, standings, queue, fixed pairs, and realtime invalidation are implemented.      |
 | Repayment           | Differentiated | Host-paid-first model, per-player shares, one proof image, and host confirmation fit Philippine friend groups better than a generic Stripe checkout. |
 | Memory loop         | Differentiated | Recap scenes, personal and group statistics, photos, reactions, native sharing, and Play Again create a credible post-game hook.                     |
-| Surface consistency | Good           | Authenticated and shared games use the same Overview, Players, Play, Chat, Payments, and Recap model.                                                |
+| Surface consistency | Good           | Authenticated and shared games use the same Overview, Players, Play, Chat, Payments, and Story model; Play becomes Recap after completion.           |
 | Accessibility       | Good baseline  | Existing Playwright/Axe coverage checks public entry and core host/guest flows with no serious violations.                                           |
 
 ### Gaps that matter before broad marketing

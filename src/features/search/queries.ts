@@ -113,7 +113,7 @@ async function findGroups(userId: string, query: string, offset: number, limit: 
   };
 }
 
-async function findVenues(query: string, offset: number, limit: number) {
+async function findCourts(query: string, offset: number, limit: number) {
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
@@ -137,10 +137,10 @@ async function findVenues(query: string, offset: number, limit: number) {
     more: result.more,
     items: result.rows.map((venue): SearchResult => ({
       id: venue.id,
-      type: "venues",
+      type: "courts",
       title: venue.name,
       subtitle: venue.address,
-      href: `/venues/${venue.slug}`,
+      href: `/court/${venue.slug}`,
     })),
   };
 }
@@ -152,13 +152,13 @@ export async function searchRelay(
   cursor: number,
 ): Promise<SearchResponse> {
   const pageSize = filter === "all" ? 5 : 20;
-  const requested = filter === "all" ? (["games", "players", "groups", "venues"] as const) : [filter];
+  const requested = filter === "all" ? (["games", "players", "groups", "courts"] as const) : [filter];
   const results = await Promise.all(
     requested.map((type) => {
       if (type === "games") return findGames(userId, query, cursor, pageSize);
       if (type === "players") return findPlayers(query, cursor, pageSize);
       if (type === "groups") return findGroups(userId, query, cursor, pageSize);
-      return findVenues(query, cursor, pageSize);
+      return findCourts(query, cursor, pageSize);
     }),
   );
   return {

@@ -30,7 +30,7 @@ function playCopy(overview: SessionOverview, status: string) {
       value: "Ready for the next match",
       detail: `${play.waitingCount} in the paddle stack`,
     };
-  return { value: "Not started", detail: "The host starts Play at the venue" };
+  return { value: "Not started", detail: "The host starts Play at the court" };
 }
 
 function paymentCopy(payment: SessionOverview["payment"]) {

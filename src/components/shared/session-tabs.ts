@@ -4,7 +4,7 @@ export const SESSION_TABS = [
   { label: "Play", path: "/play" },
   { label: "Chat", path: "/chat" },
   { label: "Payments", path: "/payments" },
-  { label: "Recap", path: "/recap" },
+  { label: "Story", path: "/story" },
 ] as const;
 
 export function sessionTabs() {

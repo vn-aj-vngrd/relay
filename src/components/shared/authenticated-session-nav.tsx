@@ -10,7 +10,7 @@ function activeTab(pathname: string): SessionTabLabel | null {
   if (pathname.endsWith("/play")) return "Play";
   if (pathname.endsWith("/chat")) return "Chat";
   if (pathname.endsWith("/payments")) return "Payments";
-  if (pathname.endsWith("/recap")) return "Recap";
+  if (pathname.endsWith("/story")) return "Story";
   if (/\/games\/[^/]+$/.test(pathname)) return "Overview";
   return null;
 }

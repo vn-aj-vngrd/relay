@@ -133,7 +133,7 @@ function VenueRows({ items }: { items: AdminVenueRecord[] }) {
       <td className="score px-3 py-3.5 text-right text-sm">{venue.courtCount ?? "—"}</td>
       <td className="px-3 py-3.5 text-right">
         <Link
-          href={`/admin/venues/${venue.id}`}
+          href={`/admin/courts/${venue.id}`}
           aria-label={`Open ${venue.name}`}
           className="inline-flex min-h-10 items-center font-semibold text-primary"
         >
@@ -276,7 +276,7 @@ export function AdminInfiniteRecords({
         <SessionRows items={items as AdminSessionRecord[]} />
       </TableShell>
     ) : resource === "venues" ? (
-      <TableShell headers={["Venue", "Source", "Status", "#Courts", ""]}>
+      <TableShell headers={["Court", "Source", "Status", "#Courts", ""]}>
         <VenueRows items={items as AdminVenueRecord[]} />
       </TableShell>
     ) : resource === "audit" ? (

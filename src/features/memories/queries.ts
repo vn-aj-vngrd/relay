@@ -42,7 +42,7 @@ export async function getSessionMemory(sessionId: string) {
   return { memory, media: withUrls, comments: notes, reactionCount: loves };
 }
 
-export async function getSessionRecap(sessionId: string) {
+export async function getSessionRecapData(sessionId: string) {
   const sessionMatches = await db
     .select()
     .from(matches)
@@ -83,5 +83,10 @@ export async function getSessionRecap(sessionId: string) {
     })),
     [...playerById.values()],
   );
-  return { recap, memory: await getSessionMemory(sessionId) };
+  return recap;
+}
+
+export async function getSessionRecap(sessionId: string) {
+  const [recap, memory] = await Promise.all([getSessionRecapData(sessionId), getSessionMemory(sessionId)]);
+  return { recap, memory };
 }

@@ -28,6 +28,22 @@ describe("buildBreadcrumbItems", () => {
     ]);
   });
 
+  it("uses the canonical court route for court details", () => {
+    expect(buildBreadcrumbItems("/court/central-pickleball")).toEqual([
+      { href: "/home", label: "Home" },
+      { href: "/court", label: "Find a court" },
+      { href: undefined, label: "Central Pickleball" },
+    ]);
+  });
+
+  it("uses Courts consistently for admin directory records", () => {
+    expect(buildBreadcrumbItems("/admin/courts/859aab56-17cd-44fc-bd52-716d15c8d93f")).toEqual([
+      { href: "/admin", label: "Admin Console" },
+      { href: "/admin/courts", label: "Courts" },
+      { href: undefined, label: "Court" },
+    ]);
+  });
+
   it("builds admin record trails without exposing ids", () => {
     expect(buildBreadcrumbItems("/admin/users/859aab56-17cd-44fc-bd52-716d15c8d93f/edit")).toEqual([
       { href: "/admin", label: "Admin Console" },

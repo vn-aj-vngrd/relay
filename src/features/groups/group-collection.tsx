@@ -141,7 +141,7 @@ function EmptyGroups() {
         </div>
         <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
           <dt className="font-semibold">Games</dt>
-          <dd className="text-sm leading-5 text-muted">Upcoming plans and past sessions in one place.</dd>
+          <dd className="text-sm leading-5 text-muted">See upcoming and past games for this group.</dd>
         </div>
         <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
           <dt className="font-semibold">Memories</dt>

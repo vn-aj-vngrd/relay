@@ -36,7 +36,7 @@ export function VenueCombobox({
       setSearchState("loading");
       try {
         const response = await fetch(`/api/venues/search?q=${encodeURIComponent(term)}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("Venue search failed");
+        if (!response.ok) throw new Error("Court search failed");
         const data = (await response.json()) as { suggestions?: VenueSuggestion[] };
         const next = data.suggestions ?? [];
         setSuggestions(next);
@@ -91,10 +91,10 @@ export function VenueCombobox({
     : searchState === "loading"
       ? "Searching Philippine places…"
       : searchState === "error"
-        ? "Venue search is unavailable. You can still enter a venue."
+        ? "Court search is unavailable. You can still enter a court."
         : searchState === "empty"
           ? "No matching place found. You can still use what you typed."
-          : "Search Philippine venues and addresses.";
+          : "Search Philippine courts and addresses.";
 
   return (
     <div
@@ -112,7 +112,7 @@ export function VenueCombobox({
         required
         maxLength={120}
         autoComplete="off"
-        placeholder="Search or enter a venue…"
+        placeholder="Search or enter a court…"
         value={query}
         onChange={(event) => {
           userEditedRef.current = true;
@@ -138,7 +138,7 @@ export function VenueCombobox({
         <ul
           id={listboxId}
           role="listbox"
-          aria-label="Venue suggestions"
+          aria-label="Court suggestions"
           className="absolute inset-x-0 top-[52px] z-40 max-h-72 overflow-y-auto rounded-lg border border-line bg-surface p-1 shadow-[0_6px_8px_oklch(0.1_0.01_275/.12)]"
         >
           {suggestions.map((suggestion, index) => (

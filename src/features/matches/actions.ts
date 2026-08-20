@@ -431,8 +431,12 @@ export async function completeSession(formData: FormData) {
     source: "authenticated",
   });
   revalidatePath(`/games/${sessionId}/play`);
+  revalidatePath(`/games/${sessionId}/story`);
   revalidatePath(`/games/${sessionId}`);
-  redirect(`/games/${session.id}/recap`);
+  revalidatePath(`/s/${session.slug}/play`);
+  revalidatePath(`/s/${session.slug}/story`);
+  revalidatePath(`/s/${session.slug}`);
+  redirect(`/games/${session.id}/play`);
 }
 
 export async function finishMatch(formData: FormData) {

@@ -55,7 +55,7 @@ export default function PrivacyPage() {
         <ul>
           <li>Supabase provides authentication, PostgreSQL, file storage, realtime updates, and scheduled jobs.</li>
           <li>Vercel hosts the application and provides privacy-conscious aggregate web analytics and runtime logs.</li>
-          <li>Geoapify returns venue suggestions from the text a host enters during game creation.</li>
+          <li>Geoapify returns court suggestions from the text a host enters during game creation.</li>
         </ul>
         <p>These providers process data under their own terms and security practices.</p>
       </section>

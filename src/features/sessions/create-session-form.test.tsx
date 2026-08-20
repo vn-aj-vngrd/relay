@@ -14,7 +14,7 @@ describe("CreateSessionForm", () => {
     render(<CreateSessionForm defaults={{}} />);
 
     expect(screen.getByLabelText("Game name")).toHaveValue("");
-    expect(screen.getByLabelText("Venue")).toHaveValue("");
+    expect(screen.getByLabelText("Court")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
     expect(screen.getByRole("button", { name: "Start time" })).toHaveTextContent("Choose a time");
     expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent("Choose a time");

@@ -176,7 +176,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
             {filter === "unread"
               ? "New invites, roster changes, payment updates, and court assignments will appear here."
-              : "Relay will keep game invites, roster changes, payments, and court assignments together here."}
+              : "Game invites, roster changes, payments, and court assignments will appear here."}
           </p>
           {filter === "unread" ? (
             <Link href="/notifications" className="mt-5 inline-flex min-h-10 items-center font-semibold text-primary">

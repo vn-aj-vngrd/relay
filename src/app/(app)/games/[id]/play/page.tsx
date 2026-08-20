@@ -13,6 +13,8 @@ import { startMatchLabel } from "@/features/matches/presentation";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { RoundTimer } from "@/features/matches/round-timer";
+import { getSessionRecapData } from "@/features/memories/queries";
+import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
 
@@ -24,6 +26,21 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   const user = await requireUser();
   const data = await getLiveSession((await params).id, user.id);
   if (!data) notFound();
+
+  if (data.session.status === "completed") {
+    const recap = await getSessionRecapData(data.session.id);
+    return (
+      <>
+        <GamePageIntro
+          title="Recap"
+          description="The final scores, pairings, highlights, and standings from this game."
+        />
+        <div className="mx-auto w-full max-w-6xl pt-6">
+          <SessionRecap session={data.session} recap={recap} storyHref={`/games/${data.session.id}/story`} />
+        </div>
+      </>
+    );
+  }
 
   const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
   const waiting = data.queue.filter(({ queue }) => queue.state === "waiting");
@@ -354,14 +371,16 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                   variant="secondary"
                   className="w-full"
                   confirmTitle="End this session?"
-                  confirmText="You won’t be able to add more matches or scores. The recap, standings, photos, and game history will stay available as a shared memory."
+                  confirmText="You won’t be able to add more matches or scores. Play will become the final Recap, and Story will unlock sharing, photos, and crew notes."
                   confirmLabel="End session"
                   cancelLabel="Keep playing"
                   pendingLabel="Ending session…"
                 >
                   End session
                 </ConfirmSubmitButton>
-                <p className="mt-2 text-center text-xs text-muted">This turns the game into a permanent memory.</p>
+                <p className="mt-2 text-center text-xs text-muted">
+                  This marks the game as ended and locks the final results.
+                </p>
               </form>
             ) : null}
           </aside>

@@ -3,26 +3,36 @@ import { expect, test } from "@playwright/test";
 
 test("the landing page introduces Relay and protected routes open a usable login", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "One session. The whole pickleball night." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
 
   await page.goto("/home");
   expect(new URL(page.url()).pathname).toBe("/login");
   expect(new URL(page.url()).searchParams.get("next")).toBe("/home");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
   await expect(page.locator("#password-email")).toBeVisible();
   await expect(page.locator("#password")).toBeVisible();
   await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(
     page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }),
   ).toBeVisible();
-  await expect(page.getByText("Everything around game night")).toBeVisible();
+  await expect(page.getByText("What you can do")).toBeVisible();
   await expect(page.getByText("Run the courts")).toBeVisible();
   await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
   await page.getByRole("link", { name: "Relay home" }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "One session. The whole pickleball night." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();
+});
+
+test("the public court finder works without an account", async ({ page }) => {
+  await page.goto("/courts");
+  await expect(page.getByRole("heading", { name: "Find a pickleball court in Cebu" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create a game" })).toHaveAttribute("href", "/signup");
+  await expect(page.getByRole("textbox", { name: "Search courts" })).toBeVisible();
+
+  await page.goto("/court");
+  await expect(page).toHaveURL(/\/login/);
 });
 
 test("an authenticated host and guest can complete the core session flow", async ({ page, browser }, testInfo) => {
@@ -282,9 +292,9 @@ test("an authenticated host and guest can complete the core session flow", async
 
 test("login and account creation have distinct entry routes", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
   await page.goto("/signup");
-  await expect(page.getByRole("heading", { name: "Join your next game" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
   await expect(page.locator("#password")).toHaveAttribute("autocomplete", "new-password");
 });
 

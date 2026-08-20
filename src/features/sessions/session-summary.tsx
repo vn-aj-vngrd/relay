@@ -6,13 +6,25 @@ import { sessions } from "@/db/schema";
 import { formatSessionDateLong, formatSessionTime, peso } from "./format";
 
 type SessionSummary = typeof sessions.$inferSelect;
+type SessionHeroData = Pick<SessionSummary, "startsAt" | "title">;
+type SessionPlanData = Pick<
+  SessionSummary,
+  | "startsAt"
+  | "endsAt"
+  | "venueName"
+  | "venueAddress"
+  | "courtNumbers"
+  | "courtCount"
+  | "bookedAt"
+  | "estimatedCostCents"
+>;
 
 export function SessionHero({
   session,
   hostLabel,
   headingLevel = "h1",
 }: {
-  session: SessionSummary;
+  session: SessionHeroData;
   hostLabel: string;
   headingLevel?: "h1" | "h2";
 }) {
@@ -34,7 +46,13 @@ export function SessionHero({
   );
 }
 
-export function SessionPlanDetails({ session, bookingAction }: { session: SessionSummary; bookingAction?: ReactNode }) {
+export function SessionPlanDetails({
+  session,
+  bookingAction,
+}: {
+  session: SessionPlanData;
+  bookingAction?: ReactNode;
+}) {
   const durationMinutes = Math.round((session.endsAt.getTime() - session.startsAt.getTime()) / 60000);
   return (
     <section

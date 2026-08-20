@@ -62,12 +62,10 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
 
       <div className="mb-6">
         <h1 className="text-[1.625rem] font-[650] leading-[1.2] tracking-[-0.02em]">
-          {creating ? "Join your next game" : "Welcome back"}
+          {creating ? "Create your account" : "Log in to Relay"}
         </h1>
         <p className="mt-2 max-w-sm text-[15px] leading-6 text-muted">
-          {creating
-            ? "Create an account to organize sessions and keep your game history."
-            : "Sign in to see your games and court plans."}
+          {creating ? "Plan games, invite players, and keep your scores." : "See your games, groups, and court plans."}
         </p>
       </div>
 

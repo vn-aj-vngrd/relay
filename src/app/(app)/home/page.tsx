@@ -95,7 +95,7 @@ export default async function HomePage() {
                 className="pressable group flex min-h-20 items-center justify-between bg-primary px-5 py-4 font-semibold hover:bg-primary-hover md:flex-col md:items-start md:justify-end md:p-6"
               >
                 <span>
-                  <span className="block text-sm text-white/75">Everything in one place</span>
+                  <span className="block text-sm text-white/75">Players, courts, and payments</span>
                   <span className="mt-1 block text-lg">
                     {next.player.rsvp === "invited" ? "Review invite" : "View game"}
                   </span>
@@ -174,7 +174,7 @@ export default async function HomePage() {
             <dl className="divide-y divide-line">
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">Plan</dt>
-                <dd className="text-sm font-medium">Time, venue, courts, and cost</dd>
+                <dd className="text-sm font-medium">Time, court, court count, and cost</dd>
               </div>
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">Roster</dt>

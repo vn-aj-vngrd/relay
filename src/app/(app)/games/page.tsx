@@ -52,7 +52,7 @@ export default async function GamesPage() {
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="app-title">Games</h1>
-          <p className="mt-2 max-w-xl text-muted">Every plan, active session, and game-night memory in one place.</p>
+          <p className="mt-2 max-w-xl text-muted">See your upcoming, active, and past games.</p>
         </div>
         <span className="hidden sm:block">
           <ButtonLink href="/games/new">

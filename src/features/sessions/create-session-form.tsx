@@ -247,10 +247,10 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
         <div>
           <div className="flex items-center justify-between gap-3">
             <label className={labelClass} htmlFor="venue">
-              Venue
+              Court
             </label>
             <Link
-              href="/venues"
+              href="/court"
               className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-primary hover:bg-primary-soft"
             >
               <MapPin aria-hidden size={15} /> Find a court

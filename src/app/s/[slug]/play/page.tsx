@@ -6,6 +6,8 @@ import { LiveCourt } from "@/features/matches/live-court";
 import { getPublicLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { RoundTimer } from "@/features/matches/round-timer";
+import { getSessionRecapData } from "@/features/memories/queries";
+import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
@@ -19,6 +21,29 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
   const slug = (await params).slug;
   const data = await getPublicLiveSession(slug);
   if (!data) notFound();
+
+  if (data.session.status === "completed") {
+    const recap = await getSessionRecapData(data.session.id);
+    return (
+      <main
+        id="main-content"
+        className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
+        style={sessionAccentStyle(data.session.accentColor)}
+      >
+        <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+          <p className="text-sm font-semibold text-primary">{data.session.title}</p>
+          <h1 className="mt-1 app-title">Recap</h1>
+          <p className="mt-2 text-sm text-muted">
+            The final scores, pairings, highlights, and standings from this game.
+          </p>
+          <div className="mt-7">
+            <SessionRecap session={data.session} recap={recap} storyHref={`/s/${slug}/story`} />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const viewer = await getSessionViewer(data.session.id, slug);
   const waiting = data.queue.filter(({ queue }) => queue.state === "waiting");
   const waitingById = new Map(waiting.map((item) => [item.player.id, item]));
@@ -64,7 +89,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
             </p>
             {viewer?.player.rsvp === "going" ? (
               <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5">
-                <p className="mb-3 text-sm text-muted">At the venue? Let the host know you’re ready.</p>
+                <p className="mb-3 text-sm text-muted">At the court? Let the host know you’re ready.</p>
                 <AttendanceToggle
                   sessionId={data.session.id}
                   sessionPlayerId={viewer.player.id}

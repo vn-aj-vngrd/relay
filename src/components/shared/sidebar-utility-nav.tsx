@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const items = [
   { href: "/games/new", label: "Create", icon: PlusCircle, tour: "create", includeSubpaths: false },
   { href: "/search", label: "Search", icon: MagnifyingGlass, tour: "search", includeSubpaths: false },
-  { href: "/venues", label: "Court", icon: MapPin, tour: "courts", includeSubpaths: true },
+  { href: "/court", label: "Court", icon: MapPin, tour: "courts", includeSubpaths: true },
 ];
 
 export function SidebarUtilityNav() {

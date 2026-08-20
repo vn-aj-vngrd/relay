@@ -49,8 +49,12 @@ The host’s concise setup state across roster, court booking, and player repaym
 _Avoid_: Completion score, event health
 
 **Session recap**:
-The completed session’s celebratory data story: matches, standings, standout pairings, shared photos, and a manually controlled portrait reel. A participant chooses one defensible story and a Relay or memory-photo background to share. It remains part of the session memory rather than becoming a separate post.
-_Avoid_: Wrapped, performance report, social post
+The session’s factual result record: matches, points, court time, standings, and defensible highlights. It may be provisional during play and final after completion.
+_Avoid_: Wrapped, rating, performance report
+
+**Session story**:
+The Story destination and completed session’s expressive layer: a manually controlled portrait story, crew photos, reactions, and notes. A participant chooses one supported focus, a bounded layout, background, crop, contrast, and personal line. It remains part of the session rather than becoming a feed post.
+_Avoid_: Social feed, freeform design editor, fabricated highlight
 
 **Playing experience**:
 A participant’s optional self-description—Just starting, Casual, Regular, or Experienced—used only to help friends form enjoyable teams. An account profile supplies a default; a session participant may use a session-specific value.

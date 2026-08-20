@@ -12,7 +12,7 @@ describe("SessionNav", () => {
       "Play",
       "Chat",
       "Payments",
-      "Recap",
+      "Story",
     ]);
     expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute(
@@ -21,9 +21,10 @@ describe("SessionNav", () => {
     );
   });
 
-  it("keeps Recap visible while the session story is still taking shape", () => {
-    render(<SessionNav id="session-1" active="Recap" />);
-    expect(screen.getByRole("link", { name: "Recap" })).toHaveAttribute("href", "/games/session-1/recap");
-    expect(screen.getByRole("link", { name: "Recap" })).toHaveAttribute("aria-current", "page");
+  it("keeps the social Story separate from Play and its completed recap", () => {
+    render(<SessionNav id="session-1" active="Story" />);
+    expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("href", "/games/session-1/play");
+    expect(screen.getByRole("link", { name: "Story" })).toHaveAttribute("href", "/games/session-1/story");
+    expect(screen.getByRole("link", { name: "Story" })).toHaveAttribute("aria-current", "page");
   });
 });

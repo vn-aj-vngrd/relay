@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ArrowRight, Check, X } from "@phosphor-icons/react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,62 +14,57 @@ const steps = [
     key: "welcome",
     target: null,
     title: "Welcome to Relay",
-    description:
-      "This is the shared home for game night. Here’s where to create a game, find the plan, and catch anything that needs you.",
+    description: "Create a game, open your next plan, and see what still needs to be done.",
   },
   {
     key: "create",
     target: "create",
     title: "Start with a game",
     description:
-      "Set the date, venue, player limit, and courts. Publishing creates the shared link your friends can open without an account.",
+      "Set the date, court, player limit, and court count. Publishing creates the shared link your friends can open without an account.",
   },
   {
     key: "home",
     target: "home",
-    title: "See what needs you next",
-    description:
-      "Home keeps your next game and its useful setup signals upfront—booking, roster, repayments, and the next action.",
+    title: "Check your next game",
+    description: "Home shows your next game, booking status, roster, payments, and next task.",
   },
   {
     key: "games",
     target: "games",
-    title: "Every session stays here",
-    description:
-      "Games keeps upcoming plans, completed nights, and your calendar together. Open one for its players, Play, chat, and payments.",
+    title: "See all games",
+    description: "Games lists your upcoming and past games. Open one to see players, scores, chat, and payments.",
   },
   {
     key: "groups",
     target: "groups",
-    title: "Reuse the regular crew",
-    description:
-      "Groups are optional shortcuts for friends who play repeatedly. Save a crew after a game, then invite them again in one step.",
+    title: "Save regular groups",
+    description: "Save people who play together often, then invite the group to another game.",
   },
   {
     key: "courts",
     target: "courts",
     title: "Find a court",
     description:
-      "Browse the court map, check practical venue details, then carry a court directly into a new game. Listings stay clearly marked until Relay verifies them.",
+      "Search the map, check the court details, and use the court in a new game. Unverified listings are marked.",
   },
   {
     key: "search",
     target: "search",
     title: "Find the plan quickly",
-    description:
-      "Search across your games, players, groups, and venues. It stays focused on real sessions—not a public social feed.",
+    description: "Search your games, players, groups, and courts.",
   },
   {
     key: "notifications",
     target: "notifications",
-    title: "Only useful updates",
+    title: "Check updates",
     description:
       "Invites, waitlist movement, payment reviews, and court assignments appear here. The number shows what you haven’t read.",
   },
   {
     key: "profile",
     target: "profile",
-    title: "Your pickleball history",
+    title: "Open your profile",
     description:
       "Profile keeps sessions, matches, groups, and memories attached to you. Preferences for theme and layout live here too.",
   },
@@ -119,8 +114,9 @@ function popoverPosition(rect: TargetRect | null): CSSProperties {
 }
 
 export function ApplicationTour({ required }: { required: boolean }) {
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const open = required || searchParams.get("tour") === "1";
+  const open = (required && pathname === "/home") || searchParams.get("tour") === "1";
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const dialog = useRef<HTMLElement>(null);

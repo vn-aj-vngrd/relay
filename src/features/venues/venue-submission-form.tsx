@@ -37,14 +37,7 @@ export function VenueSubmissionForm() {
         <label htmlFor="name" className="text-sm font-[650]">
           Court name
         </label>
-        <input
-          id="name"
-          name="name"
-          required
-          maxLength={120}
-          className={inputClass}
-          placeholder="Venue or court name"
-        />
+        <input id="name" name="name" required maxLength={120} className={inputClass} placeholder="Court name" />
         <ErrorMessage messages={state.fieldErrors?.name} />
       </div>
       <div>

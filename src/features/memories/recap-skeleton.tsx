@@ -30,27 +30,10 @@ export function RecapSkeleton() {
           ))}
         </div>
       </section>
-      <section>
-        <Skeleton className="h-6 w-36" />
-        <div className="mt-5 grid gap-6 sm:grid-cols-[220px_1fr]">
-          <Skeleton className="aspect-[9/16] w-full max-w-[220px] rounded-xl" />
-          <div>
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="mt-3 h-4 w-full max-w-md" />
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-14 w-full rounded-lg" />
-              ))}
-            </div>
-            <Skeleton className="mt-6 h-5 w-40" />
-            <div className="mt-3 flex gap-2">
-              {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-14 w-14 rounded-lg" />
-              ))}
-            </div>
-            <Skeleton className="mt-6 h-9 w-32" />
-          </div>
-        </div>
+      <section className="border-t border-line pt-6">
+        <Skeleton className="h-6 w-64 max-w-full" />
+        <Skeleton className="mt-3 h-4 w-full max-w-xl" />
+        <Skeleton className="mt-4 h-9 w-32 rounded-lg" />
       </section>
     </div>
   );

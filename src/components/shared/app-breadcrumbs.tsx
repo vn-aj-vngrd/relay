@@ -13,6 +13,7 @@ const labels: Record<string, string> = {
   admin: "Admin Console",
   audit: "Audit log",
   chat: "Chat",
+  court: "Find a court",
   courts: "Play",
   edit: "Edit",
   feedback: "Feedback",
@@ -29,12 +30,11 @@ const labels: Record<string, string> = {
   players: "Players",
   preferences: "Preferences",
   profile: "Profile",
-  recap: "Recap",
+  story: "Story",
   search: "Search",
   sessions: "Games",
   settings: "Settings",
   users: "Users",
-  venues: "Find a court",
 };
 
 function titleCase(value: string) {
@@ -50,19 +50,19 @@ function isGameId(segments: string[], index: number) {
 function isAdminRecord(segments: string[], index: number) {
   return (
     segments[0] === "admin" &&
-    ["feedback", "sessions", "users", "venues"].includes(segments[index - 1]) &&
+    ["courts", "feedback", "sessions", "users", "venues"].includes(segments[index - 1]) &&
     segments[index] !== "new"
   );
 }
 
 function segmentLabel(segments: string[], index: number) {
   const segment = segments[index];
-  if (segments[0] === "admin" && segment === "venues") return "Venues";
+  if (segments[0] === "admin" && (segment === "courts" || segment === "venues")) return "Courts";
   if (isGameId(segments, index)) return "Game";
   if (isAdminRecord(segments, index)) {
     if (segments[index - 1] === "users") return "User";
     if (segments[index - 1] === "feedback") return "Submission";
-    if (segments[index - 1] === "venues") return "Venue";
+    if (segments[index - 1] === "courts" || segments[index - 1] === "venues") return "Court";
     return "Game";
   }
   if (segments[index - 1] === "profile") return "Profile";
@@ -82,7 +82,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     const current = index === segments.length - 1;
     const path = `/${segments.slice(0, index + 1).join("/")}`;
     let href = current ? undefined : path;
-    if (segment === "venues") href = current ? undefined : "/venues";
+    if (segment === "court") href = current ? undefined : "/court";
     items.push({ href, label: segmentLabel(segments, index) });
   });
 

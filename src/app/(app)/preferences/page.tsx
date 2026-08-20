@@ -1,5 +1,6 @@
 import { requireUser } from "@/features/auth/session";
 import { PreferenceControls } from "@/features/preferences/preference-controls";
+import { InstallAppControl } from "@/features/pwa/install-app-control";
 
 export default async function PreferencesPage() {
   await requireUser();
@@ -9,8 +10,9 @@ export default async function PreferencesPage() {
         <h1 className="app-title">Preferences</h1>
         <p className="mt-2 text-sm text-muted">Adjust how Relay looks and organizes your games.</p>
       </header>
-      <div className="py-8">
+      <div className="space-y-9 py-8">
         <PreferenceControls />
+        <InstallAppControl />
       </div>
     </div>
   );

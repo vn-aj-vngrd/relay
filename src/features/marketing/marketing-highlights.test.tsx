@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MarketingHighlights } from "./marketing-highlights";
 
 beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollWidth", { configurable: true, get: () => 1200 });
+  Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => 400 });
   Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: vi.fn() });
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
@@ -25,9 +27,19 @@ describe("MarketingHighlights", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next highlight" }));
     expect(screen.getByText(/02 \/ 08/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Previous highlight" })).toBeEnabled();
 
     fireEvent.keyDown(screen.getByRole("list", { name: "Relay product highlights" }), { key: "ArrowRight" });
     expect(screen.getByText(/03 \/ 08/)).toBeInTheDocument();
+  });
+
+  it("stops navigation when the final card is already visible", () => {
+    render(<MarketingHighlights />);
+    const rail = screen.getByRole("list", { name: "Relay product highlights" });
+    Object.defineProperty(rail, "scrollLeft", { configurable: true, value: 800, writable: true });
+
+    fireEvent.scroll(rail);
+
+    expect(screen.getByRole("button", { name: "Next highlight" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Previous highlight" })).toBeEnabled();
   });
 });

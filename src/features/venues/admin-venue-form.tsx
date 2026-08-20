@@ -48,7 +48,7 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
       <section className="grid gap-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="name" className="text-sm font-semibold">
-            Venue name
+            Court name
           </label>
           <input id="name" name="name" defaultValue={venue.name} className={field} required />
         </div>
@@ -184,7 +184,7 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
         </div>
       </section>
       <div className="border-t border-line pt-5">
-        <SubmitButton pendingLabel="Saving…">Save venue</SubmitButton>
+        <SubmitButton pendingLabel="Saving…">Save court</SubmitButton>
       </div>
     </form>
   );

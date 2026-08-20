@@ -23,7 +23,7 @@ const steps = [
   },
   {
     title: "You’re ready",
-    description: "One last optional question, then a quick look around Relay.",
+    description: "One optional question, then you can continue.",
     icon: LinkSimple,
   },
 ] as const;
@@ -82,8 +82,10 @@ function Choice({
 
 export function SetupWizard({
   initial,
+  next,
 }: {
   initial: { name: string; username: string; city: string; skillLevel: string; dominantHand: string };
+  next: string;
 }) {
   const [step, setStep] = useState(0);
   const [localError, setLocalError] = useState("");
@@ -153,6 +155,7 @@ export function SetupWizard({
             </div>
           ) : null}
           <form ref={formRef} action={action} noValidate>
+            <input type="hidden" name="next" value={next} />
             <fieldset hidden={step !== 0} className="space-y-5">
               <legend className="sr-only">Player profile</legend>
               <div>
@@ -302,11 +305,8 @@ export function SetupWizard({
                 ]}
               />
               <div className="border-y border-line py-4">
-                <p className="text-sm font-semibold">Next: a quick look around</p>
-                <p className="mt-1 text-sm leading-6 text-muted">
-                  Relay will point out Create, Games, the court finder, Search, notifications, and your profile in the
-                  real app.
-                </p>
+                <p className="text-sm font-semibold">Next</p>
+                <p className="mt-1 text-sm leading-6 text-muted">Continue where you left off.</p>
               </div>
             </fieldset>
 
@@ -338,6 +338,7 @@ export function SetupWizard({
       </div>
 
       <form action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center">
+        <input type="hidden" name="next" value={next} />
         <PendingSubmit
           pendingLabel="Skipping setup…"
           className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink"

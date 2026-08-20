@@ -96,12 +96,12 @@ export default async function AdminOverviewPage() {
               <ArrowRight aria-hidden size={17} className="text-muted" />
             </Link>
             <Link
-              href="/admin/venues"
+              href="/admin/courts"
               className="pressable flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:px-2"
             >
               <MapPin aria-hidden size={20} className="text-primary" />
               <div className="flex-1">
-                <p className="font-semibold">Venues</p>
+                <p className="font-semibold">Courts</p>
                 <p className="mt-1 text-sm text-muted">Verify Cebu courts and submissions</p>
               </div>
               <ArrowRight aria-hidden size={17} className="text-muted" />

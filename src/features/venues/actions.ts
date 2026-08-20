@@ -63,7 +63,7 @@ export async function submitVenueAction(_: VenueActionState, formData: FormData)
     submittedById: user.id,
     verificationNote: parsed.data.note || null,
   });
-  revalidatePath("/admin/venues");
+  revalidatePath("/admin/courts");
   return { success: "Court submitted for review. It will appear after an admin verifies the location." };
 }
 
@@ -87,10 +87,10 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
     listingStatus: formData.get("listingStatus"),
     verificationNote: formData.get("verificationNote"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the venue details." };
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the court details." };
 
   const existing = await db.query.venues.findFirst({ where: eq(venues.id, parsed.data.venueId) });
-  if (!existing) return { error: "This venue no longer exists." };
+  if (!existing) return { error: "This court no longer exists." };
   const verified = parsed.data.listingStatus === "verified";
 
   await db.transaction(async (transaction) => {
@@ -125,9 +125,9 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
       metadata: { status: parsed.data.listingStatus, source: existing.source },
     });
   });
-  revalidatePath("/venues");
-  revalidatePath(`/venues/${existing.slug}`);
-  revalidatePath("/admin/venues");
-  revalidatePath(`/admin/venues/${existing.id}`);
-  return { success: "Venue saved." };
+  revalidatePath("/court");
+  revalidatePath(`/court/${existing.slug}`);
+  revalidatePath("/admin/courts");
+  revalidatePath(`/admin/courts/${existing.id}`);
+  return { success: "Court saved." };
 }

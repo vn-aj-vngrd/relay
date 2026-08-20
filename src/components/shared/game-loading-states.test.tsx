@@ -6,7 +6,7 @@ import OverviewLoading from "@/app/(app)/games/[id]/loading";
 import PaymentsLoading from "@/app/(app)/games/[id]/payments/loading";
 import PlayLoading from "@/app/(app)/games/[id]/play/loading";
 import PlayersLoading from "@/app/(app)/games/[id]/players/loading";
-import RecapLoading from "@/app/(app)/games/[id]/recap/loading";
+import StoryLoading from "@/app/(app)/games/[id]/story/loading";
 
 afterEach(cleanup);
 
@@ -17,7 +17,7 @@ describe("authenticated game loading states", () => {
     ["Play", "Loading Play", PlayLoading],
     ["Chat", "Loading chat", ChatLoading],
     ["Payments", "Loading payments", PaymentsLoading],
-    ["Recap", "Loading session recap", RecapLoading],
+    ["Story", "Loading session story", StoryLoading],
   ] as const;
 
   it.each(states)("keeps the %s title readable while only content is busy", (title, loadingLabel, Loading) => {

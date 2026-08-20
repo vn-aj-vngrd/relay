@@ -32,13 +32,17 @@ describe("recap share templates", () => {
       "standings",
       "closest",
       "court",
+      "points",
+      "court-time",
+      "crew",
+      "custom",
     ]);
     expect(viewerStanding(recap, "a")).toMatchObject({ name: "Van", wins: 1, rank: 1 });
   });
 
   it("keeps an empty session shareable without inventing results", () => {
     const recap = buildSessionRecap([], players);
-    expect(recapShareTemplates(recap, "a").map(({ id }) => id)).toEqual(["overview"]);
+    expect(recapShareTemplates(recap, "a").map(({ id }) => id)).toEqual(["overview", "custom"]);
     expect(viewerStanding(recap, "a")).toBeNull();
   });
 });

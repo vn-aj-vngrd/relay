@@ -14,7 +14,7 @@ const initial = { name: "Van", username: "van-player", city: "", skillLevel: "",
 
 describe("SetupWizard", () => {
   it("keeps setup short and makes playing preferences optional", () => {
-    render(<SetupWizard initial={initial} />);
+    render(<SetupWizard initial={initial} next="/home" />);
     expect(screen.getByRole("heading", { name: "Your player profile" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Skip setup and use my defaults" })).toBeVisible();
 

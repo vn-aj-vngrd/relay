@@ -13,12 +13,12 @@ afterEach(cleanup);
 describe("AuthForm", () => {
   it("presents one clear primary authentication action at a time", () => {
     render(<AuthForm />);
-    expect(screen.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Sign in" })).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
-    expect(screen.getByRole("heading", { name: "Join your next game" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Create your account" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Create account" })).toHaveLength(2);
     expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
   });

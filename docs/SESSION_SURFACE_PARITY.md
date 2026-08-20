@@ -17,10 +17,10 @@ Keep these destinations and labels in this order:
 
 1. Overview
 2. Players
-3. Play
+3. Play, which becomes the factual Recap after the host ends the session
 4. Chat
 5. Payments
-6. Recap, visible throughout planning and play with explicit preview, in-progress, and final states
+6. Story, visible throughout the session with a locked preview before completion and story, photo, reaction, and note tools afterward
 
 A shared route and its authenticated counterpart must expose the same session facts. The public link may add RSVP and sign-in prompts. The authenticated workspace may add host controls and personal history.
 
@@ -30,7 +30,7 @@ A shared route and its authenticated counterpart must expose the same session fa
 | ------------------------------------------------- | --------------- | ---------------- | ------------ | ------------------ |
 | Read plan, roster, Play, and scores               | Yes             | Yes              | Yes          | Yes                |
 | RSVP or update own response                       | Own response    | Own response     | Own response | Join by name first |
-| Chat and upload payment proof                     | Yes             | Yes              | Yes          | Join first         |
+| Chat, contribute memories, and upload proof       | Yes             | Yes              | Yes          | Join first         |
 | Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |

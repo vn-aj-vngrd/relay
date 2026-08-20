@@ -43,6 +43,6 @@ describe("venue forms", () => {
     expect(screen.getByLabelText("Latitude")).not.toBeRequired();
     expect(screen.getByLabelText("Longitude")).not.toBeRequired();
     expect(screen.getByRole("button", { name: "Listing status" })).toHaveTextContent("Pending");
-    expect(screen.getByRole("button", { name: "Save venue" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save court" })).toBeInTheDocument();
   });
 });

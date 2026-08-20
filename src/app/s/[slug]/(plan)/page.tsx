@@ -1,16 +1,12 @@
-import { CaretRight, Heart, UploadSimple } from "@phosphor-icons/react/dist/ssr";
+import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
-import { PendingSubmit } from "@/components/ui/pending-submit";
 import { getCurrentUser } from "@/features/auth/session";
-import { addMemoryComment, toggleMemoryReaction, uploadMemoryPhoto } from "@/features/memories/actions";
-import { getSessionMemory } from "@/features/memories/queries";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDateLong, formatSessionTime, spotsRemainingLabel } from "@/features/sessions/format";
@@ -132,10 +128,6 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
   const playerAvatarUrls = going.map(({ profile }) => profileAvatarUrl(profile?.avatarPath));
   const playerRoles = going.map(({ player }) => player.role);
   const spots = Math.max(0, session.capacity - going.length);
-  const memory = session.status === "completed" ? await getSessionMemory(session.id) : null;
-  const canContribute = Boolean(
-    user && (user.id === session.hostId || going.some(({ player }) => player.userId === user.id)),
-  );
   const accountName =
     typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : user?.email?.split("@")[0];
   const guestName = viewer?.isGuest ? viewer.player.guestName : null;
@@ -280,9 +272,12 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                   <p className="score text-sm font-bold text-primary">SESSION COMPLETE</p>
                   <h2 className="mt-2 text-xl font-bold">{`${matchCount} ${matchCount === 1 ? "match" : "matches"} played`}</h2>
                   <p className="mt-2 text-sm text-muted">This session is now part of the group’s history.</p>
-                  <ButtonLink href={`/s/${session.slug}/recap`} className="mt-5">
-                    Open session recap
-                  </ButtonLink>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <ButtonLink href={`/s/${session.slug}/play`}>View recap</ButtonLink>
+                    <ButtonLink href={`/s/${session.slug}/story`} variant="secondary">
+                      Open story
+                    </ButtonLink>
+                  </div>
                   {user?.id === session.hostId ? (
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Link
@@ -301,117 +296,6 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                       ) : null}
                     </div>
                   ) : null}
-                  <div className="mt-8">
-                    <h3 className="text-lg font-bold">Photos</h3>
-                    {memory?.media.length ? (
-                      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        {memory.media.map((item) =>
-                          item.url ? (
-                            <figure key={item.id}>
-                              <Image
-                                src={item.url}
-                                alt={item.altText ?? "Session photo"}
-                                width={500}
-                                height={500}
-                                className="aspect-square w-full rounded-[10px] object-cover"
-                              />
-                              {item.caption ? (
-                                <figcaption className="mt-1 text-xs text-muted">{item.caption}</figcaption>
-                              ) : null}
-                            </figure>
-                          ) : null,
-                        )}
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-sm text-muted">No photos yet. Add the first memory from the night.</p>
-                    )}
-                    {canContribute ? (
-                      <form action={uploadMemoryPhoto} className="mt-4 space-y-3 rounded-lg bg-surface p-4">
-                        <input type="hidden" name="sessionId" value={session.id} />
-                        <label className="block text-sm font-semibold" htmlFor="photo">
-                          Add a photo
-                        </label>
-                        <input
-                          id="photo"
-                          name="photo"
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          required
-                          className="block w-full text-sm"
-                        />
-                        <input
-                          name="caption"
-                          maxLength={240}
-                          autoComplete="off"
-                          placeholder="Optional caption…"
-                          className="h-11 w-full rounded-[10px] border border-line bg-canvas px-3 placeholder:text-muted"
-                        />
-                        <PendingSubmit
-                          pendingLabel="Uploading…"
-                          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white"
-                        >
-                          <UploadSimple size={16} />
-                          Upload photo
-                        </PendingSubmit>
-                      </form>
-                    ) : null}
-                  </div>
-                  <div className="mt-8 border-t border-line pt-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold">From the group</h3>
-                      {canContribute ? (
-                        <form action={toggleMemoryReaction}>
-                          <input type="hidden" name="sessionId" value={session.id} />
-                          <PendingSubmit
-                            pendingLabel="Saving…"
-                            aria-label="React to this session"
-                            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold text-primary hover:bg-primary-soft"
-                          >
-                            <Heart size={18} />
-                            {memory?.reactionCount ?? 0}
-                          </PendingSubmit>
-                        </form>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-sm text-muted">
-                          <Heart size={16} />
-                          {memory?.reactionCount ?? 0}
-                        </span>
-                      )}
-                    </div>
-                    {memory?.comments.length ? (
-                      <ul className="mt-4 space-y-4">
-                        {memory.comments.map(({ comment, profile }) => (
-                          <li key={comment.id}>
-                            <p className="text-sm font-semibold">{profile?.name ?? "Player"}</p>
-                            <p className="mt-1 break-words text-sm text-muted">{comment.body}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    {canContribute ? (
-                      <form action={addMemoryComment} className="mt-4 flex gap-2">
-                        <input type="hidden" name="sessionId" value={session.id} />
-                        <label className="sr-only" htmlFor="memory-comment">
-                          Comment
-                        </label>
-                        <input
-                          id="memory-comment"
-                          name="body"
-                          required
-                          maxLength={500}
-                          autoComplete="off"
-                          placeholder="Add a comment…"
-                          className="h-11 min-w-0 flex-1 rounded-[10px] border border-line bg-canvas px-3 placeholder:text-muted"
-                        />
-                        <PendingSubmit
-                          pendingLabel="Posting…"
-                          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-[13px] font-semibold"
-                        >
-                          Post
-                        </PendingSubmit>
-                      </form>
-                    ) : null}
-                  </div>
                 </section>
               ) : null}
             </div>

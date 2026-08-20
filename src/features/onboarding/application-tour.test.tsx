@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ completeProductTour: vi.fn(async () => undefined) }));
-vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(window.location.search) }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => window.location.pathname,
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
 
 import { ApplicationTour } from "./application-tour";
 
@@ -36,6 +39,12 @@ function Target({ name }: { name: string }) {
 }
 
 describe("ApplicationTour", () => {
+  it("does not interrupt a new user who is finishing another task", () => {
+    window.history.replaceState({}, "", "/games/new?venue=Central+Pickle");
+    render(<ApplicationTour required />);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("walks through controls in the real application navigation", () => {
     render(
       <>
@@ -55,19 +64,19 @@ describe("ApplicationTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Start with a game" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "See what needs you next" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Check your next game" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Every session stays here" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "See all games" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Reuse the regular crew" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Save regular groups" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Find a court" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Find the plan quickly" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Only useful updates" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Check updates" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Your pickleball history" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Open your profile" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Finish tour" })).toBeVisible();
   });
 

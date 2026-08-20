@@ -35,7 +35,7 @@ export default async function AdminSessionsPage({
             type="search"
             name="q"
             defaultValue={query}
-            placeholder="Search title, venue, or host email"
+            placeholder="Search title, court, or host email"
             className="field !mt-0 !h-10 !pl-10 text-sm"
           />
         </label>

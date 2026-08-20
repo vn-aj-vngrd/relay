@@ -70,7 +70,7 @@ export function AuthEntry({
             Have an invite? Open its shared link to view the plan and RSVP without an account.
           </p>
           <section className="mt-8 border-t border-line pt-5" aria-label="What Relay helps with">
-            <p className="text-xs font-semibold text-muted">Everything around game night</p>
+            <p className="text-xs font-semibold text-muted">What you can do</p>
             <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
               {features.map(({ label, icon: Icon }) => (
                 <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink">

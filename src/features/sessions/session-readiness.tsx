@@ -4,13 +4,22 @@ import Link from "next/link";
 import type { SessionReadiness } from "./readiness";
 import { readinessTaskLabel } from "./readiness";
 
-export function SessionReadinessPanel({ readiness, sessionId }: { readiness: SessionReadiness; sessionId: string }) {
+export function SessionReadinessPanel({
+  readiness,
+  sessionId,
+  hrefBase,
+}: {
+  readiness: SessionReadiness;
+  sessionId: string;
+  hrefBase?: string;
+}) {
+  const base = hrefBase ?? `/games/${sessionId}`;
   const href = (task: SessionReadiness["missing"][number]) =>
     task === "roster"
-      ? `/games/${sessionId}/players`
+      ? `${base}/players`
       : task === "booking"
-        ? `/games/${sessionId}/settings#settings-booking`
-        : `/games/${sessionId}/payments`;
+        ? `${base}/settings#settings-booking`
+        : `${base}/payments`;
   return (
     <div className="mt-5 border-t border-line pt-4">
       <div className="flex items-center justify-between gap-3">

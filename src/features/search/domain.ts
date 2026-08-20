@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const searchFilters = ["all", "games", "players", "groups", "venues"] as const;
+export const searchFilters = ["all", "games", "players", "groups", "courts"] as const;
 export type SearchFilter = (typeof searchFilters)[number];
 
 export const searchRequestSchema = z.object({

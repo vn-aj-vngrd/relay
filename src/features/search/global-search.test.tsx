@@ -28,7 +28,7 @@ describe("GlobalSearch", () => {
   it("uses recent searches instead of a minimum-character instruction", async () => {
     localStorage.setItem(
       "relay-recent-searches-v1",
-      JSON.stringify([{ query: "Central Pickle", filter: "venues", savedAt: 1 }]),
+      JSON.stringify([{ query: "Central Pickle", filter: "courts", savedAt: 1 }]),
     );
     render(<GlobalSearch />);
 

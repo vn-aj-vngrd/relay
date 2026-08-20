@@ -8,7 +8,7 @@ const items = [
   { href: "/admin", label: "Overview", icon: Gauge },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/sessions", label: "Games", icon: Volleyball },
-  { href: "/admin/venues", label: "Venues", icon: MapPin },
+  { href: "/admin/courts", label: "Courts", icon: MapPin },
   { href: "/admin/feedback", label: "Feedback", icon: ChatText },
   { href: "/admin/audit", label: "Audit log", icon: ClockCounterClockwise },
 ];

@@ -9,14 +9,19 @@ export function SessionNav({
   id,
   active = "Overview",
   embedded = false,
+  hrefBase,
 }: {
   id: string;
   active?: SessionTabLabel | null;
   embedded?: boolean;
+  hrefBase?: string;
 }) {
   const activeRef = useRef<HTMLAnchorElement>(null);
   useEffect(() => {
-    activeRef.current?.scrollIntoView?.({ block: "nearest", inline: "center" });
+    const frame = requestAnimationFrame(() =>
+      activeRef.current?.scrollIntoView?.({ block: "nearest", inline: "center", behavior: "auto" }),
+    );
+    return () => cancelAnimationFrame(frame);
   }, [active]);
   return (
     <nav
@@ -28,7 +33,7 @@ export function SessionNav({
           <li key={tab.label}>
             <Link
               ref={active === tab.label ? activeRef : undefined}
-              href={`/games/${id}${tab.path}`}
+              href={`${hrefBase ?? `/games/${id}`}${tab.path}`}
               aria-current={active === tab.label ? "page" : undefined}
               className={`relative flex min-h-11 items-center px-3 text-[13px] font-medium ${active === tab.label ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary" : "text-muted hover:text-ink"}`}
             >
