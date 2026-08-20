@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/features/auth/session";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
 import { MarketingHighlights } from "@/features/marketing/marketing-highlights";
+import { MarketingSectionNav } from "@/features/marketing/marketing-section-nav";
 import {
   ChatProductPreview,
   CreateProductPreview,
@@ -44,29 +45,7 @@ export default async function MarketingPage() {
       <header className="sticky top-0 z-40 border-b border-[#e2e2dd] bg-[#f7f7f5]/94 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-8">
           <Brand />
-          <nav
-            aria-label="Marketing navigation"
-            className="hidden items-center gap-6 text-[13px] text-[#66666c] md:flex"
-          >
-            <a href="#highlights" className="hover:text-[#171719]">
-              Highlights
-            </a>
-            <a href="#court-finder" className="hover:text-[#171719]">
-              Court
-            </a>
-            <a href="#plan" className="hover:text-[#171719]">
-              Plan & invite
-            </a>
-            <a href="#play" className="hover:text-[#171719]">
-              Play
-            </a>
-            <a href="#payments" className="hover:text-[#171719]">
-              Repay
-            </a>
-            <a href="#story" className="hover:text-[#171719]">
-              Story
-            </a>
-          </nav>
+          <MarketingSectionNav />
           <div className="flex items-center gap-1">
             {user ? null : (
               <Link
