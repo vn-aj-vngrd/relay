@@ -158,6 +158,27 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.getByRole("button", { name: "Publish game" }).click();
   await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
+
+  await page.setViewportSize({ width: 393, height: 659 });
+  const gameNavigation = await page.getByRole("navigation", { name: "Game navigation" }).boundingBox();
+  expect(gameNavigation).not.toBeNull();
+  expect(gameNavigation!.x).toBe(0);
+  expect(gameNavigation!.width).toBe(393);
+  for (const action of [
+    page.getByRole("link", { name: "Edit game" }),
+    page.getByRole("button", { name: "Share game" }),
+  ]) {
+    const bounds = await action.boundingBox();
+    expect(bounds?.width).toBeGreaterThanOrEqual(44);
+    expect(bounds?.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await page.getByRole("navigation", { name: "Breadcrumb" }).count()).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+
+  await page.setViewportSize({ width: 852, height: 393 });
+  await expect(page.locator("header.app-mobile-header")).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
+
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
   const hostAccessibility = await new AxeBuilder({ page }).analyze();

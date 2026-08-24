@@ -11,7 +11,7 @@ import { PwaManager } from "@/features/pwa/pwa-manager";
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const viewport: Viewport = { themeColor: "oklch(0.965 0.002 75)" };
+export const viewport: Viewport = { themeColor: "oklch(0.965 0.002 75)", viewportFit: "cover" };
 
 export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },

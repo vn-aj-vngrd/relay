@@ -112,7 +112,7 @@ The shared game link and authenticated session workspace are two access paths to
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
 
-Authenticated destinations begin with one compact breadcrumb trail that anchors the current surface in Home or Admin Console. Ancestors are links, the current destination is text, and database identifiers never appear as labels. A game always uses the stable `Home / Games / [game name]` trail; its local tabs already communicate Overview, Players, Play, Chat, Payments, and Story. Trails scroll quietly on narrow screens rather than wrapping into a second navigation row.
+Authenticated destinations begin with one compact breadcrumb trail that anchors the current surface in Home or Admin Console. Ancestors are links, the current destination is text, and database identifiers never appear as labels. On phone and tablet game workspaces, local game tabs replace the redundant breadcrumb; desktop keeps the stable `Home / Games / [game name]` trail. Trails scroll quietly on narrow screens rather than wrapping into a second navigation row.
 
 Authenticated game chrome is persistent across navigation: the tab rail stays left, while Edit game (host/co-host) and Share game sit beside the session name. The session name, destination title, and destination subtitle render before the data boundary; only each tab’s content becomes a layout-accurate skeleton. This prevents navigation, actions, and headings from flashing between tabs.
 
@@ -146,7 +146,7 @@ Text and numeric controls use a 44–48px white surface, cool keyline, and court
 
 ### Navigation
 
-Top chrome may use a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses an opaque, standard edge-to-edge bottom tab bar. The desktop rail’s expanded/icon-only choice is saved locally and restored before paint; it does not alter the mobile bar or content density. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Active Play prioritizes local game navigation over global navigation.
+Top chrome may use a slightly translucent canvas plus controlled blur. Desktop navigation uses compact quiet rows, smaller Phosphor icons, and a neutral selected surface; mobile uses an opaque, standard edge-to-edge bottom tab bar. The desktop rail’s expanded/icon-only choice is saved locally and restored before paint; it does not alter the mobile bar or content density. Navigation icons never become loading spinners. Appearance lives in the owner’s Profile settings rather than daily navigation. Active Play prioritizes local game navigation over global navigation. On short phone landscapes, the global top header steps away, the bottom bar compacts, and safe-area-aware game tabs remain available so courtside controls keep usable vertical space.
 
 ### Session identity
 

@@ -44,7 +44,9 @@ export function SessionHero({
       >
         {session.title}
       </Heading>
-      <p className="relative mt-3 text-white/70">{hostLabel}</p>
+      <p title={hostLabel} className="relative mt-3 truncate text-white/70">
+        {hostLabel}
+      </p>
     </div>
   );
 }

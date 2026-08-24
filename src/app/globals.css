@@ -286,6 +286,37 @@ p:not(.truncate) {
 .mobile-chrome {
   background: var(--surface);
   color: var(--ink);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+}
+.app-mobile-header,
+.session-tab-safe {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+@media (min-width: 64rem) {
+  .session-tab-safe {
+    padding-inline: 0;
+  }
+}
+@media (orientation: landscape) and (max-height: 31.25rem) and (max-width: 63.999rem) {
+  .app-shell:has(.game-workspace) > .app-mobile-header {
+    display: none;
+  }
+  .app-shell:has(.game-workspace) .mobile-chrome ul {
+    height: 3rem;
+  }
+  .game-workspace {
+    padding-top: env(safe-area-inset-top);
+  }
+  .game-workspace-action-button {
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+    width: 2.75rem !important;
+    padding-inline: 0 !important;
+  }
+  .game-workspace-action-label {
+    display: none !important;
+  }
 }
 .court-rule {
   border-color: color-mix(in oklch, var(--scoreboard-line) 28%, transparent);

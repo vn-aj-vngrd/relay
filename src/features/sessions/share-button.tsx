@@ -5,7 +5,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
 
-export function ShareButton({ url, title, sessionId }: { url: string; title: string; sessionId?: string }) {
+export function ShareButton({
+  url,
+  title,
+  sessionId,
+  compactOnMobile = false,
+}: {
+  url: string;
+  title: string;
+  sessionId?: string;
+  compactOnMobile?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   async function share() {
     const absolute = new URL(url, window.location.origin).toString();
@@ -22,9 +32,21 @@ export function ShareButton({ url, title, sessionId }: { url: string; title: str
     }
   }
   return (
-    <Button type="button" variant="secondary" onClick={share}>
+    <Button
+      type="button"
+      variant="secondary"
+      onClick={share}
+      aria-label={copied ? "Game link copied" : "Share game"}
+      className={
+        compactOnMobile
+          ? "game-workspace-action-button h-11 min-h-11 w-11 px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:px-3"
+          : ""
+      }
+    >
       <ShareNetwork aria-hidden size={16} />
-      <span aria-live="polite">{copied ? "Link copied" : "Share game"}</span>
+      <span aria-live="polite" className={compactOnMobile ? "game-workspace-action-label sr-only sm:not-sr-only" : ""}>
+        {copied ? "Link copied" : "Share game"}
+      </span>
     </Button>
   );
 }

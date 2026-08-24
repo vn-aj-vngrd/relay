@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isAdmin = isAdminEmail(user.email);
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
+    <div className="app-shell flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
       <NotificationRealtimeRefresh userId={user.id} />
       <Suspense fallback={null}>
         <ApplicationTour required={!profile.productTourCompletedAt} />
@@ -59,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <header className="app-chrome z-20 shrink-0 border-b border-line lg:hidden">
+      <header className="app-mobile-header app-chrome z-20 shrink-0 border-b border-line lg:hidden">
         <div className="flex h-[56px] items-center justify-between px-4 sm:px-6">
           <Brand href="/home" />
           <div className="flex items-center">
@@ -68,7 +68,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               data-tour="search"
               prefetch={false}
               aria-label="Search"
-              className="pressable grid h-10 w-10 place-items-center text-muted hover:text-ink"
+              className="pressable grid h-11 w-11 place-items-center text-muted hover:text-ink"
             >
               <MagnifyingGlass aria-hidden size={20} />
             </Link>
@@ -77,7 +77,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               data-tour="notifications"
               prefetch={false}
               aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
-              className="pressable relative grid h-10 w-10 place-items-center text-muted hover:text-ink"
+              className="pressable relative grid h-11 w-11 place-items-center text-muted hover:text-ink"
             >
               <Bell aria-hidden size={20} />
               {unreadCount ? (
@@ -92,7 +92,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 data-tour="profile"
                 prefetch={false}
                 aria-label={`Open ${profile.name}'s profile`}
-                className="pressable grid h-10 w-10 place-items-center rounded-full"
+                className="pressable grid h-11 w-11 place-items-center rounded-full"
               >
                 <Avatar name={profile.name} imageUrl={profileAvatarUrl(profile.avatarPath)} size="sm" />
               </Link>

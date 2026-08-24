@@ -8,4 +8,9 @@ describe("ShareButton", () => {
     render(<ShareButton url="/s/friends-night" title="Friends Night" />);
     expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("min-h-9", "text-[13px]", "bg-surface");
   });
+
+  it("uses a 44px icon target in compact mobile game chrome", () => {
+    render(<ShareButton url="/s/friends-night" title="Friends Night" compactOnMobile />);
+    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("h-11", "w-11", "px-0");
+  });
 });

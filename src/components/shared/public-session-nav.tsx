@@ -11,7 +11,7 @@ export function PublicSessionNav({ slug }: { slug: string }) {
   const active = sessionTabs().find((tab) => pathname === `${hrefBase}${tab.path}`)?.label ?? null;
 
   return (
-    <nav aria-label="Game navigation" className="public-session-scroll border-b border-line">
+    <nav aria-label="Game navigation" className="session-tab-safe public-session-scroll border-b border-line">
       <div className="mx-auto w-full max-w-6xl">
         <ResponsiveSessionTabs
           hrefBase={hrefBase}

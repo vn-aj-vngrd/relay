@@ -17,5 +17,6 @@ describe("SessionHero", () => {
     const heading = screen.getByRole("heading", { name: longTitle });
     expect(heading).toHaveClass("truncate");
     expect(heading).toHaveAttribute("title", longTitle);
+    expect(screen.getByText("Hosted by you")).toHaveClass("truncate");
   });
 });
