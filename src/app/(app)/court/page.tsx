@@ -9,8 +9,8 @@ export default async function CourtPage() {
   const courts = await getCebuVenues();
 
   return (
-    <div>
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="court-finder-workspace flex min-h-0 flex-col xl:h-full">
+      <header className="shrink-0 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2">
             <h1 className="app-title">Find a court</h1>
@@ -36,7 +36,12 @@ export default async function CourtPage() {
           <Plus aria-hidden size={16} /> Suggest a court
         </ButtonLink>
       </header>
-      <CourtFinder venues={courts} isAuthenticated detailBasePath="/court" />
+      <CourtFinder
+        venues={courts}
+        isAuthenticated
+        detailBasePath="/court"
+        className="mt-7 flex min-h-0 flex-1 flex-col"
+      />
     </div>
   );
 }

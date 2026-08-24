@@ -497,7 +497,7 @@ export function CourtFinder({
         ) : null}
       </section>
 
-      <div className="mt-4 grid min-h-0 gap-4 xl:h-[calc(100dvh-350px)] xl:min-h-[640px] xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="mt-4 grid min-h-0 gap-4 xl:flex-1 xl:grid-cols-[360px_minmax(0,1fr)]">
         <section ref={mapSectionRef} aria-label="Court map" className="flex min-h-0 scroll-mt-20 flex-col xl:order-2">
           <div className="min-h-0 flex-1">
             <CebuCourtMap

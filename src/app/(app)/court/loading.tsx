@@ -2,8 +2,12 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function VenuesLoading() {
   return (
-    <div aria-label="Loading court finder" role="status">
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div
+      aria-label="Loading court finder"
+      role="status"
+      className="court-finder-workspace flex min-h-0 flex-col xl:h-full"
+    >
+      <header className="shrink-0 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="w-full max-w-2xl">
           <Skeleton className="h-9 w-72 max-w-full" />
           <Skeleton className="mt-3 h-5 w-full max-w-xl" />
@@ -12,7 +16,7 @@ export default function VenuesLoading() {
         <Skeleton className="h-9 w-36 rounded-lg" />
       </header>
 
-      <div className="mt-7 border-y border-line py-4">
+      <div className="mt-7 shrink-0 border-y border-line py-4">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div className="w-full max-w-2xl">
             <Skeleton className="h-4 w-32" />
@@ -26,7 +30,7 @@ export default function VenuesLoading() {
         </div>
       </div>
 
-      <div className="mt-4 grid min-h-0 gap-4 xl:h-[calc(100dvh-350px)] xl:min-h-[640px] xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="mt-4 grid min-h-0 gap-4 xl:flex-1 xl:grid-cols-[360px_minmax(0,1fr)]">
         <div className="flex min-h-0 flex-col xl:order-2">
           <Skeleton className="h-[min(68dvh,620px)] min-h-[460px] w-full rounded-xl xl:h-full xl:min-h-0" />
           <Skeleton className="mt-2 h-4 w-full max-w-xl" />

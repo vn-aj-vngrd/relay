@@ -13,17 +13,17 @@ export function LiveCourtSkeleton({ canScore = true }: { canScore?: boolean }) {
           <Skeleton className="h-10 w-10" />
         </div>
       </div>
-      <div className="grid grid-cols-2 bg-[var(--scoreboard-field)]">
+      <div className="grid grid-cols-2 bg-surface-strong/55">
         {[0, 1].map((side) => (
-          <div key={side} className={side ? "court-rule border-l" : ""}>
+          <div key={side} className={side ? "border-l border-line" : ""}>
             <div className="px-4 pb-5 pt-6 text-center">
-              <Skeleton className="mx-auto h-4 w-28 max-w-full bg-white/15" />
-              <Skeleton className="mx-auto mt-3 h-24 w-24 bg-white/15" />
+              <Skeleton className="mx-auto h-4 w-28 max-w-full bg-ink/10" />
+              <Skeleton className="mx-auto mt-3 h-24 w-24 bg-ink/10" />
             </div>
             {canScore ? (
-              <div className="court-rule grid grid-cols-2 border-t">
-                <Skeleton className="h-16 rounded-none border-r border-white/10 bg-white/10" />
-                <Skeleton className="h-16 rounded-none bg-white/10" />
+              <div className="grid grid-cols-2 border-t border-line">
+                <Skeleton className="h-16 rounded-none border-r border-line bg-ink/8" />
+                <Skeleton className="h-16 rounded-none bg-ink/8" />
               </div>
             ) : null}
           </div>

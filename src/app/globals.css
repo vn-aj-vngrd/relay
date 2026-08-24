@@ -197,6 +197,16 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* The authenticated shell owns viewport scrolling; only its content surface may scroll. */
+html:has(.app-shell),
+body:has(.app-shell) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+body:has(.app-shell) {
+  height: 100dvh;
+  min-height: 100dvh;
+}
 button,
 input,
 select,
@@ -296,6 +306,14 @@ p:not(.truncate) {
 @media (min-width: 64rem) {
   .session-tab-safe {
     padding-inline: 0;
+  }
+}
+@media (min-width: 80rem) {
+  .app-scroll-surface:has(.court-finder-workspace) {
+    overflow-y: hidden;
+  }
+  .app-scroll-surface:has(.court-finder-workspace) .app-content {
+    height: 100%;
   }
 }
 @media (orientation: landscape) and (max-height: 31.25rem) and (max-width: 63.999rem) {
