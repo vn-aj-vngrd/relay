@@ -1,20 +1,10 @@
-import { CalendarBlank, CurrencyCircleDollar, LinkSimple, TennisBall } from "@phosphor-icons/react/dist/ssr";
-
 import { Brand } from "@/components/shared/brand";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
 import { AuthForm } from "./auth-form";
 
 type EntryMode = "signin" | "create";
-
-const features = [
-  { label: "Plan the game", icon: CalendarBlank },
-  { label: "Share one invite", icon: LinkSimple },
-  { label: "Run the courts", icon: TennisBall },
-  { label: "Split the cost", icon: CurrencyCircleDollar },
-] as const;
 
 export function AuthEntry({
   mode,
@@ -31,11 +21,10 @@ export function AuthEntry({
 
   return (
     <main id="main-content" className="min-h-screen bg-canvas">
-      <header className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-8">
+      <header className="mx-auto flex h-16 max-w-[1180px] items-center justify-center px-5 sm:px-8">
         <Brand />
-        <ThemeToggle />
       </header>
-      <section className="flex min-h-[calc(100svh-4rem)] items-start justify-center px-5 pb-12 pt-6 sm:items-center sm:px-8 sm:pb-20 sm:pt-10">
+      <section className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-5 py-6 sm:px-8 sm:py-10">
         <div className="w-full max-w-[410px]">
           {error ? (
             <p
@@ -66,20 +55,6 @@ export function AuthEntry({
               </form>
             </>
           ) : null}
-          <p className="mt-6 text-xs leading-5 text-muted">
-            Have an invite? Open its shared link to view the plan and RSVP without an account.
-          </p>
-          <section className="mt-8 border-t border-line pt-5" aria-label="What Relay helps with">
-            <p className="text-xs font-semibold text-muted">What you can do</p>
-            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
-              {features.map(({ label, icon: Icon }) => (
-                <li key={label} className="flex items-center gap-2 text-xs font-medium text-ink">
-                  <Icon aria-hidden size={15} className="text-muted" />
-                  {label}
-                </li>
-              ))}
-            </ul>
-          </section>
         </div>
       </section>
     </main>

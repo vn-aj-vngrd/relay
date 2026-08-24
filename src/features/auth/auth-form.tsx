@@ -110,24 +110,22 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
               {showPassword ? <EyeSlash aria-hidden size={18} /> : <Eye aria-hidden size={18} />}
             </button>
           </div>
-          {creating ? (
-            <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
-          ) : null}
+          <p className="mt-2 min-h-5 text-xs leading-5 text-muted">
+            {creating ? "8 or more characters, including a letter and number." : null}
+          </p>
         </div>
         <AuthSubmit mode={mode} />
-        {creating ? (
-          <p className="text-center text-xs leading-5 text-muted">
-            By creating an account, you agree to the{" "}
-            <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">
-              Terms
-            </Link>{" "}
-            and acknowledge the{" "}
-            <Link href="/privacy" className="font-semibold text-ink underline-offset-2 hover:underline">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        ) : null}
+        <p className="text-center text-xs leading-5 text-muted">
+          {creating ? "By creating an account" : "By signing in"}, you agree to the{" "}
+          <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">
+            Terms
+          </Link>{" "}
+          and acknowledge the{" "}
+          <Link href="/privacy" className="font-semibold text-ink underline-offset-2 hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </form>
     </div>
   );

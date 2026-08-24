@@ -15,10 +15,16 @@ describe("AuthForm", () => {
     render(<AuthForm />);
     expect(screen.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Sign in" })).toHaveLength(2);
+    expect(screen.getByText(/By signing in/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
 
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(screen.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    expect(screen.getByText(/By creating an account/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
     expect(screen.getAllByRole("button", { name: "Create account" })).toHaveLength(2);
     expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
   });
