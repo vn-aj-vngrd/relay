@@ -61,6 +61,10 @@ export function DatePickerField({
   name = id,
   label,
   defaultValue = "",
+  value: controlledValue,
+  onValueChange,
+  minValue,
+  todayValue,
   error,
   describedBy,
 }: {
@@ -68,10 +72,19 @@ export function DatePickerField({
   name?: string;
   label: string;
   defaultValue?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  minValue?: string;
+  todayValue?: string;
   error?: string;
   describedBy?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const value = controlledValue ?? internalValue;
+  const selectValue = (nextValue: string) => {
+    if (controlledValue === undefined) setInternalValue(nextValue);
+    onValueChange?.(nextValue);
+  };
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(() => parseDate(defaultValue) ?? new Date());
   const root = useRef<HTMLDivElement>(null);
@@ -82,7 +95,7 @@ export function DatePickerField({
   const cells = Array.from({ length: first.getDay() + days }, (_, index) =>
     index < first.getDay() ? null : new Date(view.getFullYear(), view.getMonth(), index - first.getDay() + 1),
   );
-  const today = dateValue(new Date());
+  const today = todayValue ?? dateValue(new Date());
 
   return (
     <div ref={root} className="relative min-w-0">
@@ -145,11 +158,12 @@ export function DatePickerField({
                   type="button"
                   aria-label={fullDateFormatter.format(day)}
                   aria-pressed={dateValue(day) === value}
+                  disabled={Boolean(minValue && dateValue(day) < minValue)}
                   onClick={() => {
-                    setValue(dateValue(day));
+                    selectValue(dateValue(day));
                     setOpen(false);
                   }}
-                  className={`pressable relative grid h-9 place-items-center rounded-md text-sm ${dateValue(day) === value ? "bg-primary font-semibold text-white" : "hover:bg-surface-strong"}`}
+                  className={`pressable relative grid h-9 place-items-center rounded-md text-sm disabled:cursor-not-allowed disabled:text-muted/45 ${dateValue(day) === value ? "bg-primary font-semibold text-white" : "hover:bg-surface-strong disabled:hover:bg-transparent"}`}
                 >
                   {day.getDate()}
                   {dateValue(day) === today && dateValue(day) !== value ? (
@@ -165,11 +179,12 @@ export function DatePickerField({
             <button
               type="button"
               onClick={() => {
-                const now = new Date();
-                setView(now);
-                setValue(dateValue(now));
+                const todayDate = parseDate(today) ?? new Date();
+                setView(todayDate);
+                selectValue(today);
                 setOpen(false);
               }}
+              disabled={Boolean(minValue && today < minValue)}
               className="pressable min-h-9 rounded-md px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft"
             >
               Today
@@ -191,6 +206,11 @@ export function TimePickerField({
   name = id,
   label,
   defaultValue = "",
+  value: controlledValue,
+  onValueChange,
+  minValue,
+  afterValue,
+  beforeValue,
   error,
   describedBy,
 }: {
@@ -198,10 +218,26 @@ export function TimePickerField({
   name?: string;
   label: string;
   defaultValue?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  minValue?: string;
+  afterValue?: string;
+  beforeValue?: string;
   error?: string;
   describedBy?: string;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const value = controlledValue ?? internalValue;
+  const selectValue = (nextValue: string) => {
+    if (controlledValue === undefined) setInternalValue(nextValue);
+    onValueChange?.(nextValue);
+  };
+  const options = timeOptions.filter(
+    (option) =>
+      (!minValue || option >= minValue) &&
+      (!afterValue || option > afterValue) &&
+      (!beforeValue || option < beforeValue),
+  );
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), root);
@@ -230,22 +266,28 @@ export function TimePickerField({
           aria-label={`${label} options`}
           className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 max-h-[55svh] w-auto overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-[calc(100%+.5rem)] sm:max-h-64 sm:w-full sm:min-w-44"
         >
-          {timeOptions.map((option) => (
-            <button
-              key={option}
-              type="button"
-              role="option"
-              aria-selected={value === option}
-              onClick={() => {
-                setValue(option);
-                setOpen(false);
-              }}
-              className={`pressable flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm ${value === option ? "bg-primary-soft font-semibold text-primary" : "hover:bg-surface-strong"}`}
-            >
-              <span className="score">{timeLabel(option)}</span>
-              {value === option ? <Check aria-hidden size={14} /> : null}
-            </button>
-          ))}
+          {options.length ? (
+            options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={value === option}
+                onClick={() => {
+                  selectValue(option);
+                  setOpen(false);
+                }}
+                className={`pressable flex min-h-10 w-full items-center justify-between rounded-lg px-3 text-sm ${value === option ? "bg-primary-soft font-semibold text-primary" : "hover:bg-surface-strong"}`}
+              >
+                <span className="score">{timeLabel(option)}</span>
+                {value === option ? <Check aria-hidden size={14} /> : null}
+              </button>
+            ))
+          ) : (
+            <p role="status" className="px-3 py-4 text-sm leading-5 text-muted">
+              No times are available. Choose another date or adjust the other time.
+            </p>
+          )}
         </div>
       ) : null}
     </div>

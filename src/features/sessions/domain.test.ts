@@ -12,24 +12,31 @@ import {
 } from "./domain";
 
 describe("session validation", () => {
+  const now = new Date("2029-12-31T16:00:00Z");
+  const createSchema = createSessionSchema(now);
   const valid = {
     title: "Saturday Night Pickle",
-    startsAt: new Date("2026-08-22T11:00:00Z"),
-    endsAt: new Date("2026-08-22T14:00:00Z"),
+    startsAt: new Date("2030-08-22T11:00:00Z"),
+    endsAt: new Date("2030-08-22T14:00:00Z"),
     venueName: "Central Pickle",
     capacity: 8,
     courtCount: 2,
   };
-  it("accepts the smallest complete session plan", () =>
-    expect(createSessionSchema.safeParse(valid).success).toBe(true));
+  it("accepts the smallest complete session plan", () => expect(createSchema.safeParse(valid).success).toBe(true));
   it("defaults to violet and rejects colors outside the curated game palette", () => {
-    expect(createSessionSchema.parse(valid).accentColor).toBe("violet");
-    expect(createSessionSchema.safeParse({ ...valid, accentColor: "hot-pink" }).success).toBe(false);
+    expect(createSchema.parse(valid).accentColor).toBe("violet");
+    expect(createSchema.safeParse({ ...valid, accentColor: "hot-pink" }).success).toBe(false);
+  });
+  it("rejects a start time that is not in the future", () => {
+    const result = createSchema.safeParse({ ...valid, startsAt: now, endsAt: new Date(now.getTime() + 3600000) });
+    expect(result.success ? [] : result.error.flatten().fieldErrors.startsAt).toContain(
+      "Start time must be in the future.",
+    );
   });
   it("rejects an end time before the start", () =>
-    expect(createSessionSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
+    expect(createSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
   it("accepts a larger court quantity without a four-court preset limit", () => {
-    expect(createSessionSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(true);
+    expect(createSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(true);
   });
   it("validates editable sharing and booking fields", () => {
     const update = {
@@ -45,9 +52,9 @@ describe("session validation", () => {
     expect(updateSessionSchema.safeParse({ ...update, visibility: "friends" }).success).toBe(false);
   });
   it("returns clear boundaries for unsafe capacity and court quantities", () => {
-    expect(createSessionSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
-    const tooFew = createSessionSchema.safeParse({ ...valid, courtCount: 0 });
-    const tooMany = createSessionSchema.safeParse({ ...valid, courtCount: 21 });
+    expect(createSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
+    const tooFew = createSchema.safeParse({ ...valid, courtCount: 0 });
+    const tooMany = createSchema.safeParse({ ...valid, courtCount: 21 });
     expect(tooFew.success ? [] : tooFew.error.flatten().fieldErrors.courtCount).toContain("Choose at least 1 court.");
     expect(tooMany.success ? [] : tooMany.error.flatten().fieldErrors.courtCount).toContain(
       "Relay supports up to 20 courts per session.",

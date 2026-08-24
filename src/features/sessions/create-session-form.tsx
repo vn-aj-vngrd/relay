@@ -13,6 +13,28 @@ import { createSessionAction, type SessionActionState } from "./actions";
 import { SessionAccentPicker } from "./session-accent-picker";
 
 const labelClass = "block text-sm font-[650]";
+const manilaDateTimeFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Manila",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
+function creationBoundary(value: Date) {
+  const parts = Object.fromEntries(manilaDateTimeFormatter.formatToParts(value).map((part) => [part.type, part.value]));
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+  const nextQuarter = (Math.floor(minutes / 15) + 1) * 15;
+  return {
+    date: `${parts.year}-${parts.month}-${parts.day}`,
+    time:
+      nextQuarter >= 24 * 60
+        ? "24:00"
+        : `${String(Math.floor(nextQuarter / 60)).padStart(2, "0")}:${String(nextQuarter % 60).padStart(2, "0")}`,
+  };
+}
 
 function fieldClass(error?: string) {
   return `mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
@@ -146,7 +168,7 @@ export type CreateSessionDefaults = {
   inviteeCount?: number;
 };
 
-export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefaults }) {
+export function CreateSessionForm({ defaults, now }: { defaults: CreateSessionDefaults; now?: string }) {
   const [more, setMore] = useState(false);
   const [state, action] = useActionState(createSessionAction, {});
 
@@ -166,6 +188,11 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
   const notesError = errorFor(state, "notes");
   const value = (field: string, initial?: string | number) =>
     state.values ? (state.values[field] ?? "") : initial == null ? "" : String(initial);
+  const [date, setDate] = useState(() => value("date", defaults.date));
+  const [start, setStart] = useState(() => value("start", defaults.start));
+  const [end, setEnd] = useState(() => value("end", defaults.end));
+  const boundary = creationBoundary(now ? new Date(now) : new Date());
+  const sameDayMinimum = date === boundary.date ? boundary.time : undefined;
   const advancedOpen =
     more ||
     Boolean(
@@ -234,7 +261,7 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
             required
             minLength={2}
             maxLength={80}
-            placeholder="Saturday night pickle"
+            placeholder="Enter a game name"
             defaultValue={value("title", defaults.title)}
             aria-invalid={Boolean(titleError)}
             aria-describedby={titleError ? "title-error" : "title-hint"}
@@ -275,10 +302,16 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
         </div>
         <div className="min-w-0">
           <DatePickerField
-            key={value("date", defaults.date)}
             id="date"
             label="Date"
-            defaultValue={value("date", defaults.date)}
+            value={date}
+            minValue={boundary.date}
+            todayValue={boundary.date}
+            onValueChange={(nextDate) => {
+              setDate(nextDate);
+              setStart("");
+              setEnd("");
+            }}
             error={dateError}
             describedBy={dateError ? "date-error" : undefined}
           />
@@ -287,10 +320,12 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
           <div className="min-w-0">
             <TimePickerField
-              key={value("start", defaults.start)}
               id="start"
               label="Start time"
-              defaultValue={value("start", defaults.start)}
+              value={start}
+              minValue={sameDayMinimum}
+              beforeValue={end || undefined}
+              onValueChange={setStart}
               error={startError}
               describedBy={startError ? "start-error" : undefined}
             />
@@ -298,10 +333,12 @@ export function CreateSessionForm({ defaults }: { defaults: CreateSessionDefault
           </div>
           <div className="min-w-0">
             <TimePickerField
-              key={value("end", defaults.end)}
               id="end"
               label="End time"
-              defaultValue={value("end", defaults.end)}
+              value={end}
+              minValue={sameDayMinimum}
+              afterValue={start || undefined}
+              onValueChange={setEnd}
               error={endError}
               describedBy={endError ? "end-error" : undefined}
             />

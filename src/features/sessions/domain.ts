@@ -30,7 +30,13 @@ function validateTimes(value: { startsAt: Date; endsAt: Date }, context: z.Refin
     context.addIssue({ code: "custom", path: ["endsAt"], message: "End time must be after start time." });
 }
 
-export const createSessionSchema = sessionDetailsSchema.superRefine(validateTimes);
+export function createSessionSchema(now = new Date()) {
+  return sessionDetailsSchema.superRefine((value, context) => {
+    validateTimes(value, context);
+    if (value.startsAt <= now)
+      context.addIssue({ code: "custom", path: ["startsAt"], message: "Start time must be in the future." });
+  });
+}
 
 export const updateSessionSchema = sessionDetailsSchema
   .extend({

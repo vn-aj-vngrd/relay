@@ -14,6 +14,7 @@ describe("CreateSessionForm", () => {
     render(<CreateSessionForm defaults={{}} />);
 
     expect(screen.getByLabelText("Game name")).toHaveValue("");
+    expect(screen.getByLabelText("Game name")).toHaveAttribute("placeholder", "Enter a game name");
     expect(screen.getByLabelText("Court")).toHaveValue("");
     expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
     expect(screen.getByRole("button", { name: "Start time" })).toHaveTextContent("Choose a time");
@@ -21,6 +22,18 @@ describe("CreateSessionForm", () => {
     expect(screen.getByRole("spinbutton", { name: "Player limit" })).toHaveValue(null);
     expect(screen.getByRole("spinbutton", { name: "Court quantity" })).toHaveValue(null);
     expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+  });
+
+  it("limits a same-day schedule to future and increasing times", () => {
+    render(<CreateSessionForm defaults={{ date: "2030-09-06" }} now="2030-09-06T11:52:00.000Z" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Start time" }));
+    expect(screen.queryByRole("option", { name: "7:45 PM" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "8:00 PM" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "End time" }));
+    expect(screen.queryByRole("option", { name: "8:00 PM" })).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "8:15 PM" })).toBeVisible();
   });
 
   it("uses accessible quantity controls instead of limiting courts to presets", () => {

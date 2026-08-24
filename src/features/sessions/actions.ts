@@ -53,7 +53,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
   if (!limit.allowed) return { error: "You’ve created several games recently. Try again later." };
   const hostProfile = await ensureProfile(user);
   const rawCost = formData.get("cost");
-  const parsed = createSessionSchema.safeParse({
+  const parsed = createSessionSchema().safeParse({
     title: formData.get("title"),
     accentColor: formData.get("accentColor") || "violet",
     venueName: formData.get("venue"),

@@ -96,7 +96,7 @@ export default async function NewGamePage({
               : "Add the court, time, player limit, and cost. Then publish the game link."}
         </p>
       </header>
-      <CreateSessionForm defaults={defaults} />
+      <CreateSessionForm defaults={defaults} now={new Date().toISOString()} />
     </div>
   );
 }
