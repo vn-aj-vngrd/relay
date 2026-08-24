@@ -170,12 +170,14 @@ function CourtResults({
   locationReady,
   onSelect,
   onClear,
+  compactPreview,
 }: {
   results: CourtResult[];
   selectedId: string | null;
   locationReady: boolean;
   onSelect: (id: string) => void;
   onClear: () => void;
+  compactPreview: boolean;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -193,7 +195,7 @@ function CourtResults({
   return (
     <section
       aria-labelledby="cebu-court-list"
-      className="flex h-[580px] min-h-0 flex-col overflow-hidden rounded-xl border border-line bg-surface xl:order-1 xl:h-full"
+      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-line bg-surface xl:order-1 xl:h-full ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[580px]"}`}
     >
       <header className="flex shrink-0 items-end justify-between gap-3 border-b border-line px-4 py-3">
         <div>
@@ -273,12 +275,14 @@ export function CourtFinder({
   isAuthenticated = false,
   detailBasePath = "/court",
   showFilterTopBorder = true,
+  compactPreview = false,
   className = "mt-7",
 }: {
   venues: CebuVenue[];
   isAuthenticated?: boolean;
   detailBasePath?: "/court" | "/courts";
   showFilterTopBorder?: boolean;
+  compactPreview?: boolean;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -497,7 +501,9 @@ export function CourtFinder({
         ) : null}
       </section>
 
-      <div className="mt-4 grid min-h-0 gap-4 xl:flex-1 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div
+        className={`mt-4 grid min-h-0 gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "xl:h-[440px]" : "xl:flex-1"}`}
+      >
         <section ref={mapSectionRef} aria-label="Court map" className="flex min-h-0 scroll-mt-20 flex-col xl:order-2">
           <div className="min-h-0 flex-1">
             <CebuCourtMap
@@ -505,6 +511,7 @@ export function CourtFinder({
               selectedId={selected?.venue.id ?? null}
               userLocation={userLocation}
               onSelect={selectCourt}
+              compactPreview={compactPreview}
             >
               {selected ? (
                 <SelectedCourtOverlay
@@ -530,6 +537,7 @@ export function CourtFinder({
           locationReady={Boolean(userLocation)}
           onSelect={(id) => selectCourt(id, true)}
           onClear={clearFilters}
+          compactPreview={compactPreview}
         />
       </div>
     </div>

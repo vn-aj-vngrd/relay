@@ -32,6 +32,7 @@ export function CourtFinderShowcase({ courts }: { courts: CebuVenue[] }) {
             isAuthenticated={false}
             detailBasePath="/courts"
             showFilterTopBorder={false}
+            compactPreview
             className="mt-0"
           />
         </div>

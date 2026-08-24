@@ -14,6 +14,7 @@ type CebuCourtMapProps = {
   userLocation?: { latitude: number; longitude: number } | null;
   onSelect: (id: string) => void;
   children?: ReactNode;
+  compactPreview?: boolean;
 };
 
 function mapStyle(dark: boolean): StyleSpecification {
@@ -74,7 +75,14 @@ function setMarkerState(element: HTMLButtonElement, active: boolean) {
   element.setAttribute("aria-pressed", String(active));
 }
 
-export function CebuCourtMap({ venues, selectedId, userLocation, onSelect, children }: CebuCourtMapProps) {
+export function CebuCourtMap({
+  venues,
+  selectedId,
+  userLocation,
+  onSelect,
+  children,
+  compactPreview = false,
+}: CebuCourtMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef(new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement }>());
@@ -228,7 +236,9 @@ export function CebuCourtMap({ venues, selectedId, userLocation, onSelect, child
   }, [ready, userLocation]);
 
   return (
-    <div className="relative h-[min(68dvh,620px)] min-h-[460px] w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0">
+    <div
+      className={`relative w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0 ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[min(68dvh,620px)] min-h-[460px]"}`}
+    >
       <div
         ref={containerRef}
         role="region"

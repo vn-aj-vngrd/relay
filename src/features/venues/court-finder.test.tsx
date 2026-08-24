@@ -73,6 +73,14 @@ beforeEach(() => {
 });
 
 describe("CourtFinder", () => {
+  it("supports a bounded landing-page preview without changing the full finder", () => {
+    const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
+    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
+
+    rerender(<CourtFinder venues={[venue]} />);
+    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[580px]");
+  });
+
   it("selects a mapped Cebu court and carries it into game creation", () => {
     render(<CourtFinder venues={[venue]} isAuthenticated />);
 
