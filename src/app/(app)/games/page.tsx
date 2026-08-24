@@ -10,9 +10,9 @@ import { sessionReadiness } from "@/features/sessions/readiness";
 export default async function GamesPage() {
   const user = await requireUser();
   const data = await getHomeSessions(user.id);
-  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, player, playerCount, hasExpense }) => ({
+  const upcoming: GameCollectionItem[] = data.upcoming.map(({ session, playerCount, hasExpense }) => ({
     id: session.id,
-    href: player.rsvp === "invited" ? `/s/${session.slug}` : `/games/${session.id}`,
+    href: `/games/${session.id}`,
     title: session.title,
     date: formatSessionDate(session.startsAt),
     dateKey: sessionDateKey(session.startsAt, session.timezone),
@@ -34,7 +34,7 @@ export default async function GamesPage() {
   }));
   const past: GameCollectionItem[] = data.recent.map(({ session, playerCount }) => ({
     id: session.id,
-    href: `/s/${session.slug}`,
+    href: `/games/${session.id}`,
     title: session.title,
     date: formatSessionDate(session.startsAt),
     dateKey: sessionDateKey(session.startsAt, session.timezone),

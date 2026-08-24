@@ -1,5 +1,5 @@
 import { CalendarCheck, CaretRight, HourglassMedium, Play } from "@phosphor-icons/react/dist/ssr";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
@@ -12,6 +12,7 @@ import { formatSessionDateLong, peso } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
 import { getSessionForUser } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
+import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionReadinessPanel } from "@/features/sessions/session-readiness";
 import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
@@ -35,7 +36,49 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   const hostName = roster.find(({ player }) => player.role === "host")?.profile?.name ?? "the host";
   const isHost = session.hostId === user.id || membership?.role === "cohost";
   if (membership?.rsvp === "declined") notFound();
-  if (membership?.rsvp === "invited") redirect(`/s/${session.slug}`);
+  if (membership?.rsvp === "invited") {
+    const accountName =
+      typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : user.email?.split("@")[0];
+    return (
+      <>
+        <GamePageIntro title="Invitation" description="Review the plan and respond without leaving the Relay app." />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
+            <SessionHero session={session} hostLabel={`Hosted by ${hostName}`} headingLevel="h2" />
+            <div className="px-5 py-6 sm:px-8 sm:py-8">
+              <SessionPlanDetails session={session} />
+              {session.notes ? (
+                <section className="pt-7">
+                  <h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2>
+                  <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p>
+                </section>
+              ) : null}
+            </div>
+          </article>
+          <aside className="self-start rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-6">
+            <p className="text-sm font-semibold text-primary">You’re invited</p>
+            <h2 className="mt-1 text-lg font-bold">Can you make it?</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">Your response stays attached to your Relay account.</p>
+            <div className="mt-5">
+              <RsvpControl
+                sessionId={session.id}
+                slug={session.slug}
+                signedIn
+                accountName={accountName}
+                currentRsvp="invited"
+                currentSkillLevel={membership.skillLevel}
+                locked={session.rosterLocked}
+                full={going.length >= session.capacity}
+              />
+            </div>
+            <ButtonLink href={`/s/${session.slug}`} variant="quiet" className="mt-3 w-full">
+              Preview shared link
+            </ButtonLink>
+          </aside>
+        </div>
+      </>
+    );
+  }
   if (membership?.rsvp === "pending")
     return (
       <div className="mx-auto w-full max-w-6xl">

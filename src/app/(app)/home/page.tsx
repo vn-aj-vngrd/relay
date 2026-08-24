@@ -22,11 +22,7 @@ export default async function HomePage() {
   const user = await requireUser();
   const [profile, data] = await Promise.all([ensureProfile(user), getHomeSessions(user.id)]);
   const next = data.upcoming[0];
-  const nextHref = next
-    ? next.player.rsvp === "invited"
-      ? `/s/${next.session.slug}`
-      : `/games/${next.session.id}`
-    : "";
+  const nextHref = next ? `/games/${next.session.id}` : "";
   const nextReadiness =
     next && next.session.hostId === user.id
       ? sessionReadiness({
@@ -162,7 +158,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <ButtonLink href="/games/new">
-                Create your first game <ArrowRight size={17} />
+                {data.recent.length ? "Create another game" : "Create your first game"} <ArrowRight size={17} />
               </ButtonLink>
               <Link
                 href="/home?tour=1"
@@ -207,9 +203,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="divide-y divide-line border-y border-line">
-            {data.upcoming.slice(1, 4).map(({ session, player, playerCount }) => (
+            {data.upcoming.slice(1, 4).map(({ session, playerCount }) => (
               <Link
-                href={player.rsvp === "invited" ? `/s/${session.slug}` : `/games/${session.id}`}
+                href={`/games/${session.id}`}
                 prefetch={false}
                 key={session.id}
                 style={sessionAccentStyle(session.accentColor)}
@@ -252,7 +248,7 @@ export default async function HomePage() {
           <div className="mt-3 divide-y divide-line border-y border-line">
             {data.recent.slice(0, 4).map(({ session, playerCount }) => (
               <Link
-                href={`/s/${session.slug}`}
+                href={`/games/${session.id}`}
                 prefetch={false}
                 key={session.id}
                 style={sessionAccentStyle(session.accentColor)}
