@@ -10,13 +10,15 @@ export default async function CourtPage() {
 
   return (
     <div className="court-finder-workspace flex min-h-0 flex-col xl:h-full">
-      <header className="shrink-0 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <h1 className="sr-only sm:hidden">Court finder</h1>
+      <header className="hidden shrink-0 items-end justify-between gap-3 sm:flex">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2">
             <h1 className="app-title">Find a court</h1>
             <IconTooltip
               id="court-coverage-tooltip"
               label="Court Finder covers Cebu. Check current rates and hours before booking."
+              align="center"
             >
               <button
                 type="button"
@@ -28,19 +30,24 @@ export default async function CourtPage() {
               </button>
             </IconTooltip>
           </div>
-          <p className="mt-2 max-w-xl text-pretty leading-6 text-muted">
+          <p className="mt-2 hidden max-w-xl text-pretty leading-6 text-muted sm:block">
             Search by court or neighborhood. Choose one for directions, booking details, or a new game.
           </p>
         </div>
-        <ButtonLink href="/court/suggest" variant="secondary" className="w-fit">
-          <Plus aria-hidden size={16} /> Suggest a court
+        <ButtonLink
+          href="/court/suggest"
+          variant="secondary"
+          aria-label="Suggest a court"
+          className="h-11 w-11 shrink-0 px-0 sm:h-auto sm:w-auto sm:px-3"
+        >
+          <Plus aria-hidden size={16} /> <span className="hidden sm:inline">Suggest a court</span>
         </ButtonLink>
       </header>
       <CourtFinder
         venues={courts}
         isAuthenticated
         detailBasePath="/court"
-        className="mt-7 flex min-h-0 flex-1 flex-col"
+        className="flex min-h-0 flex-1 flex-col sm:mt-7"
       />
     </div>
   );

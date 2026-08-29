@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gt, gte, inArray, lt, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, or } from "drizzle-orm";
 import { cache } from "react";
 
 import { db } from "@/db/client";
@@ -53,9 +53,15 @@ export async function getHomeSessions(userId: string) {
     hasExpense: sessionsWithExpense.has(row.session.id),
   }));
   return {
-    upcoming: enriched.filter(({ session }) => session.startsAt >= now && session.status !== "cancelled"),
+    upcoming: enriched.filter(
+      ({ session }) => ["published", "live"].includes(session.status) && session.endsAt.getTime() > now.getTime(),
+    ),
     recent: enriched
-      .filter(({ session }) => session.startsAt < now || session.status === "completed")
+      .filter(
+        ({ session }) =>
+          session.status === "completed" ||
+          (["published", "live"].includes(session.status) && session.endsAt.getTime() <= now.getTime()),
+      )
       .sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()),
   };
 }
@@ -86,6 +92,7 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       title: session.title,
       date: formatSessionDate(session.startsAt, session.timezone),
       dateKey: sessionDateKey(session.startsAt, session.timezone),
+      endsAt: session.endsAt.toISOString(),
       time: formatSessionTime(session.startsAt, session.endsAt, session.timezone),
       venue: session.venueName,
       playerCount,
@@ -127,8 +134,11 @@ export async function getGameCollectionPage(
   const now = new Date();
   const ascending = phase === "upcoming";
   const phaseCondition = ascending
-    ? and(gte(sessions.startsAt, now), inArray(sessions.status, ["published", "live"]))
-    : or(lt(sessions.startsAt, now), eq(sessions.status, "completed"));
+    ? and(gt(sessions.endsAt, now), inArray(sessions.status, ["published", "live"]))
+    : or(
+        eq(sessions.status, "completed"),
+        and(lte(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])),
+      );
   const cursorCondition = cursor
     ? ascending
       ? or(gt(sessions.startsAt, cursor.at), and(eq(sessions.startsAt, cursor.at), gt(sessions.id, cursor.id)))
@@ -173,10 +183,12 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
     )
     .orderBy(asc(sessions.startsAt), asc(sessions.id));
   const items = (await toGameCollectionItems(userId, rows)).filter((item) => item.dateKey.startsWith(monthKey));
-  const nowKey = sessionDateKey(new Date());
+  const now = Date.now();
   return {
-    upcoming: items.filter((item) => item.dateKey >= nowKey && item.status !== "completed"),
-    past: items.filter((item) => item.dateKey < nowKey || item.status === "completed"),
+    upcoming: items.filter(
+      (item) => ["published", "live"].includes(item.status) && new Date(item.endsAt).getTime() > now,
+    ),
+    past: items.filter((item) => item.status === "completed" || new Date(item.endsAt).getTime() <= now),
   };
 }
 

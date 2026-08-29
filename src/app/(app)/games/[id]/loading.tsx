@@ -10,15 +10,19 @@ export default function SessionLoading() {
         role="status"
         aria-label="Loading game overview"
         aria-busy="true"
-        className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"
+        className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
-        <article className="public-session-panel overflow-hidden rounded-xl border border-line">
-          <div className="min-h-48 bg-canvas px-5 py-7 sm:px-8">
-            <Skeleton className="h-3 w-40" />
-            <Skeleton className="mt-8 h-10 w-3/4" />
-            <Skeleton className="mt-3 h-4 w-32" />
+        <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
+          <div
+            className="relative min-h-44 overflow-hidden px-4 py-5 sm:min-h-48 sm:px-8 sm:py-7"
+            style={{ backgroundColor: "var(--session-cover, var(--court))" }}
+          >
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
+            <Skeleton className="h-3 w-40 bg-white/15" />
+            <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
+            <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
           </div>
-          <div className="px-5 py-6 sm:px-8 sm:py-8">
+          <div className="px-4 py-5 sm:px-8 sm:py-8">
             <div className="grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line pb-7">
               {Array.from({ length: 4 }, (_, index) => (
                 <div
@@ -36,8 +40,8 @@ export default function SessionLoading() {
             <SessionAtAGlanceSkeleton />
           </div>
         </article>
-        <aside className="space-y-7">
-          <div className="rounded-xl border border-line p-5">
+        <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
+          <div className="rounded-xl border border-line p-4 sm:p-5">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="mt-2 h-5 w-44" />
             <Skeleton className="mt-3 h-3.5 w-full" />
@@ -48,7 +52,7 @@ export default function SessionLoading() {
             <Skeleton className="h-5 w-32" />
             <Skeleton className="mt-2 h-3.5 w-24" />
             <div className="mt-3 divide-y divide-line border-y border-line">
-              {Array.from({ length: 4 }, (_, index) => (
+              {Array.from({ length: 5 }, (_, index) => (
                 <div key={index} className="flex min-h-14 items-center gap-3">
                   <Skeleton className="h-8 w-8 rounded-full" />
                   <Skeleton className="h-4 flex-1" />

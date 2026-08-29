@@ -34,7 +34,7 @@ export function RecapStoryCard({
   layout = "courtside",
   overlay = 55,
   photoPosition = 50,
-  customHeadline = "Our kind of night.",
+  customHeadline = "Our kind of game.",
   customNote = "",
   className = "",
 }: {
@@ -261,7 +261,7 @@ export function RecapStoryCard({
                 {recap.standings.map((row) => row.name).join(" · ")}
               </p>
               <p className={`mt-[8%] text-[clamp(10px,4cqw,15px)] ${secondary}`}>
-                {recap.standings.length} players · one night
+                {recap.standings.length} players · one game
               </p>
             </>
           ) : null}

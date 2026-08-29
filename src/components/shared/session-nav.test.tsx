@@ -1,13 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
-import { visibleSessionTabCount } from "./responsive-session-tabs";
 import { SessionNav } from "./session-nav";
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
 
 describe("SessionNav", () => {
   it("matches the shared-link information architecture", () => {
@@ -27,55 +21,36 @@ describe("SessionNav", () => {
     );
   });
 
-  it("uses the public navigation spacing without adding a hidden spacer", () => {
-    const { container } = render(<SessionNav id="session-1" embedded />);
-    expect(screen.getByRole("list")).toHaveClass("px-1", "sm:px-0");
-    expect(container.querySelector("span[aria-hidden]")).toHaveClass("absolute");
-  });
+  it("keeps every destination directly reachable in a mobile chip rail", () => {
+    render(<SessionNav id="session-1" embedded active="Overview" />);
 
-  it("moves tabs that no longer fit into an accessible More menu", () => {
-    const widths: Record<string, number> = {
-      Overview: 77,
-      Players: 67,
-      Play: 49,
-      Chat: 52,
-      Payments: 82,
-      Story: 55,
-      More: 63,
-    };
-    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(320);
-    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
-      const width = widths[this.textContent?.trim() ?? ""] ?? 0;
-      return { width, height: 44, x: 0, y: 0, top: 0, right: width, bottom: 44, left: 0, toJSON: () => ({}) };
-    });
-    vi.stubGlobal(
-      "ResizeObserver",
-      class {
-        constructor(private readonly callback: ResizeObserverCallback) {}
-        observe() {
-          this.callback([], this as unknown as ResizeObserver);
-        }
-        disconnect() {}
-        unobserve() {}
-      },
+    expect(screen.getByRole("group", { name: "Game navigation" })).toHaveClass("min-w-max", "gap-2");
+    const activeTab = screen.getByRole("link", { name: "Overview" });
+    expect(activeTab).toHaveClass(
+      "min-h-9",
+      "rounded-full",
+      "border",
+      "border-primary/20",
+      "bg-primary-soft",
+      "text-primary-hover",
     );
-
-    render(<SessionNav id="session-1" embedded />);
-
-    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
-      "Overview",
-      "Players",
-      "Play",
-      "Chat",
-    ]);
-    fireEvent.click(screen.getByRole("button", { name: "More" }));
-    expect(screen.getAllByRole("menuitem").map((link) => link.textContent)).toEqual(["Payments", "Story"]);
+    expect(screen.getByRole("link", { name: "Players" })).toHaveClass("border-line", "bg-surface");
+    expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
   });
 
-  it("calculates the responsive cutoff while reserving room for More", () => {
-    const widths = [77, 67, 49, 52, 82, 55];
-    expect(visibleSessionTabCount(390, widths, 63, 8)).toBe(6);
-    expect(visibleSessionTabCount(320, widths, 63, 8)).toBe(4);
+  it("centers the active chip without changing the page’s vertical scroll position", () => {
+    const scrollTo = vi.fn();
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: scrollTo });
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+
+    render(<SessionNav id="session-1" embedded active="Chat" />);
+
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: "auto", left: expect.any(Number) }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollTo");
+    Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
   });
 
   it("keeps the social Story separate from Play and its completed recap", () => {

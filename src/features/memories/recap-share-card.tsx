@@ -107,7 +107,7 @@ export function RecapShareCard({
   const [backgroundId, setBackgroundId] = useState("court");
   const [overlay, setOverlay] = useState(55);
   const [photoPosition, setPhotoPosition] = useState(50);
-  const [customHeadline, setCustomHeadline] = useState("Our kind of night.");
+  const [customHeadline, setCustomHeadline] = useState("Our kind of game.");
   const [customNote, setCustomNote] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -369,7 +369,7 @@ export function RecapShareCard({
       context.fillText(names, 72, 1190, 936);
       context.fillStyle = secondary;
       setFont(context, 31, 500);
-      context.fillText(`${recap.standings.length} players · one night`, 72, 1390);
+      context.fillText(`${recap.standings.length} players · one game`, 72, 1390);
     }
 
     if (template === "custom") {
@@ -667,7 +667,7 @@ export function RecapShareCard({
                 onChange={(event) => setCustomHeadline(event.target.value)}
                 maxLength={56}
                 className="field"
-                placeholder="Our kind of night."
+                placeholder="Our kind of game."
               />
             </label>
           ) : null}
@@ -678,7 +678,7 @@ export function RecapShareCard({
               onChange={(event) => setCustomNote(event.target.value)}
               maxLength={72}
               className="field"
-              placeholder="Same time next Saturday?"
+              placeholder="Let’s play again soon."
             />
           </label>
         </fieldset>

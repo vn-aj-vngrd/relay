@@ -39,7 +39,7 @@ export function ShareButton({
       aria-label={copied ? "Game link copied" : "Share game"}
       className={
         compactOnMobile
-          ? "game-workspace-action-button h-11 min-h-11 w-11 px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:px-3"
+          ? "game-workspace-action-button h-11 min-h-11 w-11 border-transparent bg-transparent px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:border-line sm:bg-surface sm:px-3"
           : ""
       }
     >

@@ -5,7 +5,7 @@ export default function GameStoryLoading() {
   return (
     <>
       <GamePageIntro title="Story" description="Story-ready highlights, photos, reactions, and notes from the crew." />
-      <div className="mx-auto w-full max-w-6xl pt-6">
+      <div className="mx-auto w-full max-w-6xl sm:pt-6">
         <MemoriesSkeleton />
       </div>
     </>

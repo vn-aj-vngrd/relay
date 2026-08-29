@@ -8,8 +8,10 @@ import {
   Clock,
   Copy,
   Crosshair,
+  List,
   MagnifyingGlass,
   MapPin,
+  MapTrifold,
   Plus,
   Racquet,
   X,
@@ -25,6 +27,7 @@ import type { CebuVenue } from "./queries";
 
 type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
+type CourtView = "map" | "list";
 type CourtResult = { venue: CebuVenue; distance: number | null };
 
 function createHref(venue: CebuVenue, isAuthenticated: boolean) {
@@ -171,6 +174,9 @@ function CourtResults({
   onSelect,
   onClear,
   compactPreview,
+  mobileEdgeToEdge,
+  compactHeader,
+  suggestHref,
 }: {
   results: CourtResult[];
   selectedId: string | null;
@@ -178,6 +184,9 @@ function CourtResults({
   onSelect: (id: string) => void;
   onClear: () => void;
   compactPreview: boolean;
+  mobileEdgeToEdge: boolean;
+  compactHeader: boolean;
+  suggestHref: string | null;
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const rowRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -195,9 +204,11 @@ function CourtResults({
   return (
     <section
       aria-labelledby="cebu-court-list"
-      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-line bg-surface xl:order-1 xl:h-full ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[min(60dvh,520px)] min-h-[400px] sm:h-[580px]"}`}
+      className={`flex min-h-0 flex-col overflow-hidden border border-line bg-surface sm:rounded-xl xl:order-1 xl:h-full ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[min(60dvh,520px)] min-h-[400px] sm:h-[580px]"}`}
     >
-      <header className="flex shrink-0 items-end justify-between gap-3 border-b border-line px-4 py-3">
+      <header
+        className={`${compactHeader ? "hidden xl:flex" : "flex"} shrink-0 items-end justify-between gap-3 border-b border-line px-4 py-3`}
+      >
         <div>
           <h2 id="cebu-court-list" className="text-[15px] font-[680]">
             {locationReady ? "Nearest courts" : "Courts"}
@@ -256,6 +267,16 @@ function CourtResults({
               </li>
             );
           })}
+          {suggestHref ? (
+            <li className="xl:hidden">
+              <Link
+                href={suggestHref}
+                className="pressable flex min-h-14 items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+              >
+                Can’t find your court? <span className="text-primary">Suggest it</span>
+              </Link>
+            </li>
+          ) : null}
         </ul>
       ) : (
         <div className="grid min-h-0 flex-1 place-items-center px-6 text-center">
@@ -263,6 +284,14 @@ function CourtResults({
             <Buildings aria-hidden size={22} className="mx-auto text-primary" />
             <h3 className="mt-3 font-[680]">No courts match</h3>
             <p className="mt-2 text-sm text-muted">Try another neighborhood or clear the active filters.</p>
+            {suggestHref ? (
+              <Link
+                href={suggestHref}
+                className="pressable mt-4 inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-primary-soft"
+              >
+                Suggest a court
+              </Link>
+            ) : null}
           </div>
         </div>
       )}
@@ -289,6 +318,7 @@ export function CourtFinder({
   const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
   const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [mobileView, setMobileView] = useState<CourtView>("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -332,9 +362,10 @@ export function CourtFinder({
     setSelectedId(id);
     setCopied(false);
     if (revealMap && window.innerWidth < 1280) {
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setMobileView("map");
+      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
       requestAnimationFrame(() =>
-        mapSectionRef.current?.scrollIntoView({ block: "start", behavior: reducedMotion ? "auto" : "smooth" }),
+        mapSectionRef.current?.scrollIntoView?.({ block: "start", behavior: reducedMotion ? "auto" : "smooth" }),
       );
     }
   }
@@ -391,14 +422,14 @@ export function CourtFinder({
     <div className={className}>
       <section
         aria-label="Find and filter courts"
-        className={`${showFilterTopBorder ? "border-y" : "border-b"} border-line py-4`}
+        className={`${showFilterTopBorder ? "border-b lg:border-y" : "border-b"} border-line pb-3 lg:py-4`}
       >
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <div>
-            <label htmlFor="court-search" className="block text-sm font-[650]">
+            <label htmlFor="court-search" className="sr-only lg:not-sr-only lg:block lg:text-sm lg:font-[650]">
               Search courts
             </label>
-            <div className="relative mt-1.5 max-w-2xl">
+            <div className="relative max-w-2xl lg:mt-1.5">
               <MagnifyingGlass
                 aria-hidden
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
@@ -436,17 +467,27 @@ export function CourtFinder({
             onClick={useLocation}
             disabled={locationStatus === "loading"}
             aria-pressed={Boolean(userLocation)}
-            className="w-full lg:w-auto"
+            aria-label={
+              locationStatus === "loading"
+                ? "Finding your location"
+                : userLocation
+                  ? "Stop sorting by distance"
+                  : "Use my location"
+            }
+            className="h-11 w-11 px-0 lg:h-auto lg:w-auto lg:px-3"
           >
-            <Crosshair aria-hidden size={16} />
-            {locationStatus === "loading" ? "Finding you…" : userLocation ? "Nearest first" : "Use my location"}
+            <Crosshair aria-hidden size={17} />
+            <span className="hidden lg:inline">
+              {locationStatus === "loading" ? "Finding you…" : userLocation ? "Nearest first" : "Use my location"}
+            </span>
           </Button>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="public-session-scroll -mx-1 overflow-x-auto px-1">
-            <div className="flex min-w-max border-b border-line" aria-label="Court setting filters">
-              {(["all", "indoor", "outdoor"] as const).map((value) => (
+        <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1">
+          <div className="flex min-w-max gap-2" aria-label="Court filters">
+            {(["all", "indoor", "outdoor"] as const).map((value) => {
+              const selected = setting === value;
+              return (
                 <button
                   key={value}
                   type="button"
@@ -454,16 +495,16 @@ export function CourtFinder({
                     setSetting(value);
                     setSelectedId(null);
                   }}
-                  aria-pressed={setting === value}
-                  className={`relative min-h-10 px-3 text-[13px] font-semibold ${setting === value ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-primary" : "text-muted hover:text-ink"}`}
+                  aria-pressed={selected}
+                  className={`pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-semibold ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
                 >
-                  {value === "all" ? "All settings" : value === "indoor" ? "Indoor / covered" : "Outdoor"}
+                  {value === "all" ? "All" : value === "indoor" ? "Indoor" : "Outdoor"}
                 </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px]">
-            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 font-semibold text-muted hover:text-ink">
+              );
+            })}
+            <label
+              className={`pressable inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-semibold ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+            >
               <input
                 type="checkbox"
                 checked={paddleRentalOnly}
@@ -471,11 +512,13 @@ export function CourtFinder({
                   setPaddleRentalOnly(event.target.checked);
                   setSelectedId(null);
                 }}
-                className="h-4 w-4 accent-primary"
+                className="sr-only"
               />
               Paddle rental
             </label>
-            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 font-semibold text-muted hover:text-ink">
+            <label
+              className={`pressable inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-semibold ${verifiedOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+            >
               <input
                 type="checkbox"
                 checked={verifiedOnly}
@@ -483,13 +526,17 @@ export function CourtFinder({
                   setVerifiedOnly(event.target.checked);
                   setSelectedId(null);
                 }}
-                className="h-4 w-4 accent-primary"
+                className="sr-only"
               />
-              Verified only
+              Verified
             </label>
             {filtersActive ? (
-              <button type="button" onClick={clearFilters} className="min-h-9 font-semibold text-primary">
-                Clear filters
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="pressable min-h-9 rounded-full px-3 text-[13px] font-semibold text-primary hover:bg-primary-soft"
+              >
+                Clear
               </button>
             ) : null}
           </div>
@@ -501,10 +548,49 @@ export function CourtFinder({
         ) : null}
       </section>
 
+      {!compactPreview ? (
+        <div className="flex items-center justify-between gap-3 py-2 xl:hidden">
+          <div aria-live="polite" className="min-w-0">
+            <p className="truncate text-sm font-[680]">{userLocation ? "Nearest courts" : "Courts"}</p>
+            <p className="mt-0.5 text-xs text-muted">
+              {results.length} {results.length === 1 ? "place" : "places"}
+            </p>
+          </div>
+          <div
+            role="group"
+            aria-label="Court view"
+            className="inline-flex shrink-0 rounded-lg border border-line bg-surface-strong p-0.5"
+          >
+            {(
+              [
+                { value: "map", label: "Map", icon: MapTrifold },
+                { value: "list", label: "List", icon: List },
+              ] as const
+            ).map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={mobileView === value}
+                onClick={() => setMobileView(value)}
+                className={`pressable inline-flex h-11 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold ${mobileView === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+              >
+                <Icon aria-hidden size={17} />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div
-        className={`mt-4 grid min-h-0 gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "xl:h-[440px]" : "xl:flex-1"}`}
+        className={`grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-4 xl:flex-1"}`}
       >
-        <section ref={mapSectionRef} aria-label="Court map" className="flex min-h-0 scroll-mt-20 flex-col xl:order-2">
+        <section
+          ref={mapSectionRef}
+          tabIndex={-1}
+          aria-label="Court map"
+          className={`${compactPreview || mobileView === "map" ? "flex" : "hidden xl:flex"} min-h-0 scroll-mt-20 flex-col outline-none xl:order-2`}
+        >
           <div className="min-h-0 flex-1">
             <CebuCourtMap
               venues={results.map(({ venue }) => venue)}
@@ -512,6 +598,7 @@ export function CourtFinder({
               userLocation={userLocation}
               onSelect={selectCourt}
               compactPreview={compactPreview}
+              mobileEdgeToEdge={!compactPreview}
             >
               {selected ? (
                 <SelectedCourtOverlay
@@ -525,20 +612,28 @@ export function CourtFinder({
               ) : null}
             </CebuCourtMap>
           </div>
-          <p className="mt-2 shrink-0 text-xs leading-5 text-muted">
+          <p className="mt-2 hidden shrink-0 text-xs leading-5 text-muted sm:block">
             Drag to explore. Select a pin for details. Map data © Geoapify, OpenMapTiles, and OpenStreetMap
             contributors.
           </p>
         </section>
 
-        <CourtResults
-          results={results}
-          selectedId={selected?.venue.id ?? null}
-          locationReady={Boolean(userLocation)}
-          onSelect={(id) => selectCourt(id, true)}
-          onClear={clearFilters}
-          compactPreview={compactPreview}
-        />
+        <div
+          data-court-list-pane
+          className={`${compactPreview || mobileView === "list" ? "block" : "hidden xl:block"} min-h-0 xl:order-1 xl:h-full`}
+        >
+          <CourtResults
+            results={results}
+            selectedId={selected?.venue.id ?? null}
+            locationReady={Boolean(userLocation)}
+            onSelect={(id) => selectCourt(id, true)}
+            onClear={clearFilters}
+            compactPreview={compactPreview}
+            mobileEdgeToEdge={!compactPreview}
+            compactHeader={!compactPreview}
+            suggestHref={isAuthenticated && !compactPreview ? "/court/suggest" : null}
+          />
+        </div>
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ test("the landing page introduces Relay and protected routes open a usable login
 
 test("the public court finder works without an account", async ({ page }) => {
   await page.goto("/courts");
-  await expect(page.getByRole("heading", { name: "Find a pickleball court in Cebu" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Find a (?:pickleball )?court/ })).toBeVisible();
   await expect(page.getByRole("link", { name: "Create a game" })).toHaveAttribute("href", "/signup");
   await expect(page.getByRole("textbox", { name: "Search courts" })).toBeVisible();
 
@@ -171,6 +171,9 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.goto(`/games/${sessionId}`);
 
   await page.setViewportSize({ width: 393, height: 659 });
+  await expect(page.locator("header.app-mobile-header")).toBeHidden();
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Back to games" })).toBeVisible();
   const gameNavigation = await page.getByRole("navigation", { name: "Game navigation" }).boundingBox();
   expect(gameNavigation).not.toBeNull();
   expect(gameNavigation!.x).toBe(0);

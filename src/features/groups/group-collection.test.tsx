@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { GroupCollection, type GroupCollectionItem } from "./group-collection";
+import { GroupCollection, type GroupCollectionItem, GroupViewMenu } from "./group-collection";
 
 const items: GroupCollectionItem[] = [
   {
@@ -30,7 +30,26 @@ describe("GroupCollection", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("groups-grid")).toBeVisible();
+    expect(screen.getByTestId("groups-grid").querySelector(".grid")).toHaveClass("min-[380px]:grid-cols-2");
+    expect(screen.getByRole("link", { name: /Tuesday Dink Club/ })).toHaveClass("p-3.5", "sm:p-5");
     expect(localStorage.getItem("relay-groups-view")).toBe("grid");
+  });
+
+  it("keeps mobile view selection behind one compact menu", () => {
+    render(
+      <>
+        <GroupViewMenu />
+        <GroupCollection items={items} />
+      </>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Change group view, currently List" }));
+    const gridOption = screen.getByRole("menuitemradio", { name: "Grid" });
+    expect(gridOption).toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(gridOption);
+    expect(screen.getByTestId("groups-grid")).toBeVisible();
+    expect(screen.queryByRole("menu", { name: "Group view" })).not.toBeInTheDocument();
   });
 
   it("keeps the empty state useful", () => {

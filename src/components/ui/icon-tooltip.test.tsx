@@ -16,5 +16,22 @@ describe("IconTooltip", () => {
     expect(screen.getByRole("button", { name: "Help" })).toHaveAttribute("aria-describedby", "coverage-help");
     expect(screen.getByRole("tooltip")).toHaveAttribute("id", "coverage-help");
     expect(screen.getByRole("tooltip")).toHaveTextContent("Coverage is currently limited.");
+    expect(screen.getByRole("tooltip")).toHaveClass(
+      "relay-tooltip",
+      "top-full",
+      "mt-2",
+      "sm:bottom-full",
+      "sm:top-auto",
+    );
+  });
+
+  it("can center constrained tooltips away from mobile content edges", () => {
+    render(
+      <IconTooltip label="Court coverage" align="center">
+        <button type="button">Coverage</button>
+      </IconTooltip>,
+    );
+
+    expect(screen.getByRole("tooltip")).toHaveClass("left-1/2", "-translate-x-1/2");
   });
 });

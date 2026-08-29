@@ -8,11 +8,10 @@ export default function PublicMoreLoading() {
       aria-label="Loading game preferences"
       aria-busy="true"
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="mt-2 h-8 w-20" />
-        <Skeleton className="mt-2 h-3.5 w-72 max-w-full" />
-        <div className="mt-8">
+      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+        <Skeleton className="public-tab-title h-8 w-20" />
+        <Skeleton className="public-tab-description mt-2 h-3.5 w-72 max-w-full" />
+        <div className="sm:mt-8">
           <Skeleton className="h-4 w-24" />
           <div className="mt-2 divide-y divide-line border-y border-line">
             <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-2">

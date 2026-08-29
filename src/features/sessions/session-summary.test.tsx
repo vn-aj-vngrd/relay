@@ -15,7 +15,7 @@ describe("SessionHero", () => {
     );
 
     const heading = screen.getByRole("heading", { name: longTitle });
-    expect(heading).toHaveClass("break-words", "text-[1.75rem]");
+    expect(heading).toHaveClass("break-words", "text-[1.625rem]", "sm:text-4xl");
     expect(heading).not.toHaveClass("truncate");
     expect(heading).toHaveAttribute("title", longTitle);
     expect(screen.getByText("Hosted by you")).toHaveClass("truncate");

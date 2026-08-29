@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SessionChatView } from "@/features/chat/session-chat-view";
@@ -15,32 +14,24 @@ export default async function PublicChatPage({ params }: { params: Promise<{ slu
   return (
     <main
       id="main-content"
-      className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface py-2 sm:py-4"
+      className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-chat-panel mx-auto flex h-full min-h-0 max-w-6xl flex-col overflow-hidden bg-surface px-4 pt-6 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8">
         <div className="min-w-0">
-          <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
-            {data.session.title}
+          <h1 className="public-tab-title app-title">Chat</h1>
+          <p className="public-tab-description mt-2 text-sm text-muted">
+            The session conversation for players and guests.
           </p>
-          <h1 className="mt-1 app-title">Chat</h1>
-          <p className="mt-2 text-sm text-muted">The session conversation for players and guests.</p>
         </div>
-        {!canWrite ? (
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-y border-line py-4">
-            <p className="text-sm text-muted">Join the game first to send messages and photos.</p>
-            <Link href={`/s/${slug}`} className="inline-flex min-h-11 items-center font-semibold text-primary">
-              Join on the plan
-            </Link>
-          </div>
-        ) : null}
-        <div className="mt-5 min-h-0 flex-1">
+        <div className="min-h-0 flex-1 overflow-hidden sm:mt-5 sm:rounded-xl sm:border sm:border-line">
           <SessionChatView
             sessionId={data.session.id}
             timezone={data.session.timezone}
             slug={slug}
             viewer={{ userId: viewer?.user?.id ?? null, playerId: viewer?.player.id ?? "", canWrite }}
-            className="h-full"
+            readOnlyMessage="Join the game to send messages and photos."
+            className="h-full border-t-0"
           />
         </div>
       </div>

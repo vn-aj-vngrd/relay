@@ -22,7 +22,10 @@ describe("PublicSessionNav", () => {
     ]);
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute("href", "/s/saturday-night-pickle/play");
-    expect(screen.getByRole("navigation", { name: "Game navigation" })).toHaveClass("border-b", "border-line");
+    expect(screen.getByRole("link", { name: "Play" })).toHaveClass("min-h-9", "px-3.5", "text-[13px]");
+    const navigation = screen.getByRole("navigation", { name: "Game navigation" });
+    expect(navigation).not.toHaveClass("border-b");
+    expect(navigation.querySelector(".max-w-6xl > .border-b")).toHaveClass("border-line");
   });
 
   it("keeps Play as the live and completed result surface and links to Story", () => {
@@ -33,9 +36,23 @@ describe("PublicSessionNav", () => {
 
   it("scopes the active state to the session accent", () => {
     const { container } = render(
-      <PublicSessionHeader slug="saturday-night-pickle" signedIn={false} accentColor="coral" />,
+      <PublicSessionHeader
+        slug="saturday-night-pickle"
+        signedIn={false}
+        accentColor="coral"
+        gameTitle="Saturday Night Pickle"
+      />,
     );
 
+    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Sign in" })).toHaveClass(
+      "border-transparent",
+      "bg-transparent",
+      "sm:border-line",
+      "sm:bg-surface",
+    );
+    expect(container.querySelector<HTMLElement>("header.app-chrome")).not.toHaveClass("sticky");
+    expect(screen.getByRole("navigation", { name: "Game navigation" }).parentElement).toHaveClass("sticky", "top-0");
     expect(container.querySelector<HTMLElement>(".app-chrome")?.style.getPropertyValue("--primary")).toContain(
       "#bd4545",
     );

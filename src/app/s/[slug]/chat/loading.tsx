@@ -2,23 +2,19 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicChatLoading() {
   return (
-    <main
-      id="main-content"
-      className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface py-2 sm:py-4"
-      aria-label="Loading session chat"
-      aria-busy="true"
-    >
-      <div className="public-session-panel public-chat-panel mx-auto flex h-full min-h-0 max-w-6xl flex-col overflow-hidden bg-surface px-4 pt-6 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <Skeleton className="h-4 w-40 max-w-full" />
-            <Skeleton className="mt-2 h-8 w-20" />
-            <Skeleton className="mt-2 h-3.5 w-72 max-w-[70vw]" />
-          </div>
-          <Skeleton className="h-6 w-20" />
+    <main id="main-content" className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface">
+      <div
+        role="status"
+        aria-label="Loading session chat"
+        aria-busy="true"
+        className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8"
+      >
+        <div className="min-w-0">
+          <Skeleton className="public-tab-title h-8 w-20" />
+          <Skeleton className="public-tab-description mt-2 h-3.5 w-72 max-w-[70vw]" />
         </div>
-        <div className="mt-5 flex min-h-0 flex-1 flex-col overflow-hidden border-t border-line">
-          <div className="min-h-0 flex-1 overflow-hidden py-5">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:mt-5 sm:rounded-xl sm:border sm:border-line">
+          <div className="min-h-0 flex-1 overflow-hidden py-5 sm:px-3">
             <div className="mx-auto mb-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-line" />
               <Skeleton className="h-3 w-16" />
@@ -41,7 +37,7 @@ export default function PublicChatLoading() {
               </div>
             </div>
           </div>
-          <div className="shrink-0 border-t border-line pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3">
+          <div className="shrink-0 border-t border-line pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-3">
             <div className="flex items-end gap-2">
               <Skeleton className="h-11 w-11" />
               <Skeleton className="h-11 flex-1" />

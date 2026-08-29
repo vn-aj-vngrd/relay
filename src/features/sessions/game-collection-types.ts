@@ -4,6 +4,7 @@ export type GameCollectionItem = {
   title: string;
   date: string;
   dateKey: string;
+  endsAt: string;
   time: string;
   venue: string;
   playerCount: number;

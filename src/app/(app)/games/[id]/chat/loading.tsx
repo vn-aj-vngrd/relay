@@ -11,7 +11,7 @@ export default function ChatLoading() {
         aria-busy="true"
         className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden sm:rounded-xl sm:border sm:border-line"
       >
-        <div className="min-h-0 flex-1 space-y-5 px-3 py-5 sm:px-5">
+        <div className="min-h-0 flex-1 space-y-5 py-5 sm:px-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-px flex-1" />
             <Skeleton className="h-3 w-16" />
@@ -28,7 +28,7 @@ export default function ChatLoading() {
             <Skeleton className="h-12 w-48 rounded-xl" />
           </div>
         </div>
-        <div className="flex items-end gap-2 border-t border-line bg-surface p-3">
+        <div className="flex items-end gap-2 border-t border-line bg-surface pb-3 pt-3 sm:px-3">
           <Skeleton className="h-11 w-11 rounded-lg" />
           <Skeleton className="h-11 flex-1 rounded-xl" />
           <Skeleton className="h-11 w-11 rounded-lg" />

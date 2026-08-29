@@ -26,7 +26,7 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
         className="public-session-page min-h-screen bg-surface"
         style={sessionAccentStyle(data.session.accentColor)}
       >
-        <div className="public-session-panel public-session-content mx-auto max-w-xl bg-surface px-4 py-14 text-center sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+        <div className="public-session-content mx-auto w-full max-w-xl bg-surface px-4 py-4 text-center sm:px-6 sm:py-14">
           <CurrencyCircleDollar aria-hidden size={26} className="mx-auto text-primary" />
           <h1 className="mt-4 text-2xl font-bold">Payments are for players</h1>
           <p className="mt-2 leading-7 text-muted">
@@ -66,17 +66,14 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
-          {data.session.title}
-        </p>
-        <h1 className="mt-1 app-title">Your payment</h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+        <h1 className="public-tab-title app-title">Your payment</h1>
+        <p className="public-tab-description mt-2 max-w-xl text-sm leading-6 text-muted">
           The host paid upfront. Repay your share through their listed app or bank, then upload one screenshot. Relay
           never moves the money.
         </p>
         {items.length ? (
-          <div className="mt-8 space-y-10">
+          <div className="space-y-10 sm:mt-8">
             {items.map(({ expense, account, payment, qrUrl, receiptUrl }) =>
               payment ? (
                 <section
@@ -138,7 +135,7 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
             )}
           </div>
         ) : (
-          <section className="mt-10 border-y border-line py-12 text-center">
+          <section className="border-y border-line py-4 text-center sm:mt-10 sm:py-12">
             <CircleDashed aria-hidden className="mx-auto text-primary" size={24} />
             <h2 className="mt-4 text-xl font-bold">No payment request yet</h2>
             <p className="mt-2 text-sm text-muted">

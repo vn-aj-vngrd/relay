@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GameCollection, type GameCollectionItem } from "./game-collection";
+import { GameCollection, type GameCollectionItem, GameViewMenu } from "./game-collection";
 
 const game: GameCollectionItem = {
   id: "game-1",
@@ -9,6 +9,7 @@ const game: GameCollectionItem = {
   title: "Saturday Night Pickle",
   date: "AUG 22",
   dateKey: "2026-08-22",
+  endsAt: "2099-08-22T13:00:00.000Z",
   time: "7:00–9:00 PM",
   venue: "Central Pickle",
   playerCount: 8,
@@ -18,6 +19,17 @@ const game: GameCollectionItem = {
   readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
+const liveGame: GameCollectionItem = {
+  ...game,
+  id: "game-live",
+  href: "/games/game-live",
+  title: "Wednesday Night Live",
+  date: "AUG 20",
+  dateKey: "2026-08-20",
+  status: "live",
+  readiness: undefined,
+};
+
 const pastGame: GameCollectionItem = {
   ...game,
   id: "game-2",
@@ -25,6 +37,7 @@ const pastGame: GameCollectionItem = {
   title: "Friday Crew",
   date: "AUG 15",
   dateKey: "2026-08-15",
+  endsAt: "2026-08-15T13:00:00.000Z",
   status: "completed",
   readiness: undefined,
 };
@@ -85,8 +98,13 @@ describe("GameCollection", () => {
     expect(screen.getByTestId("games-grid")).toBeVisible();
   });
 
-  it("keeps mobile view selection behind one compact control", () => {
-    render(<GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />);
+  it("keeps mobile view selection behind one compact header control", () => {
+    render(
+      <>
+        <GameViewMenu />
+        <GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />
+      </>,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Change game view, currently List" }));
     const gridOption = screen.getByRole("menuitemradio", { name: "Grid" });
@@ -98,10 +116,14 @@ describe("GameCollection", () => {
     expect(screen.queryByRole("menu", { name: "Game view" })).not.toBeInTheDocument();
   });
 
-  it("filters the collection with horizontally reusable tab chips", () => {
+  it("defaults to upcoming while keeping all and past filters available", () => {
     render(<GameCollection upcomingPage={page([game])} pastPage={page([pastGame])} todayKey="2026-08-15" />);
 
-    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
+    expect(screen.queryByText("Friday Crew")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
     expect(screen.getByText("Friday Crew")).toBeVisible();
 
@@ -109,6 +131,20 @@ describe("GameCollection", () => {
     expect(screen.queryByText("Saturday Night Pickle")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
     expect(screen.getByText("1 game")).toBeVisible();
+  });
+
+  it("pins live games above scheduled games and never shows them in past", () => {
+    render(<GameCollection upcomingPage={page([game, liveGame])} pastPage={page([pastGame])} todayKey="2026-08-15" />);
+
+    expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      "Live now",
+      "Upcoming",
+    ]);
+    expect(screen.getByText("Wednesday Night Live")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Past" }));
+    expect(screen.queryByText("Wednesday Night Live")).not.toBeInTheDocument();
+    expect(screen.getByText("Friday Crew")).toBeVisible();
   });
 
   it("loads and deduplicates the next page as its sentinel approaches", async () => {

@@ -1,9 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppNav } from "./app-nav";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/home" }));
+const navigationState = vi.hoisted(() => ({ pathname: "/home" }));
+vi.mock("next/navigation", () => ({ usePathname: () => navigationState.pathname }));
+
+beforeEach(() => {
+  navigationState.pathname = "/home";
+});
 
 describe("AppNav", () => {
   it("renders the theme-aware mobile bar with clear active and inactive states", () => {
@@ -16,5 +21,13 @@ describe("AppNav", () => {
     expect(screen.getByRole("link", { name: "Games" })).toHaveClass("text-muted");
     expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute("href", "/court");
     expect(screen.queryByRole("link", { name: "Profile" })).not.toBeInTheDocument();
+  });
+
+  it("removes global mobile navigation inside a focused game workspace", () => {
+    navigationState.pathname = "/games/game-1/chat";
+
+    render(<AppNav mode="mobile" />);
+
+    expect(screen.queryByRole("navigation", { name: "Main navigation" })).not.toBeInTheDocument();
   });
 });

@@ -8,7 +8,7 @@ function JoinPanelSkeleton({ mobile = false }: { mobile?: boolean }) {
       className={
         mobile
           ? "public-session-section border-b border-line lg:hidden"
-          : "public-session-panel bg-surface p-5 sm:rounded-xl sm:border sm:border-line"
+          : "public-session-panel public-session-overview-card rounded-xl border border-line bg-surface p-5"
       }
     >
       <div className={`flex items-start justify-between gap-4 ${mobile ? "mb-5" : "mb-5 border-b border-line pb-5"}`}>
@@ -47,7 +47,7 @@ function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
         </div>
       </div>
       <div className="divide-y divide-line border-y border-line">
-        {Array.from({ length: 3 }, (_, index) => (
+        {Array.from({ length: 5 }, (_, index) => (
           <div key={index} className="flex min-h-14 items-center gap-3 py-2">
             <Skeleton className="h-8 w-8 rounded-full" />
             <Skeleton className="h-3.5 flex-1" />
@@ -62,28 +62,32 @@ function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
 
 export default function PublicPlanLoading() {
   return (
-    <main
-      id="main-content"
-      role="status"
-      className="public-session-page min-h-screen bg-surface"
-      aria-label="Loading game plan"
-      aria-busy="true"
-    >
-      <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
+    <main id="main-content" className="public-session-page min-h-screen bg-surface">
+      <div
+        role="status"
+        aria-label="Loading game plan"
+        aria-busy="true"
+        className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8"
+      >
         <div className="px-4 sm:px-0">
-          <Skeleton className="h-4 w-40" />
           <GamePageIntro
             title="Overview"
             description="The plan, roster, availability, and what you need before the game."
-            action={<Skeleton className="h-9 w-24 lg:hidden" />}
           />
         </div>
         <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-          <article className="public-session-panel min-w-0 overflow-hidden bg-surface sm:rounded-xl sm:border sm:border-line">
-            <div className="public-session-hero min-h-48 bg-canvas px-5 pb-8 pt-7 sm:min-h-52 sm:px-8 sm:pb-10">
-              <Skeleton className="h-3 w-36" />
-              <Skeleton className="mt-8 h-10 w-3/4" />
-              <Skeleton className="mt-3 h-4 w-32" />
+          <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
+            <div
+              className="public-session-hero relative min-h-44 overflow-hidden px-4 pb-6 pt-5 sm:min-h-48 sm:px-8 sm:pb-10 sm:pt-7"
+              style={{ backgroundColor: "var(--court)" }}
+            >
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
+              <Skeleton className="h-3 w-36 bg-white/15" />
+              <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
+              <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
+            </div>
+            <div className="border-b border-line px-4 py-3 lg:hidden">
+              <Skeleton className="h-11 w-full rounded-lg" />
             </div>
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
               <div className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line">
@@ -105,7 +109,7 @@ export default function PublicPlanLoading() {
               <RosterSkeleton mobile />
             </div>
           </article>
-          <aside className="hidden space-y-7 self-start lg:block">
+          <aside className="hidden space-y-7 self-start lg:sticky lg:top-6 lg:block">
             <JoinPanelSkeleton />
             <RosterSkeleton />
           </aside>

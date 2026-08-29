@@ -45,9 +45,9 @@ export function SessionRecap({
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/70 sm:text-base">
             {completed
-              ? "The final scores, pairings, and court time from the night."
+              ? "The final scores, pairings, and court time from the game."
               : inProgress
-                ? "Completed matches are already filling the night’s results."
+                ? "Completed matches are already filling the game’s results."
                 : "Scores, pairings, and standings will collect here as the game unfolds."}
           </p>
           <div className="mt-8 grid grid-cols-3 border-y border-white/15 py-5 text-center sm:max-w-2xl sm:text-left">
@@ -107,7 +107,7 @@ export function SessionRecap({
             </div>
             <div className="py-5 sm:px-6">
               <dt className="text-xs font-semibold text-muted">Pair that clicked</dt>
-              <dd className="mt-2 text-lg font-bold">{recap.topPair?.names.join(" + ") ?? "Mixing all night"}</dd>
+              <dd className="mt-2 text-lg font-bold">{recap.topPair?.names.join(" + ") ?? "Partners kept rotating"}</dd>
               <dd className="mt-1 text-sm text-muted">
                 {recap.topPair ? `${recap.topPair.wins} wins together` : "No repeated pair"}
               </dd>
@@ -147,7 +147,7 @@ export function SessionRecap({
           <h2 id="recap-standings-title" className="text-xl font-bold">
             Session Standings
           </h2>
-          <p className="mt-1 text-sm text-muted">Only this game night. Never a player rating.</p>
+          <p className="mt-1 text-sm text-muted">Only this game. Never a player rating.</p>
           <div className="mt-4 overflow-x-auto border-y border-line">
             <table className="w-full min-w-[520px] text-sm">
               <thead>

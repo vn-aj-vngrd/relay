@@ -19,12 +19,14 @@ export async function SessionChatView({
   timezone,
   viewer,
   slug,
+  readOnlyMessage,
   className = "",
 }: {
   sessionId: string;
   timezone: string;
   viewer: { userId: string | null; playerId: string; canWrite: boolean };
   slug?: string;
+  readOnlyMessage?: string;
   className?: string;
 }) {
   const maxImageBytes = getServerEnv().CHAT_IMAGE_MAX_BYTES;
@@ -116,7 +118,7 @@ export async function SessionChatView({
                       <div>
                         {!grouped && !own ? <p className="mb-1 px-1 text-xs font-semibold text-muted">{name}</p> : null}
                         <div
-                          className={`relative overflow-hidden rounded-2xl ${own ? "rounded-br-md bg-primary text-white" : "rounded-bl-md bg-surface-strong text-ink"}`}
+                          className={`relative w-fit max-w-full overflow-hidden rounded-2xl ${own ? "ml-auto rounded-br-md bg-primary text-white" : "rounded-bl-md bg-surface-strong text-ink"}`}
                         >
                           {imageUrl ? (
                             <ChatPhotoViewer
@@ -173,7 +175,11 @@ export async function SessionChatView({
           </div>
         )}
       </ChatThread>
-      {viewer.canWrite ? <ChatComposer sessionId={sessionId} slug={slug} maxImageBytes={maxImageBytes} /> : null}
+      {viewer.canWrite ? (
+        <ChatComposer sessionId={sessionId} slug={slug} maxImageBytes={maxImageBytes} />
+      ) : readOnlyMessage ? (
+        <p className="shrink-0 px-4 py-3 text-center text-sm leading-5 text-muted">{readOnlyMessage}</p>
+      ) : null}
     </div>
   );
 }

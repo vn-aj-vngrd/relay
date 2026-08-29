@@ -30,15 +30,12 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
         className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
         style={sessionAccentStyle(data.session.accentColor)}
       >
-        <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-          <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
-            {data.session.title}
-          </p>
-          <h1 className="mt-1 app-title">Recap</h1>
-          <p className="mt-2 text-sm text-muted">
+        <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+          <h1 className="public-tab-title app-title">Recap</h1>
+          <p className="public-tab-description mt-2 text-sm text-muted">
             The final scores, pairings, highlights, and standings from this game.
           </p>
-          <div className="mt-7">
+          <div className="sm:mt-7">
             <SessionRecap session={data.session} recap={recap} storyHref={`/s/${slug}/story`} />
           </div>
         </div>
@@ -74,18 +71,17 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
       className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
+      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
-              {data.session.title}
+            <h1 className="public-tab-title app-title">Play</h1>
+            <p className="public-tab-description mt-2 text-sm text-muted">
+              Court assignments, scores, and who plays next.
             </p>
-            <h1 className="mt-1 app-title">Play</h1>
-            <p className="mt-2 text-sm text-muted">Court assignments, scores, and who plays next.</p>
           </div>
         </div>
         {data.session.status !== "live" && !data.activeMatches.length ? (
-          <section className="mt-10 border-y border-line py-12 text-center">
+          <section className="border-y border-line py-4 text-center sm:mt-10 sm:py-12">
             <Broadcast aria-hidden size={25} className="mx-auto text-primary" />
             <h2 className="mt-4 text-xl font-bold">Play hasn’t started</h2>
             <p className="mt-2 text-sm text-muted">
@@ -105,7 +101,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
             ) : null}
           </section>
         ) : (
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_300px]">
+          <div className="grid gap-8 sm:mt-8 lg:grid-cols-[1fr_300px]">
             <section>
               <h2 className="mb-4 text-lg font-bold">Active courts</h2>
               {data.session.roundDurationMinutes && roundStartedAt ? (

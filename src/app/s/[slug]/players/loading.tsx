@@ -2,17 +2,16 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicPlayersLoading() {
   return (
-    <main
-      id="main-content"
-      className="public-session-page min-h-screen bg-surface"
-      aria-label="Loading players"
-      aria-busy="true"
-    >
-      <article className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <Skeleton className="h-4 w-40" />
-        <div className="mt-2 flex items-end justify-between gap-4">
+    <main id="main-content" className="public-session-page min-h-screen bg-surface">
+      <article
+        role="status"
+        aria-label="Loading players"
+        aria-busy="true"
+        className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8"
+      >
+        <div className="flex items-end justify-between gap-4">
           <div>
-            <Skeleton className="h-8 w-28" />
+            <Skeleton className="public-tab-title h-8 w-28" />
             <Skeleton className="mt-2 h-3.5 w-36" />
           </div>
           <Skeleton className="h-7 w-16" />
@@ -21,7 +20,10 @@ export default function PublicPlayersLoading() {
           {Array.from({ length: 5 }, (_, index) => (
             <div key={index} className="public-session-row flex min-h-16 items-center gap-3 py-2">
               <Skeleton className="h-8 w-8 rounded-full" />
-              <Skeleton className="h-4 flex-1 max-w-40" />
+              <div className="min-w-0 flex-1">
+                <Skeleton className="h-4 w-40 max-w-full" />
+                <Skeleton className="mt-1.5 h-3 w-24 max-w-full" />
+              </div>
               <Skeleton className="h-3 w-12" />
             </div>
           ))}

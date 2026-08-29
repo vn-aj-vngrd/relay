@@ -39,20 +39,25 @@ export function SessionMemories({
   const completed = session.status === "completed";
 
   if (!completed) {
+    const inProgress = session.status === "live";
     return (
       <section className="overflow-hidden rounded-xl bg-[var(--scoreboard-field)] text-white">
         <div className="border-b border-white/15 px-5 py-4 sm:px-8">
-          <p className="sport-label text-[var(--scoreboard-line)]">After the last point</p>
+          <p className="sport-label text-[var(--scoreboard-line)]">
+            {inProgress ? "Game in progress" : "After the game"}
+          </p>
         </div>
         <div className="px-5 py-8 sm:px-8 sm:py-10">
           <p className="text-sm font-medium text-white/65">
             {date} · {session.venueName}
           </p>
           <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
-            This night is still being played.
+            {inProgress ? "This game is still being played." : "Story unlocks when the game ends."}
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/70 sm:text-base">
-            When the host ends the session, Story will show the final scores and game photos.
+            {inProgress
+              ? "Final scores and game photos will appear here after the host ends the game."
+              : "Once play is complete, this space will hold the final scores and game photos."}
           </p>
         </div>
       </section>
@@ -65,7 +70,7 @@ export function SessionMemories({
         <div>
           <p className="text-sm font-semibold text-primary">Story maker</p>
           <h2 id="share-memory-title" className="mt-2 text-2xl font-bold tracking-[-0.025em]">
-            Share the night
+            Share the game
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
             Choose one true highlight, pair it with a Relay color or crew photo, and make a portrait ready to share.
@@ -113,7 +118,7 @@ export function SessionMemories({
           </div>
         ) : (
           <p className="mt-4 border-y border-line py-7 text-sm text-muted">
-            No photos yet. Add the first moment from the night.
+            No photos yet. Add the first moment from the game.
           </p>
         )}
         {canContribute ? (

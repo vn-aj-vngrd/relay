@@ -188,30 +188,27 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replaceAll("<", "\\u003c") }}
       />
-      <div className="mx-auto w-full max-w-6xl pb-12 pt-8 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8">
         <div className="px-4 sm:px-0">
-          <p title={session.title} className="truncate text-sm font-semibold text-primary">
-            {session.title}
-          </p>
           <GamePageIntro
             title="Overview"
             description="The plan, roster, availability, and what you need before the game."
-            action={
-              session.status !== "completed" ? (
-                <ButtonLink href="#public-rsvp-title" className="lg:hidden">
-                  {currentRsvp ? "Update response" : spots ? "Join game" : "Join waitlist"}
-                </ButtonLink>
-              ) : undefined
-            }
           />
         </div>
         <div className={`grid gap-6 ${session.status === "completed" ? "" : "lg:grid-cols-[1fr_350px]"}`}>
-          <article className="public-session-panel min-w-0 bg-surface sm:rounded-xl sm:border sm:border-line">
+          <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
             <SessionHero
               session={session}
               hostLabel={`Hosted by ${hostProfile?.name ?? "the host"}`}
               headingLevel="h2"
             />
+            {session.status !== "completed" ? (
+              <div className="border-b border-line px-4 py-3 lg:hidden">
+                <ButtonLink href="#public-rsvp-title" className="w-full">
+                  {currentRsvp ? "Update response" : spots ? "Join game" : "Join waitlist"}
+                </ButtonLink>
+              </div>
+            ) : null}
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
               <SessionAtAGlance
@@ -272,7 +269,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
           </article>
           {session.status !== "completed" ? (
             <aside className="hidden space-y-7 self-start lg:sticky lg:top-6 lg:block">
-              <section className="public-session-panel bg-surface p-5 sm:rounded-xl sm:border sm:border-line">
+              <section className="public-session-panel public-session-overview-card rounded-xl border border-line bg-surface p-5">
                 <div className="mb-5 border-b border-line pb-5">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-lg font-bold">{joinTitle}</h2>

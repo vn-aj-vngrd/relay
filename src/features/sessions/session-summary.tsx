@@ -31,7 +31,7 @@ export function SessionHero({
   const Heading = headingLevel;
   return (
     <div
-      className="public-session-hero relative overflow-hidden px-5 pb-8 pt-7 text-white sm:rounded-t-xl sm:px-8 sm:pb-10"
+      className="public-session-hero relative overflow-hidden px-4 pb-6 pt-5 text-white sm:rounded-t-xl sm:px-8 sm:pb-10 sm:pt-7"
       style={{ backgroundColor: "var(--session-cover, var(--court))" }}
     >
       <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
@@ -40,11 +40,11 @@ export function SessionHero({
       <p className="sport-label text-white/65">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
       <Heading
         title={session.title}
-        className="relative mt-4 max-w-xl break-words text-[1.75rem] font-[720] leading-[2.125rem] tracking-[-0.025em] sm:text-4xl sm:leading-[2.5rem]"
+        className="relative mt-3 max-w-xl break-words text-[1.625rem] font-[720] leading-8 tracking-[-0.025em] sm:mt-4 sm:text-4xl sm:leading-[2.5rem]"
       >
         {session.title}
       </Heading>
-      <p title={hostLabel} className="relative mt-3 truncate text-white/70">
+      <p title={hostLabel} className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base">
         {hostLabel}
       </p>
     </div>
@@ -62,7 +62,7 @@ export function SessionPlanDetails({
   return (
     <section
       aria-label="Session plan"
-      className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line"
+      className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-5 border-b border-line sm:gap-y-6"
     >
       <div className="col-span-2 flex gap-3 sm:col-span-1">
         <CalendarBlank aria-hidden className="mt-0.5 shrink-0 text-primary" size={20} />
@@ -86,7 +86,7 @@ export function SessionPlanDetails({
           </a>
         </div>
       </div>
-      <div className="col-span-2 flex gap-3 min-[360px]:col-span-1">
+      <div className="col-span-2 flex gap-3 sm:col-span-1">
         <Clock aria-hidden className="mt-0.5 shrink-0 text-primary" size={20} />
         <div>
           <p className="font-semibold">
@@ -101,7 +101,7 @@ export function SessionPlanDetails({
           </p>
         </div>
       </div>
-      <div className="col-span-2 flex gap-3 min-[360px]:col-span-1">
+      <div className="col-span-2 flex gap-3 sm:col-span-1">
         <CheckCircle
           aria-hidden
           className={`mt-0.5 shrink-0 ${session.bookedAt ? "text-success" : "text-muted"}`}

@@ -15,6 +15,7 @@ type CebuCourtMapProps = {
   onSelect: (id: string) => void;
   children?: ReactNode;
   compactPreview?: boolean;
+  mobileEdgeToEdge?: boolean;
 };
 
 function mapStyle(dark: boolean): StyleSpecification {
@@ -82,6 +83,7 @@ export function CebuCourtMap({
   onSelect,
   children,
   compactPreview = false,
+  mobileEdgeToEdge = false,
 }: CebuCourtMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -237,7 +239,7 @@ export function CebuCourtMap({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0 ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[52dvh] min-h-[360px] max-h-[480px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
+      className={`relative w-full overflow-hidden border border-line bg-surface-raised sm:rounded-xl xl:h-full xl:min-h-0 ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[58dvh] min-h-[400px] max-h-[520px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
     >
       <div
         ref={containerRef}

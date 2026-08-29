@@ -25,7 +25,7 @@ const match: RecapMatch = {
   finishedAt: new Date("2026-08-19T10:12:00Z"),
 };
 
-function renderMemories(status: "live" | "completed") {
+function renderMemories(status: "published" | "live" | "completed") {
   return render(
     <SessionMemories
       session={{
@@ -45,15 +45,21 @@ function renderMemories(status: "live" | "completed") {
 }
 
 describe("SessionMemories", () => {
-  it("waits for the final session before opening the composer", () => {
+  it("describes a scheduled game without implying that play has started", () => {
+    renderMemories("published");
+    expect(screen.getByRole("heading", { name: "Story unlocks when the game ends." })).toBeVisible();
+    expect(screen.getByText(/Once play is complete/)).toBeVisible();
+  });
+
+  it("describes live play without assuming a time of day", () => {
     renderMemories("live");
-    expect(screen.getByText("This night is still being played.")).toBeVisible();
+    expect(screen.getByText("This game is still being played.")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
   });
 
   it("shows story creation and photos after completion", () => {
     renderMemories("completed");
-    expect(screen.getByRole("heading", { name: "Share the night" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Share the game" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Photos from the game" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "From the crew" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();

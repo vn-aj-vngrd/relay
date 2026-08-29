@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -84,6 +84,31 @@ describe("CourtFinder", () => {
     );
   });
 
+  it("gives mobile and tablet users dedicated map and list views", () => {
+    render(<CourtFinder venues={[venue, fartherVenue]} />);
+
+    const mapButton = screen.getByRole("button", { name: "Map" });
+    const listButton = screen.getByRole("button", { name: "List" });
+    const map = screen.getByRole("region", { name: "Court map" });
+    const listPane = document.querySelector<HTMLElement>("[data-court-list-pane]");
+
+    expect(mapButton).toHaveAttribute("aria-pressed", "true");
+    expect(map).toHaveClass("flex");
+    expect(listPane).toHaveClass("hidden", "xl:block");
+
+    fireEvent.click(listButton);
+
+    expect(listButton).toHaveAttribute("aria-pressed", "true");
+    expect(map).toHaveClass("hidden", "xl:flex");
+    expect(listPane).toHaveClass("block");
+
+    fireEvent.click(within(listPane!).getByRole("button", { name: /NiceServe Pickleball Court/ }));
+
+    expect(mapButton).toHaveAttribute("aria-pressed", "true");
+    expect(map).toHaveClass("flex");
+    expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
+  });
+
   it("selects a mapped Cebu court and carries it into game creation", () => {
     render(<CourtFinder venues={[venue]} isAuthenticated />);
 
@@ -95,6 +120,7 @@ describe("CourtFinder", () => {
       "/games/new?venue=NiceServe+Pickleball+Court&address=Mahayahay+Road%2C+Lapu-Lapu%2C+Cebu",
     );
     expect(screen.getByRole("link", { name: /booking/i })).toHaveAttribute("href", "https://example.com/book");
+    expect(screen.getByRole("link", { name: /Can’t find your court/ })).toHaveAttribute("href", "/court/suggest");
   });
 
   it("sends public visitors through signup without losing the selected court", () => {
@@ -134,7 +160,7 @@ describe("CourtFinder", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
     fireEvent.click(screen.getByLabelText("Paddle rental"));
-    fireEvent.click(screen.getByLabelText("Verified only"));
+    fireEvent.click(screen.getByLabelText("Verified"));
 
     expect(screen.getAllByRole("button", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
     expect(screen.queryAllByRole("button", { name: /Farther Court/ })).toHaveLength(0);

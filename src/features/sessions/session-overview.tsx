@@ -67,7 +67,7 @@ export function SessionAtAGlanceSkeleton() {
         {Array.from({ length: 4 }, (_, index) => (
           <div
             key={index}
-            className={`flex min-h-28 items-start gap-3 py-4 ${index % 2 ? "border-l border-line pl-4" : "pr-4"} ${index < 2 ? "border-b border-line" : ""}`}
+            className={`flex min-h-28 min-w-0 items-start gap-2.5 py-4 ${index % 2 ? "border-l border-line pl-3 sm:pl-4" : "pr-3 sm:pr-4"} ${index < 2 ? "border-b border-line" : ""}`}
           >
             <Skeleton className="h-5 w-5 shrink-0" />
             <div className="flex-1 space-y-2">

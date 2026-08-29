@@ -58,7 +58,7 @@ export function AppNav({ mode }: { mode: "sidebar" | "mobile" }) {
     );
   }
 
-  if (pathname === "/games/new") return null;
+  if (pathname === "/games/new" || /^\/games\/[^/]+(?:\/.*)?$/.test(pathname)) return null;
 
   return (
     <nav

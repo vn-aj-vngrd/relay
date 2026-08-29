@@ -35,7 +35,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           title="Recap"
           description="The final scores, pairings, highlights, and standings from this game."
         />
-        <div className="mx-auto w-full max-w-6xl pt-6">
+        <div className="mx-auto w-full max-w-6xl sm:pt-6">
           <SessionRecap session={data.session} recap={recap} storyHref={`/games/${data.session.id}/story`} />
         </div>
       </>
@@ -106,15 +106,15 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
         }
       />
       {data.session.status !== "live" ? (
-        <section className="mx-auto w-full max-w-6xl py-10 sm:py-14">
-          <div className="text-center">
+        <section className="mx-auto w-full max-w-6xl pb-4 sm:py-14">
+          <div className="hidden text-center sm:block">
             <Broadcast className="mx-auto text-primary" size={26} />
-            <h2 className="mt-4 text-2xl font-bold">Choose how tonight runs</h2>
+            <h2 className="mt-4 text-2xl font-bold">Choose how this game runs</h2>
             <p className="mx-auto mt-2 max-w-lg text-pretty text-muted">
               Set the court flow before play starts. Everyone will see the same assignments, queue, and scores.
             </p>
           </div>
-          <section className="mx-auto mt-9 max-w-2xl text-left" aria-labelledby="arrival-title">
+          <section className="mx-auto max-w-2xl text-left sm:mt-9" aria-labelledby="arrival-title">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <h2 id="arrival-title" className="text-lg font-bold">
@@ -166,7 +166,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           )}
         </section>
       ) : (
-        <div className="grid gap-7 pt-6 lg:grid-cols-[1fr_330px]">
+        <div className="grid gap-7 sm:pt-6 lg:grid-cols-[1fr_330px]">
           <section>
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>

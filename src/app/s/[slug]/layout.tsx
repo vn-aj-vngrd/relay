@@ -18,17 +18,16 @@ export default async function PublicSessionLayout({
     user && data && (data.session.hostId === user.id || (membership && canParticipate(membership.rsvp))),
   );
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-canvas">
+    <div className="public-session-layout flex min-h-dvh flex-col bg-surface">
       {data ? <RealtimeRefresh sessionId={data.session.id} silent /> : null}
       <PublicSessionHeader
         slug={slug}
         signedIn={Boolean(user)}
         gameHref={canOpenGame && data ? `/games/${data.session.id}` : undefined}
         accentColor={data?.session.accentColor}
+        gameTitle={data?.session.title}
       />
-      <div className="public-session-tab-content min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-surface">
-        {children}
-      </div>
+      <div className="public-session-tab-content min-h-0 flex-1 bg-surface">{children}</div>
     </div>
   );
 }

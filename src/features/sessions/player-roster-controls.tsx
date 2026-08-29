@@ -22,7 +22,7 @@ export function AddGuestPlayerForm({ sessionId }: { sessionId: string }) {
   return (
     <form action={action} className="mt-4">
       <input type="hidden" name="sessionId" value={sessionId} />
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_190px_auto] sm:items-end">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px_auto] sm:items-end">
         <div>
           <label htmlFor="guest-player-name" className="sr-only">
             Player name
@@ -50,7 +50,7 @@ export function AddGuestPlayerForm({ sessionId }: { sessionId: string }) {
             ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
           ]}
         />
-        <SubmitButton pendingLabel="Adding…" variant="secondary" className="w-full sm:w-auto">
+        <SubmitButton pendingLabel="Adding…" variant="secondary" className="h-11 min-h-11 w-full sm:w-auto">
           <UserPlus aria-hidden size={17} />
           Add
         </SubmitButton>

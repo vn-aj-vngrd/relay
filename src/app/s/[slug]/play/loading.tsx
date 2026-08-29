@@ -3,22 +3,18 @@ import { LiveCourtSkeleton } from "@/features/matches/live-court-skeleton";
 
 export default function PublicPlayLoading() {
   return (
-    <main
-      id="main-content"
-      className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
-      aria-label="Loading play and scores"
-      aria-busy="true"
-    >
-      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <div className="flex min-w-0 items-end justify-between gap-4">
-          <div className="min-w-0">
-            <Skeleton className="h-4 w-40 max-w-full" />
-            <Skeleton className="mt-2 h-8 w-56 max-w-full" />
-            <Skeleton className="mt-2 h-3.5 w-72 max-w-full" />
-          </div>
-          <Skeleton className="h-9 w-20 shrink-0" />
+    <main id="main-content" className="public-session-page min-h-full bg-surface pb-6 sm:pb-8">
+      <div
+        role="status"
+        aria-label="Loading play and scores"
+        aria-busy="true"
+        className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8"
+      >
+        <div className="min-w-0">
+          <Skeleton className="public-tab-title h-8 w-56 max-w-full" />
+          <Skeleton className="public-tab-description mt-2 h-3.5 w-72 max-w-full" />
         </div>
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid gap-8 sm:mt-8 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section className="min-w-0">
             <Skeleton className="mb-2 h-5 w-28" />
             <Skeleton className="mb-4 h-3.5 w-48" />

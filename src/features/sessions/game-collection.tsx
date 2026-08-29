@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { z } from "zod";
 
+import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 
 import { sessionAccentStyle } from "./accent";
@@ -22,6 +23,7 @@ const gameItemSchema = z.object({
   title: z.string(),
   date: z.string(),
   dateKey: z.string(),
+  endsAt: z.string(),
   time: z.string(),
   venue: z.string(),
   playerCount: z.number(),
@@ -70,76 +72,14 @@ function saveView(mode: ViewMode) {
 }
 
 const viewOptions = [
-  { value: "list" as const, label: "List view", icon: List },
-  { value: "grid" as const, label: "Grid view", icon: GridFour },
-  { value: "calendar" as const, label: "Calendar view", icon: CalendarBlank },
+  { value: "list" as const, label: "List", icon: List },
+  { value: "grid" as const, label: "Grid", icon: GridFour },
+  { value: "calendar" as const, label: "Calendar", icon: CalendarBlank },
 ];
 
-function MobileViewPicker({ mode }: { mode: ViewMode }) {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-  const current = viewOptions.find((option) => option.value === mode) ?? viewOptions[0];
-  const CurrentIcon = current.icon;
-
-  useEffect(() => {
-    if (!open) return;
-    const closeOutside = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const closeWithEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setOpen(false);
-      trigger.current?.focus();
-    };
-    document.addEventListener("pointerdown", closeOutside);
-    document.addEventListener("keydown", closeWithEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOutside);
-      document.removeEventListener("keydown", closeWithEscape);
-    };
-  }, [open]);
-
-  return (
-    <div ref={root} className="relative shrink-0 sm:hidden">
-      <button
-        ref={trigger}
-        type="button"
-        aria-label={`Change game view, currently ${current.label.replace(" view", "")}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-        className="pressable grid h-11 w-11 place-items-center rounded-lg border border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"
-      >
-        <CurrentIcon aria-hidden size={18} />
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          aria-label="Game view"
-          className="absolute right-0 top-[calc(100%+6px)] z-30 min-w-40 rounded-lg border border-line bg-surface p-1 shadow-[0_4px_8px_oklch(0.1_0.01_275/.12)]"
-        >
-          {viewOptions.map(({ value, label, icon: Icon }) => (
-            <button
-              key={value}
-              type="button"
-              role="menuitemradio"
-              aria-checked={mode === value}
-              onClick={() => {
-                saveView(value);
-                setOpen(false);
-                trigger.current?.focus();
-              }}
-              className={`pressable flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-[600] ${mode === value ? "bg-primary-soft text-primary" : "text-ink hover:bg-surface-strong"}`}
-            >
-              <Icon aria-hidden size={17} />
-              {label.replace(" view", "")}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
+export function GameViewMenu() {
+  const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+  return <MobileViewMenu label="Game view" value={mode} options={viewOptions} onChange={saveView} />;
 }
 
 function GamePageSentinel({
@@ -471,17 +411,22 @@ function CollectionSection({
   items,
   mode,
   past,
+  live,
   footer,
 }: {
   title: string;
   items: GameCollectionItem[];
   mode: Exclude<ViewMode, "calendar">;
   past?: boolean;
+  live?: boolean;
   footer?: React.ReactNode;
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-lg font-[680]">{title}</h2>
+      <h2 className={`mb-3 flex items-center gap-2 text-lg font-[680] ${live ? "text-live" : ""}`}>
+        {live ? <span aria-hidden className="h-2 w-2 rounded-full bg-live" /> : null}
+        {title}
+      </h2>
       {items.length ? (
         mode === "grid" ? (
           <GameGrid items={items} />
@@ -507,7 +452,7 @@ export function GameCollection({
 }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   const weekStart = useSyncExternalStore(subscribe, getWeekStart, (): "sunday" | "monday" => "sunday");
-  const [filter, setFilter] = useState<GameFilter>("all");
+  const [filter, setFilter] = useState<GameFilter>("upcoming");
   const [upcoming, setUpcoming] = useState(upcomingPage.items);
   const [past, setPast] = useState(pastPage.items);
   const [upcomingCursor, setUpcomingCursor] = useState(upcomingPage.nextCursor);
@@ -591,14 +536,16 @@ export function GameCollection({
     return () => controller.abort();
   }, [calendarRetry, mode, monthKey]);
 
+  const liveGames = upcoming.filter((game) => game.status === "live");
+  const scheduledGames = upcoming.filter((game) => game.status !== "live");
   const visibleUpcoming = filter === "past" ? [] : upcoming;
   const visiblePast = filter === "upcoming" ? [] : past;
   const visibleCount = visibleUpcoming.length + visiblePast.length;
   const hasVisibleMore =
     (filter !== "past" && Boolean(upcomingCursor)) || (filter !== "upcoming" && Boolean(pastCursor));
   const filterItems = [
-    { value: "all" as const, label: "All" },
     { value: "upcoming" as const, label: "Upcoming" },
+    { value: "all" as const, label: "All" },
     { value: "past" as const, label: "Past" },
   ];
 
@@ -634,7 +581,7 @@ export function GameCollection({
               <button
                 key={value}
                 type="button"
-                aria-label={label}
+                aria-label={`${label} view`}
                 aria-pressed={mode === value}
                 onClick={() => saveView(value)}
                 className={`pressable grid h-9 w-9 place-items-center rounded-lg ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
@@ -644,15 +591,14 @@ export function GameCollection({
             ))}
           </div>
         </div>
-        <div className="flex min-w-0 items-center gap-2 sm:mt-3 sm:block">
+        <div className="min-w-0 sm:mt-3">
           <TabChipRail
             label="Filter games"
             items={filterItems}
             value={filter}
             onChange={setFilter}
-            className="min-w-0 flex-1"
+            className="min-w-0"
           />
-          <MobileViewPicker mode={mode} />
         </div>
       </div>
       {mode === "calendar" ? (
@@ -685,8 +631,11 @@ export function GameCollection({
         )
       ) : (
         <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-10 sm:space-y-12">
-          {filter !== "past" ? (
-            <CollectionSection title="Upcoming" items={upcoming} mode={mode} footer={upcomingFooter} />
+          {filter !== "past" && liveGames.length ? (
+            <CollectionSection title="Live now" items={liveGames} mode={mode} live />
+          ) : null}
+          {filter !== "past" && (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
+            <CollectionSection title="Upcoming" items={scheduledGames} mode={mode} footer={upcomingFooter} />
           ) : null}
           {filter !== "upcoming" ? (
             <CollectionSection title="Past games" items={past} mode={mode} past footer={pastFooter} />

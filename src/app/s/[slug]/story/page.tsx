@@ -16,7 +16,9 @@ export default async function PublicStoryPage({ params }: { params: Promise<{ sl
   const description =
     data.session.status === "completed"
       ? "View the final scores and photos from the game."
-      : "Scores and game photos appear after the host ends the session.";
+      : data.session.status === "live"
+        ? "The final Story will appear after the host ends the game."
+        : "Scores and photos will appear here after the game is played.";
 
   return (
     <main
@@ -24,13 +26,10 @@ export default async function PublicStoryPage({ params }: { params: Promise<{ sl
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-panel public-session-content mx-auto max-w-6xl bg-surface px-4 py-8 sm:mt-8 sm:rounded-xl sm:border sm:border-line sm:px-8">
-        <p title={data.session.title} className="truncate text-sm font-semibold text-primary">
-          {data.session.title}
-        </p>
-        <h1 className="mt-1 app-title">Story</h1>
-        <p className="mt-2 text-sm text-muted">{description}</p>
-        <div className="mt-7">
+      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+        <h1 className="public-tab-title app-title">Story</h1>
+        <p className="public-tab-description mt-2 text-sm text-muted">{description}</p>
+        <div className="sm:mt-7">
           <SessionMemories
             session={data.session}
             recap={recap}

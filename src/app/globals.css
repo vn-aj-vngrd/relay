@@ -304,6 +304,12 @@ p:not(.truncate) {
   color: var(--ink);
   padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
 }
+.relay-tooltip {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 2px 6px oklch(0.1 0.01 275 / 0.14);
+}
 .app-mobile-header,
 .session-tab-safe {
   padding-left: env(safe-area-inset-left);
@@ -333,16 +339,16 @@ p:not(.truncate) {
   }
 }
 @media (max-width: 63.999rem) {
-  button:not(.relay-map-marker),
-  a.pressable,
+  button:not(.relay-map-marker):not(.tab-chip),
+  a.pressable:not(.tab-chip),
   label:has(input),
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
   select,
   textarea {
     min-height: 2.75rem;
   }
-  button[aria-label]:not(.relay-map-marker),
-  a.pressable[aria-label] {
+  button[aria-label]:not(.relay-map-marker):not(.tab-chip),
+  a.pressable[aria-label]:not(.tab-chip) {
     min-width: 2.75rem;
   }
 }
@@ -354,15 +360,44 @@ p:not(.truncate) {
     height: 100%;
   }
 }
-@media (orientation: landscape) and (max-height: 31.25rem) and (max-width: 63.999rem) {
+@media (max-width: 63.999rem) {
   .app-shell:has(.game-workspace) > .app-mobile-header {
     display: none;
   }
-  .app-shell:has(.game-workspace) .mobile-chrome ul {
-    height: 3rem;
-  }
   .game-workspace {
     padding-top: env(safe-area-inset-top);
+  }
+  .app-content:has(.game-workspace) {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+@media (max-width: 39.999rem) {
+  .game-workspace .game-page-intro,
+  .public-session-tab-content .game-page-intro {
+    padding-bottom: 0;
+  }
+  .game-workspace .game-page-intro-title,
+  .public-session-tab-content .game-page-intro-title,
+  .public-session-tab-content .public-tab-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .game-workspace .game-page-intro-description,
+  .public-session-tab-content .game-page-intro-description,
+  .public-session-tab-content .public-tab-description {
+    display: none;
+  }
+}
+@media (orientation: landscape) and (max-height: 31.25rem) and (max-width: 63.999rem) {
+  .app-shell:has(.game-workspace) .mobile-chrome ul {
+    height: 3rem;
   }
   .game-workspace-action-button {
     height: 2.75rem !important;
@@ -397,14 +432,18 @@ p:not(.truncate) {
 }
 .message-row,
 .game-list-item,
-.game-grid-item {
+.game-grid-item,
+.group-list-item,
+.group-grid-item {
   content-visibility: auto;
 }
 .message-row,
-.game-list-item {
+.game-list-item,
+.group-list-item {
   contain-intrinsic-size: auto 72px;
 }
-.game-grid-item {
+.game-grid-item,
+.group-grid-item {
   contain-intrinsic-size: auto 190px;
 }
 html[data-density="compact"] .sidebar-row {
@@ -481,14 +520,15 @@ html[data-density="compact"] .collection-row {
     max-width: 14rem;
     transform: translateY(-50%);
     border-radius: 0.375rem;
-    background: var(--ink);
-    color: var(--surface);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
     padding: 0.375rem 0.5rem;
     font-size: 0.75rem;
     line-height: 1rem;
     font-weight: 550;
     pointer-events: none;
-    box-shadow: 0 2px 6px oklch(0.1 0.01 275 / 0.16);
+    box-shadow: 0 2px 6px oklch(0.1 0.01 275 / 0.14);
   }
   html[data-sidebar="compact"] .sidebar-nav-item:hover .sidebar-item-tooltip,
   html[data-sidebar="compact"] .sidebar-nav-item:focus-visible .sidebar-item-tooltip,
@@ -666,14 +706,18 @@ html.lenis.lenis-smooth iframe {
 }
 
 /* Shared invites stay glanceable; compact mode only tightens repeated information. */
-.public-session-nav-link {
-  min-height: 2.75rem;
-}
 .public-session-panel {
   --public-section-space: 1.75rem;
 }
+.public-session-tab-content .public-session-panel:not(.public-session-overview-card) {
+  border: 0;
+  border-radius: 0;
+}
+.public-session-tab-content .public-session-panel:not(.public-session-overview-card) .public-session-hero {
+  border-radius: 0;
+}
 .public-session-section {
-  padding-block: var(--public-section-space);
+  padding-block: var(--public-section-space, 1.75rem);
 }
 .public-session-plan {
   padding-block: 0 var(--public-section-space);
@@ -690,6 +734,18 @@ html.lenis.lenis-smooth iframe {
 .public-session-scroll::-webkit-scrollbar {
   display: none;
 }
+.tab-chip-fade-right {
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2rem), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2rem), transparent 100%);
+}
+.tab-chip-fade-left {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 100%);
+}
+.tab-chip-fade-both {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 calc(100% - 2rem), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 calc(100% - 2rem), transparent 100%);
+}
 html[data-density="compact"] .public-session-panel {
   --public-section-space: 1.5rem;
 }
@@ -702,6 +758,11 @@ html[data-density="compact"] .public-session-chat-thread {
 .public-session-page {
   min-height: 0;
 }
+.public-session-layout:has(.public-chat-page) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
 .public-chat-page {
   height: 100%;
 }
@@ -711,7 +772,7 @@ html[data-density="compact"] .public-session-chat-thread {
 .app-content:has(.authenticated-chat-page) {
   height: 100%;
   overflow: hidden;
-  padding-bottom: max(6rem, calc(5rem + env(safe-area-inset-bottom)));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 .authenticated-chat-viewport {
   border-top: 0;

@@ -3,7 +3,7 @@ import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
-import { GameCollection } from "@/features/sessions/game-collection";
+import { GameCollection, GameViewMenu } from "@/features/sessions/game-collection";
 import { getGameCollectionPage } from "@/features/sessions/queries";
 
 export default async function GamesPage() {
@@ -15,10 +15,13 @@ export default async function GamesPage() {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 sm:items-end">
         <div>
           <h1 className="app-title">Games</h1>
           <p className="mt-2 hidden max-w-xl text-muted sm:block">See your upcoming, active, and past games.</p>
+        </div>
+        <div className="sm:hidden">
+          <GameViewMenu />
         </div>
         <span className="hidden sm:block">
           <ButtonLink href="/games/new">

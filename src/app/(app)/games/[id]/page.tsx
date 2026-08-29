@@ -113,9 +113,9 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
     isHost && !session.bookedAt ? (
       <form action={markSessionBookedAction}>
         <input type="hidden" name="sessionId" value={session.id} />
-        <SubmitButton pendingLabel="Confirming…">
-          <CalendarCheck aria-hidden size={15} />
+        <SubmitButton pendingLabel="Confirming…" variant="quiet" className="-ml-3 text-primary hover:bg-primary-soft">
           Confirm booking
+          <CalendarCheck aria-hidden size={15} />
         </SubmitButton>
       </form>
     ) : null;
@@ -130,14 +130,14 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
             : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <SessionHero
             session={session}
             hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`}
             headingLevel="h2"
           />
-          <div className="px-5 py-6 sm:px-8 sm:py-8">
+          <div className="px-4 py-5 sm:px-8 sm:py-8">
             <SessionPlanDetails session={session} bookingAction={bookingAction} />
             <SessionAtAGlance
               overview={overview}
@@ -158,7 +158,7 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
         </article>
 
         <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
-          <section className="rounded-xl border border-line bg-surface p-5">
+          <section className="rounded-xl border border-line bg-surface p-4 sm:p-5">
             <p className="text-sm font-semibold text-primary">{isHost ? "Host access" : "Your response"}</p>
             <h2 className="mt-1 text-lg font-bold">
               {isHost ? "You manage this game" : responseLabel(membership?.rsvp)}

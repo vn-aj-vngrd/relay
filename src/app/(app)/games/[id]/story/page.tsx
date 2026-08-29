@@ -15,12 +15,14 @@ export default async function GameStoryPage({ params }: { params: Promise<{ id: 
   const description =
     data.session.status === "completed"
       ? "Make a shareable recap and add photos from the game."
-      : "Scores and game photos appear after the host ends the session.";
+      : data.session.status === "live"
+        ? "The final Story will appear after the host ends the game."
+        : "Scores and photos will appear here after the game is played.";
 
   return (
     <>
       <GamePageIntro title="Story" description={description} />
-      <div className="mx-auto w-full max-w-6xl pt-6">
+      <div className="mx-auto w-full max-w-6xl sm:pt-6">
         <SessionMemories
           session={data.session}
           recap={recap}

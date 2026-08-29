@@ -10,7 +10,7 @@ export default function PlayLoading() {
         role="status"
         aria-label="Loading Play"
         aria-busy="true"
-        className="grid gap-7 pt-6 lg:grid-cols-[1fr_330px]"
+        className="grid gap-7 sm:pt-6 lg:grid-cols-[1fr_330px]"
       >
         <section className="min-w-0">
           <div className="mb-4">

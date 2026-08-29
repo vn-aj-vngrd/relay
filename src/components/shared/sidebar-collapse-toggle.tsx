@@ -42,7 +42,7 @@ export function SidebarCollapseToggle() {
       <SidebarSimple aria-hidden size={19} weight="regular" />
       <span
         role="tooltip"
-        className="sidebar-toggle-tooltip pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1.5 text-xs font-medium text-surface shadow-sm group-hover:block group-focus-visible:block"
+        className="sidebar-toggle-tooltip relay-tooltip pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium group-hover:block group-focus-visible:block"
       >
         {label}
       </span>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
+import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 
 export type GroupCollectionItem = {
@@ -20,6 +21,10 @@ export type GroupCollectionItem = {
 
 type ViewMode = "list" | "grid";
 const preferenceKey = "relay-groups-view";
+const viewOptions = [
+  { value: "list" as const, label: "List", icon: List },
+  { value: "grid" as const, label: "Grid", icon: GridFour },
+];
 
 function getView(): ViewMode {
   return localStorage.getItem(preferenceKey) === "grid" ? "grid" : "list";
@@ -46,7 +51,7 @@ function GroupIdentity({ item, large = false }: { item: GroupCollectionItem; lar
   return (
     <span
       aria-hidden
-      className={`grid shrink-0 place-items-center rounded-full bg-surface-strong font-bold text-ink ${large ? "h-12 w-12 text-sm" : "h-11 w-11 text-sm"}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-surface-strong font-bold text-ink ${large ? "h-10 w-10 text-xs sm:h-12 sm:w-12 sm:text-sm" : "h-10 w-10 text-xs sm:h-11 sm:w-11 sm:text-sm"}`}
     >
       {item.initials}
     </span>
@@ -62,7 +67,7 @@ function GroupList({ items }: { items: GroupCollectionItem[] }) {
           prefetch={false}
           key={item.id}
           style={item.accentColor ? sessionAccentStyle(item.accentColor) : undefined}
-          className="collection-row pressable group flex min-h-20 items-center gap-4 py-4 hover:bg-surface sm:px-3"
+          className="collection-row group-list-item pressable group flex min-h-[4.5rem] items-center gap-3 py-3.5 hover:bg-surface sm:min-h-20 sm:gap-4 sm:px-3 sm:py-4"
         >
           <GroupIdentity item={item} />
           <div className="min-w-0 flex-1">
@@ -82,32 +87,34 @@ function GroupList({ items }: { items: GroupCollectionItem[] }) {
 
 function GroupGrid({ items }: { items: GroupCollectionItem[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
       {items.map((item) => (
         <Link
           href={item.href}
           prefetch={false}
           key={item.id}
           style={item.accentColor ? sessionAccentStyle(item.accentColor) : undefined}
-          className="pressable group rounded-lg border border-line bg-surface p-5 hover:border-primary/35 hover:bg-surface-strong"
+          className="group-grid-item pressable group rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 hover:bg-surface-strong sm:p-5"
         >
-          <article>
+          <article className="flex h-full min-w-0 flex-col">
             <div className="flex items-start justify-between gap-4">
               <GroupIdentity item={item} large />
               <span className="text-xs capitalize text-muted">{item.role}</span>
             </div>
-            <h3 className="mt-5 truncate text-lg font-[680]">{item.name}</h3>
-            <div className="mt-3 space-y-2 text-sm text-muted">
-              <p className="flex items-center gap-2">
-                <UsersThree aria-hidden size={16} />
+            <h3 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 sm:mt-5 sm:truncate sm:text-lg sm:leading-normal">
+              {item.name}
+            </h3>
+            <div className="mt-2 space-y-1.5 text-[13px] text-muted sm:mt-3 sm:space-y-2 sm:text-sm">
+              <p className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                <UsersThree aria-hidden size={15} className="shrink-0" />
                 {item.memberCount} {item.memberCount === 1 ? "member" : "members"}
               </p>
-              <p className="flex items-center gap-2">
-                <CalendarBlank aria-hidden size={16} />
-                {item.nextGameDate ? `Next game ${item.nextGameDate}` : "No upcoming game"}
+              <p className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                <CalendarBlank aria-hidden size={15} className="shrink-0" />
+                <span className="truncate">{item.nextGameDate ? `Next ${item.nextGameDate}` : "No upcoming game"}</span>
               </p>
             </div>
-            <span className="mt-6 inline-flex items-center gap-1 text-sm font-[650] text-primary">
+            <span className="mt-6 hidden items-center gap-1 text-sm font-[650] text-primary sm:inline-flex">
               Open group{" "}
               <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" />
             </span>
@@ -152,11 +159,16 @@ function EmptyGroups() {
   );
 }
 
+export function GroupViewMenu() {
+  const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+  return <MobileViewMenu label="Group view" value={mode} options={viewOptions} onChange={saveView} />;
+}
+
 export function GroupCollection({ items }: { items: GroupCollectionItem[] }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   return (
-    <div className="mt-10">
-      <div className="mb-8 flex items-center justify-between gap-4 border-b border-line pb-4">
+    <div className="mt-5 sm:mt-10">
+      <div className="mb-8 hidden items-center justify-between gap-4 border-b border-line pb-4 sm:flex">
         <p className="text-sm text-muted">
           {items.length} {items.length === 1 ? "group" : "groups"}
         </p>

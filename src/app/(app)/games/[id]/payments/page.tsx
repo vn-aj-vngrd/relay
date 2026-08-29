@@ -93,7 +93,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
         description={`${isHost ? "Collect player shares and review proof." : "Repay the host, then upload one screenshot."} Relay tracks status only.`}
       />
       {sessionExpenses.length ? (
-        <div className="grid gap-8 pt-7 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-8 sm:pt-7 lg:grid-cols-[1fr_340px]">
           <section className="space-y-10">
             {sessionExpenses.map(({ expense }) => {
               const expensePayments = visiblePayments.filter((row) => row.expense.id === expense.id);
@@ -295,7 +295,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           </aside>
         </div>
       ) : isHost ? (
-        <section className="mx-auto max-w-xl py-10">
+        <section className="mx-auto max-w-xl py-4 sm:py-10">
           <CurrencyCircleDollar className="text-primary" size={20} />
           <h2 className="mt-4 text-xl font-bold">Collect player shares</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
@@ -372,7 +372,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           </form>
         </section>
       ) : (
-        <section className="mx-auto max-w-xl py-14">
+        <section className="mx-auto max-w-xl py-4 sm:py-14">
           <CircleDashed className="text-primary" />
           <h2 className="mt-4 text-xl font-bold">Payment details aren’t set up</h2>
           <p className="mt-2 text-pretty text-muted">
