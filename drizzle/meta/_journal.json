@@ -148,6 +148,13 @@
       "when": 1787137296608,
       "tag": "0020_admin_pagination_security",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787987863262,
+      "tag": "0021_game_collection_pagination",
+      "breakpoints": true
     }
   ]
 }

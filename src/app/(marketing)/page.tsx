@@ -42,7 +42,7 @@ export default async function MarketingPage() {
   return (
     <main id="main-content" className="marketing-page min-h-screen bg-[#f7f7f5] text-[#171719]">
       <MarketingEnhancements />
-      <header className="sticky top-0 z-40 border-b border-[#e2e2dd] bg-[#f7f7f5]/94 backdrop-blur-xl">
+      <header className="safe-top sticky top-0 z-40 border-b border-[#e2e2dd] bg-[#f7f7f5]/94 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-8">
           <Brand />
           <MarketingSectionNav />

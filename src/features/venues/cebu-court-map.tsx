@@ -237,7 +237,7 @@ export function CebuCourtMap({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0 ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[min(68dvh,620px)] min-h-[460px]"}`}
+      className={`relative w-full overflow-hidden rounded-xl border border-line bg-surface-raised xl:h-full xl:min-h-0 ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[52dvh] min-h-[360px] max-h-[480px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
     >
       <div
         ref={containerRef}

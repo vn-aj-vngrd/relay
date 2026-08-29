@@ -123,7 +123,7 @@ function SelectedCourtOverlay({
         </dl>
       ) : null}
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4 grid gap-2 min-[420px]:grid-cols-2">
         <Link
           href={createHref(venue, isAuthenticated)}
           className="pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
@@ -195,7 +195,7 @@ function CourtResults({
   return (
     <section
       aria-labelledby="cebu-court-list"
-      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-line bg-surface xl:order-1 xl:h-full ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[580px]"}`}
+      className={`flex min-h-0 flex-col overflow-hidden rounded-xl border border-line bg-surface xl:order-1 xl:h-full ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[min(60dvh,520px)] min-h-[400px] sm:h-[580px]"}`}
     >
       <header className="flex shrink-0 items-end justify-between gap-3 border-b border-line px-4 py-3">
         <div>

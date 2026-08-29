@@ -232,6 +232,7 @@ export const sessionPlayers = pgTable(
     unique("session_user_unique").on(table.sessionId, table.userId),
     check("player_identity_present", sql`${table.userId} is not null or ${table.guestName} is not null`),
     index("session_players_roster_idx").on(table.sessionId, table.rsvp),
+    index("session_players_user_rsvp_idx").on(table.userId, table.rsvp, table.sessionId),
   ],
 );
 

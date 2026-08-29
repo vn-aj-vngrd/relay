@@ -63,9 +63,9 @@ export function AppNav({ mode }: { mode: "sidebar" | "mobile" }) {
   return (
     <nav
       aria-label="Main navigation"
-      className="mobile-chrome safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line lg:hidden"
+      className="mobile-chrome app-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-line lg:hidden"
     >
-      <ul className="mx-auto flex h-16 max-w-lg items-stretch px-2">
+      <ul className="mx-auto flex h-[60px] max-w-lg items-stretch px-2">
         {items.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
@@ -75,9 +75,14 @@ export function AppNav({ mode }: { mode: "sidebar" | "mobile" }) {
                 data-tour={label === "Create game" ? "create" : label.toLowerCase()}
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
-                className={`pressable flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium ${active ? "text-primary" : "text-muted hover:text-ink"}`}
+                aria-label={label}
+                className={`app-mobile-tab pressable flex h-full flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-[600] ${active ? "text-primary" : "text-muted hover:text-ink"}`}
               >
-                <Icon aria-hidden size={21} weight={active ? "fill" : "regular"} />
+                <span
+                  className={`app-mobile-tab-icon grid h-7 min-w-8 place-items-center rounded-lg ${active ? "bg-primary-soft" : ""}`}
+                >
+                  <Icon aria-hidden size={21} weight={active ? "fill" : "regular"} />
+                </span>
                 <span>{label === "Create game" ? "Create" : label}</span>
               </Link>
             </li>

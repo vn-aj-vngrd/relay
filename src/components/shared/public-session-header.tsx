@@ -19,7 +19,7 @@ export function PublicSessionHeader({
   const label = gameHref ? "Open game" : signedIn ? "Open Relay" : "Sign in";
 
   return (
-    <header className="app-chrome sticky top-0 z-20" style={sessionAccentStyle(accentColor)}>
+    <header className="app-chrome safe-top sticky top-0 z-20" style={sessionAccentStyle(accentColor)}>
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Brand />
         <ButtonLink href={destination} variant={signedIn ? "primary" : "secondary"}>

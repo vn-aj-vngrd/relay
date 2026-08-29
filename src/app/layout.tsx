@@ -11,7 +11,11 @@ import { PwaManager } from "@/features/pwa/pwa-manager";
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const viewport: Viewport = { themeColor: "oklch(0.965 0.002 75)", viewportFit: "cover" };
+export const viewport: Viewport = {
+  themeColor: "oklch(0.965 0.002 75)",
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+};
 
 export const metadata: Metadata = {
   title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
@@ -42,7 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         ) : null}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark'}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
+            __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark';document.querySelector('meta[name="theme-color"]')?.setAttribute('content','oklch(0.145 0.006 275)')}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
           }}
         />
       </head>

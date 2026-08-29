@@ -8,7 +8,7 @@ export default async function CourtLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh bg-canvas">
-      <header className="app-chrome sticky top-0 z-40 border-b border-line">
+      <header className="app-chrome safe-top sticky top-0 z-40 border-b border-line">
         <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-4 px-4 sm:px-8">
           <Brand />
           <div className="flex items-center gap-1 sm:gap-2">

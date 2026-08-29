@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </aside>
 
-      <header className="app-chrome z-20 shrink-0 border-b border-line lg:hidden">
+      <header className="app-chrome safe-top z-20 shrink-0 border-b border-line lg:hidden">
         <div className="flex h-[56px] items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Brand href="/admin" />

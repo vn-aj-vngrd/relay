@@ -179,6 +179,8 @@ html[data-theme="dark"] {
 html {
   background: var(--canvas);
   color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body {
   margin: 0;
@@ -212,6 +214,7 @@ input,
 select,
 textarea {
   font-family: inherit;
+  caret-color: var(--primary);
 }
 button,
 a {
@@ -271,6 +274,9 @@ p:not(.truncate) {
 .safe-bottom {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
 .text-pretty {
   text-wrap: pretty;
 }
@@ -303,9 +309,41 @@ p:not(.truncate) {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
 }
+.app-mobile-header {
+  padding-top: env(safe-area-inset-top);
+}
+.app-bottom-nav {
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  box-shadow: 0 -2px 8px oklch(0.1 0.01 275 / 0.05);
+}
+.app-mobile-tab {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.app-scroll-surface,
+.chat-thread-scroll,
+.public-session-scroll {
+  -webkit-overflow-scrolling: touch;
+}
 @media (min-width: 64rem) {
   .session-tab-safe {
     padding-inline: 0;
+  }
+}
+@media (max-width: 63.999rem) {
+  button:not(.relay-map-marker),
+  a.pressable,
+  label:has(input),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  select,
+  textarea {
+    min-height: 2.75rem;
+  }
+  button[aria-label]:not(.relay-map-marker),
+  a.pressable[aria-label] {
+    min-width: 2.75rem;
   }
 }
 @media (min-width: 80rem) {
@@ -357,9 +395,17 @@ p:not(.truncate) {
 .skip-link:focus {
   transform: translateY(0);
 }
-.message-row {
+.message-row,
+.game-list-item,
+.game-grid-item {
   content-visibility: auto;
-  contain-intrinsic-size: 72px;
+}
+.message-row,
+.game-list-item {
+  contain-intrinsic-size: auto 72px;
+}
+.game-grid-item {
+  contain-intrinsic-size: auto 190px;
 }
 html[data-density="compact"] .sidebar-row {
   min-height: 2rem;
@@ -512,6 +558,7 @@ html.lenis.lenis-smooth iframe {
 }
 .marketing-reveal-ready.marketing-reveal-visible {
   transform: translate3d(0, 0, 0);
+  will-change: auto;
 }
 .marketing-reveal-ready:is(
   [data-marketing-reveal="sequence"],
@@ -561,6 +608,7 @@ html.lenis.lenis-smooth iframe {
   > *,
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="workflow"] > div > * {
   transform: translate3d(0, 0, 0);
+  will-change: auto;
 }
 .marketing-reveal-ready[data-marketing-reveal="mask"] {
   transform: scale(0.985);
@@ -606,6 +654,14 @@ html.lenis.lenis-smooth iframe {
   to {
     clip-path: inset(0);
     transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@media (max-width: 63.999rem) {
+  .marketing-page > section:not(:first-of-type),
+  .marketing-page > footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
   }
 }
 

@@ -40,7 +40,7 @@ export function SessionHero({
       <p className="sport-label text-white/65">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
       <Heading
         title={session.title}
-        className="relative mt-4 max-w-xl truncate text-4xl font-[720] tracking-[-0.025em] sm:text-5xl"
+        className="relative mt-4 max-w-xl break-words text-[1.75rem] font-[720] leading-[2.125rem] tracking-[-0.025em] sm:text-4xl sm:leading-[2.5rem]"
       >
         {session.title}
       </Heading>

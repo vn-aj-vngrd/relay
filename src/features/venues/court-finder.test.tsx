@@ -78,7 +78,10 @@ describe("CourtFinder", () => {
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
 
     rerender(<CourtFinder venues={[venue]} />);
-    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[580px]");
+    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass(
+      "h-[min(60dvh,520px)]",
+      "sm:h-[580px]",
+    );
   });
 
   it("selects a mapped Cebu court and carries it into game creation", () => {

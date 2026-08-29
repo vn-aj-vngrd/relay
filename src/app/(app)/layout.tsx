@@ -23,12 +23,11 @@ import { ensureProfile } from "@/features/players/profile";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const profile = await ensureProfile(user);
+  const [profile, unreadCount] = await Promise.all([
+    ensureProfile(user),
+    db.$count(notifications, and(eq(notifications.userId, user.id), isNull(notifications.readAt))),
+  ]);
   if (!profile.onboardingCompletedAt) redirect("/onboarding");
-  const unreadCount = await db.$count(
-    notifications,
-    and(eq(notifications.userId, user.id), isNull(notifications.readAt)),
-  );
   const isAdmin = isAdminEmail(user.email);
 
   return (
@@ -60,7 +59,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
 
       <header className="app-mobile-header app-chrome z-20 shrink-0 border-b border-line lg:hidden">
-        <div className="flex h-[56px] items-center justify-between px-4 sm:px-6">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <Brand href="/home" />
           <div className="flex items-center">
             <Link
@@ -106,7 +105,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <main
             id="main-content"
             data-tour="workspace"
-            className="app-content mx-auto flex w-full max-w-6xl flex-col px-4 pb-32 pt-7 sm:px-8 sm:pt-9 lg:px-10 lg:pb-16 lg:pt-10"
+            className="app-content mx-auto flex w-full max-w-6xl flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pb-16 lg:pt-10"
           >
             <AppBreadcrumbs />
             <div className="min-h-0 flex-1">{children}</div>

@@ -97,7 +97,7 @@ export function AppBreadcrumbs({ items: providedItems }: { items?: BreadcrumbIte
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-4 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="mb-4 hidden shrink-0 overflow-x-auto [scrollbar-width:none] sm:block [&::-webkit-scrollbar]:hidden"
     >
       <ol className="flex min-w-max items-center text-[13px] text-muted">
         {items.map((item, index) => (
