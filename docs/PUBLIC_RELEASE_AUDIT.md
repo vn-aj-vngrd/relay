@@ -73,20 +73,20 @@ Each pillar is scored from 0–10. A public release requires:
 
 Use ISO dates and link to the deployment, dashboard screenshot, CI run, or field note. Never mark a row complete from memory.
 
-| Severity | Gate                                                                                                                                     | Owner       | Evidence                                                     | Status                     |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ | -------------------------- |
-| P0       | Authenticated production E2E passes from the release commit                                                                              | Engineering | 2026-08-31: complete host/guest flow passed in 44 seconds    | Complete on candidate      |
-| P0       | Five real sessions complete without manual database repair                                                                               | Product     | Session observation notes                                    | Pending field use          |
-| P1       | Vercel managed mitigations allow the 8-request login navigation probe                                                                    | Engineering | 2026-08-31: 12/12 concurrent requests returned 200           | Complete                   |
-| P1       | Liveness and private readiness are monitored from outside Vercel                                                                         | Operations  | GitHub Actions 10-minute external monitor configured         | Alert test after push      |
-| P1       | Alerts exist for Vercel errors/usage, Supabase DB/storage/egress/Auth/realtime, and Geoapify quota                                       | Operations  | Dashboard screenshots and test alert                         | Manual setup               |
-| P1       | Latest backup restores into isolated PostgreSQL 17 and integrity checks pass                                                             | Operations  | 2026-08-31: post-gate Supabase PostgreSQL 17 restore, RTO 2s | Complete                   |
-| P1       | Production CSP has no unexpected browser violations on login, signup, app, shared game, Turnstile, map, realtime, uploads, and analytics | Engineering | Public plus authenticated chat/payment upload flow passed    | Complete on candidate      |
-| P1       | Production migrations 0022–0025 remain applied; anonymous Data API probes fail closed                                                    | Engineering | 2026-08-31: 26 migrations; six probes returned HTTP 401      | Complete                   |
-| P1       | Every administrator has verified TOTP and the allowlist contains only active operators                                                   | Owner       | 2026-08-31: one allowlisted operator; zero missing TOTP      | Complete                   |
-| P1       | Support inbox has an owner and response expectation                                                                                      | Owner       | `docs/SUPPORT.md` and public privacy contact                 | Complete                   |
-| P2       | Real organizer quote/screenshots replace illustrative-only proof                                                                         | Product     | Consent record and launch asset                              | After beta evidence        |
-| P2       | Paid plan, entitlement, cancellation, and support boundaries are defined before charging                                                 | Product     | Pricing decision record                                      | Not required for free beta |
+| Severity | Gate                                                                                                                                     | Owner       | Evidence                                                                      | Status                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------- | -------------------------- |
+| P0       | Authenticated production E2E passes from the release commit                                                                              | Engineering | 2026-08-31: `ddeaa6b` complete host/guest flow passed in 46 seconds           | Complete                   |
+| P0       | Five real sessions complete without manual database repair                                                                               | Product     | Session observation notes                                                     | Pending field use          |
+| P1       | Vercel managed mitigations allow the 8-request login navigation probe                                                                    | Engineering | 2026-08-31: 12/12 concurrent requests returned 200                            | Complete                   |
+| P1       | Liveness and private readiness are monitored from outside Vercel                                                                         | Operations  | 2026-08-31: GitHub Actions run `33334675048` passed public and private checks | Complete                   |
+| P1       | Alerts exist for Vercel errors/usage, Supabase DB/storage/egress/Auth/realtime, and Geoapify quota                                       | Operations  | Dashboard screenshots and test alert                                          | Manual setup               |
+| P1       | Latest backup restores into isolated PostgreSQL 17 and integrity checks pass                                                             | Operations  | 2026-08-31: post-gate Supabase PostgreSQL 17 restore, RTO 2s                  | Complete                   |
+| P1       | Production CSP has no unexpected browser violations on login, signup, app, shared game, Turnstile, map, realtime, uploads, and analytics | Engineering | Public plus authenticated chat/payment upload flow passed                     | Complete on candidate      |
+| P1       | Production migrations 0022–0025 remain applied; anonymous Data API probes fail closed                                                    | Engineering | 2026-08-31: 26 migrations; six probes returned HTTP 401                       | Complete                   |
+| P1       | Every administrator has verified TOTP and the allowlist contains only active operators                                                   | Owner       | 2026-08-31: one allowlisted operator; zero missing TOTP                       | Complete                   |
+| P1       | Support inbox has an owner and response expectation                                                                                      | Owner       | `docs/SUPPORT.md` and public privacy contact                                  | Complete                   |
+| P2       | Real organizer quote/screenshots replace illustrative-only proof                                                                         | Product     | Consent record and launch asset                                               | After beta evidence        |
+| P2       | Paid plan, entitlement, cancellation, and support boundaries are defined before charging                                                 | Product     | Pricing decision record                                                       | Not required for free beta |
 
 ## Performance and freshness contract
 
@@ -121,14 +121,15 @@ pnpm release:check
 
 It fails on floating dependency versions, vulnerable production dependencies, formatting, lint, TypeScript, unit/integration tests, production build, or public browser smoke tests.
 
-Latest candidate evidence (2026-08-31):
+Latest release evidence (2026-08-31, commit `ddeaa6b`, deployment `dpl_7bEFAUotw2vtrQunwnkqegQy4bLE`):
 
 - dependency policy and production vulnerability audit passed;
 - formatting, lint, TypeScript, and production build passed;
 - 107 test files and 295 unit/integration tests passed;
 - 19 public browser checks passed across mobile and desktop, with the credential-dependent authenticated test intentionally skipped locally;
 - axe reported zero serious or critical violations across landing, Quick Play, Court Finder, authentication, privacy, and terms in both light and dark modes at mobile and desktop sizes;
-- local production Lighthouse: landing 88 performance / 100 accessibility / 100 SEO, with LCP 3.7 s, TBT 40 ms, and CLS 0; Quick Play 96 performance / 100 accessibility / 100 SEO, with LCP 2.8 s, TBT 30 ms, and CLS 0. Local Best Practices is 96 only because the Vercel Analytics script exists at its production path but returns 404 outside Vercel.
+- production Lighthouse: landing 88 performance / 100 accessibility / 100 Best Practices / 100 SEO, with FCP 1.7 s, LCP 3.5 s, TBT 90 ms, and CLS 0; Quick Play 97 performance / 100 accessibility / 100 Best Practices / 100 SEO, with FCP 1.1 s, LCP 2.5 s, TBT 20 ms, and CLS 0;
+- exact-deployment production verification passed 10 mobile public checks, the complete 46-second authenticated host/guest workflow, all eight public endpoint probes including `/play`, strict CSP, eight concurrent login navigations, and private database readiness.
 
 ## Production verification
 
@@ -215,6 +216,7 @@ Do not charge merely because the feature list is large. Validate willingness to 
 
 Append one row per candidate. “Pass” requires all blocking evidence above.
 
-| Date       | Commit/deployment                                             | Code gate                                                 | Production E2E                                                                             | Restore          | Real sessions        | Decision         |
-| ---------- | ------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------- | -------------------- | ---------------- |
-| 2026-08-31 | `dpl_78Jd85ZgxPTtYTvBopLznyYZwy1x` plus local verifier update | Pass: 103 files, 286 tests, build, 17 local browser tests | Public production: 9/9; private readiness and 12-request burst pass; authenticated pending | Prior drill only | No evidence recorded | Invite-only beta |
+| Date       | Commit/deployment                                             | Code gate                                                   | Production E2E                                                                             | Restore           | Real sessions        | Decision                     |
+| ---------- | ------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------- | -------------------- | ---------------------------- |
+| 2026-08-31 | `dpl_78Jd85ZgxPTtYTvBopLznyYZwy1x` plus local verifier update | Pass: 103 files, 286 tests, build, 17 local browser tests   | Public production: 9/9; private readiness and 12-request burst pass; authenticated pending | Prior drill only  | No evidence recorded | Invite-only beta             |
+| 2026-08-31 | `ddeaa6b` / `dpl_7bEFAUotw2vtrQunwnkqegQy4bLE`                | Pass: 107 files, 295 tests, build, 19 public browser checks | Public 10/10; authenticated host/guest pass; endpoints, CSP, burst, and deep health pass   | 2026-08-31 RTO 2s | No evidence recorded | Invite-only Philippines beta |
