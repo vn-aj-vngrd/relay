@@ -113,9 +113,9 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
               {showPassword ? <EyeSlash aria-hidden size={18} /> : <Eye aria-hidden size={18} />}
             </button>
           </div>
-          <p className="mt-2 min-h-5 text-xs leading-5 text-muted">
-            {creating ? "8 or more characters, including a letter and number." : null}
-          </p>
+          {creating ? (
+            <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
+          ) : null}
         </div>
         {creating ? (
           turnstileSiteKey ? (
