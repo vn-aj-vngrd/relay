@@ -62,6 +62,13 @@ const fartherVenue: CebuVenue = {
   latitude: 10.2447,
   longitude: 123.8494,
   paddleRental: false,
+};
+
+const suggestedVenue: CebuVenue = {
+  ...venue,
+  id: "suggested-court",
+  slug: "suggested-court",
+  name: "Suggested Court",
   listingStatus: "unverified",
 };
 
@@ -127,7 +134,7 @@ describe("CourtFinder", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
 
-    expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
+    expect(screen.getByText("Verified by Relay")).toHaveClass("text-primary");
     expect(screen.getByRole("complementary", { name: "Selected court: NiceServe Pickleball Court" })).toHaveClass(
       "inset-x-2",
       "bottom-2",
@@ -174,6 +181,13 @@ describe("CourtFinder", () => {
       "Select NiceServe Pickleball Court",
       "Select Farther Court",
     ]);
+  });
+
+  it("never presents unverified court suggestions", () => {
+    render(<CourtFinder venues={[venue, suggestedVenue]} />);
+
+    expect(screen.getAllByText("1 place")).not.toHaveLength(0);
+    expect(screen.queryByText("Suggested Court")).not.toBeInTheDocument();
   });
 
   it("filters courts by equipment", () => {

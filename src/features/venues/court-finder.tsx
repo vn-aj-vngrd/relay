@@ -92,13 +92,9 @@ function SelectedCourtOverlay({
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-muted">
-            {venue.listingStatus === "verified" ? (
-              <span className="inline-flex items-center gap-1 text-success">
-                <CheckCircle aria-hidden size={15} weight="fill" /> Verified by Relay
-              </span>
-            ) : (
-              <span>Community listing · Confirm details</span>
-            )}
+            <span className="inline-flex items-center gap-1 text-primary">
+              <CheckCircle aria-hidden size={15} weight="fill" /> Verified by Relay
+            </span>
             {distance != null ? <span>{formatDistance(distance)} away</span> : null}
           </div>
           <h2 className="mt-1.5 text-base font-[680] tracking-[-0.02em] sm:text-lg">{venue.name}</h2>
@@ -258,14 +254,12 @@ function CourtResults({
                       {distance != null ? (
                         <span className="block text-xs font-semibold text-primary">{formatDistance(distance)}</span>
                       ) : null}
-                      {venue.listingStatus === "verified" ? (
-                        <CheckCircle
-                          aria-label="Verified by Relay"
-                          className="ml-auto mt-1 text-success"
-                          size={15}
-                          weight="fill"
-                        />
-                      ) : null}
+                      <CheckCircle
+                        aria-label="Verified by Relay"
+                        className="ml-auto mt-1 text-primary"
+                        size={15}
+                        weight="fill"
+                      />
                     </span>
                   </span>
                   <span className="mt-1 block text-xs leading-[18px] text-muted">{venue.address}</span>
@@ -340,6 +334,7 @@ export function CourtFinder({
   const results = useMemo(() => {
     const term = query.trim().toLowerCase();
     const matching = venues
+      .filter((venue) => venue.listingStatus === "verified")
       .filter((venue) => {
         const indoor =
           venue.environment === "indoor" || venue.environment === "semi-indoor" || venue.environment === "covered";
