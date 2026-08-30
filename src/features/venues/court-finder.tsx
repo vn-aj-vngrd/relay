@@ -214,22 +214,22 @@ function CourtResults({
       className={`flex min-h-0 flex-col overflow-hidden border border-line bg-surface sm:rounded-xl xl:order-1 xl:h-full ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[min(60dvh,520px)] min-h-[400px] sm:h-[580px]"}`}
     >
       <header
-        className={`${compactHeader ? "hidden xl:flex" : "flex"} shrink-0 items-end justify-between gap-3 border-b border-line px-4 py-3`}
+        className={`${compactHeader ? "hidden xl:flex" : "flex"} shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3`}
       >
-        <div>
-          <h2 id="cebu-court-list" className="text-[15px] font-[680]">
-            {locationReady ? "Nearest courts" : "Courts"}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted">
+        <h2 id="cebu-court-list" className="min-w-0 truncate text-[15px] font-[680]">
+          {locationReady ? "Nearest courts" : "Courts"}
+        </h2>
+        <div className="flex items-center gap-3">
+          {!results.length ? (
+            <button type="button" onClick={onClear} className="min-h-9 text-xs font-semibold text-primary">
+              Clear filters
+            </button>
+          ) : null}
+          <p className="shrink-0 whitespace-nowrap text-xs text-muted">
             {results.length} {results.length === 1 ? "place" : "places"}
             {locationReady ? " · nearest first" : ""}
           </p>
         </div>
-        {!results.length ? (
-          <button type="button" onClick={onClear} className="min-h-9 text-xs font-semibold text-primary">
-            Clear filters
-          </button>
-        ) : null}
       </header>
 
       {results.length ? (
@@ -424,7 +424,7 @@ export function CourtFinder({
     <div className={className}>
       <section
         aria-label="Find and filter courts"
-        className={`${showFilterTopBorder ? "border-b lg:border-y" : "border-b"} border-line pb-3 lg:py-4`}
+        className={`${showFilterTopBorder ? "lg:border-t" : ""} border-line pb-3 lg:py-4`}
       >
         <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <div>
@@ -555,7 +555,7 @@ export function CourtFinder({
       ) : null}
 
       <div
-        className={`court-finder-results-grid grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-4 xl:flex-1"}`}
+        className={`court-finder-results-grid grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-2 xl:flex-1"}`}
       >
         <section
           ref={mapSectionRef}
