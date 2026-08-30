@@ -9,10 +9,18 @@ import { groupMembers, groups, profiles, sessionPlayers, sessions } from "@/db/s
 import { trackProductEvent } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 import { validateAvatarFile } from "@/features/players/avatar-validation";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { addGroupMemberSchema, createGroupSchema, groupSlug, updateGroupSchema } from "./domain";
+
+async function guardGroupMutation(userId: string) {
+  await assertRateLimit(
+    { scope: "group-mutation", limit: 30, windowSeconds: 60 },
+    `user:${userId}`,
+    "Group changes are happening too quickly. Wait a moment and try again.",
+  );
+}
 
 export type GroupActionState = {
   error?: string;
@@ -22,6 +30,7 @@ export type GroupActionState = {
 
 export async function createGroupAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
   const user = await requireUser();
+  await guardGroupMutation(user.id);
   const parsed = createGroupSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
@@ -89,6 +98,7 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
 
 export async function updateGroupAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
   const user = await requireUser();
+  await guardGroupMutation(user.id);
   const parsed = updateGroupSchema.safeParse({
     groupId: formData.get("groupId"),
     name: formData.get("name"),
@@ -173,6 +183,7 @@ export async function updateGroupAction(_: GroupActionState, formData: FormData)
 
 export async function addGroupMemberAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
   const user = await requireUser();
+  await guardGroupMutation(user.id);
   const parsed = addGroupMemberSchema.safeParse({
     groupId: formData.get("groupId"),
     username: formData.get("username"),

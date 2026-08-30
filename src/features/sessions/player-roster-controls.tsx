@@ -20,10 +20,15 @@ import {
 export function AddPlayerForm({ sessionId }: { sessionId: string }) {
   const [state, action] = useActionState<SessionActionState, FormData>(addPlayerAction, {});
   const [playerEntry, setPlayerEntry] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
   const isRelayInvite = playerEntry.trimStart().startsWith("@");
 
+  useEffect(() => {
+    if (state.success) formRef.current?.reset();
+  }, [state]);
+
   return (
-    <form action={action} className="mt-4">
+    <form ref={formRef} action={action} onReset={() => setPlayerEntry("")} className="mt-4">
       <input type="hidden" name="sessionId" value={sessionId} />
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_260px_auto] sm:items-end">
         <div className="min-w-0">
@@ -129,7 +134,7 @@ export function RemovePlayerButton({
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (state.success) dialogRef.current?.close();
-  }, [state.success]);
+  }, [state]);
   return (
     <>
       <IconTooltip label={`Remove ${name}`}>

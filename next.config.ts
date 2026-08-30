@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const contentSecurityPolicyReportOnly = [
+const baselineContentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
@@ -18,7 +18,11 @@ const contentSecurityPolicyReportOnly = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  experimental: { serverActions: { bodySizeLimit: "11mb" }, useOffline: true },
+  experimental: {
+    serverActions: { bodySizeLimit: "11mb" },
+    sri: { algorithm: "sha256" },
+    useOffline: true,
+  },
   turbopack: { root: process.cwd() },
   async redirects() {
     return [{ source: "/venues/:path*", destination: "/court/:path*", permanent: true }];
@@ -35,7 +39,7 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicyReportOnly },
+          { key: "Content-Security-Policy", value: baselineContentSecurityPolicy },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

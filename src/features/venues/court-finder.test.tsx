@@ -116,6 +116,7 @@ describe("CourtFinder", () => {
       "sm:h-[580px]",
     );
     expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    expect(document.querySelector(".court-finder-results-grid")).toHaveClass("xl:flex-1");
   });
 
   it("gives mobile and tablet users dedicated map and list views", () => {

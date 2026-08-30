@@ -1,6 +1,7 @@
 import "server-only";
 
 import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
 import { db } from "@/db/client";
 import { venues } from "@/db/schema";
@@ -35,7 +36,7 @@ export async function getVenueSuggestions() {
     .orderBy(asc(venues.name));
 }
 
-export async function getCebuVenues(): Promise<CebuVenue[]> {
+async function queryCebuVenues(): Promise<CebuVenue[]> {
   const rows = await db
     .select()
     .from(venues)
@@ -71,3 +72,8 @@ export async function getCebuVenues(): Promise<CebuVenue[]> {
     ];
   });
 }
+
+export const getCebuVenues = unstable_cache(queryCebuVenues, ["cebu-venues"], {
+  revalidate: 3600,
+  tags: ["cebu-venues"],
+});

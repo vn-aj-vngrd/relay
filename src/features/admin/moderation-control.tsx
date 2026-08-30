@@ -67,7 +67,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
 
   useEffect(() => {
     if (state.success) dialogRef.current?.close();
-  }, [state.success]);
+  }, [state]);
 
   const Icon = restore ? ShieldCheck : mode === "cancel-session" ? Prohibit : PauseCircle;
 

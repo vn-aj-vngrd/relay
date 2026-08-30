@@ -13,9 +13,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
     return Response.json({ error: "Tile is outside the Cebu map." }, { status: 404 });
   }
 
+  // MapLibre requests many tiles concurrently. Sharding preserves the same hard
+  // aggregate ceilings without making every cold map load contend on one row.
+  const tileShard = Math.abs(zoom * 73_856_093 + tileX * 19_349_663 + tileY * 83_492_791);
+  const globalShard = tileShard % 32;
+  const visitorShard = tileShard % 8;
+  const visitor = await requestIdentity();
   const [dailyBudget, visitorLimit] = await Promise.all([
-    checkRateLimit({ scope: "cebu-map-tiles-global", limit: 2_500, windowSeconds: 86_400 }, "global"),
-    checkRateLimit({ scope: "cebu-map-tiles", limit: 600, windowSeconds: 600 }, await requestIdentity()),
+    checkRateLimit({ scope: "cebu-map-tiles-global", limit: 78, windowSeconds: 86_400 }, `shard:${globalShard}`),
+    checkRateLimit({ scope: "cebu-map-tiles", limit: 75, windowSeconds: 600 }, `${visitor}:shard:${visitorShard}`),
   ]);
   const limit = dailyBudget.allowed ? visitorLimit : dailyBudget;
   if (!limit.allowed)

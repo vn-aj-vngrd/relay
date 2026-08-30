@@ -1,3 +1,7 @@
+"use client";
+
+import { useSearchParams } from "next/navigation";
+
 import { Brand } from "@/components/shared/brand";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -6,17 +10,11 @@ import { AuthForm } from "./auth-form";
 
 type EntryMode = "signin" | "create";
 
-export function AuthEntry({
-  mode,
-  error,
-  sent,
-  next,
-}: {
-  mode: EntryMode;
-  error?: string;
-  sent?: string;
-  next?: string;
-}) {
+export function AuthEntry({ mode }: { mode: EntryMode }) {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error") ?? undefined;
+  const sent = searchParams.get("sent") ?? undefined;
+  const next = searchParams.get("next") ?? undefined;
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
   return (
@@ -56,6 +54,22 @@ export function AuthEntry({
             </>
           ) : null}
         </div>
+      </section>
+    </main>
+  );
+}
+
+export function AuthEntryFallback() {
+  return (
+    <main id="main-content" className="min-h-screen bg-canvas">
+      <header className="mx-auto flex h-16 max-w-[1180px] items-center justify-center px-5 sm:px-8">
+        <Brand />
+      </header>
+      <section
+        className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-5 py-6 sm:px-8 sm:py-10"
+        aria-label="Loading account form"
+      >
+        <div className="h-[34.5rem] w-full max-w-[410px] animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none sm:h-[36rem]" />
       </section>
     </main>
   );

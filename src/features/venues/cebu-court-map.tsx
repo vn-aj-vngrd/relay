@@ -111,6 +111,7 @@ export function CebuCourtMap({
   const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
   const selectedRef = useRef(selectedId);
+  const [activated, setActivated] = useState(!compactPreview);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -123,6 +124,7 @@ export function CebuCourtMap({
   }, [selectedId]);
 
   useEffect(() => {
+    if (!activated) return;
     const shell = shellRef.current;
     const container = containerRef.current;
     if (!shell || !container) return;
@@ -177,9 +179,9 @@ export function CebuCourtMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-    // The map instance is mounted once; later venue changes are synchronized below.
+    // The map instance is mounted after intent; later venue changes are synchronized below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activated]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -257,7 +259,23 @@ export function CebuCourtMap({
         aria-label="Interactive map of pickleball courts"
         className="relay-interactive-map"
       />
-      {!ready && !failed ? (
+      {!activated ? (
+        <div className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center">
+          <div className="max-w-sm">
+            <p className="font-[650] text-ink">Explore the Cebu court map</p>
+            <p className="mt-1 text-sm leading-5 text-muted">
+              Load the interactive map when you want to pan, zoom, or inspect court locations.
+            </p>
+            <button
+              type="button"
+              onClick={() => setActivated(true)}
+              className="pressable mt-4 min-h-11 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+            >
+              Load interactive map
+            </button>
+          </div>
+        </div>
+      ) : !ready && !failed ? (
         <div className="absolute inset-0 grid place-items-center bg-surface-raised" role="status">
           <div className="text-center">
             <span className="mx-auto block h-5 w-5 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />

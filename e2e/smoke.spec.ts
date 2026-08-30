@@ -57,7 +57,7 @@ test("an authenticated host and guest can complete the core session flow", async
     .click();
 
   await expect(page).toHaveURL(/\/onboarding$/, { timeout: 15_000 });
-  await expect(page.getByRole("heading", { name: "Your player profile" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome to Relay" })).toBeVisible();
   await page.getByRole("button", { name: "Skip setup and use my defaults" }).click();
   await expect(page).toHaveURL(/\/home\?tour=1$/);
   await expect(page.getByRole("dialog", { name: "Welcome to Relay" })).toBeVisible();
@@ -72,9 +72,9 @@ test("an authenticated host and guest can complete the core session flow", async
 
   await page.locator('button[aria-haspopup="menu"]:not([data-next-mark])').click();
   await page.getByRole("menuitem", { name: "Preferences" }).click();
-  await page.getByRole("button", { name: "Use dark mode" }).click();
+  await page.getByRole("button", { name: "Dark", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.getByRole("button", { name: "Use light mode" }).click();
+  await page.getByRole("button", { name: "Light", exact: true }).click();
   await page.getByRole("button", { name: "Compact" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
   await page.getByRole("button", { name: "Default" }).click();
@@ -90,8 +90,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Open app", exact: true }).first()).toHaveAttribute("href", "/home");
-  await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
   await page.goto("/home");
   const desktopCreate = await page.getByRole("link", { name: "Create", exact: true }).first().boundingBox();
   expect(desktopCreate).not.toBeNull();
@@ -106,6 +105,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(page.getByTestId("games-calendar")).toBeVisible();
   await page.reload();
   await expect(page.getByRole("button", { name: "Calendar view" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "List view" }).click();
 
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto("/home");
@@ -142,14 +142,18 @@ test("an authenticated host and guest can complete the core session flow", async
     year: "numeric",
   }).format(gameDate);
   await page.getByRole("button", { name: "Date" }).click();
+  const today = new Date();
+  if (gameDate.getMonth() !== today.getMonth() || gameDate.getFullYear() !== today.getFullYear()) {
+    await page.getByRole("button", { name: "Next month" }).click();
+  }
   await page.getByRole("button", { name: gameDateLabel }).click();
   await page.getByRole("button", { name: "Start time" }).click();
   await page.getByRole("option", { name: "7:00 PM" }).click();
   await page.getByRole("button", { name: "End time" }).click();
   await page.getByRole("option", { name: "9:00 PM" }).click();
   await page.locator("#capacity").fill("8");
-  await page.locator("#venue").fill("Central Pickle");
-  await expect(page.getByRole("listbox", { name: "Venue suggestions" })).toBeVisible({ timeout: 10_000 });
+  await page.locator("#venue").fill("Court District");
+  await expect(page.getByRole("listbox", { name: "Court suggestions" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("option").first().click();
   await expect(page.locator('input[name="venueAddress"]')).not.toHaveValue("");
   const selectedVenue = await page.locator("#venue").inputValue();
@@ -206,10 +210,10 @@ test("an authenticated host and guest can complete the core session flow", async
   }
   await page.goto(`/games/${sessionId}/players`);
   for (const name of ["Mika Reyes", "AJ Santos"]) {
-    await page.getByPlaceholder("Add a friend by name").fill(name);
+    await page.getByPlaceholder("Guest name or @username").fill(name);
     await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(page.getByText(name, { exact: true })).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByPlaceholder("Add a friend by name")).toHaveValue("", { timeout: 20_000 });
+    await expect(page.getByPlaceholder("Guest name or @username")).toHaveValue("", { timeout: 20_000 });
   }
 
   await page.goto(`/games/${sessionId}/more`);
@@ -283,16 +287,17 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(guestPage.getByText("Payment confirmed")).toBeVisible();
 
   await page.goto(`/games/${sessionId}/play`);
-  await expect(page.getByRole("heading", { name: "Choose how tonight runs" })).toBeVisible();
+  await page.getByRole("link", { name: "Start Play" }).click();
+  await expect(page.getByRole("heading", { name: "Choose how this game runs" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Who’s here" })).toBeVisible();
-  await expect(page.getByText(/With no check-ins, everyone going enters the first rotation/)).toBeVisible();
+  await expect(page.getByText(/No arrivals marked yet.*everyone going enters the first rotation/)).toBeVisible();
   const notHere = page.getByRole("button", { name: /^Mark .* as here$/ });
   await expect(notHere).toHaveCount(4);
   for (let remaining = 3; remaining >= 0; remaining -= 1) {
     await notHere.first().click();
     await expect(notHere).toHaveCount(remaining, { timeout: 15_000 });
   }
-  await expect(page.getByText("4 checked in · only players marked here enter the first rotation.")).toBeVisible();
+  await expect(page.getByText("4 here · players marked Not here can join the queue when they arrive.")).toBeVisible();
   await page.getByRole("radio", { name: /^Keep pairs together/ }).click();
   await expect(page.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
   const teamRoundRobin = page.getByRole("radio", { name: /Team Round Robin/ });
@@ -372,6 +377,31 @@ test("keyboard users can skip directly to the main content", async ({ page }) =>
   await expect(skip).toBeFocused();
   await skip.press("Enter");
   await expect(page).toHaveURL(/#main-content$/);
+});
+
+test("public release metadata, health, and enforced CSP are available", async ({ page }) => {
+  const [robots, sitemap, security, health] = await Promise.all([
+    page.request.get("/robots.txt"),
+    page.request.get("/sitemap.xml"),
+    page.request.get("/.well-known/security.txt"),
+    page.request.get("/api/health"),
+  ]);
+  expect(robots.ok()).toBe(true);
+  expect(await robots.text()).toContain("Sitemap:");
+  expect(sitemap.ok()).toBe(true);
+  expect(sitemap.headers()["content-type"]).toContain("application/xml");
+  expect(security.ok()).toBe(true);
+  expect(await security.text()).toContain("Contact:");
+  expect(await health.json()).toMatchObject({ status: "ok" });
+
+  const [login, protectedRoute] = await Promise.all([
+    page.request.get("/login"),
+    page.request.get("/home", { maxRedirects: 0 }),
+  ]);
+  expect(login.ok()).toBe(true);
+  expect(login.headers()["content-security-policy"]).toBeTruthy();
+  expect(protectedRoute.headers()["content-security-policy"]).toContain("strict-dynamic");
+  expect(login.headers()["content-security-policy-report-only"]).toBeUndefined();
 });
 
 test("core public and protected routes fail safely", async ({ page }) => {

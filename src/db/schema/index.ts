@@ -152,7 +152,10 @@ export const groupMembers = pgTable(
     role: memberRole("role").notNull().default("member"),
     joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.groupId, table.userId] })],
+  (table) => [
+    primaryKey({ columns: [table.groupId, table.userId] }),
+    index("group_members_user_joined_idx").on(table.userId, table.joinedAt, table.groupId),
+  ],
 );
 
 export const sessions = pgTable(
@@ -204,6 +207,7 @@ export const sessions = pgTable(
     check("session_time_valid", sql`${table.endsAt} > ${table.startsAt}`),
     index("sessions_starts_at_idx").on(table.startsAt),
     index("sessions_starts_id_idx").on(table.startsAt.desc(), table.id.desc()),
+    index("sessions_group_starts_id_idx").on(table.groupId, table.startsAt.desc(), table.id.desc()),
   ],
 );
 
@@ -355,7 +359,10 @@ export const matchPlayers = pgTable(
     team: text("team").notNull(),
     position: integer("position").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.matchId, table.sessionPlayerId] })],
+  (table) => [
+    primaryKey({ columns: [table.matchId, table.sessionPlayerId] }),
+    index("match_players_session_player_idx").on(table.sessionPlayerId, table.matchId),
+  ],
 );
 
 export const matchScores = pgTable(
@@ -431,18 +438,22 @@ export const sessionPairMembers = pgTable(
   ],
 );
 
-export const messages = pgTable("messages", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id")
-    .notNull()
-    .references(() => sessions.id, { onDelete: "restrict" }),
-  authorId: uuid("author_id").references(() => users.id, { onDelete: "restrict" }),
-  sessionPlayerId: uuid("session_player_id").references(() => sessionPlayers.id, { onDelete: "restrict" }),
-  kind: text("kind").notNull().default("text"),
-  body: text("body"),
-  imagePath: text("image_path"),
-  ...timestamps,
-});
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "restrict" }),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "restrict" }),
+    sessionPlayerId: uuid("session_player_id").references(() => sessionPlayers.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull().default("text"),
+    body: text("body"),
+    imagePath: text("image_path"),
+    ...timestamps,
+  },
+  (table) => [index("messages_session_created_id_idx").on(table.sessionId, table.createdAt.desc(), table.id.desc())],
+);
 
 export const messageReactions = pgTable(
   "message_reactions",
@@ -525,7 +536,10 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("notifications_user_unread_idx").on(table.userId, table.readAt)],
+  (table) => [
+    index("notifications_user_unread_idx").on(table.userId, table.readAt),
+    index("notifications_user_created_id_idx").on(table.userId, table.createdAt.desc(), table.id.desc()),
+  ],
 );
 
 export const productEvents = pgTable(

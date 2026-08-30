@@ -1,5 +1,5 @@
 import { ThumbsUp } from "@phosphor-icons/react/dist/ssr";
-import { asc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { PendingSubmit } from "@/components/ui/pending-submit";
@@ -30,14 +30,16 @@ export async function SessionChatView({
   className?: string;
 }) {
   const maxImageBytes = getServerEnv().CHAT_IMAGE_MAX_BYTES;
-  const rows = await db
-    .select({ message: messages, player: sessionPlayers, profile: profiles })
-    .from(messages)
-    .leftJoin(sessionPlayers, eq(messages.sessionPlayerId, sessionPlayers.id))
-    .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
-    .where(eq(messages.sessionId, sessionId))
-    .orderBy(asc(messages.createdAt))
-    .limit(200);
+  const rows = (
+    await db
+      .select({ message: messages, player: sessionPlayers, profile: profiles })
+      .from(messages)
+      .leftJoin(sessionPlayers, eq(messages.sessionPlayerId, sessionPlayers.id))
+      .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
+      .where(eq(messages.sessionId, sessionId))
+      .orderBy(desc(messages.createdAt), desc(messages.id))
+      .limit(200)
+  ).reverse();
   const reactionRows = rows.length
     ? await db
         .select()
@@ -100,7 +102,7 @@ export async function SessionChatView({
                   <div className="mx-auto my-4 max-w-lg text-center text-xs leading-5 text-muted">{message.body}</div>
                 ) : (
                   <article
-                    className={`message-row flex ${own ? "justify-end" : "justify-start"} ${grouped ? "mt-1" : "mt-4"}`}
+                    className={`message-row flex [content-visibility:auto] [contain-intrinsic-size:auto_72px] ${own ? "justify-end" : "justify-start"} ${grouped ? "mt-1" : "mt-4"}`}
                   >
                     <div className={`flex max-w-[88%] items-end gap-2 sm:max-w-[78%] ${own ? "flex-row-reverse" : ""}`}>
                       {!own ? (

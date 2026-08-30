@@ -1,0 +1,30 @@
+name: Production health monitor
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-health-monitor
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check public liveness
+        run: curl --fail --silent --show-error --max-time 20 --retry 1 https://relay-pickleball.vercel.app/api/health >/dev/null
+
+      - name: Check private database readiness
+        env:
+          HEALTHCHECK_SECRET: ${{ secrets.HEALTHCHECK_SECRET }}
+        run: |
+          test -n "$HEALTHCHECK_SECRET"
+          curl --fail --silent --show-error --max-time 20 --retry 1 \
+            -H "Authorization: Bearer $HEALTHCHECK_SECRET" \
+            'https://relay-pickleball.vercel.app/api/health?deep=1' >/dev/null

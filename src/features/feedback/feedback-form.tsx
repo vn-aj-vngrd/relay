@@ -30,7 +30,7 @@ export function FeedbackForm() {
 
   useEffect(() => {
     if (state.success) formRef.current?.reset();
-  }, [state.success]);
+  }, [state]);
 
   return (
     <form ref={formRef} action={action} className="border-y border-line py-6 sm:py-8">

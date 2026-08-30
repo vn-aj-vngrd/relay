@@ -12,7 +12,7 @@ import * as schema from "./schema";
 // Supabase database during a traffic spike before application limits take effect.
 const connection = postgres(getServerEnv().DATABASE_URL, {
   prepare: false,
-  max: 1,
+  max: process.env.VERCEL ? 1 : 5,
   idle_timeout: 20,
   connect_timeout: 10,
 });

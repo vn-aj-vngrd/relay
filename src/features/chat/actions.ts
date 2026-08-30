@@ -8,7 +8,7 @@ import { db } from "@/db/client";
 import { messageReactions, messages } from "@/db/schema";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getServerEnv } from "@/lib/env";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { validateChatImageFile } from "./config";
@@ -77,6 +77,11 @@ export async function toggleMessageReaction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const viewer = await getSessionViewer(message.sessionId, slug);
   if (!viewer || !canParticipate(viewer.player.rsvp)) return;
+  await assertRateLimit(
+    { scope: "chat-reaction", limit: 60, windowSeconds: 60 },
+    `player:${viewer.player.id}`,
+    "Reactions are changing too quickly. Wait a moment and try again.",
+  );
   const existing = await db.query.messageReactions.findFirst({
     where: and(
       eq(messageReactions.messageId, message.id),

@@ -58,6 +58,16 @@ export async function checkRateLimit(rule: RateLimitRule, identity: string): Pro
   };
 }
 
+export async function assertRateLimit(rule: RateLimitRule, identity: string, message: string) {
+  const result = await checkRateLimit(rule, identity);
+  if (!result.allowed) {
+    const error = new Error(message);
+    error.name = "RateLimitError";
+    throw error;
+  }
+  return result;
+}
+
 export function rateLimitHeaders(result: RateLimitResult) {
   return {
     "RateLimit-Limit": String(result.limit),

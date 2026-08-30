@@ -9,15 +9,24 @@ import { expenses, notifications, paymentAccounts, playerPayments, sessionPlayer
 import { requireUser } from "@/features/auth/session";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature } from "@/lib/image-file";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
 
 export type PaymentActionState = { error?: string; success?: boolean };
 
+async function guardPaymentManagement(userId: string) {
+  await assertRateLimit(
+    { scope: "payment-management", limit: 60, windowSeconds: 60 },
+    `user:${userId}`,
+    "Payment changes are happening too quickly. Wait a moment and try again.",
+  );
+}
+
 export async function createExpense(formData: FormData) {
   const user = await requireUser();
+  await guardPaymentManagement(user.id);
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session || session.hostId !== user.id) throw new Error("Only the host can request payment");
@@ -156,6 +165,7 @@ export async function markPaymentSent(_: PaymentActionState, formData: FormData)
 
 export async function confirmPayment(formData: FormData) {
   const user = await requireUser();
+  await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const rows = await db
     .select({ payment: playerPayments, player: sessionPlayers, session: sessions })
@@ -182,6 +192,7 @@ export async function confirmPayment(formData: FormData) {
 
 export async function updatePlayerPaymentAmount(formData: FormData) {
   const user = await requireUser();
+  await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const amountCents = Math.round(z.coerce.number().nonnegative().parse(formData.get("amount")) * 100);
   const rows = await db
@@ -206,6 +217,7 @@ export async function updatePlayerPaymentAmount(formData: FormData) {
 
 export async function togglePaymentExcluded(formData: FormData) {
   const user = await requireUser();
+  await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const rows = await db
     .select({ payment: playerPayments, session: sessions })
@@ -236,6 +248,7 @@ export async function togglePaymentExcluded(formData: FormData) {
 
 export async function requestNewPaymentProof(formData: FormData) {
   const user = await requireUser();
+  await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const note = z.string().trim().min(2).max(240).parse(formData.get("note"));
   const rows = await db

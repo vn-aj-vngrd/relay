@@ -26,7 +26,7 @@ export function ChatComposer({
   useEffect(() => {
     if (!state.success) return;
     formRef.current?.reset();
-  }, [state.success]);
+  }, [state]);
 
   return (
     <form

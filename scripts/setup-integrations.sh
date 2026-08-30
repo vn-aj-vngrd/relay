@@ -248,6 +248,7 @@ require_command node
 require_command supabase
 require_command vercel
 require_command corepack
+require_command openssl
 say "This creates Relay in Singapore (${REGION}), the closest Supabase region for Philippine users."
 step "Project name: ${PROJECT_NAME}"
 ORG_ID=$(first_org_id || true)
@@ -343,6 +344,13 @@ set_vercel_env NEXT_PUBLIC_SUPABASE_URL "$NEXT_PUBLIC_SUPABASE_URL"
 set_vercel_env NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
 set_vercel_env SUPABASE_SECRET_KEY "$SUPABASE_SECRET_KEY"
 set_vercel_env DATABASE_URL "$DATABASE_URL"
+HEALTHCHECK_SECRET=$(_existing HEALTHCHECK_SECRET || true)
+if [[ -z "$HEALTHCHECK_SECRET" ]]; then
+  HEALTHCHECK_SECRET=$(openssl rand -base64 32)
+fi
+write_env HEALTHCHECK_SECRET "$HEALTHCHECK_SECRET"
+set_vercel_env HEALTHCHECK_SECRET "$HEALTHCHECK_SECRET"
+set_secret HEALTHCHECK_SECRET "$HEALTHCHECK_SECRET"
 step "Deploying the production build."
 vercel deploy --prod --yes
 note "Stable production URL: $PRODUCTION_URL"
@@ -382,6 +390,6 @@ else
   warn "Production did not respond yet. Vercel may still be assigning the alias."
   SKIPPED+=("production URL response check")
 fi
-say "Use docs/integrations.md for the final email, Google, storage, and database smoke tests."
+say "Use docs/integrations.md and docs/PUBLIC_RELEASE_AUDIT.md for Auth, storage, monitoring, backup, and production release verification."
 
 finish

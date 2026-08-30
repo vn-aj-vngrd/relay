@@ -55,7 +55,10 @@ export default function PrivacyPage() {
         <ul>
           <li>Supabase provides authentication, PostgreSQL, file storage, realtime updates, and scheduled jobs.</li>
           <li>Vercel hosts the application and provides privacy-conscious aggregate web analytics and runtime logs.</li>
-          <li>Geoapify returns court suggestions from the text a host enters during game creation.</li>
+          <li>
+            Geoapify supplies map tiles through Relay’s server-side proxy. Game-creation suggestions come from Relay’s
+            reviewed court directory, so typed search text is not sent to Geoapify.
+          </li>
         </ul>
         <p>These providers process data under their own terms and security practices.</p>
       </section>
@@ -64,8 +67,9 @@ export default function PrivacyPage() {
         <h2>Payment and location boundaries</h2>
         <p>
           Relay never receives card or wallet credentials and never moves money. Payment details and proof images only
-          coordinate repayment between the people in a session. Relay does not continuously track a player’s location;
-          venue search uses only the query entered by the host.
+          coordinate repayment between the people in a session. Relay does not continuously track a player’s location.
+          If a player chooses Use my location in Court Finder, the browser uses the approximate location on that device
+          to sort courts; Relay does not store it.
         </p>
       </section>
 
@@ -84,6 +88,8 @@ export default function PrivacyPage() {
           Relay uses server-side authorization, database row-level security, private storage for sensitive uploads,
           encrypted transport, and scoped guest tokens. No online service can guarantee absolute security. Report a
           privacy or security concern to <a href="mailto:vanajvanguardia@gmail.com">vanajvanguardia@gmail.com</a>.
+          Security and account-access reports are reviewed first; Relay aims to acknowledge them within 24 hours and two
+          business days, respectively.
         </p>
       </section>
     </LegalPage>

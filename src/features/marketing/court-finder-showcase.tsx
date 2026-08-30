@@ -37,7 +37,8 @@ export function CourtFinderShowcase({ courts }: { courts: CebuVenue[] }) {
           />
         </div>
         <p className="mt-3 text-xs leading-5 text-[#6b6b70]">
-          Current Cebu court listings. Check rates and hours before booking.
+          Representative Cebu listings. Open Court Finder for the current directory, then confirm rates and hours before
+          booking.
         </p>
       </div>
     </section>

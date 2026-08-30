@@ -30,6 +30,7 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `GEOAPIFY_API_KEY`                     | Geoapify project                              | Secret, server-only       | Local, Vercel |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | Cloudflare Turnstile widget                   | Public                    | Local, Vercel |
 | `TURNSTILE_SECRET_KEY`                 | Cloudflare Turnstile widget                   | Secret, server-only       | Local, Vercel |
+| `HEALTHCHECK_SECRET`                   | `openssl rand -base64 32`                     | Secret, server-only       | Local, Vercel |
 | `ADMIN_EMAILS`                         | Relay owner                                   | Secret, server-only       | Local, Vercel |
 | `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                           | Server-only configuration | Local, Vercel |
 
@@ -110,6 +111,12 @@ When changing service-worker caching behavior, bump `VERSION` in `public/sw.js`,
 The admin directory uses **Courts** as its product label and `/admin/courts` as its canonical route; database, audit, and API identifiers remain `venues` for compatibility. Legacy `/admin/venues` links redirect to Courts.
 
 After changing the allowlist, redeploy the affected Vercel environment. Every allowlisted administrator must enroll and verify a TOTP authenticator at `/admin-security`; admin pages, actions, and APIs require an `aal2` session and redirect an `aal1` session to that setup/challenge route. Verify an allowlisted account can complete MFA and open `/admin`, a normal account reaches `/admin-access-denied`, and all user suspension, restoration, and game cancellation events appear in the audit log.
+
+## Health monitoring
+
+`GET /api/health` is a database-free public liveness check. `GET /api/health?deep=1` checks PostgreSQL and requires `Authorization: Bearer $HEALTHCHECK_SECRET`. Keep the secret out of URLs and screenshots. `.github/workflows/health-monitor.yml` checks both paths from outside Vercel every ten minutes using the GitHub `HEALTHCHECK_SECRET` secret. Enable Actions failure notifications, run it manually after each release, and add a second independent alert destination for launch week.
+
+The complete production gate, quota alerts, backup drill, and field acceptance criteria live in [`PUBLIC_RELEASE_AUDIT.md`](./PUBLIC_RELEASE_AUDIT.md).
 
 ## Emergency read-only mode
 

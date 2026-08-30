@@ -30,7 +30,7 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
 
   useEffect(() => {
     if (state.success) dialogRef.current?.close();
-  }, [state.success]);
+  }, [state]);
 
   return (
     <div>

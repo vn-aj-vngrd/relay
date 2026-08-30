@@ -23,7 +23,7 @@ import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
-import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
+import { assertRateLimit, checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
 import {
   createSessionSchema,
@@ -230,6 +230,11 @@ function courtLabel(value: string | undefined, position: number) {
 
 export async function updateSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
+  await assertRateLimit(
+    { scope: "session-update", limit: 30, windowSeconds: 60 },
+    `user:${user.id}`,
+    "Game changes are happening too quickly. Wait a moment and try again.",
+  );
   const rawCost = formData.get("cost");
   const rawBookingTotal = formData.get("bookingTotal");
   const parsed = updateSessionSchema.safeParse({
@@ -470,6 +475,11 @@ const relayUsernameInput = z
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Enter a valid Relay username after @.");
 
 async function requireSessionManager(sessionId: string, userId: string) {
+  await assertRateLimit(
+    { scope: "session-management", limit: 120, windowSeconds: 60 },
+    `user:${userId}`,
+    "Game changes are happening too quickly. Wait a moment and try again.",
+  );
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) return null;
   if (session.hostId === userId) return session;
@@ -835,6 +845,13 @@ export async function setAttendanceAction(
     }
   }
   if (!manager && !isSelf) return { error: "You can only update your own arrival." };
+  if (!manager) {
+    const limit = await checkRateLimit(
+      { scope: "attendance-self", limit: 30, windowSeconds: 60 },
+      `player:${target.id}`,
+    );
+    if (!limit.allowed) return { error: "Arrival is changing too quickly. Wait a moment and try again." };
+  }
 
   try {
     await db.transaction(async (tx) => {

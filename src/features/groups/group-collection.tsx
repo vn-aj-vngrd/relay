@@ -3,7 +3,7 @@
 import { CalendarBlank, CaretRight, GridFour, List, UsersThree } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
@@ -74,7 +74,7 @@ function GroupList({ items }: { items: GroupCollectionItem[] }) {
           prefetch={false}
           key={item.id}
           style={item.accentColor ? sessionAccentStyle(item.accentColor) : undefined}
-          className="collection-row group-list-item pressable group flex min-h-[4.5rem] items-center gap-3 py-3.5 hover:bg-surface sm:min-h-20 sm:gap-4 sm:px-3 sm:py-4"
+          className="collection-row group-list-item pressable group flex min-h-[4.5rem] items-center gap-3 py-3.5 [content-visibility:auto] [contain-intrinsic-size:auto_80px] hover:bg-surface sm:min-h-20 sm:gap-4 sm:px-3 sm:py-4"
         >
           <GroupIdentity item={item} />
           <div className="min-w-0 flex-1">
@@ -101,7 +101,7 @@ function GroupGrid({ items }: { items: GroupCollectionItem[] }) {
           prefetch={false}
           key={item.id}
           style={item.accentColor ? sessionAccentStyle(item.accentColor) : undefined}
-          className="group-grid-item pressable group overflow-hidden rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 hover:bg-surface-strong sm:p-5"
+          className="group-grid-item pressable group overflow-hidden rounded-lg border border-line bg-surface p-3.5 [content-visibility:auto] [contain-intrinsic-size:auto_220px] hover:border-primary/35 hover:bg-surface-strong sm:p-5"
         >
           <article className="flex h-full min-w-0 flex-col">
             <div className="flex items-start justify-between gap-4">
@@ -171,8 +171,56 @@ export function GroupViewMenu() {
   return <MobileViewMenu label="Group view" value={mode} options={viewOptions} onChange={saveView} />;
 }
 
-export function GroupCollection({ items }: { items: GroupCollectionItem[] }) {
+export function GroupCollection({
+  items: initialItems,
+  nextCursor: initialNextCursor = null,
+}: {
+  items: GroupCollectionItem[];
+  nextCursor?: string | null;
+}) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+  const [items, setItems] = useState(initialItems);
+  const [nextCursor, setNextCursor] = useState(initialNextCursor);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const loadingRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingRef.current) return;
+    loadingRef.current = true;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/groups?cursor=${encodeURIComponent(nextCursor)}`, { cache: "no-store" });
+      if (!response.ok) throw new Error("request failed");
+      const page = (await response.json()) as { items: GroupCollectionItem[]; nextCursor: string | null };
+      setItems((current) => {
+        const seen = new Set(current.map((item) => item.id));
+        return [...current, ...page.items.filter((item) => !seen.has(item.id))];
+      });
+      setNextCursor(page.nextCursor);
+    } catch {
+      setError("More groups couldn’t be loaded. Try again.");
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+    }
+  }, [nextCursor]);
+
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target || !nextCursor || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) void loadMore();
+      },
+      { rootMargin: "320px" },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [loadMore, nextCursor]);
+
   return (
     <div className="mt-5 sm:mt-10">
       <div className="mb-8 hidden items-center justify-between gap-4 border-b border-line pb-4 sm:flex">
@@ -218,6 +266,27 @@ export function GroupCollection({ items }: { items: GroupCollectionItem[] }) {
           <EmptyGroups />
         )}
       </section>
+      {items.length ? (
+        <div ref={sentinelRef} className="flex min-h-20 items-center justify-center" aria-live="polite">
+          {nextCursor ? (
+            <button
+              type="button"
+              onClick={() => void loadMore()}
+              disabled={loading}
+              className="pressable min-h-11 rounded-lg px-4 text-sm font-semibold text-primary hover:bg-primary-soft disabled:text-muted"
+            >
+              {loading ? "Loading more groups…" : "Load more groups"}
+            </button>
+          ) : (
+            <p className="text-sm text-muted">All {items.length} groups loaded.</p>
+          )}
+        </div>
+      ) : null}
+      {error ? (
+        <p role="alert" className="pb-4 text-center text-sm font-medium text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

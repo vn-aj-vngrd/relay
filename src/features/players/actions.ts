@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { validateAvatarFile } from "./avatar-validation";
@@ -30,6 +30,11 @@ export async function updateOwnProfileAction(
   formData: FormData,
 ): Promise<ProfileDetailsActionState> {
   const user = await requireUser();
+  await assertRateLimit(
+    { scope: "profile-update", limit: 20, windowSeconds: 60 },
+    `user:${user.id}`,
+    "Profile changes are happening too quickly. Wait a moment and try again.",
+  );
   const profile = await ensureProfile(user);
   const parsed = profileDetailsSchema.safeParse({
     name: formData.get("name"),

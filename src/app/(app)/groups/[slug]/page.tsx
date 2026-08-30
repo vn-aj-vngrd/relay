@@ -1,5 +1,5 @@
 import { CalendarPlus, CaretRight, PencilSimple, UsersThree } from "@phosphor-icons/react/dist/ssr";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -24,7 +24,8 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
     where: and(eq(groupMembers.groupId, group.id), eq(groupMembers.userId, user.id)),
   });
   if (!membership) notFound();
-  const [members, groupSessions] = await Promise.all([
+  const now = new Date();
+  const [members, upcoming, past] = await Promise.all([
     db
       .select({ member: groupMembers, profile: profiles })
       .from(groupMembers)
@@ -39,21 +40,22 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
           eq(sessions.groupId, group.id),
           inArray(
             sessions.status,
-            membership.role === "owner"
-              ? ["draft", "published", "live", "completed"]
-              : ["published", "live", "completed"],
+            membership.role === "owner" ? ["draft", "published", "live"] : ["published", "live"],
           ),
+          gte(sessions.endsAt, now),
         ),
       )
-      .orderBy(desc(sessions.startsAt)),
+      .orderBy(asc(sessions.startsAt), asc(sessions.id))
+      .limit(24),
+    db
+      .select()
+      .from(sessions)
+      .where(and(eq(sessions.groupId, group.id), eq(sessions.status, "completed")))
+      .orderBy(desc(sessions.startsAt), desc(sessions.id))
+      .limit(6),
   ]);
-  const now = new Date();
-  const upcoming = groupSessions
-    .filter((session) => session.status === "live" || (session.startsAt >= now && session.status !== "completed"))
-    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
-  const past = groupSessions.filter((session) => session.status === "completed");
   const memories = await Promise.all(
-    past.slice(0, 6).map(async (session) => ({ session, memory: await getSessionMemory(session.id) })),
+    past.map(async (session) => ({ session, memory: await getSessionMemory(session.id) })),
   );
   const names = members.map(({ profile }) => profile.name);
   const avatars = members.map(({ profile }) => profileAvatarUrl(profile.avatarPath));
@@ -218,7 +220,10 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
             </div>
             <ul className="mt-4 divide-y divide-line border-y border-line">
               {members.map(({ member, profile }, index) => (
-                <li key={member.userId} className="flex min-h-14 items-center gap-3 py-2">
+                <li
+                  key={member.userId}
+                  className="flex min-h-14 items-center gap-3 py-2 [content-visibility:auto] [contain-intrinsic-size:auto_56px]"
+                >
                   <Avatar name={profile.name} imageUrl={profileAvatarUrl(profile.avatarPath)} index={index} size="sm" />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{profile.name}</span>
                   <span className="text-xs capitalize text-muted">{member.role}</span>

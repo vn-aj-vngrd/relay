@@ -24,6 +24,7 @@ import {
   sessions,
 } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { assertRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type DeleteSessionState = { error?: string };
@@ -32,6 +33,11 @@ const inputSchema = z.object({ sessionId: z.uuid(), confirmation: z.string().max
 
 export async function deleteSessionAction(_: DeleteSessionState, formData: FormData): Promise<DeleteSessionState> {
   const user = await requireUser();
+  await assertRateLimit(
+    { scope: "session-delete", limit: 5, windowSeconds: 3600 },
+    `user:${user.id}`,
+    "Game deletions are temporarily limited. Wait before trying again.",
+  );
   const parsed = inputSchema.safeParse({
     sessionId: formData.get("sessionId"),
     confirmation: formData.get("confirmation"),

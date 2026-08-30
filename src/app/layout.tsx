@@ -7,6 +7,7 @@ import { Geist_Mono, Inter } from "next/font/google";
 
 import { OfflineIndicator } from "@/features/pwa/offline-indicator";
 import { PwaManager } from "@/features/pwa/pwa-manager";
+import { THEME_INIT_SCRIPT } from "@/lib/theme-init";
 
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -46,7 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         ) : null}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{const m=matchMedia('(prefers-color-scheme: dark)'),a=t=>{document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t==='dark'?'oklch(0.145 0.006 275)':'oklch(0.965 0.002 75)')},p=localStorage.getItem('relay-theme');a(p==='dark'||(p!=='light'&&m.matches)?'dark':'light');m.addEventListener?.('change',()=>{const t=localStorage.getItem('relay-theme');if(t!=='light'&&t!=='dark')a(m.matches?'dark':'light')});const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
+            __html: THEME_INIT_SCRIPT,
           }}
         />
       </head>

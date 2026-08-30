@@ -14,6 +14,7 @@ const serverSchema = publicSchema.extend({
   SUPABASE_SECRET_KEY: z.string().min(1),
   GEOAPIFY_API_KEY: z.string().min(20),
   TURNSTILE_SECRET_KEY: z.string().default(""),
+  HEALTHCHECK_SECRET: z.string().default(""),
   ADMIN_EMAILS: z.string().default(""),
   CHAT_IMAGE_MAX_BYTES: z.coerce
     .number()
@@ -22,6 +23,8 @@ const serverSchema = publicSchema.extend({
     .max(10 * 1024 * 1024)
     .default(DEFAULT_CHAT_IMAGE_MAX_BYTES),
 });
+
+const healthcheckSecretSchema = z.string().default("");
 
 export type PublicEnv = z.infer<typeof publicSchema>;
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -35,6 +38,10 @@ export function getPublicEnv(): PublicEnv {
   });
 }
 
+export function getHealthcheckSecret() {
+  return healthcheckSecretSchema.parse(process.env.HEALTHCHECK_SECRET);
+}
+
 export function getServerEnv(): ServerEnv {
   return serverSchema.parse({
     ...getPublicEnv(),
@@ -42,6 +49,7 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
     GEOAPIFY_API_KEY: process.env.GEOAPIFY_API_KEY,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
+    HEALTHCHECK_SECRET: process.env.HEALTHCHECK_SECRET,
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     CHAT_IMAGE_MAX_BYTES: process.env.CHAT_IMAGE_MAX_BYTES,
   });

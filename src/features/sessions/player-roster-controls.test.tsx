@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
@@ -8,6 +8,7 @@ vi.mock("./actions", () => ({
   toggleRosterLockAction: vi.fn(async () => ({})),
 }));
 
+import { addPlayerAction } from "./actions";
 import { AddPlayerForm, RemovePlayerButton } from "./player-roster-controls";
 
 beforeAll(() => {
@@ -33,6 +34,18 @@ describe("AddPlayerForm", () => {
     expect(screen.getByRole("button", { name: "Invite" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Guest playing experience" })).toBeDisabled();
     expect(screen.getByText(/use @username to invite a Relay player/i)).toBeVisible();
+  });
+
+  it("clears a guest name after the guest is added", async () => {
+    vi.mocked(addPlayerAction).mockResolvedValueOnce({ success: true, playerOutcome: "added" });
+    render(<AddPlayerForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
+
+    const entry = screen.getByRole("textbox", { name: "Guest name or Relay username" });
+    fireEvent.change(entry, { target: { value: "Mika Reyes" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+
+    await waitFor(() => expect(entry).toHaveValue(""));
+    expect(screen.getByRole("status")).toHaveTextContent("Guest added.");
   });
 });
 

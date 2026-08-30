@@ -10,8 +10,17 @@ import { profiles } from "@/db/schema";
 import { safeNextPath } from "@/features/auth/destination-path";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
+import { assertRateLimit } from "@/lib/rate-limit";
 
 import { discoverySourceValues } from "./discovery-source";
+
+async function guardOnboardingMutation(userId: string) {
+  await assertRateLimit(
+    { scope: "onboarding-mutation", limit: 20, windowSeconds: 60 },
+    `user:${userId}`,
+    "Setup changes are happening too quickly. Wait a moment and try again.",
+  );
+}
 
 const setupSchema = z.object({
   name: z
@@ -44,6 +53,7 @@ export async function completeProfileSetup(
   formData: FormData,
 ): Promise<OnboardingActionState> {
   const user = await requireUser();
+  await guardOnboardingMutation(user.id);
   await ensureProfile(user);
   const parsed = setupSchema.safeParse({
     name: formData.get("name"),
@@ -87,6 +97,7 @@ export async function completeProfileSetup(
 
 export async function skipProfileSetup(formData: FormData) {
   const user = await requireUser();
+  await guardOnboardingMutation(user.id);
   await ensureProfile(user);
   await db
     .update(profiles)
@@ -97,6 +108,7 @@ export async function skipProfileSetup(formData: FormData) {
 
 export async function completeProductTour(formData: FormData) {
   const user = await requireUser();
+  await guardOnboardingMutation(user.id);
   await ensureProfile(user);
   const destination = z.enum(["/home", "/games/new"]).catch("/home").parse(formData.get("destination"));
   const now = new Date();

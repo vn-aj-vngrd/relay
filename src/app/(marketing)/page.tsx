@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
-import { getCurrentUser } from "@/features/auth/session";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
+import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
 import { MarketingHighlights } from "@/features/marketing/marketing-highlights";
 import { MarketingSectionNav } from "@/features/marketing/marketing-section-nav";
@@ -18,7 +18,6 @@ import {
   PlaySetupProductPreview,
 } from "@/features/marketing/product-previews";
 import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
-import { getCebuVenues } from "@/features/venues/queries";
 
 export const metadata: Metadata = {
   title: "Relay — Plan pickleball with friends",
@@ -35,9 +34,8 @@ const primaryAction =
 const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-[#d5d5cf] bg-white px-4 text-[13px] font-semibold hover:border-[#aaa9a3] hover:bg-[#f1f1ee]";
 
-export default async function MarketingPage() {
-  const [user, courts] = await Promise.all([getCurrentUser(), getCebuVenues()]);
-  const primaryHref = user ? "/home" : "/signup";
+export default function MarketingPage() {
+  const primaryHref = "/signup";
 
   return (
     <main id="main-content" className="marketing-page min-h-screen bg-[#f7f7f5] text-[#171719]">
@@ -47,16 +45,14 @@ export default async function MarketingPage() {
           <Brand />
           <MarketingSectionNav />
           <div className="flex items-center gap-1">
-            {user ? null : (
-              <Link
-                href="/login"
-                className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-[#55555b] hover:text-[#171719] sm:inline-flex"
-              >
-                Log in
-              </Link>
-            )}
+            <Link
+              href="/login"
+              className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-[#55555b] hover:text-[#171719] sm:inline-flex"
+            >
+              Log in
+            </Link>
             <Link href={primaryHref} className={primaryAction}>
-              {user ? "Open app" : "Get started"}
+              Get started
             </Link>
           </div>
         </div>
@@ -79,7 +75,7 @@ export default async function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href={primaryHref} className={primaryAction}>
-                {user ? "Open Relay" : "Create a game"}
+                Create a game
                 <ArrowRight aria-hidden size={16} />
               </Link>
               <a href="#highlights" className={secondaryAction}>
@@ -95,7 +91,7 @@ export default async function MarketingPage() {
 
       <MarketingHighlights />
 
-      <CourtFinderShowcase courts={courts} />
+      <CourtFinderShowcase courts={marketingCourts} />
 
       <section className="border-b border-[#deded9] bg-white px-5 py-20 sm:px-8 sm:py-28">
         <div data-marketing-reveal="sequence" className="mx-auto max-w-[1180px]">
@@ -305,7 +301,7 @@ export default async function MarketingPage() {
             Add the court and time, then send one link to your players.
           </p>
           <Link href={primaryHref} className={`${primaryAction} mt-9`}>
-            {user ? "Open Relay" : "Create a game"}
+            Create a game
             <ArrowRight aria-hidden size={16} />
           </Link>
         </div>
@@ -319,7 +315,7 @@ export default async function MarketingPage() {
             <a href="#highlights">Highlights</a>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
-            <Link href={user ? "/home" : "/login"}>{user ? "Open app" : "Log in"}</Link>
+            <Link href="/login">Log in</Link>
           </nav>
         </div>
       </footer>

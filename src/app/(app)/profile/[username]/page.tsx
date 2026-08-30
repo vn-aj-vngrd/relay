@@ -10,7 +10,7 @@ import {
   SlidersHorizontal,
   TennisBall,
 } from "@phosphor-icons/react/dist/ssr";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -32,16 +32,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
     getCurrentUser(),
   ]);
   if (!profile) notFound();
-  const [sessionCount, participation] = await Promise.all([
+  const [sessionCount, [matchSummary]] = await Promise.all([
     db.$count(sessionPlayers, and(eq(sessionPlayers.userId, profile.userId), eq(sessionPlayers.rsvp, "going"))),
     db
-      .select({ match: matches, player: matchPlayers })
+      .select({
+        total: count(),
+        wins: sql<number>`count(*) filter (where ${matches.winningTeam} = ${matchPlayers.team})`,
+      })
       .from(matchPlayers)
       .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
       .innerJoin(sessionPlayers, eq(matchPlayers.sessionPlayerId, sessionPlayers.id))
       .where(and(eq(sessionPlayers.userId, profile.userId), eq(matches.status, "completed"))),
   ]);
-  const wins = participation.filter(({ match, player }) => match.winningTeam === player.team).length;
+  const matchCount = Number(matchSummary?.total ?? 0);
+  const wins = Number(matchSummary?.wins ?? 0);
   const ownProfile = viewer?.id === profile.userId;
   const imageUrl = profileAvatarUrl(profile.avatarPath);
 
@@ -99,7 +103,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
           <span className="text-xs font-medium text-muted sm:text-sm">Sessions</span>
         </div>
         <div className="border-x border-line">
-          <strong className="score block text-2xl">{participation.length}</strong>
+          <strong className="score block text-2xl">{matchCount}</strong>
           <span className="text-xs font-medium text-muted sm:text-sm">Matches</span>
         </div>
         <div>

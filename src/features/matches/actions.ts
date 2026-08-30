@@ -23,6 +23,7 @@ import {
 import { trackProductEvent } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
+import { assertRateLimit } from "@/lib/rate-limit";
 
 import {
   parsePlaySetup,
@@ -34,6 +35,11 @@ import {
 
 async function requireHost(sessionId: string) {
   const user = await requireUser();
+  await assertRateLimit(
+    { scope: "play-management", limit: 120, windowSeconds: 60 },
+    `user:${user.id}`,
+    "Play changes are happening too quickly. Wait a moment and try again.",
+  );
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) throw new Error("Session not found");
   const player = await db.query.sessionPlayers.findFirst({
@@ -45,6 +51,11 @@ async function requireHost(sessionId: string) {
 
 async function requireScorekeeper(sessionId: string, matchId: string) {
   const user = await requireUser();
+  await assertRateLimit(
+    { scope: "score-write", limit: 240, windowSeconds: 60 },
+    `user:${user.id}`,
+    "Score changes are happening too quickly. Wait a moment and try again.",
+  );
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) throw new Error("Session not found");
   if (session.hostId === user.id) return { session, user };

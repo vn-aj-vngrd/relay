@@ -17,8 +17,8 @@ export default async function CourtPage() {
   const suggestHref = user ? "/court/suggest" : `/signup?next=${encodeURIComponent("/court/suggest")}`;
 
   return (
-    <div>
-      <header className="flex items-center justify-between gap-3 sm:items-end">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <header className="shrink-0 flex items-center justify-between gap-3 sm:items-end">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2">
             <h1 className="app-title">
@@ -53,7 +53,12 @@ export default async function CourtPage() {
           <Plus aria-hidden size={16} /> <span className="hidden sm:inline">Suggest a court</span>
         </ButtonLink>
       </header>
-      <CourtFinder venues={courts} isAuthenticated={Boolean(user)} detailBasePath="/courts" />
+      <CourtFinder
+        venues={courts}
+        isAuthenticated={Boolean(user)}
+        detailBasePath="/courts"
+        className="mt-7 flex min-h-0 flex-1 flex-col"
+      />
     </div>
   );
 }

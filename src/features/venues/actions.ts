@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 
 import { and, eq, ilike, or } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { db } from "@/db/client";
 import { adminAuditLogs, venues } from "@/db/schema";
@@ -125,8 +125,11 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
       metadata: { status: parsed.data.listingStatus, source: existing.source },
     });
   });
+  updateTag("cebu-venues");
   revalidatePath("/court");
+  revalidatePath("/courts");
   revalidatePath(`/court/${existing.slug}`);
+  revalidatePath(`/courts/${existing.slug}`);
   revalidatePath("/admin/courts");
   revalidatePath(`/admin/courts/${existing.id}`);
   return { success: "Court saved." };
