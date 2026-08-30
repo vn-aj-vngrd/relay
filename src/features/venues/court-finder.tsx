@@ -323,6 +323,7 @@ export function CourtFinder({
   const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
   const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
   const [mobileView, setMobileView] = useState<CourtView>("map");
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -362,6 +363,7 @@ export function CourtFinder({
     selectionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setSelectedId(id);
     setCopied(false);
+    if (revealMap) setMapLoaded(true);
     if (revealMap && window.innerWidth < 1280) {
       setMobileView("map");
       const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -562,25 +564,42 @@ export function CourtFinder({
           className={`${compactPreview || mobileView === "map" ? "flex" : "hidden xl:flex"} min-h-0 scroll-mt-20 flex-col outline-none xl:order-2`}
         >
           <div className="min-h-0 flex-1">
-            <CebuCourtMap
-              venues={mappedVenues}
-              selectedId={selected?.venue.id ?? null}
-              userLocation={userLocation}
-              onSelect={selectCourt}
-              compactPreview={compactPreview}
-              mobileEdgeToEdge={!compactPreview}
-            >
-              {selected ? (
-                <SelectedCourtOverlay
-                  result={selected}
-                  copied={copied}
-                  onClose={closeSelection}
-                  onCopy={() => void copyLocation(selected.venue)}
-                  isAuthenticated={isAuthenticated}
-                  detailBasePath={detailBasePath}
-                />
-              ) : null}
-            </CebuCourtMap>
+            {mapLoaded ? (
+              <CebuCourtMap
+                venues={mappedVenues}
+                selectedId={selected?.venue.id ?? null}
+                userLocation={userLocation}
+                onSelect={selectCourt}
+                compactPreview={compactPreview}
+                mobileEdgeToEdge={!compactPreview}
+              >
+                {selected ? (
+                  <SelectedCourtOverlay
+                    result={selected}
+                    copied={copied}
+                    onClose={closeSelection}
+                    onCopy={() => void copyLocation(selected.venue)}
+                    isAuthenticated={isAuthenticated}
+                    detailBasePath={detailBasePath}
+                  />
+                ) : null}
+              </CebuCourtMap>
+            ) : (
+              <div
+                className={`grid place-items-center border border-line bg-surface-raised px-6 text-center sm:rounded-xl xl:h-full ${!compactPreview ? "h-[58dvh] min-h-[400px] max-h-[520px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none" : "h-[360px] min-h-[360px] rounded-xl sm:h-[420px] sm:min-h-[420px]"}`}
+              >
+                <div className="max-w-sm">
+                  <MapTrifold aria-hidden className="mx-auto text-primary" size={28} />
+                  <h2 className="mt-3 text-base font-[680]">Load the interactive map</h2>
+                  <p className="mt-2 text-sm leading-6 text-muted">
+                    The court list works without map tiles. Load the map only when you need to explore Cebu visually.
+                  </p>
+                  <Button type="button" className="mt-4" onClick={() => setMapLoaded(true)}>
+                    Load map
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <p className="mt-2 hidden shrink-0 text-xs leading-5 text-muted sm:block">
             Drag to explore. Select a pin for details. Map data © Geoapify, OpenMapTiles, and OpenStreetMap

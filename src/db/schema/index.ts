@@ -573,6 +573,20 @@ export const feedbackSubmissions = pgTable(
   ],
 );
 
+export const signupSettings = pgTable(
+  "signup_settings",
+  {
+    id: text("id").primaryKey().default("global"),
+    accountCap: integer("account_cap").notNull().default(200),
+    updatedById: uuid("updated_by_id").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (table) => [
+    check("signup_settings_singleton", sql`${table.id} = 'global'`),
+    check("signup_account_cap_valid", sql`${table.accountCap} between 1 and 50000`),
+  ],
+);
+
 export const rateLimitBuckets = pgTable(
   "rate_limit_buckets",
   {

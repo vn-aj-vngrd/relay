@@ -2,12 +2,12 @@
 
 import { randomBytes } from "node:crypto";
 
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
-import { adminAuditLogs, profiles, sessions, users } from "@/db/schema";
+import { adminAuditLogs, profiles, sessions, signupSettings, users } from "@/db/schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { requireAdmin } from "./auth";
@@ -15,6 +15,7 @@ import {
   adminCreateUserSchema,
   adminOnboardingResetSchema,
   adminSessionActionSchema,
+  adminSignupCapacitySchema,
   adminUpdateProfileSchema,
   adminUserActionSchema,
 } from "./validation";
@@ -25,6 +26,37 @@ function refreshAdminUser(userId: string) {
   revalidatePath("/admin");
   revalidatePath("/admin/users");
   revalidatePath(`/admin/users/${userId}`);
+}
+
+export async function updateSignupCapacityAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  const actor = await requireAdmin();
+  const parsed = adminSignupCapacitySchema.safeParse({ accountCap: formData.get("accountCap") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid account limit." };
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended('relay.signup-account-cap', 0))`);
+      const saved = await tx
+        .update(signupSettings)
+        .set({ accountCap: parsed.data.accountCap, updatedById: actor.id, updatedAt: new Date() })
+        .where(eq(signupSettings.id, "global"))
+        .returning({ accountCap: signupSettings.accountCap });
+      if (!saved.length) throw new Error("SIGNUP_SETTINGS_MISSING");
+      await tx.insert(adminAuditLogs).values({
+        actorUserId: actor.id,
+        action: "signup.capacity_updated",
+        targetType: "signup_settings",
+        targetId: "global",
+        metadata: { accountCap: parsed.data.accountCap },
+      });
+    });
+  } catch (error) {
+    console.error("Signup capacity update failed", error);
+    return { error: "The account limit could not be saved. Try again." };
+  }
+
+  revalidatePath("/admin");
+  return { success: `Account limit saved. Up to ${parsed.data.accountCap.toLocaleString()} accounts can register.` };
 }
 
 export async function createUserAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
@@ -53,7 +85,11 @@ export async function createUserAction(_: AdminActionState, formData: FormData):
     app_metadata: { force_password_change: true },
   });
   if (error || !data.user)
-    return { error: "Supabase could not create this account. Confirm the email is not already registered." };
+    return {
+      error: error?.message.includes("beta signup is full")
+        ? "The account limit has been reached. Raise it before creating another account."
+        : "Supabase could not create this account. Confirm the email is not already registered.",
+    };
 
   try {
     await db.transaction(async (tx) => {

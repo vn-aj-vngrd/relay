@@ -34,6 +34,13 @@ export async function sendMessage(_: ChatActionState, formData: FormData): Promi
     `player:${viewer.player.id}`,
   );
   if (!limit.allowed) return { error: "Messages are sending too quickly. Wait a moment and try again." };
+  if (hasImage) {
+    const uploadLimit = await checkRateLimit(
+      { scope: "chat-image-upload", limit: 10, windowSeconds: 86400 },
+      `player:${viewer.player.id}`,
+    );
+    if (!uploadLimit.allowed) return { error: "Photo uploads are temporarily limited. Try again tomorrow." };
+  }
 
   const [message] = await db
     .insert(messages)

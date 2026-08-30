@@ -21,6 +21,8 @@ export async function createExpense(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session || session.hostId !== user.id) throw new Error("Only the host can request payment");
+  const limit = await checkRateLimit({ scope: "expense-create", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
+  if (!limit.allowed) throw new Error("Payment requests are temporarily limited. Try again tomorrow.");
   const totalCents = Math.round(z.coerce.number().positive().parse(formData.get("total")) * 100);
   const method = z.string().trim().min(2).max(40).parse(formData.get("method"));
   const details = z.string().trim().min(2).max(300).parse(formData.get("details"));
@@ -32,6 +34,7 @@ export async function createExpense(formData: FormData) {
   if (qr instanceof File && qr.size > 0) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(qr.type) || qr.size > 5 * 1024 * 1024)
       throw new Error("Use a JPG, PNG, or WebP QR image under 5 MB");
+    if (!(await hasValidImageSignature(qr))) throw new Error("That QR file doesn’t appear to be a valid image.");
     const extension = qr.type === "image/png" ? "png" : qr.type === "image/webp" ? "webp" : "jpg";
     qrStoragePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseAdminClient();
@@ -44,6 +47,7 @@ export async function createExpense(formData: FormData) {
     const receiptError = validatePaymentProof(receipt);
     if (receiptError)
       throw new Error(receiptError.replace("payment proof", "receipt").replace("Payment proof", "Receipt"));
+    if (!(await hasValidImageSignature(receipt))) throw new Error("That receipt doesn’t appear to be a valid image.");
     const extension = receipt.type === "image/png" ? "png" : receipt.type === "image/webp" ? "webp" : "jpg";
     receiptStoragePath = `${sessionId}/expense-${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseAdminClient();

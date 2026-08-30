@@ -13,10 +13,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
     return Response.json({ error: "Tile is outside the Cebu map." }, { status: 404 });
   }
 
-  const limit = await checkRateLimit(
-    { scope: "cebu-map-tiles", limit: 600, windowSeconds: 600 },
-    await requestIdentity(),
-  );
+  const [dailyBudget, visitorLimit] = await Promise.all([
+    checkRateLimit({ scope: "cebu-map-tiles-global", limit: 2_500, windowSeconds: 86_400 }, "global"),
+    checkRateLimit({ scope: "cebu-map-tiles", limit: 600, windowSeconds: 600 }, await requestIdentity()),
+  ]);
+  const limit = dailyBudget.allowed ? visitorLimit : dailyBudget;
   if (!limit.allowed)
     return Response.json(
       { error: "Map requests are temporarily limited." },

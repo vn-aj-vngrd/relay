@@ -73,6 +73,7 @@ const suggestedVenue: CebuVenue = {
 };
 
 beforeEach(() => {
+  captureMapVenues.mockClear();
   Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   Object.defineProperty(navigator, "geolocation", {
     configurable: true,
@@ -87,9 +88,12 @@ beforeEach(() => {
 describe("CourtFinder", () => {
   it("keeps the mapped court set stable when opening a marker card", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
-    const beforeSelection = captureMapVenues.mock.calls.at(-1)?.[0];
+    expect(captureMapVenues).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(screen.getByRole("button", { name: "Load map" }));
+    const map = screen.getByLabelText("Interactive map of pickleball courts");
+    const beforeSelection = captureMapVenues.mock.calls.at(-1)?.[0];
+    fireEvent.click(within(map).getByRole("button", { name: "Select NiceServe Pickleball Court" }));
 
     expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
   });
@@ -129,10 +133,10 @@ describe("CourtFinder", () => {
     expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
   });
 
-  it("selects a mapped Cebu court and carries it into game creation", () => {
+  it("selects a Cebu court from the list and carries it into game creation", () => {
     render(<CourtFinder venues={[venue]} isAuthenticated />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(screen.getByRole("button", { name: /^NiceServe Pickleball Court/ }));
 
     expect(screen.getByText("Verified by Relay")).toHaveClass("text-primary");
     expect(screen.getByRole("complementary", { name: "Selected court: NiceServe Pickleball Court" })).toHaveClass(
@@ -153,7 +157,7 @@ describe("CourtFinder", () => {
   it("sends public visitors through signup without losing the selected court", () => {
     render(<CourtFinder venues={[venue]} detailBasePath="/courts" />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(screen.getByRole("button", { name: /^NiceServe Pickleball Court/ }));
 
     expect(screen.getByRole("link", { name: "Court details" })).toHaveAttribute("href", "/courts/nice-serve");
     expect(screen.getByRole("link", { name: "Plan a game here" })).toHaveAttribute(
@@ -177,10 +181,12 @@ describe("CourtFinder", () => {
 
     expect(await screen.findByText(/sorted by distance/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Nearest courts" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /^Select / }).map((button) => button.textContent)).toEqual([
-      "Select NiceServe Pickleball Court",
-      "Select Farther Court",
-    ]);
+    const list = screen.getByRole("region", { name: "Nearest courts" });
+    expect(
+      within(list)
+        .getAllByRole("button")
+        .map((button) => button.textContent?.trim()),
+    ).toEqual([expect.stringMatching(/^NiceServe Pickleball Court/), expect.stringMatching(/^Farther Court/)]);
   });
 
   it("never presents unverified court suggestions", () => {
@@ -202,7 +208,7 @@ describe("CourtFinder", () => {
   it("copies a Google Maps location without exposing provider credentials", async () => {
     render(<CourtFinder venues={[venue]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(screen.getByRole("button", { name: /^NiceServe Pickleball Court/ }));
     fireEvent.click(screen.getByRole("button", { name: "Copy location" }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(

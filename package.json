@@ -22,6 +22,7 @@
     "venues:import-cebu": "node --env-file=.env.local --experimental-strip-types scripts/import-cebu-venues.ts"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.6.1",
     "@phosphor-icons/react": "^2.1.10",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",

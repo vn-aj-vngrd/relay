@@ -17,6 +17,13 @@ export const adminReasonSchema = z
 export const adminUserActionSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
 export const adminOnboardingResetSchema = z.object({ userId: z.uuid() });
 export const adminSessionActionSchema = z.object({ sessionId: z.uuid(), reason: adminReasonSchema });
+export const adminSignupCapacitySchema = z.object({
+  accountCap: z.coerce
+    .number()
+    .int("Enter a whole number of accounts.")
+    .min(1, "Allow at least one account.")
+    .max(50_000, "Keep the account limit at 50,000 or fewer."),
+});
 
 const usernameSchema = z
   .string()

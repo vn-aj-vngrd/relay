@@ -1,11 +1,14 @@
 import { ArrowRight, ChatText, ClockCounterClockwise, MapPin, Users, Volleyball } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { AdminDate } from "@/features/admin/presentation";
 import { getAdminOverview } from "@/features/admin/queries";
+import { SignupCapacityControl } from "@/features/admin/signup-capacity-control";
 
 export default async function AdminOverviewPage() {
+  await connection();
   const data = await getAdminOverview();
 
   return (
@@ -40,6 +43,10 @@ export default async function AdminOverviewPage() {
           <p className="mt-1 text-xs text-muted">Waiting for review</p>
         </div>
       </section>
+
+      <div className="mt-10">
+        <SignupCapacityControl accountCap={data.accountCap} userCount={data.userCount} />
+      </div>
 
       <section className="mt-10" aria-labelledby="product-loop-title">
         <div>

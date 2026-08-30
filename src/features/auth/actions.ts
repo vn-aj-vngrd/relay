@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { getPublicEnv } from "@/lib/env";
+import { getPublicEnv, getServerEnv } from "@/lib/env";
 import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -23,6 +23,27 @@ const passwordSchema = z
 
 function nextPath(formData: FormData) {
   return safeNextPath(formData.get("next"));
+}
+
+async function verifySignupCaptcha(formData: FormData) {
+  const token = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
+  const secret = getServerEnv().TURNSTILE_SECRET_KEY;
+  if (!secret || !token.success) return false;
+
+  try {
+    const body = new URLSearchParams({ secret, response: token.data });
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      body,
+      signal: AbortSignal.timeout(5_000),
+      cache: "no-store",
+    });
+    if (!response.ok) return false;
+    const result = (await response.json()) as { success?: boolean };
+    return result.success === true;
+  } catch {
+    return false;
+  }
 }
 
 function authError(message: string, destination = "/login", next?: string): never {
@@ -123,6 +144,7 @@ export async function createPasswordAccount(formData: FormData) {
       "/signup",
       next,
     );
+  if (!(await verifySignupCaptcha(formData))) authError("Complete the security check and try again.", "/signup", next);
   await guardAuthAttempt({
     scope: "password-sign-up",
     email: email.data,
@@ -141,7 +163,9 @@ export async function createPasswordAccount(formData: FormData) {
     authError(
       error.message === "User already registered"
         ? "An account already exists for this email. Log in instead."
-        : "We couldn’t create your account. Please try again.",
+        : error.message.includes("beta signup is full")
+          ? "Relay’s beta is full right now. Try again after more places open."
+          : "We couldn’t create your account. Please try again.",
       "/signup",
       next,
     );

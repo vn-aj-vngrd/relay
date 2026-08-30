@@ -1,6 +1,23 @@
 import type { NextConfig } from "next";
 
+const contentSecurityPolicyReportOnly = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://lh3.googleusercontent.com",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://vitals.vercel-insights.com",
+  "frame-src https://challenges.cloudflare.com",
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   experimental: { serverActions: { bodySizeLimit: "11mb" }, useOffline: true },
   turbopack: { root: process.cwd() },
   async redirects() {
@@ -18,6 +35,7 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
+          { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicyReportOnly },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

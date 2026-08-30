@@ -26,6 +26,10 @@ describe("AuthForm", () => {
     expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
     expect(screen.getAllByRole("button", { name: "Create account" })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", { name: "Create account" }).find((button) => button.hasAttribute("disabled")),
+    ).toBeDisabled();
+    expect(screen.getByText(/security check is being configured/i)).toHaveAttribute("role", "alert");
     expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
   });
 });

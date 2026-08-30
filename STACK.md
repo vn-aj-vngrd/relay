@@ -4,15 +4,15 @@ This document records the technologies currently used to build, run, test, and d
 
 ## Application platform
 
-| Layer | Technology | Version / role |
-| --- | --- | --- |
-| Runtime | Node.js | Node 22 for local development and tooling |
-| Package manager | pnpm | 10.12.1 |
-| Language | TypeScript | 5.9.3, strict mode |
-| Web framework | Next.js App Router | 16.3.1, React Server Components, Server Actions, route handlers, Turbopack |
-| UI runtime | React / React DOM | 19.2.8 |
-| Hosting | Vercel | Application functions pinned to Singapore (`sin1`) |
-| Analytics | Vercel Analytics | 2.0.1 |
+| Layer           | Technology         | Version / role                                                             |
+| --------------- | ------------------ | -------------------------------------------------------------------------- |
+| Runtime         | Node.js            | Node 22 for local development and tooling                                  |
+| Package manager | pnpm               | 10.12.1                                                                    |
+| Language        | TypeScript         | 5.9.3, strict mode                                                         |
+| Web framework   | Next.js App Router | 16.3.1, React Server Components, Server Actions, route handlers, Turbopack |
+| UI runtime      | React / React DOM  | 19.2.8                                                                     |
+| Hosting         | Vercel             | Application functions pinned to Singapore (`sin1`)                         |
+| Analytics       | Vercel Analytics   | 2.0.1                                                                      |
 
 ## Frontend
 
@@ -27,19 +27,19 @@ This document records the technologies currently used to build, run, test, and d
 
 ## Backend and data
 
-| Concern | Technology |
-| --- | --- |
-| Application backend | Next.js Server Components, Server Actions, and route handlers |
-| Database | PostgreSQL hosted by Supabase |
-| ORM and query layer | Drizzle ORM 0.45.2 |
-| Migrations | Drizzle Kit 0.31.10 and SQL migrations in `drizzle/` |
-| PostgreSQL driver | `postgres` 3.4.9, using the Supabase transaction pooler with prepared statements disabled |
-| Validation | Zod 4.4.3 at action, API, and environment boundaries |
-| Authentication | Supabase Auth through `@supabase/ssr` and `@supabase/supabase-js` |
-| File storage | Supabase Storage for avatars, group photos, chat images, payment assets, booking receipts, and session memories |
-| Realtime | Supabase Broadcast for session invalidations and Postgres Changes for user notifications |
-| Scheduled work | Supabase Cron for session reminders and maintenance jobs |
-| Rate limiting | PostgreSQL-backed fixed-window limiter with application-level guards |
+| Concern             | Technology                                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Application backend | Next.js Server Components, Server Actions, and route handlers                                                   |
+| Database            | PostgreSQL hosted by Supabase                                                                                   |
+| ORM and query layer | Drizzle ORM 0.45.2                                                                                              |
+| Migrations          | Drizzle Kit 0.31.10 and SQL migrations in `drizzle/`                                                            |
+| PostgreSQL driver   | `postgres` 3.4.9, using the Supabase transaction pooler with prepared statements disabled                       |
+| Validation          | Zod 4.4.3 at action, API, and environment boundaries                                                            |
+| Authentication      | Supabase Auth through `@supabase/ssr` and `@supabase/supabase-js`                                               |
+| File storage        | Supabase Storage for avatars, group photos, chat images, payment assets, booking receipts, and session memories |
+| Realtime            | Supabase Broadcast for session invalidations and Postgres Changes for user notifications                        |
+| Scheduled work      | Supabase Cron for session reminders and maintenance jobs                                                        |
+| Rate limiting       | PostgreSQL-backed fixed-window limiter with application-level guards                                            |
 
 Supabase runs in Singapore (`ap-southeast-1`). Public and private storage boundaries, realtime topics, environment variables, and provisioning steps are documented in [`docs/integrations.md`](docs/integrations.md).
 
@@ -53,15 +53,15 @@ Supabase runs in Singapore (`ap-southeast-1`). Public and private storage bounda
 
 ## Quality and testing
 
-| Tool | Version / purpose |
-| --- | --- |
-| Vitest | 4.1.10, unit and component tests in jsdom |
-| Testing Library | React 16.3.2 and jest-dom 7.0.1 |
-| Playwright | 1.62.1, mobile and desktop Chromium end-to-end tests |
-| axe-core Playwright | 4.13.0, browser accessibility checks |
-| ESLint | 9.39.5 with Next.js rules and simple import sorting |
-| Prettier | 3.9.6 |
-| TypeScript compiler | Strict static checking with `tsc --noEmit` |
+| Tool                | Version / purpose                                    |
+| ------------------- | ---------------------------------------------------- |
+| Vitest              | 4.1.10, unit and component tests in jsdom            |
+| Testing Library     | React 16.3.2 and jest-dom 7.0.1                      |
+| Playwright          | 1.62.1, mobile and desktop Chromium end-to-end tests |
+| axe-core Playwright | 4.13.0, browser accessibility checks                 |
+| ESLint              | 9.39.5 with Next.js rules and simple import sorting  |
+| Prettier            | 3.9.6                                                |
+| TypeScript compiler | Strict static checking with `tsc --noEmit`           |
 
 The production quality gate is documented in [`docs/CODE_QUALITY.md`](docs/CODE_QUALITY.md). The standard commands are:
 

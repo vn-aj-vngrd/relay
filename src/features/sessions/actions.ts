@@ -50,8 +50,8 @@ function manilaDate(date: FormDataEntryValue | null, time: FormDataEntryValue | 
 
 export async function createSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
-  const limit = await checkRateLimit({ scope: "session-create", limit: 20, windowSeconds: 3600 }, `user:${user.id}`);
-  if (!limit.allowed) return { error: "You’ve created several games recently. Try again later." };
+  const limit = await checkRateLimit({ scope: "session-create", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
+  if (!limit.allowed) return { error: "You’ve created several games today. Try again tomorrow." };
   const hostProfile = await ensureProfile(user);
   const rawCost = formData.get("cost");
   const parsed = createSessionSchema().safeParse({

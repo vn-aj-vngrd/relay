@@ -1,5 +1,6 @@
 "use client";
 
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -11,11 +12,11 @@ import { createPasswordAccount, signInWithPassword } from "./actions";
 
 type Mode = "signin" | "create";
 
-function AuthSubmit({ mode }: { mode: Mode }) {
+function AuthSubmit({ mode, blocked = false }: { mode: Mode; blocked?: boolean }) {
   const { pending } = useFormStatus();
   const creating = mode === "create";
   return (
-    <Button className="h-12 w-full text-[15px]" disabled={pending} aria-disabled={pending}>
+    <Button className="h-12 w-full text-[15px]" disabled={pending || blocked} aria-disabled={pending || blocked}>
       {pending ? (
         <>
           <ButtonSpinner />
@@ -33,7 +34,9 @@ function AuthSubmit({ mode }: { mode: Mode }) {
 export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: string; initialMode?: Mode }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaReady, setCaptchaReady] = useState(false);
   const creating = mode === "create";
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   return (
     <div>
@@ -114,7 +117,24 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
             {creating ? "8 or more characters, including a letter and number." : null}
           </p>
         </div>
-        <AuthSubmit mode={mode} />
+        {creating ? (
+          turnstileSiteKey ? (
+            <div className="min-h-[65px] overflow-hidden" aria-label="Signup security check">
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                options={{ size: "flexible", theme: "auto" }}
+                onSuccess={() => setCaptchaReady(true)}
+                onExpire={() => setCaptchaReady(false)}
+                onError={() => setCaptchaReady(false)}
+              />
+            </div>
+          ) : (
+            <p role="alert" className="text-sm leading-5 text-danger">
+              Account creation is temporarily unavailable while the security check is being configured.
+            </p>
+          )
+        ) : null}
+        <AuthSubmit mode={mode} blocked={creating && (!turnstileSiteKey || !captchaReady)} />
         <p className="text-center text-xs leading-5 text-muted">
           {creating ? "By creating an account" : "By signing in"}, you agree to the{" "}
           <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">

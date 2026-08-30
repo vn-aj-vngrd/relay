@@ -80,9 +80,9 @@ allowed_cidrs = ["0.0.0.0/0"]
 # Defaults to allow all IPv6 connections. Set empty array to block all IPs.
 allowed_cidrs_v6 = ["::/0"]
 
-# Uncomment to reject non-secure connections to the database.
-# [db.ssl_enforcement]
-# enabled = true
+# Reject non-TLS database connections in production and local parity.
+[db.ssl_enforcement]
+enabled = true
 
 [realtime]
 enabled = true
@@ -210,11 +210,11 @@ token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
-# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
-# [auth.captcha]
-# enabled = true
-# provider = "hcaptcha"
-# secret = ""
+# Cloudflare Turnstile is required for all public Auth flows.
+[auth.captcha]
+enabled = true
+provider = "turnstile"
+secret = "env(TURNSTILE_SECRET_KEY)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
@@ -222,10 +222,10 @@ enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
-# Password accounts sign in immediately. Magic-link delivery stays disabled until production SMTP is configured.
-enable_confirmations = false
+# Public accounts must prove ownership of their email before receiving a session.
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
-secure_password_change = false
+secure_password_change = true
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1m"
 # Number of characters used in the email OTP.
@@ -233,15 +233,15 @@ otp_length = 8
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
-# Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# Resend's free production SMTP keeps authentication mail independent from Supabase's test-only sender.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 587
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "env(SMTP_FROM_EMAIL)"
+sender_name = "Relay"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -275,10 +275,10 @@ max_frequency = "5s"
 # Force log out if the user has been inactive longer than the specified duration.
 # inactivity_timeout = "8h"
 
-# This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-# [auth.hook.before_user_created]
-# enabled = true
-# uri = "pg-functions://postgres/auth/before-user-created-hook"
+# Enforce the admin-managed global account cap before any Auth identity is created.
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_enforce_signup_account_cap"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
 # [auth.hook.custom_access_token]

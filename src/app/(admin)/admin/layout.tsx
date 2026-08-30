@@ -1,5 +1,6 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { AppBreadcrumbs } from "@/components/shared/app-breadcrumbs";
 import { Brand } from "@/components/shared/brand";
@@ -7,6 +8,7 @@ import { AdminNav } from "@/features/admin/admin-nav";
 import { requireAdmin } from "@/features/admin/auth";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   const admin = await requireAdmin();
 
   return (

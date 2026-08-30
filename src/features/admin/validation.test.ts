@@ -4,6 +4,7 @@ import {
   adminCreateUserSchema,
   adminReasonSchema,
   adminSessionActionSchema,
+  adminSignupCapacitySchema,
   adminUpdateProfileSchema,
   adminUserActionSchema,
 } from "./validation";
@@ -26,6 +27,13 @@ describe("admin action validation", () => {
     expect(adminSessionActionSchema.safeParse({ sessionId: id, reason: "Host requested cancellation" }).success).toBe(
       true,
     );
+  });
+
+  it("accepts a bounded whole-number signup capacity", () => {
+    expect(adminSignupCapacitySchema.parse({ accountCap: "200" })).toEqual({ accountCap: 200 });
+    expect(adminSignupCapacitySchema.safeParse({ accountCap: "0" }).success).toBe(false);
+    expect(adminSignupCapacitySchema.safeParse({ accountCap: "2.5" }).success).toBe(false);
+    expect(adminSignupCapacitySchema.safeParse({ accountCap: "50001" }).success).toBe(false);
   });
 
   it("normalizes new accounts and validates profile edits", () => {

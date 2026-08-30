@@ -1,6 +1,7 @@
 import "server-only";
 
 import { and, type AnyColumn, count, desc, eq, gte, ilike, isNotNull, lt, or, type SQL, sql } from "drizzle-orm";
+import { connection } from "next/server";
 
 import { db } from "@/db/client";
 import {
@@ -13,6 +14,7 @@ import {
   profiles,
   sessionPlayers,
   sessions,
+  signupSettings,
   users,
   venues,
 } from "@/db/schema";
@@ -27,6 +29,7 @@ import {
 import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
 export async function getAdminInsights() {
+  await connection();
   const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const [profileCount, onboardingCount, tourCount, discoveryRows, lifecycleRows] = await Promise.all([
     db.$count(profiles),
@@ -56,30 +59,30 @@ export async function getAdminInsights() {
 }
 
 export async function getAdminOverview() {
+  await connection();
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const [
-    userCount,
-    newUsers,
-    suspendedUsers,
-    sessionCount,
-    upcomingSessions,
-    liveSessions,
-    newFeedbackCount,
-    recentActions,
-    lifecycleEvents,
-  ] = await Promise.all([
-    db.$count(users),
-    db.$count(users, gte(users.createdAt, weekAgo)),
-    db.$count(users, isNotNull(users.suspendedAt)),
-    db.$count(sessions),
-    db.$count(
-      sessions,
-      and(gte(sessions.startsAt, now), or(eq(sessions.status, "published"), eq(sessions.status, "live"))),
-    ),
-    db.$count(sessions, eq(sessions.status, "live")),
-    db.$count(feedbackSubmissions, eq(feedbackSubmissions.status, "new")),
+  const [totalsRows, recentActions, lifecycleEvents, signupCapacity] = await Promise.all([
+    db
+      .select({
+        userCount: sql<number>`count(*)::int`,
+        newUsers: sql<number>`count(*) filter (where ${users.createdAt} >= ${weekAgo.toISOString()}::timestamptz)::int`,
+        suspendedUsers: sql<number>`count(*) filter (where ${users.suspendedAt} is not null)::int`,
+        sessionCount: sql<number>`(select count(*)::int from ${sessions})`,
+        upcomingSessions: sql<number>`(
+          select count(*)::int from ${sessions}
+          where ${sessions.startsAt} >= ${now.toISOString()}::timestamptz
+            and ${sessions.status} in ('published', 'live')
+        )`,
+        liveSessions: sql<number>`(
+          select count(*)::int from ${sessions} where ${sessions.status} = 'live'
+        )`,
+        newFeedbackCount: sql<number>`(
+          select count(*)::int from ${feedbackSubmissions} where ${feedbackSubmissions.status} = 'new'
+        )`,
+      })
+      .from(users),
     db
       .select({ log: adminAuditLogs, actorEmail: users.email })
       .from(adminAuditLogs)
@@ -91,16 +94,24 @@ export async function getAdminOverview() {
       .from(productEvents)
       .where(gte(productEvents.createdAt, monthAgo))
       .groupBy(productEvents.name),
+    db.query.signupSettings.findFirst({
+      columns: { accountCap: true },
+      where: eq(signupSettings.id, "global"),
+    }),
   ]);
+  const totals = totalsRows[0] ?? {
+    userCount: 0,
+    newUsers: 0,
+    suspendedUsers: 0,
+    sessionCount: 0,
+    upcomingSessions: 0,
+    liveSessions: 0,
+    newFeedbackCount: 0,
+  };
   return {
-    userCount,
-    newUsers,
-    suspendedUsers,
-    sessionCount,
-    upcomingSessions,
-    liveSessions,
-    newFeedbackCount,
+    ...totals,
     recentActions,
+    accountCap: signupCapacity?.accountCap ?? 200,
     lifecycle: new Map(lifecycleEvents.map(({ name, total }) => [name, Number(total)])),
   };
 }
@@ -119,6 +130,7 @@ function paged<T extends { id: string }>(rows: T[], dateFor: (item: T) => Date):
 }
 
 export async function getAdminUsers(input: { query?: string; cursor?: AdminCursor | null } = {}) {
+  await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
@@ -148,6 +160,7 @@ export async function getAdminUsers(input: { query?: string; cursor?: AdminCurso
 }
 
 export async function getAdminUser(userId: string) {
+  await connection();
   const [account, hostedCount, joinedCount] = await Promise.all([
     db
       .select({ user: users, profile: profiles })
@@ -170,6 +183,7 @@ export async function getAdminSessions(
     cursor?: AdminCursor | null;
   } = {},
 ) {
+  await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
@@ -204,6 +218,7 @@ export async function getAdminSessions(
 }
 
 export async function getAdminSession(sessionId: string) {
+  await connection();
   const [record, playerCount, matchCount, messageCount, expenseCount] = await Promise.all([
     db
       .select({ session: sessions, hostEmail: users.email, hostName: profiles.name })
@@ -229,6 +244,7 @@ export async function getAdminVenues(
     cursor?: AdminCursor | null;
   } = {},
 ) {
+  await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
@@ -283,10 +299,12 @@ export async function getAdminVenues(
 }
 
 export async function getAdminVenue(venueId: string) {
+  await connection();
   return db.query.venues.findFirst({ where: eq(venues.id, venueId) });
 }
 
 export async function getAdminAuditLog(cursor: AdminCursor | null = null) {
+  await connection();
   const cursorCondition = afterCursor(adminAuditLogs.createdAt, adminAuditLogs.id, cursor);
   const rows = await db
     .select({
