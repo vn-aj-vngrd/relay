@@ -104,16 +104,18 @@ describe("CourtFinder", () => {
     expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
   });
 
-  it("supports a bounded click-to-load landing-page preview without changing the full finder", () => {
+  it("loads the map immediately in the bounded preview and full finder", () => {
     const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
-    expect(screen.getByRole("button", { name: "Load map" })).toBeVisible();
+    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Load map" })).not.toBeInTheDocument();
 
     rerender(<CourtFinder venues={[venue]} />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass(
       "h-[min(60dvh,520px)]",
       "sm:h-[580px]",
     );
+    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
   });
 
   it("gives mobile and tablet users dedicated map and list views", () => {
