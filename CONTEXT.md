@@ -60,6 +60,10 @@ _Avoid_: Social feed, freeform design editor, fabricated highlight
 A participant’s optional self-description—Just starting, Casual, Regular, or Experienced—used only to help friends form enjoyable teams. An account profile supplies a default; a session participant may use a session-specific value.
 _Avoid_: Rating, rank, proficiency score
 
+**Court directory coverage**:
+The geographic area where Relay accepts court submissions, verified listing coordinates, and map requests. It describes supported geography, not an exhaustive inventory of every operating court.
+_Avoid_: Complete court coverage, court inventory
+
 **Shared game link**:
 The account-optional URL used to understand and join a session. It is the canonical entry point for guests and invitees, not a separate copy of the session.
 _Avoid_: Public version, guest app

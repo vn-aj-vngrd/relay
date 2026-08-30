@@ -6,7 +6,7 @@ import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { type CreateSessionDefaults, CreateSessionForm } from "@/features/sessions/create-session-form";
-import { getVenueSuggestions } from "@/features/venues/queries";
+import { getCourtSuggestions } from "@/features/venues/directory";
 
 export default async function NewGamePage({
   searchParams,
@@ -14,7 +14,7 @@ export default async function NewGamePage({
   searchParams: Promise<{ from?: string; group?: string; venue?: string; address?: string }>;
 }) {
   const user = await requireUser();
-  const [params, courts] = await Promise.all([searchParams, getVenueSuggestions()]);
+  const [params, courts] = await Promise.all([searchParams, getCourtSuggestions()]);
   const source = params.from
     ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id)) })
     : null;

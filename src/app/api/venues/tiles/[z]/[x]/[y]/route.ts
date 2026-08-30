@@ -1,4 +1,4 @@
-import { isValidPhilippinesTile } from "@/features/venues/tile-boundary";
+import { courtDirectoryCoverage } from "@/features/venues/coverage";
 import { getServerEnv } from "@/lib/env";
 import { checkRateLimit, rateLimitHeaders, requestIdentity } from "@/lib/rate-limit";
 
@@ -9,7 +9,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
   const zoom = Number(z);
   const tileX = Number(x);
   const tileY = Number(y);
-  if (!isValidPhilippinesTile(zoom, tileX, tileY)) {
+  if (!courtDirectoryCoverage.allowsTile({ zoom, x: tileX, y: tileY })) {
     return Response.json({ error: "Tile is outside the Philippines map." }, { status: 404 });
   }
 

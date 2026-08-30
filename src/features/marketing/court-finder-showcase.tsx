@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { CourtFinder } from "@/features/venues/court-finder";
-import type { PhilippinesVenue } from "@/features/venues/queries";
+import type { CourtListing } from "@/features/venues/directory";
 
-export function CourtFinderShowcase({ courts }: { courts: PhilippinesVenue[] }) {
+export function CourtFinderShowcase({ courts }: { courts: CourtListing[] }) {
   return (
     <section id="court-finder" className="border-b border-line bg-surface px-5 py-20 sm:px-8 sm:py-28">
       <div className="mx-auto max-w-[1180px]">

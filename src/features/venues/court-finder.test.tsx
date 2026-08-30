@@ -3,17 +3,17 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CourtFinder } from "./court-finder";
-import type { PhilippinesVenue } from "./queries";
+import type { CourtListing } from "./directory";
 
 const { captureMapVenues } = vi.hoisted(() => ({ captureMapVenues: vi.fn() }));
 
-vi.mock("./philippines-court-map", () => ({
-  PhilippinesCourtMap: ({
+vi.mock("./court-map", () => ({
+  CourtMap: ({
     venues,
     onSelect,
     children,
   }: {
-    venues: PhilippinesVenue[];
+    venues: CourtListing[];
     onSelect: (id: string) => void;
     children?: ReactNode;
   }) => {
@@ -31,7 +31,7 @@ vi.mock("./philippines-court-map", () => ({
   },
 }));
 
-const venue: PhilippinesVenue = {
+const venue: CourtListing = {
   id: "nice-serve",
   slug: "nice-serve",
   name: "NiceServe Pickleball Court",
@@ -53,7 +53,7 @@ const venue: PhilippinesVenue = {
   sourceUrl: null,
 };
 
-const fartherVenue: PhilippinesVenue = {
+const fartherVenue: CourtListing = {
   ...venue,
   id: "farther-court",
   slug: "farther-court",
@@ -64,7 +64,7 @@ const fartherVenue: PhilippinesVenue = {
   paddleRental: false,
 };
 
-const suggestedVenue: PhilippinesVenue = {
+const suggestedVenue: CourtListing = {
   ...venue,
   id: "suggested-court",
   slug: "suggested-court",

@@ -8,8 +8,8 @@ import type {
 } from "maplibre-gl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import type { PhilippinesVenue } from "./queries";
-import { PHILIPPINES_TILE_BOUNDS } from "./tile-boundary";
+import { courtDirectoryCoverage } from "./coverage";
+import type { CourtListing } from "./directory";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MAP_STYLESHEET_ID = "relay-maplibre-styles";
@@ -43,8 +43,8 @@ function ensureMapStylesheet() {
   });
 }
 
-type PhilippinesCourtMapProps = {
-  venues: PhilippinesVenue[];
+type CourtMapProps = {
+  venues: CourtListing[];
   selectedId: string | null;
   userLocation?: { latitude: number; longitude: number } | null;
   onSelect: (id: string) => void;
@@ -55,6 +55,7 @@ type PhilippinesCourtMapProps = {
 
 function mapStyle(dark: boolean): StyleSpecification {
   const style = dark ? "dark-matter" : "osm-bright-grey";
+  const viewport = courtDirectoryCoverage.mapViewport();
   return {
     version: 8,
     sources: {
@@ -62,8 +63,8 @@ function mapStyle(dark: boolean): StyleSpecification {
         type: "raster",
         tiles: [`/api/venues/tiles/{z}/{x}/{y}?style=${style}`],
         tileSize: 256,
-        minzoom: 8,
-        maxzoom: 18,
+        minzoom: viewport.minZoom,
+        maxzoom: viewport.maxZoom,
         attribution:
           '<a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Geoapify</a> · <a href="https://openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>',
       },
@@ -72,7 +73,7 @@ function mapStyle(dark: boolean): StyleSpecification {
   };
 }
 
-function fitVenues(map: MapLibreMap, venues: PhilippinesVenue[], immediate = false) {
+function fitVenues(map: MapLibreMap, venues: CourtListing[], immediate = false) {
   if (!venues.length) return;
   if (venues.length === 1) {
     map.easeTo({
@@ -125,7 +126,7 @@ export function createMobileSafeFullscreenControl(
   return new FullscreenControl({ pseudo: true, container });
 }
 
-export function PhilippinesCourtMap({
+export function CourtMap({
   venues,
   selectedId,
   userLocation,
@@ -133,7 +134,7 @@ export function PhilippinesCourtMap({
   children,
   compactPreview = false,
   mobileEdgeToEdge = false,
-}: PhilippinesCourtMapProps) {
+}: CourtMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -168,17 +169,15 @@ export function PhilippinesCourtMap({
       .then((maplibre) => {
         if (disposed) return;
         const dark = document.documentElement.dataset.theme === "dark";
+        const viewport = courtDirectoryCoverage.mapViewport();
         const map = new maplibre.Map({
           container,
           style: mapStyle(dark),
-          center: [122.2, 12.1],
-          zoom: 5.2,
-          minZoom: 5,
-          maxZoom: 18,
-          maxBounds: [
-            [PHILIPPINES_TILE_BOUNDS.west, PHILIPPINES_TILE_BOUNDS.south],
-            [PHILIPPINES_TILE_BOUNDS.east, PHILIPPINES_TILE_BOUNDS.north],
-          ],
+          center: viewport.center,
+          zoom: viewport.zoom,
+          minZoom: viewport.minZoom,
+          maxZoom: viewport.maxZoom,
+          maxBounds: viewport.maxBounds,
           attributionControl: false,
           cooperativeGestures: true,
         });

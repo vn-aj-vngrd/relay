@@ -3,7 +3,7 @@
 import { randomBytes } from "node:crypto";
 
 import { and, eq, ilike, or } from "drizzle-orm";
-import { revalidatePath, updateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 
 import { db } from "@/db/client";
 import { adminAuditLogs, venues } from "@/db/schema";
@@ -11,6 +11,7 @@ import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 
+import { expireCourtDirectory } from "./directory";
 import { adminVenueSchema, venueSubmissionSchema } from "./domain";
 
 export type VenueActionState = { error?: string; success?: string; fieldErrors?: Record<string, string[]> };
@@ -125,7 +126,7 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
       metadata: { status: parsed.data.listingStatus, source: existing.source },
     });
   });
-  updateTag("philippines-venues");
+  expireCourtDirectory();
   revalidatePath("/court");
   revalidatePath("/courts");
   revalidatePath(`/court/${existing.slug}`);

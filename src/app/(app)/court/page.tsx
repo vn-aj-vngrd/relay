@@ -3,10 +3,10 @@ import { Plus, Question } from "@phosphor-icons/react/dist/ssr";
 import { ButtonLink } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { CourtFinder } from "@/features/venues/court-finder";
-import { getPhilippinesVenues } from "@/features/venues/queries";
+import { getCourtListings } from "@/features/venues/directory";
 
 export default async function CourtPage() {
-  const courts = await getPhilippinesVenues();
+  const courts = await getCourtListings();
 
   return (
     <div className="court-finder-workspace flex min-h-0 flex-col xl:h-full">

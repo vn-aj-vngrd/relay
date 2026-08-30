@@ -1,9 +1,9 @@
-import type { PhilippinesVenue } from "@/features/venues/queries";
+import type { CourtListing } from "@/features/venues/directory";
 
 // A reviewed, deployment-local snapshot keeps the marketing page independent
 // from authentication, PostgreSQL, and the map provider. The full public finder
 // remains authoritative and loads current listings from the database.
-export const marketingCourts: PhilippinesVenue[] = [
+export const marketingCourts: CourtListing[] = [
   {
     id: "marketing-all-day-dink",
     slug: "all-day-dink",

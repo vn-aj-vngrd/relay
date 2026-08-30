@@ -23,39 +23,36 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 
+import type { CourtListing } from "./directory";
 import { distanceInKilometers, formatDistance } from "./distance";
-import type { PhilippinesVenue } from "./queries";
 
-const PhilippinesCourtMap = dynamic(
-  () => import("./philippines-court-map").then((module) => module.PhilippinesCourtMap),
-  {
-    ssr: false,
-    loading: () => (
-      <div
-        className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
-        role="status"
-        aria-label="Loading map"
-      />
-    ),
-  },
-);
+const CourtMap = dynamic(() => import("./court-map").then((module) => module.CourtMap), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
+      role="status"
+      aria-label="Loading map"
+    />
+  ),
+});
 
 type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
 type CourtView = "map" | "list";
-type CourtResult = { venue: PhilippinesVenue; distance: number | null };
+type CourtResult = { venue: CourtListing; distance: number | null };
 
 const courtViewOptions = [
   { value: "map" as const, label: "Map", icon: MapTrifold },
   { value: "list" as const, label: "List", icon: List },
 ];
 
-function createHref(venue: PhilippinesVenue, isAuthenticated: boolean) {
+function createHref(venue: CourtListing, isAuthenticated: boolean) {
   const gamePath = `/games/new?${new URLSearchParams({ venue: venue.name, address: venue.address }).toString()}`;
   return isAuthenticated ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
 }
 
-function directionsHref(venue: PhilippinesVenue) {
+function directionsHref(venue: CourtListing) {
   return `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`;
 }
 
@@ -65,7 +62,7 @@ function environmentLabel(environment: string | null) {
   return environment.slice(0, 1).toUpperCase() + environment.slice(1);
 }
 
-function venueMeta(venue: PhilippinesVenue) {
+function venueMeta(venue: CourtListing) {
   return [
     environmentLabel(venue.environment),
     venue.courtCount ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}` : null,
@@ -326,7 +323,7 @@ export function CourtFinder({
   compactPreview = false,
   className = "mt-7",
 }: {
-  venues: PhilippinesVenue[];
+  venues: CourtListing[];
   isAuthenticated?: boolean;
   detailBasePath?: "/court" | "/courts";
   showFilterTopBorder?: boolean;
@@ -426,7 +423,7 @@ export function CourtFinder({
     );
   }
 
-  async function copyLocation(venue: PhilippinesVenue) {
+  async function copyLocation(venue: CourtListing) {
     await navigator.clipboard.writeText(directionsHref(venue));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
@@ -576,7 +573,7 @@ export function CourtFinder({
           className={`${compactPreview || mobileView === "map" ? "flex" : "hidden xl:flex"} min-h-0 scroll-mt-20 flex-col outline-none xl:order-2`}
         >
           <div className="min-h-0 flex-1">
-            <PhilippinesCourtMap
+            <CourtMap
               venues={mappedVenues}
               selectedId={selected?.venue.id ?? null}
               userLocation={userLocation}
@@ -594,7 +591,7 @@ export function CourtFinder({
                   detailBasePath={detailBasePath}
                 />
               ) : null}
-            </PhilippinesCourtMap>
+            </CourtMap>
           </div>
           <p className="mt-2 hidden shrink-0 text-xs leading-5 text-muted sm:block">
             Drag to explore. Select a pin for details. Map data © Geoapify, OpenMapTiles, and OpenStreetMap

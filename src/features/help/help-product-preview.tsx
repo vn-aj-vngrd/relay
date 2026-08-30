@@ -5,9 +5,9 @@ import {
   PlaySetupProductPreview,
 } from "@/features/marketing/product-previews";
 import { CourtFinder } from "@/features/venues/court-finder";
-import type { PhilippinesVenue } from "@/features/venues/queries";
+import type { CourtListing } from "@/features/venues/directory";
 
-function CourtFinderPreview({ courts }: { courts: PhilippinesVenue[] }) {
+function CourtFinderPreview({ courts }: { courts: CourtListing[] }) {
   return (
     <figure>
       <div
@@ -34,7 +34,7 @@ function CourtFinderPreview({ courts }: { courts: PhilippinesVenue[] }) {
   );
 }
 
-export function HelpProductPreview({ guideId, courts }: { guideId: string; courts: PhilippinesVenue[] }) {
+export function HelpProductPreview({ guideId, courts }: { guideId: string; courts: CourtListing[] }) {
   return (
     <div className="mt-7">
       {guideId === "find-a-court" ? <CourtFinderPreview courts={courts} /> : null}

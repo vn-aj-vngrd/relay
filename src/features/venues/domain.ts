@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { courtDirectoryCoverage } from "./coverage";
+
 const optionalHttpUrl = z.union([
   z
     .url("Add a complete link beginning with https://.")
@@ -20,8 +22,8 @@ export const adminVenueSchema = z
     venueId: z.uuid(),
     name: z.string().trim().min(2).max(120),
     address: z.string().trim().min(5).max(240),
-    latitude: z.union([z.coerce.number().min(4.45).max(21.35), z.literal("")]),
-    longitude: z.union([z.coerce.number().min(116.8).max(126.7), z.literal("")]),
+    latitude: z.union([z.coerce.number(), z.literal("")]),
+    longitude: z.union([z.coerce.number(), z.literal("")]),
     environment: z.enum(["indoor", "outdoor", "semi-indoor", "covered", ""]),
     courtCount: z.union([z.coerce.number().int().min(1).max(50), z.literal("")]),
     priceRange: z.string().trim().max(160),
@@ -36,16 +38,6 @@ export const adminVenueSchema = z
   })
   .superRefine((value, context) => {
     if (!["unverified", "verified"].includes(value.listingStatus)) return;
-    if (value.latitude === "")
-      context.addIssue({
-        code: "custom",
-        path: ["latitude"],
-        message: "Add a Philippines latitude before publishing.",
-      });
-    if (value.longitude === "")
-      context.addIssue({
-        code: "custom",
-        path: ["longitude"],
-        message: "Add a Philippines longitude before publishing.",
-      });
+    for (const issue of courtDirectoryCoverage.validatePublishingCoordinate(value))
+      context.addIssue({ code: "custom", path: [issue.path], message: issue.message });
   });

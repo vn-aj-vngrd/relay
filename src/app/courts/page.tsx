@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { getCurrentUser } from "@/features/auth/session";
 import { CourtFinder } from "@/features/venues/court-finder";
-import { getPhilippinesVenues } from "@/features/venues/queries";
+import { getCourtListings } from "@/features/venues/directory";
 
 export const metadata: Metadata = {
   title: "Pickleball courts in the Philippines",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function CourtPage() {
-  const [courts, user] = await Promise.all([getPhilippinesVenues(), getCurrentUser()]);
+  const [courts, user] = await Promise.all([getCourtListings(), getCurrentUser()]);
   const suggestHref = user ? "/court/suggest" : `/signup?next=${encodeURIComponent("/court/suggest")}`;
 
   return (

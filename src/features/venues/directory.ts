@@ -1,12 +1,16 @@
 import "server-only";
 
 import { and, asc, eq, isNotNull } from "drizzle-orm";
-import { unstable_cache } from "next/cache";
+import { unstable_cache, updateTag } from "next/cache";
 
 import { db } from "@/db/client";
 import { venues } from "@/db/schema";
 
-export type PhilippinesVenue = {
+import { courtDirectoryCoverage } from "./coverage";
+
+const courtDirectoryTag = "court-directory";
+
+export type CourtListing = {
   id: string;
   slug: string;
   name: string;
@@ -28,15 +32,7 @@ export type PhilippinesVenue = {
   sourceUrl: string | null;
 };
 
-export async function getVenueSuggestions() {
-  return db
-    .select({ id: venues.id, name: venues.name, address: venues.address })
-    .from(venues)
-    .where(eq(venues.listingStatus, "verified"))
-    .orderBy(asc(venues.name));
-}
-
-async function queryPhilippinesVenues(): Promise<PhilippinesVenue[]> {
+async function queryCourtListings(): Promise<CourtListing[]> {
   const rows = await db
     .select()
     .from(venues)
@@ -46,7 +42,7 @@ async function queryPhilippinesVenues(): Promise<PhilippinesVenue[]> {
   return rows.flatMap((venue) => {
     const latitude = Number(venue.latitude);
     const longitude = Number(venue.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
+    if (!courtDirectoryCoverage.contains({ latitude, longitude })) return [];
     return [
       {
         id: venue.id,
@@ -73,7 +69,16 @@ async function queryPhilippinesVenues(): Promise<PhilippinesVenue[]> {
   });
 }
 
-export const getPhilippinesVenues = unstable_cache(queryPhilippinesVenues, ["philippines-venues"], {
+export const getCourtListings = unstable_cache(queryCourtListings, [courtDirectoryTag], {
   revalidate: 3600,
-  tags: ["philippines-venues"],
+  tags: [courtDirectoryTag],
 });
+
+export async function getCourtSuggestions() {
+  return (await getCourtListings()).map(({ id, name, address }) => ({ id, name, address }));
+}
+
+/** Expires every Court Directory read after a verified listing changes. Server Actions only. */
+export function expireCourtDirectory() {
+  updateTag(courtDirectoryTag);
+}
