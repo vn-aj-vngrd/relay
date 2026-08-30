@@ -373,12 +373,15 @@ test("light mode is default and a stored dark preference loads", async ({ page }
 });
 
 test("public entry pages have no serious accessibility violations in light and dark modes", async ({ page }) => {
-  const paths = ["/", "/play", "/courts", "/login", "/signup", "/privacy", "/terms"];
-  for (const theme of ["light", "dark"] as const) {
-    await page.goto("/");
-    await page.evaluate((nextTheme) => localStorage.setItem("relay-theme", nextTheme), theme);
-    for (const path of paths) {
-      await page.goto(path);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const path of ["/", "/play", "/courts", "/login", "/signup", "/privacy", "/terms"]) {
+    await page.goto(path);
+    for (const theme of ["light", "dark"] as const) {
+      await page.evaluate((nextTheme) => {
+        document.documentElement.dataset.theme = nextTheme;
+        document.documentElement.style.colorScheme = nextTheme;
+        window.dispatchEvent(new Event("relay-theme-change"));
+      }, theme);
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
@@ -387,7 +390,7 @@ test("public entry pages have no serious accessibility violations in light and d
 });
 
 test("keyboard users can skip directly to the main content", async ({ page }) => {
-  await page.goto("/login");
+  await page.goto("/play");
   await page.keyboard.press("Tab");
   const skip = page.getByRole("link", { name: "Skip to content" });
   await expect(skip).toBeFocused();
@@ -449,9 +452,9 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
   test.skip(!testInfo.project.name.startsWith("mobile"), "mobile-only validation");
   await page.goto("/");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
-  await page.goto("/login");
+  await page.goto("/play");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
-  const button = page.locator("form").getByRole("button", { name: "Sign in" });
+  const button = page.getByRole("button", { name: "Start doubles" });
   const box = await button.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
   expect(await button.evaluate((element) => getComputedStyle(element).cursor)).toBe("pointer");

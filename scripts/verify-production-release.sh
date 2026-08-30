@@ -17,7 +17,7 @@ sleep 60
 pnpm exec playwright test --project desktop-authenticated
 
 printf '\n[2/4] Public release endpoints\n'
-for path in / /login /courts /robots.txt /sitemap.xml /.well-known/security.txt /api/health; do
+for path in / /login /play /courts /robots.txt /sitemap.xml /.well-known/security.txt /api/health; do
   status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$BASE_URL$path")"
   if [[ "$status" != "200" ]]; then
     printf 'FAIL %s returned %s\n' "$path" "$status" >&2
