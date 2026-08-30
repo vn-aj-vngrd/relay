@@ -39,10 +39,10 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
   return (
-    <div>
+    <div className="min-h-[34.5rem] sm:min-h-[36rem]">
       <div
         role="group"
-        className="mb-5 grid grid-cols-2 rounded-lg bg-surface-strong p-1 sm:mb-7"
+        className="mb-3 grid grid-cols-2 rounded-lg bg-surface-strong p-1 sm:mb-7"
         aria-label="Authentication method"
       >
         <button
