@@ -166,7 +166,7 @@ These are operational starting points, not security guarantees. Tighten them usi
 - [x] Confirm Supabase and Vercel free plans cannot bill overages; add a 2,500-tile/day server budget below Geoapify Free’s provider allowance.
 - [x] Make the public map click-to-load and cache public court data.
 - [x] Ship CSP report-only; monitor violations before enforcement.
-- [ ] Require MFA for every admin.
+- [x] Require MFA for every admin.
 - [x] Run formatting, lint, typecheck, tests, and the production build. Authenticated E2E remains manual.
 - [x] Create and validate a private logical database backup, then restore it into an isolated PostgreSQL 17 instance and verify tables, migrations, signup capacity, and Auth users.
 - [x] Document and implement a one-command emergency read-only mode.
@@ -182,6 +182,7 @@ These are operational starting points, not security guarantees. Tighten them usi
 - Anonymous production PostgREST probes confirmed the profile/session/message exposure; `rate_limit_buckets` correctly returned an authorization failure.
 - Production browser smoke check found no console errors on the landing page and confirmed security headers plus CSP report-only.
 - Five consecutive production `/admin` requests completed without runtime errors after the database timeout correction.
+- The only allowlisted production administrator has a verified TOTP factor.
 - The private custom-format backup restored into an isolated PostgreSQL 17 instance: 31 public tables, 24 migration records, account cap 200, and 2 Auth users. Supabase-only `pg_cron` and Vault extensions were excluded from the local drill.
 - Public court maps now require an explicit click, retain 30-day CDN caching, and stop at a global 2,500 tile requests per day.
 
