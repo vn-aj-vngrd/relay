@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { collapseAttributionControl } from "./cebu-court-map";
+import { collapseAttributionControl } from "./philippines-court-map";
 
 describe("collapseAttributionControl", () => {
   it("keeps map attribution available but closed initially", () => {

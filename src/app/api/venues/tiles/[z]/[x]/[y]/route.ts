@@ -1,4 +1,4 @@
-import { isValidCebuTile } from "@/features/venues/tile-boundary";
+import { isValidPhilippinesTile } from "@/features/venues/tile-boundary";
 import { getServerEnv } from "@/lib/env";
 import { checkRateLimit, rateLimitHeaders, requestIdentity } from "@/lib/rate-limit";
 
@@ -9,8 +9,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
   const zoom = Number(z);
   const tileX = Number(x);
   const tileY = Number(y);
-  if (!isValidCebuTile(zoom, tileX, tileY)) {
-    return Response.json({ error: "Tile is outside the Cebu map." }, { status: 404 });
+  if (!isValidPhilippinesTile(zoom, tileX, tileY)) {
+    return Response.json({ error: "Tile is outside the Philippines map." }, { status: 404 });
   }
 
   // MapLibre requests many tiles concurrently. Sharding preserves the same hard
@@ -20,8 +20,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
   const visitorShard = tileShard % 8;
   const visitor = await requestIdentity();
   const [dailyBudget, visitorLimit] = await Promise.all([
-    checkRateLimit({ scope: "cebu-map-tiles-global", limit: 78, windowSeconds: 86_400 }, `shard:${globalShard}`),
-    checkRateLimit({ scope: "cebu-map-tiles", limit: 75, windowSeconds: 600 }, `${visitor}:shard:${visitorShard}`),
+    checkRateLimit({ scope: "philippines-map-tiles-global", limit: 78, windowSeconds: 86_400 }, `shard:${globalShard}`),
+    checkRateLimit(
+      { scope: "philippines-map-tiles", limit: 75, windowSeconds: 600 },
+      `${visitor}:shard:${visitorShard}`,
+    ),
   ]);
   const limit = dailyBudget.allowed ? visitorLimit : dailyBudget;
   if (!limit.allowed)
@@ -49,7 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
       },
     });
   } catch (error) {
-    console.error("Cebu map tile failed", error instanceof Error ? error.message : "Unknown provider error");
+    console.error("Philippines map tile failed", error instanceof Error ? error.message : "Unknown provider error");
     return Response.json({ error: "The map tile is temporarily unavailable." }, { status: 502 });
   }
 }

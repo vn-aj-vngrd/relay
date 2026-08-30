@@ -3,17 +3,17 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CourtFinder } from "./court-finder";
-import type { CebuVenue } from "./queries";
+import type { PhilippinesVenue } from "./queries";
 
 const { captureMapVenues } = vi.hoisted(() => ({ captureMapVenues: vi.fn() }));
 
-vi.mock("./cebu-court-map", () => ({
-  CebuCourtMap: ({
+vi.mock("./philippines-court-map", () => ({
+  PhilippinesCourtMap: ({
     venues,
     onSelect,
     children,
   }: {
-    venues: CebuVenue[];
+    venues: PhilippinesVenue[];
     onSelect: (id: string) => void;
     children?: ReactNode;
   }) => {
@@ -31,7 +31,7 @@ vi.mock("./cebu-court-map", () => ({
   },
 }));
 
-const venue: CebuVenue = {
+const venue: PhilippinesVenue = {
   id: "nice-serve",
   slug: "nice-serve",
   name: "NiceServe Pickleball Court",
@@ -53,7 +53,7 @@ const venue: CebuVenue = {
   sourceUrl: null,
 };
 
-const fartherVenue: CebuVenue = {
+const fartherVenue: PhilippinesVenue = {
   ...venue,
   id: "farther-court",
   slug: "farther-court",
@@ -64,7 +64,7 @@ const fartherVenue: CebuVenue = {
   paddleRental: false,
 };
 
-const suggestedVenue: CebuVenue = {
+const suggestedVenue: PhilippinesVenue = {
   ...venue,
   id: "suggested-court",
   slug: "suggested-court",
@@ -86,10 +86,10 @@ beforeEach(() => {
 });
 
 describe("CourtFinder", () => {
-  it("loads the full finder map with court details closed by default", () => {
+  it("loads the full finder map with court details closed by default", async () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
-    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    expect(await screen.findByLabelText("Interactive map of pickleball courts")).toBeVisible();
     expect(screen.queryByRole("button", { name: "Load map" })).not.toBeInTheDocument();
     expect(screen.queryByRole("complementary", { name: /Selected court:/ })).not.toBeInTheDocument();
   });

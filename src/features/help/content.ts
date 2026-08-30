@@ -13,7 +13,7 @@ export const helpGuides = [
     id: "find-a-court",
     title: "Find a court",
     summary:
-      "Search Relay’s verified Cebu directory, compare practical details, and carry your choice into a new game.",
+      "Search Relay’s verified Philippines directory, compare practical details, and carry your choice into a new game.",
     time: "About 2 minutes",
     action: { href: "/court", label: "Open Court Finder" },
     steps: [
@@ -34,7 +34,7 @@ export const helpGuides = [
       },
     ],
     notes: [
-      "Court Finder is currently a Cebu pilot.",
+      "Court Finder covers the Philippines only. The reviewed directory is growing, and you can suggest a missing court.",
       "Relay lists courts but does not show live availability or make bookings.",
     ],
   },
@@ -197,7 +197,7 @@ export const faqSections = [
         "No. Start with a standalone game. Create a group later when the same crew plays regularly.",
       ],
       [
-        "How do I add a missing Cebu court?",
+        "How do I add a missing Philippines court?",
         "Choose Suggest a court in Court Finder and send the name, location, and an official or Google Maps link. The suggestion stays private until Relay verifies it.",
       ],
       [

@@ -60,7 +60,7 @@ function ProductComponentFrame({
       >
         {children}
       </div>
-      <figcaption className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#6b6b70]">
+      <figcaption className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
         <span className="inline-flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-[#b7d62e]" />
           {caption}

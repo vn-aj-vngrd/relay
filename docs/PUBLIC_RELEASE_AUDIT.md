@@ -4,7 +4,7 @@ This is Relay’s durable release authority for security, reliability, and marke
 
 ## Decision
 
-**Current release class:** capped, invite-only Cebu beta.
+**Current release class:** capped, invite-only Philippines beta with initial field operations in Cebu.
 
 Relay may move to unrestricted public signup only when every blocking row below has dated evidence. “10/10” means all objective gates pass; it does not mean the service is invulnerable or guaranteed to remain available. No internet service can promise freedom from DDoS, account compromise, provider outages, or unknown vulnerabilities.
 
@@ -43,7 +43,9 @@ Each pillar is scored from 0–10. A public release requires:
 - `/` is statically generated and no longer reads authentication or PostgreSQL during rendering.
 - Marketing uses a small reviewed court snapshot rather than the live court table.
 - The marketing map waits for explicit intent before importing MapLibre or requesting tiles.
-- Current Court Finder data is cached for one hour and invalidated when an admin changes a court.
+- Current Philippines Court Finder data is cached for one hour and invalidated when an admin changes a court.
+- The public map proxy rejects tiles outside the Philippines, preserving the provider-key boundary and quota controls while enabling nationwide map coverage.
+- `/play` is a public, device-local Quick Play scorekeeper. It needs no account, database write, upload, or realtime connection, which keeps the acquisition hook usable during provider degradation.
 - Proxy refreshes Supabase claims only on routes that can consume a user session.
 - `/api/health` is a database-free public liveness endpoint.
 - `/api/health?deep=1` performs a private database readiness check and requires a 32+ character bearer secret.
@@ -61,7 +63,9 @@ Each pillar is scored from 0–10. A public release requires:
 - `/robots.txt`, `/sitemap.xml`, and security contact metadata are now published.
 - The privacy policy accurately states that Geoapify supplies proxied map tiles, court search uses Relay’s directory, and optional geolocation remains on-device.
 - The landing page remains focused on the differentiating loop: one link, guest RSVP, courtside Play, repayment, and recap.
-- The full directory remains the current source of court truth; marketing labels its embedded courts as representative.
+- Landing, authentication, legal, Court Finder, public game links, Quick Play, authenticated product, and admin surfaces use the shared light/dark token system. Public entry headers expose a labeled accessible theme control; map tiles switch with the active theme.
+- The landing page exposes both no-account acquisition tools directly: Philippines Court Finder at `/courts` and Quick Play at `/play`.
+- The full reviewed directory remains the current source of court truth; marketing labels its embedded courts as representative, states that coverage is Philippines-only, and does not imply the inventory is exhaustive.
 - Mobile Court Finder filters meet Relay’s 44 px touch-target requirement.
 - The published support channel is owned and has 24-hour security and two-business-day account-access acknowledgement targets in `docs/SUPPORT.md`.
 
@@ -89,10 +93,23 @@ Use ISO dates and link to the deployment, dashboard screenshot, CI run, or field
 - Public entry pages are static and must remain cacheable at the edge. The landing page must not query Auth, PostgreSQL, MapLibre, or Geoapify before user intent.
 - Unbounded cross-session collections use automatic infinite loading backed by bounded database queries. A visible fallback control remains for keyboard users, disabled JavaScript observers, and transient network failures; it is not numbered pagination.
 - Private and rapidly changing data is never shared-cacheable. Authenticated collection APIs return `Cache-Control: private, no-store`; session collaboration uses payload-free realtime invalidations followed by authoritative refetches.
-- The Cebu court directory is the only cross-request data cache. Admin writes call `updateTag("cebu-venues")` for immediate expiration; the one-hour TTL is a provider/database resilience fallback for data changed outside Relay’s admin action.
+- The Philippines court directory is the only cross-request data cache. Admin writes call `updateTag("philippines-venues")` for immediate expiration; the one-hour TTL is a provider/database resilience fallback for data changed outside Relay’s admin action.
 - Session-local collections remain explicitly bounded by product rules where loading everything is necessary for correct play: the main roster capacity is 40, court quantity is 20, and the initial chat window is the newest 200 messages. Off-screen repeated rows use rendering containment.
 - Stable timestamp/UUID cursors prevent duplicate or skipped records when writes occur during infinite loading. Offset pagination remains only in full-text global search, where results are relevance-ranked, capped at 10,000, and loaded automatically.
 - Never add a cache to authorization decisions, private media URLs, RSVP/payment state, Play state, chat writes, or admin state merely to improve a synthetic score.
+
+## Public acquisition and theme checklist
+
+- [x] Landing page supports explicit, persistent light and dark modes without fixed light-only content surfaces.
+- [x] Authentication, legal, Court Finder, shared game, Quick Play, app, onboarding, preferences, and admin surfaces inherit accessible semantic theme tokens.
+- [x] Map style changes between light and dark without exposing the Geoapify key.
+- [x] Court map, moderation coordinates, and community submissions cover the Philippines; out-of-country map tiles and publish coordinates fail closed.
+- [x] Landing and Court Finder state that geographic coverage is limited to the Philippines and that reviewed listings are growing.
+- [x] Public Court Finder is available at `/courts` without an account.
+- [x] Public Quick Play is available at `/play` without an account or server-side persistence.
+- [x] Both public tools are linked from the landing page and each other.
+
+Geographic support does not imply an exhaustive inventory. Nationwide directory completeness remains an operating metric: every listing stays unpublished until reviewed, and the UI invites a Philippines submission when a court is missing.
 
 ## Automated code gate
 
@@ -103,6 +120,15 @@ pnpm release:check
 ```
 
 It fails on floating dependency versions, vulnerable production dependencies, formatting, lint, TypeScript, unit/integration tests, production build, or public browser smoke tests.
+
+Latest candidate evidence (2026-08-31):
+
+- dependency policy and production vulnerability audit passed;
+- formatting, lint, TypeScript, and production build passed;
+- 107 test files and 295 unit/integration tests passed;
+- 19 public browser checks passed across mobile and desktop, with the credential-dependent authenticated test intentionally skipped locally;
+- axe reported zero serious or critical violations across landing, Quick Play, Court Finder, authentication, privacy, and terms in both light and dark modes at mobile and desktop sizes;
+- local production Lighthouse: landing 88 performance / 100 accessibility / 100 SEO, with LCP 3.7 s, TBT 40 ms, and CLS 0; Quick Play 96 performance / 100 accessibility / 100 SEO, with LCP 2.8 s, TBT 30 ms, and CLS 0. Local Best Practices is 96 only because the Vercel Analytics script exists at its production path but returns 404 outside Vercel.
 
 ## Production verification
 

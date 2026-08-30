@@ -1,7 +1,7 @@
 import { FullscreenControl } from "maplibre-gl";
 import { describe, expect, it, vi } from "vitest";
 
-import { createMobileSafeFullscreenControl } from "./cebu-court-map";
+import { createMobileSafeFullscreenControl } from "./philippines-court-map";
 
 describe("createMobileSafeFullscreenControl", () => {
   it("uses pseudo fullscreen when mobile WebKit exposes an unusable fullscreen method", () => {

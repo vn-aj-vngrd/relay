@@ -8,13 +8,43 @@ import type {
 } from "maplibre-gl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import type { CebuVenue } from "./queries";
-import { CEBU_TILE_BOUNDS } from "./tile-boundary";
+import type { PhilippinesVenue } from "./queries";
+import { PHILIPPINES_TILE_BOUNDS } from "./tile-boundary";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+const MAP_STYLESHEET_ID = "relay-maplibre-styles";
 
-type CebuCourtMapProps = {
-  venues: CebuVenue[];
+function ensureMapStylesheet() {
+  const existing = document.getElementById(MAP_STYLESHEET_ID) as HTMLLinkElement | null;
+  if (existing?.sheet) return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const link = existing ?? document.createElement("link");
+    const onLoad = () => {
+      cleanup();
+      resolve();
+    };
+    const onError = () => {
+      cleanup();
+      link.remove();
+      reject(new Error("Map styles failed to load"));
+    };
+    const cleanup = () => {
+      link.removeEventListener("load", onLoad);
+      link.removeEventListener("error", onError);
+    };
+    link.addEventListener("load", onLoad);
+    link.addEventListener("error", onError);
+    if (!existing) {
+      link.id = MAP_STYLESHEET_ID;
+      link.rel = "stylesheet";
+      link.href = "/maplibre-gl.css";
+      document.head.append(link);
+    }
+  });
+}
+
+type PhilippinesCourtMapProps = {
+  venues: PhilippinesVenue[];
   selectedId: string | null;
   userLocation?: { latitude: number; longitude: number } | null;
   onSelect: (id: string) => void;
@@ -42,7 +72,7 @@ function mapStyle(dark: boolean): StyleSpecification {
   };
 }
 
-function fitVenues(map: MapLibreMap, venues: CebuVenue[], immediate = false) {
+function fitVenues(map: MapLibreMap, venues: PhilippinesVenue[], immediate = false) {
   if (!venues.length) return;
   if (venues.length === 1) {
     map.easeTo({
@@ -95,7 +125,7 @@ export function createMobileSafeFullscreenControl(
   return new FullscreenControl({ pseudo: true, container });
 }
 
-export function CebuCourtMap({
+export function PhilippinesCourtMap({
   venues,
   selectedId,
   userLocation,
@@ -103,7 +133,7 @@ export function CebuCourtMap({
   children,
   compactPreview = false,
   mobileEdgeToEdge = false,
-}: CebuCourtMapProps) {
+}: PhilippinesCourtMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -130,22 +160,24 @@ export function CebuCourtMap({
     if (!shell || !container) return;
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
+    let removeThemeListener: (() => void) | null = null;
     const markers = markersRef.current;
 
-    void import("maplibre-gl")
+    void ensureMapStylesheet()
+      .then(() => import("maplibre-gl"))
       .then((maplibre) => {
         if (disposed) return;
         const dark = document.documentElement.dataset.theme === "dark";
         const map = new maplibre.Map({
           container,
           style: mapStyle(dark),
-          center: [123.91, 10.34],
-          zoom: 10.5,
-          minZoom: 8,
+          center: [122.2, 12.1],
+          zoom: 5.2,
+          minZoom: 5,
           maxZoom: 18,
           maxBounds: [
-            [CEBU_TILE_BOUNDS.west, CEBU_TILE_BOUNDS.south],
-            [CEBU_TILE_BOUNDS.east, CEBU_TILE_BOUNDS.north],
+            [PHILIPPINES_TILE_BOUNDS.west, PHILIPPINES_TILE_BOUNDS.south],
+            [PHILIPPINES_TILE_BOUNDS.east, PHILIPPINES_TILE_BOUNDS.north],
           ],
           attributionControl: false,
           cooperativeGestures: true,
@@ -162,6 +194,9 @@ export function CebuCourtMap({
           collapseAttributionControl(container);
           setReady(true);
         });
+        const updateTheme = () => map.setStyle(mapStyle(document.documentElement.dataset.theme === "dark"));
+        window.addEventListener("relay-theme-change", updateTheme);
+        removeThemeListener = () => window.removeEventListener("relay-theme-change", updateTheme);
         resizeObserver = new ResizeObserver(() => map.resize());
         resizeObserver.observe(container);
       })
@@ -172,6 +207,7 @@ export function CebuCourtMap({
     return () => {
       disposed = true;
       resizeObserver?.disconnect();
+      removeThemeListener?.();
       markers.forEach(({ marker }) => marker.remove());
       markers.clear();
       locationMarkerRef.current?.remove();
@@ -262,7 +298,7 @@ export function CebuCourtMap({
       {!activated ? (
         <div className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center">
           <div className="max-w-sm">
-            <p className="font-[650] text-ink">Explore the Cebu court map</p>
+            <p className="font-[650] text-ink">Explore the Philippines court map</p>
             <p className="mt-1 text-sm leading-5 text-muted">
               Load the interactive map when you want to pan, zoom, or inspect court locations.
             </p>

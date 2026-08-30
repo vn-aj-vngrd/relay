@@ -5,15 +5,16 @@ import { ButtonLink } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { getCurrentUser } from "@/features/auth/session";
 import { CourtFinder } from "@/features/venues/court-finder";
-import { getCebuVenues } from "@/features/venues/queries";
+import { getPhilippinesVenues } from "@/features/venues/queries";
 
 export const metadata: Metadata = {
-  title: "Pickleball courts in Cebu",
-  description: "Find pickleball courts in Cebu. Check the location, setting, price, and booking link.",
+  title: "Pickleball courts in the Philippines",
+  description:
+    "Find reviewed pickleball courts across the Philippines. Check the location, setting, price, and booking link.",
 };
 
 export default async function CourtPage() {
-  const [courts, user] = await Promise.all([getCebuVenues(), getCurrentUser()]);
+  const [courts, user] = await Promise.all([getPhilippinesVenues(), getCurrentUser()]);
   const suggestHref = user ? "/court/suggest" : `/signup?next=${encodeURIComponent("/court/suggest")}`;
 
   return (
@@ -23,11 +24,11 @@ export default async function CourtPage() {
           <div className="flex items-center gap-2">
             <h1 className="app-title">
               <span className="sm:hidden">Find a court</span>
-              <span className="hidden sm:inline">Find a pickleball court in Cebu</span>
+              <span className="hidden sm:inline">Find a pickleball court in the Philippines</span>
             </h1>
             <IconTooltip
               id="court-coverage-tooltip"
-              label="Court Finder covers Cebu. Check current rates and hours before booking."
+              label="Court Finder covers the Philippines only. Listings are community-reviewed and growing; check current rates and hours before booking."
               align="center"
             >
               <button
@@ -41,7 +42,7 @@ export default async function CourtPage() {
             </IconTooltip>
           </div>
           <p className="mt-2 hidden max-w-xl text-pretty leading-6 text-muted sm:block">
-            Search by court or neighborhood. Choose one for directions, booking details, or a new game.
+            Search by court, city, province, or neighborhood. Choose one for directions, booking details, or a new game.
           </p>
         </div>
         <ButtonLink

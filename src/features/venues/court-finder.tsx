@@ -16,32 +16,46 @@ import {
   Racquet,
   X,
 } from "@phosphor-icons/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 
-import { CebuCourtMap } from "./cebu-court-map";
 import { distanceInKilometers, formatDistance } from "./distance";
-import type { CebuVenue } from "./queries";
+import type { PhilippinesVenue } from "./queries";
+
+const PhilippinesCourtMap = dynamic(
+  () => import("./philippines-court-map").then((module) => module.PhilippinesCourtMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
+        role="status"
+        aria-label="Loading map"
+      />
+    ),
+  },
+);
 
 type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
 type CourtView = "map" | "list";
-type CourtResult = { venue: CebuVenue; distance: number | null };
+type CourtResult = { venue: PhilippinesVenue; distance: number | null };
 
 const courtViewOptions = [
   { value: "map" as const, label: "Map", icon: MapTrifold },
   { value: "list" as const, label: "List", icon: List },
 ];
 
-function createHref(venue: CebuVenue, isAuthenticated: boolean) {
+function createHref(venue: PhilippinesVenue, isAuthenticated: boolean) {
   const gamePath = `/games/new?${new URLSearchParams({ venue: venue.name, address: venue.address }).toString()}`;
   return isAuthenticated ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
 }
 
-function directionsHref(venue: CebuVenue) {
+function directionsHref(venue: PhilippinesVenue) {
   return `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`;
 }
 
@@ -51,7 +65,7 @@ function environmentLabel(environment: string | null) {
   return environment.slice(0, 1).toUpperCase() + environment.slice(1);
 }
 
-function venueMeta(venue: CebuVenue) {
+function venueMeta(venue: PhilippinesVenue) {
   return [
     environmentLabel(venue.environment),
     venue.courtCount ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}` : null,
@@ -210,13 +224,13 @@ function CourtResults({
 
   return (
     <section
-      aria-labelledby="cebu-court-list"
+      aria-labelledby="philippines-court-list"
       className={`flex min-h-0 flex-col overflow-hidden border border-line bg-surface sm:rounded-xl xl:order-1 xl:h-full ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] sm:h-[420px]" : "h-[min(60dvh,520px)] min-h-[400px] sm:h-[580px]"}`}
     >
       <header
         className={`${compactHeader ? "hidden xl:flex" : "flex"} shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3`}
       >
-        <h2 id="cebu-court-list" className="min-w-0 truncate text-[15px] font-[680]">
+        <h2 id="philippines-court-list" className="min-w-0 truncate text-[15px] font-[680]">
           {locationReady ? "Nearest courts" : "Courts"}
         </h2>
         <div className="flex items-center gap-3">
@@ -312,7 +326,7 @@ export function CourtFinder({
   compactPreview = false,
   className = "mt-7",
 }: {
-  venues: CebuVenue[];
+  venues: PhilippinesVenue[];
   isAuthenticated?: boolean;
   detailBasePath?: "/court" | "/courts";
   showFilterTopBorder?: boolean;
@@ -412,7 +426,7 @@ export function CourtFinder({
     );
   }
 
-  async function copyLocation(venue: CebuVenue) {
+  async function copyLocation(venue: PhilippinesVenue) {
     await navigator.clipboard.writeText(directionsHref(venue));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
@@ -443,7 +457,7 @@ export function CourtFinder({
                   setSelectedId(null);
                 }}
                 className="h-11 w-full rounded-lg border border-line bg-surface px-10 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
-                placeholder="Court name, neighborhood, or amenity"
+                placeholder="Court, city, province, or amenity"
                 autoComplete="off"
               />
               {query ? (
@@ -562,7 +576,7 @@ export function CourtFinder({
           className={`${compactPreview || mobileView === "map" ? "flex" : "hidden xl:flex"} min-h-0 scroll-mt-20 flex-col outline-none xl:order-2`}
         >
           <div className="min-h-0 flex-1">
-            <CebuCourtMap
+            <PhilippinesCourtMap
               venues={mappedVenues}
               selectedId={selected?.venue.id ?? null}
               userLocation={userLocation}
@@ -580,7 +594,7 @@ export function CourtFinder({
                   detailBasePath={detailBasePath}
                 />
               ) : null}
-            </CebuCourtMap>
+            </PhilippinesCourtMap>
           </div>
           <p className="mt-2 hidden shrink-0 text-xs leading-5 text-muted sm:block">
             Drag to explore. Select a pin for details. Map data © Geoapify, OpenMapTiles, and OpenStreetMap

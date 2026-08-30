@@ -5,9 +5,9 @@ import {
   PlaySetupProductPreview,
 } from "@/features/marketing/product-previews";
 import { CourtFinder } from "@/features/venues/court-finder";
-import type { CebuVenue } from "@/features/venues/queries";
+import type { PhilippinesVenue } from "@/features/venues/queries";
 
-function CourtFinderPreview({ courts }: { courts: CebuVenue[] }) {
+function CourtFinderPreview({ courts }: { courts: PhilippinesVenue[] }) {
   return (
     <figure>
       <div
@@ -28,13 +28,13 @@ function CourtFinderPreview({ courts }: { courts: CebuVenue[] }) {
           <span className="h-1.5 w-1.5 rounded-full bg-signal" />
           The actual Court Finder component
         </span>
-        <span>Current verified Cebu listings</span>
+        <span>Current verified Philippines listings</span>
       </figcaption>
     </figure>
   );
 }
 
-export function HelpProductPreview({ guideId, courts }: { guideId: string; courts: CebuVenue[] }) {
+export function HelpProductPreview({ guideId, courts }: { guideId: string; courts: PhilippinesVenue[] }) {
   return (
     <div className="mt-7">
       {guideId === "find-a-court" ? <CourtFinderPreview courts={courts} /> : null}

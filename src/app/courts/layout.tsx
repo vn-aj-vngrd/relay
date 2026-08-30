@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Brand } from "@/components/shared/brand";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { getCurrentUser } from "@/features/auth/session";
 
 export default async function CourtLayout({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,13 @@ export default async function CourtLayout({ children }: { children: React.ReactN
         <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-4 px-4 sm:px-8">
           <Brand />
           <div className="flex items-center gap-1 sm:gap-2">
+            <ThemeToggle />
+            <Link
+              href="/play"
+              className="pressable hidden min-h-10 items-center px-3 text-sm font-medium text-muted hover:text-ink md:inline-flex"
+            >
+              Quick Play
+            </Link>
             {user ? null : (
               <Link
                 href="/login?next=/courts"

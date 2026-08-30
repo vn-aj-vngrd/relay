@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 import { db } from "@/db/client";
 import { venues } from "@/db/schema";
 
-export type CebuVenue = {
+export type PhilippinesVenue = {
   id: string;
   slug: string;
   name: string;
@@ -36,7 +36,7 @@ export async function getVenueSuggestions() {
     .orderBy(asc(venues.name));
 }
 
-async function queryCebuVenues(): Promise<CebuVenue[]> {
+async function queryPhilippinesVenues(): Promise<PhilippinesVenue[]> {
   const rows = await db
     .select()
     .from(venues)
@@ -73,7 +73,7 @@ async function queryCebuVenues(): Promise<CebuVenue[]> {
   });
 }
 
-export const getCebuVenues = unstable_cache(queryCebuVenues, ["cebu-venues"], {
+export const getPhilippinesVenues = unstable_cache(queryPhilippinesVenues, ["philippines-venues"], {
   revalidate: 3600,
-  tags: ["cebu-venues"],
+  tags: ["philippines-venues"],
 });

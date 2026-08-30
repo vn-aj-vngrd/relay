@@ -113,7 +113,7 @@ export function MarketingEnhancements() {
       aria-label="Back to top"
       aria-hidden={!showTop}
       tabIndex={showTop ? 0 : -1}
-      className={`marketing-back-to-top pressable fixed bottom-5 right-5 z-30 grid h-10 w-10 place-items-center rounded-lg border border-[#d5d5cf] bg-white text-[#55555b] shadow-[0_4px_8px_rgb(20_20_23/.08)] hover:border-[#aaa9a3] hover:text-[#171719] ${showTop ? "is-visible" : ""}`}
+      className={`marketing-back-to-top pressable fixed bottom-5 right-5 z-30 grid h-10 w-10 place-items-center rounded-lg border border-line bg-surface text-muted shadow-[0_4px_8px_rgb(20_20_23/.08)] hover:border-muted hover:text-ink ${showTop ? "is-visible" : ""}`}
     >
       <ArrowUp aria-hidden size={17} />
     </button>

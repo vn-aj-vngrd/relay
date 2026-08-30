@@ -109,7 +109,7 @@ export default async function AdminOverviewPage() {
               <MapPin aria-hidden size={20} className="text-primary" />
               <div className="flex-1">
                 <p className="font-semibold">Courts</p>
-                <p className="mt-1 text-sm text-muted">Verify Cebu courts and submissions</p>
+                <p className="mt-1 text-sm text-muted">Verify Philippines courts and submissions</p>
               </div>
               <ArrowRight aria-hidden size={17} className="text-muted" />
             </Link>

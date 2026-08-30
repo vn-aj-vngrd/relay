@@ -21,7 +21,7 @@ export default async function AdminCourtsPage({
     <div>
       <AdminPageHeading
         title="Courts"
-        description="Verify Cebu court listings, review community submissions, and keep booking and map information accurate."
+        description="Verify Philippines court listings, review community submissions, and keep booking and map information accurate."
       />
       <form role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative flex-1">

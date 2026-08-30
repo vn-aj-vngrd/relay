@@ -13,7 +13,7 @@ Relay serves friends organizing recreational pickleball sessions.
 - **Hosts** set the plan, invite players, manage capacity and booking status, coordinate shared costs, run courts and scoring, and preserve the completed game.
 - **Players** check the plan, RSVP, chat, coordinate repayment, follow court assignments, and revisit results and photos.
 - **Lightweight guests** join a specific game by name from its shared link without creating an account.
-- **Operators** moderate users, games, feedback, and the Cebu court directory through a separately authorized admin console.
+- **Operators** moderate users, games, feedback, and the Philippines court directory through a separately authorized admin console.
 
 Usage is mobile-first and often one-handed while people are messaging, traveling to the venue, paying the host, or standing courtside between rallies.
 
@@ -45,7 +45,7 @@ The public shared surface and authenticated workspace expose the same session fa
 - Going responses respect capacity and ordered waitlists transactionally. Guest identity is scoped and token-bound to one session.
 - Supported play formats include Paddle Stack with mixed or fixed partners, Mix It Up, Balanced Mix, Court Climb, and Team Round Robin.
 - Relay coordinates payment methods, player shares, receipts, proof, and host confirmation. Money moves through external methods such as GCash, Maya, bank transfer, or cash; Relay never processes the transaction.
-- Relay stores court and booking context and links to external directions or booking. It does not reserve courts. The court finder and community submission workflow are currently centered on Cebu.
+- Relay stores court and booking context and links to external directions or booking. It does not reserve courts. Court Finder accepts reviewed listings and community submissions throughout the Philippines; its initial verified inventory remains strongest in Cebu.
 - Session collaboration uses one Broadcast invalidation topic per mounted session and refetches authoritative server state after changes or reconnects. Score and queue mutations preserve explicit concurrency controls.
 - The installable web app provides an offline fallback and network-state feedback. It intentionally does not cache authenticated pages, API responses, game data, payment media, chat media, or map tiles for offline use.
 - Authorization is enforced at server boundaries for host, participant, guest, and admin capabilities. Link visibility and navigation are not treated as authorization.
@@ -60,7 +60,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 ## Evidence on Hand
 
 - `docs/product-blueprint.md` records the reviewed workflows, domain language, authorization matrix, and product boundaries.
-- `src/features/`, `src/app/`, and `src/db/schema/index.ts` contain database-backed implementations for authentication, game creation and management, public RSVP, roster and waitlist handling, groups, Cebu courts, chat, payments, live play, notifications, memories, search, profiles, feedback, and administration.
+- `src/features/`, `src/app/`, and `src/db/schema/index.ts` contain database-backed implementations for authentication, game creation and management, public RSVP, roster and waitlist handling, groups, Philippines courts, chat, payments, live play, notifications, memories, search, profiles, feedback, and administration.
 - `drizzle/0000` through `drizzle/0020` document the deployed data, authorization, realtime, reminder, court-directory, and abuse-control migrations.
 - Vitest and Playwright suites cover domain behavior, component interactions, accessibility, responsive browser workflows, and public/protected route safety.
 - `DESIGN.md`, `docs/UI_QUALITY.md`, and `docs/SESSION_SURFACE_PARITY.md` are the implementation authorities for visual quality and shared/authenticated session parity.
@@ -73,6 +73,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 3. **Reveal responsibility progressively.** Common participant actions remain immediate; host, scorer, and administrative controls appear only when the role and game state require them.
 4. **Courtside beats comprehensive.** Live controls prioritize glanceability, reliable touch interaction, deterministic state, and quick recovery over exhaustive configuration.
 5. **The game becomes the memory.** Results, people, photos, and reactions accumulate around the event rather than becoming a generic content feed.
+6. **Useful before signup.** Public Court Finder and device-local Quick Play give any visitor an immediate way to find a place or score a game without creating an account.
 
 ## Accessibility & Inclusion
 

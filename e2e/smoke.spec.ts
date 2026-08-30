@@ -18,7 +18,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   ).toBeVisible();
   await expect(page.getByText("What you can do")).toHaveCount(0);
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Use dark mode" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
   const headerBox = await page.locator("header").boundingBox();
   const brandBox = await page.getByRole("link", { name: "Relay home" }).boundingBox();
   expect(brandBox).not.toBeNull();
@@ -38,6 +38,16 @@ test("the public court finder works without an account", async ({ page }) => {
 
   await page.goto("/court");
   await expect(page).toHaveURL(/\/login/);
+});
+
+test("public Quick Play starts and scores without an account", async ({ page }) => {
+  await page.goto("/play");
+  await expect(page.getByRole("heading", { name: "Start a game now" })).toBeVisible();
+  await page.getByRole("button", { name: "Start doubles" }).click();
+  await page.getByRole("button", { name: "Add one point to side 1" }).click();
+  await expect(page.getByLabel("Side 1 score 1")).toHaveText("1");
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByLabel("Side 1 score 0")).toHaveText("0");
 });
 
 test("an authenticated host and guest can complete the core session flow", async ({ page, browser }, testInfo) => {
@@ -358,15 +368,21 @@ test("light mode is default and a stored dark preference loads", async ({ page }
   await page.evaluate(() => localStorage.setItem("relay-theme", "dark"));
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("button", { name: "Use light mode" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Use light mode" })).toBeVisible();
   await expect(favicon).toHaveAttribute("href", "/relay-ball.svg");
 });
 
-test("public entry pages have no serious accessibility violations", async ({ page }) => {
-  for (const path of ["/", "/login", "/signup", "/privacy", "/terms"]) {
-    await page.goto(path);
-    const results = await new AxeBuilder({ page }).analyze();
-    expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+test("public entry pages have no serious accessibility violations in light and dark modes", async ({ page }) => {
+  const paths = ["/", "/play", "/courts", "/login", "/signup", "/privacy", "/terms"];
+  for (const theme of ["light", "dark"] as const) {
+    await page.goto("/");
+    await page.evaluate((nextTheme) => localStorage.setItem("relay-theme", nextTheme), theme);
+    for (const path of paths) {
+      await page.goto(path);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+    }
   }
 });
 

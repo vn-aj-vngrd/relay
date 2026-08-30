@@ -18,7 +18,7 @@ export function VenueSubmissionForm() {
   if (state.success)
     return (
       <section role="status" className="border-y border-line py-8">
-        <h2 className="text-lg font-[680]">Thanks for helping the Cebu community</h2>
+        <h2 className="text-lg font-[680]">Thanks for helping players across the Philippines</h2>
         <p className="mt-2 max-w-xl text-sm leading-6 text-muted">{state.success}</p>
       </section>
     );
@@ -56,10 +56,10 @@ export function VenueSubmissionForm() {
       </div>
       <div>
         <label htmlFor="city" className="text-sm font-[650]">
-          Cebu city or municipality
+          Philippine city or municipality
         </label>
-        <input id="city" name="city" required maxLength={80} className={inputClass} placeholder="Cebu City" />
-        <p className="mt-1.5 text-sm text-muted">Court Finder currently accepts Cebu locations only.</p>
+        <input id="city" name="city" required maxLength={80} className={inputClass} placeholder="Quezon City" />
+        <p className="mt-1.5 text-sm text-muted">Court Finder accepts locations in the Philippines only.</p>
         <ErrorMessage messages={state.fieldErrors?.city} />
       </div>
       <div>

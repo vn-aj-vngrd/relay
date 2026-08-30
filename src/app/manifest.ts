@@ -37,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: "Find a court",
         short_name: "Court",
-        description: "Open the Cebu Court Finder.",
+        description: "Open the Philippines Court Finder.",
         url: "/court?source=pwa-shortcut",
         icons: [{ src: "/pwa-192.png", sizes: "192x192", type: "image/png" }],
       },

@@ -3,10 +3,10 @@ import { Plus, Question } from "@phosphor-icons/react/dist/ssr";
 import { ButtonLink } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { CourtFinder } from "@/features/venues/court-finder";
-import { getCebuVenues } from "@/features/venues/queries";
+import { getPhilippinesVenues } from "@/features/venues/queries";
 
 export default async function CourtPage() {
-  const courts = await getCebuVenues();
+  const courts = await getPhilippinesVenues();
 
   return (
     <div className="court-finder-workspace flex min-h-0 flex-col xl:h-full">
@@ -17,7 +17,7 @@ export default async function CourtPage() {
             <h1 className="app-title">Find a court</h1>
             <IconTooltip
               id="court-coverage-tooltip"
-              label="Court Finder covers Cebu. Check current rates and hours before booking."
+              label="Court Finder covers the Philippines only. Listings are community-reviewed and growing; check current rates and hours before booking."
               align="center"
             >
               <button
@@ -31,7 +31,7 @@ export default async function CourtPage() {
             </IconTooltip>
           </div>
           <p className="mt-2 hidden max-w-xl text-pretty leading-6 text-muted sm:block">
-            Search by court or neighborhood. Choose one for directions, booking details, or a new game.
+            Search by court, city, province, or neighborhood. Choose one for directions, booking details, or a new game.
           </p>
         </div>
         <ButtonLink

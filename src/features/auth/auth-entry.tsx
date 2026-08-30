@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
@@ -19,8 +20,12 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
 
   return (
     <main id="main-content" className="min-h-screen bg-canvas">
-      <header className="mx-auto flex h-16 max-w-[1180px] items-center justify-center px-5 sm:px-8">
+      <header className="mx-auto grid h-16 max-w-[1180px] grid-cols-[1fr_auto_1fr] items-center px-5 sm:px-8">
+        <span />
         <Brand />
+        <span className="justify-self-end">
+          <ThemeToggle />
+        </span>
       </header>
       <section className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-5 py-6 sm:px-8 sm:py-10">
         <div className="w-full max-w-[410px]">
@@ -62,8 +67,12 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
 export function AuthEntryFallback() {
   return (
     <main id="main-content" className="min-h-screen bg-canvas">
-      <header className="mx-auto flex h-16 max-w-[1180px] items-center justify-center px-5 sm:px-8">
+      <header className="mx-auto grid h-16 max-w-[1180px] grid-cols-[1fr_auto_1fr] items-center px-5 sm:px-8">
+        <span />
         <Brand />
+        <span className="justify-self-end">
+          <ThemeToggle />
+        </span>
       </header>
       <section
         className="flex min-h-[calc(100svh-4rem)] items-center justify-center px-5 py-6 sm:px-8 sm:py-10"

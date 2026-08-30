@@ -22,7 +22,7 @@ function venueSlug(name: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 64);
-  return `${base || "cebu-court"}-${randomBytes(3).toString("hex")}`;
+  return `${base || "philippines-court"}-${randomBytes(3).toString("hex")}`;
 }
 
 export async function submitVenueAction(_: VenueActionState, formData: FormData): Promise<VenueActionState> {
@@ -125,7 +125,7 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
       metadata: { status: parsed.data.listingStatus, source: existing.source },
     });
   });
-  updateTag("cebu-venues");
+  updateTag("philippines-venues");
   revalidatePath("/court");
   revalidatePath("/courts");
   revalidatePath(`/court/${existing.slug}`);

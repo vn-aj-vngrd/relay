@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Brand } from "./brand";
+import { ThemeToggle } from "./theme-toggle";
 
 export function LegalPage({
   title,
@@ -18,9 +19,15 @@ export function LegalPage({
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
           <Brand />
-          <Link href="/" className="text-sm font-semibold text-primary">
-            Back to Relay
-          </Link>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Link
+              href="/"
+              className="pressable inline-flex min-h-11 items-center px-2 text-sm font-semibold text-primary"
+            >
+              Back to Relay
+            </Link>
+          </div>
         </div>
       </header>
       <article className="mx-auto max-w-3xl px-5 py-12 sm:px-8 sm:py-16">

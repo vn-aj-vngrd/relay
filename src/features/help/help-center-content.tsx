@@ -1,7 +1,7 @@
 import { ArrowRight, Clock, Info, MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";
-import type { CebuVenue } from "@/features/venues/queries";
+import type { PhilippinesVenue } from "@/features/venues/queries";
 
 import { faqSections, helpGuides, helpSectionId, playModes } from "./content";
 import { HelpProductPreview } from "./help-product-preview";
@@ -10,7 +10,7 @@ function matchesQuery(parts: readonly string[], query: string) {
   return !query || parts.join(" ").toLowerCase().includes(query);
 }
 
-export function HelpCenterContent({ courts, query: rawQuery = "" }: { courts: CebuVenue[]; query?: string }) {
+export function HelpCenterContent({ courts, query: rawQuery = "" }: { courts: PhilippinesVenue[]; query?: string }) {
   const query = rawQuery.trim().toLowerCase();
   const visibleGuides = helpGuides.filter((guide) =>
     matchesQuery(

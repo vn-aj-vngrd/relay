@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!court) return { title: "Court not found" };
   return {
     title: court.name,
-    description: `${court.name} in Cebu. Check the address, court details, directions, and booking link.`,
+    description: `${court.name} in the Philippines. Check the address, court details, directions, and booking link.`,
   };
 }
 
@@ -34,7 +34,7 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <p className="text-sm font-semibold text-primary">Verified Cebu court</p>
+      <p className="text-sm font-semibold text-primary">Verified Philippines court</p>
       <h1 className="mt-2 app-title">{court.name}</h1>
       <p className="mt-3 flex items-start gap-2 text-muted">
         <MapPin className="mt-0.5 shrink-0" size={18} />

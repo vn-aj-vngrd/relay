@@ -401,7 +401,7 @@ export function GlobalSearch({
                 href="/court"
                 className="pressable mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
               >
-                <MapPin aria-hidden size={15} /> Browse the Cebu court map
+                <MapPin aria-hidden size={15} /> Browse the Philippines court map
               </Link>
             ) : null}
           </section>

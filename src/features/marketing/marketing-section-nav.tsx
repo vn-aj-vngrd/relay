@@ -64,7 +64,7 @@ export function MarketingSectionNav() {
             setIndicator({ left: event.currentTarget.offsetLeft, width: event.currentTarget.offsetWidth });
           }}
           className={`inline-flex min-h-11 items-center text-[13px] font-medium transition-colors duration-150 ${
-            active === section.id ? "text-[#171719]" : "text-[#66666c] hover:text-[#171719]"
+            active === section.id ? "text-ink" : "text-muted hover:text-ink"
           }`}
         >
           {section.label}
@@ -72,7 +72,7 @@ export function MarketingSectionNav() {
       ))}
       <span
         aria-hidden
-        className="pointer-events-none absolute bottom-0 h-0.5 bg-[#5962d9] transition-[transform,width,opacity] duration-200 ease-out motion-reduce:transition-none"
+        className="pointer-events-none absolute bottom-0 h-0.5 bg-primary transition-[transform,width,opacity] duration-200 ease-out motion-reduce:transition-none"
         style={{
           width: indicator.width,
           opacity: active ? 1 : 0,
