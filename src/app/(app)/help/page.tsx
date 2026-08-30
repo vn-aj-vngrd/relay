@@ -37,7 +37,7 @@ const sections = [
       ],
       [
         "How do I report a problem or request a feature?",
-        "Choose Send feedback from the sidebar, your profile, or Help Center. Pick Bug report, Feature request, or General feedback, add specific context, and track its review status from the same page.",
+        "Choose Send feedback from the sidebar or your profile. Pick Bug report, Feature request, or General feedback, add specific context, and track its review status from the same page.",
       ],
     ],
   },
@@ -184,12 +184,9 @@ export default async function HelpPage({ searchParams }: { searchParams: Promise
             <h1 className="app-title">Help Center</h1>
             <p className="mt-2 text-sm text-muted">Answers for planning, inviting, paying, and playing.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <ButtonLink href="/home?tour=1" variant="secondary">
-              Replay tour
-            </ButtonLink>
-            <ButtonLink href="/feedback">Send feedback</ButtonLink>
-          </div>
+          <ButtonLink href="/home?tour=1" variant="secondary" className="shrink-0 whitespace-nowrap">
+            Replay tour
+          </ButtonLink>
         </div>
         <form className="relative mt-5 max-w-xl">
           <MagnifyingGlass aria-hidden className="absolute left-3 top-3 text-muted" size={18} />

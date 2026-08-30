@@ -9,6 +9,7 @@ describe("AdminNav", () => {
   it("uses Courts as the canonical admin directory label", () => {
     render(<AdminNav mode="sidebar" />);
     expect(screen.getByRole("link", { name: "Courts" })).toHaveAttribute("href", "/admin/courts");
+    expect(screen.getByRole("link", { name: "Insights" })).toHaveAttribute("href", "/admin/insights");
     expect(screen.queryByRole("link", { name: "Venues" })).not.toBeInTheDocument();
   });
 });

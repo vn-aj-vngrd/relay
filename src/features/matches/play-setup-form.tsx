@@ -101,20 +101,26 @@ export function PlaySetupForm({
   playerCount,
   courtCount,
   players = [],
+  activePlayerIds,
 }: {
   sessionId: string;
   playerCount: number;
   courtCount: number;
   players?: SetupPlayer[];
+  activePlayerIds?: string[];
 }) {
   const [mode, setMode] = useState<PlayMode>("queue");
   const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
   const [state, action] = useActionState(startPlay, {} as StartPlayActionState);
+  const goingRosterCount = players.length || playerCount;
   const climbPlayers = courtCount * 4;
-  const climbAvailable = courtCount >= 2 && playerCount === climbPlayers;
-  const pairsAvailable = playerCount >= 4 && playerCount % 2 === 0 && players.length === playerCount;
+  const climbAvailable = courtCount >= 2 && playerCount === climbPlayers && goingRosterCount === playerCount;
+  const pairsAvailable = players.length >= 4 && players.length % 2 === 0;
+  const activeIds = new Set(activePlayerIds ?? players.map((player) => player.id));
+  const completePairCount = Math.floor(playerCount / 2);
+  const roundRobinAvailable = pairsAvailable && completePairCount >= 2;
   const fixedPartners = mode === "round_robin" || (mode === "queue" && partnerPolicy === "fixed");
-  const missingExperience = players.filter((player) => !player.skillLevel).length;
+  const missingExperience = players.filter((player) => activeIds.has(player.id) && !player.skillLevel).length;
 
   return (
     <form action={action} className="mt-8 text-left">
@@ -124,7 +130,7 @@ export function PlaySetupForm({
         <div className="divide-y divide-line border-y border-line">
           {options.map(({ mode: value, title, description, icon: Icon }) => {
             const disabled =
-              (value === "king_of_court" && !climbAvailable) || (value === "round_robin" && !pairsAvailable);
+              (value === "king_of_court" && !climbAvailable) || (value === "round_robin" && !roundRobinAvailable);
             const selected = mode === value;
             return (
               <label
@@ -159,11 +165,15 @@ export function PlaySetupForm({
                     <span className="mt-1.5 block text-xs font-medium text-warning">
                       {courtCount < 2
                         ? "Needs at least 2 courts."
-                        : `Needs exactly ${climbPlayers} active players for ${courtCount} courts.`}
+                        : goingRosterCount !== playerCount
+                          ? "Every going player must be here before Court Climb starts."
+                          : `Needs exactly ${climbPlayers} active players for ${courtCount} courts.`}
                     </span>
-                  ) : value === "round_robin" && !pairsAvailable ? (
+                  ) : value === "round_robin" && !roundRobinAvailable ? (
                     <span className="mt-1.5 block text-xs font-medium text-warning">
-                      {playerCount % 2 ? "Needs an even number of active players." : "Needs at least 4 active players."}
+                      {!pairsAvailable
+                        ? "Needs an even going roster of at least 4 players."
+                        : "Needs at least two complete pairs here to start."}
                     </span>
                   ) : null}
                 </span>
@@ -236,13 +246,13 @@ export function PlaySetupForm({
                 />
                 <span>
                   <strong className="block text-sm">Keep pairs together</strong>
-                  <span className="block text-xs text-muted">Queue and rotate as teams.</span>
+                  <span className="block text-xs text-muted">Pair everyone going; late teams join when ready.</span>
                 </span>
               </label>
             </div>
             {!pairsAvailable ? (
               <p className="mt-2 text-xs font-medium text-warning">
-                Fixed pairs need an even roster of at least 4 active players.
+                Fixed pairs need an even going roster of at least 4 players.
               </p>
             ) : null}
           </div>
@@ -283,7 +293,7 @@ export function PlaySetupForm({
 
       <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted">
-          {playerCount} going · {courtCount} {courtCount === 1 ? "court" : "courts"}
+          {playerCount} here · {goingRosterCount} going · {courtCount} {courtCount === 1 ? "court" : "courts"}
         </p>
         <SubmitButton pendingLabel="Starting Play…" className="w-full sm:w-auto">
           Start Play

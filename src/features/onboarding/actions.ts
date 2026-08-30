@@ -11,6 +11,8 @@ import { safeNextPath } from "@/features/auth/destination-path";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 
+import { discoverySourceValues } from "./discovery-source";
+
 const setupSchema = z.object({
   name: z
     .string()
@@ -27,7 +29,7 @@ const setupSchema = z.object({
   city: z.string().trim().max(60, "Keep your city under 60 characters.").optional(),
   skillLevel: z.enum(["new", "casual", "regular", "experienced"]).optional(),
   dominantHand: z.enum(["right", "left", "both"]).optional(),
-  discoverySource: z.enum(["friend", "group_chat", "social", "search", "other"]).optional(),
+  discoverySource: z.enum(discoverySourceValues).optional(),
 });
 
 export type OnboardingActionState = { error?: string; fieldErrors?: Record<string, string[]> };

@@ -95,19 +95,30 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
   const roundDurationMinutes = setup.mode === "queue" ? null : (roundDuration?.data ?? null);
   if (session.status !== "draft" && session.status !== "published") return { error: "Play has already started." };
   const goingPlayers = await db
-    .select({ id: sessionPlayers.id, checkedInAt: sessionPlayers.checkedInAt })
+    .select({
+      id: sessionPlayers.id,
+      checkedInAt: sessionPlayers.checkedInAt,
+      playState: sessionPlayers.playState,
+    })
     .from(sessionPlayers)
     .where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
   const checkedInPlayers = goingPlayers.filter((player) => player.checkedInAt);
-  const activePlayers = checkedInPlayers.length ? checkedInPlayers : goingPlayers;
+  const attendanceTaken =
+    checkedInPlayers.length > 0 || goingPlayers.some((player) => player.playState === "unavailable");
+  const activePlayers = attendanceTaken ? checkedInPlayers : goingPlayers;
   const goingCount = activePlayers.length;
   if (goingCount < 4) return { error: "At least four players need to be going before Play can start." };
   const setupPairs = "pairs" in setup ? setup.pairs : [];
   if (setupPairs.length) {
     const assigned = setupPairs.flat().toSorted();
-    const eligible = activePlayers.map((player) => player.id).toSorted();
+    const eligible = goingPlayers.map((player) => player.id).toSorted();
     if (assigned.length !== eligible.length || assigned.some((id, index) => id !== eligible[index]))
-      return { error: "Assign every active player to exactly one pair." };
+      return { error: "Assign every going player to exactly one pair." };
+    if (setup.mode === "round_robin") {
+      const activeIds = new Set(activePlayers.map((player) => player.id));
+      const completePairsHere = setupPairs.filter((pair) => pair.every((playerId) => activeIds.has(playerId))).length;
+      if (completePairsHere < 2) return { error: "Team Round Robin needs at least two complete pairs here to start." };
+    }
   }
   if (setup.mode === "king_of_court" && (session.courtCount < 2 || goingCount !== session.courtCount * 4))
     return {
@@ -180,7 +191,7 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
       );
     await tx
       .update(sessionPlayers)
-      .set({ playState: "waiting" })
+      .set({ checkedInAt: new Date(), playState: "waiting" })
       .where(
         inArray(
           sessionPlayers.id,
@@ -205,7 +216,7 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
   });
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
-  return {};
+  redirect(`/games/${sessionId}/play`);
 }
 
 export async function createQueueMatch(formData: FormData) {

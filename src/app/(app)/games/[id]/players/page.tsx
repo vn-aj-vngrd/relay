@@ -7,7 +7,7 @@ import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { playingExperienceLabel } from "@/features/players/playing-experience";
 import {
-  AddGuestPlayerForm,
+  AddPlayerForm,
   PendingPlayerActions,
   RemovePlayerButton,
   RosterLockButton,
@@ -21,7 +21,9 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const pending = data.roster.filter(({ player }) => player.rsvp === "pending");
   const waitlist = data.roster.filter(({ player }) => player.rsvp === "waitlisted");
-  const otherResponses = data.roster.filter(({ player }) => player.rsvp === "maybe" || player.rsvp === "invited");
+  const otherResponses = data.roster.filter(
+    ({ player }) => !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp),
+  );
   const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
 
   return (
@@ -41,7 +43,7 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
                     Build the roster your way
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-muted">
-                    Add friends by name now, or share the invite and let them RSVP.{" "}
+                    Add guests by name, invite Relay players with @username, or share the game link.{" "}
                     {data.session.requiresApproval
                       ? "New join requests need approval."
                       : "New players join automatically while spots are open."}
@@ -55,7 +57,7 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
                 The roster is locked. Unlock it to add or accept players.
               </p>
             ) : (
-              <AddGuestPlayerForm sessionId={data.session.id} />
+              <AddPlayerForm sessionId={data.session.id} />
             )}
           </section>
         ) : null}

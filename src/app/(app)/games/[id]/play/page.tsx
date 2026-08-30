@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
+import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/features/auth/session";
 import { completeSession, createQueueMatch } from "@/features/matches/actions";
 import { LiveCourt } from "@/features/matches/live-court";
-import { PlaySetupForm } from "@/features/matches/play-setup-form";
 import { startMatchLabel } from "@/features/matches/presentation";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
@@ -58,8 +58,6 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     );
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const checkedIn = going.filter(({ player }) => player.checkedInAt);
-  const activeRoster = checkedIn.length ? checkedIn : going;
-  const goingCount = activeRoster.length;
   const roundMode =
     data.session.rotationMode === "random" ||
     data.session.rotationMode === "balanced" ||
@@ -106,64 +104,30 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
         }
       />
       {data.session.status !== "live" ? (
-        <section className="mx-auto w-full max-w-6xl pb-4 sm:py-14">
-          <div className="hidden text-center sm:block">
-            <Broadcast className="mx-auto text-primary" size={26} />
-            <h2 className="mt-4 text-2xl font-bold">Choose how this game runs</h2>
-            <p className="mx-auto mt-2 max-w-lg text-pretty text-muted">
-              Set the court flow before play starts. Everyone will see the same assignments, queue, and scores.
-            </p>
-          </div>
-          <section className="mx-auto max-w-2xl text-left sm:mt-9" aria-labelledby="arrival-title">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <h2 id="arrival-title" className="text-lg font-bold">
-                  Who’s here
-                </h2>
-                <p className="mt-1 text-sm leading-5 text-muted">
-                  {checkedIn.length
-                    ? `${checkedIn.length} checked in · only players marked here enter the first rotation.`
-                    : "Optional until the first check-in. With no check-ins, everyone going enters the first rotation."}
-                </p>
-              </div>
-            </div>
-            {isHost ? (
-              <div className="mt-3 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
-                {going.map(({ player, profile }) => (
-                  <AttendanceToggle
-                    key={player.id}
-                    sessionId={data.session.id}
-                    sessionPlayerId={player.id}
-                    name={playerName(player, profile)}
-                    present={Boolean(player.checkedInAt)}
-                  />
-                ))}
-              </div>
-            ) : data.membership?.rsvp === "going" ? (
-              <div className="mt-3 border-y border-line">
-                <AttendanceToggle
-                  sessionId={data.session.id}
-                  sessionPlayerId={data.membership.id}
-                  name="yourself"
-                  present={Boolean(data.membership.checkedInAt)}
-                />
-              </div>
-            ) : null}
-          </section>
+        <section className="mx-auto w-full max-w-2xl border-y border-line py-10 text-center sm:mt-8 sm:py-14">
+          <Broadcast aria-hidden className="mx-auto text-primary" size={26} />
+          <h2 className="mt-4 text-2xl font-bold">Play hasn’t started</h2>
+          <p className="mx-auto mt-2 max-w-lg text-pretty text-sm leading-6 text-muted sm:text-base">
+            {isHost
+              ? "Confirm who’s here, choose the court flow, and start the first rotation."
+              : "The host will start courts and the queue when the group is ready."}
+          </p>
           {isHost ? (
-            <PlaySetupForm
-              sessionId={data.session.id}
-              playerCount={goingCount}
-              courtCount={data.courts.length}
-              players={activeRoster.map(({ player, profile }) => ({
-                id: player.id,
-                name: playerName(player, profile),
-                skillLevel: player.skillLevel,
-              }))}
-            />
-          ) : (
-            <p className="mt-7 text-center text-sm font-medium text-muted">The host is choosing the play setup.</p>
-          )}
+            <ButtonLink href={`/games/${data.session.id}/play/setup`} className="mt-6">
+              Start Play
+            </ButtonLink>
+          ) : data.membership?.rsvp === "going" ? (
+            <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5 text-left">
+              <p className="mb-2 text-center text-sm text-muted">At the court? Mark yourself here.</p>
+              <AttendanceToggle
+                sessionId={data.session.id}
+                sessionPlayerId={data.membership.id}
+                name="yourself"
+                present={Boolean(data.membership.checkedInAt)}
+                compact
+              />
+            </div>
+          ) : null}
         </section>
       ) : (
         <div className="grid gap-7 sm:pt-6 lg:grid-cols-[1fr_330px]">
@@ -255,7 +219,38 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           </section>
 
           <aside>
-            <div className="flex items-end justify-between">
+            <section aria-labelledby="live-arrivals-title">
+              <h2 id="live-arrivals-title" className="text-lg font-bold">
+                Arrivals
+              </h2>
+              <p className="mt-1 text-sm leading-5 text-muted">
+                {checkedIn.length} of {going.length} here · late arrivals join the end of the queue.
+              </p>
+              {isHost ? (
+                <div className="mt-3 divide-y divide-line border-y border-line">
+                  {going.map(({ player, profile }) => (
+                    <AttendanceToggle
+                      key={player.id}
+                      sessionId={data.session.id}
+                      sessionPlayerId={player.id}
+                      name={playerName(player, profile)}
+                      present={Boolean(player.checkedInAt)}
+                    />
+                  ))}
+                </div>
+              ) : data.membership?.rsvp === "going" ? (
+                <div className="mt-3 border-y border-line py-3">
+                  <AttendanceToggle
+                    sessionId={data.session.id}
+                    sessionPlayerId={data.membership.id}
+                    name="yourself"
+                    present={Boolean(data.membership.checkedInAt)}
+                    compact
+                  />
+                </div>
+              ) : null}
+            </section>
+            <div className="mt-9 flex items-end justify-between">
               <div>
                 <h2 className="text-lg font-bold">
                   {data.pairs.length ? "Team queue" : roundMode ? "Waiting & resting" : "Paddle stack"}

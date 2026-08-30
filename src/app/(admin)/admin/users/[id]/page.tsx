@@ -1,4 +1,12 @@
-import { ArrowLeft, EnvelopeSimple, MapPin, PencilSimple, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowLeft,
+  Compass,
+  EnvelopeSimple,
+  MapPin,
+  PencilSimple,
+  TennisBall,
+  UserCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
@@ -7,8 +15,11 @@ import { ButtonLink } from "@/components/ui/button";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
 import { ModerationControl } from "@/features/admin/moderation-control";
+import { OnboardingResetControl } from "@/features/admin/onboarding-reset-control";
 import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import { getAdminUser } from "@/features/admin/queries";
+import { discoverySourceLabel } from "@/features/onboarding/discovery-source";
+import { playingExperienceLabel } from "@/features/players/playing-experience";
 
 export default async function AdminUserPage({ params }: { params: Promise<{ id: string }> }) {
   const parsed = z.uuid().safeParse((await params).id);
@@ -76,6 +87,40 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
               <dd className="text-sm font-medium">{profile?.city ?? "Not set"}</dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
+              <dt className="flex items-center gap-2 text-sm text-muted">
+                <Compass size={17} />
+                Discovered via
+              </dt>
+              <dd className="text-sm font-medium">{discoverySourceLabel(profile?.discoverySource)}</dd>
+            </div>
+            <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
+              <dt className="flex items-center gap-2 text-sm text-muted">
+                <TennisBall size={17} />
+                Experience
+              </dt>
+              <dd className="text-sm font-medium">{playingExperienceLabel(profile?.skillLevel)}</dd>
+            </div>
+            <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
+              <dt className="text-sm text-muted">Setup completed</dt>
+              <dd>
+                {profile?.onboardingCompletedAt ? (
+                  <AdminDate value={profile.onboardingCompletedAt} includeTime />
+                ) : (
+                  "Not yet"
+                )}
+              </dd>
+            </div>
+            <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
+              <dt className="text-sm text-muted">Tour completed</dt>
+              <dd>
+                {profile?.productTourCompletedAt ? (
+                  <AdminDate value={profile.productTourCompletedAt} includeTime />
+                ) : (
+                  "Not yet"
+                )}
+              </dd>
+            </div>
+            <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="text-sm text-muted">Registered</dt>
               <dd>
                 <AdminDate value={user.createdAt} includeTime />
@@ -107,6 +152,22 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
                 <dd className="score mt-1 text-2xl font-bold">{account.joinedCount}</dd>
               </div>
             </dl>
+          </section>
+          <section className="border-t border-line pt-5">
+            <h2 className="text-sm font-semibold">Onboarding</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Queue profile setup and the product tour for the next time this user opens Relay.
+            </p>
+            <div className="mt-4">
+              {profile ? (
+                <OnboardingResetControl
+                  targetId={user.id}
+                  queued={!profile.onboardingCompletedAt && !profile.productTourCompletedAt}
+                />
+              ) : (
+                <p className="text-sm font-medium text-muted">A profile is required before onboarding can start.</p>
+              )}
+            </div>
           </section>
           <section className="border-t border-line pt-5">
             <h2 className="text-sm font-semibold">Account access</h2>

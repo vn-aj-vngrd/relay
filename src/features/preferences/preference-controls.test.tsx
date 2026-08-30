@@ -7,14 +7,24 @@ afterEach(() => {
   cleanup();
   localStorage.clear();
   document.documentElement.removeAttribute("data-density");
+  document.documentElement.dataset.theme = "light";
 });
 
 describe("PreferenceControls", () => {
   it("offers device-local appearance controls on public session pages", () => {
     render(<PreferenceControls appearanceOnly />);
     expect(screen.getByText("Color theme")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Light" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Dark" })).toBeVisible();
+    const system = screen.getByRole("button", { name: "System" });
+    expect(system).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Dark" }));
+    expect(localStorage.getItem("relay-theme")).toBe("dark");
+    expect(document.documentElement.dataset.theme).toBe("dark");
     expect(screen.queryByText("Default games view")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Compact" }));
+    const compact = screen.getByRole("button", { name: "Compact" });
+    expect(compact).toHaveClass("min-h-8", "px-2", "sm:min-h-9");
+    fireEvent.click(compact);
     expect(localStorage.getItem("relay-density")).toBe("compact");
     expect(document.documentElement.dataset.density).toBe("compact");
   });

@@ -14,6 +14,7 @@ export function SelectField({
   value: controlledValue,
   onValueChange,
   hideLabel = false,
+  disabled = false,
   className = "",
 }: {
   id: string;
@@ -24,6 +25,7 @@ export function SelectField({
   value?: string;
   onValueChange?: (value: string) => void;
   hideLabel?: boolean;
+  disabled?: boolean;
   className?: string;
 }) {
   const [localValue, setLocalValue] = useState(defaultValue);
@@ -61,18 +63,19 @@ export function SelectField({
         id={id}
         type="button"
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={open && !disabled}
+        disabled={disabled}
         onClick={() => setOpen((current) => !current)}
-        className={`mt-1.5 flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 ${className}`}
+        className={`mt-1.5 flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${className}`}
       >
         <span className="truncate">{selected?.label}</span>
         <CaretDown
           aria-hidden
           size={14}
-          className={`shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-muted transition-transform ${open && !disabled ? "rotate-180" : ""}`}
         />
       </button>
-      {open ? (
+      {open && !disabled ? (
         <div
           role="listbox"
           aria-label={`${label} options`}

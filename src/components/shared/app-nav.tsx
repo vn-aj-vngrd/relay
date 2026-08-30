@@ -33,7 +33,7 @@ export function AppNav({ mode }: { mode: "sidebar" | "mobile" }) {
               <li key={href} className={primary ? "mb-3" : undefined}>
                 <Link
                   href={href}
-                  data-tour={label === "Create game" ? "create" : label.toLowerCase()}
+                  data-tour={label === "Create game" ? "create" : label === "Court" ? "courts" : label.toLowerCase()}
                   prefetch={false}
                   aria-label={label}
                   aria-current={active ? "page" : undefined}
@@ -72,7 +72,7 @@ export function AppNav({ mode }: { mode: "sidebar" | "mobile" }) {
             <li key={href} className="min-w-0 flex-1">
               <Link
                 href={href}
-                data-tour={label === "Create game" ? "create" : label.toLowerCase()}
+                data-tour={label === "Create game" ? "create" : label === "Court" ? "courts" : label.toLowerCase()}
                 prefetch={false}
                 aria-current={active ? "page" : undefined}
                 aria-label={label}

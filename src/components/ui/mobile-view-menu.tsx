@@ -13,11 +13,13 @@ export function MobileViewMenu<T extends string>({
   value,
   options,
   onChange,
+  responsiveClassName = "sm:hidden",
 }: {
   label: string;
   value: T;
   options: readonly ViewOption<T>[];
   onChange: (value: T) => void;
+  responsiveClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export function MobileViewMenu<T extends string>({
   }, [open]);
 
   return (
-    <div ref={root} className="relative shrink-0 sm:hidden">
+    <div ref={root} className={`relative shrink-0 ${responsiveClassName}`}>
       <button
         ref={trigger}
         type="button"
@@ -52,7 +54,7 @@ export function MobileViewMenu<T extends string>({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="pressable grid h-11 w-11 place-items-center rounded-lg border border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"
+        className="mobile-view-menu-trigger pressable grid h-9 w-9 place-items-center rounded-lg border border-transparent bg-transparent text-muted hover:bg-surface-strong hover:text-ink"
       >
         <span aria-hidden>
           <CurrentIcon size={18} />

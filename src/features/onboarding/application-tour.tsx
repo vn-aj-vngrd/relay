@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, X } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, X } from "@phosphor-icons/react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -14,7 +14,8 @@ const steps = [
     key: "welcome",
     target: null,
     title: "Welcome to Relay",
-    description: "Create a game, open your next plan, and see what still needs to be done.",
+    description:
+      "Relay keeps one pickleball game together—from the invite and court plan to scores, payments, and memories.",
   },
   {
     key: "create",
@@ -30,43 +31,17 @@ const steps = [
     description: "Home shows your next game, booking status, roster, payments, and next task.",
   },
   {
-    key: "games",
-    target: "games",
-    title: "See all games",
-    description: "Games lists your upcoming and past games. Open one to see players, scores, chat, and payments.",
-  },
-  {
-    key: "groups",
-    target: "groups",
-    title: "Save regular groups",
-    description: "Save people who play together often, then invite the group to another game.",
-  },
-  {
     key: "courts",
     target: "courts",
     title: "Find a court",
-    description:
-      "Search the map, check the court details, and use the court in a new game. Unverified listings are marked.",
-  },
-  {
-    key: "search",
-    target: "search",
-    title: "Find the plan quickly",
-    description: "Search your games, players, groups, and courts.",
-  },
-  {
-    key: "notifications",
-    target: "notifications",
-    title: "Check updates",
-    description:
-      "Invites, waitlist movement, payment reviews, and court assignments appear here. The number shows what you haven’t read.",
+    description: "Browse verified courts on the map, check the details, and use one in a new game.",
   },
   {
     key: "profile",
     target: "profile",
     title: "Open your profile",
     description:
-      "Profile keeps sessions, matches, groups, and memories attached to you. Preferences for theme and layout live here too.",
+      "Your profile keeps your games and memories together. Theme, layout, and other preferences live here too.",
   },
 ] as const;
 
@@ -262,17 +237,28 @@ export function ApplicationTour({ required }: { required: boolean }) {
             <span />
           )}
           {finalStep ? (
-            <form action={completeProductTour}>
-              <input type="hidden" name="destination" value="/home" />
-              <PendingSubmit
-                data-tour-primary
-                pendingLabel="Finishing…"
-                className="pressable inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
-              >
-                <Check aria-hidden size={15} />
-                Finish tour
-              </PendingSubmit>
-            </form>
+            <div className="flex items-center gap-2">
+              <form action={completeProductTour}>
+                <input type="hidden" name="destination" value="/home" />
+                <PendingSubmit
+                  pendingLabel="Finishing…"
+                  className="pressable inline-flex h-9 items-center rounded-lg px-2.5 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+                >
+                  Home
+                </PendingSubmit>
+              </form>
+              <form action={completeProductTour}>
+                <input type="hidden" name="destination" value="/games/new" />
+                <PendingSubmit
+                  data-tour-primary
+                  pendingLabel="Opening…"
+                  className="pressable inline-flex h-9 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
+                >
+                  Create first game
+                  <ArrowRight aria-hidden size={15} />
+                </PendingSubmit>
+              </form>
+            </div>
           ) : (
             <Button data-tour-primary onClick={() => setStep((value) => value + 1)}>
               Next

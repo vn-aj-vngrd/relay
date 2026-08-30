@@ -46,7 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         ) : null}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{const t=localStorage.getItem('relay-theme');if(t==='dark'){document.documentElement.dataset.theme='dark';document.documentElement.style.colorScheme='dark';document.querySelector('meta[name="theme-color"]')?.setAttribute('content','oklch(0.145 0.006 275)')}const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
+            __html: `try{const m=matchMedia('(prefers-color-scheme: dark)'),a=t=>{document.documentElement.dataset.theme=t;document.documentElement.style.colorScheme=t;document.querySelector('meta[name="theme-color"]')?.setAttribute('content',t==='dark'?'oklch(0.145 0.006 275)':'oklch(0.965 0.002 75)')},p=localStorage.getItem('relay-theme');a(p==='dark'||(p!=='light'&&m.matches)?'dark':'light');m.addEventListener?.('change',()=>{const t=localStorage.getItem('relay-theme');if(t!=='light'&&t!=='dark')a(m.matches?'dark':'light')});const d=localStorage.getItem('relay-density');if(d==='compact')document.documentElement.dataset.density='compact';const s=localStorage.getItem('relay-sidebar');if(s==='compact')document.documentElement.dataset.sidebar='compact'}catch{}`,
           }}
         />
       </head>

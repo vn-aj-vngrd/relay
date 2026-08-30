@@ -34,7 +34,7 @@ export default async function HomePage() {
       : null;
 
   return (
-    <div className="space-y-12 sm:space-y-16">
+    <div className="space-y-8 sm:space-y-16">
       <section className="flex items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm text-muted">Good to see you, {profile.name.split(" ")[0]}</p>

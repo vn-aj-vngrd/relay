@@ -20,6 +20,7 @@ describe("AppNav", () => {
     expect(screen.getByRole("link", { name: "Home" })).toHaveClass("text-primary");
     expect(screen.getByRole("link", { name: "Games" })).toHaveClass("text-muted");
     expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute("href", "/court");
+    expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute("data-tour", "courts");
     expect(screen.queryByRole("link", { name: "Profile" })).not.toBeInTheDocument();
   });
 

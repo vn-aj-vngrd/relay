@@ -17,7 +17,7 @@ const sizes: Record<Size, string> = {
 };
 
 const base =
-  "pressable inline-flex items-center justify-center gap-1.5 rounded-lg border text-[13px] font-[600] leading-none disabled:pointer-events-none disabled:opacity-45 [&>svg]:block [&>svg]:shrink-0";
+  "pressable inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-[13px] font-[600] leading-none disabled:pointer-events-none disabled:opacity-45 [&>svg]:block [&>svg]:shrink-0";
 
 export function ButtonSpinner({ className = "" }: { className?: string }) {
   return (

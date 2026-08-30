@@ -375,8 +375,8 @@ test("keyboard users can skip directly to the main content", async ({ page }) =>
 });
 
 test("core public and protected routes fail safely", async ({ page }) => {
-  const venueSearch = await page.request.get("/api/venues/search?q=Central");
-  expect(venueSearch.status()).toBe(401);
+  const removedVenueAutocomplete = await page.request.get("/api/venues/search?q=Central");
+  expect(removedVenueAutocomplete.status()).toBe(404);
   const globalSearch = await page.request.get("/api/search?q=v&type=all");
   expect(globalSearch.status()).toBe(401);
   await page.goto("/games/new");

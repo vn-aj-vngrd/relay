@@ -1,8 +1,10 @@
 import {
   CaretRight,
   ChatText,
+  Hand,
   Lifebuoy,
   MapPin,
+  PencilSimple,
   ShieldCheck,
   SignOut,
   SlidersHorizontal,
@@ -13,6 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/shared/avatar-stack";
+import { ButtonLink } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { db } from "@/db/client";
 import { matches, matchPlayers, profiles, sessionPlayers } from "@/db/schema";
@@ -21,19 +24,15 @@ import { signOut } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { playingExperienceLabel } from "@/features/players/playing-experience";
-import { ProfileAvatarEditor } from "@/features/players/profile-avatar-editor";
-import { ProfileDetailsForm } from "@/features/players/profile-details-form";
-import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDate } from "@/features/sessions/format";
-import { getUserSessions } from "@/features/sessions/queries";
 
 export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params;
   const [profile, viewer] = await Promise.all([
-    db.query.profiles.findFirst({ where: eq(profiles.username, (await params).username) }),
+    db.query.profiles.findFirst({ where: eq(profiles.username, username) }),
     getCurrentUser(),
   ]);
   if (!profile) notFound();
-  const [sessionCount, participation, sessionRows] = await Promise.all([
+  const [sessionCount, participation] = await Promise.all([
     db.$count(sessionPlayers, and(eq(sessionPlayers.userId, profile.userId), eq(sessionPlayers.rsvp, "going"))),
     db
       .select({ match: matches, player: matchPlayers })
@@ -41,40 +40,56 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
       .innerJoin(sessionPlayers, eq(matchPlayers.sessionPlayerId, sessionPlayers.id))
       .where(and(eq(sessionPlayers.userId, profile.userId), eq(matches.status, "completed"))),
-    getUserSessions(profile.userId),
   ]);
   const wins = participation.filter(({ match, player }) => match.winningTeam === player.team).length;
-  const recent = sessionRows.slice(-5).reverse();
   const ownProfile = viewer?.id === profile.userId;
-  const canSeeAllSessions = ownProfile && sessionRows.length > recent.length;
   const imageUrl = profileAvatarUrl(profile.avatarPath);
 
   return (
     <div className="mx-auto w-full max-w-6xl">
       <header className="flex items-start gap-4 pb-7">
-        {ownProfile ? (
-          <ProfileAvatarEditor name={profile.name} imageUrl={imageUrl} />
-        ) : (
-          <Avatar name={profile.name} imageUrl={imageUrl} size="xl" />
-        )}
+        <Avatar name={profile.name} imageUrl={imageUrl} size="xl" />
         <div className="min-w-0 flex-1 pt-1">
-          <h1 className="truncate text-[1.75rem] font-[680] tracking-[-0.025em]">{profile.name}</h1>
-          {profile.city ? (
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
-              <MapPin size={15} />
-              {profile.city}
-              {profile.dominantHand ? ` · ${profile.dominantHand}-handed` : ""}
-            </p>
-          ) : (
-            <p className="mt-1 text-sm text-muted">@{profile.username}</p>
-          )}
-          {profile.skillLevel ? (
-            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted">
-              <TennisBall aria-hidden size={15} />
-              {playingExperienceLabel(profile.skillLevel)}
-            </p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="min-w-0 flex-1 truncate text-[1.75rem] font-[680] tracking-[-0.025em]">{profile.name}</h1>
+            {ownProfile ? (
+              <ButtonLink
+                href={`/profile/${profile.username}/edit`}
+                variant="secondary"
+                aria-label="Edit profile"
+                className="shrink-0 px-2.5 sm:px-3"
+              >
+                <PencilSimple aria-hidden size={15} />
+                <span className="hidden sm:inline">Edit profile</span>
+              </ButtonLink>
+            ) : null}
+          </div>
+          <p className="mt-0.5 text-sm text-muted">@{profile.username}</p>
+          {profile.city || profile.dominantHand || profile.skillLevel ? (
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted">
+              {profile.city ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin aria-hidden size={15} />
+                  {profile.city}
+                </span>
+              ) : null}
+              {profile.dominantHand ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Hand aria-hidden size={15} />
+                  {profile.dominantHand === "both"
+                    ? "Uses both hands"
+                    : `${profile.dominantHand.charAt(0).toUpperCase()}${profile.dominantHand.slice(1)}-handed`}
+                </span>
+              ) : null}
+              {profile.skillLevel ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <TennisBall aria-hidden size={15} />
+                  {playingExperienceLabel(profile.skillLevel)}
+                </span>
+              ) : null}
+            </div>
           ) : null}
-          {profile.bio ? <p className="mt-3 max-w-xl text-sm leading-6 text-muted">{profile.bio}</p> : null}
+          {profile.bio ? <p className="mt-3 max-w-xl text-sm leading-6 text-ink/75">{profile.bio}</p> : null}
         </div>
       </header>
 
@@ -95,68 +110,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       <p className="pt-3 text-center text-xs leading-5 text-muted">For fun, not a competitive rating.</p>
 
       {ownProfile ? (
-        <section className="pt-9" aria-labelledby="player-details-title">
-          <h2 id="player-details-title" className="text-lg font-[680]">
-            Player details
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Keep the social context friends see and Relay uses for team balancing.
-          </p>
-          <div className="mt-4">
-            <ProfileDetailsForm profile={profile} />
-          </div>
-        </section>
-      ) : null}
-
-      <section className="py-10" aria-labelledby="recent-title">
-        <div className="mb-3 flex items-start justify-between gap-4">
-          <div>
-            <h2 id="recent-title" className="text-lg font-[680]">
-              Recent sessions
-            </h2>
-            <p className="mt-1 text-sm text-muted">Games you played with friends.</p>
-          </div>
-          {canSeeAllSessions ? (
-            <Link
-              href="/games"
-              className="inline-flex min-h-9 shrink-0 items-center text-[13px] font-semibold text-primary"
-            >
-              See all
-            </Link>
-          ) : null}
-        </div>
-        {recent.length ? (
-          <ul className="divide-y divide-line border-y border-line">
-            {recent.map(({ session }) => (
-              <li key={session.id}>
-                <Link
-                  href={`/games/${session.id}`}
-                  prefetch={false}
-                  style={sessionAccentStyle(session.accentColor)}
-                  className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
-                >
-                  <time className="score w-20 shrink-0 text-xs font-semibold text-primary">
-                    {formatSessionDate(session.startsAt)}
-                  </time>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{session.title}</p>
-                    <p className="mt-1 truncate text-sm text-muted">{session.venueName}</p>
-                  </div>
-                  <CaretRight aria-hidden className="text-muted" size={16} />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="border-y border-line py-7">
-            <p className="font-semibold">No sessions yet</p>
-            <p className="mt-1 text-sm text-muted">Your first game will show up here.</p>
-          </div>
-        )}
-      </section>
-
-      {ownProfile ? (
-        <section aria-labelledby="account-title" className="pb-6">
+        <section aria-labelledby="account-title" className="pb-6 pt-10">
           <h2 id="account-title" className="mb-2 text-sm font-semibold">
             Account
           </h2>

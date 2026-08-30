@@ -26,6 +26,35 @@ import {
 
 import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
+export async function getAdminInsights() {
+  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [profileCount, onboardingCount, tourCount, discoveryRows, lifecycleRows] = await Promise.all([
+    db.$count(profiles),
+    db.$count(profiles, isNotNull(profiles.onboardingCompletedAt)),
+    db.$count(profiles, isNotNull(profiles.productTourCompletedAt)),
+    db
+      .select({ source: profiles.discoverySource, total: count() })
+      .from(profiles)
+      .where(isNotNull(profiles.discoverySource))
+      .groupBy(profiles.discoverySource),
+    db
+      .select({ name: productEvents.name, total: count() })
+      .from(productEvents)
+      .where(gte(productEvents.createdAt, monthAgo))
+      .groupBy(productEvents.name),
+  ]);
+  const discovery = new Map(discoveryRows.map(({ source, total }) => [source, Number(total)]));
+  const answeredDiscovery = [...discovery.values()].reduce((sum, total) => sum + total, 0);
+  return {
+    profileCount,
+    onboardingCount,
+    tourCount,
+    unansweredDiscovery: Math.max(0, profileCount - answeredDiscovery),
+    discovery,
+    lifecycle: new Map(lifecycleRows.map(({ name, total }) => [name, Number(total)])),
+  };
+}
+
 export async function getAdminOverview() {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);

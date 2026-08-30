@@ -10,6 +10,11 @@ export const createGroupSchema = z.object({
   sourceSessionId: z.uuid().optional(),
 });
 
+export const updateGroupSchema = createGroupSchema.omit({ sourceSessionId: true }).extend({
+  groupId: z.uuid(),
+  removeImage: z.boolean(),
+});
+
 export const addGroupMemberSchema = z.object({
   groupId: z.uuid(),
   username: z.string().trim().toLowerCase().min(2, "Enter a username.").max(40, "Enter a valid username."),

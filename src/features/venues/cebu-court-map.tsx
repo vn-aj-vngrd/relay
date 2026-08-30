@@ -91,7 +91,6 @@ export function CebuCourtMap({
   const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
   const selectedRef = useRef(selectedId);
-  const previousSelectionRef = useRef(selectedId);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -197,19 +196,7 @@ export function CebuCourtMap({
 
   useEffect(() => {
     for (const [id, { element }] of markersRef.current) setMarkerState(element, id === selectedId);
-    const map = mapRef.current;
-    if (!ready || !map) return;
-    const previousSelection = previousSelectionRef.current;
-    previousSelectionRef.current = selectedId;
-    if (!selectedId || previousSelection === selectedId) return;
-    const venue = venues.find((item) => item.id === selectedId);
-    if (!venue) return;
-    map.easeTo({
-      center: [venue.longitude, venue.latitude],
-      zoom: Math.max(map.getZoom(), 14),
-      duration: window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
-    });
-  }, [ready, selectedId, venues]);
+  }, [selectedId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -239,7 +226,7 @@ export function CebuCourtMap({
 
   return (
     <div
-      className={`relative w-full overflow-hidden border border-line bg-surface-raised sm:rounded-xl xl:h-full xl:min-h-0 ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[58dvh] min-h-[400px] max-h-[520px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
+      className={`relay-court-map-shell relative w-full overflow-hidden border border-line bg-surface-raised sm:rounded-xl xl:h-full xl:min-h-0 ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[58dvh] min-h-[400px] max-h-[520px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
     >
       <div
         ref={containerRef}

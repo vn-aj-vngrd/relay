@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import { groupMembers, groups, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { GroupCollection, type GroupCollectionItem, GroupViewMenu } from "@/features/groups/group-collection";
+import { groupImageUrl } from "@/features/groups/image";
 import { formatSessionDate } from "@/features/sessions/format";
 
 export default async function GroupsPage() {
@@ -52,6 +53,7 @@ export default async function GroupsPage() {
       href: `/groups/${group.slug}`,
       name: group.name,
       initials: group.name.slice(0, 2).toUpperCase(),
+      imageUrl: groupImageUrl(group.imagePath),
       memberCount: counts.get(group.id) ?? 1,
       role: member.role,
       nextGameDate: next ? formatSessionDate(next.startsAt) : undefined,

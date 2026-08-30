@@ -1,9 +1,9 @@
 "use client";
 
-import { CalendarBlank, Rows, SquaresFour } from "@phosphor-icons/react";
+import { CalendarBlank, Desktop, Moon, Rows, SquaresFour, Sun } from "@phosphor-icons/react";
 import { type ComponentType, useSyncExternalStore } from "react";
 
-import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { getThemePreference, setThemePreference, type ThemePreference } from "@/components/shared/theme-toggle";
 
 type Density = "comfortable" | "compact";
 type GameView = "list" | "grid" | "calendar";
@@ -21,7 +21,7 @@ function Segmented<T extends string>({
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex rounded-lg bg-surface-strong p-1">
+    <div role="group" aria-label={label} className="inline-flex rounded-lg bg-surface-strong p-0.5 sm:p-1">
       {options.map((option) => {
         const Icon = option.icon;
         return (
@@ -30,7 +30,7 @@ function Segmented<T extends string>({
             type="button"
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
-            className={`pressable flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
+            className={`preference-segment-control pressable flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-medium sm:min-h-9 sm:gap-1.5 sm:px-2.5 ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
           >
             {Icon ? <Icon size={15} /> : null}
             {option.label}
@@ -60,7 +60,17 @@ function subscribe(callback: () => void) {
   };
 }
 
+function subscribeTheme(callback: () => void) {
+  window.addEventListener("relay-theme-change", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("relay-theme-change", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
 export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?: boolean }) {
+  const theme = useSyncExternalStore(subscribeTheme, getThemePreference, (): ThemePreference => "system");
   const [density, gameView, weekStart] = useSyncExternalStore(
     subscribe,
     getPreferences,
@@ -91,11 +101,18 @@ export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?
           <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-2">
             <div>
               <p className="text-sm font-medium">Color theme</p>
-              <p className="mt-0.5 text-xs text-muted">Switch between light and dark.</p>
+              <p className="mt-0.5 text-xs text-muted">Use light, dark, or your device setting.</p>
             </div>
-            <div className="w-36">
-              <ThemeToggle showLabel />
-            </div>
+            <Segmented
+              label="Color theme"
+              value={theme}
+              onChange={setThemePreference}
+              options={[
+                { value: "light", label: "Light", icon: Sun },
+                { value: "dark", label: "Dark", icon: Moon },
+                { value: "system", label: "System", icon: Desktop },
+              ]}
+            />
           </div>
           <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
             <div>

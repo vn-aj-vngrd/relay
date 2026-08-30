@@ -1,11 +1,33 @@
 "use client";
 
-import { CheckCircle, Circle } from "@phosphor-icons/react";
+import { CheckCircle, CheckSquare, Circle, Square } from "@phosphor-icons/react";
 import { useActionState } from "react";
 
 import { ButtonSpinner } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 
-import { type AttendanceActionState, setAttendanceAction } from "./actions";
+import { type AttendanceActionState, setAllAttendanceAction, setAttendanceAction } from "./actions";
+
+export function AttendanceBulkActions({ sessionId, allPresent }: { sessionId: string; allPresent: boolean }) {
+  const [state, action] = useActionState(setAllAttendanceAction, {} as AttendanceActionState);
+  return (
+    <div>
+      <form action={action}>
+        <input type="hidden" name="sessionId" value={sessionId} />
+        <input type="hidden" name="present" value={allPresent ? "false" : "true"} />
+        <SubmitButton pendingLabel="Updating…" variant="quiet" className="whitespace-nowrap">
+          {allPresent ? <Square aria-hidden size={16} /> : <CheckSquare aria-hidden size={16} />}
+          {allPresent ? "Mark all not here" : "Mark all here"}
+        </SubmitButton>
+      </form>
+      {state.error ? (
+        <p role="alert" className="mt-1 text-right text-xs font-medium text-danger">
+          {state.error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export function AttendanceToggle({
   sessionId,

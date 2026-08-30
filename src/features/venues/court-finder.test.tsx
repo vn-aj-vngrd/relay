@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CourtFinder } from "./court-finder";
 import type { CebuVenue } from "./queries";
 
+const { captureMapVenues } = vi.hoisted(() => ({ captureMapVenues: vi.fn() }));
+
 vi.mock("./cebu-court-map", () => ({
   CebuCourtMap: ({
     venues,
@@ -14,16 +16,19 @@ vi.mock("./cebu-court-map", () => ({
     venues: CebuVenue[];
     onSelect: (id: string) => void;
     children?: ReactNode;
-  }) => (
-    <div aria-label="Interactive map of pickleball courts">
-      {venues.map((item) => (
-        <button key={item.id} type="button" onClick={() => onSelect(item.id)}>
-          Select {item.name}
-        </button>
-      ))}
-      {children}
-    </div>
-  ),
+  }) => {
+    captureMapVenues(venues);
+    return (
+      <div aria-label="Interactive map of pickleball courts">
+        {venues.map((item) => (
+          <button key={item.id} type="button" onClick={() => onSelect(item.id)}>
+            Select {item.name}
+          </button>
+        ))}
+        {children}
+      </div>
+    );
+  },
 }));
 
 const venue: CebuVenue = {
@@ -73,6 +78,15 @@ beforeEach(() => {
 });
 
 describe("CourtFinder", () => {
+  it("keeps the mapped court set stable when opening a marker card", () => {
+    render(<CourtFinder venues={[venue, fartherVenue]} />);
+    const beforeSelection = captureMapVenues.mock.calls.at(-1)?.[0];
+
+    fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+
+    expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
+  });
+
   it("supports a bounded landing-page preview without changing the full finder", () => {
     const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
@@ -87,24 +101,23 @@ describe("CourtFinder", () => {
   it("gives mobile and tablet users dedicated map and list views", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
-    const mapButton = screen.getByRole("button", { name: "Map" });
-    const listButton = screen.getByRole("button", { name: "List" });
     const map = screen.getByRole("region", { name: "Court map" });
     const listPane = document.querySelector<HTMLElement>("[data-court-list-pane]");
 
-    expect(mapButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Change court view, currently Map" })).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(listPane).toHaveClass("hidden", "xl:block");
 
-    fireEvent.click(listButton);
+    fireEvent.click(screen.getByRole("button", { name: "Change court view, currently Map" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "List" }));
 
-    expect(listButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Change court view, currently List" })).toBeVisible();
     expect(map).toHaveClass("hidden", "xl:flex");
     expect(listPane).toHaveClass("block");
 
     fireEvent.click(within(listPane!).getByRole("button", { name: /NiceServe Pickleball Court/ }));
 
-    expect(mapButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Change court view, currently Map" })).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
   });
@@ -115,6 +128,13 @@ describe("CourtFinder", () => {
     fireEvent.click(screen.getByRole("button", { name: "Select NiceServe Pickleball Court" }));
 
     expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Selected court: NiceServe Pickleball Court" })).toHaveClass(
+      "inset-x-2",
+      "bottom-2",
+      "max-h-[min(72%,32rem)]",
+      "p-3",
+      "sm:p-4",
+    );
     expect(screen.getByRole("link", { name: "Plan a game here" })).toHaveAttribute(
       "href",
       "/games/new?venue=NiceServe+Pickleball+Court&address=Mahayahay+Road%2C+Lapu-Lapu%2C+Cebu",
@@ -156,11 +176,10 @@ describe("CourtFinder", () => {
     ]);
   });
 
-  it("combines trust and equipment filters", () => {
+  it("filters courts by equipment", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
     fireEvent.click(screen.getByLabelText("Paddle rental"));
-    fireEvent.click(screen.getByLabelText("Verified"));
 
     expect(screen.getAllByRole("button", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
     expect(screen.queryAllByRole("button", { name: /Farther Court/ })).toHaveLength(0);

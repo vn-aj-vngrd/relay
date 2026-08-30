@@ -1,6 +1,7 @@
 "use client";
 
 import { ClockCounterClockwise, MagnifyingGlass, MapPin, TennisBall, UsersThree } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -55,8 +56,15 @@ function ResultIdentity({ result, index }: { result: SearchResult; index: number
   if (result.type === "games") return <span aria-hidden className="h-9 w-1 rounded-full bg-primary" />;
   if (result.type === "groups")
     return (
-      <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-surface-strong text-xs font-bold">
-        <UsersThree size={17} />
+      <span
+        aria-hidden
+        className="relative grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-surface-strong text-xs font-bold"
+      >
+        {result.imageUrl ? (
+          <Image src={result.imageUrl} alt="" fill className="object-cover" />
+        ) : (
+          <UsersThree size={17} />
+        )}
       </span>
     );
   return (

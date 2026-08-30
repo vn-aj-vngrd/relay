@@ -15,6 +15,7 @@ export const adminReasonSchema = z
   .min(5, "Add a short reason (at least 5 characters).")
   .max(240, "Keep the reason under 240 characters.");
 export const adminUserActionSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
+export const adminOnboardingResetSchema = z.object({ userId: z.uuid() });
 export const adminSessionActionSchema = z.object({ sessionId: z.uuid(), reason: adminReasonSchema });
 
 const usernameSchema = z

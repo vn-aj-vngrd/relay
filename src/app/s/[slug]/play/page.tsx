@@ -85,7 +85,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
             <Broadcast aria-hidden size={25} className="mx-auto text-primary" />
             <h2 className="mt-4 text-xl font-bold">Play hasn’t started</h2>
             <p className="mt-2 text-sm text-muted">
-              The host will start courts and the paddle stack when everyone arrives.
+              The host will start courts when the group is ready. Late players can join the queue when they arrive.
             </p>
             {viewer?.player.rsvp === "going" ? (
               <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5">
@@ -150,6 +150,25 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
               )}
             </section>
             <aside>
+              {viewer?.player.rsvp === "going" ? (
+                <section aria-labelledby="public-arrival-title" className="mb-9">
+                  <h2 id="public-arrival-title" className="text-lg font-bold">
+                    Your arrival
+                  </h2>
+                  <p className="mt-1 text-sm leading-5 text-muted">
+                    Running late? Mark yourself here when you arrive to join the end of the queue.
+                  </p>
+                  <div className="mt-3 border-y border-line py-3">
+                    <AttendanceToggle
+                      sessionId={data.session.id}
+                      sessionPlayerId={viewer.player.id}
+                      name="yourself"
+                      present={Boolean(viewer.player.checkedInAt)}
+                      compact
+                    />
+                  </div>
+                </section>
+              ) : null}
               <div className="flex items-start gap-2">
                 <Users aria-hidden size={18} className="mt-0.5 text-primary" />
                 <div>

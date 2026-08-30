@@ -67,7 +67,28 @@ describe("PlaySetupForm", () => {
       />,
     );
     expect(screen.getByRole("radio", { name: /Team Round Robin/ })).toBeDisabled();
-    expect(screen.getByText("Needs an even number of active players.")).toBeVisible();
+    expect(screen.getByText("Needs an even going roster of at least 4 players.")).toBeVisible();
+  });
+
+  it("pairs the full going roster while late players stay out of the opening rotation", () => {
+    const latePlayers = [
+      { id: "00000000-0000-4000-8000-000000000005", name: "Chris" },
+      { id: "00000000-0000-4000-8000-000000000006", name: "Sam" },
+    ];
+    render(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={4}
+        courtCount={1}
+        players={[...players, ...latePlayers]}
+        activePlayerIds={players.map((player) => player.id)}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: /^Keep pairs together/ }));
+
+    expect(screen.getByText("4 here · 6 going · 1 court")).toBeVisible();
+    expect(screen.getByText("Pair 3")).toBeVisible();
   });
 
   it("explains and selects Mix It Up without showing Paddle Stack rules", () => {

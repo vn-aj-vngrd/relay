@@ -7,7 +7,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { DatePickerField, TimePickerField } from "@/components/ui/date-time-picker";
-import { VenueCombobox } from "@/features/venues/venue-combobox";
+import { type CourtSuggestion, VenueCombobox } from "@/features/venues/venue-combobox";
 
 import { createSessionAction, type SessionActionState } from "./actions";
 import { SessionAccentPicker } from "./session-accent-picker";
@@ -36,8 +36,8 @@ function creationBoundary(value: Date) {
   };
 }
 
-function fieldClass(error?: string) {
-  return `mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
+function fieldClass(error?: string, multiline = false) {
+  return `mt-1.5 w-full rounded-lg border bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:outline-none ${multiline ? "min-h-20 resize-y py-3" : "h-11"} ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`;
 }
 
 function SessionFormActions() {
@@ -168,7 +168,15 @@ export type CreateSessionDefaults = {
   inviteeCount?: number;
 };
 
-export function CreateSessionForm({ defaults, now }: { defaults: CreateSessionDefaults; now?: string }) {
+export function CreateSessionForm({
+  defaults,
+  now,
+  courts = [],
+}: {
+  defaults: CreateSessionDefaults;
+  now?: string;
+  courts?: CourtSuggestion[];
+}) {
   const [more, setMore] = useState(false);
   const [state, action] = useActionState(createSessionAction, {});
 
@@ -285,6 +293,7 @@ export function CreateSessionForm({ defaults, now }: { defaults: CreateSessionDe
           </div>
           <VenueCombobox
             key={`${value("venue", defaults.venue)}:${value("venueAddress", defaults.venueAddress)}`}
+            courts={courts}
             defaultValue={value("venue", defaults.venue)}
             defaultAddress={value("venueAddress", defaults.venueAddress)}
             error={venueError}
@@ -438,9 +447,10 @@ export function CreateSessionForm({ defaults, now }: { defaults: CreateSessionDe
                 Note for players
               </label>
               <textarea
-                className={`${fieldClass(notesError)} min-h-28 resize-y py-3`}
+                className={fieldClass(notesError, true)}
                 id="notes"
                 name="notes"
+                rows={2}
                 maxLength={1200}
                 defaultValue={value("notes")}
                 placeholder="Parking tips, what to bring, or anything your crew should know…"

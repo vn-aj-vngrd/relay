@@ -1,12 +1,13 @@
 "use client";
 
-import { ChatText, ClockCounterClockwise, Gauge, MapPin, Users, Volleyball } from "@phosphor-icons/react";
+import { ChartBar, ChatText, ClockCounterClockwise, Gauge, MapPin, Users, Volleyball } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
   { href: "/admin", label: "Overview", icon: Gauge },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/insights", label: "Insights", icon: ChartBar },
   { href: "/admin/sessions", label: "Games", icon: Volleyball },
   { href: "/admin/courts", label: "Courts", icon: MapPin },
   { href: "/admin/feedback", label: "Feedback", icon: ChatText },

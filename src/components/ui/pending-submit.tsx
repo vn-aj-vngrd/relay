@@ -12,7 +12,12 @@ export function PendingSubmit({
 }: ComponentProps<"button"> & { pendingLabel: string; children: ReactNode }) {
   const { pending } = useFormStatus();
   return (
-    <button {...props} disabled={props.disabled || pending} aria-disabled={props.disabled || pending}>
+    <button
+      {...props}
+      disabled={props.disabled || pending}
+      aria-disabled={props.disabled || pending}
+      className={`whitespace-nowrap ${props.className ?? ""}`}
+    >
       {pending ? (
         <>
           <ButtonSpinner />

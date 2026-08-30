@@ -13,6 +13,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "./auth";
 import {
   adminCreateUserSchema,
+  adminOnboardingResetSchema,
   adminSessionActionSchema,
   adminUpdateProfileSchema,
   adminUserActionSchema,
@@ -135,6 +136,38 @@ export async function updateUserProfileAction(_: AdminActionState, formData: For
   if (existing?.username) revalidatePath(`/profile/${existing.username}`);
   revalidatePath(`/profile/${parsed.data.username}`);
   redirect(`/admin/users/${target.id}`);
+}
+
+export async function resetUserOnboardingAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  const actor = await requireAdmin();
+  const parsed = adminOnboardingResetSchema.safeParse({ userId: formData.get("userId") });
+  if (!parsed.success) return { error: "Choose a valid account." };
+
+  const profile = await db.query.profiles.findFirst({ where: eq(profiles.userId, parsed.data.userId) });
+  if (!profile) return { error: "This account does not have a profile to onboard." };
+  if (!profile.onboardingCompletedAt && !profile.productTourCompletedAt)
+    return { success: "Onboarding is already waiting for this user." };
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(profiles)
+      .set({ onboardingCompletedAt: null, productTourCompletedAt: null, updatedAt: new Date() })
+      .where(eq(profiles.userId, profile.userId));
+    await tx.insert(adminAuditLogs).values({
+      actorUserId: actor.id,
+      action: "user.onboarding_reset",
+      targetType: "user",
+      targetId: profile.userId,
+      metadata: {
+        previousOnboardingCompletedAt: profile.onboardingCompletedAt?.toISOString() ?? null,
+        previousProductTourCompletedAt: profile.productTourCompletedAt?.toISOString() ?? null,
+      },
+    });
+  });
+
+  refreshAdminUser(profile.userId);
+  revalidatePath("/admin/insights");
+  return { success: "Onboarding will start the next time this user opens Relay." };
 }
 
 export async function suspendUserAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {

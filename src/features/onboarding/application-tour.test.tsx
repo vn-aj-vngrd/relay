@@ -50,11 +50,7 @@ describe("ApplicationTour", () => {
       <>
         <Target name="create" />
         <Target name="home" />
-        <Target name="games" />
-        <Target name="groups" />
         <Target name="courts" />
-        <Target name="search" />
-        <Target name="notifications" />
         <Target name="profile" />
         <ApplicationTour required />
       </>,
@@ -66,18 +62,27 @@ describe("ApplicationTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Check your next game" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "See all games" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Save regular groups" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Find a court" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Find the plan quickly" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(screen.getByRole("dialog", { name: "Check updates" })).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Open your profile" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Finish tour" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Create first game" })).toHaveClass("whitespace-nowrap", "shrink-0");
+    expect(screen.getByRole("button", { name: "Home" })).toHaveClass("whitespace-nowrap");
+  });
+
+  it("targets the visible responsive navigation control", () => {
+    render(
+      <>
+        <button data-tour="create" style={{ display: "none" }}>
+          Hidden desktop create
+        </button>
+        <Target name="create" />
+        <ApplicationTour required />
+      </>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(document.querySelector<HTMLElement>("[data-tour-spotlight]")).toHaveStyle({ left: "7px", width: "210px" });
   });
 
   it("can replay from the tour query without resetting onboarding", async () => {

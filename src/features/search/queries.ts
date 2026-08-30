@@ -4,6 +4,7 @@ import { and, asc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzl
 
 import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessionPlayers, sessions, users, venues } from "@/db/schema";
+import { groupImageUrl } from "@/features/groups/image";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { formatSessionDate } from "@/features/sessions/format";
 
@@ -108,7 +109,13 @@ async function findGroups(userId: string, query: string, offset: number, limit: 
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
   const rows = await db
-    .select({ id: groups.id, name: groups.name, description: groups.description, slug: groups.slug })
+    .select({
+      id: groups.id,
+      name: groups.name,
+      description: groups.description,
+      slug: groups.slug,
+      imagePath: groups.imagePath,
+    })
     .from(groupMembers)
     .innerJoin(groups, eq(groupMembers.groupId, groups.id))
     .where(and(eq(groupMembers.userId, userId), or(ilike(groups.name, pattern), ilike(groups.description, pattern))))
@@ -124,6 +131,7 @@ async function findGroups(userId: string, query: string, offset: number, limit: 
       title: group.name,
       subtitle: group.description || "Your regular group",
       href: `/groups/${group.slug}`,
+      imageUrl: groupImageUrl(group.imagePath) ?? null,
     })),
   };
 }
@@ -134,12 +142,7 @@ async function findCourts(query: string, offset: number, limit: number) {
   const rows = await db
     .select({ id: venues.id, name: venues.name, address: venues.address, slug: venues.slug })
     .from(venues)
-    .where(
-      and(
-        inArray(venues.listingStatus, ["unverified", "verified"]),
-        or(ilike(venues.name, pattern), ilike(venues.address, pattern)),
-      ),
-    )
+    .where(and(eq(venues.listingStatus, "verified"), or(ilike(venues.name, pattern), ilike(venues.address, pattern))))
     .orderBy(sql`case when lower(${venues.name}) like lower(${prefix}) then 0 else 1 end`, asc(venues.name))
     .limit(limit + 1)
     .offset(offset);

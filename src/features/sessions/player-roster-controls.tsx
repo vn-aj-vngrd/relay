@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, LockKey, LockKeyOpen, UserMinus, UserPlus, X } from "@phosphor-icons/react";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
@@ -10,58 +10,74 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { playingExperienceOptions } from "@/features/players/playing-experience";
 
 import {
-  addGuestPlayerAction,
+  addPlayerAction,
   approvePlayerAction,
   removePlayerAction,
   type SessionActionState,
   toggleRosterLockAction,
 } from "./actions";
 
-export function AddGuestPlayerForm({ sessionId }: { sessionId: string }) {
-  const [state, action] = useActionState<SessionActionState, FormData>(addGuestPlayerAction, {});
+export function AddPlayerForm({ sessionId }: { sessionId: string }) {
+  const [state, action] = useActionState<SessionActionState, FormData>(addPlayerAction, {});
+  const [playerEntry, setPlayerEntry] = useState("");
+  const isRelayInvite = playerEntry.trimStart().startsWith("@");
+
   return (
     <form action={action} className="mt-4">
       <input type="hidden" name="sessionId" value={sessionId} />
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_220px_auto] sm:items-end">
-        <div>
-          <label htmlFor="guest-player-name" className="sr-only">
-            Player name
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_260px_auto] sm:items-end">
+        <div className="min-w-0">
+          <label htmlFor="player-entry" className="sr-only">
+            Guest name or Relay username
           </label>
           <input
-            id="guest-player-name"
-            name="guestName"
+            id="player-entry"
+            name="playerEntry"
             required
             minLength={2}
             maxLength={60}
             autoComplete="off"
-            placeholder="Add a friend by name"
-            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-sm placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+            spellCheck={!isRelayInvite}
+            value={playerEntry}
+            onChange={(event) => setPlayerEntry(event.target.value)}
+            aria-describedby="player-entry-hint"
+            placeholder="Guest name or @username"
+            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 sm:text-sm"
           />
         </div>
         <SelectField
+          key={isRelayInvite ? "relay" : "guest"}
           id="guest-player-experience"
           name="skillLevel"
-          label="Playing experience"
+          label="Guest playing experience"
           hideLabel
+          disabled={isRelayInvite}
           defaultValue=""
           className="!mt-0"
           options={[
-            { value: "", label: "Experience (optional)" },
+            { value: "", label: isRelayInvite ? "Uses Relay profile" : "Guest experience (optional)" },
             ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
           ]}
         />
-        <SubmitButton pendingLabel="Adding…" variant="secondary" className="h-11 min-h-11 w-full sm:w-auto">
+        <SubmitButton
+          pendingLabel={isRelayInvite ? "Inviting…" : "Adding…"}
+          variant="secondary"
+          className="h-11 min-h-11 w-full sm:w-auto"
+        >
           <UserPlus aria-hidden size={17} />
-          Add
+          {isRelayInvite ? "Invite" : "Add"}
         </SubmitButton>
       </div>
+      <p id="player-entry-hint" className="mt-2 text-sm leading-5 text-muted">
+        Use @username to invite a Relay player. Plain names are added as guests.
+      </p>
       {state.error ? (
         <p role="alert" className="mt-2 text-sm font-medium text-danger">
           {state.error}
         </p>
       ) : state.success ? (
         <p role="status" className="mt-2 text-sm font-medium text-success">
-          Player added.
+          {state.playerOutcome === "invited" ? "Invitation sent." : "Guest added."}
         </p>
       ) : null}
     </form>

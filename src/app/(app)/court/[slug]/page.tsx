@@ -1,5 +1,5 @@
 import { ArrowSquareOut, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -11,7 +11,7 @@ import { getCurrentUser } from "@/features/auth/session";
 
 const getCourt = cache(async (slug: string) =>
   db.query.venues.findFirst({
-    where: and(eq(venues.slug, slug), inArray(venues.listingStatus, ["unverified", "verified"])),
+    where: and(eq(venues.slug, slug), eq(venues.listingStatus, "verified")),
   }),
 );
 
@@ -34,9 +34,7 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <p className="text-sm font-semibold text-primary">
-        {court.listingStatus === "verified" ? "Verified Cebu court" : "Unverified court · Check details before booking"}
-      </p>
+      <p className="text-sm font-semibold text-primary">Verified Cebu court</p>
       <h1 className="mt-2 app-title">{court.name}</h1>
       <p className="mt-3 flex items-start gap-2 text-muted">
         <MapPin className="mt-0.5 shrink-0" size={18} />

@@ -59,6 +59,24 @@ describe("play rotation", () => {
     ).toEqual([{ courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] }]);
   });
 
+  it("keeps an incomplete late pair out until both players arrive", () => {
+    const fixedPairs: [string, string][] = [
+      ["a", "b"],
+      ["c", "d"],
+      ["e", "f"],
+    ];
+
+    expect(
+      planRotation({
+        mode: "queue",
+        courts,
+        waiting: waiting(["a", "b", "c", "d", "e"]),
+        history: [],
+        fixedPairs,
+      }),
+    ).toEqual([{ courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] }]);
+  });
+
   it("schedules every fixed pair once per Team Round Robin round without repeats", () => {
     const fixedPairs: [string, string][] = [
       ["a", "b"],

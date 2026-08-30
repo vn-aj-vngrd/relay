@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarBlank, CaretRight, GridFour, List, UsersThree } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 
@@ -13,6 +14,7 @@ export type GroupCollectionItem = {
   href: string;
   name: string;
   initials: string;
+  imageUrl?: string;
   memberCount: number;
   role: "owner" | "admin" | "member";
   nextGameDate?: string;
@@ -48,10 +50,15 @@ function saveView(mode: ViewMode) {
 }
 
 function GroupIdentity({ item, large = false }: { item: GroupCollectionItem; large?: boolean }) {
-  return (
+  const size = large ? "h-10 w-10 sm:h-12 sm:w-12" : "h-10 w-10 sm:h-11 sm:w-11";
+  return item.imageUrl ? (
+    <span aria-hidden className={`relative shrink-0 overflow-hidden rounded-full border border-line ${size}`}>
+      <Image src={item.imageUrl} alt="" fill className="object-cover" />
+    </span>
+  ) : (
     <span
       aria-hidden
-      className={`grid shrink-0 place-items-center rounded-full bg-surface-strong font-bold text-ink ${large ? "h-10 w-10 text-xs sm:h-12 sm:w-12 sm:text-sm" : "h-10 w-10 text-xs sm:h-11 sm:w-11 sm:text-sm"}`}
+      className={`grid shrink-0 place-items-center rounded-full bg-surface-strong text-xs font-bold text-ink sm:text-sm ${size}`}
     >
       {item.initials}
     </span>
@@ -94,7 +101,7 @@ function GroupGrid({ items }: { items: GroupCollectionItem[] }) {
           prefetch={false}
           key={item.id}
           style={item.accentColor ? sessionAccentStyle(item.accentColor) : undefined}
-          className="group-grid-item pressable group rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 hover:bg-surface-strong sm:p-5"
+          className="group-grid-item pressable group overflow-hidden rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 hover:bg-surface-strong sm:p-5"
         >
           <article className="flex h-full min-w-0 flex-col">
             <div className="flex items-start justify-between gap-4">

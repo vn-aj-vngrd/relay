@@ -1,35 +1,87 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, LinkSimple, TennisBall, UserCircle } from "@phosphor-icons/react";
-import { useActionState, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, LinkSimple, Moon, Rows, Sun, TennisBall, UserCircle } from "@phosphor-icons/react";
+import { type ComponentType, type ReactNode, useActionState, useRef, useState, useSyncExternalStore } from "react";
 import { useFormStatus } from "react-dom";
 
+import { setThemePreference, type Theme } from "@/components/shared/theme-toggle";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { SelectField } from "@/components/ui/select-field";
 
 import { completeProfileSetup, type OnboardingActionState, skipProfileSetup } from "./actions";
+import { discoverySourceOptions } from "./discovery-source";
 
 const steps = [
   {
-    title: "Your player profile",
-    description: "The name friends will recognize on invites and scoreboards.",
+    title: "Welcome to Relay",
+    description: "A shared home for the plan, players, courts, scores, payments, and memories.",
     icon: UserCircle,
   },
   {
-    title: "How you play",
-    description: "Optional details that make team lists and profiles more useful.",
+    title: "Make Relay yours",
+    description: "Choose a little playing context and how the app should feel on this device.",
     icon: TennisBall,
   },
   {
-    title: "You’re ready",
-    description: "One optional question, then you can continue.",
+    title: "Ready for a quick tour",
+    description: "One optional question, then Relay will show you the core loop in the real app.",
     icon: LinkSimple,
   },
 ] as const;
 
 const fieldClass =
   "mt-1.5 h-12 w-full rounded-lg border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+
+type Density = "comfortable" | "compact";
+
+function subscribeTheme(callback: () => void) {
+  window.addEventListener("relay-theme-change", callback);
+  return () => window.removeEventListener("relay-theme-change", callback);
+}
+
+function currentTheme(): Theme {
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+}
+
+function subscribeDensity(callback: () => void) {
+  window.addEventListener("relay-preferences-change", callback);
+  return () => window.removeEventListener("relay-preferences-change", callback);
+}
+
+function currentDensity(): Density {
+  return localStorage.getItem("relay-density") === "compact" ? "compact" : "comfortable";
+}
+
+function setDensityPreference(density: Density) {
+  document.documentElement.dataset.density = density;
+  localStorage.setItem("relay-density", density);
+  window.dispatchEvent(new Event("relay-preferences-change"));
+}
+
+function PreferenceChoice({
+  selected,
+  onClick,
+  icon: Icon,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`pressable flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold ${selected ? "border-primary bg-primary-soft text-primary" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+    >
+      <Icon aria-hidden size={16} />
+      {children}
+    </button>
+  );
+}
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -92,6 +144,8 @@ export function SetupWizard({
   const [state, action] = useActionState<OnboardingActionState, FormData>(completeProfileSetup, {});
   const formRef = useRef<HTMLFormElement>(null);
   const StepIcon = steps[step].icon;
+  const theme = useSyncExternalStore(subscribeTheme, currentTheme, (): Theme => "light");
+  const density = useSyncExternalStore(subscribeDensity, currentDensity, (): Density => "comfortable");
 
   function continueFromProfile() {
     const data = new FormData(formRef.current ?? undefined);
@@ -261,29 +315,49 @@ export function SetupWizard({
                   This is social context, not a competitive rating. It helps Balanced Mix make closer teams.
                 </p>
               </div>
-              <div>
-                <p className="text-sm font-semibold">
-                  Dominant hand <span className="font-normal text-muted">Optional</span>
-                </p>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  <Choice
-                    name="dominantHand"
-                    value="right"
-                    label="Right"
-                    defaultChecked={initial.dominantHand === "right"}
-                  />
-                  <Choice
-                    name="dominantHand"
-                    value="left"
-                    label="Left"
-                    defaultChecked={initial.dominantHand === "left"}
-                  />
-                  <Choice
-                    name="dominantHand"
-                    value="both"
-                    label="Both"
-                    defaultChecked={initial.dominantHand === "both"}
-                  />
+              <input type="hidden" name="dominantHand" value={initial.dominantHand} />
+              <div className="border-t border-line pt-6">
+                <p className="text-sm font-semibold">Appearance on this device</p>
+                <p className="mt-1 text-xs leading-5 text-muted">You can change these later from Profile.</p>
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-muted">Theme</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <PreferenceChoice
+                        selected={theme === "light"}
+                        onClick={() => setThemePreference("light")}
+                        icon={Sun}
+                      >
+                        Light
+                      </PreferenceChoice>
+                      <PreferenceChoice
+                        selected={theme === "dark"}
+                        onClick={() => setThemePreference("dark")}
+                        icon={Moon}
+                      >
+                        Dark
+                      </PreferenceChoice>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted">Layout</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <PreferenceChoice
+                        selected={density === "comfortable"}
+                        onClick={() => setDensityPreference("comfortable")}
+                        icon={Rows}
+                      >
+                        Default
+                      </PreferenceChoice>
+                      <PreferenceChoice
+                        selected={density === "compact"}
+                        onClick={() => setDensityPreference("compact")}
+                        icon={Rows}
+                      >
+                        Compact
+                      </PreferenceChoice>
+                    </div>
+                  </div>
                 </div>
               </div>
             </fieldset>
@@ -295,18 +369,18 @@ export function SetupWizard({
                 name="discoverySource"
                 label="How did you discover Relay? (optional)"
                 defaultValue=""
-                options={[
-                  { value: "", label: "Choose an answer" },
-                  { value: "friend", label: "A friend" },
-                  { value: "group_chat", label: "A group chat or shared game" },
-                  { value: "social", label: "Social media" },
-                  { value: "search", label: "Web search" },
-                  { value: "other", label: "Somewhere else" },
-                ]}
+                options={[{ value: "", label: "Choose an answer" }, ...discoverySourceOptions]}
               />
-              <div className="border-y border-line py-4">
-                <p className="text-sm font-semibold">Next</p>
-                <p className="mt-1 text-sm leading-6 text-muted">Continue where you left off.</p>
+              <div className="divide-y divide-line border-y border-line">
+                {[
+                  "Plan once and invite everyone with one link.",
+                  "Run courts, rotations, and scores together.",
+                  "Keep payments, photos, and the final story with the game.",
+                ].map((item) => (
+                  <p key={item} className="py-3 text-sm leading-5 text-muted">
+                    {item}
+                  </p>
+                ))}
               </div>
             </fieldset>
 

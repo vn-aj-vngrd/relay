@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 
 import { CebuCourtMap } from "./cebu-court-map";
 import { distanceInKilometers, formatDistance } from "./distance";
@@ -29,6 +30,11 @@ type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
 type CourtView = "map" | "list";
 type CourtResult = { venue: CebuVenue; distance: number | null };
+
+const courtViewOptions = [
+  { value: "map" as const, label: "Map", icon: MapTrifold },
+  { value: "list" as const, label: "List", icon: List },
+];
 
 function createHref(venue: CebuVenue, isAuthenticated: boolean) {
   const gamePath = `/games/new?${new URLSearchParams({ venue: venue.name, address: venue.address }).toString()}`;
@@ -81,7 +87,7 @@ function SelectedCourtOverlay({
     <aside
       aria-live="polite"
       aria-label={`Selected court: ${venue.name}`}
-      className="absolute inset-x-3 bottom-3 z-20 max-h-[calc(100%-72px)] overflow-y-auto rounded-xl border border-line bg-surface p-4 shadow-[0_4px_8px_rgb(13_15_20/.14)] sm:right-auto sm:w-[min(460px,calc(100%-88px))]"
+      className="absolute inset-x-2 bottom-2 z-20 max-h-[min(72%,32rem)] overflow-y-auto rounded-xl border border-line bg-surface p-3 shadow-[0_4px_8px_rgb(13_15_20/.14)] sm:inset-x-3 sm:bottom-3 sm:right-auto sm:max-h-[calc(100%-72px)] sm:w-[min(460px,calc(100%-88px))] sm:p-4"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
@@ -95,14 +101,14 @@ function SelectedCourtOverlay({
             )}
             {distance != null ? <span>{formatDistance(distance)} away</span> : null}
           </div>
-          <h2 className="mt-1.5 text-lg font-[680] tracking-[-0.02em]">{venue.name}</h2>
+          <h2 className="mt-1.5 text-base font-[680] tracking-[-0.02em] sm:text-lg">{venue.name}</h2>
           <p className="mt-1 text-sm leading-5 text-muted">{venue.address}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close court details"
-          className="pressable grid h-9 w-9 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
+          className="court-compact-control pressable grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink sm:h-9 sm:w-9"
         >
           <X aria-hidden size={17} />
         </button>
@@ -129,7 +135,7 @@ function SelectedCourtOverlay({
       <div className="mt-4 grid gap-2 min-[420px]:grid-cols-2">
         <Link
           href={createHref(venue, isAuthenticated)}
-          className="pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
+          className="court-compact-control pressable inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-hover sm:min-h-10 sm:px-3 sm:text-[13px]"
         >
           <Plus aria-hidden size={15} /> Plan a game here
         </Link>
@@ -137,7 +143,7 @@ function SelectedCourtOverlay({
           href={directionsHref(venue)}
           target="_blank"
           rel="noopener noreferrer"
-          className="pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold text-ink hover:bg-surface-strong"
+          className="court-compact-control pressable inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-xs font-semibold text-ink hover:bg-surface-strong sm:min-h-10 sm:px-3 sm:text-[13px]"
         >
           <MapPin aria-hidden size={15} /> Directions
         </Link>
@@ -145,7 +151,7 @@ function SelectedCourtOverlay({
       <div className="mt-1 flex flex-wrap items-center gap-1">
         <Link
           href={`${detailBasePath}/${venue.slug}`}
-          className="pressable inline-flex min-h-9 items-center rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+          className="court-compact-control pressable inline-flex min-h-8 items-center rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:min-h-9 sm:text-[13px]"
         >
           Court details
         </Link>
@@ -154,12 +160,17 @@ function SelectedCourtOverlay({
             href={venue.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+            className="court-compact-control pressable inline-flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:min-h-9 sm:gap-1.5 sm:text-[13px]"
           >
             External booking <ArrowSquareOut aria-hidden size={14} />
           </Link>
         ) : null}
-        <Button type="button" variant="quiet" className="text-muted" onClick={onCopy}>
+        <Button
+          type="button"
+          variant="quiet"
+          className="court-compact-control min-h-8 px-2 text-xs text-muted sm:min-h-9 sm:text-[13px]"
+          onClick={onCopy}
+        >
           <Copy aria-hidden size={15} /> {copied ? "Copied" : "Copy location"}
         </Button>
       </div>
@@ -317,7 +328,6 @@ export function CourtFinder({
   const [query, setQuery] = useState("");
   const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
   const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [mobileView, setMobileView] = useState<CourtView>("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -339,12 +349,7 @@ export function CourtFinder({
           `${venue.name} ${venue.address} ${venue.priceRange ?? ""} ${venue.amenities.join(" ")}`
             .toLowerCase()
             .includes(term);
-        return (
-          settingMatches &&
-          queryMatches &&
-          (!paddleRentalOnly || venue.paddleRental) &&
-          (!verifiedOnly || venue.listingStatus === "verified")
-        );
+        return settingMatches && queryMatches && (!paddleRentalOnly || venue.paddleRental);
       })
       .map((venue) => ({
         venue,
@@ -352,10 +357,11 @@ export function CourtFinder({
       }));
     if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
     return matching;
-  }, [paddleRentalOnly, query, setting, userLocation, venues, verifiedOnly]);
+  }, [paddleRentalOnly, query, setting, userLocation, venues]);
 
+  const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
-  const filtersActive = Boolean(query.trim() || setting !== "all" || paddleRentalOnly || verifiedOnly);
+  const filtersActive = Boolean(query.trim() || setting !== "all" || paddleRentalOnly);
 
   function selectCourt(id: string, revealMap = false) {
     selectionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -380,7 +386,6 @@ export function CourtFinder({
     setQuery("");
     setSetting("all");
     setPaddleRentalOnly(false);
-    setVerifiedOnly(false);
     setSelectedId(null);
   }
 
@@ -474,7 +479,7 @@ export function CourtFinder({
                   ? "Stop sorting by distance"
                   : "Use my location"
             }
-            className="h-11 w-11 px-0 lg:h-auto lg:w-auto lg:px-3"
+            className="court-compact-control h-11 min-h-11 w-11 px-0 lg:w-auto lg:px-3"
           >
             <Crosshair aria-hidden size={17} />
             <span className="hidden lg:inline">
@@ -484,7 +489,7 @@ export function CourtFinder({
         </div>
 
         <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1">
-          <div className="flex min-w-max gap-2" aria-label="Court filters">
+          <div className="flex min-w-max gap-1.5 sm:gap-2" aria-label="Court filters">
             {(["all", "indoor", "outdoor"] as const).map((value) => {
               const selected = setting === value;
               return (
@@ -496,14 +501,14 @@ export function CourtFinder({
                     setSelectedId(null);
                   }}
                   aria-pressed={selected}
-                  className={`pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-semibold ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+                  className={`court-compact-control pressable inline-flex min-h-8 items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
                 >
                   {value === "all" ? "All" : value === "indoor" ? "Indoor" : "Outdoor"}
                 </button>
               );
             })}
             <label
-              className={`pressable inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-semibold ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+              className={`court-compact-control pressable inline-flex min-h-8 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
             >
               <input
                 type="checkbox"
@@ -516,25 +521,11 @@ export function CourtFinder({
               />
               Paddle rental
             </label>
-            <label
-              className={`pressable inline-flex min-h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-semibold ${verifiedOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
-            >
-              <input
-                type="checkbox"
-                checked={verifiedOnly}
-                onChange={(event) => {
-                  setVerifiedOnly(event.target.checked);
-                  setSelectedId(null);
-                }}
-                className="sr-only"
-              />
-              Verified
-            </label>
             {filtersActive ? (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="pressable min-h-9 rounded-full px-3 text-[13px] font-semibold text-primary hover:bg-primary-soft"
+                className="court-compact-control pressable min-h-8 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:min-h-9 sm:px-3 sm:text-[13px]"
               >
                 Clear
               </button>
@@ -549,41 +540,25 @@ export function CourtFinder({
       </section>
 
       {!compactPreview ? (
-        <div className="flex items-center justify-between gap-3 py-2 xl:hidden">
+        <div className="flex items-center justify-between gap-3 py-1.5 sm:py-2 xl:hidden">
           <div aria-live="polite" className="min-w-0">
             <p className="truncate text-sm font-[680]">{userLocation ? "Nearest courts" : "Courts"}</p>
             <p className="mt-0.5 text-xs text-muted">
               {results.length} {results.length === 1 ? "place" : "places"}
             </p>
           </div>
-          <div
-            role="group"
-            aria-label="Court view"
-            className="inline-flex shrink-0 rounded-lg border border-line bg-surface-strong p-0.5"
-          >
-            {(
-              [
-                { value: "map", label: "Map", icon: MapTrifold },
-                { value: "list", label: "List", icon: List },
-              ] as const
-            ).map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={mobileView === value}
-                onClick={() => setMobileView(value)}
-                className={`pressable inline-flex h-11 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold ${mobileView === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-              >
-                <Icon aria-hidden size={17} />
-                {label}
-              </button>
-            ))}
-          </div>
+          <MobileViewMenu
+            label="Court view"
+            value={mobileView}
+            options={courtViewOptions}
+            onChange={setMobileView}
+            responsiveClassName="xl:hidden"
+          />
         </div>
       ) : null}
 
       <div
-        className={`grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-4 xl:flex-1"}`}
+        className={`court-finder-results-grid grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-4 xl:flex-1"}`}
       >
         <section
           ref={mapSectionRef}
@@ -593,7 +568,7 @@ export function CourtFinder({
         >
           <div className="min-h-0 flex-1">
             <CebuCourtMap
-              venues={results.map(({ venue }) => venue)}
+              venues={mappedVenues}
               selectedId={selected?.venue.id ?? null}
               userLocation={userLocation}
               onSelect={selectCourt}

@@ -67,6 +67,15 @@ describe("CreateSessionForm", () => {
     expect(screen.getByText("7 group members will be invited when you publish.")).toBeVisible();
   });
 
+  it("keeps the player note readable as a multiline field on mobile", () => {
+    render(<CreateSessionForm defaults={{ date: "2026-08-22" }} />);
+    fireEvent.click(screen.getByRole("button", { name: /More details/ }));
+
+    expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveAttribute("rows", "2");
+    expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveClass("min-h-20");
+    expect(screen.getByRole("textbox", { name: "Note for players" })).not.toHaveClass("h-11");
+  });
+
   it("keeps game color optional and exposes an accessible palette", () => {
     render(<CreateSessionForm defaults={{ date: "2026-08-22" }} />);
     expect(screen.queryByRole("radio", { name: "Violet" })).not.toBeInTheDocument();

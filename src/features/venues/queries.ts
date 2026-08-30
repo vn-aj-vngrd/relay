@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { venues } from "@/db/schema";
@@ -27,17 +27,19 @@ export type CebuVenue = {
   sourceUrl: string | null;
 };
 
+export async function getVenueSuggestions() {
+  return db
+    .select({ id: venues.id, name: venues.name, address: venues.address })
+    .from(venues)
+    .where(eq(venues.listingStatus, "verified"))
+    .orderBy(asc(venues.name));
+}
+
 export async function getCebuVenues(): Promise<CebuVenue[]> {
   const rows = await db
     .select()
     .from(venues)
-    .where(
-      and(
-        inArray(venues.listingStatus, ["unverified", "verified"]),
-        isNotNull(venues.latitude),
-        isNotNull(venues.longitude),
-      ),
-    )
+    .where(and(eq(venues.listingStatus, "verified"), isNotNull(venues.latitude), isNotNull(venues.longitude)))
     .orderBy(asc(venues.name));
 
   return rows.flatMap((venue) => {

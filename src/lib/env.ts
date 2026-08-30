@@ -12,7 +12,6 @@ const serverSchema = publicSchema.extend({
   DATABASE_URL: z.string().min(1),
   SUPABASE_SECRET_KEY: z.string().min(1),
   GEOAPIFY_API_KEY: z.string().min(20),
-  GEOAPIFY_API_URL: z.url().default("https://api.geoapify.com"),
   ADMIN_EMAILS: z.string().default(""),
   CHAT_IMAGE_MAX_BYTES: z.coerce
     .number()
@@ -39,7 +38,6 @@ export function getServerEnv(): ServerEnv {
     DATABASE_URL: process.env.DATABASE_URL,
     SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
     GEOAPIFY_API_KEY: process.env.GEOAPIFY_API_KEY,
-    GEOAPIFY_API_URL: process.env.GEOAPIFY_API_URL,
     ADMIN_EMAILS: process.env.ADMIN_EMAILS,
     CHAT_IMAGE_MAX_BYTES: process.env.CHAT_IMAGE_MAX_BYTES,
   });

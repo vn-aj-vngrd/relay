@@ -9,6 +9,7 @@ const items: GroupCollectionItem[] = [
     href: "/groups/tuesday-dink-club",
     name: "Tuesday Dink Club",
     initials: "TU",
+    imageUrl: "https://relay.supabase.co/storage/v1/object/public/avatars/owner/group.webp",
     memberCount: 8,
     role: "owner",
     nextGameDate: "Sat, Aug 22",
@@ -35,6 +36,18 @@ describe("GroupCollection", () => {
     expect(localStorage.getItem("relay-groups-view")).toBe("grid");
   });
 
+  it("shows the selected group photo as a circle in list and grid views", () => {
+    render(<GroupCollection items={items} />);
+    const listImage = screen.getByTestId("groups-list").querySelector("img");
+    expect(listImage).toBeVisible();
+    expect(listImage?.parentElement).toHaveClass("rounded-full");
+
+    fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
+    const gridImage = screen.getByTestId("groups-grid").querySelector("img");
+    expect(gridImage).toBeVisible();
+    expect(gridImage?.parentElement).toHaveClass("rounded-full");
+  });
+
   it("keeps mobile view selection behind one compact menu", () => {
     render(
       <>
@@ -43,7 +56,10 @@ describe("GroupCollection", () => {
       </>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Change group view, currently List" }));
+    const viewTrigger = screen.getByRole("button", { name: "Change group view, currently List" });
+    expect(viewTrigger).toHaveClass("h-9", "w-9", "border-transparent");
+    expect(viewTrigger).not.toHaveClass("border-line");
+    fireEvent.click(viewTrigger);
     const gridOption = screen.getByRole("menuitemradio", { name: "Grid" });
     expect(gridOption).toHaveAttribute("aria-checked", "false");
 

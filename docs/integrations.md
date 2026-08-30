@@ -28,13 +28,12 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `SUPABASE_PROJECT_REF`                 | Supabase project                              | Local setup metadata      | Local only    |
 | `SUPABASE_REGION`                      | Provisioning decision                         | Local setup metadata      | Local only    |
 | `GEOAPIFY_API_KEY`                     | Geoapify project                              | Secret, server-only       | Local, Vercel |
-| `GEOAPIFY_API_URL`                     | Geoapify API origin                           | Server-only configuration | Local, Vercel |
 | `ADMIN_EMAILS`                         | Relay owner                                   | Secret, server-only       | Local, Vercel |
 | `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                           | Server-only configuration | Local, Vercel |
 
 `SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
-Geoapify remains server-only. Court autocomplete is restricted to the Philippines; the V1 court directory and interactive map are restricted to Cebu. `/courts` is the public finder and `/court` is the signed-in finder; legacy `/venues` links redirect permanently to the signed-in route. The internal `/api/venues/tiles/[z]/[x]/[y]` endpoint retains the database-era identifier for compatibility, accepts only tile coordinates intersecting Cebu, proxies Geoapify raster tiles, and applies CDN caching so the provider key never enters the browser. The UI must retain Geoapify/OpenMapTiles/OpenStreetMap attribution. Never move `GEOAPIFY_API_KEY` into a public variable or browser map bundle.
+Geoapify remains server-only and supplies Cebu map tiles. Create-game court suggestions come directly from Relay’s reviewed court directory; no location-provider autocomplete runs while typing. The V1 court directory and interactive map are restricted to Cebu. `/courts` is the public finder and `/court` is the signed-in finder; legacy `/venues` links redirect permanently to the signed-in route. The internal `/api/venues/tiles/[z]/[x]/[y]` endpoint retains the database-era identifier for compatibility, accepts only tile coordinates intersecting Cebu, proxies Geoapify raster tiles, and applies CDN caching so the provider key never enters the browser. The UI must retain Geoapify/OpenMapTiles/OpenStreetMap attribution. Never move `GEOAPIFY_API_KEY` into a public variable or browser map bundle.
 
 `pnpm venues:import-cebu` performs the reviewed, idempotent factual import after migration `0019_cebu_court_directory`. It reads the permitted Cebu Pickleball Courts API and reviewed first-party venue announcements. Imported listings start unverified, retain their source URL, and exclude third-party photos and editorial copy. Run it manually after reviewing every source and its robots policy; continuous scraping is intentionally absent. Community submissions remain pending until an allowlisted admin supplies coordinates and approves them.
 
@@ -76,7 +75,7 @@ Authenticated Data API access still depends on the self-membership `SELECT` poli
 
 Migration `0020_admin_pagination_security` adds a server-only fixed-window limiter backed by PostgreSQL. It stores SHA-256 bucket keys rather than raw IP addresses, emails, user IDs, or guest tokens. `anon` and `authenticated` have no table access; server code uses `DATABASE_URL`. Supabase Cron removes expired buckets hourly.
 
-Application limits protect authentication attempts, admin pagination, search, Geoapify autocomplete and tiles, feedback and court submissions, session creation and RSVP, chat, storage uploads and public analytics. Vercel Firewall and Supabase Auth rate limits remain independent outer controls. A 429 response includes `Retry-After`; do not retry it in a tight loop.
+Application limits protect authentication attempts, admin pagination, search, Geoapify tiles, feedback and court submissions, session creation and RSVP, chat, storage uploads and public analytics. Vercel Firewall and Supabase Auth rate limits remain independent outer controls. A 429 response includes `Retry-After`; do not retry it in a tight loop.
 
 **Complete when:** anonymous PostgREST access to `rate_limit_buckets` is denied, a test identity exceeds a low test limit atomically, and the cleanup Cron appears in Supabase Cron.
 

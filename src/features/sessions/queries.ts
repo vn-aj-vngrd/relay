@@ -31,9 +31,37 @@ export async function getUserSessions(userId: string) {
     .orderBy(asc(sessions.startsAt));
 }
 
+const HOME_UPCOMING_LIMIT = 4;
+const HOME_RECENT_LIMIT = 4;
+
 export async function getHomeSessions(userId: string) {
   const now = new Date();
-  const rows = await getUserSessions(userId);
+  const membershipCondition = userSessionCondition(userId);
+  const [upcoming, recent] = await Promise.all([
+    db
+      .select({ session: sessions, player: sessionPlayers })
+      .from(sessionPlayers)
+      .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+      .where(and(membershipCondition, gt(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])))
+      .orderBy(asc(sessions.startsAt), asc(sessions.id))
+      .limit(HOME_UPCOMING_LIMIT),
+    db
+      .select({ session: sessions, player: sessionPlayers })
+      .from(sessionPlayers)
+      .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+      .where(
+        and(
+          membershipCondition,
+          or(
+            eq(sessions.status, "completed"),
+            and(lte(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])),
+          ),
+        ),
+      )
+      .orderBy(desc(sessions.startsAt), desc(sessions.id))
+      .limit(HOME_RECENT_LIMIT + 1),
+  ]);
+  const rows = [...upcoming, ...recent];
   const sessionIds = rows.map(({ session }) => session.id);
   const [counts, expenseRows] = rows.length
     ? await Promise.all([
@@ -47,22 +75,15 @@ export async function getHomeSessions(userId: string) {
     : [[], []];
   const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
   const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
-  const enriched = rows.map((row) => ({
+  const enrich = (row: (typeof rows)[number]) => ({
     ...row,
     playerCount: playerCounts.get(row.session.id) ?? 0,
     hasExpense: sessionsWithExpense.has(row.session.id),
-  }));
+  });
+
   return {
-    upcoming: enriched.filter(
-      ({ session }) => ["published", "live"].includes(session.status) && session.endsAt.getTime() > now.getTime(),
-    ),
-    recent: enriched
-      .filter(
-        ({ session }) =>
-          session.status === "completed" ||
-          (["published", "live"].includes(session.status) && session.endsAt.getTime() <= now.getTime()),
-      )
-      .sort((a, b) => b.session.startsAt.getTime() - a.session.startsAt.getTime()),
+    upcoming: upcoming.map(enrich),
+    recent: recent.map(enrich),
   };
 }
 

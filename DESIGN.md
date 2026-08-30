@@ -120,7 +120,7 @@ Management controls sit beside the information they change and render only for h
 
 ## Onboarding
 
-Profile setup asks only for identity and optional recreational context. The following product tour runs over the real authenticated shell rather than a slideshow: it spotlights Create, Home, Games, Groups, Search, Notifications, and Profile in place, selecting the visible desktop or mobile control automatically. Each step explains one practical part of the create → share → play loop. The rest of the interface is inert while the accessible tour dialog is open. Closing stays visually immediate—no spinner or exit effect. Completion is persistent; Help Center may replay the same tour without resetting account data.
+Profile setup uses three short stages: a welcome with recognizable identity, optional playing context plus device-local theme and density, then an optional discovery-source question and concise product promise. The following five-step product tour runs over the real authenticated shell rather than a slideshow: Welcome, Create, Home, Court, and Profile. It selects the visible desktop-sidebar or mobile-header/bottom-bar control automatically. Groups, search, notifications, payments, and advanced Play behavior remain contextual rather than becoming front-loaded instruction. The rest of the interface is inert while the accessible tour dialog is open. Players may skip immediately, finish at Home, or create their first game; Help Center can replay the tour without resetting account data.
 
 ## Notifications
 
@@ -128,7 +128,7 @@ Notifications are a contextual inbox, not an activity feed. Group updates by rec
 
 ## Admin console
 
-The admin directory uses **Courts**, matching the player-facing Court Finder; `venue` remains an internal data and audit term only. Admin collections render one server-side 30-record page, then append stable cursor pages as the bottom sentinel approaches. Existing rows and table geometry stay fixed while a compact progress status loads the next page; incremental failure stays below existing rows with one Retry action. Completion names the exact number loaded and never implies a fixed cap. Search and filters reset the collection rather than mixing cursors from different result sets.
+Admin **Insights** reports aggregate acquisition source, setup and tour completion, and the 30-day core product loop without exposing chat, payments, or score content. Individual user detail shows the player’s optional discovery answer and onboarding status. The admin directory uses **Courts**, matching the player-facing Court Finder; `venue` remains an internal data and audit term only. Admin collections render one server-side 30-record page, then append stable cursor pages as the bottom sentinel approaches. Existing rows and table geometry stay fixed while a compact progress status loads the next page; incremental failure stays below existing rows with one Retry action. Completion names the exact number loaded and never implies a fixed cap. Search and filters reset the collection rather than mixing cursors from different result sets.
 
 ## Product feedback
 

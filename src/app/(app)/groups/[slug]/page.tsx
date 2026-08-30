@@ -1,4 +1,4 @@
-import { CalendarPlus, CaretRight, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { CalendarPlus, CaretRight, PencilSimple, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { AddGroupMemberForm } from "@/features/groups/add-member-form";
+import { groupImageUrl } from "@/features/groups/image";
 import { getSessionMemory } from "@/features/memories/queries";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { sessionAccentStyle } from "@/features/sessions/accent";
@@ -56,23 +57,51 @@ export default async function GroupPage({ params }: { params: Promise<{ slug: st
   );
   const names = members.map(({ profile }) => profile.name);
   const avatars = members.map(({ profile }) => profileAvatarUrl(profile.avatarPath));
+  const imageUrl = groupImageUrl(group.imagePath);
 
   return (
     <div className="mx-auto max-w-6xl">
       <header className="flex flex-col gap-5 border-b border-line pb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-primary">Group</p>
-          <h1 className="mt-1 app-title">{group.name}</h1>
-          {group.description ? (
-            <p className="mt-3 max-w-xl leading-7 text-muted">{group.description}</p>
+        <div className="flex min-w-0 items-start gap-4 sm:items-center">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt=""
+              width={96}
+              height={96}
+              priority
+              className="h-20 w-20 shrink-0 rounded-full border border-line object-cover sm:h-24 sm:w-24"
+            />
           ) : (
-            <p className="mt-2 text-muted">A regular crew for faster game nights.</p>
+            <span
+              aria-hidden
+              className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-surface-strong text-muted sm:h-24 sm:w-24"
+            >
+              <UsersThree size={28} />
+            </span>
           )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-primary">Group</p>
+            <h1 className="mt-1 break-words app-title">{group.name}</h1>
+            {group.description ? (
+              <p className="mt-3 max-w-xl break-words leading-7 text-muted">{group.description}</p>
+            ) : (
+              <p className="mt-2 text-muted">A regular crew for faster game nights.</p>
+            )}
+          </div>
         </div>
-        <ButtonLink href={`/games/new?group=${group.id}`}>
-          <CalendarPlus aria-hidden size={17} />
-          Start a game
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          {membership.role === "owner" ? (
+            <ButtonLink href={`/groups/${group.slug}/edit`} variant="secondary">
+              <PencilSimple aria-hidden size={16} />
+              Edit group
+            </ButtonLink>
+          ) : null}
+          <ButtonLink href={`/games/new?group=${group.id}`}>
+            <CalendarPlus aria-hidden size={17} />
+            Start a game
+          </ButtonLink>
+        </div>
       </header>
 
       <div className="grid gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_280px]">

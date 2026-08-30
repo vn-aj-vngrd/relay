@@ -2,73 +2,52 @@
 
 import { MapPin } from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import type { VenueSuggestion } from "./geoapify";
-
-type SearchState = "idle" | "loading" | "ready" | "empty" | "error";
+export type CourtSuggestion = { id: string; name: string; address: string };
 
 export function VenueCombobox({
+  courts = [],
   defaultValue = "",
   defaultAddress = "",
   error,
 }: {
+  courts?: CourtSuggestion[];
   defaultValue?: string;
   defaultAddress?: string;
   error?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const userEditedRef = useRef(false);
   const [query, setQuery] = useState(defaultValue);
   const [address, setAddress] = useState(defaultAddress);
-  const [suggestions, setSuggestions] = useState<VenueSuggestion[]>([]);
-  const [searchState, setSearchState] = useState<SearchState>("idle");
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const listboxId = "venue-suggestions";
+  const suggestions = useMemo(() => {
+    if (address) return [];
+    const term = query.trim().toLocaleLowerCase();
+    return courts
+      .filter(
+        (court) =>
+          !term || court.name.toLocaleLowerCase().includes(term) || court.address.toLocaleLowerCase().includes(term),
+      )
+      .slice(0, 6);
+  }, [address, courts, query]);
 
-  useEffect(() => {
-    const term = query.trim();
-    if (!userEditedRef.current || term.length < 3 || address) return;
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(async () => {
-      setSearchState("loading");
-      try {
-        const response = await fetch(`/api/venues/search?q=${encodeURIComponent(term)}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("Court search failed");
-        const data = (await response.json()) as { suggestions?: VenueSuggestion[] };
-        const next = data.suggestions ?? [];
-        setSuggestions(next);
-        setSearchState(next.length ? "ready" : "empty");
-        setOpen(true);
-        setActiveIndex(next.length ? 0 : -1);
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setSuggestions([]);
-        setSearchState("error");
-        setOpen(false);
-      }
-    }, 300);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [address, query]);
-
-  function selectSuggestion(suggestion: VenueSuggestion) {
+  function selectSuggestion(suggestion: CourtSuggestion) {
     setQuery(suggestion.name);
     setAddress(suggestion.address);
-    setSuggestions([]);
-    setSearchState("idle");
     setOpen(false);
     setActiveIndex(-1);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (!open || suggestions.length === 0) {
-      if (event.key === "ArrowDown" && suggestions.length) setOpen(true);
+      if (event.key === "ArrowDown" && suggestions.length) {
+        event.preventDefault();
+        setOpen(true);
+        setActiveIndex(0);
+      }
       return;
     }
     if (event.key === "ArrowDown") {
@@ -88,20 +67,19 @@ export function VenueCombobox({
 
   const hint = address
     ? address
-    : searchState === "loading"
-      ? "Searching Philippine places…"
-      : searchState === "error"
-        ? "Court search is unavailable. You can still enter a court."
-        : searchState === "empty"
-          ? "No matching place found. You can still use what you typed."
-          : "Search Philippine courts and addresses.";
+    : query.trim() && suggestions.length === 0
+      ? "No matching Relay court. You can still use what you typed."
+      : "Choose a Relay court or enter another court name.";
 
   return (
     <div
       ref={containerRef}
       className="relative"
       onBlurCapture={(event) => {
-        if (!containerRef.current?.contains(event.relatedTarget as Node | null)) setOpen(false);
+        if (!containerRef.current?.contains(event.relatedTarget as Node | null)) {
+          setOpen(false);
+          setActiveIndex(-1);
+        }
       }}
     >
       <MapPin className="pointer-events-none absolute left-3.5 top-[17px] z-10 text-muted" size={18} />
@@ -115,19 +93,19 @@ export function VenueCombobox({
         placeholder="Search or enter a court…"
         value={query}
         onChange={(event) => {
-          userEditedRef.current = true;
           setQuery(event.target.value);
           setAddress("");
-          setSuggestions([]);
-          setSearchState("idle");
-          setOpen(false);
-          setActiveIndex(-1);
+          setOpen(true);
+          setActiveIndex(0);
         }}
-        onFocus={() => setOpen(suggestions.length > 0)}
+        onFocus={() => {
+          setOpen(true);
+          setActiveIndex(suggestions.length ? 0 : -1);
+        }}
         onKeyDown={handleKeyDown}
         role="combobox"
         aria-autocomplete="list"
-        aria-expanded={open}
+        aria-expanded={open && suggestions.length > 0}
         aria-controls={listboxId}
         aria-activedescendant={open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined}
         aria-invalid={Boolean(error)}
@@ -161,19 +139,9 @@ export function VenueCombobox({
           ))}
         </ul>
       ) : null}
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm">
-        <p id="venue-hint" aria-live="polite" className={searchState === "error" ? "text-danger" : "text-muted"}>
-          {hint}
-        </p>
-        <a
-          href="https://www.geoapify.com/"
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs text-muted underline decoration-line underline-offset-2 hover:text-ink"
-        >
-          Places by Geoapify
-        </a>
-      </div>
+      <p id="venue-hint" aria-live="polite" className="mt-1.5 text-sm text-muted">
+        {hint}
+      </p>
     </div>
   );
 }

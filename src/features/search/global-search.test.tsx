@@ -90,6 +90,33 @@ describe("GlobalSearch", () => {
     expect(screen.getByText("Van")).toBeVisible();
   });
 
+  it("renders a group photo in search results", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          items: [
+            {
+              id: "group-1",
+              type: "groups",
+              title: "Tuesday Dink Club",
+              subtitle: "The regular crew",
+              href: "/groups/tuesday-dink-club",
+              imageUrl: "https://relay.supabase.co/storage/v1/object/public/avatars/owner/group.webp",
+            },
+          ],
+          nextCursor: null,
+        }),
+        { status: 200 },
+      ),
+    );
+    const { container } = render(<GlobalSearch initialQuery="tuesday" initialFilter="groups" />);
+
+    expect(await screen.findByText("Tuesday Dink Club")).toBeVisible();
+    const image = container.querySelector("img");
+    expect(image).toBeVisible();
+    expect(image?.parentElement).toHaveClass("rounded-full");
+  });
+
   it("shows a directional empty result state", async () => {
     render(<GlobalSearch initialQuery="unlikely-query" />);
     await waitFor(() => expect(screen.getByRole("heading", { name: "No results for “unlikely-query”" })).toBeVisible());

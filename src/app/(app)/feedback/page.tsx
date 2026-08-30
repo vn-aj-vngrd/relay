@@ -1,6 +1,3 @@
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
-
-import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { feedbackAreaLabels, feedbackTypeLabels } from "@/features/feedback/domain";
 import { FeedbackForm } from "@/features/feedback/feedback-form";
@@ -13,17 +10,11 @@ export default async function FeedbackPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-6">
-        <div>
-          <h1 className="app-title">Send feedback</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Report a problem, suggest an improvement, or tell us what makes game night easier.
-          </p>
-        </div>
-        <ButtonLink href="/help" variant="secondary">
-          <ArrowLeft aria-hidden size={15} />
-          Help Center
-        </ButtonLink>
+      <header className="border-b border-line pb-6">
+        <h1 className="app-title">Send feedback</h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+          Report a problem, suggest an improvement, or tell us what makes game night easier.
+        </p>
       </header>
 
       <section aria-labelledby="feedback-form-title" className="py-8">
