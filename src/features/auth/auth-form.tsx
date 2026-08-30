@@ -119,7 +119,7 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
         </div>
         {creating ? (
           turnstileSiteKey ? (
-            <div className="min-h-[65px] overflow-hidden" aria-label="Signup security check">
+            <div role="group" className="min-h-[65px] overflow-hidden" aria-label="Signup security check">
               <Turnstile
                 siteKey={turnstileSiteKey}
                 options={{ size: "flexible", theme: "auto" }}

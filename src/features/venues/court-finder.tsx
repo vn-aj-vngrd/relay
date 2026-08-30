@@ -323,7 +323,7 @@ export function CourtFinder({
   const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
   const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
   const [mobileView, setMobileView] = useState<CourtView>("map");
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(!compactPreview);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);

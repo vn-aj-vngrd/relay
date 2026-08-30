@@ -1,6 +1,11 @@
 "use client";
 
-import type { Map as MapLibreMap, Marker as MapLibreMarker, StyleSpecification } from "maplibre-gl";
+import type {
+  FullscreenControl as MapLibreFullscreenControl,
+  Map as MapLibreMap,
+  Marker as MapLibreMarker,
+  StyleSpecification,
+} from "maplibre-gl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import type { CebuVenue } from "./queries";
@@ -76,6 +81,20 @@ function setMarkerState(element: HTMLButtonElement, active: boolean) {
   element.setAttribute("aria-pressed", String(active));
 }
 
+export function collapseAttributionControl(container: HTMLElement) {
+  const attribution = container.querySelector<HTMLDetailsElement>(".maplibregl-ctrl-attrib");
+  if (!attribution) return;
+  attribution.open = false;
+  attribution.classList.remove("maplibregl-compact-show");
+}
+
+export function createMobileSafeFullscreenControl(
+  FullscreenControl: new (options?: { pseudo?: boolean; container?: HTMLElement }) => MapLibreFullscreenControl,
+  container: HTMLElement,
+) {
+  return new FullscreenControl({ pseudo: true, container });
+}
+
 export function CebuCourtMap({
   venues,
   selectedId,
@@ -85,6 +104,7 @@ export function CebuCourtMap({
   compactPreview = false,
   mobileEdgeToEdge = false,
 }: CebuCourtMapProps) {
+  const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef(new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement }>());
@@ -103,8 +123,9 @@ export function CebuCourtMap({
   }, [selectedId]);
 
   useEffect(() => {
+    const shell = shellRef.current;
     const container = containerRef.current;
-    if (!container) return;
+    if (!shell || !container) return;
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
     const markers = markersRef.current;
@@ -130,12 +151,13 @@ export function CebuCourtMap({
         map.dragRotate.disable();
         map.touchZoomRotate.disableRotation();
         map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
-        map.addControl(new maplibre.FullscreenControl(), "top-right");
+        map.addControl(createMobileSafeFullscreenControl(maplibre.FullscreenControl, shell), "top-right");
         map.addControl(new maplibre.AttributionControl({ compact: true }), "bottom-right");
         map.once("load", () => {
           if (disposed) return;
           mapRef.current = map;
           fitVenues(map, venues, true);
+          collapseAttributionControl(container);
           setReady(true);
         });
         resizeObserver = new ResizeObserver(() => map.resize());
@@ -226,6 +248,7 @@ export function CebuCourtMap({
 
   return (
     <div
+      ref={shellRef}
       className={`relay-court-map-shell relative w-full overflow-hidden border border-line bg-surface-raised sm:rounded-xl xl:h-full xl:min-h-0 ${mobileEdgeToEdge ? "border-x-0 sm:border-x" : "rounded-xl"} ${compactPreview ? "h-[360px] min-h-[360px] sm:h-[420px] sm:min-h-[420px]" : "h-[58dvh] min-h-[400px] max-h-[520px] sm:h-[min(68dvh,620px)] sm:min-h-[460px] sm:max-h-none"}`}
     >
       <div

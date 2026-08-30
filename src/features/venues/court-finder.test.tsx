@@ -86,11 +86,17 @@ beforeEach(() => {
 });
 
 describe("CourtFinder", () => {
+  it("loads the full finder map with court details closed by default", () => {
+    render(<CourtFinder venues={[venue, fartherVenue]} />);
+
+    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Load map" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("complementary", { name: /Selected court:/ })).not.toBeInTheDocument();
+  });
+
   it("keeps the mapped court set stable when opening a marker card", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
-    expect(captureMapVenues).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Load map" }));
     const map = screen.getByLabelText("Interactive map of pickleball courts");
     const beforeSelection = captureMapVenues.mock.calls.at(-1)?.[0];
     fireEvent.click(within(map).getByRole("button", { name: "Select NiceServe Pickleball Court" }));
@@ -98,9 +104,10 @@ describe("CourtFinder", () => {
     expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
   });
 
-  it("supports a bounded landing-page preview without changing the full finder", () => {
+  it("supports a bounded click-to-load landing-page preview without changing the full finder", () => {
     const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
+    expect(screen.getByRole("button", { name: "Load map" })).toBeVisible();
 
     rerender(<CourtFinder venues={[venue]} />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass(

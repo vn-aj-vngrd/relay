@@ -144,7 +144,7 @@ Recommended initial policy:
 
 | Resource         |                                        Beta ceiling |
 | ---------------- | --------------------------------------------------: |
-| Accounts         |                      Invite-only; 100–250 accounts |
+| Accounts         |                       Invite-only; 100–250 accounts |
 | Admins           |                                                   1 |
 | Games created    |              5/user/day; add a global daily ceiling |
 | Chat text        |          30/player/minute plus a daily write budget |
@@ -158,18 +158,18 @@ These are operational starting points, not security guarantees. Tighten them usi
 
 ## Required pre-launch checklist
 
-- [X] Apply migration `0022` and verify anonymous Data API access fails closed.
-- [X] Apply migration `0023`, push the Auth hook configuration, and verify the admin-managed account cap.
-- [X] Enable CAPTCHA and verified email before expanding open signup beyond the capped beta.
-- [X] Confirm production Supabase Auth rate limits match reviewed values.
-- [X] Configure and test a Vercel authentication rate-limit rule.
-- [X] Confirm Supabase and Vercel free plans cannot bill overages; add a 2,500-tile/day server budget below Geoapify Free’s provider allowance.
-- [X] Make the public map click-to-load and cache public court data.
-- [X] Ship CSP report-only; monitor violations before enforcement.
-- [X] Require MFA for every admin.
-- [X] Run formatting, lint, typecheck, tests, and the production build. Authenticated E2E remains manual.
-- [X] Create and validate a private logical database backup, then restore it into an isolated PostgreSQL 17 instance and verify tables, migrations, signup capacity, and Auth users.
-- [X] Document and implement a one-command emergency read-only mode.
+- [x] Apply migration `0022` and verify anonymous Data API access fails closed.
+- [x] Apply migration `0023`, push the Auth hook configuration, and verify the admin-managed account cap.
+- [x] Enable CAPTCHA and verified email before expanding open signup beyond the capped beta.
+- [x] Confirm production Supabase Auth rate limits match reviewed values.
+- [x] Configure and test a Vercel authentication rate-limit rule.
+- [x] Confirm Supabase and Vercel free plans cannot bill overages; add a 2,500-tile/day server budget below Geoapify Free’s provider allowance.
+- [x] Keep the landing-page map preview click-to-load and cache public court data.
+- [x] Ship CSP report-only; monitor violations before enforcement.
+- [x] Require MFA for every admin.
+- [x] Run formatting, lint, typecheck, tests, and the production build. Authenticated E2E remains manual.
+- [x] Create and validate a private logical database backup, then restore it into an isolated PostgreSQL 17 instance and verify tables, migrations, signup capacity, and Auth users.
+- [x] Document and implement a one-command emergency read-only mode.
 
 ## Verification performed
 
@@ -184,7 +184,7 @@ These are operational starting points, not security guarantees. Tighten them usi
 - Five consecutive production `/admin` requests completed without runtime errors after the database timeout correction.
 - The only allowlisted production administrator has a verified TOTP factor.
 - The private custom-format backup restored into an isolated PostgreSQL 17 instance: 31 public tables, 24 migration records, account cap 200, and 2 Auth users. Supabase-only `pg_cron` and Vault extensions were excluded from the local drill.
-- Public court maps now require an explicit click, retain 30-day CDN caching, and stop at a global 2,500 tile requests per day.
+- The landing-page map preview requires an explicit click; dedicated Court Finder visits load the map immediately. Tiles retain 30-day CDN caching and stop at a global 2,500 requests per day.
 
 ## Primary sources
 
