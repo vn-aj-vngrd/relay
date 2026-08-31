@@ -34,4 +34,15 @@ describe("IconTooltip", () => {
 
     expect(screen.getByRole("tooltip")).toHaveClass("left-1/2", "-translate-x-1/2");
   });
+
+  it("can stay below controls near the top of a page", () => {
+    render(
+      <IconTooltip label="Court coverage" side="bottom">
+        <button type="button">Coverage</button>
+      </IconTooltip>,
+    );
+
+    expect(screen.getByRole("tooltip")).toHaveClass("top-full", "mt-2");
+    expect(screen.getByRole("tooltip")).not.toHaveClass("sm:bottom-full", "bottom-full");
+  });
 });

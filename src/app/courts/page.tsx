@@ -30,6 +30,7 @@ export default async function CourtPage() {
               id="court-coverage-tooltip"
               label="Court Finder covers the Philippines only. Listings are community-reviewed and growing; check current rates and hours before booking."
               align="center"
+              side="bottom"
             >
               <button
                 type="button"
