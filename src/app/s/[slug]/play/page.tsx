@@ -44,27 +44,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
   }
 
   const viewer = await getSessionViewer(data.session.id, slug);
-  const waiting = data.queue.filter(({ queue }) => queue.state === "waiting");
-  const waitingById = new Map(waiting.map((item) => [item.player.id, item]));
-  const waitingPairs = data.pairs
-    .map((pair) => ({
-      ...pair,
-      players: pair.members.flatMap((id) => (waitingById.get(id) ? [waitingById.get(id)!] : [])),
-    }))
-    .filter((pair) => pair.players.length === 2)
-    .toSorted(
-      (left, right) =>
-        Math.min(...left.players.map((item) => item.queue.position)) -
-        Math.min(...right.players.map((item) => item.queue.position)),
-    );
-  const roundStartedAt = data.activeMatches
-    .flatMap((match) => (match.startedAt ? [match.startedAt] : []))
-    .toSorted((left, right) => left.getTime() - right.getTime())[0];
-  const roundMode =
-    data.session.rotationMode === "random" ||
-    data.session.rotationMode === "balanced" ||
-    data.session.rotationMode === "king_of_court" ||
-    data.session.rotationMode === "round_robin";
+  const { roundMode, roundStartedAt, waiting, waitingPairs } = data.play;
   return (
     <main
       id="main-content"

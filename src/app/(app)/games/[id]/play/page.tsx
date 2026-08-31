@@ -6,10 +6,10 @@ import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { completeSession, createQueueMatch } from "@/features/matches/actions";
 import { LiveCourt } from "@/features/matches/live-court";
-import { startMatchLabel } from "@/features/matches/presentation";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { RoundTimer } from "@/features/matches/round-timer";
@@ -42,50 +42,13 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
-  const waiting = data.queue.filter(({ queue }) => queue.state === "waiting");
-  const waitingById = new Map(waiting.map((item) => [item.player.id, item]));
-  const waitingPairs = data.pairs
-    .map((pair) => ({
-      ...pair,
-      players: pair.members.flatMap((id) => (waitingById.get(id) ? [waitingById.get(id)!] : [])),
-    }))
-    .filter((pair) => pair.players.length === 2)
-    .toSorted(
-      (left, right) =>
-        Math.min(...left.players.map((item) => item.queue.position)) -
-        Math.min(...right.players.map((item) => item.queue.position)),
-    );
+  const actor = sessionActor({ userId: user.id, hostId: data.session.hostId, membership: data.membership });
+  const canManagePlay = can(actor, "edit");
+  const canCompleteSession = can(actor, "complete");
+  const { canStartRotation, rotationLabel, roundMode, roundRobinComplete, roundStartedAt, waiting, waitingPairs } =
+    data.play;
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const checkedIn = going.filter(({ player }) => player.checkedInAt);
-  const roundMode =
-    data.session.rotationMode === "random" ||
-    data.session.rotationMode === "balanced" ||
-    data.session.rotationMode === "king_of_court" ||
-    data.session.rotationMode === "round_robin";
-  const roundRobinMatchCount = (data.pairs.length * (data.pairs.length - 1)) / 2;
-  const roundRobinComplete =
-    data.session.rotationMode === "round_robin" && data.completedMatchCount >= roundRobinMatchCount;
-  const canStartRotation =
-    !roundRobinComplete &&
-    waiting.length >= 4 &&
-    (roundMode ? data.activeMatches.length === 0 : data.activeMatches.length < data.courts.length);
-  const nextCourtCount = Math.min(
-    Math.max(0, data.courts.length - data.activeMatches.length),
-    Math.floor(waiting.length / 4),
-  );
-  const roundStartedAt = data.activeMatches
-    .flatMap((match) => (match.startedAt ? [match.startedAt] : []))
-    .toSorted((left, right) => left.getTime() - right.getTime())[0];
-  const rotationLabel = roundMode
-    ? data.completedMatchCount
-      ? "Start next round"
-      : "Start first round"
-    : nextCourtCount > 1
-      ? `Start ${nextCourtCount} courts`
-      : data.activeMatches.length
-        ? "Start another match"
-        : startMatchLabel(data.completedMatchCount);
 
   return (
     <>
@@ -108,11 +71,11 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           <Broadcast aria-hidden className="mx-auto text-primary" size={26} />
           <h2 className="mt-4 text-2xl font-bold">Play hasn’t started</h2>
           <p className="mx-auto mt-2 max-w-lg text-pretty text-sm leading-6 text-muted sm:text-base">
-            {isHost
+            {canManagePlay
               ? "Confirm who’s here, choose the court flow, and start the first rotation."
               : "The host will start courts and the queue when the group is ready."}
           </p>
-          {isHost ? (
+          {canManagePlay ? (
             <ButtonLink href={`/games/${data.session.id}/play/setup`} className="mt-6">
               Start Play
             </ButtonLink>
@@ -139,7 +102,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                   {rotationName(data.session.rotationMode)} · scores update for everyone
                 </p>
               </div>
-              {isHost && canStartRotation && data.activeMatches.length > 0 ? (
+              {canManagePlay && canStartRotation && data.activeMatches.length > 0 ? (
                 <form action={createQueueMatch}>
                   <input type="hidden" name="sessionId" value={data.session.id} />
                   <SubmitButton pendingLabel="Creating match…" variant="secondary" className="whitespace-nowrap">
@@ -177,12 +140,15 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                       teams={[teamA, teamB]}
                       scores={[match.teamAScore, match.teamBScore]}
                       version={match.version}
-                      canScore={
-                        isHost ||
-                        Boolean(
-                          data.membership && match.players.some(({ player }) => player.id === data.membership?.id),
-                        )
-                      }
+                      canScore={can(
+                        {
+                          ...actor,
+                          assignedScorer: Boolean(
+                            data.membership && match.players.some(({ player }) => player.id === data.membership?.id),
+                          ),
+                        },
+                        "score",
+                      )}
                     />
                   );
                 })}
@@ -205,7 +171,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                         ? "Every court is ready for the next round."
                         : "The next four players are ready."}
                 </p>
-                {isHost && canStartRotation ? (
+                {canManagePlay && canStartRotation ? (
                   <form action={createQueueMatch} className="mt-5">
                     <input type="hidden" name="sessionId" value={data.session.id} />
                     <SubmitButton pendingLabel={roundMode ? "Starting round…" : "Starting match…"}>
@@ -226,7 +192,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
               <p className="mt-1 text-sm leading-5 text-muted">
                 {checkedIn.length} of {going.length} here · late arrivals join the end of the queue.
               </p>
-              {isHost ? (
+              {canManagePlay ? (
                 <div className="mt-3 divide-y divide-line border-y border-line">
                   {going.map(({ player, profile }) => (
                     <AttendanceToggle
@@ -286,7 +252,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                           ))}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{names.join(" + ")}</span>
-                        {isHost ? (
+                        {canManagePlay ? (
                           <DotsSixVertical
                             aria-label={`Move ${names.join(" and ")}`}
                             className="text-muted"
@@ -314,7 +280,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                         size="sm"
                       />
                       <span className="flex-1 text-sm font-semibold">{name}</span>
-                      {isHost ? <DotsSixVertical aria-label={`Move ${name}`} className="text-muted" size={18} /> : null}
+                      {canManagePlay ? (
+                        <DotsSixVertical aria-label={`Move ${name}`} className="text-muted" size={18} />
+                      ) : null}
                     </li>
                   );
                 })}
@@ -359,7 +327,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
                 </div>
               </section>
             ) : null}
-            {isHost && !data.activeMatches.length ? (
+            {canCompleteSession && !data.activeMatches.length ? (
               <form action={completeSession} className="mt-9 border-t border-line pt-5">
                 <input type="hidden" name="sessionId" value={data.session.id} />
                 <ConfirmSubmitButton

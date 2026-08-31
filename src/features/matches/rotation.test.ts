@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePlaySetup, planRotation, rotationDescription } from "./rotation";
+import { parsePlaySetup, planMatchFinish, planRotation, rotationDescription } from "./rotation";
 
 const courts = [
   { id: "court-1", label: "Court 1", position: 1 },
@@ -247,6 +247,66 @@ describe("play rotation", () => {
       { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "g"], teamB: ["b", "h"] },
       { courtId: "court-2", courtLabel: "Court 2", teamA: ["c", "e"], teamB: ["d", "f"] },
     ]);
+  });
+
+  it("returns all four players behind the waiting queue after a four-off match", () => {
+    expect(
+      planMatchFinish({
+        mode: "queue",
+        queueRule: "four_off",
+        waitingPlayerIds: ["e", "f"],
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+        winner: "A",
+        previousCourtPlayerIds: [],
+      }),
+    ).toEqual({
+      winnersStay: false,
+      returnedPlayerIds: ["a", "b", "c", "d"],
+      orderedPlayerIds: ["e", "f", "a", "b", "c", "d"],
+    });
+  });
+
+  it("keeps winners for one more match when the Paddle Stack is short", () => {
+    expect(
+      planMatchFinish({
+        mode: "queue",
+        queueRule: "adaptive",
+        waitingPlayerIds: ["e", "f"],
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+        winner: "A",
+        previousCourtPlayerIds: [],
+      }),
+    ).toMatchObject({ winnersStay: true, orderedPlayerIds: ["a", "b", "e", "f", "c", "d"] });
+  });
+
+  it("rotates winners off after they have already stayed", () => {
+    expect(
+      planMatchFinish({
+        mode: "queue",
+        queueRule: "winner_stays",
+        waitingPlayerIds: ["e", "f"],
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+        winner: "A",
+        previousCourtPlayerIds: ["a", "b", "x", "y"],
+      }).winnersStay,
+    ).toBe(false);
+  });
+
+  it("does not keep winners without a court history seam", () => {
+    expect(
+      planMatchFinish({
+        mode: "queue",
+        queueRule: "winner_stays",
+        waitingPlayerIds: ["e", "f"],
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+        winner: "A",
+        previousCourtPlayerIds: null,
+      }).winnersStay,
+    ).toBe(false);
   });
 
   it("explains the active setup in player language", () => {

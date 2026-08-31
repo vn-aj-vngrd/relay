@@ -21,19 +21,21 @@ import {
   sessions,
 } from "@/db/schema";
 import { trackProductEvent } from "@/features/analytics/events";
+import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
 import { assertRateLimit } from "@/lib/rate-limit";
 
 import {
   parsePlaySetup,
+  planMatchFinish,
   planRotation,
   queueRuleFromConfig,
   rotationDescription,
   type RotationHistory,
 } from "./rotation";
 
-async function requireHost(sessionId: string) {
+async function requirePlayManager(sessionId: string) {
   const user = await requireUser();
   await assertRateLimit(
     { scope: "play-management", limit: 120, windowSeconds: 60 },
@@ -45,8 +47,9 @@ async function requireHost(sessionId: string) {
   const player = await db.query.sessionPlayers.findFirst({
     where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, user.id)),
   });
-  if (session.hostId !== user.id && player?.role !== "cohost") throw new Error("Only a host can manage live play");
-  return { session, user };
+  const actor = sessionActor({ userId: user.id, hostId: session.hostId, membership: player });
+  if (!can(actor, "edit")) throw new Error("Only a host or co-host can manage live play");
+  return { session, user, actor };
 }
 
 async function requireScorekeeper(sessionId: string, matchId: string) {
@@ -58,16 +61,23 @@ async function requireScorekeeper(sessionId: string, matchId: string) {
   );
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) throw new Error("Session not found");
-  if (session.hostId === user.id) return { session, user };
+  const hostActor = sessionActor({ userId: user.id, hostId: session.hostId });
+  if (can(hostActor, "score")) return { session, user };
   const player = await db.query.sessionPlayers.findFirst({
     where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, user.id)),
   });
   if (!player || player.rsvp !== "going") throw new Error("Only active players can change this score");
-  if (player.role === "cohost") return { session, user };
-  const assignment = await db.query.matchPlayers.findFirst({
-    where: and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.sessionPlayerId, player.id)),
-  });
-  if (!assignment) throw new Error("Only players on this court can change its score");
+  const assignment =
+    player.role === "cohost"
+      ? null
+      : await db.query.matchPlayers.findFirst({
+          where: and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.sessionPlayerId, player.id)),
+        });
+  const actor = {
+    ...sessionActor({ userId: user.id, hostId: session.hostId, membership: player }),
+    assignedScorer: Boolean(assignment),
+  };
+  if (!can(actor, "score")) throw new Error("Only players on this court can change its score");
   return { session, user };
 }
 
@@ -75,7 +85,7 @@ export type StartPlayActionState = { error?: string };
 
 export async function startPlay(_: StartPlayActionState, formData: FormData): Promise<StartPlayActionState> {
   const sessionId = String(formData.get("sessionId"));
-  const { session, user } = await requireHost(sessionId);
+  const { session, user } = await requirePlayManager(sessionId);
   let setup;
   try {
     const pairCount = Math.max(0, Math.min(20, Number(formData.get("pairCount")) || 0));
@@ -232,7 +242,7 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
 
 export async function createQueueMatch(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  const { session } = await requireHost(sessionId);
+  const { session } = await requirePlayManager(sessionId);
   await db.transaction(async (tx) => {
     await tx.execute(sql`select id from ${sessions} where id = ${sessionId} for update`);
     const [active, sessionCourts, waiting, completed, pairRows] = await Promise.all([
@@ -425,7 +435,8 @@ export async function saveScore(input: z.input<typeof scoreInput>) {
 
 export async function completeSession(formData: FormData) {
   const sessionId = String(formData.get("sessionId"));
-  const { session, user } = await requireHost(sessionId);
+  const { session, user, actor } = await requirePlayManager(sessionId);
+  if (!can(actor, "complete")) throw new Error("Only the host can end this session");
   const activeCount = await db.$count(matches, and(eq(matches.sessionId, sessionId), eq(matches.status, "active")));
   if (activeCount) throw new Error("Finish active matches before ending the session");
   await db.transaction(async (tx) => {
@@ -482,55 +493,57 @@ export async function finishMatch(formData: FormData) {
       .from(matchPlayers)
       .where(eq(matchPlayers.matchId, matchId))
       .orderBy(asc(matchPlayers.team), asc(matchPlayers.position));
-    const winners = players.filter((player) => player.team === winningTeam).map((player) => player.sessionPlayerId);
-    const losers = players.filter((player) => player.team !== winningTeam).map((player) => player.sessionPlayerId);
     const waitingBefore = await tx
       .select()
       .from(sessionQueue)
       .where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.state, "waiting")))
       .orderBy(asc(sessionQueue.position));
-
-    let winnersStay = false;
-    if (session.rotationMode === "queue" && waitingBefore.length >= 2) {
-      const queueRule = queueRuleFromConfig(session.rotationConfig);
-      const requested = queueRule === "winner_stays" || (queueRule === "adaptive" && waitingBefore.length < 4);
-      if (requested && match.courtId) {
-        const [previous] = await tx
-          .select()
-          .from(matches)
-          .where(
-            and(eq(matches.sessionId, sessionId), eq(matches.courtId, match.courtId), eq(matches.status, "completed")),
-          )
-          .orderBy(desc(matches.finishedAt))
-          .limit(1);
-        const previousPlayers = previous
-          ? await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, previous.id))
-          : [];
-        winnersStay = !winners.every((id) => previousPlayers.some((player) => player.sessionPlayerId === id));
-      }
-    }
+    const [previous] =
+      session.rotationMode === "queue" && match.courtId
+        ? await tx
+            .select()
+            .from(matches)
+            .where(
+              and(
+                eq(matches.sessionId, sessionId),
+                eq(matches.courtId, match.courtId),
+                eq(matches.status, "completed"),
+              ),
+            )
+            .orderBy(desc(matches.finishedAt))
+            .limit(1)
+        : [];
+    const previousPlayers = previous
+      ? await tx.select().from(matchPlayers).where(eq(matchPlayers.matchId, previous.id))
+      : [];
+    const finishPlan = planMatchFinish({
+      mode: session.rotationMode,
+      queueRule: queueRuleFromConfig(session.rotationConfig),
+      waitingPlayerIds: waitingBefore.map((item) => item.sessionPlayerId),
+      teamA: players.filter((player) => player.team === "A").map((player) => player.sessionPlayerId),
+      teamB: players.filter((player) => player.team === "B").map((player) => player.sessionPlayerId),
+      winner: winningTeam,
+      previousCourtPlayerIds: match.courtId ? previousPlayers.map((player) => player.sessionPlayerId) : null,
+    });
 
     await tx
       .update(matches)
       .set({ status: "completed", finishedAt: new Date(), winningTeam, version: sql`${matches.version} + 1` })
       .where(eq(matches.id, matchId));
-    const returned = players.map((player) => player.sessionPlayerId);
-    const desiredWaiting = winnersStay
-      ? [...winners, ...waitingBefore.map((item) => item.sessionPlayerId), ...losers]
-      : [...waitingBefore.map((item) => item.sessionPlayerId), ...returned];
-    const uniqueWaiting = [...new Set(desiredWaiting)];
     const allQueue = await tx
       .select()
       .from(sessionQueue)
       .where(eq(sessionQueue.sessionId, sessionId))
       .orderBy(asc(sessionQueue.position));
-    const remaining = allQueue.map((item) => item.sessionPlayerId).filter((id) => !uniqueWaiting.includes(id));
+    const remaining = allQueue
+      .map((item) => item.sessionPlayerId)
+      .filter((id) => !finishPlan.orderedPlayerIds.includes(id));
     await tx
       .update(sessionQueue)
       .set({ position: sql`${sessionQueue.position} + 100000` })
       .where(eq(sessionQueue.sessionId, sessionId));
-    for (const [index, id] of [...uniqueWaiting, ...remaining].entries()) {
-      const isReturning = returned.includes(id);
+    for (const [index, id] of [...finishPlan.orderedPlayerIds, ...remaining].entries()) {
+      const isReturning = finishPlan.returnedPlayerIds.includes(id);
       await tx
         .update(sessionQueue)
         .set({
@@ -540,7 +553,10 @@ export async function finishMatch(formData: FormData) {
         })
         .where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.sessionPlayerId, id)));
     }
-    await tx.update(sessionPlayers).set({ playState: "waiting" }).where(inArray(sessionPlayers.id, returned));
+    await tx
+      .update(sessionPlayers)
+      .set({ playState: "waiting" })
+      .where(inArray(sessionPlayers.id, finishPlan.returnedPlayerIds));
     await tx.insert(messages).values({
       sessionId,
       kind: "system",

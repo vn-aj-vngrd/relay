@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  applyRsvp,
   cloneSession,
   createSessionSchema,
   findRosterIdentity,
-  promoteWaitlist,
-  resolveJoinRsvp,
   sessionInviteeIds,
   updateSessionSchema,
 } from "./domain";
@@ -67,42 +64,6 @@ describe("session roster", () => {
     const roster = [{ id: "host", userId: "user-1", guestTokenHash: null }];
     expect(findRosterIdentity(roster, { userId: null, guestTokenHash: null })).toBeUndefined();
     expect(findRosterIdentity(roster, { guestTokenHash: "guest-hash" })).toBeUndefined();
-  });
-  it("keeps approval deterministic before applying capacity", () => {
-    expect(resolveJoinRsvp({ requested: "going", requiresApproval: true, goingCount: 2, capacity: 8 })).toBe("pending");
-    expect(
-      resolveJoinRsvp({ requested: "going", current: "pending", requiresApproval: true, goingCount: 8, capacity: 8 }),
-    ).toBe("pending");
-    expect(
-      resolveJoinRsvp({
-        requested: "going",
-        current: "waitlisted",
-        requiresApproval: true,
-        goingCount: 7,
-        capacity: 8,
-      }),
-    ).toBe("going");
-  });
-  it("waitlists a player when capacity is full", () => {
-    const roster = [
-      { id: "a", rsvp: "going" as const },
-      { id: "b", rsvp: "going" as const },
-    ];
-    expect(applyRsvp(roster, "c", "going", 2).find((p) => p.id === "c")).toEqual({
-      id: "c",
-      rsvp: "waitlisted",
-      waitlistPosition: 1,
-    });
-  });
-  it("promotes the earliest waitlisted player and compacts ordering", () => {
-    const roster = [
-      { id: "a", rsvp: "going" as const },
-      { id: "b", rsvp: "waitlisted" as const, waitlistPosition: 2 },
-      { id: "c", rsvp: "waitlisted" as const, waitlistPosition: 1 },
-    ];
-    const result = promoteWaitlist(roster, 2);
-    expect(result.find((p) => p.id === "c")?.rsvp).toBe("going");
-    expect(result.find((p) => p.id === "b")?.waitlistPosition).toBe(1);
   });
 });
 

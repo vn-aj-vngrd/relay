@@ -44,16 +44,3 @@ export function calculateStandings(matches: MatchResult[]): Standing[] {
     }))
     .sort((a, b) => b.wins - a.wins || b.differential - a.differential);
 }
-
-export function queueTeams(
-  queue: string[],
-  courtCount: number,
-): { matches: { teamA: string[]; teamB: string[] }[]; waiting: string[] } {
-  const playerCount = Math.min(queue.length, Math.max(0, courtCount) * 4);
-  const playing = queue.slice(0, playerCount - (playerCount % 4));
-  const matches = Array.from({ length: playing.length / 4 }, (_, index) => ({
-    teamA: playing.slice(index * 4, index * 4 + 2),
-    teamB: playing.slice(index * 4 + 2, index * 4 + 4),
-  }));
-  return { matches, waiting: queue.slice(playing.length) };
-}

@@ -32,6 +32,7 @@ A shared route and its authenticated counterpart must expose the same session fa
 | RSVP or update own response                       | Own response    | Own response     | Own response | Join by name first |
 | Chat, contribute memories, and upload proof       | Yes             | Yes              | Yes          | Join first         |
 | Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
+| End or delete the session                         | Host only       | No               | No           | No                 |
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |
 

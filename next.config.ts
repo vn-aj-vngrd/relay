@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
 const baselineContentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com https://lh3.googleusercontent.com",
   "font-src 'self' data:",

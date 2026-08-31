@@ -9,6 +9,7 @@ import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { db } from "@/db/client";
 import { expenses, paymentAccounts, playerPayments, profiles, sessionPlayers } from "@/db/schema";
+import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import {
   confirmPayment,
@@ -37,7 +38,9 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   const sessionId = (await params).id;
   const data = await getSessionForParticipant(sessionId, user.id);
   if (!data) notFound();
-  const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
+  const actor = sessionActor({ userId: user.id, hostId: data.session.hostId, membership: data.membership });
+  const canManagePayments = can(actor, "confirm_payment");
+  const canCreateExpense = can(actor, "create_expense");
   const hostName = data.roster.find(({ player }) => player.role === "host")?.profile?.name ?? "The host";
   const sessionExpenses = await db
     .select({ expense: expenses, account: paymentAccounts })
@@ -53,7 +56,9 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
     .where(eq(expenses.sessionId, sessionId));
   const supabase = createSupabaseAdminClient();
   const collectibleRows = rows.filter(({ player }) => player.userId !== data.session.hostId);
-  const visibleRows = isHost ? collectibleRows : collectibleRows.filter(({ player }) => player.userId === user.id);
+  const visibleRows = canManagePayments
+    ? collectibleRows
+    : collectibleRows.filter(({ player }) => player.userId === user.id);
   const visiblePayments = await Promise.all(
     visibleRows.map(async (row) => ({
       ...row,
@@ -89,8 +94,8 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <GamePageIntro
-        title={isHost ? "Payments" : "Your payment"}
-        description={`${isHost ? "Collect player shares and review proof." : "Repay the host, then upload one screenshot."} Relay tracks status only.`}
+        title={canManagePayments ? "Payments" : "Your payment"}
+        description={`${canManagePayments ? "Collect player shares and review proof." : "Repay the host, then upload one screenshot."} Relay tracks status only.`}
       />
       {sessionExpenses.length ? (
         <div className="grid gap-8 sm:pt-7 lg:grid-cols-[1fr_340px]">
@@ -142,7 +147,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                               {paymentLabel(payment.status, requested)}
                             </span>
                           </div>
-                          {isHost && payment.status !== "sent" && payment.status !== "confirmed" ? (
+                          {canManagePayments && payment.status !== "sent" && payment.status !== "confirmed" ? (
                             <details className="mt-2">
                               <summary className="pressable inline-flex min-h-9 cursor-pointer items-center rounded-lg px-3 text-[13px] font-[600] leading-none text-muted hover:bg-surface-strong hover:text-ink">
                                 Adjust player share
@@ -208,7 +213,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                                 <p className="mt-1 text-xs leading-5 text-muted">
                                   Submitted proof does not mark payment paid until the host confirms it.
                                 </p>
-                                {isHost ? (
+                                {canManagePayments ? (
                                   <div className="mt-3 flex flex-wrap items-start gap-2">
                                     <form action={confirmPayment}>
                                       <input type="hidden" name="paymentId" value={payment.id} />
@@ -294,7 +299,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
             </p>
           </aside>
         </div>
-      ) : isHost ? (
+      ) : canCreateExpense ? (
         <section className="mx-auto max-w-xl py-4 sm:py-10">
           <CurrencyCircleDollar className="text-primary" size={20} />
           <h2 className="mt-4 text-xl font-bold">Collect player shares</h2>

@@ -19,19 +19,15 @@ import {
   sessions,
 } from "@/db/schema";
 import { trackProductEvent } from "@/features/analytics/events";
+import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
 import { assertRateLimit, checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
-import {
-  createSessionSchema,
-  findRosterIdentity,
-  resolveJoinRsvp,
-  sessionInviteeIds,
-  updateSessionSchema,
-} from "./domain";
+import { createSessionSchema, findRosterIdentity, sessionInviteeIds, updateSessionSchema } from "./domain";
+import { planRosterTransition } from "./roster";
 import { sessionSlug } from "./slug";
 
 export type SessionActionState = {
@@ -306,8 +302,8 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
   const membership = await db.query.sessionPlayers.findFirst({
     where: and(eq(sessionPlayers.sessionId, existing.id), eq(sessionPlayers.userId, user.id)),
   });
-  if (existing.hostId !== user.id && membership?.role !== "cohost")
-    return { error: "Only the host or co-host can change game settings." };
+  const actor = sessionActor({ userId: user.id, hostId: existing.hostId, membership });
+  if (!can(actor, "edit")) return { error: "Only the host or co-host can change game settings." };
   if (existing.status !== "draft" && existing.status !== "published")
     return { error: "Game details are locked after Play starts." };
 
@@ -482,15 +478,11 @@ async function requireSessionManager(sessionId: string, userId: string) {
   );
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
   if (!session) return null;
-  if (session.hostId === userId) return session;
   const membership = await db.query.sessionPlayers.findFirst({
-    where: and(
-      eq(sessionPlayers.sessionId, sessionId),
-      eq(sessionPlayers.userId, userId),
-      eq(sessionPlayers.role, "cohost"),
-    ),
+    where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)),
   });
-  return membership ? session : null;
+  const actor = sessionActor({ userId, hostId: session.hostId, membership });
+  return can(actor, "manage_roster") ? session : null;
 }
 
 export async function addPlayerAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -570,10 +562,11 @@ export async function addPlayerAction(_: SessionActionState, formData: FormData)
           !player.leftAt && player.guestName?.localeCompare(guestName, undefined, { sensitivity: "accent" }) === 0,
       );
       if (duplicate) throw new Error("DUPLICATE_GUEST");
-      const goingCount = roster.filter((player) => player.rsvp === "going").length;
-      const rsvp = goingCount >= session.capacity ? "waitlisted" : "going";
-      const waitlistPosition =
-        rsvp === "waitlisted" ? Math.max(0, ...roster.map((player) => player.waitlistPosition ?? 0)) + 1 : null;
+      const transition = planRosterTransition({
+        roster,
+        capacity: session.capacity,
+        intent: { requested: "going" },
+      });
       const [player] = await tx
         .insert(sessionPlayers)
         .values({
@@ -581,13 +574,11 @@ export async function addPlayerAction(_: SessionActionState, formData: FormData)
           guestName,
           skillLevel: parsed.data.skillLevel ?? null,
           role: "player",
-          rsvp,
-          playState: rsvp === "going" ? "waiting" : "unavailable",
-          waitlistPosition,
+          ...transition.target,
           respondedAt: new Date(),
         })
         .returning();
-      if (session.status === "live" && rsvp === "going") {
+      if (session.status === "live" && transition.target.rsvp === "going") {
         const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
         await tx.insert(sessionQueue).values({
           sessionId: session.id,
@@ -640,18 +631,17 @@ export async function approvePlayerAction(_: SessionActionState, formData: FormD
       const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       const player = roster.find((item) => item.id === parsed.data.sessionPlayerId && item.rsvp === "pending");
       if (!player) throw new Error("REQUEST_GONE");
-      const goingCount = roster.filter((item) => item.rsvp === "going").length;
-      result = goingCount >= session.capacity ? "waitlisted" : "going";
-      const position =
-        result === "waitlisted" ? Math.max(0, ...roster.map((item) => item.waitlistPosition ?? 0)) + 1 : null;
+      const transition = planRosterTransition({
+        roster,
+        capacity: session.capacity,
+        intent: { playerId: player.id, requested: "going" },
+      });
+      if (transition.target.rsvp !== "going" && transition.target.rsvp !== "waitlisted")
+        throw new Error("REQUEST_GONE");
+      result = transition.target.rsvp;
       await tx
         .update(sessionPlayers)
-        .set({
-          rsvp: result,
-          waitlistPosition: position,
-          playState: result === "going" ? "waiting" : "unavailable",
-          respondedAt: new Date(),
-        })
+        .set({ ...transition.target, respondedAt: new Date() })
         .where(eq(sessionPlayers.id, player.id));
       if (session.status === "live" && result === "going") {
         const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
@@ -711,34 +701,46 @@ export async function removePlayerAction(_: SessionActionState, formData: FormDa
       const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       const player = roster.find((item) => item.id === parsed.data.sessionPlayerId);
       if (!player || player.role === "host") throw new Error("CANNOT_REMOVE");
+      const transition = planRosterTransition({
+        roster,
+        capacity: session.capacity,
+        intent: { playerId: player.id, requested: "declined" },
+      });
       await tx
         .update(sessionPlayers)
-        .set({
-          rsvp: "declined",
-          playState: "unavailable",
-          checkedInAt: null,
-          waitlistPosition: null,
-          leftAt: new Date(),
-        })
+        .set({ ...transition.target, role: "player", checkedInAt: null, leftAt: new Date() })
         .where(eq(sessionPlayers.id, player.id));
       await tx
         .update(sessionQueue)
         .set({ state: "unavailable", version: sql`${sessionQueue.version} + 1` })
         .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, player.id)));
-      if (player.rsvp === "going") {
-        const next = roster
-          .filter((item) => item.rsvp === "waitlisted" && item.id !== player.id)
-          .sort((a, b) => (a.waitlistPosition ?? Infinity) - (b.waitlistPosition ?? Infinity))[0];
-        if (next) {
+      for (const update of transition.updates.filter((item) => item.id !== player.id))
+        await tx
+          .update(sessionPlayers)
+          .set({ rsvp: update.rsvp, waitlistPosition: update.waitlistPosition, playState: update.playState })
+          .where(eq(sessionPlayers.id, update.id));
+      for (const promotedId of transition.promotedPlayerIds) {
+        if (session.status === "live") {
+          const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+          const position = Math.max(0, ...queue.map((item) => item.position)) + 1;
           await tx
-            .update(sessionPlayers)
-            .set({ rsvp: "going", waitlistPosition: null, playState: "waiting" })
-            .where(eq(sessionPlayers.id, next.id));
-          if (next.userId)
-            await tx
-              .insert(notifications)
-              .values({ userId: next.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
+            .insert(sessionQueue)
+            .values({
+              sessionId: session.id,
+              sessionPlayerId: promotedId,
+              position,
+              state: "waiting",
+            })
+            .onConflictDoUpdate({
+              target: [sessionQueue.sessionId, sessionQueue.sessionPlayerId],
+              set: { state: "waiting", position, enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` },
+            });
         }
+        const promoted = roster.find((item) => item.id === promotedId);
+        if (promoted?.userId)
+          await tx
+            .insert(notifications)
+            .values({ userId: promoted.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
       }
       await tx.insert(messages).values({
         sessionId: session.id,
@@ -1059,17 +1061,17 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             )
           : undefined;
       if (claimingGuest) identity = claimingGuest;
-      const goingCount = current.filter((item) => item.rsvp === "going" && item.id !== identity?.id).length;
-      const waitlistPosition = Math.max(0, ...current.map((item) => item.waitlistPosition ?? 0)) + 1;
-      const nextRsvp = resolveJoinRsvp({
-        requested: parsed.data.choice,
-        current: identity?.rsvp,
-        requiresApproval: session.requiresApproval,
-        goingCount,
+      const transition = planRosterTransition({
+        roster: current,
         capacity: session.capacity,
+        intent: {
+          playerId: identity?.id,
+          requested: parsed.data.choice,
+          requiresApproval: session.requiresApproval,
+        },
       });
+      const nextRsvp = transition.target.rsvp;
       resolvedRsvp = nextRsvp;
-      const nextPosition = nextRsvp === "waitlisted" ? (identity?.waitlistPosition ?? waitlistPosition) : null;
       let createdToken: string | null = null;
       let actorPlayerId = identity?.id;
       if (identity) {
@@ -1084,10 +1086,8 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
           .set({
             guestTokenHash: claimedTokenHash,
             skillLevel: selectedExperience ?? identity.skillLevel,
-            rsvp: nextRsvp,
-            waitlistPosition: nextPosition,
+            ...transition.target,
             respondedAt: new Date(),
-            playState: nextRsvp === "going" ? "waiting" : "unavailable",
             checkedInAt: nextRsvp === "going" ? identity.checkedInAt : null,
           })
           .where(eq(sessionPlayers.id, identity.id));
@@ -1106,10 +1106,8 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             guestName: user ? null : parsed.data.guestName,
             guestTokenHash: tokenHash,
             skillLevel: selectedExperience,
-            rsvp: nextRsvp,
-            waitlistPosition: nextPosition,
+            ...transition.target,
             respondedAt: new Date(),
-            playState: nextRsvp === "going" ? "waiting" : "unavailable",
           })
           .returning({ id: sessionPlayers.id });
         actorPlayerId = createdPlayer.id;
@@ -1158,20 +1156,33 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             .set({ state: "unavailable" })
             .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, actorPlayerId)));
       }
-      if (identity?.rsvp === "going" && nextRsvp !== "going") {
-        const nextWaiting = current
-          .filter((item) => item.rsvp === "waitlisted" && item.id !== identity.id)
-          .sort((a, b) => (a.waitlistPosition ?? Infinity) - (b.waitlistPosition ?? Infinity))[0];
-        if (nextWaiting) {
+      for (const update of transition.updates.filter((item) => item.id !== actorPlayerId))
+        await tx
+          .update(sessionPlayers)
+          .set({ rsvp: update.rsvp, waitlistPosition: update.waitlistPosition, playState: update.playState })
+          .where(eq(sessionPlayers.id, update.id));
+      for (const promotedId of transition.promotedPlayerIds) {
+        if (session.status === "live") {
+          const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+          const position = Math.max(0, ...queue.map((item) => item.position)) + 1;
           await tx
-            .update(sessionPlayers)
-            .set({ rsvp: "going", waitlistPosition: null, playState: "waiting" })
-            .where(eq(sessionPlayers.id, nextWaiting.id));
-          if (nextWaiting.userId)
-            await tx
-              .insert(notifications)
-              .values({ userId: nextWaiting.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
+            .insert(sessionQueue)
+            .values({
+              sessionId: session.id,
+              sessionPlayerId: promotedId,
+              position,
+              state: "waiting",
+            })
+            .onConflictDoUpdate({
+              target: [sessionQueue.sessionId, sessionQueue.sessionPlayerId],
+              set: { state: "waiting", position, enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` },
+            });
         }
+        const promoted = current.find((item) => item.id === promotedId);
+        if (promoted?.userId)
+          await tx
+            .insert(notifications)
+            .values({ userId: promoted.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
       }
       return createdToken;
     });

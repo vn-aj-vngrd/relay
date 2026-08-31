@@ -85,6 +85,37 @@ export type RotationHistory = {
 };
 export type RotationPlan = { courtId: string; courtLabel: string; teamA: string[]; teamB: string[] };
 
+export function planMatchFinish(input: {
+  mode: string;
+  queueRule: QueueRule;
+  waitingPlayerIds: string[];
+  teamA: string[];
+  teamB: string[];
+  winner: "A" | "B";
+  previousCourtPlayerIds: string[] | null;
+}) {
+  const winners = input.winner === "A" ? input.teamA : input.teamB;
+  const losers = input.winner === "A" ? input.teamB : input.teamA;
+  const returnedPlayerIds = [...input.teamA, ...input.teamB];
+  const winnerStaysRequested =
+    input.mode === "queue" &&
+    input.waitingPlayerIds.length >= 2 &&
+    (input.queueRule === "winner_stays" || (input.queueRule === "adaptive" && input.waitingPlayerIds.length < 4));
+  const winnersStay =
+    winnerStaysRequested &&
+    input.previousCourtPlayerIds !== null &&
+    !winners.every((id) => input.previousCourtPlayerIds!.includes(id));
+  const orderedPlayerIds = winnersStay
+    ? [...winners, ...input.waitingPlayerIds, ...losers]
+    : [...input.waitingPlayerIds, ...returnedPlayerIds];
+
+  return {
+    winnersStay,
+    returnedPlayerIds,
+    orderedPlayerIds: [...new Set(orderedPlayerIds)],
+  };
+}
+
 function partnershipCounts(history: RotationHistory[]) {
   const counts = new Map<string, number>();
   for (const match of history) {

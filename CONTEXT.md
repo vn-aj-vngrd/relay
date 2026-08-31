@@ -93,7 +93,7 @@ A player’s assigned share of a host-paid expense. The player pays outside Rela
 _Avoid_: Checkout, transaction
 
 **Co-host**:
-A participant delegated session-management authority by the host.
+A participant delegated authority to manage a session’s plan, roster, payments, courts, and matches. A co-host cannot end or delete the session.
 _Avoid_: Moderator
 
 **Group**:

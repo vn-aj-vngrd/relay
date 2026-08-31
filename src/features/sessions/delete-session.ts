@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -23,6 +23,7 @@ import {
   sessionQueue,
   sessions,
 } from "@/db/schema";
+import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -44,10 +45,9 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
   });
   if (!parsed.success) return { error: "Enter the game title exactly as shown." };
 
-  const session = await db.query.sessions.findFirst({
-    where: and(eq(sessions.id, parsed.data.sessionId), eq(sessions.hostId, user.id)),
-  });
-  if (!session) return { error: "Only the host can delete this game." };
+  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
+  if (!session || !can(sessionActor({ userId: user.id, hostId: session.hostId }), "delete"))
+    return { error: "Only the host can delete this game." };
   if (parsed.data.confirmation.trim() !== session.title) return { error: `Type “${session.title}” to confirm.` };
 
   let paymentProofPaths: string[] = [];

@@ -16,8 +16,9 @@ import {
 import { getPublicSession, getSessionForParticipant } from "@/features/sessions/queries";
 
 import { calculateStandings } from "./domain";
+import { deriveLiveState } from "./live-state";
 
-async function getLiveDetails(sessionId: string) {
+async function getLiveDetails(sessionId: string, rotationMode: string) {
   const [sessionCourts, sessionMatches, queue, pairRows] = await Promise.all([
     db.select().from(courts).where(eq(courts.sessionId, sessionId)).orderBy(asc(courts.position)),
     db
@@ -77,7 +78,7 @@ async function getLiveDetails(sessionId: string) {
     position: pairRows.find((row) => row.id === id)?.position ?? 0,
     members: pairRows.filter((row) => row.id === id).map((row) => row.sessionPlayerId),
   }));
-  return {
+  const liveDetails = {
     courts: sessionCourts,
     activeMatches: activeMatches.map((match) => ({
       ...match,
@@ -88,16 +89,27 @@ async function getLiveDetails(sessionId: string) {
     pairs,
     standings,
   };
+  return {
+    ...liveDetails,
+    play: deriveLiveState({
+      rotationMode,
+      queue,
+      pairs,
+      activeMatches: liveDetails.activeMatches,
+      courtCount: sessionCourts.length,
+      completedMatchCount,
+    }),
+  };
 }
 
 export async function getLiveSession(sessionId: string, userId: string) {
   const base = await getSessionForParticipant(sessionId, userId);
   if (!base) return null;
-  return { ...base, ...(await getLiveDetails(sessionId)) };
+  return { ...base, ...(await getLiveDetails(sessionId, base.session.rotationMode)) };
 }
 
 export async function getPublicLiveSession(slug: string) {
   const base = await getPublicSession(slug);
   if (!base) return null;
-  return { ...base, ...(await getLiveDetails(base.session.id)) };
+  return { ...base, ...(await getLiveDetails(base.session.id, base.session.rotationMode)) };
 }

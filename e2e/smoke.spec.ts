@@ -400,6 +400,18 @@ test("keyboard users can skip directly to the main content", async ({ page }) =>
   await expect(page).toHaveURL(/#main-content$/);
 });
 
+test("CSP does not block React runtime scripts", async ({ page }) => {
+  const evalErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes("eval() is not supported"))
+      evalErrors.push(message.text());
+  });
+
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
+  expect(evalErrors).toEqual([]);
+});
+
 test("public release metadata, health, and enforced CSP are available", async ({ page }) => {
   const [robots, sitemap, security, health] = await Promise.all([
     page.request.get("/robots.txt"),

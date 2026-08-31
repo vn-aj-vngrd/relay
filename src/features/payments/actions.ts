@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { expenses, notifications, paymentAccounts, playerPayments, sessionPlayers, sessions } from "@/db/schema";
+import { can, type SessionAction, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature } from "@/lib/image-file";
@@ -24,12 +25,27 @@ async function guardPaymentManagement(userId: string) {
   );
 }
 
+async function hasPaymentCapability(
+  session: { id: string; hostId: string },
+  userId: string,
+  action: Extract<SessionAction, "confirm_payment" | "create_expense">,
+) {
+  const membership =
+    session.hostId === userId
+      ? null
+      : await db.query.sessionPlayers.findFirst({
+          where: and(eq(sessionPlayers.sessionId, session.id), eq(sessionPlayers.userId, userId)),
+        });
+  return can(sessionActor({ userId, hostId: session.hostId, membership }), action);
+}
+
 export async function createExpense(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
-  if (!session || session.hostId !== user.id) throw new Error("Only the host can request payment");
+  if (!session || !(await hasPaymentCapability(session, user.id, "create_expense")))
+    throw new Error("Only the host can request payment");
   const limit = await checkRateLimit({ scope: "expense-create", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
   if (!limit.allowed) throw new Error("Payment requests are temporarily limited. Try again tomorrow.");
   const totalCents = Math.round(z.coerce.number().positive().parse(formData.get("total")) * 100);
@@ -176,7 +192,8 @@ export async function confirmPayment(formData: FormData) {
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || row.session.hostId !== user.id) throw new Error("Only the host can confirm payments");
+  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+    throw new Error("Only a host or co-host can confirm payments");
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
@@ -204,7 +221,8 @@ export async function updatePlayerPaymentAmount(formData: FormData) {
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || row.session.hostId !== user.id) throw new Error("Only the host can change payment amounts");
+  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+    throw new Error("Only a host or co-host can change payment amounts");
   await db.transaction(async (tx) => {
     await tx.update(playerPayments).set({ amountCents, updatedAt: new Date() }).where(eq(playerPayments.id, paymentId));
     if (row.player.userId)
@@ -227,7 +245,8 @@ export async function togglePaymentExcluded(formData: FormData) {
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || row.session.hostId !== user.id) throw new Error("Only the host can exclude players from a split");
+  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+    throw new Error("Only a host or co-host can exclude players from a split");
   if (row.payment.status === "sent" || row.payment.status === "confirmed")
     throw new Error("Reviewed payments cannot be excluded");
   await db.transaction(async (tx) => {
@@ -260,7 +279,8 @@ export async function requestNewPaymentProof(formData: FormData) {
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || row.session.hostId !== user.id) throw new Error("Only the host can review payment proof");
+  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+    throw new Error("Only a host or co-host can review payment proof");
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
