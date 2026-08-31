@@ -1,6 +1,6 @@
 "use client";
 
-import { Desktop, Moon, Sun } from "@phosphor-icons/react";
+import { Moon, Sun } from "@phosphor-icons/react";
 import { useSyncExternalStore } from "react";
 
 const themeColors = { light: "oklch(0.965 0.002 75)", dark: "oklch(0.145 0.006 275)" } as const;
@@ -36,59 +36,16 @@ function subscribe(callback: () => void) {
     if (localStorage.getItem("relay-theme") === "system") applyTheme(systemTheme());
     callback();
   };
-  const handleStorage = () => {
-    const preference = getThemePreference();
-    applyTheme(preference === "system" ? systemTheme() : preference);
-    callback();
-  };
   window.addEventListener("relay-theme-change", callback);
-  window.addEventListener("storage", handleStorage);
   media?.addEventListener("change", handleSystemChange);
   return () => {
     window.removeEventListener("relay-theme-change", callback);
-    window.removeEventListener("storage", handleStorage);
     media?.removeEventListener("change", handleSystemChange);
   };
 }
 
 function getTheme(): Theme {
   return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-}
-
-const themeOptions = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "system", label: "System", icon: Desktop },
-] satisfies { value: ThemePreference; label: string; icon: typeof Sun }[];
-
-export function ThemeSelector() {
-  const preference = useSyncExternalStore(subscribe, getThemePreference, (): ThemePreference => "system");
-
-  return (
-    <div
-      role="group"
-      aria-label="Color theme"
-      className="inline-flex rounded-lg border border-line bg-surface-strong p-0.5"
-    >
-      {themeOptions.map(({ value, label, icon: Icon }) => {
-        const selected = preference === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => setThemePreference(value)}
-            className={`pressable flex min-h-9 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium ${
-              selected ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"
-            }`}
-          >
-            <Icon aria-hidden size={15} />
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 export function ThemeToggle({ inverse = false, showLabel = false }: { inverse?: boolean; showLabel?: boolean }) {

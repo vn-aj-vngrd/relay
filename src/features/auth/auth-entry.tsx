@@ -3,7 +3,6 @@
 import { useSearchParams } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
-import { PublicThemeFooter } from "@/components/shared/public-theme-footer";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
@@ -56,7 +55,6 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
           ) : null}
         </div>
       </main>
-      <PublicThemeFooter />
     </div>
   );
 }
@@ -74,7 +72,6 @@ export function AuthEntryFallback() {
       >
         <div className="h-[34.5rem] w-full max-w-[410px] animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none sm:h-[36rem]" />
       </main>
-      <PublicThemeFooter />
     </div>
   );
 }

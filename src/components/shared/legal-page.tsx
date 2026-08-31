@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Brand } from "./brand";
-import { PublicThemeFooter } from "./public-theme-footer";
 
 export function LegalPage({
   title,
@@ -38,7 +37,6 @@ export function LegalPage({
           </div>
         </article>
       </main>
-      <PublicThemeFooter />
     </div>
   );
 }

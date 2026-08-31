@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand } from "@/components/shared/brand";
-import { ThemeSelector } from "@/components/shared/theme-toggle";
 import { PublicQuickPlay } from "@/features/matches/public-quick-play";
 
 export const metadata: Metadata = {
@@ -45,7 +44,6 @@ export default function QuickPlayPage() {
       <footer className="border-t border-line px-4 py-7 sm:px-8">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <p>Quick Play runs locally in your browser.</p>
-          <ThemeSelector />
           <nav aria-label="Quick Play footer" className="flex flex-wrap gap-5">
             <Link href="/courts" className="hover:text-ink">
               Philippines courts

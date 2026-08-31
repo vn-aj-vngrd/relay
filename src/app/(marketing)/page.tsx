@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
-import { ThemeSelector } from "@/components/shared/theme-toggle";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
@@ -314,7 +313,6 @@ export default function MarketingPage() {
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
           <Brand />
           <p>Plan games, invite players, and record scores.</p>
-          <ThemeSelector />
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>

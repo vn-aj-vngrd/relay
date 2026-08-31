@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Brand } from "@/components/shared/brand";
-import { ThemeSelector } from "@/components/shared/theme-toggle";
 import { getCurrentUser } from "@/features/auth/session";
 
 export default async function CourtLayout({ children }: { children: React.ReactNode }) {
@@ -45,7 +44,6 @@ export default async function CourtLayout({ children }: { children: React.ReactN
       <footer className="shrink-0 border-t border-line px-4 py-7 sm:px-8">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <Brand />
-          <ThemeSelector />
           <nav aria-label="Court Finder footer" className="flex items-center gap-5">
             <Link href="/privacy" className="hover:text-ink">
               Privacy

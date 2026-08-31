@@ -1,5 +1,4 @@
 import { PublicSessionHeader } from "@/components/shared/public-session-header";
-import { PublicThemeFooter } from "@/components/shared/public-theme-footer";
 import { getCurrentUser } from "@/features/auth/session";
 import { getPublicSession, getSessionMembership } from "@/features/sessions/queries";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
@@ -29,7 +28,6 @@ export default async function PublicSessionLayout({
         gameTitle={data?.session.title}
       />
       <div className="public-session-tab-content min-h-0 flex-1 bg-surface">{children}</div>
-      <PublicThemeFooter className="bg-surface" />
     </div>
   );
 }
