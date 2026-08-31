@@ -35,6 +35,7 @@ export function CourtFinderShowcase({ courts }: { courts: CourtListing[] }) {
             detailBasePath="/courts"
             showFilterTopBorder={false}
             compactPreview
+            autoLoadMap
             className="mt-0"
           />
         </div>

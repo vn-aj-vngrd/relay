@@ -51,6 +51,7 @@ type CourtMapProps = {
   children?: ReactNode;
   compactPreview?: boolean;
   mobileEdgeToEdge?: boolean;
+  autoLoad?: boolean;
 };
 
 function mapStyle(dark: boolean): StyleSpecification {
@@ -134,6 +135,7 @@ export function CourtMap({
   children,
   compactPreview = false,
   mobileEdgeToEdge = false,
+  autoLoad = false,
 }: CourtMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -142,7 +144,7 @@ export function CourtMap({
   const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
   const selectedRef = useRef(selectedId);
-  const [activated, setActivated] = useState(!compactPreview);
+  const [activated, setActivated] = useState(autoLoad || !compactPreview);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 

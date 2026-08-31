@@ -5,19 +5,25 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CourtFinder } from "./court-finder";
 import type { CourtListing } from "./directory";
 
-const { captureMapVenues } = vi.hoisted(() => ({ captureMapVenues: vi.fn() }));
+const { captureMapVenues, captureMapAutoLoad } = vi.hoisted(() => ({
+  captureMapVenues: vi.fn(),
+  captureMapAutoLoad: vi.fn(),
+}));
 
 vi.mock("./court-map", () => ({
   CourtMap: ({
     venues,
     onSelect,
     children,
+    autoLoad,
   }: {
     venues: CourtListing[];
     onSelect: (id: string) => void;
     children?: ReactNode;
+    autoLoad?: boolean;
   }) => {
     captureMapVenues(venues);
+    captureMapAutoLoad(autoLoad);
     return (
       <div aria-label="Interactive map of pickleball courts">
         {venues.map((item) => (
@@ -74,6 +80,7 @@ const suggestedVenue: CourtListing = {
 
 beforeEach(() => {
   captureMapVenues.mockClear();
+  captureMapAutoLoad.mockClear();
   Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
   Object.defineProperty(navigator, "geolocation", {
     configurable: true,
@@ -104,11 +111,11 @@ describe("CourtFinder", () => {
     expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
   });
 
-  it("loads the map immediately in the bounded preview and full finder", () => {
-    const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
+  it("supports an auto-loaded map in the bounded preview and full finder", () => {
+    const { rerender } = render(<CourtFinder venues={[venue]} compactPreview autoLoadMap />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
     expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Load map" })).not.toBeInTheDocument();
+    expect(captureMapAutoLoad).toHaveBeenLastCalledWith(true);
 
     rerender(<CourtFinder venues={[venue]} />);
     expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass(
@@ -116,6 +123,7 @@ describe("CourtFinder", () => {
       "sm:h-[580px]",
     );
     expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    expect(captureMapAutoLoad).toHaveBeenLastCalledWith(false);
     expect(document.querySelector(".court-finder-results-grid")).toHaveClass("xl:flex-1");
   });
 

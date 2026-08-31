@@ -9,6 +9,7 @@ import { venues } from "@/db/schema";
 import { courtDirectoryCoverage } from "./coverage";
 
 const courtDirectoryTag = "court-directory";
+const courtDirectorySnapshot = "2026-09-01";
 
 export type CourtListing = {
   id: string;
@@ -69,7 +70,7 @@ async function queryCourtListings(): Promise<CourtListing[]> {
   });
 }
 
-export const getCourtListings = unstable_cache(queryCourtListings, [courtDirectoryTag], {
+export const getCourtListings = unstable_cache(queryCourtListings, [courtDirectoryTag, courtDirectorySnapshot], {
   revalidate: 3600,
   tags: [courtDirectoryTag],
 });

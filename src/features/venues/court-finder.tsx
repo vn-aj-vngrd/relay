@@ -321,6 +321,7 @@ export function CourtFinder({
   detailBasePath = "/court",
   showFilterTopBorder = true,
   compactPreview = false,
+  autoLoadMap = false,
   className = "mt-7",
 }: {
   venues: CourtListing[];
@@ -328,6 +329,7 @@ export function CourtFinder({
   detailBasePath?: "/court" | "/courts";
   showFilterTopBorder?: boolean;
   compactPreview?: boolean;
+  autoLoadMap?: boolean;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
@@ -580,6 +582,7 @@ export function CourtFinder({
               onSelect={selectCourt}
               compactPreview={compactPreview}
               mobileEdgeToEdge={!compactPreview}
+              autoLoad={autoLoadMap}
             >
               {selected ? (
                 <SelectedCourtOverlay

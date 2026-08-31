@@ -5,6 +5,9 @@ test("the landing page introduces Relay and protected routes open a usable login
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
+  const landingCourtFinder = page.locator("#court-finder");
+  await expect(landingCourtFinder.getByRole("button", { name: "Zoom in" })).toBeVisible();
+  await expect(landingCourtFinder.getByRole("button", { name: "Load interactive map" })).toHaveCount(0);
 
   await page.goto("/home");
   expect(new URL(page.url()).pathname).toBe("/login");
