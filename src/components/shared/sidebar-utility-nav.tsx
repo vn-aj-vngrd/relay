@@ -16,7 +16,9 @@ export function SidebarUtilityNav() {
     <nav aria-label="Quick actions">
       <ul className="space-y-0.5">
         {items.map(({ href, label, icon: Icon, tour, includeSubpaths }) => {
-          const active = includeSubpaths ? pathname.startsWith(href) : pathname === href;
+          const active = includeSubpaths
+            ? pathname.startsWith(href) && !pathname.startsWith(`${href}/suggest`)
+            : pathname === href;
           return (
             <li key={href}>
               <Link

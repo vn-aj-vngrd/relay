@@ -1,12 +1,13 @@
 "use client";
 
-import { Bell, ChatText, Lifebuoy, ShieldCheck } from "@phosphor-icons/react";
+import { Bell, ChatText, Lifebuoy, PlusCircle, ShieldCheck } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function SidebarSupportNav({ unreadCount, isAdmin }: { unreadCount: number; isAdmin: boolean }) {
   const pathname = usePathname();
   const items = [
+    { href: "/court/suggest", label: "Suggest a court", icon: PlusCircle, badge: 0 },
     { href: "/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
     { href: "/help", label: "Help Center", icon: Lifebuoy, badge: 0 },
     { href: "/feedback", label: "Send feedback", icon: ChatText, badge: 0 },

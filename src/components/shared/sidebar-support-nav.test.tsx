@@ -15,6 +15,13 @@ describe("SidebarSupportNav", () => {
     expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
     expect(screen.getByRole("link", { name: "Help Center" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Send feedback" })).toHaveAttribute("href", "/feedback");
+    expect(screen.getByRole("link", { name: "Suggest a court" })).toHaveAttribute("href", "/court/suggest");
+  });
+
+  it("marks the court suggestion form as the current sidebar destination", () => {
+    usePathname.mockReturnValue("/court/suggest");
+    render(<SidebarSupportNav unreadCount={0} isAdmin={false} />);
+    expect(screen.getByRole("link", { name: "Suggest a court" })).toHaveAttribute("aria-current", "page");
   });
 
   it("only shows the admin console to platform admins", () => {

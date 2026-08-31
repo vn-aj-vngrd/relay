@@ -1,11 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SidebarUtilityNav } from "./sidebar-utility-nav";
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/games/new" }));
+const usePathname = vi.fn();
+vi.mock("next/navigation", () => ({ usePathname: () => usePathname() }));
 
 describe("SidebarUtilityNav", () => {
+  beforeEach(() => usePathname.mockReturnValue("/games/new"));
+
   it("uses concise labels and exposes the current quick action", () => {
     render(<SidebarUtilityNav />);
 
@@ -14,5 +17,11 @@ describe("SidebarUtilityNav", () => {
     expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute("href", "/court");
     expect(screen.getByRole("link", { name: "Court" })).not.toHaveAttribute("aria-current");
     expect(screen.queryByText("Create game")).not.toBeInTheDocument();
+  });
+
+  it("does not mark Court current on the separate suggestion destination", () => {
+    usePathname.mockReturnValue("/court/suggest");
+    render(<SidebarUtilityNav />);
+    expect(screen.getByRole("link", { name: "Court" })).not.toHaveAttribute("aria-current");
   });
 });

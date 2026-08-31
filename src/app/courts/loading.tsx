@@ -3,15 +3,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function VenuesLoading() {
   return (
     <div aria-label="Loading court finder" role="status" className="flex min-h-0 flex-1 flex-col">
-      <header className="flex shrink-0 items-center justify-between gap-3 sm:items-end">
-        <div className="w-full max-w-2xl">
-          <Skeleton className="h-9 w-44 max-w-full sm:w-72" />
-          <Skeleton className="mt-3 hidden h-5 w-full max-w-xl sm:block" />
-        </div>
-        <Skeleton className="h-11 w-11 shrink-0 rounded-lg sm:h-9 sm:w-36" />
-      </header>
-
-      <div className="mt-4 shrink-0 border-line pb-3 sm:mt-7 lg:border-t lg:py-4">
+      <div className="shrink-0 pb-3 lg:py-4">
         <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <Skeleton className="h-11 w-full rounded-lg" />
           <Skeleton className="h-11 w-11 rounded-lg lg:w-36" />
