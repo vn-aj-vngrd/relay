@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ThemeSelector } from "@/components/shared/theme-toggle";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
@@ -46,7 +46,6 @@ export default function MarketingPage() {
           <Brand />
           <MarketingSectionNav />
           <div className="flex items-center gap-1">
-            <ThemeToggle />
             <Link
               href="/login"
               className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink sm:inline-flex"
@@ -315,6 +314,7 @@ export default function MarketingPage() {
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
           <Brand />
           <p>Plan games, invite players, and record scores.</p>
+          <ThemeSelector />
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>

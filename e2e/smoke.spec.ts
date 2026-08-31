@@ -18,7 +18,8 @@ test("the landing page introduces Relay and protected routes open a usable login
   ).toBeVisible();
   await expect(page.getByText("What you can do")).toHaveCount(0);
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Use dark mode" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Color theme" })).toBeVisible();
+  await expect(page.locator("header").getByRole("group", { name: "Color theme" })).toHaveCount(0);
   const headerBox = await page.locator("header").boundingBox();
   const brandBox = await page.getByRole("link", { name: "Relay home" }).boundingBox();
   expect(brandBox).not.toBeNull();
@@ -349,9 +350,9 @@ test("login and account creation have distinct entry routes", async ({ page }) =
   const createPosition = await authTabs.boundingBox();
   expect(createPosition?.y).toBe(signInPosition?.y);
   const panelBox = await authTabs.locator("..").boundingBox();
-  const viewport = page.viewportSize();
-  expect(panelBox && viewport).toBeTruthy();
-  expect(Math.abs(panelBox!.y + panelBox!.height / 2 - (64 + viewport!.height) / 2)).toBeLessThan(1);
+  const mainBox = await page.locator("main").boundingBox();
+  expect(panelBox && mainBox).toBeTruthy();
+  expect(Math.abs(panelBox!.y + panelBox!.height / 2 - (mainBox!.y + mainBox!.height / 2))).toBeLessThan(1);
 
   await page.goto("/signup");
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
@@ -360,15 +361,16 @@ test("login and account creation have distinct entry routes", async ({ page }) =
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
 });
 
-test("light mode is default and a stored dark preference loads", async ({ page }) => {
+test("system mode is default and a stored dark preference loads", async ({ page }) => {
   await page.goto("/login");
   const favicon = page.locator('link[rel~="icon"][type="image/svg+xml"]');
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.getByRole("button", { name: "System", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(favicon).toHaveAttribute("href", "/relay-ball.svg");
   await page.evaluate(() => localStorage.setItem("relay-theme", "dark"));
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(page.getByRole("button", { name: "Use light mode" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Dark", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(favicon).toHaveAttribute("href", "/relay-ball.svg");
 });
 

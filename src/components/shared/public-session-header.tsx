@@ -3,7 +3,6 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 
 import { Brand } from "./brand";
 import { PublicSessionNav } from "./public-session-nav";
-import { ThemeToggle } from "./theme-toggle";
 
 export function PublicSessionHeader({
   slug,
@@ -29,7 +28,6 @@ export function PublicSessionHeader({
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Brand />
           <div className="flex items-center gap-1">
-            <ThemeToggle />
             <ButtonLink
               href={destination}
               variant={signedIn ? "primary" : "secondary"}

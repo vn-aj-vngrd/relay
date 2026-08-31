@@ -2,7 +2,7 @@
 
 ## Design thesis
 
-Relay should feel like checking a beautifully made sports instrument: immediate, precise, and calm until play becomes live. Light mode is the deliberate default for bright venues and daytime planning; dark mode is an explicit, persistent user choice. The visual world combines **hard-court geometry** with **Apple-like product discipline**—native-feeling typography, strong hierarchy, polished materials, and controls that behave exactly as expected.
+Relay should feel like checking a beautifully made sports instrument: immediate, precise, and calm until play becomes live. Light mode is tuned for bright venues and daytime planning; dark mode is designed for lower-light settings, and the default follows the device. The visual world combines **hard-court geometry** with **Apple-like product discipline**—native-feeling typography, strong hierarchy, polished materials, and controls that behave exactly as expected.
 
 Linear is the current product-UI baseline for hierarchy, density, alignment, icons, theme discipline, and component behavior; see `docs/LINEAR_UI_REFERENCE.md`. It is a temporary foundation, not Relay’s final identity. Apple remains a quality reference for platform-native behavior and careful state feedback.
 
@@ -42,7 +42,7 @@ Restrained foundation with a stronger courtside state. Court blue occupies less 
 --danger: oklch(0.56 0.2 26);
 ```
 
-Dark mode uses neutral blue-black architecture rather than inverting light colors. The app never follows the operating-system theme implicitly: it starts light, exposes a labeled toggle, and stores the user’s choice. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
+Dark mode uses neutral blue-black architecture rather than inverting light colors. The app follows the device until it stores the user’s explicit Light, Dark, or System choice. Public pages place the three-option appearance control in the footer so primary header actions stay focused. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
 
 ### Color rules
 
