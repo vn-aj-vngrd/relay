@@ -8,10 +8,10 @@ import { PublicQuickPlay } from "@/features/matches/public-quick-play";
 export const metadata: Metadata = {
   title: "Quick Play — Free pickleball scorekeeper",
   description:
-    "Add two or four players and keep pickleball score from one phone. Free, public, and no account required.",
+    "Add players by name, run pickleball rotations, and keep score from one phone. Free, public, and no account required.",
   openGraph: {
     title: "Relay Quick Play",
-    description: "Add the players and keep pickleball score from one phone—no account required.",
+    description: "Add players, run court rotations, and keep score from one phone—no account required.",
     type: "website",
   },
 };

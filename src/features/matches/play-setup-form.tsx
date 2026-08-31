@@ -1,46 +1,13 @@
 "use client";
 
-import { ArrowsClockwise, CrownSimple, Scales, Stack, UsersFour } from "@phosphor-icons/react";
 import { useActionState, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { startPlay, type StartPlayActionState } from "./actions";
+import { playModeOptions } from "./play-mode-options";
 import type { PlayMode } from "./rotation";
-
-const options: Array<{ mode: PlayMode; title: string; description: string; icon: typeof Stack }> = [
-  {
-    mode: "queue",
-    title: "Paddle Stack",
-    description: "Keep courts moving as players arrive, rest, or leave.",
-    icon: Stack,
-  },
-  {
-    mode: "random",
-    title: "Mix It Up",
-    description: "Rotate together with new partners and fair rests each round.",
-    icon: ArrowsClockwise,
-  },
-  {
-    mode: "balanced",
-    title: "Balanced Mix",
-    description: "Build close teams from everyone’s self-described playing experience.",
-    icon: Scales,
-  },
-  {
-    mode: "king_of_court",
-    title: "Court Climb",
-    description: "Winners move toward Court 1 and partners split every round.",
-    icon: CrownSimple,
-  },
-  {
-    mode: "round_robin",
-    title: "Team Round Robin",
-    description: "Keep pairs together and play every other pair once.",
-    icon: UsersFour,
-  },
-];
 
 type SetupPlayer = { id: string; name: string; skillLevel?: string | null };
 
@@ -128,7 +95,7 @@ export function PlaySetupForm({
       <fieldset>
         <legend className="sr-only">Play setup</legend>
         <div className="divide-y divide-line border-y border-line">
-          {options.map(({ mode: value, title, description, icon: Icon }) => {
+          {playModeOptions.map(({ mode: value, title, description, icon: Icon }) => {
             const disabled =
               (value === "king_of_court" && !climbAvailable) || (value === "round_robin" && !roundRobinAvailable);
             const selected = mode === value;

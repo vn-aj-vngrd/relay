@@ -44,14 +44,18 @@ test("the public court finder works without an account", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
-test("public Quick Play starts and scores without an account", async ({ page }) => {
+test("public Quick Play prepares players, rotates, and scores without an account", async ({ page }) => {
   await page.goto("/play");
-  await expect(page.getByRole("heading", { name: "Start a game now" })).toBeVisible();
-  await page.getByRole("button", { name: "Start doubles" }).click();
-  await page.getByRole("button", { name: "Add one point to side 1" }).click();
-  await expect(page.getByLabel("Side 1 score 1")).toHaveText("1");
-  await page.getByRole("button", { name: "Undo" }).click();
-  await expect(page.getByLabel("Side 1 score 0")).toHaveText("0");
+  await expect(page.getByRole("heading", { name: "Set up Play" })).toBeVisible();
+  for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
+    await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
+  }
+  await page.getByRole("button", { name: "Start Play" }).click();
+  await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
+  await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
+  await page.getByRole("button", { name: "Finish match" }).click();
+  await expect(page.getByRole("heading", { name: "Standings" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start next match" })).toBeVisible();
 });
 
 test("an authenticated host and guest can complete the core session flow", async ({ page, browser }, testInfo) => {
@@ -471,7 +475,7 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
   await page.goto("/play");
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBe(0);
-  const button = page.getByRole("button", { name: "Start doubles" });
+  const button = page.getByRole("button", { name: "Start Play" });
   const box = await button.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
   expect(await button.evaluate((element) => getComputedStyle(element).cursor)).toBe("pointer");
