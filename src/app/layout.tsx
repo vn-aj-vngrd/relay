@@ -17,13 +17,35 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
+const siteOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002";
+
 export const metadata: Metadata = {
-  title: { default: "Relay — Pickleball with friends", template: "%s · Relay" },
-  description: "Plan casual pickleball with friends, share one invite, run the courts, and split the cost.",
+  title: { default: "Relay — Pickleball planner, court finder and scorekeeper", template: "%s · Relay" },
+  description:
+    "Plan pickleball games, find verified courts in the Philippines, manage RSVPs and rotations, and keep score with Relay.",
   applicationName: "Relay",
+  category: "sports",
+  manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Relay", statusBarStyle: "default" },
   formatDetection: { telephone: false },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002"),
+  metadataBase: new URL(siteOrigin),
+  openGraph: {
+    siteName: "Relay",
+    locale: "en_PH",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/relay-ball.svg", type: "image/svg+xml", sizes: "any" },
@@ -34,8 +56,24 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Relay",
+    url: siteOrigin,
+    logo: new URL("/pwa-512.png", siteOrigin).toString(),
+    description: "Pickleball planning, court discovery, rotations, and scoring for players in the Philippines.",
+  };
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Relay",
+    url: siteOrigin,
+    inLanguage: "en-PH",
+  };
+
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
+    <html lang="en-PH" data-theme="light" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV !== "production" ? (
           <script
@@ -51,6 +89,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
       </head>
       <body className={`${inter.variable} ${geistMono.variable}`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([organizationJsonLd, websiteJsonLd]).replaceAll("<", "\\u003c"),
+          }}
+        />
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>

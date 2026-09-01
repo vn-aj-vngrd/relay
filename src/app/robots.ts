@@ -7,9 +7,12 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/courts", "/privacy", "/terms"],
+      allow: "/",
       disallow: [
+        "/account-suspended",
         "/admin/",
+        "/admin-access-denied",
+        "/admin-security",
         "/api/",
         "/auth/",
         "/court/",
@@ -20,9 +23,11 @@ export default function robots(): MetadataRoute.Robots {
         "/home",
         "/login",
         "/notifications",
+        "/offline",
         "/onboarding/",
         "/preferences",
         "/profile/",
+        "/read-only",
         "/s/",
         "/search",
         "/set-password",

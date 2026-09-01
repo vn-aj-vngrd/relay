@@ -1,39 +1,64 @@
 import { ArrowSquareOut, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
-import { db } from "@/db/client";
-import { venues } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
-
-const getCourt = cache(async (slug: string) =>
-  db.query.venues.findFirst({
-    where: and(eq(venues.slug, slug), eq(venues.listingStatus, "verified")),
-  }),
-);
+import { getCourtListingBySlug } from "@/features/venues/directory";
+import { getPublicEnv } from "@/lib/env";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const court = await getCourt((await params).slug);
-  if (!court) return { title: "Court not found" };
+  const court = await getCourtListingBySlug((await params).slug);
+  if (!court) return { title: "Court not found", robots: { index: false, follow: false } };
+  const description = `${court.name} at ${court.address}. See court count, setting, price, paddle rental, parking, directions, and booking details.`;
   return {
-    title: court.name,
-    description: `${court.name} in the Philippines. Check the address, court details, directions, and booking link.`,
+    title: `${court.name} pickleball court`,
+    description,
+    alternates: { canonical: `/courts/${court.slug}` },
+    openGraph: {
+      title: `${court.name} pickleball court`,
+      description,
+      url: `/courts/${court.slug}`,
+      type: "website",
+    },
+    twitter: { card: "summary_large_image", title: court.name, description },
   };
 }
 
 export default async function CourtPage({ params }: { params: Promise<{ slug: string }> }) {
   const slug = (await params).slug;
-  const [court, user] = await Promise.all([getCourt(slug), getCurrentUser()]);
+  const [court, user] = await Promise.all([getCourtListingBySlug(slug), getCurrentUser()]);
   if (!court) notFound();
+
+  const origin = getPublicEnv().NEXT_PUBLIC_APP_URL;
+  const courtUrl = `${origin}/courts/${court.slug}`;
+  const sameAs = [court.websiteUrl, court.socialUrl].filter((url): url is string => Boolean(url));
+  const courtJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    "@id": `${courtUrl}#court`,
+    name: court.name,
+    url: courtUrl,
+    address: { "@type": "PostalAddress", streetAddress: court.address, addressCountry: "PH" },
+    geo: { "@type": "GeoCoordinates", latitude: court.latitude, longitude: court.longitude },
+    sameAs,
+    additionalProperty: [
+      court.courtCount ? { "@type": "PropertyValue", name: "Pickleball courts", value: court.courtCount } : null,
+      court.environment ? { "@type": "PropertyValue", name: "Setting", value: court.environment } : null,
+      court.paddleRental ? { "@type": "LocationFeatureSpecification", name: "Paddle rental", value: true } : null,
+      court.parking ? { "@type": "LocationFeatureSpecification", name: "Parking", value: court.parking } : null,
+    ].filter(Boolean),
+  };
 
   const gamePath = `/games/new?${new URLSearchParams({ venue: court.name, address: court.address }).toString()}`;
   const createHref = user ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courtJsonLd).replaceAll("<", "\\u003c") }}
+      />
       <p className="text-sm font-semibold text-primary">Verified Philippines court</p>
       <h1 className="mt-2 app-title">{court.name}</h1>
       <p className="mt-3 flex items-start gap-2 text-muted">

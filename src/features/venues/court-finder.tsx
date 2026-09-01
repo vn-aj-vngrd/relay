@@ -195,6 +195,7 @@ function CourtResults({
   mobileEdgeToEdge,
   compactHeader,
   suggestHref,
+  detailBasePath,
 }: {
   results: CourtResult[];
   selectedId: string | null;
@@ -205,9 +206,10 @@ function CourtResults({
   mobileEdgeToEdge: boolean;
   compactHeader: boolean;
   suggestHref: string | null;
+  detailBasePath: "/court" | "/courts";
 }) {
   const listRef = useRef<HTMLUListElement>(null);
-  const rowRefs = useRef(new Map<string, HTMLButtonElement>());
+  const rowRefs = useRef(new Map<string, HTMLAnchorElement>());
 
   useEffect(() => {
     const list = listRef.current;
@@ -249,15 +251,19 @@ function CourtResults({
             const active = venue.id === selectedId;
             return (
               <li key={venue.id} className="[content-visibility:auto] [contain-intrinsic-size:auto_76px]">
-                <button
+                <Link
                   ref={(element) => {
                     if (element) rowRefs.current.set(venue.id, element);
                     else rowRefs.current.delete(venue.id);
                   }}
-                  type="button"
-                  onClick={() => onSelect(venue.id)}
-                  aria-pressed={active}
-                  className={`pressable relative w-full px-4 py-3.5 text-left ${active ? "bg-primary-soft/55 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:bg-primary" : "hover:bg-surface-strong/60"}`}
+                  href={`${detailBasePath}/${venue.slug}`}
+                  onClick={(event) => {
+                    if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    onSelect(venue.id);
+                  }}
+                  aria-current={active ? "location" : undefined}
+                  className={`pressable relative block w-full px-4 py-3.5 text-left ${active ? "bg-primary-soft/55 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:bg-primary" : "hover:bg-surface-strong/60"}`}
                 >
                   <span className="flex items-start justify-between gap-3">
                     <strong className="text-sm font-[650] leading-5 text-ink">{venue.name}</strong>
@@ -279,7 +285,7 @@ function CourtResults({
                       {venueMeta(venue).join(" · ")}
                     </span>
                   ) : null}
-                </button>
+                </Link>
               </li>
             );
           })}
@@ -633,6 +639,7 @@ export function CourtFinder({
             mobileEdgeToEdge={!compactPreview}
             compactHeader={!compactPreview}
             suggestHref={isAuthenticated && !compactPreview ? "/court/suggest" : null}
+            detailBasePath={detailBasePath}
           />
         </div>
       </div>

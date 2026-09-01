@@ -75,6 +75,10 @@ export const getCourtListings = unstable_cache(queryCourtListings, [courtDirecto
   tags: [courtDirectoryTag],
 });
 
+export async function getCourtListingBySlug(slug: string) {
+  return (await getCourtListings()).find((court) => court.slug === slug) ?? null;
+}
+
 export async function getCourtSuggestions() {
   return (await getCourtListings()).map(({ id, name, address }) => ({ id, name, address }));
 }

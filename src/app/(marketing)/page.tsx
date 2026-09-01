@@ -20,12 +20,22 @@ import {
 import { RecapTemplatePreview } from "@/features/marketing/recap-template-preview";
 
 export const metadata: Metadata = {
-  title: "Relay — Plan pickleball with friends",
-  description: "Plan a pickleball game, share the link, manage RSVPs and courts, split costs, and record scores.",
+  title: { absolute: "Relay — Plan pickleball games with friends" },
+  description:
+    "Plan a pickleball game, share one RSVP link, organize players and courts, split costs, run rotations, and record scores with Relay.",
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Relay — Plan pickleball with friends",
-    description: "Set the time and court, then share one link for RSVPs, payments, scores, chat, and photos.",
+    title: "Relay — Plan pickleball games with friends",
+    description: "One link for the plan, RSVPs, court rotations, payments, scores, chat, and photos.",
+    url: "/",
     type: "website",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Relay pickleball planning" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Relay — Plan pickleball games with friends",
+    description: "Plan the game, share one link, organize the courts, and keep score.",
+    images: ["/opengraph-image"],
   },
 };
 
