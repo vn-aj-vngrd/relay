@@ -261,220 +261,240 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
   }
 
   return (
-    <section aria-labelledby="quick-play-setup" className="mx-auto w-full max-w-3xl">
-      <div>
-        <p className="sport-label text-primary">No account needed</p>
-        <h1 id="quick-play-setup" className="app-title mt-2">
+    <section aria-labelledby="quick-play-setup" className="mx-auto w-full max-w-[1180px]">
+      <header>
+        <h1 id="quick-play-setup" className="app-title">
           Set up Play
         </h1>
-        <p className="mt-3 max-w-2xl leading-7 text-muted">
-          Add everyone by name, choose the court flow, then run rotations and scores from this phone. Nothing is
-          uploaded.
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Add players, choose the court flow, and begin the first rotation. Everything stays on this device.
         </p>
-      </div>
+      </header>
 
-      <section aria-labelledby="quick-players-title" className="mt-9">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <h2 id="quick-players-title" className="text-lg font-bold">
-              Who’s playing
-            </h2>
-            <p className="mt-1 text-sm text-muted">At least four players. Add four players for each active court.</p>
-          </div>
-          <Button type="button" variant="secondary" onClick={addPlayer} disabled={players.length >= 24}>
-            <UserPlus aria-hidden size={17} /> Add player
-          </Button>
-        </div>
-        <div className="mt-4 divide-y divide-line border-y border-line">
-          {players.map((player, index) => (
-            <div key={player.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_190px_44px] sm:items-end">
-              <label className="text-sm font-[650]">
-                Player {index + 1}
-                <input
-                  value={player.name}
-                  onChange={(event) => updatePlayer(player.id, { name: event.target.value })}
-                  maxLength={50}
-                  autoComplete="off"
-                  placeholder={`Enter player ${index + 1} name`}
-                  className="field"
-                />
-              </label>
-              {mode === "balanced" ? (
-                <label className="text-sm font-[650]">
-                  Playing experience
-                  <select
-                    value={player.experience}
-                    onChange={(event) =>
-                      updatePlayer(player.id, { experience: event.target.value as PlayingExperience })
-                    }
-                    className="field h-11"
-                  >
-                    {playingExperienceOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : (
-                <span className="hidden sm:block" />
-              )}
-              <button
-                type="button"
-                onClick={() => removePlayer(player.id)}
-                disabled={players.length <= 4}
-                aria-label={`Remove player ${index + 1}`}
-                className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-danger disabled:opacity-30"
-              >
-                <Trash aria-hidden size={17} />
-              </button>
+      <div className="mx-auto w-full max-w-2xl pb-8 pt-6">
+        <section aria-labelledby="quick-players-title">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 id="quick-players-title" className="text-lg font-bold">
+                Who’s playing
+              </h2>
+              <p className="mt-1 text-sm leading-5 text-muted">
+                Add at least four players. Each active court needs four.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section aria-labelledby="quick-format-title" className="mt-10">
-        <div className="grid gap-5 sm:grid-cols-[1fr_180px] sm:items-end">
-          <div>
-            <h2 id="quick-format-title" className="text-lg font-bold">
-              Choose how this game runs
-            </h2>
-            <p className="mt-1 text-sm text-muted">The same Play modes available in a planned Relay game.</p>
+            <Button type="button" variant="quiet" onClick={addPlayer} disabled={players.length >= 24}>
+              <UserPlus aria-hidden size={17} /> Add player
+            </Button>
           </div>
-          <label className="text-sm font-[650]">
-            Active courts
-            <select
-              value={courtCount}
-              onChange={(event) => setCourtCount(Number(event.target.value))}
-              className="field h-11"
-            >
-              {Array.from({ length: maxCourts }, (_, index) => (
-                <option key={index + 1} value={index + 1}>
-                  {index + 1} {index ? "courts" : "court"}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <fieldset className="mt-5">
-          <legend className="sr-only">Play mode</legend>
-          <div className="divide-y divide-line border-y border-line">
-            {playModeOptions.map(({ mode: value, title, description, icon: Icon }) => {
-              const disabled =
-                (value === "king_of_court" && players.length !== courtCount * 4) ||
-                (value === "round_robin" && !pairsAvailable);
-              const selected = mode === value;
-              return (
-                <label
-                  key={value}
-                  className={`flex min-h-20 gap-3 py-4 ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}
-                >
-                  <input
-                    type="radio"
-                    name="quick-play-mode"
-                    value={value}
-                    checked={selected}
-                    disabled={disabled}
-                    onChange={() => {
-                      setMode(value);
-                      setError("");
-                    }}
-                    className="sr-only"
-                  />
-                  <span
-                    aria-hidden
-                    className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selected ? "bg-primary text-white" : "bg-surface-strong text-muted"}`}
-                  >
-                    <Icon size={18} weight={selected ? "bold" : "regular"} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center justify-between gap-3">
-                      <strong className="font-[680]">{title}</strong>
-                      <span
-                        aria-hidden
-                        className={`h-4 w-4 rounded-full border-4 ${selected ? "border-primary bg-surface" : "border-line bg-surface"}`}
-                      />
-                    </span>
-                    <span className="mt-1 block text-sm leading-5 text-muted">{description}</span>
-                    {value === "king_of_court" && disabled ? (
-                      <span className="mt-1.5 block text-xs font-medium text-warning">
-                        Needs exactly {courtCount * 4} players for {courtCount} {courtCount === 1 ? "court" : "courts"}.
-                      </span>
-                    ) : value === "round_robin" && disabled ? (
-                      <span className="mt-1.5 block text-xs font-medium text-warning">
-                        Needs an even roster of at least four players.
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {mode === "queue" ? (
-          <div className="mt-6 space-y-5">
-            <fieldset>
-              <legend className="text-sm font-[650]">Partner style</legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {[
-                  { value: "mix" as const, title: "Mix partners", detail: "Relay balances variety." },
-                  { value: "fixed" as const, title: "Keep pairs together", detail: "Teams rotate as one unit." },
-                ].map((option) => (
-                  <label
-                    key={option.value}
-                    className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 ${option.value === "fixed" && !pairsAvailable ? "cursor-not-allowed opacity-55" : "cursor-pointer"} ${partnerPolicy === option.value ? "border-primary bg-primary-soft" : "border-line bg-surface"}`}
-                  >
+          <div className="mt-3 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
+            {players.map((player, index) => (
+              <div key={player.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-end gap-2 py-3">
+                <div className="min-w-0 space-y-3">
+                  <label className="block text-sm font-[650]">
+                    Player {index + 1}
                     <input
-                      type="radio"
-                      name="quick-partner-policy"
-                      value={option.value}
-                      checked={partnerPolicy === option.value}
-                      disabled={option.value === "fixed" && !pairsAvailable}
-                      onChange={() => setPartnerPolicy(option.value)}
-                      className="h-4 w-4 accent-[var(--primary)]"
+                      value={player.name}
+                      onChange={(event) => updatePlayer(player.id, { name: event.target.value })}
+                      maxLength={50}
+                      autoComplete="off"
+                      placeholder="Enter name"
+                      className="field"
                     />
-                    <span>
-                      <strong className="block text-sm">{option.title}</strong>
-                      <span className="block text-xs text-muted">{option.detail}</span>
-                    </span>
                   </label>
-                ))}
+                  {mode === "balanced" ? (
+                    <label className="block text-sm font-[650]">
+                      Playing experience
+                      <select
+                        value={player.experience}
+                        onChange={(event) =>
+                          updatePlayer(player.id, { experience: event.target.value as PlayingExperience })
+                        }
+                        className="field h-11"
+                      >
+                        {playingExperienceOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removePlayer(player.id)}
+                  disabled={players.length <= 4}
+                  aria-label={`Remove player ${index + 1}`}
+                  className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-danger disabled:opacity-30"
+                >
+                  <Trash aria-hidden size={17} />
+                </button>
               </div>
-            </fieldset>
-            <label className="block text-sm font-[650]">
-              Queue rule
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="quick-format-title" className="mt-10">
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <h2 id="quick-format-title" className="text-lg font-bold">
+                Choose how this game runs
+              </h2>
+              <p className="mt-1 text-sm leading-5 text-muted">
+                Court assignments, queue, and scores stay together on this page.
+              </p>
+            </div>
+            <label className="w-full text-sm font-[650] sm:w-40">
+              Active courts
               <select
-                value={queueRule}
-                onChange={(event) => setQueueRule(event.target.value as QueueRule)}
-                className="field h-11 max-w-xl"
+                value={courtCount}
+                onChange={(event) => setCourtCount(Number(event.target.value))}
+                className="field h-11"
               >
-                <option value="adaptive">Adaptive — respond to the queue</option>
-                <option value="four_off">Four rotate — a fresh group every match</option>
-                <option value="winner_stays">Winners stay — then rotate off</option>
+                {Array.from({ length: maxCourts }, (_, index) => (
+                  <option key={index + 1} value={index + 1}>
+                    {index + 1} {index ? "courts" : "court"}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
-        ) : null}
 
-        {fixedPartners && pairsAvailable ? (
-          <PairBuilder players={players} order={pairOrder} onChange={setPairOrder} />
-        ) : null}
-      </section>
+          <fieldset className="mt-8">
+            <legend className="sr-only">Play mode</legend>
+            <div className="divide-y divide-line border-y border-line">
+              {playModeOptions.map(({ mode: value, title, description, icon: Icon }) => {
+                const disabled =
+                  (value === "king_of_court" && players.length !== courtCount * 4) ||
+                  (value === "round_robin" && !pairsAvailable);
+                const selected = mode === value;
+                return (
+                  <label
+                    key={value}
+                    className={`flex min-h-20 gap-3 py-4 ${disabled ? "cursor-not-allowed opacity-55" : "cursor-pointer"}`}
+                  >
+                    <input
+                      type="radio"
+                      name="quick-play-mode"
+                      value={value}
+                      checked={selected}
+                      disabled={disabled}
+                      onChange={() => {
+                        setMode(value);
+                        setError("");
+                      }}
+                      className="sr-only"
+                    />
+                    <span
+                      aria-hidden
+                      className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selected ? "bg-primary text-white" : "bg-surface-strong text-muted"}`}
+                    >
+                      <Icon size={18} weight={selected ? "bold" : "regular"} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center justify-between gap-3">
+                        <strong className="font-[680]">{title}</strong>
+                        <span
+                          aria-hidden
+                          className={`h-4 w-4 rounded-full border-4 ${selected ? "border-primary bg-surface" : "border-line bg-surface"}`}
+                        />
+                      </span>
+                      <span className="mt-1 block text-sm leading-5 text-muted">{description}</span>
+                      {value === "king_of_court" && disabled ? (
+                        <span className="mt-1.5 block text-xs font-medium text-warning">
+                          Needs exactly {courtCount * 4} players for {courtCount}{" "}
+                          {courtCount === 1 ? "court" : "courts"}.
+                        </span>
+                      ) : value === "round_robin" && disabled ? (
+                        <span className="mt-1.5 block text-xs font-medium text-warning">
+                          Needs an even roster of at least four players.
+                        </span>
+                      ) : null}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
 
-      {error ? (
-        <p role="alert" className="mt-5 text-sm font-medium text-danger">
-          {error}
-        </p>
-      ) : null}
-      <div className="mt-7 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted">
-          {players.length} players · {courtCount} {courtCount === 1 ? "court" : "courts"} · saved only on this page
-        </p>
-        <Button type="button" size="large" onClick={start} className="w-full sm:w-auto">
-          Start Play
-        </Button>
+          {mode === "queue" ? (
+            <div className="mt-5 space-y-5">
+              <fieldset>
+                <legend className="text-sm font-[650]">Partner style</legend>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {[
+                    { value: "mix" as const, title: "Mix partners", detail: "Relay balances variety." },
+                    { value: "fixed" as const, title: "Keep pairs together", detail: "Teams rotate as one unit." },
+                  ].map((option) => (
+                    <label
+                      key={option.value}
+                      className={`flex min-h-14 items-center gap-3 rounded-lg border px-3 ${option.value === "fixed" && !pairsAvailable ? "cursor-not-allowed opacity-55" : "cursor-pointer"} ${partnerPolicy === option.value ? "border-primary bg-primary-soft" : "border-line bg-surface"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="quick-partner-policy"
+                        value={option.value}
+                        checked={partnerPolicy === option.value}
+                        disabled={option.value === "fixed" && !pairsAvailable}
+                        onChange={() => setPartnerPolicy(option.value)}
+                        className="h-4 w-4 accent-[var(--primary)]"
+                      />
+                      <span>
+                        <strong className="block text-sm">{option.title}</strong>
+                        <span className="block text-xs text-muted">{option.detail}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div>
+                <label className="block text-sm font-[650]">
+                  Queue rule
+                  <select
+                    value={queueRule}
+                    onChange={(event) => setQueueRule(event.target.value as QueueRule)}
+                    className="field h-11"
+                  >
+                    <option value="adaptive">Adaptive — Relay responds to the queue</option>
+                    <option value="four_off">
+                      {fixedPartners
+                        ? "Both pairs rotate — two fresh teams"
+                        : "Four rotate — a fresh group every match"}
+                    </option>
+                    <option value="winner_stays">
+                      {fixedPartners
+                        ? "Winning pair stays — up to two games"
+                        : "Winners stay — split and take the next two"}
+                    </option>
+                  </select>
+                </label>
+                <p className="mt-1.5 text-xs leading-5 text-muted">
+                  {fixedPartners
+                    ? "Adaptive keeps the winning pair for a short queue and rotates both pairs when another two teams are waiting."
+                    : "Adaptive uses winners-stay for a short queue and rotates all four when four or more players are waiting."}
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          {fixedPartners && pairsAvailable ? (
+            <PairBuilder players={players} order={pairOrder} onChange={setPairOrder} />
+          ) : null}
+        </section>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted">
+            {players.length} players · {courtCount} {courtCount === 1 ? "court" : "courts"} · saved only on this page
+          </p>
+          <Button type="button" onClick={start} className="w-full sm:w-auto">
+            Start Play
+          </Button>
+        </div>
+        {error ? (
+          <p role="alert" className="mt-3 text-sm font-medium text-danger">
+            {error}
+          </p>
+        ) : null}
       </div>
     </section>
   );
@@ -560,7 +580,7 @@ function QuickPlayLive({
             ) : null}
           </div>
           {session.activeMatches.length ? (
-            <div className="mt-4 grid gap-5 xl:grid-cols-2">
+            <div className="mt-4 grid gap-5">
               {session.activeMatches.map((match) => (
                 <QuickCourt
                   key={match.id}
