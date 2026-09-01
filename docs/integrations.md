@@ -48,6 +48,8 @@ Geoapify remains server-only and supplies Philippines-bounded map tiles. The ded
 
 Password authentication is the production baseline. Public signup fails closed unless Cloudflare Turnstile’s site and secret keys are configured; the server verifies every token directly with Cloudflare before calling Supabase Auth. Email confirmation must be enabled only together with verified production SMTP, because Supabase’s built-in sender is not a public-production mail service.
 
+The source-controlled recovery email is [`../supabase/templates/recovery.html`](../supabase/templates/recovery.html), with the subject `Reset your Relay password`. Hosted projects manage this template in Supabase Dashboard → Authentication → Email Templates → Reset password; paste the committed HTML there and keep `{{ .ConfirmationURL }}` unchanged. The matching `auth.email.template.recovery` section in `supabase/config.toml` also keeps local Auth emails aligned. An email from `noreply@mail.app.supabase.io` means custom SMTP is not active yet; successful production delivery must come from `Relay <relay@vanajvanguardia.tech>` through Resend.
+
 The Supabase **Before User Created** hook enforces the singleton `public.signup_settings.account_cap` before every Auth identity is created, including Admin API accounts. The cap starts at 200 and is changed from Admin Console → Overview. The hook and admin action share a transaction advisory lock so concurrent signups cannot exceed the final place. Missing settings fail closed. Apply migration `0023_signup_account_cap` before pushing `supabase/config.toml`, or Auth will reject all account creation until the hook function exists.
 
 1. Open `/login` on localhost.

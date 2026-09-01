@@ -1,0 +1,84 @@
+<!doctype html>
+<!-- impeccable-disable overused-font: transactional email requires web-safe system fonts -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reset your Relay password</title>
+  </head>
+  <body style="margin: 0; background: #f5f5f3; color: #202124; font-family: Arial, Helvetica, sans-serif">
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0">
+      Choose a new password for your Relay account.
+    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #f5f5f3">
+      <tr>
+        <td align="center" style="padding: 40px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellspacing="0"
+            cellpadding="0"
+            style="max-width: 560px; border: 1px solid #ddddda; border-radius: 16px; background: #ffffff"
+          >
+            <tr>
+              <td style="padding: 34px 34px 12px">
+                <table role="presentation" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="padding-right: 10px">
+                      <span
+                        style="display: block; width: 20px; height: 20px; border-radius: 999px; background: #b7db28"
+                      ></span>
+                    </td>
+                    <td style="font-size: 18px; font-weight: 700; letter-spacing: -0.2px">Relay</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 34px 34px">
+                <h1 style="margin: 0; font-size: 28px; line-height: 1.25; letter-spacing: -0.6px">
+                  Reset your password
+                </h1>
+                <p style="margin: 18px 0 0; color: #61636a; font-size: 16px; line-height: 1.65">
+                  We received a request to reset your Relay password. Choose a new one using the secure link below.
+                </p>
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top: 28px">
+                  <tr>
+                    <td style="border-radius: 9px; background: #5556c7">
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        style="
+                          display: inline-block;
+                          padding: 14px 22px;
+                          color: #ffffff;
+                          font-size: 15px;
+                          font-weight: 700;
+                          line-height: 1;
+                          text-decoration: none;
+                        "
+                        >Choose a new password</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 24px 0 0; color: #777980; font-size: 13px; line-height: 1.6">
+                  This link expires in one hour. If you didn’t request a password reset, you can safely ignore this
+                  email.
+                </p>
+                <p style="margin: 24px 0 0; color: #777980; font-size: 12px; line-height: 1.6">
+                  Button not working? Copy and paste this address into your browser:<br />
+                  <a href="{{ .ConfirmationURL }}" style="color: #5556c7; word-break: break-all"
+                    >{{ .ConfirmationURL }}</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin: 18px 0 0; color: #85878d; font-size: 12px; line-height: 1.5">
+            Relay · Plan the game. Share the link. Play.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -243,10 +243,11 @@ pass = "env(RESEND_API_KEY)"
 admin_email = "env(SMTP_FROM_EMAIL)"
 sender_name = "Relay"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Keep the recovery email source-controlled; paste the same HTML into the hosted
+# Supabase Reset password template when provisioning production.
+[auth.email.template.recovery]
+subject = "Reset your Relay password"
+content_path = "./supabase/templates/recovery.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
