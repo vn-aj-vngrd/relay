@@ -86,7 +86,13 @@ describe("local Quick Play session", () => {
     expect(restoreQuickPlaySession("not-json")).toBeNull();
   });
 
-  it("enforces Court Climb and fixed-pair requirements before play starts", () => {
+  it("enforces court capacity, Court Climb, and fixed-pair requirements before play starts", () => {
+    expect(() => startQuickPlay(configuration({ players: players(4), courtCount: 2 }))).toThrow(
+      "Add 4 more players for 2 courts.",
+    );
+    expect(() => startQuickPlay(configuration({ players: players(24), courtCount: 7 }))).toThrow(
+      "Choose between 1 and 6 active courts.",
+    );
     expect(() => startQuickPlay(configuration({ players: players(7), courtCount: 1, mode: "king_of_court" }))).toThrow(
       "Court Climb needs exactly four players per court.",
     );

@@ -57,7 +57,7 @@ describe("PublicQuickPlay", () => {
     Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`).forEach((name, index) => {
       fireEvent.change(screen.getByRole("textbox", { name: `Player ${index + 1}` }), { target: { value: name } });
     });
-    fireEvent.change(screen.getByRole("combobox", { name: "Active courts" }), { target: { value: "2" } });
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Active courts" }), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
 
     fireEvent.click(screen.getAllByRole("button", { name: "Open full-screen scoreboard" })[0]);
@@ -94,6 +94,18 @@ describe("PublicQuickPlay", () => {
     nameFourPlayers();
     fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
     expect(screen.getByText("Balanced Mix · scores and rotations stay on this page")).toBeVisible();
+  });
+
+  it("uses a bounded court count and explains the player requirement", () => {
+    render(<PublicQuickPlay />);
+    const courts = screen.getByRole("spinbutton", { name: "Active courts" });
+    expect(courts).toHaveAttribute("min", "1");
+    expect(courts).toHaveAttribute("max", "6");
+    fireEvent.change(courts, { target: { value: "3" } });
+    expect(screen.getByText("Add 8 more players.")).toBeVisible();
+    nameFourPlayers();
+    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Add 8 more players for 3 courts.");
   });
 
   it("adds players and lets fixed teams be prepared", () => {

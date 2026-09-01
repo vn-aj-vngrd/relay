@@ -26,6 +26,8 @@ import { playModeOptions } from "./play-mode-options";
 import {
   canStartNextQuickPlayMatches,
   finishQuickPlayMatch,
+  maxQuickPlayCourts,
+  maxQuickPlayPlayers,
   type QuickPlayMatch,
   type QuickPlayPlayer,
   type QuickPlaySession,
@@ -339,12 +341,15 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
   const nextPlayerNumber = useRef(5);
   const [players, setPlayers] = useState(initialPlayers);
   const [pairOrder, setPairOrder] = useState(initialPlayers.map((player) => player.id));
-  const [courtCount, setCourtCount] = useState(1);
+  const [courtCountInput, setCourtCountInput] = useState("1");
   const [mode, setMode] = useState<PlayMode>("queue");
   const [queueRule, setQueueRule] = useState<QueueRule>("adaptive");
   const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
   const [error, setError] = useState("");
-  const maxCourts = Math.max(1, Math.min(4, Math.floor(players.length / 4)));
+  const courtCount = Number(courtCountInput);
+  const requiredPlayerCount = courtCount * 4;
+  const missingPlayerCount = Math.max(0, requiredPlayerCount - players.length);
+  const courtCountValid = Number.isInteger(courtCount) && courtCount >= 1 && courtCount <= maxQuickPlayCourts;
   const pairsAvailable = players.length >= 4 && players.length % 2 === 0;
   const fixedPartners = mode === "round_robin" || (mode === "queue" && partnerPolicy === "fixed");
 
@@ -354,7 +359,7 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
   }
 
   function addPlayer() {
-    if (players.length >= 24) return;
+    if (players.length >= maxQuickPlayPlayers) return;
     const player = { id: `quick-player-${nextPlayerNumber.current}`, name: "", experience: "casual" as const };
     nextPlayerNumber.current += 1;
     setPlayers((current) => [...current, player]);
@@ -367,7 +372,6 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
     const nextPlayers = players.filter((player) => player.id !== id);
     setPlayers(nextPlayers);
     setPairOrder((current) => current.filter((playerId) => playerId !== id));
-    setCourtCount((current) => Math.min(current, Math.max(1, Math.floor(nextPlayers.length / 4))));
     setError("");
   }
 
@@ -408,11 +412,9 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
               <h2 id="quick-players-title" className="text-lg font-bold">
                 Who’s playing
               </h2>
-              <p className="mt-1 text-sm leading-5 text-muted">
-                Add at least four players. Each active court needs four.
-              </p>
+              <p className="mt-1 text-sm leading-5 text-muted">Add 4–24 players. Each active court needs four.</p>
             </div>
-            <Button type="button" variant="quiet" onClick={addPlayer} disabled={players.length >= 24}>
+            <Button type="button" variant="quiet" onClick={addPlayer} disabled={players.length >= maxQuickPlayPlayers}>
               <UserPlus aria-hidden size={17} /> Add player
             </Button>
           </div>
@@ -474,20 +476,34 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
                 Court assignments, queue, and scores stay together on this page.
               </p>
             </div>
-            <label className="w-full text-sm font-[650] sm:w-40">
-              Active courts
-              <select
-                value={courtCount}
-                onChange={(event) => setCourtCount(Number(event.target.value))}
+            <div className="w-full sm:w-48">
+              <label htmlFor="quick-court-count" className="text-sm font-[650]">
+                Active courts
+              </label>
+              <input
+                id="quick-court-count"
+                type="number"
+                value={courtCountInput}
+                min={1}
+                max={maxQuickPlayCourts}
+                step={1}
+                inputMode="numeric"
+                onChange={(event) => setCourtCountInput(event.target.value)}
+                aria-describedby="quick-court-count-help"
+                aria-invalid={!courtCountValid || missingPlayerCount > 0}
                 className="field h-11"
+              />
+              <p
+                id="quick-court-count-help"
+                className={`mt-1.5 text-xs leading-5 ${!courtCountValid || missingPlayerCount > 0 ? "text-warning" : "text-muted"}`}
               >
-                {Array.from({ length: maxCourts }, (_, index) => (
-                  <option key={index + 1} value={index + 1}>
-                    {index + 1} {index ? "courts" : "court"}
-                  </option>
-                ))}
-              </select>
-            </label>
+                {!courtCountValid
+                  ? `Choose 1–${maxQuickPlayCourts} courts.`
+                  : missingPlayerCount > 0
+                    ? `Add ${missingPlayerCount} more ${missingPlayerCount === 1 ? "player" : "players"}.`
+                    : `${requiredPlayerCount} players fill ${courtCount} ${courtCount === 1 ? "court" : "courts"}.`}
+              </p>
+            </div>
           </div>
 
           <fieldset className="mt-8">

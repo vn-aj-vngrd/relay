@@ -33,12 +33,12 @@ export default async function GameWorkspaceLayout({
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <RealtimeRefresh sessionId={id} silent />
-      <div className="hidden shrink-0 lg:block">
+      <div className="hidden shrink-0 lg:block [&>nav]:mb-0">
         <AppBreadcrumbs
           items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
         />
       </div>
-      <div className="game-workspace-actions flex shrink-0 items-center justify-between gap-3 py-2.5 sm:py-4 lg:pt-5">
+      <div className="game-workspace-actions flex shrink-0 items-center justify-between gap-3 py-2.5 sm:py-4 lg:py-2">
         <div className="flex min-w-0 flex-1 items-center gap-1">
           <ButtonLink
             href="/games"

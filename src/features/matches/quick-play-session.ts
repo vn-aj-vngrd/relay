@@ -37,6 +37,8 @@ export type QuickPlaySession = QuickPlayConfiguration & {
 };
 
 export const quickPlayStorageKey = "relay-quick-play-session";
+export const maxQuickPlayCourts = 6;
+export const maxQuickPlayPlayers = maxQuickPlayCourts * 4;
 
 const quickPlayPlayerSchema = z.object({
   id: z.string().min(1),
@@ -57,8 +59,8 @@ const quickPlayMatchSchema = z.object({
 });
 
 const quickPlaySessionSchema = z.object({
-  players: z.array(quickPlayPlayerSchema).min(4),
-  courtCount: z.number().int().min(1).max(4),
+  players: z.array(quickPlayPlayerSchema).min(4).max(maxQuickPlayPlayers),
+  courtCount: z.number().int().min(1).max(maxQuickPlayCourts),
   mode: z.enum(["queue", "random", "balanced", "king_of_court", "round_robin"]),
   queueRule: z.enum(["adaptive", "four_off", "winner_stays"]),
   fixedPairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])),
@@ -108,11 +110,24 @@ function nextPlans(session: QuickPlaySession) {
 
 function validateConfiguration(configuration: QuickPlayConfiguration) {
   if (configuration.players.length < 4) throw new Error("Add at least four players.");
+  if (configuration.players.length > maxQuickPlayPlayers) {
+    throw new Error(`Quick Play supports up to ${maxQuickPlayPlayers} players.`);
+  }
   const names = configuration.players.map((player) => player.name.trim().toLocaleLowerCase());
   if (names.some((name) => !name)) throw new Error("Add a name for every player.");
   if (new Set(names).size !== names.length) throw new Error("Use a different name for each player.");
-  if (configuration.courtCount < 1 || configuration.courtCount > Math.floor(configuration.players.length / 4)) {
-    throw new Error("Add four players for every court in use.");
+  if (
+    !Number.isInteger(configuration.courtCount) ||
+    configuration.courtCount < 1 ||
+    configuration.courtCount > maxQuickPlayCourts
+  ) {
+    throw new Error(`Choose between 1 and ${maxQuickPlayCourts} active courts.`);
+  }
+  const missingPlayers = configuration.courtCount * 4 - configuration.players.length;
+  if (missingPlayers > 0) {
+    throw new Error(
+      `Add ${missingPlayers} more ${missingPlayers === 1 ? "player" : "players"} for ${configuration.courtCount} ${configuration.courtCount === 1 ? "court" : "courts"}.`,
+    );
   }
   if (configuration.mode === "king_of_court" && configuration.players.length !== configuration.courtCount * 4) {
     throw new Error("Court Climb needs exactly four players per court.");

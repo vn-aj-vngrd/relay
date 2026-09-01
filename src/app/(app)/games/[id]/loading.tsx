@@ -14,13 +14,13 @@ export default function SessionLoading() {
       >
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <div
-            className="relative min-h-44 overflow-hidden px-4 py-5 sm:min-h-48 sm:px-8 sm:py-7"
+            className="relative overflow-hidden px-4 pb-6 pt-5 sm:px-8 sm:pb-10 sm:pt-7"
             style={{ backgroundColor: "var(--session-cover, var(--court))" }}
           >
             <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
             <Skeleton className="h-3 w-40 bg-white/15" />
-            <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
-            <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
+            <Skeleton className="mt-3 h-8 w-3/4 bg-white/15 sm:mt-4 sm:h-10" />
+            <Skeleton className="mt-2 h-5 w-32 bg-white/15 sm:mt-3 sm:h-6" />
           </div>
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <div className="grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line pb-7">
