@@ -6,15 +6,20 @@ export default function GroupsLoading() {
       <header className="flex items-center justify-between gap-4">
         <Skeleton className="h-7 w-28" />
         <Skeleton className="h-9 w-9 rounded-lg sm:hidden" />
-        <Skeleton className="hidden h-9 w-28 rounded-lg sm:block" />
       </header>
 
-      <div className="mt-5 sm:mt-10">
-        <div className="mb-8 hidden items-center justify-between gap-4 border-b border-line pb-4 sm:flex">
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-11 w-20 rounded-lg" />
+      <div className="mt-4 sm:mt-5">
+        <div className="mb-6 flex min-w-0 items-center gap-3 pb-3">
+          <div className="flex min-w-0 flex-1 gap-2 overflow-hidden">
+            <Skeleton className="h-11 w-14 shrink-0 rounded-full sm:h-9" />
+            <Skeleton className="h-11 w-24 shrink-0 rounded-full sm:h-9" />
+            <Skeleton className="h-11 w-20 shrink-0 rounded-full sm:h-9" />
+          </div>
+          <div className="hidden shrink-0 items-center gap-3 sm:flex">
+            <Skeleton className="h-9 w-[68px] rounded-lg" />
+            <Skeleton className="h-9 w-28 rounded-lg" />
+          </div>
         </div>
-        <Skeleton className="mb-3 h-5 w-24" />
         <div className="divide-y divide-line border-y border-line">
           {Array.from({ length: 3 }, (_, index) => (
             <div

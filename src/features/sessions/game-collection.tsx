@@ -1,10 +1,11 @@
 "use client";
 
-import { CalendarBlank, CaretLeft, CaretRight, GridFour, List, MapPin } from "@phosphor-icons/react";
+import { CalendarBlank, CalendarPlus, CaretLeft, CaretRight, GridFour, List, MapPin } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { z } from "zod";
 
+import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 
@@ -538,11 +539,6 @@ export function GameCollection({
 
   const liveGames = upcoming.filter((game) => game.status === "live");
   const scheduledGames = upcoming.filter((game) => game.status !== "live");
-  const visibleUpcoming = filter === "past" ? [] : upcoming;
-  const visiblePast = filter === "upcoming" ? [] : past;
-  const visibleCount = visibleUpcoming.length + visiblePast.length;
-  const hasVisibleMore =
-    (filter !== "past" && Boolean(upcomingCursor)) || (filter !== "upcoming" && Boolean(pastCursor));
   const filterItems = [
     { value: "upcoming" as const, label: "Upcoming" },
     { value: "all" as const, label: "All" },
@@ -569,13 +565,9 @@ export function GameCollection({
   );
 
   return (
-    <div className="mt-4 sm:mt-10">
-      <div className="mb-5 border-b border-line pb-3 sm:mb-8 sm:pb-4">
-        <div className="flex min-w-0 items-center gap-4">
-          <p aria-live="polite" className="hidden shrink-0 text-sm text-muted sm:block">
-            {visibleCount}
-            {hasVisibleMore ? "+" : ""} {visibleCount === 1 && !hasVisibleMore ? "game" : "games"}
-          </p>
+    <div className="mt-4 sm:mt-5">
+      <div className="mb-6 pb-3">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0 flex-1">
             <TabChipRail
               label="Filter games"
@@ -588,7 +580,7 @@ export function GameCollection({
           <div
             role="group"
             aria-label="Game view"
-            className="hidden shrink-0 rounded-lg bg-surface-strong p-1 sm:inline-flex"
+            className="hidden shrink-0 rounded-lg bg-surface-strong p-0.5 sm:inline-flex"
           >
             {viewOptions.map(({ value, label, icon: Icon }) => (
               <button
@@ -597,12 +589,18 @@ export function GameCollection({
                 aria-label={`${label} view`}
                 aria-pressed={mode === value}
                 onClick={() => saveView(value)}
-                className={`pressable grid h-9 w-9 place-items-center rounded-lg ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+                className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
               >
                 <Icon aria-hidden size={value === "grid" ? 17 : 18} />
               </button>
             ))}
           </div>
+          <span className="hidden shrink-0 sm:block">
+            <ButtonLink href="/games/new">
+              <CalendarPlus aria-hidden size={17} />
+              Create game
+            </ButtonLink>
+          </span>
         </div>
       </div>
       {mode === "calendar" ? (

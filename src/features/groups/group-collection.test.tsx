@@ -28,12 +28,25 @@ describe("GroupCollection", () => {
       "href",
       "/groups/tuesday-dink-club",
     );
+    expect(screen.getByRole("link", { name: "Create group" })).toHaveAttribute("href", "/groups/new");
+    expect(screen.queryByText("1 group")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("groups-grid")).toBeVisible();
     expect(screen.getByTestId("groups-grid").querySelector(".grid")).toHaveClass("min-[380px]:grid-cols-2");
     expect(screen.getByRole("link", { name: /Tuesday Dink Club/ })).toHaveClass("p-3.5", "sm:p-5");
     expect(localStorage.getItem("relay-groups-view")).toBe("grid");
+  });
+
+  it("filters groups by organizing and joined roles", () => {
+    render(<GroupCollection items={items} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Joined" }));
+    expect(screen.getByText("No joined groups")).toBeVisible();
+    expect(screen.queryByText("Tuesday Dink Club")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Organizing" }));
+    expect(screen.getByText("Tuesday Dink Club")).toBeVisible();
   });
 
   it("shows the selected group photo as a circle in list and grid views", () => {

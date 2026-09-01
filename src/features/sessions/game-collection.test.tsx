@@ -85,6 +85,8 @@ describe("GameCollection", () => {
       "#bd4545",
     );
     expect(screen.getByText("67% ready")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute("href", "/games/new");
+    expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
@@ -130,7 +132,7 @@ describe("GameCollection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Past" }));
     expect(screen.queryByText("Saturday Night Pickle")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
-    expect(screen.getByText("1 game")).toBeVisible();
+    expect(screen.queryByText("1 game")).not.toBeInTheDocument();
   });
 
   it("pins live games above scheduled games and never shows them in past", () => {

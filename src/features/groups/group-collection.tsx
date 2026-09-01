@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarBlank, CaretRight, GridFour, List, UsersThree } from "@phosphor-icons/react";
+import { CalendarBlank, CaretRight, GridFour, List, Plus, UsersThree } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
+import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 
 export type GroupCollectionItem = {
@@ -22,10 +23,16 @@ export type GroupCollectionItem = {
 };
 
 type ViewMode = "list" | "grid";
+type GroupFilter = "all" | "organizing" | "joined";
 const preferenceKey = "relay-groups-view";
 const viewOptions = [
   { value: "list" as const, label: "List", icon: List },
   { value: "grid" as const, label: "Grid", icon: GridFour },
+];
+const filterOptions = [
+  { value: "all" as const, label: "All" },
+  { value: "organizing" as const, label: "Organizing" },
+  { value: "joined" as const, label: "Joined" },
 ];
 
 function getView(): ViewMode {
@@ -179,6 +186,7 @@ export function GroupCollection({
   nextCursor?: string | null;
 }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+  const [filter, setFilter] = useState<GroupFilter>("all");
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
   const [loading, setLoading] = useState(false);
@@ -221,45 +229,73 @@ export function GroupCollection({
     return () => observer.disconnect();
   }, [loadMore, nextCursor]);
 
+  const visibleItems = items.filter((item) => {
+    if (filter === "organizing") return item.role === "owner" || item.role === "admin";
+    if (filter === "joined") return item.role === "member";
+    return true;
+  });
+
   return (
-    <div className="mt-5 sm:mt-10">
-      <div className="mb-8 hidden items-center justify-between gap-4 border-b border-line pb-4 sm:flex">
-        <p className="text-sm text-muted">
-          {items.length} {items.length === 1 ? "group" : "groups"}
-        </p>
-        <div role="group" aria-label="Group view" className="inline-flex rounded-lg bg-surface-strong p-1">
-          <button
-            type="button"
-            aria-label="List view"
-            aria-pressed={mode === "list"}
-            onClick={() => saveView("list")}
-            className={`pressable grid h-9 w-9 place-items-center rounded-lg ${mode === "list" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-          >
-            <List aria-hidden size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label="Grid view"
-            aria-pressed={mode === "grid"}
-            onClick={() => saveView("grid")}
-            className={`pressable grid h-9 w-9 place-items-center rounded-lg ${mode === "grid" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-          >
-            <GridFour aria-hidden size={17} />
-          </button>
+    <div className="mt-4 sm:mt-5">
+      <div className="mb-6 flex min-w-0 items-center gap-3 pb-3">
+        <div className="min-w-0 flex-1">
+          <TabChipRail
+            label="Filter groups"
+            items={filterOptions}
+            value={filter}
+            onChange={setFilter}
+            className="min-w-0"
+          />
+        </div>
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+          <div role="group" aria-label="Group view" className="inline-flex rounded-lg bg-surface-strong p-0.5">
+            <button
+              type="button"
+              aria-label="List view"
+              aria-pressed={mode === "list"}
+              onClick={() => saveView("list")}
+              className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === "list" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+            >
+              <List aria-hidden size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="Grid view"
+              aria-pressed={mode === "grid"}
+              onClick={() => saveView("grid")}
+              className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === "grid" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+            >
+              <GridFour aria-hidden size={17} />
+            </button>
+          </div>
+          {items.length ? (
+            <ButtonLink href="/groups/new">
+              <Plus aria-hidden size={16} />
+              Create group
+            </ButtonLink>
+          ) : null}
         </div>
       </div>
-      <section aria-labelledby="your-groups">
-        <h2 id="your-groups" className="mb-3 text-lg font-[680]">
-          Your groups
-        </h2>
+      <section aria-label="Your groups">
         {items.length ? (
-          mode === "grid" ? (
-            <div data-testid="groups-grid">
-              <GroupGrid items={items} />
-            </div>
+          visibleItems.length ? (
+            mode === "grid" ? (
+              <div data-testid="groups-grid">
+                <GroupGrid items={visibleItems} />
+              </div>
+            ) : (
+              <div data-testid="groups-list">
+                <GroupList items={visibleItems} />
+              </div>
+            )
           ) : (
-            <div data-testid="groups-list">
-              <GroupList items={items} />
+            <div className="border-y border-line py-8">
+              <p className="font-[650]">No {filter === "organizing" ? "organizing" : "joined"} groups</p>
+              <p className="mt-1 text-sm text-muted">
+                {filter === "organizing"
+                  ? "Groups you own or help manage will appear here."
+                  : "Groups where you’re a member will appear here."}
+              </p>
             </div>
           )
         ) : (

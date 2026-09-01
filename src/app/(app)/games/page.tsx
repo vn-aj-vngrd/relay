@@ -1,6 +1,3 @@
-import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
-
-import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
 import { GameCollection, GameViewMenu } from "@/features/sessions/game-collection";
@@ -20,12 +17,6 @@ export default async function GamesPage() {
         <div className="sm:hidden">
           <GameViewMenu />
         </div>
-        <span className="hidden sm:block">
-          <ButtonLink href="/games/new">
-            <CalendarPlus size={17} />
-            Create game
-          </ButtonLink>
-        </span>
       </div>
       <GameCollection upcomingPage={upcomingPage} pastPage={pastPage} todayKey={sessionDateKey(new Date())} />
     </div>
