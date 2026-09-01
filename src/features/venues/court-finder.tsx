@@ -435,7 +435,7 @@ export function CourtFinder({
     <div className={className}>
       <section
         aria-label="Find and filter courts"
-        className={`${showFilterTopBorder ? "lg:border-t" : ""} border-line pb-3 lg:py-4`}
+        className={`${showFilterTopBorder ? "lg:border-t lg:pt-4" : ""} border-line pb-3 lg:pb-4`}
       >
         <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <div>

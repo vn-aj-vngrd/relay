@@ -7,7 +7,7 @@ export default function VenuesLoading() {
       role="status"
       className="court-finder-workspace flex min-h-0 flex-col xl:h-full"
     >
-      <div className="shrink-0 pb-3 lg:py-4">
+      <div className="shrink-0 pb-3 lg:pb-4">
         <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <Skeleton className="h-11 w-full rounded-lg" />
           <Skeleton className="h-11 w-11 rounded-lg lg:w-36" />
