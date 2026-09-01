@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { changePassword } from "@/features/auth/actions";
 import { requireUser } from "@/features/auth/session";
@@ -27,15 +28,11 @@ export default async function ChangePasswordPage({
       </header>
       <div className="max-w-md py-8">
         {success ? (
-          <p role="status" className="mb-6 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
+          <Alert variant="success" className="mb-6">
             Your password has been changed.
-          </p>
+          </Alert>
         ) : null}
-        {error ? (
-          <p role="alert" className="mb-6 rounded-lg bg-danger/8 px-3.5 py-3 text-sm font-medium text-danger">
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert className="mb-6">{error}</Alert> : null}
         <form action={changePassword} className="space-y-5">
           <div>
             <label htmlFor="current-password" className="text-sm font-semibold">

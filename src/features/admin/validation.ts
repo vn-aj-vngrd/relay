@@ -16,6 +16,7 @@ export const adminReasonSchema = z
   .max(240, "Keep the reason under 240 characters.");
 export const adminUserActionSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
 export const adminOnboardingResetSchema = z.object({ userId: z.uuid() });
+export const adminPasswordResetSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
 export const adminSessionActionSchema = z.object({ sessionId: z.uuid(), reason: adminReasonSchema });
 export const adminSignupCapacitySchema = z.object({
   accountCap: z.coerce

@@ -16,6 +16,7 @@ import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
 import { ModerationControl } from "@/features/admin/moderation-control";
 import { OnboardingResetControl } from "@/features/admin/onboarding-reset-control";
+import { PasswordResetControl } from "@/features/admin/password-reset-control";
 import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import { getAdminUser } from "@/features/admin/queries";
 import { discoverySourceLabel } from "@/features/onboarding/discovery-source";
@@ -167,6 +168,15 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
               ) : (
                 <p className="text-sm font-medium text-muted">A profile is required before onboarding can start.</p>
               )}
+            </div>
+          </section>
+          <section className="border-t border-line pt-5">
+            <h2 className="text-sm font-semibold">Password recovery</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Create a temporary password after verifying the account owner. Existing MFA stays enforced.
+            </p>
+            <div className="mt-4">
+              <PasswordResetControl targetId={user.id} email={user.email} />
             </div>
           </section>
           <section className="border-t border-line pt-5">

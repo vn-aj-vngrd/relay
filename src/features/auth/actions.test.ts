@@ -2,22 +2,33 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(async () => ({ allowed: true })),
+  challengeAndVerify: vi.fn(),
+  cookieGet: vi.fn(),
   cookieSet: vi.fn(),
+  getAuthenticatorAssuranceLevel: vi.fn(),
+  getUser: vi.fn(),
+  googleEnabled: true,
+  listFactors: vi.fn(),
   redirect: vi.fn(() => {
     throw new Error("redirect");
   }),
   resetPasswordForEmail: vi.fn(),
+  signInWithOAuth: vi.fn(),
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
+  updateUser: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ delete: vi.fn(), get: vi.fn(), set: mocks.cookieSet })),
+  cookies: vi.fn(async () => ({ delete: vi.fn(), get: mocks.cookieGet, set: mocks.cookieSet })),
 }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/env", () => ({
-  getPublicEnv: () => ({ NEXT_PUBLIC_APP_URL: "https://relay.vanajvanguardia.tech" }),
+  getPublicEnv: () => ({
+    NEXT_PUBLIC_APP_URL: "https://relay.vanajvanguardia.tech",
+    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: mocks.googleEnabled,
+  }),
 }));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
@@ -27,24 +38,82 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(async () => ({
     auth: {
+      getUser: mocks.getUser,
+      mfa: {
+        challengeAndVerify: mocks.challengeAndVerify,
+        getAuthenticatorAssuranceLevel: mocks.getAuthenticatorAssuranceLevel,
+        listFactors: mocks.listFactors,
+      },
       resetPasswordForEmail: mocks.resetPasswordForEmail,
+      signInWithOAuth: mocks.signInWithOAuth,
       signInWithPassword: mocks.signInWithPassword,
       signUp: mocks.signUp,
+      updateUser: mocks.updateUser,
     },
   })),
 }));
 vi.mock("./destination", () => ({ resolvePostAuthDestination: vi.fn() }));
 vi.mock("./session", () => ({ getCurrentUser: vi.fn() }));
 
-import { createPasswordAccount, requestPasswordReset, signInWithPassword } from "./actions";
+import {
+  createPasswordAccount,
+  requestPasswordReset,
+  signInWithGoogle,
+  signInWithPassword,
+  updateRecoveredPassword,
+  verifyRecoveryMfa,
+} from "./actions";
 
 beforeEach(() => {
+  mocks.challengeAndVerify.mockReset();
   mocks.checkRateLimit.mockClear();
+  mocks.cookieGet.mockReset();
   mocks.cookieSet.mockClear();
+  mocks.getAuthenticatorAssuranceLevel.mockReset();
+  mocks.getUser.mockReset();
+  mocks.listFactors.mockReset();
   mocks.redirect.mockClear();
+  mocks.googleEnabled = true;
   mocks.resetPasswordForEmail.mockReset();
+  mocks.signInWithOAuth.mockReset();
   mocks.signInWithPassword.mockReset();
   mocks.signUp.mockReset();
+  mocks.updateUser.mockReset();
+});
+
+describe("signInWithGoogle", () => {
+  it("starts OAuth with the trusted callback and remembers a safe destination", async () => {
+    mocks.signInWithOAuth.mockResolvedValue({
+      data: { url: "https://accounts.google.com/o/oauth2/v2/auth" },
+      error: null,
+    });
+    const formData = new FormData();
+    formData.set("next", "//malicious.example");
+
+    await expect(signInWithGoogle(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
+      provider: "google",
+      options: { redirectTo: "https://relay.vanajvanguardia.tech/auth/callback" },
+    });
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "relay_auth_next",
+      "/home",
+      expect.objectContaining({ httpOnly: true, maxAge: 600, sameSite: "lax" }),
+    );
+    expect(mocks.redirect).toHaveBeenLastCalledWith("https://accounts.google.com/o/oauth2/v2/auth");
+  });
+
+  it("fails closed when Google authentication is not enabled", async () => {
+    mocks.googleEnabled = false;
+
+    await expect(signInWithGoogle(new FormData())).rejects.toThrow("redirect");
+
+    expect(mocks.signInWithOAuth).not.toHaveBeenCalled();
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/login?error=Google+sign-in+is+not+available+yet.+Sign+in+with+your+email+and+password.",
+    );
+  });
 });
 
 describe("signInWithPassword", () => {
@@ -82,6 +151,50 @@ describe("requestPasswordReset", () => {
       "relay_recovery_email",
       "player@example.com",
       expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/forgot-password" }),
+    );
+  });
+});
+
+describe("verifyRecoveryMfa", () => {
+  it("upgrades an email recovery session with its verified authenticator before password entry", async () => {
+    mocks.cookieGet.mockReturnValue({ value: "1" });
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "recovery-user" } }, error: null });
+    mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal2" },
+      error: null,
+    });
+    mocks.listFactors.mockResolvedValue({
+      data: { totp: [{ id: "verified-factor", status: "verified" }] },
+      error: null,
+    });
+    mocks.challengeAndVerify.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("code", "123456");
+
+    await expect(verifyRecoveryMfa(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.challengeAndVerify).toHaveBeenCalledWith({ factorId: "verified-factor", code: "123456" });
+    expect(mocks.redirect).toHaveBeenLastCalledWith("/update-password");
+  });
+});
+
+describe("updateRecoveredPassword", () => {
+  it("refuses the password mutation until an MFA account reaches AAL2", async () => {
+    mocks.cookieGet.mockReturnValue({ value: "1" });
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "recovery-user" } }, error: null });
+    mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal2" },
+      error: null,
+    });
+    const formData = new FormData();
+    formData.set("password", "NewRelayPass123");
+    formData.set("confirmation", "NewRelayPass123");
+
+    await expect(updateRecoveredPassword(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/update-password?error=Verify+your+authenticator+before+choosing+a+new+password.",
     );
   });
 });

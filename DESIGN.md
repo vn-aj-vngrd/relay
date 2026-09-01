@@ -142,7 +142,7 @@ One solid action per decision area. Primary buttons use court blue and a subtle 
 
 ### Inputs
 
-Text and numeric controls use a 44–48px white surface, cool keyline, and court-blue focus halo. Labels sit above inputs. Date, time, and select fields use Relay-owned accessible popovers rather than browser-native pickers so their hierarchy, spacing, and error treatment remain consistent across iOS, Android, and desktop. Mobile popovers become compact bottom sheets; desktop popovers stay anchored to their trigger. Validation appears inline and names the corrective action.
+Text and numeric controls use a 44–48px white surface, cool keyline, and court-blue focus halo. Labels sit above inputs. Date, time, and select fields use Relay-owned accessible popovers rather than browser-native pickers so their hierarchy, spacing, and error treatment remain consistent across iOS, Android, and desktop. Mobile popovers become compact bottom sheets; desktop popovers stay anchored to their trigger. Field validation appears inline and names the corrective action. Form-level errors and success messages use the shared `Alert` banner immediately above the form; they never appear as loose colored text below the final field.
 
 ### Navigation
 

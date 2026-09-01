@@ -1,8 +1,10 @@
 "use client";
 
+import { GoogleLogo } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
+import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
@@ -53,23 +55,16 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
       </header>
       <main id="main-content" className="flex flex-1 items-center justify-center px-5 py-6 sm:px-8 sm:py-10">
         <div className="w-full max-w-[410px]">
-          {error ? (
-            <p
-              role="alert"
-              className="mb-5 rounded-lg bg-danger/8 px-3.5 py-3 text-sm font-medium leading-5 text-danger ring-1 ring-danger/15"
-            >
-              {error}
-            </p>
-          ) : null}
+          {error ? <Alert className="mb-5">{error}</Alert> : null}
           {sent ? (
-            <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
+            <Alert variant="info" className="mb-5">
               Check your email for your secure sign-in link.
-            </p>
+            </Alert>
           ) : null}
           {passwordUpdated ? (
-            <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
+            <Alert variant="success" className="mb-5">
               Your password was updated. Sign in with your new password.
-            </p>
+            </Alert>
           ) : null}
           <AuthForm next={next} initialMode={mode} />
           {googleEnabled ? (
@@ -82,6 +77,7 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
               <form action={signInWithGoogle}>
                 <input type="hidden" name="next" value={next ?? "/home"} />
                 <SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">
+                  <GoogleLogo aria-hidden="true" size={18} weight="bold" />
                   Continue with Google
                 </SubmitButton>
               </form>

@@ -20,6 +20,7 @@
     "release:check": "./scripts/release-gate.sh",
     "release:verify-production": "./scripts/verify-production-release.sh",
     "backup:database": "./scripts/backup-database.sh",
+    "auth:reset-limits": "node --env-file=.env.local --experimental-strip-types scripts/reset-auth-rate-limits.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "venues:import-cebu": "node --env-file=.env.local --experimental-strip-types scripts/import-cebu-venues.ts",

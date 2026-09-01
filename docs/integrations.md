@@ -14,6 +14,19 @@ The wizard creates `relay-pickleball` in Supabase Singapore (`ap-southeast-1`), 
 
 The wizard is idempotent at the project and environment level. Re-running it finds the named Supabase project, keeps existing local values when you press Enter, updates Vercel environment variables, and lets Drizzle skip an applied migration.
 
+### Google OAuth setup
+
+The setup wizard opens each dashboard and enables the UI only after you confirm the provider is saved. To configure Google manually:
+
+1. In [Google Auth Platform](https://console.cloud.google.com/auth/clients), create or select the Relay project. Complete **Branding**, choose **External** under **Audience**, and add test-user Google accounts while the app remains in Testing.
+2. Create an OAuth client with application type **Web application**. Add `http://localhost:3002` and the production app origin under **Authorized JavaScript origins**.
+3. Add `https://<supabase-project-ref>.supabase.co/auth/v1/callback` under **Authorized redirect URIs**. This is Supabase’s callback, not Relay’s `/auth/callback`; it must match exactly, including scheme and trailing slash.
+4. In Supabase → Authentication → Sign In / Providers → Google, enable Google and save the client ID and client secret. Never put the Google client secret in Relay’s `.env` files or a `NEXT_PUBLIC_` variable.
+5. Set `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true` in `.env.local` and in Vercel Preview and Production, then restart `pnpm dev` and redeploy. Next.js freezes public variables into the browser bundle at build time.
+6. Open `/login`, choose **Continue with Google**, approve consent, and confirm Relay returns through `/auth/callback` to onboarding for a new account or the requested safe destination for an existing account. Cancel consent once to verify the login page offers a clear retry.
+
+Keep the button disabled until Google and Supabase are both configured. Google credentials stay in Google and Supabase; Relay stores only the public feature flag.
+
 ## Environment contract
 
 | Variable                               | Source                                        | Exposure                  | Destination   |
@@ -93,6 +106,14 @@ Migration `0020_admin_pagination_security` adds a server-only fixed-window limit
 
 Application limits protect authentication attempts, admin pagination, search, Geoapify tiles, feedback and court submissions, session creation and RSVP, chat, storage uploads and public analytics. Supabase Auth permits up to 30 authentication emails per hour through custom SMTP. Relay permits 10 signup attempts per account and 30 per IP per hour; tighter password-reset limits remain 3 requests per account and 8 per IP per hour. Vercel Firewall and Supabase Auth rate limits remain independent outer controls. A 429 response includes `Retry-After`; do not retry it in a tight loop.
 
+During intentional production testing, an operator can reset only the current auth buckets for a known email, IP, or both:
+
+```bash
+pnpm auth:reset-limits -- --scope all-auth --email tester@example.com --confirm-production
+```
+
+Use `--scope signup`, `password-reset`, or `password-login` to narrow the reset further; add `--ip <address>` only when the IP bucket was exhausted. The command never stores or prints the supplied identity and cannot reset Supabase’s independent one-minute email cooldown. Never expose this operation through a public route or application control.
+
 **Complete when:** anonymous PostgREST access to `rate_limit_buckets` is denied, a test identity exceeds a low test limit atomically, and the cleanup Cron appears in Supabase Cron.
 
 ## Scheduled reminders
@@ -119,7 +140,11 @@ When changing service-worker caching behavior, bump `VERSION` in `public/sw.js`,
 
 The admin directory uses **Courts** as its product label and `/admin/courts` as its canonical route; database, audit, and API identifiers remain `venues` for compatibility. Legacy `/admin/venues` links redirect to Courts.
 
-After changing the allowlist, redeploy the affected Vercel environment. Every allowlisted administrator must enroll and verify a TOTP authenticator at `/admin-security`; admin pages, actions, and APIs require an `aal2` session and redirect an `aal1` session to that setup/challenge route. Verify an allowlisted account can complete MFA and open `/admin`, a normal account reaches `/admin-access-denied`, and all user suspension, restoration, and game cancellation events appear in the audit log.
+After changing the allowlist, redeploy the affected Vercel environment. Every allowlisted administrator must enroll and verify a TOTP authenticator at `/admin-security`; admin pages, actions, and APIs require an `aal2` session and redirect an `aal1` session to that setup/challenge route.
+
+Password recovery preserves MFA. A recovery email creates an `aal1` session; accounts with a verified TOTP factor must enter the current six-digit authenticator code before Relay exposes the new-password form. An AAL2 administrator may create a one-time temporary password from the user detail page after recording a reason. This does not delete the user’s factors: after signing in with the temporary password, the user verifies the existing authenticator before choosing a permanent password. Use this only after verifying the account owner through an established support channel, and share the generated credential privately.
+
+Verify an allowlisted account can complete MFA and open `/admin`, a normal account reaches `/admin-access-denied`, an MFA account can complete both email and administrator-assisted password recovery, and all user suspension, restoration, password reset, and game cancellation events appear in the audit log.
 
 ## Health monitoring
 

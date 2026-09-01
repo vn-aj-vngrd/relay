@@ -6,6 +6,10 @@ const publicSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3002"),
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1),
+  NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: z
+    .union([z.enum(["true", "false"]), z.boolean()])
+    .default("false")
+    .transform((value) => value === true || value === "true"),
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().default(""),
 });
 
@@ -33,6 +37,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_GOOGLE_AUTH_ENABLED: process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   });
 }

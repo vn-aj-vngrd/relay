@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { Alert } from "@/components/ui/alert";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 
 import { createPasswordAccount, signInWithPassword } from "./actions";
@@ -72,6 +73,13 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
         </p>
       </div>
 
+      {!turnstileSiteKey ? (
+        <Alert className="mb-5">
+          {creating ? "Account creation" : "Sign in"} is temporarily unavailable while the security check is being
+          configured.
+        </Alert>
+      ) : null}
+
       <form action={creating ? createPasswordAccount : signInWithPassword} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="next" value={next} />
         <div>
@@ -137,12 +145,7 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
               onError={() => setCaptchaReady(false)}
             />
           </div>
-        ) : (
-          <p role="alert" className="text-sm leading-5 text-danger">
-            {creating ? "Account creation" : "Sign in"} is temporarily unavailable while the security check is being
-            configured.
-          </p>
-        )}
+        ) : null}
         <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaReady} />
         <p className="text-center text-xs leading-5 text-muted">
           {creating ? "By creating an account" : "By signing in"}, you agree to the{" "}

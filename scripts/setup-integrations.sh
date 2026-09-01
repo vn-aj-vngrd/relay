@@ -342,6 +342,10 @@ PRODUCTION_URL="https://${VERCEL_PROJECT_NAME}.vercel.app"
 set_vercel_env NEXT_PUBLIC_APP_URL "$PRODUCTION_URL"
 set_vercel_env NEXT_PUBLIC_SUPABASE_URL "$NEXT_PUBLIC_SUPABASE_URL"
 set_vercel_env NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY "$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+GOOGLE_AUTH_ENABLED=$(_existing NEXT_PUBLIC_GOOGLE_AUTH_ENABLED || true)
+[[ "$GOOGLE_AUTH_ENABLED" == "true" ]] || GOOGLE_AUTH_ENABLED="false"
+write_env NEXT_PUBLIC_GOOGLE_AUTH_ENABLED "$GOOGLE_AUTH_ENABLED"
+set_vercel_env NEXT_PUBLIC_GOOGLE_AUTH_ENABLED "$GOOGLE_AUTH_ENABLED"
 set_vercel_env SUPABASE_SECRET_KEY "$SUPABASE_SECRET_KEY"
 set_vercel_env DATABASE_URL "$DATABASE_URL"
 HEALTHCHECK_SECRET=$(_existing HEALTHCHECK_SECRET || true)
@@ -364,17 +368,27 @@ say "Configured the production Site URL, localhost/Vercel redirects, confirmed e
 stage "Google — OAuth client and Supabase provider"
 say "Google needs one Web application OAuth client. The client secret stays in Google and Supabase; Relay does not store it locally."
 open_url "https://console.cloud.google.com/auth/clients"
-step "Create or select a Google Cloud project named Relay. Configure the OAuth consent screen for External users."
+step "Create or select a Google Cloud project named Relay. In Google Auth Platform, set Branding and choose External under Audience."
+step "If the app remains in Testing, add every Google account that should be able to sign in as a test user."
 step "Create a Web application OAuth client named Relay Web."
-step "Authorized JavaScript origins: http://localhost:3002"
-step "Authorized JavaScript origins: ${PRODUCTION_URL}"
+step "Authorized JavaScript origin: http://localhost:3002"
+step "Authorized JavaScript origin: ${PRODUCTION_URL}"
 step "Authorized redirect URI: ${NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback"
-step "Create the client and copy its Client ID and Client Secret."
+step "Create the client and copy its Client ID and Client Secret. Redirect URI spelling and trailing slashes must match exactly."
 pause "Keep the Google credentials copied, then press Enter."
 open_url "https://supabase.com/dashboard/project/${PROJECT_REF}/auth/providers"
 step "Open Google, enable it, and paste the Client ID and Client Secret."
 step "Save the Google provider."
-pause "Finish the provider setup, then press Enter."
+if confirm "Is the Google provider saved and ready to test?"; then
+  write_env NEXT_PUBLIC_GOOGLE_AUTH_ENABLED "true"
+  set_vercel_env NEXT_PUBLIC_GOOGLE_AUTH_ENABLED "true"
+  step "Redeploying so Next.js includes the public Google feature flag in the browser bundle."
+  vercel deploy --prod --yes
+  say "Google sign-in is now visible locally after restarting pnpm dev and in this production deployment."
+else
+  warn "Google sign-in remains hidden. Re-run this wizard when the provider is ready."
+  SKIPPED+=("Google OAuth provider and NEXT_PUBLIC_GOOGLE_AUTH_ENABLED=true")
+fi
 
 stage "Verification — local, database, and production"
 export DATABASE_URL

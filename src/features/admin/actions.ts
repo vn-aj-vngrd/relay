@@ -14,6 +14,7 @@ import { requireAdmin } from "./auth";
 import {
   adminCreateUserSchema,
   adminOnboardingResetSchema,
+  adminPasswordResetSchema,
   adminSessionActionSchema,
   adminSignupCapacitySchema,
   adminUpdateProfileSchema,
@@ -172,6 +173,49 @@ export async function updateUserProfileAction(_: AdminActionState, formData: For
   if (existing?.username) revalidatePath(`/profile/${existing.username}`);
   revalidatePath(`/profile/${parsed.data.username}`);
   redirect(`/admin/users/${target.id}`);
+}
+
+export async function resetUserPasswordAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  const actor = await requireAdmin();
+  const parsed = adminPasswordResetSchema.safeParse({
+    userId: formData.get("userId"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the reset details." };
+
+  const target = await db.query.users.findFirst({
+    columns: { id: true, email: true },
+    where: eq(users.id, parsed.data.userId),
+  });
+  if (!target) return { error: "This account no longer exists." };
+
+  const temporaryPassword = `Relay-${randomBytes(9).toString("base64url")}7`;
+  const supabase = createSupabaseAdminClient();
+  const { data: authAccount, error: accountError } = await supabase.auth.admin.getUserById(target.id);
+  if (accountError || !authAccount.user) return { error: "Supabase could not load this account. Try again." };
+  const { error } = await supabase.auth.admin.updateUserById(target.id, {
+    password: temporaryPassword,
+    app_metadata: { ...authAccount.user.app_metadata, force_password_change: true },
+  });
+  if (error) return { error: "Supabase could not reset this password. Try again." };
+
+  await db.transaction(async (tx) => {
+    await tx.insert(adminAuditLogs).values({
+      actorUserId: actor.id,
+      action: "user.password_reset",
+      targetType: "user",
+      targetId: target.id,
+      reason: parsed.data.reason,
+      metadata: { source: "admin_console", mfaFactorsPreserved: true },
+    });
+  });
+
+  refreshAdminUser(target.id);
+  return {
+    success: "Temporary password created. The account’s authenticator remains required.",
+    temporaryPassword,
+    accountEmail: target.email,
+  };
 }
 
 export async function resetUserOnboardingAction(_: AdminActionState, formData: FormData): Promise<AdminActionState> {

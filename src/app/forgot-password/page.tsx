@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { Brand } from "@/components/shared/brand";
+import { Alert } from "@/components/ui/alert";
 import { EmailSentState } from "@/features/auth/email-sent-state";
 import { PasswordRecoveryForm } from "@/features/auth/password-recovery-form";
 
@@ -52,11 +53,7 @@ export default async function ForgotPasswordPage({
         <p className="mt-3 leading-7 text-muted">
           Enter the email used for Relay. We’ll send a secure link to choose a new password.
         </p>
-        {error ? (
-          <p role="alert" className="mt-6 rounded-lg bg-danger/8 px-3.5 py-3 text-sm font-medium text-danger">
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert className="mt-6">{error}</Alert> : null}
         <PasswordRecoveryForm />
       </div>
     </main>

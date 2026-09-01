@@ -206,6 +206,57 @@ export async function requestPasswordReset(formData: FormData) {
   redirect("/forgot-password?sent=1");
 }
 
+async function verifyPasswordMfa(formData: FormData, mode: "recovery" | "temporary-password") {
+  const destination = mode === "recovery" ? "/update-password" : "/set-password";
+  const cookieStore = await cookies();
+  const supabase = await createSupabaseServerClient();
+  const { data: currentUser, error: sessionError } = await supabase.auth.getUser();
+  const user = currentUser.user;
+  const authorized =
+    !sessionError &&
+    user &&
+    (mode === "recovery"
+      ? cookieStore.get("relay_password_recovery")?.value === "1"
+      : user.app_metadata.force_password_change === true);
+  if (!authorized) redirect(mode === "recovery" ? "/forgot-password" : "/login?next=/set-password");
+
+  const code = z
+    .string()
+    .regex(/^\d{6}$/)
+    .safeParse(formData.get("code"));
+  if (!code.success) authError("Enter the six-digit code from your authenticator app.", destination);
+  await guardAuthAttempt({
+    scope: `password-mfa-${mode}`,
+    email: user.email,
+    ipLimit: 20,
+    accountLimit: 10,
+    windowSeconds: 600,
+    destination,
+  });
+
+  const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError) authError("Your authenticator could not be checked. Try again.", destination);
+  if (assurance.currentLevel === "aal2") redirect(destination);
+  if (assurance.nextLevel !== "aal2") redirect(destination);
+
+  const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+  const factor = factors?.totp.find((candidate) => candidate.status === "verified");
+  if (factorsError || !factor)
+    authError("Your verified authenticator could not be loaded. Contact Relay support.", destination);
+
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: code.data });
+  if (error) authError("That code was not accepted. Wait for a new code and try again.", destination);
+  redirect(destination);
+}
+
+export async function verifyRecoveryMfa(formData: FormData) {
+  return verifyPasswordMfa(formData, "recovery");
+}
+
+export async function verifyTemporaryPasswordMfa(formData: FormData) {
+  return verifyPasswordMfa(formData, "temporary-password");
+}
+
 export async function updateRecoveredPassword(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = await createSupabaseServerClient();
@@ -216,6 +267,10 @@ export async function updateRecoveredPassword(formData: FormData) {
   const confirmation = formData.get("confirmation");
   if (!password.success) authError("Use at least 8 characters with a letter and number.", "/update-password");
   if (password.data !== confirmation) authError("Passwords do not match.", "/update-password");
+  const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError) authError("Your authenticator could not be checked. Try again.", "/update-password");
+  if (assurance.nextLevel === "aal2" && assurance.currentLevel !== "aal2")
+    authError("Verify your authenticator before choosing a new password.", "/update-password");
 
   const { error } = await supabase.auth.updateUser({ password: password.data });
   if (error) {
@@ -271,6 +326,10 @@ export async function setTemporaryPassword(formData: FormData) {
   if (password.data !== confirmation) redirect(`/set-password?error=${encodeURIComponent("Passwords do not match.")}`);
 
   const supabase = await createSupabaseServerClient();
+  const { data: assurance, error: assuranceError } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (assuranceError) authError("Your authenticator could not be checked. Try again.", "/set-password");
+  if (assurance.nextLevel === "aal2" && assurance.currentLevel !== "aal2")
+    authError("Verify your authenticator before choosing a new password.", "/set-password");
   const { error } = await supabase.auth.updateUser({ password: password.data });
   if (error) redirect(`/set-password?error=${encodeURIComponent("Your password could not be updated. Try again.")}`);
   const admin = createSupabaseAdminClient();
@@ -292,7 +351,16 @@ export async function signOut() {
 
 export async function signInWithGoogle(formData: FormData) {
   const next = nextPath(formData);
+  const env = getPublicEnv();
+  if (!env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED)
+    authError("Google sign-in is not available yet. Sign in with your email and password.", "/login", next);
   await guardAuthAttempt({ scope: "google-sign-in", ipLimit: 20, windowSeconds: 600, destination: "/login", next });
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback` },
+  });
+  if (error || !data.url) authError("Google sign-in could not start. Try again.", "/login", next);
   const cookieStore = await cookies();
   cookieStore.set("relay_auth_next", next, {
     httpOnly: true,
@@ -301,11 +369,5 @@ export async function signInWithGoogle(formData: FormData) {
     maxAge: 600,
     path: "/",
   });
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
-  });
-  if (error || !data.url) authError(error?.message ?? "Google sign-in could not start.");
   redirect(data.url);
 }

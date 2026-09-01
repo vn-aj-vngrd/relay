@@ -2,11 +2,24 @@ import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { resolvePostAuthDestination } from "@/features/auth/destination";
+import { safeNextPath } from "@/features/auth/destination-path";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
+  const cookieStore = await cookies();
+  const providerError = request.nextUrl.searchParams.get("error");
+  if (providerError) {
+    cookieStore.delete("relay_auth_next");
+    const message =
+      providerError === "access_denied"
+        ? "Google sign-in was canceled. You can try again or sign in with your email."
+        : "Google sign-in could not be completed. Try again.";
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, request.url));
+  }
+
   const code = request.nextUrl.searchParams.get("code");
   if (!code) {
+    cookieStore.delete("relay_auth_next");
     const destination =
       request.nextUrl.searchParams.get("recovery") === "1"
         ? "/forgot-password?error=This+reset+link+is+invalid+or+has+expired.+Request+a+new+one."
@@ -16,10 +29,17 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
-  if (error) return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));
+  if (error) {
+    cookieStore.delete("relay_auth_next");
+    return NextResponse.redirect(
+      new URL("/login?error=Authentication+could+not+be+completed.+Try+again.", request.url),
+    );
+  }
   const { data } = await supabase.auth.getUser();
-  if (!data.user) return NextResponse.redirect(new URL("/login?error=Authentication+did+not+finish.", request.url));
-  const cookieStore = await cookies();
+  if (!data.user) {
+    cookieStore.delete("relay_auth_next");
+    return NextResponse.redirect(new URL("/login?error=Authentication+did+not+finish.", request.url));
+  }
   if (request.nextUrl.searchParams.get("recovery") === "1") {
     cookieStore.set("relay_password_recovery", "1", {
       httpOnly: true,
@@ -30,7 +50,7 @@ export async function GET(request: NextRequest) {
     });
     return NextResponse.redirect(new URL("/update-password", request.url));
   }
-  const next = cookieStore.get("relay_auth_next")?.value ?? "/home";
+  const next = safeNextPath(cookieStore.get("relay_auth_next")?.value);
   cookieStore.delete("relay_auth_next");
   const destination = await resolvePostAuthDestination(next, data.user.id);
   return NextResponse.redirect(new URL(destination, request.url));

@@ -31,7 +31,7 @@ describe("AuthForm", () => {
     expect(
       screen.getAllByRole("button", { name: "Create account" }).find((button) => button.hasAttribute("disabled")),
     ).toBeDisabled();
-    expect(screen.getByText(/security check is being configured/i)).toHaveAttribute("role", "alert");
+    expect(screen.getByRole("alert")).toHaveTextContent(/security check is being configured/i);
     expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
     expect(screen.getByText("8 or more characters, including a letter and number.")).toBeVisible();
     expect(screen.queryByRole("link", { name: "Forgot password?" })).not.toBeInTheDocument();
