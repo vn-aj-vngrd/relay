@@ -30,6 +30,7 @@ export type SessionSettingsDefaults = {
   title: string;
   accentColor: string;
   venue: string;
+  venueId: string;
   venueAddress: string;
   date: string;
   start: string;
@@ -50,6 +51,20 @@ export type SessionSettingsDefaults = {
 export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDefaults }) {
   const [state, action] = useActionState<SessionActionState, FormData>(updateSessionAction, {});
   const [booked, setBooked] = useState(state.values ? state.values.booked === "on" : defaults.booked);
+  const [visibility, setVisibility] = useState<"public" | "link" | "private">(
+    (state.values?.visibility as "public" | "link" | "private" | undefined) ?? defaults.visibility,
+  );
+  const [costKind, setCostKind] = useState<"unspecified" | "free" | "estimated">(
+    state.values?.costKind === "free" || state.values?.costKind === "estimated"
+      ? state.values.costKind
+      : state.values?.costKind === "unspecified"
+        ? "unspecified"
+        : Number(defaults.cost) === 0 && defaults.cost !== ""
+          ? "free"
+          : defaults.cost
+            ? "estimated"
+            : "unspecified",
+  );
   const value = (key: keyof SessionSettingsDefaults) => state.values?.[key] ?? String(defaults[key] ?? "");
   const error = (key: string) => state.fieldErrors?.[key]?.[0];
 
@@ -91,8 +106,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
               Court
             </label>
             <VenueCombobox
-              key={`${value("venue")}:${value("venueAddress")}`}
+              key={`${value("venue")}:${value("venueId")}:${value("venueAddress")}`}
               defaultValue={value("venue")}
+              defaultVenueId={value("venueId")}
               defaultAddress={value("venueAddress")}
               error={error("venue")}
             />
@@ -191,14 +207,48 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
             id="settings-visibility"
             name="visibility"
             label="Visibility"
-            defaultValue={value("visibility")}
+            value={visibility}
+            onValueChange={(next) => setVisibility(next as typeof visibility)}
             options={[
               { value: "link", label: "Anyone with the link" },
-              { value: "public", label: "Public" },
-              { value: "private", label: "Private" },
+              { value: "public", label: "Public — listed in Open games" },
+              { value: "private", label: "Private — invited players only" },
             ]}
           />
-          <div>
+          <fieldset>
+            <legend className={label}>Cost expectation</legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[
+                ["free", "Free"],
+                ["estimated", "Estimated per player"],
+                ...(visibility === "public" ? [] : [["unspecified", "Not provided"]]),
+              ].map(([kind, text]) => (
+                <label
+                  key={kind}
+                  className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold sm:min-h-10 ${costKind === kind ? "border-primary bg-primary-soft text-primary" : "border-line"}`}
+                >
+                  <input
+                    type="radio"
+                    name="costKind"
+                    value={kind}
+                    checked={costKind === kind}
+                    onChange={() => setCostKind(kind as typeof costKind)}
+                    className="h-4 w-4 accent-[var(--primary)]"
+                  />
+                  {text}
+                </label>
+              ))}
+            </div>
+            {visibility === "public" && costKind === "unspecified" ? (
+              <p className="mt-2 text-sm font-medium text-warning">
+                Choose Free or Estimated before saving a public game.
+              </p>
+            ) : null}
+            <ErrorText id="settings-cost-kind-error" message={error("costKind")} />
+          </fieldset>
+        </div>
+        {costKind === "estimated" ? (
+          <div className="mt-6 max-w-sm">
             <label htmlFor="settings-cost" className={label}>
               Estimated cost per player
             </label>
@@ -208,17 +258,21 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                 id="settings-cost"
                 name="cost"
                 type="number"
-                min="0"
+                min="0.01"
+                max="100000"
                 step="0.01"
                 inputMode="decimal"
                 defaultValue={value("cost")}
                 className={`${field} score pl-8`}
                 placeholder="300"
+                aria-invalid={Boolean(error("cost"))}
               />
             </div>
             <ErrorText id="settings-cost-error" message={error("cost")} />
           </div>
-        </div>
+        ) : (
+          <input type="hidden" name="cost" value={costKind === "free" ? "0" : ""} />
+        )}
         <div className="mt-6">
           <label htmlFor="settings-notes" className={label}>
             Note for players
@@ -299,6 +353,7 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                     name="bookingTotal"
                     type="number"
                     min="0"
+                    max="1000000"
                     step="0.01"
                     inputMode="decimal"
                     defaultValue={value("bookingTotal")}

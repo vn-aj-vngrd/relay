@@ -34,6 +34,7 @@ export function RsvpControl({
   locked = false,
   full = false,
   instance = "default",
+  discoverySource,
 }: {
   sessionId: string;
   slug: string;
@@ -45,6 +46,7 @@ export function RsvpControl({
   locked?: boolean;
   full?: boolean;
   instance?: "mobile" | "desktop" | "default";
+  discoverySource?: "open-games" | "search";
 }) {
   const [choice, setChoice] = useState<Choice>(() => initialChoice(currentRsvp));
   const [state, action, pending] = useActionState(rsvpAction, {});
@@ -90,6 +92,7 @@ export function RsvpControl({
           <form action={action} className="space-y-3">
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="choice" value={choice} />
+            {discoverySource ? <input type="hidden" name="discoverySource" value={discoverySource} /> : null}
             {isReturningGuest ? (
               <div className="flex min-h-14 items-center gap-3 rounded-lg bg-surface-strong px-3 py-2.5">
                 <UserCircle aria-hidden size={21} className="shrink-0 text-primary" />

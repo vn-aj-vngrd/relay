@@ -10,6 +10,14 @@ describe("buildBreadcrumbItems", () => {
     ]);
   });
 
+  it("keeps the Open games collection in the authenticated breadcrumb trail", () => {
+    expect(buildBreadcrumbItems("/games/open")).toEqual([
+      { href: "/home", label: "Home" },
+      { href: "/games", label: "Games" },
+      { href: undefined, label: "Open games" },
+    ]);
+  });
+
   it("defers game detail breadcrumbs to the session layout", () => {
     expect(buildBreadcrumbItems("/games/859aab56-17cd-44fc-bd52-716d15c8d93f/payments")).toEqual([]);
   });

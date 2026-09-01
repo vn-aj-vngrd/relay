@@ -47,6 +47,7 @@ Hard guardrails:
 - Shadows are inset highlights or floating-chrome elevation with at most 8px blur.
 - Court lines divide real teams, courts, or information regions.
 - Copy is direct, specific, and free of promotional filler.
+- Skeletons represent pending server data only. Static titles, breadcrumbs, tabs, filters, navigation, and explanatory copy remain real UI or wait for the route instead of flashing as gray placeholders.
 
 Reject the change when it introduces decorative gradients, glowing blobs, gradient text, glass content cards, repeated icon-card grids, hero metrics, oversized radii, wide ghost shadows, decorative all-caps labels, arbitrary sports art, fake broadcast graphics, or a dashboard of generic statistics.
 

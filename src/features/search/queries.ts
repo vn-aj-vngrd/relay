@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessionPlayers, sessions, users, venues } from "@/db/schema";
@@ -21,6 +21,11 @@ function page<T>(rows: T[], limit: number) {
 async function findGames(userId: string, query: string, offset: number, limit: number) {
   const pattern = `%${likeValue(query)}%`;
   const prefix = `${likeValue(query)}%`;
+  const now = new Date();
+  const goingCount = sql<number>`(
+    select count(*)::int from ${sessionPlayers} roster
+    where roster.session_id = ${sessions.id} and roster.rsvp = 'going'
+  )`;
   const rows = await db
     .select({
       id: sessions.id,
@@ -31,6 +36,11 @@ async function findGames(userId: string, query: string, offset: number, limit: n
       slug: sessions.slug,
       accentColor: sessions.accentColor,
       membershipId: sessionPlayers.id,
+      membershipRsvp: sessionPlayers.rsvp,
+      capacity: sessions.capacity,
+      estimatedCostCents: sessions.estimatedCostCents,
+      requiresApproval: sessions.requiresApproval,
+      playerCount: goingCount,
     })
     .from(sessions)
     .leftJoin(
@@ -44,24 +54,73 @@ async function findGames(userId: string, query: string, offset: number, limit: n
     .where(
       and(
         inArray(sessions.status, ["published", "live", "completed"]),
-        or(eq(sessions.visibility, "public"), eq(sessions.hostId, userId), isNotNull(sessionPlayers.id)),
+        or(
+          and(
+            eq(sessions.visibility, "public"),
+            inArray(sessions.status, ["published", "live"]),
+            gt(sessions.endsAt, now),
+            isNotNull(sessions.estimatedCostCents),
+          ),
+          eq(sessions.hostId, userId),
+          isNotNull(sessionPlayers.id),
+        ),
         or(ilike(sessions.title, pattern), ilike(sessions.venueName, pattern), ilike(sessions.venueAddress, pattern)),
       ),
     )
-    .orderBy(sql`case when lower(${sessions.title}) like lower(${prefix}) then 0 else 1 end`, asc(sessions.startsAt))
+    .orderBy(
+      sql`case
+        when lower(${sessions.title}) = lower(${query}) then 0
+        when lower(${sessions.title}) like lower(${prefix}) then 1
+        when lower(${sessions.venueName}) like lower(${prefix}) then 2
+        else 3
+      end`,
+      desc(sql`greatest(
+        extensions.similarity(${sessions.title}, ${query}),
+        extensions.similarity(${sessions.venueName}, ${query}),
+        extensions.similarity(coalesce(${sessions.venueAddress}, ''), ${query})
+      )`),
+      asc(sessions.startsAt),
+    )
     .limit(limit + 1)
     .offset(offset);
   const result = page(rows, limit);
   return {
     more: result.more,
-    items: result.rows.map((session): SearchResult => ({
-      id: session.id,
-      type: "games",
-      title: session.title,
-      subtitle: `${formatSessionDate(session.startsAt)} · ${session.venueName}`,
-      href: session.visibility === "private" || session.membershipId ? `/games/${session.id}` : `/s/${session.slug}`,
-      accentColor: session.accentColor,
-    })),
+    items: result.rows.map((session): SearchResult => {
+      const spots = Math.max(0, session.capacity - Number(session.playerCount));
+      const cost =
+        session.estimatedCostCents === 0
+          ? "Free"
+          : session.estimatedCostCents
+            ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(session.estimatedCostCents / 100)} est.`
+            : null;
+      const state = session.membershipRsvp
+        ? session.membershipRsvp === "pending"
+          ? "Pending approval"
+          : session.membershipRsvp.charAt(0).toUpperCase() + session.membershipRsvp.slice(1)
+        : spots
+          ? `${spots} ${spots === 1 ? "spot" : "spots"} left`
+          : "Waitlist open";
+      return {
+        id: session.id,
+        type: "games",
+        title: session.title,
+        subtitle: [
+          formatSessionDate(session.startsAt),
+          session.venueName,
+          cost,
+          state,
+          session.requiresApproval && !session.membershipId ? "Approval required" : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        href:
+          session.visibility === "private" || session.membershipId
+            ? `/games/${session.id}`
+            : `/s/${session.slug}?source=search`,
+        accentColor: session.accentColor,
+      };
+    }),
   };
 }
 

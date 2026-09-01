@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ButtonSpinner } from "@/components/ui/button";
+import { trackDiscoveryEvent } from "@/features/analytics/actions";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 
 import {
@@ -78,7 +79,11 @@ function SearchResultRow({ result, index, onOpen }: { result: SearchResult; inde
   return (
     <Link
       href={result.href}
-      onClick={onOpen}
+      onClick={() => {
+        onOpen();
+        if (result.type === "games")
+          void trackDiscoveryEvent({ event: "public_game_opened", sessionId: result.id, source: "search" });
+      }}
       style={result.accentColor ? sessionAccentStyle(result.accentColor) : undefined}
       className="collection-row pressable group flex min-h-16 items-center gap-3 py-3 hover:bg-surface-strong sm:px-2"
     >

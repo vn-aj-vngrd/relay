@@ -17,6 +17,7 @@ import {
   sessionPlayers,
   sessionQueue,
   sessions,
+  venues,
 } from "@/db/schema";
 import { trackProductEvent } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
@@ -26,7 +27,13 @@ import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
 import { assertRateLimit, checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
-import { createSessionSchema, findRosterIdentity, sessionInviteeIds, updateSessionSchema } from "./domain";
+import {
+  canRespondToSession,
+  createSessionSchema,
+  findRosterIdentity,
+  sessionInviteeIds,
+  updateSessionSchema,
+} from "./domain";
 import { planRosterTransition } from "./roster";
 import { manageRoster } from "./roster-management";
 import { sessionSlug } from "./slug";
@@ -45,15 +52,44 @@ function manilaDate(date: FormDataEntryValue | null, time: FormDataEntryValue | 
   return new Date(`${date}T${time}:00+08:00`);
 }
 
+function costInput(formData: FormData) {
+  const costKind = formData.get("costKind");
+  const rawCost = formData.get("cost");
+  return {
+    costKind,
+    estimatedCostCents:
+      costKind === "free"
+        ? 0
+        : costKind === "estimated" && typeof rawCost === "string" && rawCost
+          ? Math.round(Number(rawCost) * 100)
+          : undefined,
+  };
+}
+
+function bookingInput(formData: FormData) {
+  const rawTotal = formData.get("bookingTotal");
+  return {
+    booked: formData.get("booked") === "on",
+    bookingReference: formData.get("bookingReference") || undefined,
+    bookingTotalCents: typeof rawTotal === "string" && rawTotal ? Math.round(Number(rawTotal) * 100) : undefined,
+    bookingNotes: formData.get("bookingNotes") || undefined,
+  };
+}
+
+async function verifiedVenue(venueId?: string) {
+  if (!venueId) return null;
+  return db.query.venues.findFirst({ where: and(eq(venues.id, venueId), eq(venues.listingStatus, "verified")) });
+}
+
 export async function createSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
   const limit = await checkRateLimit({ scope: "session-create", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
   if (!limit.allowed) return { error: "You’ve created several games today. Try again tomorrow." };
   const hostProfile = await ensureProfile(user);
-  const rawCost = formData.get("cost");
   const parsed = createSessionSchema().safeParse({
     title: formData.get("title"),
     accentColor: formData.get("accentColor") || "violet",
+    venueId: formData.get("venueId") || undefined,
     venueName: formData.get("venue"),
     venueAddress: formData.get("venueAddress") || undefined,
     startsAt: manilaDate(formData.get("date"), formData.get("start")),
@@ -61,7 +97,9 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     capacity: formData.get("capacity"),
     courtCount: formData.get("courts"),
     notes: formData.get("notes") || undefined,
-    estimatedCostCents: typeof rawCost === "string" && rawCost ? Math.round(Number(rawCost) * 100) : undefined,
+    visibility: formData.get("visibility") || "link",
+    ...costInput(formData),
+    ...bookingInput(formData),
   });
   if (!parsed.success) {
     const errors = parsed.error.flatten().fieldErrors;
@@ -72,32 +110,50 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
           "title",
           "accentColor",
           "venue",
+          "venueId",
           "venueAddress",
           "date",
           "capacity",
           "start",
           "end",
           "courts",
+          "visibility",
+          "costKind",
           "cost",
           "courtNumbers",
           "notes",
           "booked",
+          "bookingReference",
+          "bookingTotal",
+          "bookingNotes",
           "requiresApproval",
         ].map((key) => [key, String(formData.get(key) ?? "")]),
       ),
       fieldErrors: {
         title: errors.title ?? [],
-        venue: errors.venueName ?? [],
+        venue: [...(errors.venueId ?? []), ...(errors.venueName ?? [])],
         date: errors.startsAt ?? [],
         start: errors.startsAt ?? [],
         end: errors.endsAt ?? [],
         capacity: errors.capacity ?? [],
         courts: errors.courtCount ?? [],
         notes: errors.notes ?? [],
+        costKind: errors.costKind ?? [],
         cost: errors.estimatedCostCents ?? [],
+        booked: errors.booked ?? [],
+        bookingReference: errors.bookingReference ?? [],
+        bookingTotal: errors.bookingTotalCents ?? [],
+        bookingNotes: errors.bookingNotes ?? [],
       },
     };
   }
+  const selectedVenue = await verifiedVenue(parsed.data.venueId);
+  if (parsed.data.venueId && !selectedVenue)
+    return {
+      error: "The selected Relay court is no longer available. Choose another court or enter it manually.",
+      fieldErrors: { venue: ["Choose another verified court or edit the court name."] },
+      values: Object.fromEntries(Array.from(formData.entries(), ([key, value]) => [key, String(value)])),
+    };
 
   const intent = formData.get("intent") === "draft" ? "draft" : "published";
   const requestedGroupId = String(formData.get("groupId") ?? "");
@@ -152,8 +208,9 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
         groupId: groupMembership?.groupId ?? null,
         title: parsed.data.title,
         accentColor: parsed.data.accentColor,
-        venueName: parsed.data.venueName,
-        venueAddress: parsed.data.venueAddress || null,
+        venueId: selectedVenue?.id ?? null,
+        venueName: selectedVenue?.name ?? parsed.data.venueName,
+        venueAddress: selectedVenue?.address ?? parsed.data.venueAddress ?? null,
         startsAt: parsed.data.startsAt,
         endsAt: parsed.data.endsAt,
         capacity: parsed.data.capacity,
@@ -161,9 +218,13 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
         courtNumbers,
         notes: parsed.data.notes,
         estimatedCostCents: parsed.data.estimatedCostCents,
+        visibility: parsed.data.visibility,
         status: intent,
         publishedAt: intent === "published" ? new Date() : null,
-        bookedAt: formData.get("booked") === "on" ? new Date() : null,
+        bookedAt: parsed.data.booked ? new Date() : null,
+        bookingReference: parsed.data.booked ? (parsed.data.bookingReference ?? null) : null,
+        bookingTotalCents: parsed.data.booked ? (parsed.data.bookingTotalCents ?? null) : null,
+        bookingNotes: parsed.data.booked ? (parsed.data.bookingNotes ?? null) : null,
         requiresApproval: formData.get("requiresApproval") === "on",
       })
       .returning();
@@ -225,6 +286,19 @@ function courtLabel(value: string | undefined, position: number) {
   return /^court\b/i.test(value) ? value : `Court ${value}`;
 }
 
+function costLabel(value: number | null | undefined) {
+  if (value === 0) return "free";
+  if (value == null) return "not provided";
+  return `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(value / 100)} per player`;
+}
+
+function costChangeMessage(previous: number | null, next: number | null | undefined) {
+  if (next === 0) return previous == null ? "This game is free." : "This game is now free.";
+  if (previous == null) return `Estimated cost set to ${costLabel(next)}.`;
+  if (next == null) return "The estimated cost was removed.";
+  return `Estimated cost updated from ${costLabel(previous)} to ${costLabel(next)}.`;
+}
+
 export async function updateSessionAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
   const user = await requireUser();
   await assertRateLimit(
@@ -232,13 +306,12 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
     `user:${user.id}`,
     "Game changes are happening too quickly. Wait a moment and try again.",
   );
-  const rawCost = formData.get("cost");
-  const rawBookingTotal = formData.get("bookingTotal");
   const parsed = updateSessionSchema.safeParse({
     sessionId: formData.get("sessionId"),
     version: formData.get("version"),
     title: formData.get("title"),
     accentColor: formData.get("accentColor") || "violet",
+    venueId: formData.get("venueId") || undefined,
     venueName: formData.get("venue"),
     venueAddress: formData.get("venueAddress") || undefined,
     startsAt: manilaDate(formData.get("date"), formData.get("start")),
@@ -246,25 +319,24 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
     capacity: formData.get("capacity"),
     courtCount: formData.get("courts"),
     notes: formData.get("notes") || undefined,
-    estimatedCostCents: typeof rawCost === "string" && rawCost ? Math.round(Number(rawCost) * 100) : undefined,
+    ...costInput(formData),
+    ...bookingInput(formData),
     visibility: formData.get("visibility"),
     requiresApproval: formData.get("requiresApproval") === "on",
-    bookingReference: formData.get("bookingReference") || undefined,
-    bookingTotalCents:
-      typeof rawBookingTotal === "string" && rawBookingTotal ? Math.round(Number(rawBookingTotal) * 100) : undefined,
-    bookingNotes: formData.get("bookingNotes") || undefined,
   });
   const savedValues = Object.fromEntries(
     [
       "title",
       "accentColor",
       "venue",
+      "venueId",
       "venueAddress",
       "date",
       "capacity",
       "start",
       "end",
       "courts",
+      "costKind",
       "cost",
       "courtNumbers",
       "notes",
@@ -283,13 +355,14 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
       values: savedValues,
       fieldErrors: {
         title: errors.title ?? [],
-        venue: errors.venueName ?? [],
+        venue: [...(errors.venueId ?? []), ...(errors.venueName ?? [])],
         date: errors.startsAt ?? [],
         start: errors.startsAt ?? [],
         end: errors.endsAt ?? [],
         capacity: errors.capacity ?? [],
         courts: errors.courtCount ?? [],
         notes: errors.notes ?? [],
+        costKind: errors.costKind ?? [],
         cost: errors.estimatedCostCents ?? [],
         bookingReference: errors.bookingReference ?? [],
         bookingTotal: errors.bookingTotalCents ?? [],
@@ -297,6 +370,13 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
       },
     };
   }
+  const selectedVenue = await verifiedVenue(parsed.data.venueId);
+  if (parsed.data.venueId && !selectedVenue)
+    return {
+      error: "The selected Relay court is no longer available. Choose another court or enter it manually.",
+      fieldErrors: { venue: ["Choose another verified court or edit the court name."] },
+      values: savedValues,
+    };
 
   const existing = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
   if (!existing) return { error: "This game no longer exists." };
@@ -346,6 +426,9 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
     }
   }
 
+  const nextCost = parsed.data.estimatedCostCents ?? null;
+  const costChanged = existing.estimatedCostCents !== nextCost;
+  const costMessage = costChanged ? costChangeMessage(existing.estimatedCostCents, nextCost) : null;
   const changedFields = [
     existing.title !== parsed.data.title ? "title" : null,
     existing.accentColor !== parsed.data.accentColor ? "game accent" : null,
@@ -361,10 +444,15 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
     JSON.stringify(existing.courtNumbers ?? []) !== JSON.stringify(labels)
       ? "courts"
       : null,
-    existing.estimatedCostCents !== (parsed.data.estimatedCostCents ?? null) ? "estimated cost" : null,
+    costChanged ? "estimated cost" : null,
     existing.visibility !== parsed.data.visibility ? "visibility" : null,
     existing.notes !== (parsed.data.notes ?? null) ? "notes" : null,
-    Boolean(existing.bookedAt) !== (formData.get("booked") === "on") ? "booking status" : null,
+    Boolean(existing.bookedAt) !== parsed.data.booked ||
+    existing.bookingReference !== (parsed.data.booked ? (parsed.data.bookingReference ?? null) : null) ||
+    existing.bookingTotalCents !== (parsed.data.booked ? (parsed.data.bookingTotalCents ?? null) : null) ||
+    existing.bookingNotes !== (parsed.data.booked ? (parsed.data.bookingNotes ?? null) : null)
+      ? "booking details"
+      : null,
     existing.requiresApproval !== parsed.data.requiresApproval ? "join approval" : null,
   ].filter((value): value is string => Boolean(value));
 
@@ -378,8 +466,9 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
         .set({
           title: parsed.data.title,
           accentColor: parsed.data.accentColor,
-          venueName: parsed.data.venueName,
-          venueAddress: parsed.data.venueAddress ?? null,
+          venueId: selectedVenue?.id ?? null,
+          venueName: selectedVenue?.name ?? parsed.data.venueName,
+          venueAddress: selectedVenue?.address ?? parsed.data.venueAddress ?? null,
           startsAt: parsed.data.startsAt,
           endsAt: parsed.data.endsAt,
           capacity: parsed.data.capacity,
@@ -389,10 +478,10 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
           estimatedCostCents: parsed.data.estimatedCostCents ?? null,
           visibility: parsed.data.visibility,
           requiresApproval: parsed.data.requiresApproval,
-          bookedAt: formData.get("booked") === "on" ? (existing.bookedAt ?? new Date()) : null,
-          bookingReference: parsed.data.bookingReference ?? null,
-          bookingTotalCents: parsed.data.bookingTotalCents ?? null,
-          bookingNotes: parsed.data.bookingNotes ?? null,
+          bookedAt: parsed.data.booked ? (existing.bookedAt ?? new Date()) : null,
+          bookingReference: parsed.data.booked ? (parsed.data.bookingReference ?? null) : null,
+          bookingTotalCents: parsed.data.booked ? (parsed.data.bookingTotalCents ?? null) : null,
+          bookingNotes: parsed.data.booked ? (parsed.data.bookingNotes ?? null) : null,
           version: current.version + 1,
           updatedAt: new Date(),
         })
@@ -419,7 +508,7 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
           sessionId: existing.id,
           authorId: user.id,
           kind: "system",
-          body: `Game details updated: ${changedFields.join(", ")}.`,
+          body: costMessage ?? `Game details updated: ${changedFields.join(", ")}.`,
         });
         const participants = await tx
           .select({ userId: sessionPlayers.userId })
@@ -435,8 +524,8 @@ export async function updateSessionAction(_: SessionActionState, formData: FormD
             recipients.map((userId) => ({
               userId,
               sessionId: existing.id,
-              type: "session_details_changed",
-              payload: { fields: changedFields },
+              type: costMessage ? "session_cost_changed" : "session_details_changed",
+              payload: { fields: changedFields, body: costMessage },
             })),
           );
       }
@@ -767,6 +856,7 @@ const rsvpInput = z.object({
   choice: z.enum(["going", "maybe", "declined"]),
   guestName: z.string().trim().min(2).max(60).optional(),
   skillLevel: z.enum(playingExperienceValues).optional(),
+  discoverySource: z.enum(["open-games", "search"]).optional(),
 });
 
 export async function rsvpAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -775,6 +865,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
     choice: formData.get("choice"),
     guestName: formData.get("guestName") || undefined,
     skillLevel: formData.get("skillLevel") || undefined,
+    discoverySource: formData.get("discoverySource") || undefined,
   });
   if (!parsed.success) return { error: "Add your name before responding." };
   const session = await db.query.sessions.findFirst({
@@ -812,6 +903,15 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
       const current = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       let identity = findRosterIdentity(current, { userId: user?.id, guestTokenHash: guestHash });
+      if (
+        !canRespondToSession({
+          visibility: session.visibility,
+          hostId: session.hostId,
+          userId: user?.id,
+          hasRosterIdentity: Boolean(identity),
+        })
+      )
+        throw new Error("PRIVATE_SESSION");
       const claimingGuest =
         !identity && !user && parsed.data.guestName
           ? current.find(
@@ -949,6 +1049,8 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       return createdToken;
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "PRIVATE_SESSION")
+      return { error: "This private game only accepts responses from invited players." };
     console.error("RSVP mutation failed", error);
     return { error: "Your response couldn’t be saved. Check your connection and try again." };
   }
@@ -961,13 +1063,32 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       path: "/",
     });
   await reconcileUnpaidExpenseShares(session.id);
-  await trackProductEvent({
-    name: "rsvp_saved",
-    userId: user?.id,
-    sessionId: session.id,
-    source: user ? "authenticated" : "guest",
-    metadata: { response: resolvedRsvp ?? "unknown" },
-  });
+  await Promise.all([
+    trackProductEvent({
+      name: "rsvp_saved",
+      userId: user?.id,
+      sessionId: session.id,
+      source: user ? "authenticated" : "guest",
+      metadata: { response: resolvedRsvp ?? "unknown" },
+    }),
+    ...(session.visibility === "public" && parsed.data.discoverySource
+      ? [
+          trackProductEvent({
+            name: "public_join_submitted" as const,
+            userId: user?.id,
+            sessionId: session.id,
+            source: user ? ("authenticated" as const) : ("guest" as const),
+            metadata: {
+              discoverySource: parsed.data.discoverySource,
+              response: resolvedRsvp ?? "unknown",
+              approvalRequired: session.requiresApproval,
+              costKind: session.estimatedCostCents === 0 ? "free" : "estimated",
+              capacityState: resolvedRsvp === "waitlisted" ? "full" : "available",
+            },
+          }),
+        ]
+      : []),
+  ]);
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/s/${session.slug}`);
   return { success: true, rsvp: resolvedRsvp };

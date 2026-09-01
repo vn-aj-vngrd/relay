@@ -11,6 +11,7 @@ const defaults: SessionSettingsDefaults = {
   title: "Saturday Night Pickle",
   accentColor: "teal",
   venue: "Central Pickle",
+  venueId: "",
   venueAddress: "Quezon City",
   date: "2026-08-22",
   start: "19:00",

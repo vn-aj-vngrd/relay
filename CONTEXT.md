@@ -64,8 +64,16 @@ _Avoid_: Rating, rank, proficiency score
 The geographic area where Relay accepts court submissions, verified listing coordinates, and map requests. It describes supported geography, not an exhaustive inventory of every operating court.
 _Avoid_: Complete court coverage, court inventory
 
+**Open game**:
+A published or live public session that has not ended and discloses either Free or an estimated per-player cost. Signed-in players may discover it in Games or Search, then use its shared game link to join, request approval, or waitlist.
+_Avoid_: Community post, pickup feed
+
+**Cost expectation**:
+The pre-join price context for a session: Free, an estimated per-player amount, or unspecified. Public games require Free or an estimate; link-only and private games may remain unspecified. It is not a charge or payment request.
+_Avoid_: Price guarantee, checkout amount
+
 **Shared game link**:
-The account-optional URL used to understand and join a session. It is the canonical entry point for guests and invitees, not a separate copy of the session.
+The account-optional URL used to understand and join a public or link-only session. It is the canonical entry point for guests and invitees, not a separate copy of the session. A private session never becomes accessible merely because someone knows its identifier.
 _Avoid_: Public version, guest app
 
 **Account player**:

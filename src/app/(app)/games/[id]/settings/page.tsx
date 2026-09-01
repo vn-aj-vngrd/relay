@@ -37,6 +37,7 @@ export default async function GameSettingsPage({ params }: { params: Promise<{ i
     title: data.session.title,
     accentColor: data.session.accentColor,
     venue: data.session.venueName,
+    venueId: data.session.venueId ?? "",
     venueAddress: data.session.venueAddress ?? "",
     date: start.date,
     start: start.time,

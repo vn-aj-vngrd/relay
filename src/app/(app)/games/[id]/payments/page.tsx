@@ -328,8 +328,14 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                 required
                 inputMode="decimal"
                 autoComplete="off"
+                defaultValue={data.session.bookingTotalCents == null ? undefined : data.session.bookingTotalCents / 100}
                 placeholder="2400"
               />
+              {data.session.bookingTotalCents != null ? (
+                <p className="mt-1.5 text-sm text-muted">
+                  Prefilled from the court booking. Confirm or change it here.
+                </p>
+              ) : null}
             </div>
             <SelectField
               id="method"

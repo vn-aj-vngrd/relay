@@ -41,7 +41,8 @@ Render actions only when the viewer can complete them. Explain the next step ins
 ## Shared presentation
 
 - Reuse domain components for session hero, plan details, at-a-glance status, scoreboard, queue rows, standings, and chat.
-- Use the same game accent, labels, status language, score values, and player ordering on both paths.
+- Use the same game accent, labels, status language, score values, cost expectation, approval requirement, capacity state, and player ordering on both paths.
+- Free is a stated cost expectation, not missing data. Public games always show Free or an estimated per-player amount before the RSVP action; link-only/private games may say that cost has not been added.
 - Keep one `h1` per destination. Session heroes below a destination heading use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.
 - A scoreboard is the digital court: neutral outer shell, deep court field, complete player names, tabular scores, and explicit Live text. It must remain readable in its column and in the expanded view.

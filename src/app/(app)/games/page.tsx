@@ -1,6 +1,7 @@
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
 import { GameCollection, GameViewMenu } from "@/features/sessions/game-collection";
+import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import { getGameCollectionPage } from "@/features/sessions/queries";
 
 export default async function GamesPage() {
@@ -18,6 +19,7 @@ export default async function GamesPage() {
           <GameViewMenu />
         </div>
       </div>
+      <GamesSectionNav current="mine" />
       <GameCollection upcomingPage={upcomingPage} pastPage={pastPage} todayKey={sessionDateKey(new Date())} />
     </div>
   );

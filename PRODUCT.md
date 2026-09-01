@@ -31,7 +31,7 @@ Relay organizes one real-world game around one durable shared link and one sessi
 
 A typical game moves through four connected moments:
 
-1. **Plan and invite:** the host sets the schedule, venue, capacity, courts, optional group, booking details, and expected cost, then shares the public game link.
+1. **Plan and invite:** the host moves through a short Plan → Players and access → optional Details → read-only Review flow, sets the schedule, court, roster, visibility, and expected cost, optionally records booking details, then publishes one shared game link.
 2. **Confirm and coordinate:** players or named guests RSVP; capacity and waitlist state remain authoritative; the group checks changes, chats, and coordinates external court booking and repayment.
 3. **Play courtside:** the host marks attendance, chooses a supported play format, creates court assignments, records scores, advances the queue, and monitors standings and timers from a phone.
 4. **Remember and repeat:** the completed game retains results, standings, chat, photos, and shareable recap imagery; a host can reuse the game structure for another date.
@@ -48,7 +48,8 @@ The public shared surface and authenticated workspace expose the same session fa
 - Relay stores court and booking context and links to external directions or booking. It does not reserve courts. Court Finder accepts reviewed listings and community submissions throughout the Philippines; its initial verified inventory remains strongest in Cebu.
 - Session collaboration uses one Broadcast invalidation topic per mounted session and refetches authoritative server state after changes or reconnects. Score and queue mutations preserve explicit concurrency controls.
 - The installable web app provides an offline fallback and network-state feedback. It intentionally does not cache authenticated pages, API responses, game data, payment media, chat media, or map tiles for offline use.
-- Authorization is enforced at server boundaries for host, participant, guest, and admin capabilities. Link visibility and navigation are not treated as authorization.
+- Public sessions are discoverable to signed-in players only when they have not ended and disclose Free or an estimated per-player cost. Link-only sessions remain accessible by shared link but absent from discovery; private sessions accept access and responses only from hosts and existing invited participants.
+- Authorization is enforced at server boundaries for host, participant, guest, and admin capabilities. Link visibility, route rendering, and identifier secrecy are not treated as authorization.
 - The responsive web interface supports light and dark themes. Product language uses **game** in the interface while the durable domain model uses **session**.
 
 ## Brand Commitments
@@ -61,7 +62,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 
 - `docs/product-blueprint.md` records the reviewed workflows, domain language, authorization matrix, and product boundaries.
 - `src/features/`, `src/app/`, and `src/db/schema/index.ts` contain database-backed implementations for authentication, game creation and management, public RSVP, roster and waitlist handling, groups, Philippines courts, chat, payments, live play, notifications, memories, search, profiles, feedback, and administration.
-- `drizzle/0000` through `drizzle/0020` document the deployed data, authorization, realtime, reminder, court-directory, and abuse-control migrations.
+- `drizzle/0000` through `drizzle/0026` document the deployed data, authorization, realtime, reminder, court-directory, abuse-control, performance, and public-discovery migrations.
 - Vitest and Playwright suites cover domain behavior, component interactions, accessibility, responsive browser workflows, and public/protected route safety.
 - `DESIGN.md`, `docs/UI_QUALITY.md`, and `docs/SESSION_SURFACE_PARITY.md` are the implementation authorities for visual quality and shared/authenticated session parity.
 - No repository evidence currently supports claims about customer counts, testimonials, revenue, pricing, market leadership, partnerships, or measured engagement. Future product work must not fabricate those claims.
@@ -74,6 +75,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 4. **Courtside beats comprehensive.** Live controls prioritize glanceability, reliable touch interaction, deterministic state, and quick recovery over exhaustive configuration.
 5. **The game becomes the memory.** Results, people, photos, and reactions accumulate around the event rather than becoming a generic content feed.
 6. **Useful before signup.** Public Court Finder and device-local Quick Play give any visitor an immediate way to find a place or score a game without creating an account.
+7. **Public means informed.** A discoverable game states its court, roster limit, admission behavior, and cost expectation before a new player joins.
 
 ## Accessibility & Inclusion
 

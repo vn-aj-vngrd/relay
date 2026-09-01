@@ -58,12 +58,13 @@ export default async function NewGamePage({
     ? {
         title: source?.title ?? `${group?.name ?? template.title} Pickle`,
         venue: template.venueName,
+        venueId: template.venueId ?? undefined,
         venueAddress: template.venueAddress ?? undefined,
         capacity: template.capacity,
         courts: template.courtCount,
         start: time(template.startsAt),
         end: time(template.endsAt),
-        cost: template.estimatedCostCents ? template.estimatedCostCents / 100 : undefined,
+        cost: template.estimatedCostCents == null ? undefined : template.estimatedCostCents / 100,
         accentColor: template.accentColor,
         groupId: group?.id,
         groupName: group?.name,
@@ -99,13 +100,6 @@ export default async function NewGamePage({
       </Link>
       <header className="mb-10 hidden border-b border-line pb-7 lg:block">
         <h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1>
-        <p className="mt-2 max-w-xl text-pretty text-muted">
-          {source
-            ? "Review the copied details, choose a time, and publish."
-            : group
-              ? "Start with this group’s last setup and change what you need."
-              : "Add the court, time, player limit, and cost. Then publish the game link."}
-        </p>
       </header>
       <CreateSessionForm defaults={defaults} now={new Date().toISOString()} courts={courts} />
     </div>

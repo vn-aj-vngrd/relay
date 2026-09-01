@@ -110,9 +110,11 @@ export function SessionPlanDetails({
         <div className="min-w-0">
           <p className="font-semibold">{session.bookedAt ? "Court confirmed" : "Booking pending"}</p>
           <p className="mt-1 text-sm text-muted">
-            {session.estimatedCostCents
-              ? `${peso(session.estimatedCostCents)} estimated per player`
-              : "Cost not added yet"}
+            {session.estimatedCostCents === 0
+              ? "Free"
+              : session.estimatedCostCents
+                ? `${peso(session.estimatedCostCents)} estimated per player`
+                : "Cost not added yet"}
           </p>
           {bookingAction ? <div className="mt-2">{bookingAction}</div> : null}
         </div>

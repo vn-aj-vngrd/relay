@@ -11,19 +11,22 @@ Relay coordinates everything around a recreational pickleball session; it does n
 ### Create → share → join
 
 1. Authenticated host selects **Create game**.
-2. Enters the seven required fields; sensible defaults are prefilled.
-3. Optionally expands booking, cost, court, group, notes, and visibility.
-4. Publishes and lands on the session overview with a share link.
-5. Invitee opens `/s/[slug]`, sees the complete plan without signing in, and chooses Going, Maybe, or Can't make it.
-6. An unauthenticated invitee supplies only a display name; Relay stores a scoped guest identity.
-7. Going RSVPs fill capacity; later Going responses become ordered waitlist entries.
+2. Completes **Plan**: name, court, date, and time.
+3. Completes **Players and access**: capacity, court count, visibility, cost expectation, and approval behavior.
+4. Optionally completes **Details**: color, court labels, player note, booking status, reference, total, and booking notes. Relay states that these can be added later.
+5. Uses the read-only **Review** stage, with Edit actions returning to each earlier stage.
+6. Publishes and lands on the session overview with a share link.
+7. Invitee opens `/s/[slug]`, sees the complete plan without signing in, and chooses Going, Maybe, or Can't make it.
+8. An unauthenticated invitee supplies only a display name; Relay stores a scoped guest identity.
+9. Going RSVPs fill capacity; later Going responses become ordered waitlist entries. Public games require Free or an estimated per-player cost; link-only/private games may leave cost unspecified.
 
 ### Book externally → coordinate payment
 
 1. Host follows the venue's external booking link.
 2. Returns and marks the session booked with optional courts, reference, screenshot, total, and notes.
-3. Relay divides included expenses among included players, preserving explicit overrides.
-4. Player marks payment sent; host confirms it.
+3. When the host creates a payment collection, Relay pre-fills its total from the recorded booking total; the host can confirm or change it before submission.
+4. Relay divides included expenses among included players, preserving explicit overrides.
+5. Player marks payment sent; host confirms it.
 
 ### Arrive → play live
 
@@ -45,8 +48,9 @@ Relay coordinates everything around a recreational pickleball session; it does n
 ```text
 /                         authenticated home (redirect to /login if required)
 /login                    email + Google auth
-/games                    upcoming and past sessions
-/games/new                fast create flow
+/games                    authenticated player's upcoming and past sessions
+/games/open               authenticated public-game discovery
+/games/new                progressive Plan → Players and access → optional Details → read-only Review flow
 /games/[id]               private session workspace
 /games/[id]/players       roster and waitlist
 /games/[id]/payments      expenses and payment status
@@ -73,7 +77,8 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **Session workspace:** Overview, Players, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** next game → applicable action items → upcoming games → recent games. No generic analytics.
-- **Search:** recent searches when idle → two-character minimum → 280 ms debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. A bounded in-memory cache reuses filter results during the current search visit. PostgreSQL trigram indexes back searchable names and addresses; queries select only result-row fields. Link-only/private content remains authorization-scoped.
+- **Games:** My games retains personal list/grid/calendar history. Open games lists authenticated discovery rows for public, unended sessions with a stated cost expectation; date, location, and available-spots filters reset stable cursor pagination.
+- **Search:** recent searches when idle → two-character minimum → 280 ms debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. A bounded in-memory cache reuses filter results during the current search visit. PostgreSQL trigram indexes back searchable names and addresses; exact and prefix matches lead fuzzy relevance. Public game rows include cost, availability, approval, and RSVP state. Link-only/private/completed content remains authorization-scoped.
 - **Completed session:** memory summary → media → matches and standings → conversation → Play again.
 
 ## 5. Domain model

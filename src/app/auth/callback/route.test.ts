@@ -54,12 +54,33 @@ describe("authentication callback", () => {
 
   it("turns a canceled Google consent screen into a useful retry path", async () => {
     const response = await GET(new NextRequest("https://relay.vanajvanguardia.tech/auth/callback?error=access_denied"));
+    const destination = new URL(response.headers.get("location")!);
 
     expect(mocks.cookieDelete).toHaveBeenCalledWith("relay_auth_next");
-    expect(response.headers.get("location")).toBe(
-      "https://relay.vanajvanguardia.tech/login?error=Google%20sign-in%20was%20canceled.%20You%20can%20try%20again%20or%20sign%20in%20with%20your%20email.",
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("error")).toBe(
+      "Google sign-in was canceled. No changes were made. Try again when you’re ready.",
     );
     expect(mocks.exchangeCodeForSession).not.toHaveBeenCalled();
+  });
+
+  it("turns a duplicate account mirror failure into safe recovery guidance and preserves the destination", async () => {
+    mocks.cookieGet.mockReturnValue({ value: "/games" });
+    const requestUrl = new URL("https://relay.vanajvanguardia.tech/auth/callback");
+    requestUrl.searchParams.set("error", "server_error");
+    requestUrl.searchParams.set("error_code", "unexpected_failure");
+    requestUrl.searchParams.set(
+      "error_description",
+      'failed to close prepared statement: duplicate key value violates unique constraint "users email unique"',
+    );
+
+    const response = await GET(new NextRequest(requestUrl));
+    const destination = new URL(response.headers.get("location")!);
+
+    expect(destination.pathname).toBe("/login");
+    expect(destination.searchParams.get("next")).toBe("/games");
+    expect(destination.searchParams.get("error")).toMatch(/existing account data.*reset your password/i);
+    expect(destination.searchParams.get("error")).not.toMatch(/duplicate|constraint|prepared statement/i);
   });
 
   it("uses a safe post-auth destination after Google completes", async () => {

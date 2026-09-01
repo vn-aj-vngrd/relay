@@ -25,6 +25,7 @@ const labels: Record<string, string> = {
   more: "More",
   new: "Create",
   notifications: "Notifications",
+  open: "Open games",
   payments: "Payments",
   play: "Play",
   players: "Players",
@@ -44,7 +45,7 @@ function titleCase(value: string) {
 }
 
 function isGameId(segments: string[], index: number) {
-  return segments[index - 1] === "games" && segments[index] !== "new";
+  return segments[index - 1] === "games" && !["new", "open"].includes(segments[index]);
 }
 
 function isAdminRecord(segments: string[], index: number) {
@@ -73,7 +74,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   if (!segments.length) return [];
   if (segments[0] === "home") return [{ label: "Home" }];
-  if (segments[0] === "games" && segments[1] && segments[1] !== "new") return [];
+  if (segments[0] === "games" && segments[1] && !["new", "open"].includes(segments[1])) return [];
 
   const items: BreadcrumbItem[] = segments[0] === "admin" ? [] : [{ href: "/home", label: "Home" }];
 

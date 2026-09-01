@@ -3,18 +3,18 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { resolvePostAuthDestination } from "@/features/auth/destination";
 import { safeNextPath } from "@/features/auth/destination-path";
+import { googleOAuthErrorMessage } from "@/features/auth/google-oauth-error";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const providerError = request.nextUrl.searchParams.get("error");
   if (providerError) {
+    const next = safeNextPath(cookieStore.get("relay_auth_next")?.value);
     cookieStore.delete("relay_auth_next");
-    const message =
-      providerError === "access_denied"
-        ? "Google sign-in was canceled. You can try again or sign in with your email."
-        : "Google sign-in could not be completed. Try again.";
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, request.url));
+    const loginParams = new URLSearchParams({ error: googleOAuthErrorMessage(request.nextUrl.searchParams) });
+    if (next !== "/home") loginParams.set("next", next);
+    return NextResponse.redirect(new URL(`/login?${loginParams}`, request.url));
   }
 
   const code = request.nextUrl.searchParams.get("code");

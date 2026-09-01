@@ -9,6 +9,7 @@ const sessionDetailsSchema = z.object({
   accentColor: z.enum(["violet", "blue", "teal", "green", "orange", "coral"]).default("violet"),
   startsAt: z.coerce.date({ error: "Choose a valid date and start time." }),
   endsAt: z.coerce.date({ error: "Choose a valid end time." }),
+  venueId: z.uuid("Choose a valid Relay court or enter the court manually.").optional(),
   venueName: z.string().trim().min(2, "Add the court name.").max(120, "Keep the court name under 120 characters."),
   venueAddress: z.string().trim().max(240, "Keep the court address under 240 characters.").optional(),
   capacity: z.coerce
@@ -22,17 +23,67 @@ const sessionDetailsSchema = z.object({
     .min(1, "Choose at least 1 court.")
     .max(20, "Relay supports up to 20 courts per session."),
   notes: z.string().trim().max(1200, "Keep the note under 1,200 characters.").optional(),
-  estimatedCostCents: z.coerce.number().int("Enter a valid amount.").nonnegative("Cost can’t be negative.").optional(),
+  visibility: z.enum(["public", "link", "private"]).default("link"),
+  costKind: z.enum(["unspecified", "free", "estimated"]).default("unspecified"),
+  estimatedCostCents: z.coerce
+    .number()
+    .int("Enter a valid amount.")
+    .nonnegative("Cost can’t be negative.")
+    .max(10_000_000, "Estimated cost can’t exceed ₱100,000 per player.")
+    .optional(),
+  booked: z.boolean().default(false),
+  bookingReference: z.string().trim().max(120, "Keep the booking reference under 120 characters.").optional(),
+  bookingTotalCents: z.coerce
+    .number()
+    .int("Enter a valid booking total.")
+    .nonnegative("Booking total can’t be negative.")
+    .max(100_000_000, "Booking total can’t exceed ₱1,000,000.")
+    .optional(),
+  bookingNotes: z.string().trim().max(600, "Keep booking notes under 600 characters.").optional(),
 });
 
-function validateTimes(value: { startsAt: Date; endsAt: Date }, context: z.RefinementCtx) {
+type ValidatedSessionDetails = {
+  startsAt: Date;
+  endsAt: Date;
+  visibility: "public" | "link" | "private";
+  costKind: "unspecified" | "free" | "estimated";
+  estimatedCostCents?: number;
+  booked: boolean;
+  bookingReference?: string;
+  bookingTotalCents?: number;
+  bookingNotes?: string;
+};
+
+function validateSessionDetails(value: ValidatedSessionDetails, context: z.RefinementCtx) {
   if (value.endsAt <= value.startsAt)
     context.addIssue({ code: "custom", path: ["endsAt"], message: "End time must be after start time." });
+  if (value.visibility === "public" && value.costKind === "unspecified")
+    context.addIssue({
+      code: "custom",
+      path: ["costKind"],
+      message: "Public games must be marked free or include an estimated cost per player.",
+    });
+  if (value.costKind === "estimated" && (!value.estimatedCostCents || value.estimatedCostCents <= 0))
+    context.addIssue({
+      code: "custom",
+      path: ["estimatedCostCents"],
+      message: "Enter an estimated cost greater than ₱0.",
+    });
+  if (value.costKind === "free" && value.estimatedCostCents !== 0)
+    context.addIssue({ code: "custom", path: ["costKind"], message: "Free games must have a zero cost." });
+  if (value.costKind === "unspecified" && value.estimatedCostCents !== undefined)
+    context.addIssue({ code: "custom", path: ["costKind"], message: "Choose how the game cost should be shown." });
+  if (!value.booked && (value.bookingReference || value.bookingTotalCents !== undefined || value.bookingNotes))
+    context.addIssue({
+      code: "custom",
+      path: ["booked"],
+      message: "Mark the court as booked before adding reservation details.",
+    });
 }
 
 export function createSessionSchema(now = new Date()) {
   return sessionDetailsSchema.superRefine((value, context) => {
-    validateTimes(value, context);
+    validateSessionDetails(value, context);
     if (value.startsAt <= now)
       context.addIssue({ code: "custom", path: ["startsAt"], message: "Start time must be in the future." });
   });
@@ -42,17 +93,19 @@ export const updateSessionSchema = sessionDetailsSchema
   .extend({
     sessionId: z.uuid(),
     version: z.coerce.number().int().positive(),
-    visibility: z.enum(["public", "link", "private"]),
     requiresApproval: z.coerce.boolean(),
-    bookingReference: z.string().trim().max(120, "Keep the booking reference under 120 characters.").optional(),
-    bookingTotalCents: z.coerce
-      .number()
-      .int("Enter a valid booking total.")
-      .nonnegative("Booking total can’t be negative.")
-      .optional(),
-    bookingNotes: z.string().trim().max(600, "Keep booking notes under 600 characters.").optional(),
   })
-  .superRefine(validateTimes);
+  .superRefine(validateSessionDetails);
+
+export function canRespondToSession(input: {
+  visibility: "public" | "link" | "private";
+  hostId: string;
+  userId?: string | null;
+  hasRosterIdentity: boolean;
+}) {
+  if (input.visibility !== "private") return true;
+  return input.userId === input.hostId || input.hasRosterIdentity;
+}
 
 export type RosterIdentity = { id: string; userId: string | null; guestTokenHash: string | null };
 

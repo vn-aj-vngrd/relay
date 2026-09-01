@@ -53,6 +53,13 @@ export function notificationPresentation({
         href: gameHref,
         tone: "session",
       };
+    case "session_cost_changed":
+      return {
+        title: customTitle ?? `${game} cost updated`,
+        body: customBody ?? "Open the game to review the updated cost per player.",
+        href: gameHref,
+        tone: "payment",
+      };
     case "booking_confirmed":
       return {
         title: customTitle ?? "Court booking confirmed",

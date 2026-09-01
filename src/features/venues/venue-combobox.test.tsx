@@ -47,6 +47,7 @@ describe("VenueCombobox", () => {
 
     fireEvent.click(screen.getByRole("option", { name: /Central Pickle/ }));
     expect(input).toHaveValue("Central Pickle");
+    expect(document.querySelector<HTMLInputElement>('input[name="venueId"]')).toHaveValue("venue-1");
     expect(document.querySelector<HTMLInputElement>('input[name="venueAddress"]')).toHaveValue(
       "Greenfield District, Mandaluyong",
     );
@@ -81,6 +82,7 @@ describe("VenueCombobox", () => {
     fireEvent.change(input, { target: { value: "Private neighborhood court" } });
 
     expect(input).toHaveValue("Private neighborhood court");
+    expect(document.querySelector<HTMLInputElement>('input[name="venueId"]')).toHaveValue("");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(screen.getByText(/You can still use what you typed/)).toBeVisible();
   });

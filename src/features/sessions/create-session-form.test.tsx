@@ -10,6 +10,26 @@ import { CreateSessionForm } from "./create-session-form";
 afterEach(cleanup);
 
 describe("CreateSessionForm", () => {
+  const completePlan = {
+    title: "Saturday Pickle",
+    venue: "Central Pickle",
+    date: "2030-08-22",
+    start: "19:00",
+    end: "21:00",
+    capacity: 8,
+    courts: 2,
+  };
+  const now = "2030-08-21T08:00:00.000Z";
+
+  function moveToAccess() {
+    fireEvent.click(screen.getByRole("button", { name: "Continue to players" }));
+  }
+
+  function moveToDetails() {
+    moveToAccess();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
+  }
+
   it("starts a new game blank instead of guessing the plan", () => {
     render(<CreateSessionForm defaults={{}} />);
 
@@ -19,9 +39,26 @@ describe("CreateSessionForm", () => {
     expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
     expect(screen.getByRole("button", { name: "Start time" })).toHaveTextContent("Choose a time");
     expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent("Choose a time");
-    expect(screen.getByRole("spinbutton", { name: "Player limit" })).toHaveValue(null);
-    expect(screen.getByRole("spinbutton", { name: "Court quantity" })).toHaveValue(null);
+    expect(screen.getByText("Step 1 of 4")).toBeVisible();
+    expect(screen.queryByRole("spinbutton", { name: "Player limit" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to players" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+  });
+
+  it("clears a field error as soon as the player corrects that field", () => {
+    render(<CreateSessionForm defaults={{}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Continue to players" }));
+
+    const title = screen.getByLabelText("Game name");
+    expect(screen.getByText("Add a game name with at least 2 characters.")).toBeVisible();
+    expect(title).toHaveAttribute("aria-invalid", "true");
+
+    fireEvent.change(title, { target: { value: "Friday Pickle" } });
+    expect(screen.queryByText("Add a game name with at least 2 characters.")).not.toBeInTheDocument();
+    expect(title).toHaveAttribute("aria-invalid", "false");
+
+    fireEvent.change(screen.getByLabelText("Court"), { target: { value: "3rd Fitness Lab" } });
+    expect(screen.queryByText("Add the court name.")).not.toBeInTheDocument();
   });
 
   it("limits a same-day schedule to future and increasing times", () => {
@@ -37,7 +74,8 @@ describe("CreateSessionForm", () => {
   });
 
   it("uses accessible quantity controls instead of limiting courts to presets", () => {
-    render(<CreateSessionForm defaults={{ date: "2026-08-22", courts: 2 }} />);
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToAccess();
     const courts = screen.getByRole("spinbutton", { name: "Court quantity" });
 
     expect(courts).toHaveValue(2);
@@ -68,8 +106,8 @@ describe("CreateSessionForm", () => {
   });
 
   it("keeps the player note readable as a multiline field on mobile", () => {
-    render(<CreateSessionForm defaults={{ date: "2026-08-22" }} />);
-    fireEvent.click(screen.getByRole("button", { name: /More details/ }));
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToDetails();
 
     expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveAttribute("rows", "2");
     expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveClass("min-h-20");
@@ -77,11 +115,44 @@ describe("CreateSessionForm", () => {
   });
 
   it("keeps game color optional and exposes an accessible palette", () => {
-    render(<CreateSessionForm defaults={{ date: "2026-08-22" }} />);
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
     expect(screen.queryByRole("radio", { name: "Violet" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /More details/ }));
+    moveToDetails();
     expect(screen.getByRole("radio", { name: "Violet" })).toBeChecked();
     fireEvent.click(screen.getByRole("radio", { name: "Court blue" }));
     expect(screen.getByRole("radio", { name: "Court blue" })).toBeChecked();
+  });
+
+  it("offers optional booking details before a read-only review", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToDetails();
+
+    expect(screen.getByText(/You can add or change everything here later in Settings/)).toBeVisible();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Court is already booked/ }));
+    fireEvent.change(screen.getByLabelText("Booking reference"), { target: { value: "RES-2048" } });
+    fireEvent.change(screen.getByLabelText("Booking total"), { target: { value: "2400" } });
+    fireEvent.click(screen.getByRole("button", { name: "Review game" }));
+
+    expect(screen.getByText("Court booked · Reference RES-2048 · ₱2400")).toBeVisible();
+    expect(screen.getByText(/This step is read-only/)).toBeVisible();
+    expect(screen.getByLabelText("Booking reference")).not.toBeVisible();
+    expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(3);
+  });
+
+  it("requires a cost expectation before reviewing a public game", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToAccess();
+    fireEvent.click(screen.getByRole("radio", { name: /^Public/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
+    expect(screen.getByText("Public games must be marked free or include an estimated cost per player.")).toBeVisible();
+    fireEvent.click(screen.getByRole("radio", { name: "Free" }));
+    expect(
+      screen.queryByText("Public games must be marked free or include an estimated cost per player."),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
+    expect(screen.getByRole("heading", { name: "Optional details" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Review game" }));
+    expect(screen.getByRole("heading", { name: "Review your game" })).toBeVisible();
+    expect(screen.getAllByText("Free").at(-1)).toBeVisible();
   });
 });

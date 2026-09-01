@@ -115,8 +115,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function PublicSessionPage({ params }: { params: Promise<{ slug: string }> }) {
-  const slug = (await params).slug;
+export default async function PublicSessionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ source?: string }>;
+}) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const discoverySource = query.source === "open-games" || query.source === "search" ? query.source : undefined;
   const [data, user] = await Promise.all([getPublicSession(slug), getCurrentUser()]);
   if (!data) notFound();
   const viewer = await getSessionViewer(data.session.id, slug);
@@ -244,6 +251,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                     locked={session.rosterLocked}
                     full={spots === 0}
                     instance="mobile"
+                    discoverySource={discoverySource}
                   />
                 </section>
               ) : null}
@@ -288,6 +296,7 @@ export default async function PublicSessionPage({ params }: { params: Promise<{ 
                   locked={session.rosterLocked}
                   full={spots === 0}
                   instance="desktop"
+                  discoverySource={discoverySource}
                 />
               </section>
               <RosterPreview

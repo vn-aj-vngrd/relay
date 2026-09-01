@@ -38,6 +38,22 @@ describe("notificationPresentation", () => {
     ).toMatchObject({ body: "Head to Court 2 for your next match.", href: "/games/session-1/play", tone: "play" });
   });
 
+  it("presents a cost change as a repayment-relevant update", () => {
+    expect(
+      notificationPresentation({
+        type: "session_cost_changed",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: { body: "Estimated cost updated from ₱300 per player to ₱400 per player." },
+      }),
+    ).toEqual({
+      title: "Saturday Pickle cost updated",
+      body: "Estimated cost updated from ₱300 per player to ₱400 per player.",
+      href: "/games/session-1",
+      tone: "payment",
+    });
+  });
+
   it("routes scheduled reminders to the plan and arrival flow", () => {
     expect(
       notificationPresentation({

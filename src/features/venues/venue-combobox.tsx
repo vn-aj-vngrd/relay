@@ -10,16 +10,21 @@ export function VenueCombobox({
   courts = [],
   defaultValue = "",
   defaultAddress = "",
+  defaultVenueId = "",
   error,
+  onValueChange,
 }: {
   courts?: CourtSuggestion[];
   defaultValue?: string;
   defaultAddress?: string;
+  defaultVenueId?: string;
   error?: string;
+  onValueChange?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(defaultValue);
   const [address, setAddress] = useState(defaultAddress);
+  const [venueId, setVenueId] = useState(defaultVenueId);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const listboxId = "venue-suggestions";
@@ -37,8 +42,10 @@ export function VenueCombobox({
   function selectSuggestion(suggestion: CourtSuggestion) {
     setQuery(suggestion.name);
     setAddress(suggestion.address);
+    setVenueId(suggestion.id);
     setOpen(false);
     setActiveIndex(-1);
+    onValueChange?.();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -95,8 +102,10 @@ export function VenueCombobox({
         onChange={(event) => {
           setQuery(event.target.value);
           setAddress("");
+          setVenueId("");
           setOpen(true);
           setActiveIndex(0);
+          onValueChange?.();
         }}
         onFocus={() => {
           setOpen(true);
@@ -111,6 +120,7 @@ export function VenueCombobox({
         aria-invalid={Boolean(error)}
         aria-describedby={`venue-hint${error ? " venue-error" : ""}`}
       />
+      <input type="hidden" name="venueId" value={venueId} />
       <input type="hidden" name="venueAddress" value={address} />
       {open && suggestions.length ? (
         <ul

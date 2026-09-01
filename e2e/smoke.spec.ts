@@ -149,20 +149,17 @@ test("an authenticated host and guest can complete the core session flow", async
 
   await page.goto("/games/new");
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Publish game" }).click();
-  await expect(
-    page.getByText("A few details need attention. Check the fields marked below.", { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText("Choose a valid date and start time.", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("Step 1 of 4")).toBeVisible();
+  await page.getByRole("button", { name: "Continue to players" }).click();
+  await expect(page.getByText("Add a game name with at least 2 characters.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Choose a date.", { exact: true })).toBeVisible();
   const date = await page.locator("#date").boundingBox();
-  const capacity = await page.locator("#capacity").boundingBox();
   const start = await page.locator("#start").boundingBox();
   const end = await page.locator("#end").boundingBox();
-  for (const field of [date, capacity, start, end]) {
+  for (const field of [date, start, end]) {
     expect(field).not.toBeNull();
     expect(field!.x + field!.width).toBeLessThanOrEqual(320);
   }
-  expect(date!.y + date!.height).toBeLessThanOrEqual(capacity!.y);
   expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
 
   await page.locator("#title").fill("Saturday Night Pickle");
@@ -184,19 +181,28 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.getByRole("option", { name: "7:00 PM" }).click();
   await page.getByRole("button", { name: "End time" }).click();
   await page.getByRole("option", { name: "9:00 PM" }).click();
-  await page.locator("#capacity").fill("8");
   await page.locator("#venue").fill("Court District");
   await expect(page.getByRole("listbox", { name: "Court suggestions" })).toBeVisible({ timeout: 10_000 });
   await page.getByRole("option").first().click();
   await expect(page.locator('input[name="venueAddress"]')).not.toHaveValue("");
   const selectedVenue = await page.locator("#venue").inputValue();
+  await page.getByRole("button", { name: "Continue to players" }).click();
+  await expect(page.getByText("Step 2 of 4")).toBeVisible();
+  const capacity = await page.locator("#capacity").boundingBox();
+  expect(capacity).not.toBeNull();
+  expect(capacity!.x + capacity!.width).toBeLessThanOrEqual(320);
+  await page.locator("#capacity").fill("8");
   await page.locator("#courts").fill("21");
-  await page.getByRole("button", { name: "Publish game" }).click();
-  await expect(page.getByText("Relay supports up to 20 courts per session.")).toBeVisible();
+  await page.getByRole("button", { name: "Continue to details" }).click();
+  await expect(page.getByText("Choose a whole-number court quantity from 1 to 20.")).toBeVisible();
   await expect(page.locator("#courts")).toBeFocused();
-  await expect(page.locator("#venue")).toHaveValue(selectedVenue);
 
   await page.locator("#courts").fill("2");
+  await page.getByRole("button", { name: "Continue to details" }).click();
+  await expect(page.getByText("Step 3 of 4")).toBeVisible();
+  await page.getByRole("button", { name: "Review game" }).click();
+  await expect(page.getByText("Step 4 of 4")).toBeVisible();
+  await expect(page.getByText(selectedVenue)).toBeVisible();
   await page.getByRole("button", { name: "Publish game" }).click();
   await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
   const sessionId = new URL(page.url()).pathname.split("/").at(-1);
@@ -471,6 +477,8 @@ test("core public and protected routes fail safely", async ({ page }) => {
   expect(removedVenueAutocomplete.status()).toBe(404);
   const globalSearch = await page.request.get("/api/search?q=v&type=all");
   expect(globalSearch.status()).toBe(401);
+  await page.goto("/games/open");
+  expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/games/new");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/groups/new");
