@@ -158,6 +158,7 @@ export async function createPasswordAccount(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email: email.data,
     password: password.data,
+    options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
   });
   if (error)
     authError(

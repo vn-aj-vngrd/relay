@@ -35,7 +35,9 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
           ) : null}
           {sent ? (
             <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
-              Check your email for your secure sign-in link.
+              {sent === "account"
+                ? "Check your email to confirm your Relay account, then return here to sign in."
+                : "Check your email for your secure sign-in link."}
             </p>
           ) : null}
           {passwordUpdated ? (

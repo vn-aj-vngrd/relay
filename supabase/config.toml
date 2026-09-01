@@ -243,17 +243,35 @@ pass = "env(RESEND_API_KEY)"
 admin_email = "env(SMTP_FROM_EMAIL)"
 sender_name = "Relay"
 
-# Keep the recovery email source-controlled; paste the same HTML into the hosted
-# Supabase Reset password template when provisioning production.
+# Source-controlled templates keep every Supabase Auth email aligned with Relay.
+[auth.email.template.confirmation]
+subject = "Confirm your Relay account"
+content_path = "./supabase/templates/confirmation.html"
+
 [auth.email.template.recovery]
 subject = "Reset your Relay password"
 content_path = "./supabase/templates/recovery.html"
 
-# Uncomment to customize notification email template
-# [auth.email.notification.password_changed]
-# enabled = true
-# subject = "Your password has been changed"
-# content_path = "./templates/password_changed_notification.html"
+[auth.email.template.magic_link]
+subject = "Your secure Relay sign-in link"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.invite]
+subject = "You’re invited to Relay"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new Relay email"
+content_path = "./supabase/templates/email-change.html"
+
+[auth.email.template.reauthentication]
+subject = "Your Relay verification code"
+content_path = "./supabase/templates/reauthentication.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Your Relay password changed"
+content_path = "./templates/password-changed.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

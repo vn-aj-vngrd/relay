@@ -377,6 +377,11 @@ test("login and account creation have distinct entry routes", async ({ page }) =
   await expect(page.locator("#password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.getByText("What you can do")).toHaveCount(0);
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
+
+  await page.goto("/signup?sent=account");
+  await expect(page.getByRole("status")).toHaveText(
+    "Check your email to confirm your Relay account, then return here to sign in.",
+  );
 });
 
 test("light mode is default and a stored dark preference loads", async ({ page }) => {

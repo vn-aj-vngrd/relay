@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db/client";
 import { profiles } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -40,6 +41,17 @@ export default async function EditProfilePage({ params }: { params: Promise<{ us
           </div>
         </section>
         <ProfileDetailsForm profile={profile} />
+        <section aria-labelledby="profile-security-title" className="border-b border-line py-6">
+          <h2 id="profile-security-title" className="text-sm font-semibold">
+            Account security
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+            Change your password or send yourself a recovery link if you no longer know it.
+          </p>
+          <ButtonLink href="/preferences/password" variant="secondary" className="mt-4">
+            Change password
+          </ButtonLink>
+        </section>
       </div>
     </div>
   );
