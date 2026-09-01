@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  checkRateLimit: vi.fn(async () => ({ allowed: true })),
   cookieSet: vi.fn(),
   redirect: vi.fn(() => {
     throw new Error("redirect");
@@ -19,7 +20,7 @@ vi.mock("@/lib/env", () => ({
   getPublicEnv: () => ({ NEXT_PUBLIC_APP_URL: "https://relay.vanajvanguardia.tech" }),
 }));
 vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: vi.fn(async () => ({ allowed: true })),
+  checkRateLimit: mocks.checkRateLimit,
   requestIdentity: vi.fn(async () => "ip:test"),
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn() }));
@@ -38,6 +39,7 @@ vi.mock("./session", () => ({ getCurrentUser: vi.fn() }));
 import { createPasswordAccount, requestPasswordReset, signInWithPassword } from "./actions";
 
 beforeEach(() => {
+  mocks.checkRateLimit.mockClear();
   mocks.cookieSet.mockClear();
   mocks.redirect.mockClear();
   mocks.resetPasswordForEmail.mockReset();
@@ -94,6 +96,10 @@ describe("createPasswordAccount", () => {
 
     await expect(createPasswordAccount(formData)).rejects.toThrow("redirect");
 
+    expect(mocks.checkRateLimit).toHaveBeenCalledWith(
+      { scope: "password-sign-up:account", limit: 10, windowSeconds: 3600 },
+      "email:player@example.com",
+    );
     expect(mocks.signUp).toHaveBeenCalledWith({
       email: "player@example.com",
       password: "RelayPass123",

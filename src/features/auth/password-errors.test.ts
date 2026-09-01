@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { recoveredPasswordErrorMessage } from "./password-errors";
+import { passwordResetRequestErrorMessage, recoveredPasswordErrorMessage } from "./password-errors";
+
+describe("passwordResetRequestErrorMessage", () => {
+  it("explains Supabase’s provider email limit", () => {
+    expect(passwordResetRequestErrorMessage({ code: "over_email_send_rate_limit", status: 429 })).toBe(
+      "Too many authentication emails were sent recently. Wait a few minutes and request a new link.",
+    );
+  });
+});
 
 describe("recoveredPasswordErrorMessage", () => {
   it.each([

@@ -3,6 +3,17 @@ type PasswordUpdateError = {
   status?: number;
 };
 
+export function passwordResetRequestErrorMessage(error: PasswordUpdateError) {
+  switch (error.code) {
+    case "over_email_send_rate_limit":
+      return "Too many authentication emails were sent recently. Wait a few minutes and request a new link.";
+    case "captcha_failed":
+      return "The security check expired. Complete it again and resend the request.";
+    default:
+      return "We couldn’t send the reset email. Wait a moment and try again.";
+  }
+}
+
 export function recoveredPasswordErrorMessage(error: PasswordUpdateError) {
   switch (error.code) {
     case "same_password":

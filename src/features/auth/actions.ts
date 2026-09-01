@@ -11,7 +11,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { resolvePostAuthDestination } from "./destination";
 import { safeNextPath } from "./destination-path";
-import { recoveredPasswordErrorMessage } from "./password-errors";
+import { passwordResetRequestErrorMessage, recoveredPasswordErrorMessage } from "./password-errors";
 import { getCurrentUser } from "./session";
 
 const emailSchema = z.email();
@@ -135,8 +135,8 @@ export async function createPasswordAccount(formData: FormData) {
   await guardAuthAttempt({
     scope: "password-sign-up",
     email: email.data,
-    ipLimit: 8,
-    accountLimit: 3,
+    ipLimit: 30,
+    accountLimit: 10,
     windowSeconds: 3600,
     destination: "/signup",
     next,
@@ -191,7 +191,10 @@ export async function requestPasswordReset(formData: FormData) {
     redirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback?recovery=1`,
     captchaToken: captchaToken.data,
   });
-  if (error) authError("We couldn’t send the reset email. Wait a moment and try again.", "/forgot-password");
+  if (error) {
+    console.error("[relay-password-reset-request]", { code: error.code, status: error.status });
+    authError(passwordResetRequestErrorMessage(error), "/forgot-password");
+  }
   const cookieStore = await cookies();
   cookieStore.set("relay_recovery_email", email.data, {
     httpOnly: true,
