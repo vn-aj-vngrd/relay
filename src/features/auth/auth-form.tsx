@@ -115,7 +115,13 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
           </div>
           {creating ? (
             <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
-          ) : null}
+          ) : (
+            <p className="mt-2 text-right text-sm">
+              <Link href="/forgot-password" className="font-semibold text-primary underline-offset-2 hover:underline">
+                Forgot password?
+              </Link>
+            </p>
+          )}
         </div>
         {creating ? (
           turnstileSiteKey ? (

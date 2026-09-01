@@ -6,7 +6,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getPublicEnv } from "@/lib/env";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-init";
 
-const readOnlyWriteExceptions = ["/login", "/signup", "/auth/callback", "/admin-security", "/set-password"];
+const readOnlyWriteExceptions = [
+  "/login",
+  "/signup",
+  "/auth/callback",
+  "/admin-security",
+  "/forgot-password",
+  "/set-password",
+  "/update-password",
+];
 const sessionRefreshPrefixes = [
   "/admin",
   "/api/admin",
@@ -16,6 +24,7 @@ const sessionRefreshPrefixes = [
   "/api/search",
   "/court",
   "/feedback",
+  "/forgot-password",
   "/games",
   "/groups",
   "/help",
@@ -27,6 +36,7 @@ const sessionRefreshPrefixes = [
   "/s/",
   "/search",
   "/set-password",
+  "/update-password",
 ];
 const strictCspPrefixes = ["/admin", "/auth", "/set-password", ...sessionRefreshPrefixes];
 const themeInitHash = createHash("sha256").update(THEME_INIT_SCRIPT).digest("base64");
@@ -120,6 +130,7 @@ export const config = {
     "/auth/:path*",
     "/court/:path*",
     "/feedback/:path*",
+    "/forgot-password/:path*",
     "/games/:path*",
     "/groups/:path*",
     "/help/:path*",
@@ -131,5 +142,6 @@ export const config = {
     "/s/:path*",
     "/search/:path*",
     "/set-password/:path*",
+    "/update-password/:path*",
   ],
 };

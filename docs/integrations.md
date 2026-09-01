@@ -24,6 +24,8 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`      | `true` after Google provider setup            | Public                    | Local, Vercel |
 | `NEXT_PUBLIC_MAGIC_LINK_ENABLED`       | `true` only after production SMTP is verified | Public                    | Local, Vercel |
 | `SUPABASE_SECRET_KEY`                  | Supabase API Keys                             | Secret, server-only       | Local, Vercel |
+| `RESEND_API_KEY`                       | Resend API Keys                               | Secret, setup-only        | Local only    |
+| `SMTP_FROM_EMAIL`                      | Verified Resend domain sender                 | Setup-only configuration  | Local only    |
 | `DATABASE_URL`                         | Supabase Connect → Transaction pooler         | Secret, server-only       | Local, Vercel |
 | `SUPABASE_PROJECT_REF`                 | Supabase project                              | Local setup metadata      | Local only    |
 | `SUPABASE_REGION`                      | Provisioning decision                         | Local setup metadata      | Local only    |
@@ -34,7 +36,9 @@ The wizard is idempotent at the project and environment level. Re-running it fin
 | `ADMIN_EMAILS`                         | Relay owner                                   | Secret, server-only       | Local, Vercel |
 | `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                           | Server-only configuration | Local, Vercel |
 
-`SUPABASE_SECRET_KEY` and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
+`SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. `RESEND_API_KEY` and `SMTP_FROM_EMAIL` are expanded only when `supabase config push` applies Auth SMTP settings; Relay does not need them at runtime. The production sender is `Relay <relay@vanajvanguardia.tech>`. A verified `vanajvanguardia.tech` domain covers that address, so a separately verified `relay.vanajvanguardia.tech` subdomain is unnecessary unless mail should originate from that subdomain.
+
+Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
 Geoapify remains server-only and supplies Philippines-bounded map tiles. The dedicated Court Finder and landing-page Court Finder preview load their maps on entry; other compact previews remain click-to-load. Provider responses are cached for 30 days at the CDN, and a server-side global budget stops uncached tile requests after 2,500 per day—below Geoapify Free’s 3,000-credit daily allowance. Create-game court suggestions come directly from Relay’s reviewed court directory; no location-provider autocomplete runs while typing. The court directory and interactive map are restricted to the Philippines. The verified inventory begins with Cebu and grows through reviewed nationwide submissions. `/courts` is the public finder and `/court` is the signed-in finder; legacy `/venues` links redirect permanently to the signed-in route. The internal `/api/venues/tiles/[z]/[x]/[y]` endpoint retains the database-era identifier for compatibility, accepts only tile coordinates intersecting the Philippines, proxies Geoapify raster tiles, and applies CDN caching so the provider key never enters the browser. The UI must retain Geoapify/OpenMapTiles/OpenStreetMap attribution. Never move `GEOAPIFY_API_KEY` into a public variable or browser map bundle.
 
@@ -48,12 +52,15 @@ The Supabase **Before User Created** hook enforces the singleton `public.signup_
 
 1. Open `/login` on localhost.
 2. Create a password account, confirm it reaches the authenticated home, sign out, and sign in again.
-3. When production SMTP is configured, set `NEXT_PUBLIC_MAGIC_LINK_ENABLED=true`, request a magic link, and confirm it returns through `/auth/callback`.
-4. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
-5. In Supabase Authentication → Users, verify one identity per enabled method.
-6. In the SQL editor, verify the same IDs exist in `public.users`.
-7. In Admin Console → Overview, set the account limit to the current registered-user count and confirm a new signup is rejected without creating an Auth user.
-8. Raise the limit by one, confirm one signup succeeds, and restore the intended launch limit.
+3. With Resend SMTP configured, open `/forgot-password`, request a reset for a known account, and verify Resend logs show mail from `Relay <relay@vanajvanguardia.tech>`.
+4. Follow the reset link, confirm `/update-password` accepts a new password, signs the recovery session out, and returns to `/login` with a success message. Verify the link cannot be reused.
+5. Sign in with the new password, open Preferences → Change password, and confirm the current-password flow works. Confirm an incorrect current password fails without changing it.
+6. When production SMTP is configured, set `NEXT_PUBLIC_MAGIC_LINK_ENABLED=true`, request a magic link, and confirm it returns through `/auth/callback`.
+7. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
+8. In Supabase Authentication → Users, verify one identity per enabled method.
+9. In the SQL editor, verify the same IDs exist in `public.users`.
+10. In Admin Console → Overview, set the account limit to the current registered-user count and confirm a new signup is rejected without creating an Auth user.
+11. Raise the limit by one, confirm one signup succeeds, and restore the intended launch limit.
 
 **Complete when:** password authentication creates a persistent session, the capacity boundary fails closed, and every enabled optional method passes its callback flow. Supabase’s built-in mailer is test-only; never enable magic links in production without custom SMTP.
 

@@ -29,6 +29,12 @@ test("the landing page introduces Relay and protected routes open a usable login
   expect(headerBox).not.toBeNull();
   expect(Math.abs(brandBox!.x + brandBox!.width / 2 - (headerBox!.x + headerBox!.width / 2))).toBeLessThan(1);
   await expect(page.getByText("Continue with Google")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await expect(page).toHaveURL(/\/forgot-password$/);
+  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+  await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
   await page.getByRole("link", { name: "Relay home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();

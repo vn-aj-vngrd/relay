@@ -14,6 +14,7 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") ?? undefined;
   const sent = searchParams.get("sent") ?? undefined;
+  const passwordUpdated = searchParams.get("password") === "updated";
   const next = searchParams.get("next") ?? undefined;
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
 
@@ -35,6 +36,11 @@ export function AuthEntry({ mode }: { mode: EntryMode }) {
           {sent ? (
             <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
               Check your email for your secure sign-in link.
+            </p>
+          ) : null}
+          {passwordUpdated ? (
+            <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
+              Your password was updated. Sign in with your new password.
             </p>
           ) : null}
           <AuthForm next={next} initialMode={mode} />

@@ -173,6 +173,81 @@ export async function createPasswordAccount(formData: FormData) {
   redirect("/signup?sent=account");
 }
 
+export async function requestPasswordReset(formData: FormData) {
+  const email = emailSchema.safeParse(formData.get("email"));
+  const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
+  if (!email.success) authError("Enter a valid email address.", "/forgot-password");
+  if (!captchaToken.success) authError("Complete the security check and try again.", "/forgot-password");
+  await guardAuthAttempt({
+    scope: "password-reset",
+    email: email.data,
+    ipLimit: 8,
+    accountLimit: 3,
+    windowSeconds: 3600,
+    destination: "/forgot-password",
+  });
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
+    redirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback?recovery=1`,
+    captchaToken: captchaToken.data,
+  });
+  if (error) authError("We couldn’t send the reset email. Wait a moment and try again.", "/forgot-password");
+  redirect("/forgot-password?sent=1");
+}
+
+export async function updateRecoveredPassword(formData: FormData) {
+  const cookieStore = await cookies();
+  const user = await getCurrentUser();
+  if (!user || cookieStore.get("relay_password_recovery")?.value !== "1") redirect("/forgot-password");
+  const password = passwordSchema.safeParse(formData.get("password"));
+  const confirmation = formData.get("confirmation");
+  if (!password.success) authError("Use at least 8 characters with a letter and number.", "/update-password");
+  if (password.data !== confirmation) authError("Passwords do not match.", "/update-password");
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ password: password.data });
+  if (error)
+    authError("Your password could not be updated. Request a new reset link and try again.", "/update-password");
+  cookieStore.delete("relay_password_recovery");
+  await supabase.auth.signOut();
+  redirect("/login?password=updated");
+}
+
+export async function changePassword(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?next=/preferences/password");
+  const currentPassword = passwordSchema.safeParse(formData.get("currentPassword"));
+  const password = passwordSchema.safeParse(formData.get("password"));
+  const confirmation = formData.get("confirmation");
+  if (!currentPassword.success) authError("Enter your current password.", "/preferences/password");
+  if (!password.success) authError("Use at least 8 characters with a letter and number.", "/preferences/password");
+  if (password.data !== confirmation) authError("Passwords do not match.", "/preferences/password");
+  if (password.data === currentPassword.data)
+    authError("Choose a new password that differs from your current password.", "/preferences/password");
+
+  await guardAuthAttempt({
+    scope: "password-change",
+    email: user.email,
+    ipLimit: 10,
+    accountLimit: 5,
+    windowSeconds: 3600,
+    destination: "/preferences/password",
+  });
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({
+    current_password: currentPassword.data,
+    password: password.data,
+  });
+  if (error) {
+    const message = error.message.toLowerCase().includes("password")
+      ? "Your current password is incorrect."
+      : "Your password could not be changed. Try again.";
+    authError(message, "/preferences/password");
+  }
+  redirect("/preferences/password?success=1");
+}
+
 export async function setTemporaryPassword(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/set-password");

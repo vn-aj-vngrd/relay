@@ -18,6 +18,7 @@ describe("AuthForm", () => {
     expect(screen.getByText(/By signing in/)).toBeVisible();
     expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
     expect(screen.queryByText("8 or more characters, including a letter and number.")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
@@ -33,5 +34,6 @@ describe("AuthForm", () => {
     expect(screen.getByText(/security check is being configured/i)).toHaveAttribute("role", "alert");
     expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
     expect(screen.getByText("8 or more characters, including a letter and number.")).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Forgot password?" })).not.toBeInTheDocument();
   });
 });
