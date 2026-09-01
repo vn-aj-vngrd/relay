@@ -2,7 +2,7 @@ import { Broadcast, Users } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { Avatar } from "@/components/shared/avatar-stack";
-import { LiveCourt } from "@/features/matches/live-court";
+import { LiveCourtDeck } from "@/features/matches/live-court";
 import { getPublicLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { RoundTimer } from "@/features/matches/round-timer";
@@ -93,35 +93,31 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
                 </div>
               ) : null}
               {data.activeMatches.length ? (
-                <div className="grid gap-5">
-                  {data.activeMatches.map((match) => {
-                    const teamA = match.players
-                      .filter(({ matchPlayer }) => matchPlayer.team === "A")
-                      .map(({ player, profile }) => name(player, profile))
-                      .join(" + ");
-                    const teamB = match.players
-                      .filter(({ matchPlayer }) => matchPlayer.team === "B")
-                      .map(({ player, profile }) => name(player, profile))
-                      .join(" + ");
-                    return (
-                      <LiveCourt
-                        key={match.id}
-                        sessionId={data.session.id}
-                        matchId={match.id}
-                        number={match.courtLabel}
-                        teams={[teamA, teamB]}
-                        scores={[match.teamAScore, match.teamBScore]}
-                        version={match.version}
-                        canScore={Boolean(
-                          viewer?.user &&
-                          (data.session.hostId === viewer.user.id ||
-                            viewer.player.role === "cohost" ||
-                            match.players.some(({ player }) => player.id === viewer.player.id)),
-                        )}
-                      />
-                    );
-                  })}
-                </div>
+                <LiveCourtDeck
+                  courts={data.activeMatches.map((match) => ({
+                    sessionId: data.session.id,
+                    matchId: match.id,
+                    number: match.courtLabel,
+                    teams: [
+                      match.players
+                        .filter(({ matchPlayer }) => matchPlayer.team === "A")
+                        .map(({ player, profile }) => name(player, profile))
+                        .join(" + "),
+                      match.players
+                        .filter(({ matchPlayer }) => matchPlayer.team === "B")
+                        .map(({ player, profile }) => name(player, profile))
+                        .join(" + "),
+                    ],
+                    scores: [match.teamAScore, match.teamBScore],
+                    version: match.version,
+                    canScore: Boolean(
+                      viewer?.user &&
+                      (data.session.hostId === viewer.user.id ||
+                        viewer.player.role === "cohost" ||
+                        match.players.some(({ player }) => player.id === viewer.player.id)),
+                    ),
+                  }))}
+                />
               ) : (
                 <div className="border-y border-line py-10">
                   <h3 className="font-bold">No match is active</h3>

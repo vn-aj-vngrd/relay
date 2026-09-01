@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LiveCourt } from "./live-court";
+import { LiveCourt, LiveCourtDeck } from "./live-court";
 
 const { saveScore, refresh } = vi.hoisted(() => ({
   saveScore: vi.fn(async (input: { teamAScore: number; teamBScore: number; version: number }) => ({
@@ -68,10 +68,39 @@ describe("LiveCourt", () => {
     render(<LiveCourt {...props} canScore={false} />);
 
     expect(screen.queryByRole("button", { name: /Add a point/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Expand scoreboard" }));
-    const dialog = screen.getByRole("dialog", { name: "Court 2 expanded scoreboard" });
+    fireEvent.click(screen.getByRole("button", { name: "Open full-screen scoreboard" }));
+    const dialog = screen.getByRole("dialog", { name: "Court 2 full-screen scoreboard" });
     expect(dialog).toHaveAttribute("open");
     fireEvent.click(screen.getByRole("button", { name: "Close expanded scoreboard" }));
     expect(dialog).not.toHaveAttribute("open");
+  });
+
+  it("switches between live courts and keeps realtime score updates in the full-screen scoreboard", () => {
+    const secondCourt = {
+      ...props,
+      matchId: "00000000-0000-4000-8000-000000000003",
+      number: "Court 3",
+      teams: ["Lia + Sam", "Noah + Kai"] as [string, string],
+      scores: [4, 7] as [number, number],
+      canScore: true,
+    };
+    const { rerender } = render(<LiveCourtDeck courts={[{ ...props, canScore: true }, secondCourt]} />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Open full-screen scoreboard" })[0]);
+    expect(screen.getByRole("dialog", { name: "Court 2 full-screen scoreboard" })).toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "Next court, Court 3" }));
+    expect(screen.getByRole("dialog", { name: "Court 3 full-screen scoreboard" })).toHaveAttribute("open");
+    expect(screen.getByText("Court 2 of 2")).toBeVisible();
+
+    rerender(
+      <LiveCourtDeck
+        courts={[
+          { ...props, canScore: true },
+          { ...secondCourt, scores: [5, 7], version: 2 },
+        ]}
+      />,
+    );
+    expect(screen.getByRole("dialog", { name: "Court 3 full-screen scoreboard" })).toHaveAttribute("open");
+    expect(screen.getAllByLabelText("Lia + Sam score 5")[0]).toHaveTextContent("5");
   });
 });

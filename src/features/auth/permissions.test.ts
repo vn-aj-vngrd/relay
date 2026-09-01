@@ -7,6 +7,7 @@ describe("session authorization", () => {
     expect(can({ userId: "p", role: "player" }, "edit")).toBe(false);
     expect(can({ userId: "h", role: "host" }, "edit")).toBe(true);
     expect(can({ userId: "c", role: "cohost" }, "confirm_payment")).toBe(true);
+    expect(can({ userId: "c", role: "cohost" }, "score")).toBe(true);
     expect(can({ userId: "c", role: "cohost" }, "create_expense")).toBe(false);
     expect(can({ userId: "c", role: "cohost" }, "complete")).toBe(false);
     expect(can({ userId: "c", role: "cohost" }, "delete")).toBe(false);

@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { completeSession, createQueueMatch } from "@/features/matches/actions";
-import { LiveCourt } from "@/features/matches/live-court";
+import { LiveCourtDeck } from "@/features/matches/live-court";
 import { getLiveSession } from "@/features/matches/queries";
 import { rotationDescription, rotationName } from "@/features/matches/rotation";
 import { RoundTimer } from "@/features/matches/round-timer";
@@ -121,38 +121,34 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
               </div>
             ) : null}
             {data.activeMatches.length ? (
-              <div className="grid gap-5">
-                {data.activeMatches.map((match) => {
-                  const teamA = match.players
-                    .filter(({ matchPlayer }) => matchPlayer.team === "A")
-                    .map(({ player, profile }) => playerName(player, profile))
-                    .join(" + ");
-                  const teamB = match.players
-                    .filter(({ matchPlayer }) => matchPlayer.team === "B")
-                    .map(({ player, profile }) => playerName(player, profile))
-                    .join(" + ");
-                  return (
-                    <LiveCourt
-                      key={match.id}
-                      sessionId={data.session.id}
-                      matchId={match.id}
-                      number={match.courtLabel}
-                      teams={[teamA, teamB]}
-                      scores={[match.teamAScore, match.teamBScore]}
-                      version={match.version}
-                      canScore={can(
-                        {
-                          ...actor,
-                          assignedScorer: Boolean(
-                            data.membership && match.players.some(({ player }) => player.id === data.membership?.id),
-                          ),
-                        },
-                        "score",
-                      )}
-                    />
-                  );
-                })}
-              </div>
+              <LiveCourtDeck
+                courts={data.activeMatches.map((match) => ({
+                  sessionId: data.session.id,
+                  matchId: match.id,
+                  number: match.courtLabel,
+                  teams: [
+                    match.players
+                      .filter(({ matchPlayer }) => matchPlayer.team === "A")
+                      .map(({ player, profile }) => playerName(player, profile))
+                      .join(" + "),
+                    match.players
+                      .filter(({ matchPlayer }) => matchPlayer.team === "B")
+                      .map(({ player, profile }) => playerName(player, profile))
+                      .join(" + "),
+                  ],
+                  scores: [match.teamAScore, match.teamBScore],
+                  version: match.version,
+                  canScore: can(
+                    {
+                      ...actor,
+                      assignedScorer: Boolean(
+                        data.membership && match.players.some(({ player }) => player.id === data.membership?.id),
+                      ),
+                    },
+                    "score",
+                  ),
+                }))}
+              />
             ) : (
               <div className="border-y border-line py-10">
                 <h3 className="font-bold">

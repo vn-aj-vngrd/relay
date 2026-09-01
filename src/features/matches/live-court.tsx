@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowsOutSimple, Minus, Plus, X } from "@phosphor-icons/react";
+import { ArrowsOutSimple, CaretLeft, CaretRight, Minus, Plus, X } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -9,7 +9,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 
 import { finishMatch, saveScore } from "./actions";
 
-type LiveCourtProps = {
+export type LiveCourtProps = {
   sessionId: string;
   matchId: string;
   number: string;
@@ -27,6 +27,14 @@ type ScoreboardProps = Omit<LiveCourtProps, "scores" | "version"> & {
   onScore: (side: 0 | 1, amount: number) => void;
   onExpand?: () => void;
   onClose?: () => void;
+  navigation?: {
+    position: number;
+    total: number;
+    previousLabel: string;
+    nextLabel: string;
+    onPrevious: () => void;
+    onNext: () => void;
+  };
 };
 
 function TeamName({ name }: { name: string }) {
@@ -59,6 +67,7 @@ function Scoreboard({
   onScore,
   onExpand,
   onClose,
+  navigation,
   expanded = false,
 }: ScoreboardProps) {
   return (
@@ -78,14 +87,15 @@ function Scoreboard({
             Live
           </span>
           {onExpand ? (
-            <IconTooltip label="Expand scoreboard">
+            <IconTooltip label="Open full-screen scoreboard">
               <button
                 type="button"
                 onClick={onExpand}
-                aria-label="Expand scoreboard"
-                className="pressable grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+                aria-label="Open full-screen scoreboard"
+                className="pressable inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
               >
                 <ArrowsOutSimple aria-hidden size={19} />
+                <span className="hidden min-[360px]:inline">Full screen</span>
               </button>
             </IconTooltip>
           ) : null}
@@ -102,6 +112,38 @@ function Scoreboard({
         </div>
       </header>
 
+      {expanded && navigation && navigation.total > 1 ? (
+        <nav
+          aria-label="Full-screen courts"
+          className="flex min-h-12 shrink-0 items-center justify-between border-b border-line px-3 sm:px-6"
+        >
+          <button
+            type="button"
+            onClick={navigation.onPrevious}
+            aria-label={`Previous court, ${navigation.previousLabel}`}
+            className="pressable inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+          >
+            <CaretLeft aria-hidden size={17} /> Previous
+          </button>
+          <span className="score text-xs font-semibold text-muted">
+            Court {navigation.position} of {navigation.total}
+          </span>
+          <button
+            type="button"
+            onClick={navigation.onNext}
+            aria-label={`Next court, ${navigation.nextLabel}`}
+            className="pressable inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+          >
+            Next <CaretRight aria-hidden size={17} />
+          </button>
+        </nav>
+      ) : null}
+      {expanded ? (
+        <p className="shrink-0 border-b border-line px-4 py-2 text-center text-xs text-muted landscape:hidden sm:hidden">
+          Rotate your phone for a wider scoreboard.
+        </p>
+      ) : null}
+
       <div
         className={`grid shrink-0 grid-cols-2 bg-[var(--scoreboard-field)] text-white ${expanded ? "min-h-0 flex-1" : ""}`}
       >
@@ -112,13 +154,13 @@ function Scoreboard({
             className={`flex min-w-0 flex-col ${side === 1 ? "court-rule border-l" : ""}`}
           >
             <div
-              className={`flex min-h-0 flex-1 flex-col justify-center text-center ${expanded ? "px-5 py-8 sm:px-10" : "px-4 pb-5 pt-6"}`}
+              className={`flex min-h-0 flex-1 flex-col justify-center text-center ${expanded ? "px-5 py-8 sm:px-10 landscape:py-1" : "px-4 pb-5 pt-6"}`}
             >
               <TeamName name={teams[side]} />
               <output
                 aria-live="polite"
                 aria-label={`${teams[side]} score ${scores[side]}`}
-                className={`score mt-3 block font-bold leading-none tracking-[-0.055em] ${expanded ? "text-[clamp(7rem,22vw,16rem)]" : "text-[5rem] sm:text-[6.5rem]"}`}
+                className={`score mt-3 block font-bold leading-none tracking-[-0.055em] ${expanded ? "text-[clamp(7rem,22vw,16rem)] landscape:text-[clamp(4rem,14vh,7rem)]" : "text-[5rem] sm:text-[6.5rem]"}`}
               >
                 {scores[side]}
               </output>
@@ -174,7 +216,24 @@ function Scoreboard({
   );
 }
 
-export function LiveCourt({ sessionId, matchId, number, teams, scores, version, canScore }: LiveCourtProps) {
+type ManagedLiveCourtProps = LiveCourtProps & {
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+  navigation?: ScoreboardProps["navigation"];
+};
+
+function ManagedLiveCourt({
+  sessionId,
+  matchId,
+  number,
+  teams,
+  scores,
+  version,
+  canScore,
+  expanded,
+  onExpandedChange,
+  navigation,
+}: ManagedLiveCourtProps) {
   const router = useRouter();
   const serverScoreA = scores[0];
   const serverScoreB = scores[1];
@@ -187,6 +246,9 @@ export function LiveCourt({ sessionId, matchId, number, teams, scores, version, 
   const [localScores, setLocalScores] = useState<[number, number]>(scores);
   const [scorePending, setScorePending] = useState(false);
   const [error, setError] = useState("");
+  const [standaloneExpanded, setStandaloneExpanded] = useState(false);
+  const isExpanded = expanded ?? standaloneExpanded;
+  const setExpanded = onExpandedChange ?? setStandaloneExpanded;
 
   useEffect(() => {
     if (dirtyRef.current || savingRef.current) return;
@@ -202,6 +264,13 @@ export function LiveCourt({ sessionId, matchId, number, teams, scores, version, 
     },
     [],
   );
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isExpanded && !dialog.open) dialog.showModal();
+    else if (!isExpanded && dialog.open) dialog.close();
+  }, [isExpanded]);
 
   async function flushScore() {
     if (savingRef.current || !dirtyRef.current) return;
@@ -262,17 +331,61 @@ export function LiveCourt({ sessionId, matchId, number, teams, scores, version, 
 
   return (
     <>
-      <Scoreboard {...shared} onExpand={() => dialogRef.current?.showModal()} />
+      <Scoreboard {...shared} onExpand={() => setExpanded(true)} />
       <dialog
         ref={dialogRef}
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) event.currentTarget.close();
+        onCancel={() => setExpanded(false)}
+        onKeyDown={(event) => {
+          if (!navigation) return;
+          if (event.key === "ArrowLeft") navigation.onPrevious();
+          else if (event.key === "ArrowRight") navigation.onNext();
         }}
-        aria-label={`${number} expanded scoreboard`}
-        className="m-auto h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-surface p-0 text-ink backdrop:bg-black/70 sm:h-[calc(100dvh-2rem)] sm:w-[min(960px,calc(100vw-2rem))] sm:rounded-xl sm:border sm:border-line"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setExpanded(false);
+        }}
+        aria-label={`${number} full-screen scoreboard`}
+        className="m-auto h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-surface p-0 text-ink backdrop:bg-black/70"
       >
-        <Scoreboard {...shared} expanded onClose={() => dialogRef.current?.close()} />
+        <Scoreboard {...shared} expanded navigation={navigation} onClose={() => setExpanded(false)} />
       </dialog>
     </>
+  );
+}
+
+export function LiveCourt(props: LiveCourtProps) {
+  return <ManagedLiveCourt {...props} />;
+}
+
+export function LiveCourtDeck({ courts }: { courts: LiveCourtProps[] }) {
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const selectedIndex = courts.findIndex((court) => court.matchId === selectedMatchId);
+
+  return (
+    <div className="grid gap-5">
+      {courts.map((court, index) => {
+        const previous = courts[(index - 1 + courts.length) % courts.length];
+        const next = courts[(index + 1) % courts.length];
+        return (
+          <ManagedLiveCourt
+            key={court.matchId}
+            {...court}
+            expanded={selectedIndex === index}
+            onExpandedChange={(nextExpanded) => setSelectedMatchId(nextExpanded ? court.matchId : null)}
+            navigation={
+              courts.length > 1
+                ? {
+                    position: index + 1,
+                    total: courts.length,
+                    previousLabel: previous.number,
+                    nextLabel: next.number,
+                    onPrevious: () => setSelectedMatchId(previous.matchId),
+                    onNext: () => setSelectedMatchId(next.matchId),
+                  }
+                : undefined
+            }
+          />
+        );
+      })}
+    </div>
   );
 }

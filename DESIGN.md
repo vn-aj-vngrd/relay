@@ -161,7 +161,7 @@ Before Play starts, the host chooses one of five flat, outcome-labeled rows: Pad
 - Scores dominate and remain readable from several feet. The standard scoreboard fills its available court column; every active court gets its own scoreboard and multiple courts stack instead of squeezing into narrow desktop cards.
 - Score taps update immediately and debounce into one version-checked write. Host, co-host, or a signed-in player assigned to that court may score; all other viewers remain read-only.
 - The neutral outer shell follows the planning UI while the deep court field carries teams, scores, and controls. Its dark field and court lines inherit the game’s curated accent without weakening white-score contrast. Player names remain intact and fixed partners stack as two explicit names.
-- Every scoreboard offers an expanded, viewport-filling view for courtside use. It preserves score state and permissions, closes with Escape or a labeled control, and works for read-only public viewers.
+- Every scoreboard offers a clearly labeled, viewport-filling view for courtside use. On phones it supports portrait and landscape, prompts portrait users to rotate, and lets people move directly between active courts without closing the view. It preserves live score state and permissions, closes with Escape or a labeled control, and works for read-only public viewers.
 - Teams align directly above their score.
 - Minus and plus controls have separate 64px zones.
 - Live state combines a coral mark with the word “Live.”
