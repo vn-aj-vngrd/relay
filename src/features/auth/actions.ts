@@ -11,6 +11,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { resolvePostAuthDestination } from "./destination";
 import { safeNextPath } from "./destination-path";
+import { recoveredPasswordErrorMessage } from "./password-errors";
 import { getCurrentUser } from "./session";
 
 const emailSchema = z.email();
@@ -199,17 +200,20 @@ export async function requestPasswordReset(formData: FormData) {
 
 export async function updateRecoveredPassword(formData: FormData) {
   const cookieStore = await cookies();
-  const user = await getCurrentUser();
-  if (!user || cookieStore.get("relay_password_recovery")?.value !== "1") redirect("/forgot-password");
+  const supabase = await createSupabaseServerClient();
+  const { data: currentUser, error: sessionError } = await supabase.auth.getUser();
+  if (sessionError || !currentUser.user || cookieStore.get("relay_password_recovery")?.value !== "1")
+    redirect("/forgot-password");
   const password = passwordSchema.safeParse(formData.get("password"));
   const confirmation = formData.get("confirmation");
   if (!password.success) authError("Use at least 8 characters with a letter and number.", "/update-password");
   if (password.data !== confirmation) authError("Passwords do not match.", "/update-password");
 
-  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password: password.data });
-  if (error)
-    authError("Your password could not be updated. Request a new reset link and try again.", "/update-password");
+  if (error) {
+    console.error("[relay-password-recovery-update]", { code: error.code, status: error.status });
+    authError(recoveredPasswordErrorMessage(error), "/update-password");
+  }
   cookieStore.delete("relay_password_recovery");
   await supabase.auth.signOut();
   redirect("/login?password=updated");
