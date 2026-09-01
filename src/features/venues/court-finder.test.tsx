@@ -67,6 +67,7 @@ const fartherVenue: CourtListing = {
   address: "Talisay, Cebu",
   latitude: 10.2447,
   longitude: 123.8494,
+  parking: null,
   paddleRental: false,
 };
 
@@ -214,11 +215,15 @@ describe("CourtFinder", () => {
     expect(screen.queryByText("Suggested Court")).not.toBeInTheDocument();
   });
 
-  it("filters courts by equipment", () => {
-    render(<CourtFinder venues={[venue, fartherVenue]} />);
+  it("filters courts by equipment and parking", () => {
+    const { rerender } = render(<CourtFinder venues={[venue, fartherVenue]} />);
 
     fireEvent.click(screen.getByLabelText("Paddle rental"));
+    expect(screen.getAllByRole("button", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Farther Court/ })).toHaveLength(0);
 
+    rerender(<CourtFinder key="parking-filter" venues={[venue, fartherVenue]} />);
+    fireEvent.click(screen.getByLabelText("Parking"));
     expect(screen.getAllByRole("button", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
     expect(screen.queryAllByRole("button", { name: /Farther Court/ })).toHaveLength(0);
   });

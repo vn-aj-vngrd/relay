@@ -55,7 +55,7 @@ type CourtMapProps = {
 };
 
 function mapStyle(dark: boolean): StyleSpecification {
-  const style = dark ? "dark-matter" : "osm-bright-grey";
+  const style = dark ? "dark-matter" : "osm-bright";
   const viewport = courtDirectoryCoverage.mapViewport();
   return {
     version: 8,
@@ -181,7 +181,7 @@ export function CourtMap({
           maxZoom: viewport.maxZoom,
           maxBounds: viewport.maxBounds,
           attributionControl: false,
-          cooperativeGestures: true,
+          cooperativeGestures: false,
         });
         map.dragRotate.disable();
         map.touchZoomRotate.disableRotation();

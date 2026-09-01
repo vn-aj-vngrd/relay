@@ -9,10 +9,11 @@ export default function VenuesLoading() {
           <Skeleton className="h-11 w-11 rounded-lg lg:w-36" />
         </div>
         <div className="mt-3 flex gap-2 overflow-hidden">
-          <Skeleton className="h-11 w-14 shrink-0 rounded-full" />
-          <Skeleton className="h-11 w-20 shrink-0 rounded-full" />
-          <Skeleton className="h-11 w-24 shrink-0 rounded-full" />
-          <Skeleton className="h-11 w-28 shrink-0 rounded-full" />
+          <Skeleton className="h-11 w-14 shrink-0 rounded-full sm:h-9" />
+          <Skeleton className="h-11 w-20 shrink-0 rounded-full sm:h-9" />
+          <Skeleton className="h-11 w-24 shrink-0 rounded-full sm:h-9" />
+          <Skeleton className="h-11 w-28 shrink-0 rounded-full sm:h-9" />
+          <Skeleton className="h-11 w-20 shrink-0 rounded-full sm:h-9" />
         </div>
       </div>
 

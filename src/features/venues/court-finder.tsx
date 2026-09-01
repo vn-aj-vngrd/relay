@@ -335,6 +335,7 @@ export function CourtFinder({
   const [query, setQuery] = useState("");
   const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
   const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
+  const [parkingOnly, setParkingOnly] = useState(false);
   const [mobileView, setMobileView] = useState<CourtView>("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -357,7 +358,8 @@ export function CourtFinder({
           `${venue.name} ${venue.address} ${venue.priceRange ?? ""} ${venue.amenities.join(" ")}`
             .toLowerCase()
             .includes(term);
-        return settingMatches && queryMatches && (!paddleRentalOnly || venue.paddleRental);
+        const parkingMatches = !parkingOnly || Boolean(venue.parking?.trim());
+        return settingMatches && queryMatches && parkingMatches && (!paddleRentalOnly || venue.paddleRental);
       })
       .map((venue) => ({
         venue,
@@ -365,11 +367,11 @@ export function CourtFinder({
       }));
     if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
     return matching;
-  }, [paddleRentalOnly, query, setting, userLocation, venues]);
+  }, [paddleRentalOnly, parkingOnly, query, setting, userLocation, venues]);
 
   const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
-  const filtersActive = Boolean(query.trim() || setting !== "all" || paddleRentalOnly);
+  const filtersActive = Boolean(query.trim() || setting !== "all" || paddleRentalOnly || parkingOnly);
 
   function selectCourt(id: string, revealMap = false) {
     selectionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -394,6 +396,7 @@ export function CourtFinder({
     setQuery("");
     setSetting("all");
     setPaddleRentalOnly(false);
+    setParkingOnly(false);
     setSelectedId(null);
   }
 
@@ -509,14 +512,14 @@ export function CourtFinder({
                     setSelectedId(null);
                   }}
                   aria-pressed={selected}
-                  className={`court-compact-control pressable inline-flex min-h-11 items-center rounded-full border px-3 text-xs font-semibold sm:px-3.5 sm:text-[13px] ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+                  className={`court-compact-control pressable inline-flex min-h-11 items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
                 >
                   {value === "all" ? "All" : value === "indoor" ? "Indoor" : "Outdoor"}
                 </button>
               );
             })}
             <label
-              className={`court-compact-control pressable inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:px-3.5 sm:text-[13px] ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+              className={`court-compact-control pressable inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
             >
               <input
                 type="checkbox"
@@ -529,11 +532,25 @@ export function CourtFinder({
               />
               Paddle rental
             </label>
+            <label
+              className={`court-compact-control pressable inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${parkingOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
+            >
+              <input
+                type="checkbox"
+                checked={parkingOnly}
+                onChange={(event) => {
+                  setParkingOnly(event.target.checked);
+                  setSelectedId(null);
+                }}
+                className="sr-only"
+              />
+              Parking
+            </label>
             {filtersActive ? (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="court-compact-control pressable min-h-11 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
+                className="court-compact-control pressable min-h-11 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:min-h-9 sm:px-3 sm:text-[13px]"
               >
                 Clear
               </button>

@@ -2,7 +2,7 @@ import { courtDirectoryCoverage } from "@/features/venues/coverage";
 import { getServerEnv } from "@/lib/env";
 import { checkRateLimit, rateLimitHeaders, requestIdentity } from "@/lib/rate-limit";
 
-const mapStyles = new Set(["osm-bright-grey", "dark-matter"]);
+const mapStyles = new Set(["osm-bright", "dark-matter"]);
 
 export async function GET(request: Request, { params }: { params: Promise<{ z: string; x: string; y: string }> }) {
   const { z, x, y } = await params;
@@ -33,8 +33,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
       { status: 429, headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
     );
 
-  const requestedStyle = new URL(request.url).searchParams.get("style") ?? "osm-bright-grey";
-  const style = mapStyles.has(requestedStyle) ? requestedStyle : "osm-bright-grey";
+  const requestedStyle = new URL(request.url).searchParams.get("style") ?? "osm-bright";
+  const style = mapStyles.has(requestedStyle) ? requestedStyle : "osm-bright";
   const endpoint = new URL(`https://maps.geoapify.com/v1/tile/${style}/${zoom}/${tileX}/${tileY}@2x.png`);
   endpoint.searchParams.set("apiKey", getServerEnv().GEOAPIFY_API_KEY);
 
