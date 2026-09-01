@@ -1,7 +1,9 @@
 "use client";
 
-import { GoogleLogo } from "@phosphor-icons/react";
+import Image from "next/image";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import { Brand } from "@/components/shared/brand";
 import { Alert } from "@/components/ui/alert";
@@ -15,6 +17,7 @@ type EntryMode = "signin" | "create";
 
 export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confirmationEmail?: string }) {
   const searchParams = useSearchParams();
+  const [activeMode, setActiveMode] = useState(mode);
   const error = searchParams.get("error") ?? undefined;
   const sent = searchParams.get("sent") ?? undefined;
   const passwordUpdated = searchParams.get("password") === "updated";
@@ -66,7 +69,7 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
               Your password was updated. Sign in with your new password.
             </Alert>
           ) : null}
-          <AuthForm next={next} initialMode={mode} />
+          <AuthForm next={next} initialMode={mode} onModeChange={setActiveMode} />
           {googleEnabled ? (
             <>
               <div className="my-5 flex items-center gap-3 text-xs text-muted">
@@ -77,12 +80,23 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
               <form action={signInWithGoogle}>
                 <input type="hidden" name="next" value={next ?? "/home"} />
                 <SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">
-                  <GoogleLogo aria-hidden="true" size={18} weight="bold" />
+                  <Image src="/google-g.svg" alt="" aria-hidden width={18} height={18} />
                   Continue with Google
                 </SubmitButton>
               </form>
             </>
           ) : null}
+          <p className="mt-5 text-center text-xs leading-5 text-muted">
+            {activeMode === "create" ? "By creating an account" : "By signing in"}, you agree to the{" "}
+            <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">
+              Terms
+            </Link>{" "}
+            and acknowledge the{" "}
+            <Link href="/privacy" className="font-semibold text-ink underline-offset-2 hover:underline">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       </main>
     </div>

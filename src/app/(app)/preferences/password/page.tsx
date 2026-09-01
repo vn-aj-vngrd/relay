@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Alert } from "@/components/ui/alert";
+import { PasswordField } from "@/components/ui/password-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { changePassword } from "@/features/auth/actions";
 import { requireUser } from "@/features/auth/session";
@@ -34,49 +35,31 @@ export default async function ChangePasswordPage({
         ) : null}
         {error ? <Alert className="mb-6">{error}</Alert> : null}
         <form action={changePassword} className="space-y-5">
-          <div>
-            <label htmlFor="current-password" className="text-sm font-semibold">
-              Current password
-            </label>
-            <input
-              id="current-password"
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              required
-              minLength={8}
-              className="field"
-            />
-          </div>
-          <div>
-            <label htmlFor="new-password" className="text-sm font-semibold">
-              New password
-            </label>
-            <input
-              id="new-password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="field"
-            />
-            <p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>
-          </div>
-          <div>
-            <label htmlFor="confirm-password" className="text-sm font-semibold">
-              Confirm new password
-            </label>
-            <input
-              id="confirm-password"
-              name="confirmation"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              className="field"
-            />
-          </div>
+          <PasswordField
+            id="current-password"
+            name="currentPassword"
+            label="Current password"
+            autoComplete="current-password"
+            required
+            minLength={8}
+          />
+          <PasswordField
+            id="new-password"
+            name="password"
+            label="New password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+            hint={<p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>}
+          />
+          <PasswordField
+            id="confirm-password"
+            name="confirmation"
+            label="Confirm new password"
+            autoComplete="new-password"
+            required
+            minLength={8}
+          />
           <SubmitButton type="submit" pendingLabel="Changing password…">
             Change password
           </SubmitButton>

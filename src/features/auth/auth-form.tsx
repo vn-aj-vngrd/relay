@@ -1,15 +1,15 @@
 "use client";
 
-import { Turnstile } from "@marsidev/react-turnstile";
-import { Eye, EyeSlash } from "@phosphor-icons/react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import Link from "next/link";
-import { useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { PasswordField } from "@/components/ui/password-field";
 
-import { createPasswordAccount, signInWithPassword } from "./actions";
+import { createPasswordAccount, signInWithPasswordState } from "./actions";
 
 type Mode = "signin" | "create";
 
@@ -32,36 +32,58 @@ function AuthSubmit({ mode, blocked = false }: { mode: Mode; blocked?: boolean }
   );
 }
 
-export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: string; initialMode?: Mode }) {
+export function AuthForm({
+  next = "/home",
+  initialMode = "signin",
+  onModeChange,
+}: {
+  next?: string;
+  initialMode?: Mode;
+  onModeChange?: (mode: Mode) => void;
+}) {
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [showPassword, setShowPassword] = useState(false);
   const [captchaReady, setCaptchaReady] = useState(false);
+  const [signInState, signInAction] = useActionState(signInWithPasswordState, {});
+  const turnstileRef = useRef<TurnstileInstance>(undefined);
   const creating = mode === "create";
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+  const modeHref = (path: "/login" | "/signup") =>
+    next && next !== "/home" ? `${path}?next=${encodeURIComponent(next)}` : path;
+
+  useEffect(() => {
+    if (!signInState.error) return;
+    turnstileRef.current?.reset();
+  }, [signInState]);
 
   return (
-    <div className="min-h-[34.5rem] sm:min-h-[36rem]">
+    <div>
       <div
         role="group"
         className="mb-3 grid grid-cols-2 rounded-lg bg-surface-strong p-1 sm:mb-7"
         aria-label="Authentication method"
       >
-        <button
-          type="button"
-          onClick={() => setMode("signin")}
-          aria-pressed={!creating}
-          className={`pressable min-h-9 rounded-md text-[13px] font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
+        <Link
+          href={modeHref("/login")}
+          onClick={() => {
+            setMode("signin");
+            onModeChange?.("signin");
+          }}
+          aria-current={!creating ? "page" : undefined}
+          className={`pressable grid min-h-9 place-items-center rounded-md text-[13px] font-medium ${!creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
         >
           Sign in
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("create")}
-          aria-pressed={creating}
-          className={`pressable min-h-9 rounded-md text-[13px] font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
+        </Link>
+        <Link
+          href={modeHref("/signup")}
+          onClick={() => {
+            setMode("create");
+            onModeChange?.("create");
+          }}
+          aria-current={creating ? "page" : undefined}
+          className={`pressable grid min-h-9 place-items-center rounded-md text-[13px] font-medium ${creating ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
         >
           Create account
-        </button>
+        </Link>
       </div>
 
       <div className="mb-6">
@@ -80,7 +102,9 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
         </Alert>
       ) : null}
 
-      <form action={creating ? createPasswordAccount : signInWithPassword} className="space-y-4 sm:space-y-5">
+      {!creating && signInState.error ? <Alert className="mb-5">{signInState.error}</Alert> : null}
+
+      <form action={creating ? createPasswordAccount : signInAction} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="password-email" className="text-sm font-[650]">
@@ -98,39 +122,37 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
             placeholder="you@example.com"
           />
         </div>
-        <div>
-          <label htmlFor="password" className="text-sm font-[650]">
-            Password
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              minLength={8}
-              autoComplete={creating ? "new-password" : "current-password"}
-              required
-              className="field pr-12"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((shown) => !shown)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-              className="pressable absolute right-1 top-2 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-            >
-              {showPassword ? <EyeSlash aria-hidden size={18} /> : <Eye aria-hidden size={18} />}
-            </button>
-          </div>
-          {creating ? (
-            <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
-          ) : (
-            <p className="mt-2 text-right text-sm">
-              <Link href="/forgot-password" className="font-semibold text-primary underline-offset-2 hover:underline">
-                Forgot password?
-              </Link>
-            </p>
-          )}
-        </div>
+        <PasswordField
+          id="password"
+          name="password"
+          label="Password"
+          minLength={8}
+          autoComplete={creating ? "new-password" : "current-password"}
+          required
+          labelClassName="font-[650]"
+          hint={
+            creating ? (
+              <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
+            ) : (
+              <p className="mt-2 text-right text-sm">
+                <Link href="/forgot-password" className="font-semibold text-primary underline-offset-2 hover:underline">
+                  Forgot password?
+                </Link>
+              </p>
+            )
+          }
+        />
+        {creating ? (
+          <PasswordField
+            id="password-confirmation"
+            name="confirmation"
+            label="Confirm password"
+            minLength={8}
+            autoComplete="new-password"
+            required
+            labelClassName="font-[650]"
+          />
+        ) : null}
         {turnstileSiteKey ? (
           <div
             role="group"
@@ -138,26 +160,17 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
             aria-label={creating ? "Signup security check" : "Sign-in security check"}
           >
             <Turnstile
+              ref={turnstileRef}
               siteKey={turnstileSiteKey}
               options={{ size: "flexible", theme: "auto" }}
               onSuccess={() => setCaptchaReady(true)}
+              onBeforeInteractive={() => setCaptchaReady(false)}
               onExpire={() => setCaptchaReady(false)}
               onError={() => setCaptchaReady(false)}
             />
           </div>
         ) : null}
         <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaReady} />
-        <p className="text-center text-xs leading-5 text-muted">
-          {creating ? "By creating an account" : "By signing in"}, you agree to the{" "}
-          <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">
-            Terms
-          </Link>{" "}
-          and acknowledge the{" "}
-          <Link href="/privacy" className="font-semibold text-ink underline-offset-2 hover:underline">
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </form>
     </div>
   );

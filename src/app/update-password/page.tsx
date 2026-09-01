@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
 import { Alert } from "@/components/ui/alert";
+import { PasswordField } from "@/components/ui/password-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { updateRecoveredPassword, verifyRecoveryMfa } from "@/features/auth/actions";
 import { PasswordMfaForm } from "@/features/auth/password-mfa-form";
@@ -41,35 +42,23 @@ export default async function UpdatePasswordPage({ searchParams }: { searchParam
           />
         ) : (
           <form action={updateRecoveredPassword} className="mt-8 space-y-5">
-            <div>
-              <label htmlFor="recovery-password" className="text-sm font-semibold">
-                New password
-              </label>
-              <input
-                id="recovery-password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="field"
-              />
-              <p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>
-            </div>
-            <div>
-              <label htmlFor="recovery-confirmation" className="text-sm font-semibold">
-                Confirm new password
-              </label>
-              <input
-                id="recovery-confirmation"
-                name="confirmation"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="field"
-              />
-            </div>
+            <PasswordField
+              id="recovery-password"
+              name="password"
+              label="New password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              hint={<p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>}
+            />
+            <PasswordField
+              id="recovery-confirmation"
+              name="confirmation"
+              label="Confirm new password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+            />
             <SubmitButton type="submit" className="h-12 w-full text-[15px]" pendingLabel="Updating password…">
               Update password
             </SubmitButton>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
 import { Alert } from "@/components/ui/alert";
+import { PasswordField } from "@/components/ui/password-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { setTemporaryPassword, verifyTemporaryPasswordMfa } from "@/features/auth/actions";
 import { PasswordMfaForm } from "@/features/auth/password-mfa-form";
@@ -40,35 +41,23 @@ export default async function SetPasswordPage({ searchParams }: { searchParams: 
           />
         ) : (
           <form action={setTemporaryPassword} className="mt-8 space-y-5">
-            <div>
-              <label htmlFor="new-password" className="text-sm font-semibold">
-                New password
-              </label>
-              <input
-                id="new-password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="field"
-              />
-              <p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>
-            </div>
-            <div>
-              <label htmlFor="confirm-password" className="text-sm font-semibold">
-                Confirm password
-              </label>
-              <input
-                id="confirm-password"
-                name="confirmation"
-                type="password"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                className="field"
-              />
-            </div>
+            <PasswordField
+              id="new-password"
+              name="password"
+              label="New password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              hint={<p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>}
+            />
+            <PasswordField
+              id="confirm-password"
+              name="confirmation"
+              label="Confirm password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+            />
             <SubmitButton type="submit" className="w-full" pendingLabel="Saving password…">
               Save password and continue
             </SubmitButton>

@@ -32,7 +32,7 @@ function authError(message: string, destination = "/login", next?: string): neve
   redirect(`${destination}?${params}`);
 }
 
-async function guardAuthAttempt(input: {
+type AuthAttemptInput = {
   scope: string;
   email?: string;
   ipLimit: number;
@@ -40,7 +40,9 @@ async function guardAuthAttempt(input: {
   windowSeconds: number;
   destination?: string;
   next?: string;
-}) {
+};
+
+async function authAttemptAllowed(input: AuthAttemptInput) {
   const ipResult = await checkRateLimit(
     { scope: `${input.scope}:ip`, limit: input.ipLimit, windowSeconds: input.windowSeconds },
     await requestIdentity(),
@@ -55,7 +57,11 @@ async function guardAuthAttempt(input: {
         `email:${input.email.toLowerCase()}`,
       )
     : null;
-  if (!ipResult.allowed || accountResult?.allowed === false)
+  return ipResult.allowed && accountResult?.allowed !== false;
+}
+
+async function guardAuthAttempt(input: AuthAttemptInput) {
+  if (!(await authAttemptAllowed(input)))
     authError("Too many attempts. Wait a few minutes and try again.", input.destination, input.next);
 }
 
@@ -89,41 +95,49 @@ export async function sendMagicLink(formData: FormData) {
   redirect("/login?sent=1");
 }
 
-export async function signInWithPassword(formData: FormData) {
+export type AuthFormState = { error?: string };
+
+async function attemptPasswordSignIn(formData: FormData): Promise<AuthFormState> {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
   if (!email.success || !password.success)
-    authError(
-      "Enter a valid email and a password with at least 8 characters, including a letter and number.",
-      "/login",
-      next,
-    );
-  if (!captchaToken.success) authError("Complete the security check and try again.", "/login", next);
-  await guardAuthAttempt({
+    return { error: "Enter a valid email and a password with at least 8 characters, including a letter and number." };
+  if (!captchaToken.success) return { error: "Complete the security check and try again." };
+  const allowed = await authAttemptAllowed({
     scope: "password-sign-in",
     email: email.data,
     ipLimit: 25,
     accountLimit: 12,
     windowSeconds: 600,
-    destination: "/login",
-    next,
   });
+  if (!allowed) return { error: "Too many attempts. Wait a few minutes and try again." };
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: email.data,
     password: password.data,
     options: { captchaToken: captchaToken.data },
   });
-  if (error || !data.user) authError("Email or password is incorrect.", "/login", next);
+  if (error || !data.user) return { error: "Email or password is incorrect." };
   redirect(await resolvePostAuthDestination(next, data.user.id));
+}
+
+export async function signInWithPasswordState(_: AuthFormState, formData: FormData) {
+  return attemptPasswordSignIn(formData);
+}
+
+export async function signInWithPassword(formData: FormData) {
+  const result = await attemptPasswordSignIn(formData);
+  authError(result.error ?? "Sign in could not be completed. Try again.", "/login", nextPath(formData));
 }
 
 export async function createPasswordAccount(formData: FormData) {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
+  const confirmation = formData.get("confirmation");
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
   if (!email.success || !password.success)
     authError(
@@ -131,6 +145,7 @@ export async function createPasswordAccount(formData: FormData) {
       "/signup",
       next,
     );
+  if (password.data !== confirmation) authError("Passwords do not match.", "/signup", next);
   if (!captchaToken.success) authError("Complete the security check and try again.", "/signup", next);
   await guardAuthAttempt({
     scope: "password-sign-up",

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ search: "sent=account" }));
@@ -11,6 +11,7 @@ vi.mock("./actions", () => ({
   createPasswordAccount: vi.fn(),
   signInWithGoogle: vi.fn(),
   signInWithPassword: vi.fn(),
+  signInWithPasswordState: vi.fn(async () => ({})),
 }));
 
 import { AuthEntry } from "./auth-entry";
@@ -45,6 +46,15 @@ describe("AuthEntry", () => {
 
     const googleButton = screen.getByRole("button", { name: "Continue with Google" });
     expect(googleButton).toBeVisible();
+    expect(googleButton.querySelector("img")).toHaveAttribute("src", expect.stringContaining("google-g.svg"));
     expect(googleButton.closest("form")?.querySelector('input[name="next"]')).toHaveValue("/games");
+    expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute("href", "/signup?next=%2Fgames");
+    const legalCopy = screen.getByText(/By signing in/);
+    expect(googleButton.compareDocumentPosition(legalCopy) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+
+    fireEvent.click(screen.getByRole("link", { name: "Create account" }));
+    expect(screen.getByText(/By creating an account/)).toBeVisible();
   });
 });

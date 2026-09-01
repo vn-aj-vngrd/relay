@@ -60,6 +60,7 @@ import {
   requestPasswordReset,
   signInWithGoogle,
   signInWithPassword,
+  signInWithPasswordState,
   updateRecoveredPassword,
   verifyRecoveryMfa,
 } from "./actions";
@@ -132,6 +133,18 @@ describe("signInWithPassword", () => {
       options: { captchaToken: "verified-turnstile-token" },
     });
   });
+
+  it("returns invalid credentials to the mounted form without redirecting it", async () => {
+    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("password", "RelayPass123");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({ error: "Email or password is incorrect." });
+
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
 });
 
 describe("requestPasswordReset", () => {
@@ -200,11 +213,25 @@ describe("updateRecoveredPassword", () => {
 });
 
 describe("createPasswordAccount", () => {
+  it("rejects mismatched password confirmation before creating an account", async () => {
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("password", "RelayPass123");
+    formData.set("confirmation", "DifferentPass123");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(createPasswordAccount(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.signUp).not.toHaveBeenCalled();
+    expect(mocks.redirect).toHaveBeenLastCalledWith("/signup?error=Passwords+do+not+match.");
+  });
+
   it("forwards the completed Turnstile token to Supabase for one authoritative verification", async () => {
     mocks.signUp.mockResolvedValue({ data: { session: null, user: {} }, error: null });
     const formData = new FormData();
     formData.set("email", "player@example.com");
     formData.set("password", "RelayPass123");
+    formData.set("confirmation", "RelayPass123");
     formData.set("cf-turnstile-response", "verified-turnstile-token");
 
     await expect(createPasswordAccount(formData)).rejects.toThrow("redirect");
