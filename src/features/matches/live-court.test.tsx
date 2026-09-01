@@ -64,6 +64,12 @@ describe("LiveCourt", () => {
     vi.useRealTimers();
   });
 
+  it("uses a visible full-screen label without a redundant tooltip", () => {
+    render(<LiveCourt {...props} canScore={false} />);
+    expect(screen.getByRole("button", { name: "Open full-screen scoreboard" })).toHaveTextContent("Full screen");
+    expect(screen.queryByRole("tooltip", { hidden: true })).not.toBeInTheDocument();
+  });
+
   it("opens a focused scoreboard for hosts and public viewers", () => {
     render(<LiveCourt {...props} canScore={false} />);
 

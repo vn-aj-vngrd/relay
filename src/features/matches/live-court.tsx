@@ -4,7 +4,6 @@ import { ArrowsOutSimple, CaretLeft, CaretRight, Minus, Plus, X } from "@phospho
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { finishMatch, saveScore } from "./actions";
@@ -87,17 +86,15 @@ function Scoreboard({
             Live
           </span>
           {onExpand ? (
-            <IconTooltip label="Open full-screen scoreboard">
-              <button
-                type="button"
-                onClick={onExpand}
-                aria-label="Open full-screen scoreboard"
-                className="pressable inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
-              >
-                <ArrowsOutSimple aria-hidden size={19} />
-                <span className="hidden min-[360px]:inline">Full screen</span>
-              </button>
-            </IconTooltip>
+            <button
+              type="button"
+              onClick={onExpand}
+              aria-label="Open full-screen scoreboard"
+              className="pressable inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+            >
+              <ArrowsOutSimple aria-hidden size={19} />
+              <span className="hidden min-[360px]:inline">Full screen</span>
+            </button>
           ) : null}
           {onClose ? (
             <button
