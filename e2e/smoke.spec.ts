@@ -53,6 +53,11 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await page.getByRole("button", { name: "Start Play" }).click();
   await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
   await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
+  await page.getByRole("button", { name: "Open full-screen scoreboard" }).click();
+  await expect(page.getByRole("dialog", { name: "Court 1 full-screen scoreboard" })).toBeVisible();
+  await page.getByRole("button", { name: "Close full-screen scoreboard" }).click();
+  await page.reload();
+  await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
   await page.getByRole("button", { name: "Finish match" }).click();
   await expect(page.getByRole("heading", { name: "Standings" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Start next match" })).toBeVisible();

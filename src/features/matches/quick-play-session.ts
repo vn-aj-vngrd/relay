@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { calculateStandings } from "./domain";
 import { planMatchFinish, planRotation, type PlayMode, type QueueRule, type RotationHistory } from "./rotation";
 
@@ -33,6 +35,40 @@ export type QuickPlaySession = QuickPlayConfiguration & {
   completedMatches: QuickPlayMatch[];
   nextMatchNumber: number;
 };
+
+export const quickPlayStorageKey = "relay-quick-play-session";
+
+const quickPlayPlayerSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  experience: z.number().finite(),
+});
+
+const quickPlayMatchSchema = z.object({
+  id: z.string().min(1),
+  courtId: z.string().min(1),
+  courtLabel: z.string().min(1),
+  teamA: z.array(z.string().min(1)).length(2),
+  teamB: z.array(z.string().min(1)).length(2),
+  scores: z.tuple([z.number().int().min(0).max(99), z.number().int().min(0).max(99)]),
+  status: z.enum(["active", "completed"]),
+  winner: z.enum(["A", "B"]).nullable(),
+  finishedAt: z.number().nullable(),
+});
+
+const quickPlaySessionSchema = z.object({
+  players: z.array(quickPlayPlayerSchema).min(4),
+  courtCount: z.number().int().min(1).max(4),
+  mode: z.enum(["queue", "random", "balanced", "king_of_court", "round_robin"]),
+  queueRule: z.enum(["adaptive", "four_off", "winner_stays"]),
+  fixedPairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])),
+  waitingPlayerIds: z.array(z.string().min(1)),
+  activeMatches: z.array(quickPlayMatchSchema),
+  completedMatches: z.array(quickPlayMatchSchema),
+  nextMatchNumber: z.number().int().min(1),
+});
+
+const storedQuickPlaySchema = z.object({ version: z.literal(1), session: quickPlaySessionSchema });
 
 function courts(count: number) {
   return Array.from({ length: count }, (_, index) => ({
@@ -93,6 +129,22 @@ function validateConfiguration(configuration: QuickPlayConfiguration) {
       throw new Error("Assign every player to one pair.");
     }
   }
+}
+
+export function restoreQuickPlaySession(value: string | null): QuickPlaySession | null {
+  if (!value) return null;
+  try {
+    const stored = storedQuickPlaySchema.safeParse(JSON.parse(value));
+    if (!stored.success) return null;
+    validateConfiguration(stored.data.session);
+    return stored.data.session;
+  } catch {
+    return null;
+  }
+}
+
+export function serializeQuickPlaySession(session: QuickPlaySession) {
+  return JSON.stringify({ version: 1, session });
 }
 
 export function startQuickPlay(configuration: QuickPlayConfiguration): QuickPlaySession {

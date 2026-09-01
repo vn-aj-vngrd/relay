@@ -1,7 +1,18 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { PublicQuickPlay } from "./public-quick-play";
+
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute("open");
+  };
+});
+
+beforeEach(() => localStorage.clear());
 
 function nameFourPlayers() {
   ["Van", "AJ", "Mika", "John"].forEach((name, index) => {
@@ -25,6 +36,35 @@ describe("PublicQuickPlay", () => {
     expect(screen.getByRole("heading", { name: "Standings" })).toBeVisible();
     expect(within(screen.getByRole("table")).getByText("Van")).toBeVisible();
     expect(screen.getByRole("button", { name: "Start next match" })).toBeVisible();
+  });
+
+  it("restores the active session and score after a browser reload", () => {
+    const view = render(<PublicQuickPlay />);
+    nameFourPlayers();
+    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    fireEvent.click(screen.getByRole("button", { name: /Add a point to Van \+ AJ/ }));
+    expect(localStorage.getItem("relay-quick-play-session")).toContain('"scores":[1,0]');
+
+    view.unmount();
+    render(<PublicQuickPlay />);
+    expect(screen.getByRole("heading", { name: "Play" })).toBeVisible();
+    expect(screen.getByLabelText("Van + AJ score 1")).toHaveTextContent("1");
+  });
+
+  it("opens a full-screen scoreboard and switches between active courts", () => {
+    render(<PublicQuickPlay />);
+    for (let index = 0; index < 4; index += 1) fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`).forEach((name, index) => {
+      fireEvent.change(screen.getByRole("textbox", { name: `Player ${index + 1}` }), { target: { value: name } });
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Active courts" }), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Open full-screen scoreboard" })[0]);
+    expect(screen.getByRole("dialog", { name: "Court 1 full-screen scoreboard" })).toHaveAttribute("open");
+    fireEvent.click(screen.getByRole("button", { name: "Next court, Court 2" }));
+    expect(screen.getByRole("dialog", { name: "Court 2 full-screen scoreboard" })).toHaveAttribute("open");
+    expect(screen.getByText("Court 2 of 2")).toBeVisible();
   });
 
   it("validates unique manual player names before starting", () => {

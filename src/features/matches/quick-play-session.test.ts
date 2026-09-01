@@ -5,7 +5,9 @@ import {
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
   quickPlayStandings,
+  restoreQuickPlaySession,
   scoreQuickPlayMatch,
+  serializeQuickPlaySession,
   startNextQuickPlayMatches,
   startQuickPlay,
 } from "./quick-play-session";
@@ -75,6 +77,13 @@ describe("local Quick Play session", () => {
       expect.objectContaining({ name: "Player 1", wins: 1, differential: 1 }),
       expect.objectContaining({ name: "Player 2", wins: 1, differential: 1 }),
     ]);
+  });
+
+  it("restores a versioned browser session and rejects invalid stored data", () => {
+    const session = startQuickPlay(configuration());
+    expect(restoreQuickPlaySession(serializeQuickPlaySession(session))).toEqual(session);
+    expect(restoreQuickPlaySession('{"version":1,"session":{"players":[]}}')).toBeNull();
+    expect(restoreQuickPlaySession("not-json")).toBeNull();
   });
 
   it("enforces Court Climb and fixed-pair requirements before play starts", () => {

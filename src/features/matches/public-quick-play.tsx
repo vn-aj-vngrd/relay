@@ -1,7 +1,19 @@
 "use client";
 
-import { ArrowCounterClockwise, ArrowsLeftRight, Minus, Plus, Shuffle, Trash, UserPlus } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import {
+  ArrowCounterClockwise,
+  ArrowsLeftRight,
+  ArrowsOutSimple,
+  CaretLeft,
+  CaretRight,
+  Minus,
+  Plus,
+  Shuffle,
+  Trash,
+  UserPlus,
+  X,
+} from "@phosphor-icons/react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +30,10 @@ import {
   type QuickPlayPlayer,
   type QuickPlaySession,
   quickPlayStandings,
+  quickPlayStorageKey,
+  restoreQuickPlaySession,
   scoreQuickPlayMatch,
+  serializeQuickPlaySession,
   startNextQuickPlayMatches,
   startQuickPlay,
   swapQuickPlayMatchSides,
@@ -54,28 +69,50 @@ function TeamName({ playerIds, players }: { playerIds: string[]; players: Map<st
   );
 }
 
-function QuickCourt({
-  match,
-  players,
-  onScore,
-  onSwap,
-  onFinish,
-}: {
+type QuickCourtNavigation = {
+  position: number;
+  total: number;
+  previousLabel: string;
+  nextLabel: string;
+  onPrevious: () => void;
+  onNext: () => void;
+};
+
+type QuickCourtProps = {
   match: QuickPlayMatch;
   players: Map<string, string>;
+  expanded: boolean;
+  navigation?: QuickCourtNavigation;
+  onExpandedChange: (expanded: boolean) => void;
   onScore: (side: 0 | 1, amount: -1 | 1) => void;
   onSwap: () => void;
   onFinish: () => void;
-}) {
+};
+
+function QuickCourtScoreboard({
+  match,
+  players,
+  expanded,
+  navigation,
+  onExpand,
+  onClose,
+  onScore,
+  onSwap,
+  onFinish,
+}: Omit<QuickCourtProps, "onExpandedChange"> & { onExpand?: () => void; onClose?: () => void }) {
   const teamNames = ([match.teamA, match.teamB] as const).map((team) => team.map((id) => players.get(id)).join(" + "));
   return (
-    <article className="overflow-hidden rounded-xl border border-line bg-surface">
-      <header className="flex min-h-14 items-center justify-between gap-3 border-b border-line px-4">
+    <article
+      className={`overflow-hidden border border-line bg-surface ${expanded ? "flex h-full flex-col border-0" : "rounded-xl"}`}
+    >
+      <header
+        className={`flex shrink-0 items-center justify-between gap-3 border-b border-line ${expanded ? "min-h-16 px-5 sm:px-8" : "min-h-14 px-4"}`}
+      >
         <div>
           <p className="sport-label text-primary">{match.courtLabel}</p>
           <p className="mt-0.5 text-xs text-muted">Match in progress</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-live">
             <span className="h-1.5 w-1.5 rounded-full bg-live" /> Live
           </span>
@@ -87,9 +124,65 @@ function QuickCourt({
           >
             <ArrowsLeftRight aria-hidden size={18} />
           </button>
+          {onExpand ? (
+            <button
+              type="button"
+              onClick={onExpand}
+              aria-label="Open full-screen scoreboard"
+              className="pressable inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+            >
+              <ArrowsOutSimple aria-hidden size={19} />
+              <span className="hidden min-[360px]:inline">Full screen</span>
+            </button>
+          ) : null}
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close full-screen scoreboard"
+              className="pressable grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+            >
+              <X aria-hidden size={19} />
+            </button>
+          ) : null}
         </div>
       </header>
-      <div className="grid grid-cols-2 bg-[var(--scoreboard-field)] text-white">
+
+      {expanded && navigation && navigation.total > 1 ? (
+        <nav
+          aria-label="Full-screen courts"
+          className="flex min-h-12 shrink-0 items-center justify-between border-b border-line px-3 sm:px-6"
+        >
+          <button
+            type="button"
+            onClick={navigation.onPrevious}
+            aria-label={`Previous court, ${navigation.previousLabel}`}
+            className="pressable inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+          >
+            <CaretLeft aria-hidden size={17} /> Previous
+          </button>
+          <span className="score text-xs font-semibold text-muted">
+            Court {navigation.position} of {navigation.total}
+          </span>
+          <button
+            type="button"
+            onClick={navigation.onNext}
+            aria-label={`Next court, ${navigation.nextLabel}`}
+            className="pressable inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
+          >
+            Next <CaretRight aria-hidden size={17} />
+          </button>
+        </nav>
+      ) : null}
+      {expanded ? (
+        <p className="shrink-0 border-b border-line px-4 py-2 text-center text-xs text-muted landscape:hidden sm:hidden">
+          Rotate your phone for a wider scoreboard.
+        </p>
+      ) : null}
+
+      <div
+        className={`grid shrink-0 grid-cols-2 bg-[var(--scoreboard-field)] text-white ${expanded ? "min-h-0 flex-1" : ""}`}
+      >
         {([0, 1] as const).map((side) => {
           const team = side === 0 ? match.teamA : match.teamB;
           return (
@@ -98,40 +191,42 @@ function QuickCourt({
               aria-label={teamNames[side]}
               className={`flex min-w-0 flex-col ${side === 1 ? "court-rule border-l" : ""}`}
             >
-              <div className="px-3 pb-5 pt-6 text-center sm:px-5">
+              <div
+                className={`flex min-h-0 flex-1 flex-col justify-center text-center ${expanded ? "px-5 py-8 sm:px-10 landscape:py-1" : "px-3 pb-5 pt-6 sm:px-5"}`}
+              >
                 <TeamName playerIds={team} players={players} />
                 <output
                   aria-live="polite"
                   aria-label={`${teamNames[side]} score ${match.scores[side]}`}
-                  className="score mt-3 block text-[5rem] font-bold leading-none tracking-[-0.055em] sm:text-[6.5rem]"
+                  className={`score mt-3 block font-bold leading-none tracking-[-0.055em] ${expanded ? "text-[clamp(7rem,22vw,16rem)] landscape:text-[clamp(4rem,14vh,7rem)]" : "text-[5rem] sm:text-[6.5rem]"}`}
                 >
                   {match.scores[side]}
                 </output>
               </div>
-              <div className="court-rule grid grid-cols-2 border-t">
+              <div className="court-rule grid shrink-0 grid-cols-2 border-t">
                 <button
                   type="button"
                   onClick={() => onScore(side, -1)}
                   disabled={match.scores[side] === 0}
                   aria-label={`Subtract a point from ${teamNames[side]}`}
-                  className="pressable grid min-h-16 place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white disabled:opacity-35"
+                  className={`pressable grid place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white disabled:opacity-35 ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
-                  <Minus aria-hidden size={21} />
+                  <Minus aria-hidden size={expanded ? 24 : 21} />
                 </button>
                 <button
                   type="button"
                   onClick={() => onScore(side, 1)}
                   aria-label={`Add a point to ${teamNames[side]}`}
-                  className="pressable grid min-h-16 place-items-center text-white hover:bg-white/10"
+                  className={`pressable grid place-items-center text-white hover:bg-white/10 ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
-                  <Plus aria-hidden size={22} />
+                  <Plus aria-hidden size={expanded ? 24 : 22} />
                 </button>
               </div>
             </section>
           );
         })}
       </div>
-      <footer className="border-t border-line p-3">
+      <footer className={`shrink-0 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}>
         <Button
           type="button"
           variant="secondary"
@@ -143,6 +238,41 @@ function QuickCourt({
         </Button>
       </footer>
     </article>
+  );
+}
+
+function QuickCourt(props: QuickCourtProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (props.expanded && !dialog.open) dialog.showModal();
+    else if (!props.expanded && dialog.open) dialog.close();
+  }, [props.expanded]);
+
+  return (
+    <>
+      <QuickCourtScoreboard {...props} expanded={false} onExpand={() => props.onExpandedChange(true)} />
+      <dialog
+        ref={dialogRef}
+        onCancel={() => props.onExpandedChange(false)}
+        onKeyDown={(event) => {
+          if (!props.navigation) return;
+          if (event.key === "ArrowLeft") props.navigation.onPrevious();
+          else if (event.key === "ArrowRight") props.navigation.onNext();
+        }}
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) props.onExpandedChange(false);
+        }}
+        aria-label={`${props.match.courtLabel} full-screen scoreboard`}
+        className="m-auto h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-surface p-0 text-ink backdrop:bg-black/70"
+      >
+        {props.expanded ? (
+          <QuickCourtScoreboard {...props} expanded onClose={() => props.onExpandedChange(false)} />
+        ) : null}
+      </dialog>
+    </>
   );
 }
 
@@ -484,7 +614,7 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
 
         <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted">
-            {players.length} players · {courtCount} {courtCount === 1 ? "court" : "courts"} · saved only on this page
+            {players.length} players · {courtCount} {courtCount === 1 ? "court" : "courts"} · local only
           </p>
           <Button type="button" onClick={start} className="w-full sm:w-auto">
             Start Play
@@ -510,6 +640,7 @@ function QuickPlayLive({
   onEdit: () => void;
 }) {
   const [error, setError] = useState("");
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const names = new Map(session.players.map((player) => [player.id, player.name]));
   const standings = quickPlayStandings(session);
   const canStartNext = canStartNextQuickPlayMatches(session);
@@ -581,16 +712,35 @@ function QuickPlayLive({
           </div>
           {session.activeMatches.length ? (
             <div className="mt-4 grid gap-5">
-              {session.activeMatches.map((match) => (
-                <QuickCourt
-                  key={match.id}
-                  match={match}
-                  players={names}
-                  onScore={(side, amount) => onChange(scoreQuickPlayMatch(session, match.id, side, amount))}
-                  onSwap={() => onChange(swapQuickPlayMatchSides(session, match.id))}
-                  onFinish={() => finish(match.id)}
-                />
-              ))}
+              {session.activeMatches.map((match, index) => {
+                const previous =
+                  session.activeMatches[(index - 1 + session.activeMatches.length) % session.activeMatches.length];
+                const next = session.activeMatches[(index + 1) % session.activeMatches.length];
+                return (
+                  <QuickCourt
+                    key={match.id}
+                    match={match}
+                    players={names}
+                    expanded={selectedMatchId === match.id}
+                    onExpandedChange={(expanded) => setSelectedMatchId(expanded ? match.id : null)}
+                    navigation={
+                      session.activeMatches.length > 1
+                        ? {
+                            position: index + 1,
+                            total: session.activeMatches.length,
+                            previousLabel: previous.courtLabel,
+                            nextLabel: next.courtLabel,
+                            onPrevious: () => setSelectedMatchId(previous.id),
+                            onNext: () => setSelectedMatchId(next.id),
+                          }
+                        : undefined
+                    }
+                    onScore={(side, amount) => onChange(scoreQuickPlayMatch(session, match.id, side, amount))}
+                    onSwap={() => onChange(swapQuickPlayMatchSides(session, match.id))}
+                    onFinish={() => finish(match.id)}
+                  />
+                );
+              })}
             </div>
           ) : (
             <div className="mt-4 border-y border-line py-10">
@@ -677,7 +827,7 @@ function QuickPlayLive({
           ) : null}
           <p className="text-xs leading-5 text-muted">
             {session.completedMatches.length} completed {session.completedMatches.length === 1 ? "match" : "matches"}.
-            Closing or refreshing this page clears Quick Play.
+            Quick Play is saved in this browser until you start a new setup.
           </p>
         </aside>
       </div>
@@ -685,11 +835,21 @@ function QuickPlayLive({
   );
 }
 
-export function PublicQuickPlay() {
-  const [session, setSession] = useState<QuickPlaySession | null>(null);
+const subscribeToBrowser = () => () => undefined;
+
+function PersistentQuickPlay() {
+  const [session, setSession] = useState<QuickPlaySession | null>(() =>
+    restoreQuickPlaySession(localStorage.getItem(quickPlayStorageKey)),
+  );
+
+  useEffect(() => {
+    if (session) localStorage.setItem(quickPlayStorageKey, serializeQuickPlaySession(session));
+    else localStorage.removeItem(quickPlayStorageKey);
+  }, [session]);
 
   function showSession(nextSession: QuickPlaySession | null) {
     setSession(nextSession);
+    if (!nextSession) localStorage.removeItem(quickPlayStorageKey);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }
@@ -698,5 +858,21 @@ export function PublicQuickPlay() {
     <QuickPlayLive session={session} onChange={setSession} onEdit={() => showSession(null)} />
   ) : (
     <QuickPlaySetup onStart={showSession} />
+  );
+}
+
+export function PublicQuickPlay() {
+  const browserReady = useSyncExternalStore(
+    subscribeToBrowser,
+    () => true,
+    () => false,
+  );
+  if (browserReady) return <PersistentQuickPlay />;
+  return (
+    <section aria-label="Restoring Quick Play" role="status" className="mx-auto w-full max-w-[1180px]">
+      <div className="h-9 w-44 animate-pulse rounded-md bg-surface-strong motion-reduce:animate-none" />
+      <div className="mx-auto mt-10 h-80 w-full max-w-2xl animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none" />
+      <span className="sr-only">Restoring Quick Play…</span>
+    </section>
   );
 }

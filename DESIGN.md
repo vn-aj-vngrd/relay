@@ -223,7 +223,7 @@ Product motion communicates state in 140–220ms using ease-out-quart. Marketing
 
 ## Accessibility and platform behavior
 
-- `/courts` is the public Philippines finder; `/court` is the signed-in app version. `/play` is a public, device-local singles/doubles scorekeeper with no account or network write requirement. Public court CTAs preserve the selected court through signup and onboarding, then open a prefilled game.
+- `/courts` is the public Philippines finder; `/court` is the signed-in app version. `/play` is public, device-local Play with manual players, the same rotation modes, multi-court full-screen scoring, and versioned browser persistence. It requires no account or network write. Public court CTAs preserve the selected court through signup and onboarding, then open a prefilled game.
 - Relay is installable as a standalone PWA with the same light-first theme, ball mark, and responsive app shell. Preferences owns the install affordance; browsers without a programmatic prompt receive platform-appropriate manual guidance.
 - Offline state is explicit and restrained. Network-backed navigation and mutations remain pending when supported, live data never pretends to be current, and a full offline load shows one branded recovery page rather than cached private content.
 - WCAG 2.2 AA minimum.
