@@ -571,12 +571,25 @@ export function GameCollection({
   return (
     <div className="mt-4 sm:mt-10">
       <div className="mb-5 border-b border-line pb-3 sm:mb-8 sm:pb-4">
-        <div className="hidden items-center justify-between gap-4 sm:flex">
-          <p aria-live="polite" className="text-sm text-muted">
+        <div className="flex min-w-0 items-center gap-4">
+          <p aria-live="polite" className="hidden shrink-0 text-sm text-muted sm:block">
             {visibleCount}
             {hasVisibleMore ? "+" : ""} {visibleCount === 1 && !hasVisibleMore ? "game" : "games"}
           </p>
-          <div role="group" aria-label="Game view" className="inline-flex rounded-lg bg-surface-strong p-1">
+          <div className="min-w-0 flex-1">
+            <TabChipRail
+              label="Filter games"
+              items={filterItems}
+              value={filter}
+              onChange={setFilter}
+              className="min-w-0"
+            />
+          </div>
+          <div
+            role="group"
+            aria-label="Game view"
+            className="hidden shrink-0 rounded-lg bg-surface-strong p-1 sm:inline-flex"
+          >
             {viewOptions.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
@@ -590,15 +603,6 @@ export function GameCollection({
               </button>
             ))}
           </div>
-        </div>
-        <div className="min-w-0 sm:mt-3">
-          <TabChipRail
-            label="Filter games"
-            items={filterItems}
-            value={filter}
-            onChange={setFilter}
-            className="min-w-0"
-          />
         </div>
       </div>
       {mode === "calendar" ? (

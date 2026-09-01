@@ -11,13 +11,8 @@ export default async function GroupsPage() {
 
   return (
     <div>
-      <header className="flex items-center justify-between gap-4 sm:items-end">
-        <div>
-          <h1 className="app-title">Groups</h1>
-          <p className="mt-2 hidden max-w-xl text-muted sm:block">
-            Regular crews, faster invites, and game-night history.
-          </p>
-        </div>
+      <header className="flex items-center justify-between gap-4">
+        <h1 className="app-title">Groups</h1>
         <GroupViewMenu />
         <span className="hidden sm:block">
           <ButtonLink href="/groups/new">

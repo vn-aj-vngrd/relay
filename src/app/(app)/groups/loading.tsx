@@ -3,11 +3,8 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function GroupsLoading() {
   return (
     <div role="status" aria-label="Loading groups" aria-busy="true">
-      <header className="flex items-center justify-between gap-4 sm:items-end">
-        <div className="space-y-2.5">
-          <Skeleton className="h-7 w-28" />
-          <Skeleton className="hidden h-4 w-72 sm:block" />
-        </div>
+      <header className="flex items-center justify-between gap-4">
+        <Skeleton className="h-7 w-28" />
         <Skeleton className="h-9 w-9 rounded-lg sm:hidden" />
         <Skeleton className="hidden h-9 w-28 rounded-lg sm:block" />
       </header>

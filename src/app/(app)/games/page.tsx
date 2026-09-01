@@ -15,11 +15,8 @@ export default async function GamesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4 sm:items-end">
-        <div>
-          <h1 className="app-title">Games</h1>
-          <p className="mt-2 hidden max-w-xl text-muted sm:block">See your upcoming, active, and past games.</p>
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="app-title">Games</h1>
         <div className="sm:hidden">
           <GameViewMenu />
         </div>
