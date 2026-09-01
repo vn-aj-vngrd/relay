@@ -93,12 +93,14 @@ export async function signInWithPassword(formData: FormData) {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
+  const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
   if (!email.success || !password.success)
     authError(
       "Enter a valid email and a password with at least 8 characters, including a letter and number.",
       "/login",
       next,
     );
+  if (!captchaToken.success) authError("Complete the security check and try again.", "/login", next);
   await guardAuthAttempt({
     scope: "password-sign-in",
     email: email.data,
@@ -109,7 +111,11 @@ export async function signInWithPassword(formData: FormData) {
     next,
   });
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email: email.data, password: password.data });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.data,
+    password: password.data,
+    options: { captchaToken: captchaToken.data },
+  });
   if (error || !data.user) authError("Email or password is incorrect.", "/login", next);
   redirect(await resolvePostAuthDestination(next, data.user.id));
 }
@@ -186,6 +192,14 @@ export async function requestPasswordReset(formData: FormData) {
     captchaToken: captchaToken.data,
   });
   if (error) authError("We couldn’t send the reset email. Wait a moment and try again.", "/forgot-password");
+  const cookieStore = await cookies();
+  cookieStore.set("relay_recovery_email", email.data, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 600,
+    path: "/forgot-password",
+  });
   redirect("/forgot-password?sent=1");
 }
 

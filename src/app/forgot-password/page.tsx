@@ -1,6 +1,7 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 
 import { Brand } from "@/components/shared/brand";
+import { EmailSentState } from "@/features/auth/email-sent-state";
 import { PasswordRecoveryForm } from "@/features/auth/password-recovery-form";
 
 export const metadata = { title: "Reset your password" };
@@ -10,7 +11,35 @@ export default async function ForgotPasswordPage({
 }: {
   searchParams: Promise<{ error?: string; sent?: string }>;
 }) {
-  const { error, sent } = await searchParams;
+  const [{ error, sent }, cookieStore] = await Promise.all([searchParams, cookies()]);
+  const recoveryEmail = cookieStore.get("relay_recovery_email")?.value;
+
+  if (sent) {
+    return (
+      <div className="flex min-h-screen flex-col bg-canvas">
+        <header className="mx-auto flex h-16 w-full max-w-[1180px] items-center justify-center px-5 sm:px-8">
+          <Brand />
+        </header>
+        <main id="main-content" className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
+          <EmailSentState
+            label={
+              recoveryEmail ? (
+                <>
+                  Reset requested for <span className="break-all text-ink">{recoveryEmail}</span>
+                </>
+              ) : (
+                "Password reset requested"
+              )
+            }
+            title="Check your inbox"
+            description="If a Relay account exists for that address, open the secure link to choose a new password. The link expires in one hour."
+            primary={{ href: "/login", label: "Return to sign in" }}
+            secondary={{ prefix: "Wrong email?", href: "/forgot-password", label: "Send another link" }}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <main
@@ -28,26 +57,7 @@ export default async function ForgotPasswordPage({
             {error}
           </p>
         ) : null}
-        {sent ? (
-          <div className="mt-8 border-y border-line py-6">
-            <p role="status" className="font-semibold">
-              Check your email
-            </p>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              If a Relay account exists for that address, a reset link is on its way. The link expires in one hour.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm">
-              <Link href="/login" className="font-semibold text-primary hover:underline">
-                Return to login
-              </Link>
-              <Link href="/forgot-password" className="font-semibold text-ink hover:underline">
-                Try another email
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <PasswordRecoveryForm />
-        )}
+        <PasswordRecoveryForm />
       </div>
     </main>
   );

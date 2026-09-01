@@ -1,14 +1,13 @@
 "use client";
 
-import { ArrowRight, CheckCircle, EnvelopeSimple } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
-import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
 import { AuthForm } from "./auth-form";
+import { EmailSentState } from "./email-sent-state";
 
 type EntryMode = "signin" | "create";
 
@@ -27,43 +26,21 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
           <Brand />
         </header>
         <main id="main-content" className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
-          <section aria-labelledby="confirmation-title" className="w-full max-w-[410px] text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-primary">
-              <EnvelopeSimple aria-hidden size={30} weight="duotone" />
-            </div>
-            <div className="mt-6 inline-flex max-w-full items-start gap-1.5 rounded-full bg-surface-strong px-3 py-1.5 text-left text-xs font-semibold leading-5 text-muted ring-1 ring-line">
-              <CheckCircle aria-hidden size={16} weight="fill" className="mt-0.5 shrink-0 text-success" />
-              <span>
-                {confirmationEmail ? (
-                  <>
-                    Confirmation sent to <span className="break-all text-ink">{confirmationEmail}</span>
-                  </>
-                ) : (
-                  "Confirmation email sent"
-                )}
-              </span>
-            </div>
-            <h1 id="confirmation-title" className="mt-5 text-[1.75rem] font-[650] tracking-[-0.025em]">
-              Check your inbox
-            </h1>
-            <p className="mx-auto mt-3 max-w-sm text-[15px] leading-6 text-muted">
-              Open the confirmation link we sent to finish creating your Relay account. The link expires in one hour.
-            </p>
-            <ButtonLink href="/login" className="mt-8 h-12 w-full text-[15px]">
-              Return to sign in
-              <ArrowRight aria-hidden size={17} weight="bold" />
-            </ButtonLink>
-            <p className="mt-5 text-sm text-muted">
-              Used a different email?{" "}
-              <ButtonLink
-                href="/signup"
-                variant="quiet"
-                className="min-h-0 border-0 p-0 align-baseline font-semibold text-ink hover:bg-transparent hover:underline"
-              >
-                Create another account
-              </ButtonLink>
-            </p>
-          </section>
+          <EmailSentState
+            label={
+              confirmationEmail ? (
+                <>
+                  Confirmation sent to <span className="break-all text-ink">{confirmationEmail}</span>
+                </>
+              ) : (
+                "Confirmation email sent"
+              )
+            }
+            title="Check your inbox"
+            description="Open the confirmation link we sent to finish creating your Relay account. The link expires in one hour."
+            primary={{ href: "/login", label: "Return to sign in" }}
+            secondary={{ prefix: "Used a different email?", href: "/signup", label: "Create another account" }}
+          />
         </main>
       </div>
     );
@@ -86,9 +63,7 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
           ) : null}
           {sent ? (
             <p role="status" className="mb-5 rounded-lg bg-primary-soft px-3.5 py-3 text-sm font-medium text-primary">
-              {sent === "account"
-                ? "Check your email to confirm your Relay account, then return here to sign in."
-                : "Check your email for your secure sign-in link."}
+              Check your email for your secure sign-in link.
             </p>
           ) : null}
           {passwordUpdated ? (

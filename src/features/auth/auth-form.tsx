@@ -123,24 +123,27 @@ export function AuthForm({ next = "/home", initialMode = "signin" }: { next?: st
             </p>
           )}
         </div>
-        {creating ? (
-          turnstileSiteKey ? (
-            <div role="group" className="min-h-[65px] overflow-hidden" aria-label="Signup security check">
-              <Turnstile
-                siteKey={turnstileSiteKey}
-                options={{ size: "flexible", theme: "auto" }}
-                onSuccess={() => setCaptchaReady(true)}
-                onExpire={() => setCaptchaReady(false)}
-                onError={() => setCaptchaReady(false)}
-              />
-            </div>
-          ) : (
-            <p role="alert" className="text-sm leading-5 text-danger">
-              Account creation is temporarily unavailable while the security check is being configured.
-            </p>
-          )
-        ) : null}
-        <AuthSubmit mode={mode} blocked={creating && (!turnstileSiteKey || !captchaReady)} />
+        {turnstileSiteKey ? (
+          <div
+            role="group"
+            className="min-h-[65px] overflow-hidden"
+            aria-label={creating ? "Signup security check" : "Sign-in security check"}
+          >
+            <Turnstile
+              siteKey={turnstileSiteKey}
+              options={{ size: "flexible", theme: "auto" }}
+              onSuccess={() => setCaptchaReady(true)}
+              onExpire={() => setCaptchaReady(false)}
+              onError={() => setCaptchaReady(false)}
+            />
+          </div>
+        ) : (
+          <p role="alert" className="text-sm leading-5 text-danger">
+            {creating ? "Account creation" : "Sign in"} is temporarily unavailable while the security check is being
+            configured.
+          </p>
+        )}
+        <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaReady} />
         <p className="text-center text-xs leading-5 text-muted">
           {creating ? "By creating an account" : "By signing in"}, you agree to the{" "}
           <Link href="/terms" className="font-semibold text-ink underline-offset-2 hover:underline">

@@ -46,7 +46,7 @@ Geoapify remains server-only and supplies Philippines-bounded map tiles. The ded
 
 ## Authentication smoke test
 
-Password authentication is the production baseline. Public signup fails closed unless Cloudflare Turnstile’s site and secret keys are configured; Relay forwards each completed widget token to Supabase Auth for one authoritative server-side verification. Email confirmation must be enabled only together with verified production SMTP, because Supabase’s built-in sender is not a public-production mail service.
+Password authentication is the production baseline. Public signup, password login, and recovery fail closed unless Cloudflare Turnstile’s site and secret keys are configured; Relay forwards each completed widget token to Supabase Auth for one authoritative server-side verification. Email confirmation must be enabled only together with verified production SMTP, because Supabase’s built-in sender is not a public-production mail service.
 
 Every Supabase Auth email used by Relay is source-controlled under [`../supabase/templates/`](../supabase/templates/): account confirmation, recovery, magic link, invitation, email change, reauthentication, and the password-changed security notice. Each uses the same email-safe Relay shell, typography, palette, and footer. Keep required Supabase variables such as `{{ .ConfirmationURL }}` and `{{ .Token }}` unchanged. `supabase config push` installs these templates in the hosted project and keeps local Auth aligned. An email from `noreply@mail.app.supabase.io` means custom SMTP is not active; successful production delivery must come from `Relay <relay@vanajvanguardia.tech>` through Resend.
 

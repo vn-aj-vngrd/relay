@@ -35,6 +35,10 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
   await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
   await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
+  await page.goto("/forgot-password?sent=1");
+  await expect(page.getByText("Password reset requested")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Email" })).toHaveCount(0);
   await page.getByRole("link", { name: "Relay home" }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();

@@ -5,6 +5,8 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn(() => {
     throw new Error("redirect");
   }),
+  resetPasswordForEmail: vi.fn(),
+  signInWithPassword: vi.fn(),
   signUp: vi.fn(),
 }));
 
@@ -22,17 +24,64 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
-  createSupabaseServerClient: vi.fn(async () => ({ auth: { signUp: mocks.signUp } })),
+  createSupabaseServerClient: vi.fn(async () => ({
+    auth: {
+      resetPasswordForEmail: mocks.resetPasswordForEmail,
+      signInWithPassword: mocks.signInWithPassword,
+      signUp: mocks.signUp,
+    },
+  })),
 }));
 vi.mock("./destination", () => ({ resolvePostAuthDestination: vi.fn() }));
 vi.mock("./session", () => ({ getCurrentUser: vi.fn() }));
 
-import { createPasswordAccount } from "./actions";
+import { createPasswordAccount, requestPasswordReset, signInWithPassword } from "./actions";
 
 beforeEach(() => {
   mocks.cookieSet.mockClear();
   mocks.redirect.mockClear();
+  mocks.resetPasswordForEmail.mockReset();
+  mocks.signInWithPassword.mockReset();
   mocks.signUp.mockReset();
+});
+
+describe("signInWithPassword", () => {
+  it("forwards the completed Turnstile token to Supabase password login", async () => {
+    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("password", "RelayPass123");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(signInWithPassword(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.signInWithPassword).toHaveBeenCalledWith({
+      email: "player@example.com",
+      password: "RelayPass123",
+      options: { captchaToken: "verified-turnstile-token" },
+    });
+  });
+});
+
+describe("requestPasswordReset", () => {
+  it("forwards Turnstile to Supabase and remembers which email received the request", async () => {
+    mocks.resetPasswordForEmail.mockResolvedValue({ error: null });
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(requestPasswordReset(formData)).rejects.toThrow("redirect");
+
+    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith("player@example.com", {
+      captchaToken: "verified-turnstile-token",
+      redirectTo: "https://relay.vanajvanguardia.tech/auth/callback?recovery=1",
+    });
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "relay_recovery_email",
+      "player@example.com",
+      expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/forgot-password" }),
+    );
+  });
 });
 
 describe("createPasswordAccount", () => {
