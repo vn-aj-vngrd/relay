@@ -1,8 +1,10 @@
 "use client";
 
+import { ArrowRight, CheckCircle, EnvelopeSimple } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
+import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { signInWithGoogle } from "./actions";
@@ -10,13 +12,62 @@ import { AuthForm } from "./auth-form";
 
 type EntryMode = "signin" | "create";
 
-export function AuthEntry({ mode }: { mode: EntryMode }) {
+export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confirmationEmail?: string }) {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") ?? undefined;
   const sent = searchParams.get("sent") ?? undefined;
   const passwordUpdated = searchParams.get("password") === "updated";
   const next = searchParams.get("next") ?? undefined;
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+
+  if (sent === "account") {
+    return (
+      <div className="flex min-h-screen flex-col bg-canvas">
+        <header className="mx-auto flex h-16 w-full max-w-[1180px] items-center justify-center px-5 sm:px-8">
+          <Brand />
+        </header>
+        <main id="main-content" className="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 sm:py-12">
+          <section aria-labelledby="confirmation-title" className="w-full max-w-[410px] text-center">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-primary">
+              <EnvelopeSimple aria-hidden size={30} weight="duotone" />
+            </div>
+            <div className="mt-6 inline-flex max-w-full items-start gap-1.5 rounded-full bg-surface-strong px-3 py-1.5 text-left text-xs font-semibold leading-5 text-muted ring-1 ring-line">
+              <CheckCircle aria-hidden size={16} weight="fill" className="mt-0.5 shrink-0 text-success" />
+              <span>
+                {confirmationEmail ? (
+                  <>
+                    Confirmation sent to <span className="break-all text-ink">{confirmationEmail}</span>
+                  </>
+                ) : (
+                  "Confirmation email sent"
+                )}
+              </span>
+            </div>
+            <h1 id="confirmation-title" className="mt-5 text-[1.75rem] font-[650] tracking-[-0.025em]">
+              Check your inbox
+            </h1>
+            <p className="mx-auto mt-3 max-w-sm text-[15px] leading-6 text-muted">
+              Open the confirmation link we sent to finish creating your Relay account. The link expires in one hour.
+            </p>
+            <ButtonLink href="/login" className="mt-8 h-12 w-full text-[15px]">
+              Return to sign in
+              <ArrowRight aria-hidden size={17} weight="bold" />
+            </ButtonLink>
+            <p className="mt-5 text-sm text-muted">
+              Used a different email?{" "}
+              <ButtonLink
+                href="/signup"
+                variant="quiet"
+                className="min-h-0 border-0 p-0 align-baseline font-semibold text-ink hover:bg-transparent hover:underline"
+              >
+                Create another account
+              </ButtonLink>
+            </p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">

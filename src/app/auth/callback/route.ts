@@ -6,7 +6,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  if (!code) return NextResponse.redirect(new URL("/login?error=Missing+authentication+code.", request.url));
+  if (!code) {
+    const destination =
+      request.nextUrl.searchParams.get("recovery") === "1"
+        ? "/forgot-password?error=This+reset+link+is+invalid+or+has+expired.+Request+a+new+one."
+        : "/login?error=Missing+authentication+code.";
+    return NextResponse.redirect(new URL(destination, request.url));
+  }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);

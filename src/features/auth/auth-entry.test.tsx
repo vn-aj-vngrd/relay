@@ -16,11 +16,14 @@ import { AuthEntry } from "./auth-entry";
 afterEach(cleanup);
 
 describe("AuthEntry", () => {
-  it("explains the confirmation step after password signup", () => {
-    render(<AuthEntry mode="create" />);
+  it("replaces account creation with a focused, email-specific confirmation state", () => {
+    render(<AuthEntry mode="create" confirmationEmail="player@example.com" />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Check your email to confirm your Relay account, then return here to sign in.",
-    );
+    expect(screen.getByText(/Confirmation sent to/)).toHaveTextContent("Confirmation sent to player@example.com");
+    expect(screen.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
+    expect(screen.getByRole("link", { name: /Return to sign in/ })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "Create another account" })).toHaveAttribute("href", "/signup");
+    expect(screen.queryByRole("textbox", { name: "Email" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Create account" })).not.toBeInTheDocument();
   });
 });

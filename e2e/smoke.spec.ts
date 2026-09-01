@@ -379,9 +379,11 @@ test("login and account creation have distinct entry routes", async ({ page }) =
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
 
   await page.goto("/signup?sent=account");
-  await expect(page.getByRole("status")).toHaveText(
-    "Check your email to confirm your Relay account, then return here to sign in.",
-  );
+  await expect(page.getByText("Confirmation email sent")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Return to sign in/ })).toHaveAttribute("href", "/login");
+  await expect(page.getByRole("button", { name: "Create account" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Email" })).toHaveCount(0);
 });
 
 test("light mode is default and a stored dark preference loads", async ({ page }) => {

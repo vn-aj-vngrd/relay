@@ -33,6 +33,15 @@ vi.mock("@/features/auth/destination", () => ({
 import { GET } from "./route";
 
 describe("authentication callback", () => {
+  it("turns an expired recovery redirect into a useful retry path", async () => {
+    const response = await GET(new NextRequest("https://relay.vanajvanguardia.tech/auth/callback?recovery=1"));
+
+    expect(response.headers.get("location")).toBe(
+      "https://relay.vanajvanguardia.tech/forgot-password?error=This+reset+link+is+invalid+or+has+expired.+Request+a+new+one.",
+    );
+    expect(mocks.exchangeCodeForSession).not.toHaveBeenCalled();
+  });
+
   it("marks an exchanged recovery session and sends it to password update", async () => {
     mocks.exchangeCodeForSession.mockResolvedValue({ error: null });
     mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });

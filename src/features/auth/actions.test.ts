@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  cookieSet: vi.fn(),
   redirect: vi.fn(() => {
     throw new Error("redirect");
   }),
@@ -8,7 +9,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("server-only", () => ({}));
-vi.mock("next/headers", () => ({ cookies: vi.fn(async () => ({ delete: vi.fn(), get: vi.fn(), set: vi.fn() })) }));
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ delete: vi.fn(), get: vi.fn(), set: mocks.cookieSet })),
+}));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/env", () => ({
   getPublicEnv: () => ({ NEXT_PUBLIC_APP_URL: "https://relay.vanajvanguardia.tech" }),
@@ -27,6 +30,7 @@ vi.mock("./session", () => ({ getCurrentUser: vi.fn() }));
 import { createPasswordAccount } from "./actions";
 
 beforeEach(() => {
+  mocks.cookieSet.mockClear();
   mocks.redirect.mockClear();
   mocks.signUp.mockReset();
 });
@@ -49,5 +53,10 @@ describe("createPasswordAccount", () => {
         emailRedirectTo: "https://relay.vanajvanguardia.tech/auth/callback",
       },
     });
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "relay_confirmation_email",
+      "player@example.com",
+      expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/signup" }),
+    );
   });
 });

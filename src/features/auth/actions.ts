@@ -155,6 +155,14 @@ export async function createPasswordAccount(formData: FormData) {
       next,
     );
   if (data.session && data.user) redirect(await resolvePostAuthDestination(next, data.user.id));
+  const cookieStore = await cookies();
+  cookieStore.set("relay_confirmation_email", email.data, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 600,
+    path: "/signup",
+  });
   redirect("/signup?sent=account");
 }
 
