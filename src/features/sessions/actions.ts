@@ -28,6 +28,7 @@ import { assertRateLimit, checkRateLimit, requestIdentity } from "@/lib/rate-lim
 
 import { createSessionSchema, findRosterIdentity, sessionInviteeIds, updateSessionSchema } from "./domain";
 import { planRosterTransition } from "./roster";
+import { manageRoster } from "./roster-management";
 import { sessionSlug } from "./slug";
 
 export type SessionActionState = {
@@ -462,14 +463,6 @@ const rosterManagerInput = z.object({
   skillLevel: z.enum(playingExperienceValues).optional(),
 });
 
-const relayUsernameInput = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .min(3, "Relay usernames have at least 3 characters.")
-  .max(24, "Relay usernames have at most 24 characters.")
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Enter a valid Relay username after @.");
-
 async function requireSessionManager(sessionId: string, userId: string) {
   await assertRateLimit(
     { scope: "session-management", limit: 120, windowSeconds: 60 },
@@ -494,124 +487,13 @@ export async function addPlayerAction(_: SessionActionState, formData: FormData)
   });
   if (!parsed.success || !parsed.data.playerEntry)
     return { error: parsed.success ? "Enter a guest name or @username." : parsed.error.issues[0]?.message };
-  const playerEntry = parsed.data.playerEntry;
-  const session = await requireSessionManager(parsed.data.sessionId, user.id);
-  if (!session) return { error: "Only a host or co-host can add players." };
-  if (session.rosterLocked) return { error: "Unlock the roster before adding another player." };
-
-  const isRelayInvite = playerEntry.startsWith("@");
-  const username = isRelayInvite ? relayUsernameInput.safeParse(playerEntry.slice(1)) : null;
-  if (username && !username.success) return { error: username.error.issues[0]?.message };
-  const invitee =
-    username?.success === true
-      ? await db.query.profiles.findFirst({ where: eq(profiles.username, username.data) })
-      : null;
-  if (username?.success === true && !invitee) return { error: `No Relay player found for @${username.data}.` };
-  if (invitee?.userId === user.id) return { error: "You’re already the host of this game." };
-
-  try {
-    await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
-
-      if (invitee) {
-        const existing = roster.find((player) => player.userId === invitee.userId);
-        if (existing && !existing.leftAt) throw new Error("ACCOUNT_ALREADY_ON_ROSTER");
-        if (existing) {
-          await tx
-            .update(sessionPlayers)
-            .set({
-              skillLevel: invitee.skillLevel,
-              role: "player",
-              rsvp: "invited",
-              playState: "unavailable",
-              checkedInAt: null,
-              waitlistPosition: null,
-              respondedAt: null,
-              leftAt: null,
-            })
-            .where(eq(sessionPlayers.id, existing.id));
-        } else {
-          await tx.insert(sessionPlayers).values({
-            sessionId: session.id,
-            userId: invitee.userId,
-            skillLevel: invitee.skillLevel,
-            role: "player",
-            rsvp: "invited",
-            playState: "unavailable",
-          });
-        }
-        await tx.insert(notifications).values({
-          userId: invitee.userId,
-          sessionId: session.id,
-          type: "session_invite",
-          payload: {},
-        });
-        await tx.insert(messages).values({
-          sessionId: session.id,
-          authorId: user.id,
-          kind: "system",
-          body: `${invitee.name} was invited by the host.`,
-        });
-        return;
-      }
-
-      const guestName = playerEntry;
-      const duplicate = roster.some(
-        (player) =>
-          !player.leftAt && player.guestName?.localeCompare(guestName, undefined, { sensitivity: "accent" }) === 0,
-      );
-      if (duplicate) throw new Error("DUPLICATE_GUEST");
-      const transition = planRosterTransition({
-        roster,
-        capacity: session.capacity,
-        intent: { requested: "going" },
-      });
-      const [player] = await tx
-        .insert(sessionPlayers)
-        .values({
-          sessionId: session.id,
-          guestName,
-          skillLevel: parsed.data.skillLevel ?? null,
-          role: "player",
-          ...transition.target,
-          respondedAt: new Date(),
-        })
-        .returning();
-      if (session.status === "live" && transition.target.rsvp === "going") {
-        const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
-        await tx.insert(sessionQueue).values({
-          sessionId: session.id,
-          sessionPlayerId: player.id,
-          position: Math.max(0, ...queue.map((item) => item.position)) + 1,
-          state: "waiting",
-        });
-      }
-      await tx.insert(messages).values({
-        sessionId: session.id,
-        authorId: user.id,
-        kind: "system",
-        body: `${guestName} was added by the host.`,
-      });
-    });
-  } catch (error) {
-    if (
-      (error instanceof Error && error.message === "ACCOUNT_ALREADY_ON_ROSTER") ||
-      (invitee && typeof error === "object" && error !== null && "code" in error && error.code === "23505")
-    )
-      return { error: `${invitee?.name ?? "That player"} is already on the roster.` };
-    if (error instanceof Error && error.message === "DUPLICATE_GUEST")
-      return { error: "A guest with this name is already on the roster." };
-    return {
-      error: isRelayInvite ? "The invitation couldn’t be sent. Try again." : "The player couldn’t be added. Try again.",
-    };
-  }
-  if (!isRelayInvite) await reconcileUnpaidExpenseShares(session.id);
-  revalidatePath(`/games/${session.id}/players`);
-  revalidatePath(`/games/${session.id}/payments`);
-  revalidatePath(`/games/${session.id}`);
-  revalidatePath(`/s/${session.slug}`);
-  return { success: true, playerOutcome: isRelayInvite ? "invited" : "added" };
+  return manageRoster({
+    type: "add",
+    actorUserId: user.id,
+    sessionId: parsed.data.sessionId,
+    playerEntry: parsed.data.playerEntry,
+    skillLevel: parsed.data.skillLevel,
+  });
 }
 
 export async function approvePlayerAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -621,68 +503,12 @@ export async function approvePlayerAction(_: SessionActionState, formData: FormD
     sessionPlayerId: formData.get("sessionPlayerId"),
   });
   if (!parsed.success || !parsed.data.sessionPlayerId) return { error: "This join request could not be found." };
-  const session = await requireSessionManager(parsed.data.sessionId, user.id);
-  if (!session) return { error: "Only a host or co-host can approve players." };
-
-  let result: "going" | "waitlisted" = "going";
-  try {
-    await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
-      const player = roster.find((item) => item.id === parsed.data.sessionPlayerId && item.rsvp === "pending");
-      if (!player) throw new Error("REQUEST_GONE");
-      const transition = planRosterTransition({
-        roster,
-        capacity: session.capacity,
-        intent: { playerId: player.id, requested: "going" },
-      });
-      if (transition.target.rsvp !== "going" && transition.target.rsvp !== "waitlisted")
-        throw new Error("REQUEST_GONE");
-      result = transition.target.rsvp;
-      await tx
-        .update(sessionPlayers)
-        .set({ ...transition.target, respondedAt: new Date() })
-        .where(eq(sessionPlayers.id, player.id));
-      if (session.status === "live" && result === "going") {
-        const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
-        await tx
-          .insert(sessionQueue)
-          .values({
-            sessionId: session.id,
-            sessionPlayerId: player.id,
-            position: Math.max(0, ...queue.map((item) => item.position)) + 1,
-            state: "waiting",
-          })
-          .onConflictDoNothing();
-      }
-      await tx.insert(messages).values({
-        sessionId: session.id,
-        authorId: user.id,
-        kind: "system",
-        body:
-          result === "going"
-            ? "A join request was approved."
-            : "A join request was approved and moved to the waitlist.",
-      });
-      if (player.userId)
-        await tx.insert(notifications).values({
-          userId: player.userId,
-          sessionId: session.id,
-          type: result === "going" ? "join_approved" : "moved_to_waitlist",
-          payload: {},
-        });
-    });
-  } catch (error) {
-    if (error instanceof Error && error.message === "REQUEST_GONE")
-      return { error: "This join request was already handled." };
-    return { error: "The join request couldn’t be approved. Try again." };
-  }
-  await reconcileUnpaidExpenseShares(session.id);
-  revalidatePath(`/games/${session.id}/players`);
-  revalidatePath(`/games/${session.id}/payments`);
-  revalidatePath(`/games/${session.id}`);
-  revalidatePath(`/s/${session.slug}`);
-  return { success: true, rsvp: result };
+  return manageRoster({
+    type: "approve",
+    actorUserId: user.id,
+    sessionId: parsed.data.sessionId,
+    sessionPlayerId: parsed.data.sessionPlayerId,
+  });
 }
 
 export async function removePlayerAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -692,76 +518,12 @@ export async function removePlayerAction(_: SessionActionState, formData: FormDa
     sessionPlayerId: formData.get("sessionPlayerId"),
   });
   if (!parsed.success || !parsed.data.sessionPlayerId) return { error: "This player could not be found." };
-  const session = await requireSessionManager(parsed.data.sessionId, user.id);
-  if (!session) return { error: "Only a host or co-host can remove players." };
-
-  try {
-    await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
-      const player = roster.find((item) => item.id === parsed.data.sessionPlayerId);
-      if (!player || player.role === "host") throw new Error("CANNOT_REMOVE");
-      const transition = planRosterTransition({
-        roster,
-        capacity: session.capacity,
-        intent: { playerId: player.id, requested: "declined" },
-      });
-      await tx
-        .update(sessionPlayers)
-        .set({ ...transition.target, role: "player", checkedInAt: null, leftAt: new Date() })
-        .where(eq(sessionPlayers.id, player.id));
-      await tx
-        .update(sessionQueue)
-        .set({ state: "unavailable", version: sql`${sessionQueue.version} + 1` })
-        .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, player.id)));
-      for (const update of transition.updates.filter((item) => item.id !== player.id))
-        await tx
-          .update(sessionPlayers)
-          .set({ rsvp: update.rsvp, waitlistPosition: update.waitlistPosition, playState: update.playState })
-          .where(eq(sessionPlayers.id, update.id));
-      for (const promotedId of transition.promotedPlayerIds) {
-        if (session.status === "live") {
-          const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
-          const position = Math.max(0, ...queue.map((item) => item.position)) + 1;
-          await tx
-            .insert(sessionQueue)
-            .values({
-              sessionId: session.id,
-              sessionPlayerId: promotedId,
-              position,
-              state: "waiting",
-            })
-            .onConflictDoUpdate({
-              target: [sessionQueue.sessionId, sessionQueue.sessionPlayerId],
-              set: { state: "waiting", position, enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` },
-            });
-        }
-        const promoted = roster.find((item) => item.id === promotedId);
-        if (promoted?.userId)
-          await tx
-            .insert(notifications)
-            .values({ userId: promoted.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
-      }
-      await tx.insert(messages).values({
-        sessionId: session.id,
-        authorId: user.id,
-        kind: "system",
-        body: "The host updated the player roster.",
-      });
-      if (player.userId)
-        await tx
-          .insert(notifications)
-          .values({ userId: player.userId, sessionId: session.id, type: "removed_from_session", payload: {} });
-    });
-  } catch {
-    return { error: "This player can’t be removed from the roster." };
-  }
-  await reconcileUnpaidExpenseShares(session.id);
-  revalidatePath(`/games/${session.id}/players`);
-  revalidatePath(`/games/${session.id}/payments`);
-  revalidatePath(`/games/${session.id}`);
-  revalidatePath(`/s/${session.slug}`);
-  return { success: true };
+  return manageRoster({
+    type: "remove",
+    actorUserId: user.id,
+    sessionId: parsed.data.sessionId,
+    sessionPlayerId: parsed.data.sessionPlayerId,
+  });
 }
 
 export async function markSessionBookedAction(formData: FormData) {
