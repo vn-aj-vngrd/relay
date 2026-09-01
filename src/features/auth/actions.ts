@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { getPublicEnv, getServerEnv } from "@/lib/env";
+import { getPublicEnv } from "@/lib/env";
 import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -24,27 +24,6 @@ const passwordSchema = z
 
 function nextPath(formData: FormData) {
   return safeNextPath(formData.get("next"));
-}
-
-async function verifySignupCaptcha(formData: FormData) {
-  const token = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
-  const secret = getServerEnv().TURNSTILE_SECRET_KEY;
-  if (!secret || !token.success) return false;
-
-  try {
-    const body = new URLSearchParams({ secret, response: token.data });
-    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-      method: "POST",
-      body,
-      signal: AbortSignal.timeout(5_000),
-      cache: "no-store",
-    });
-    if (!response.ok) return false;
-    const result = (await response.json()) as { success?: boolean };
-    return result.success === true;
-  } catch {
-    return false;
-  }
 }
 
 function authError(message: string, destination = "/login", next?: string): never {
@@ -139,13 +118,14 @@ export async function createPasswordAccount(formData: FormData) {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
+  const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
   if (!email.success || !password.success)
     authError(
       "Enter a valid email and a password with at least 8 characters, including a letter and number.",
       "/signup",
       next,
     );
-  if (!(await verifySignupCaptcha(formData))) authError("Complete the security check and try again.", "/signup", next);
+  if (!captchaToken.success) authError("Complete the security check and try again.", "/signup", next);
   await guardAuthAttempt({
     scope: "password-sign-up",
     email: email.data,
@@ -159,7 +139,10 @@ export async function createPasswordAccount(formData: FormData) {
   const { data, error } = await supabase.auth.signUp({
     email: email.data,
     password: password.data,
-    options: { emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback` },
+    options: {
+      captchaToken: captchaToken.data,
+      emailRedirectTo: `${getPublicEnv().NEXT_PUBLIC_APP_URL}/auth/callback`,
+    },
   });
   if (error)
     authError(
