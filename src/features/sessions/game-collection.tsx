@@ -3,7 +3,6 @@
 import {
   CalendarBlank,
   CalendarPlus,
-  CaretLeft,
   CaretRight,
   Check,
   Coins,
@@ -30,6 +29,7 @@ import type {
   GameInvitationPage,
 } from "./game-collection-types";
 import { GameDesktopViewControls } from "./game-view-menu";
+import { GamesCalendar } from "./games-calendar";
 
 export type { GameCollectionItem } from "./game-collection-types";
 export { GameViewMenu } from "./game-view-menu";
@@ -71,6 +71,28 @@ const gameItemSchema = z.object({
 });
 const gamePageSchema = z.object({ items: z.array(gameItemSchema), nextCursor: z.string().nullable() });
 const calendarPageSchema = z.object({ upcoming: z.array(gameItemSchema), past: z.array(gameItemSchema) });
+type CalendarPage = z.infer<typeof calendarPageSchema>;
+
+function validMonth(value: string | null): value is string {
+  return Boolean(value && /^\d{4}-(0[1-9]|1[0-2])$/.test(value));
+}
+
+function validDate(value: string | null): value is string {
+  if (!value || !/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function updateGamesUrl(
+  values: { filter?: GameFilter; month?: string; date?: string },
+  behavior: "push" | "replace" = "replace",
+) {
+  const url = new URL(window.location.href);
+  if (values.filter) url.searchParams.set("filter", values.filter);
+  if (values.month) url.searchParams.set("month", values.month);
+  if (values.date) url.searchParams.set("date", values.date);
+  window.history[behavior === "push" ? "pushState" : "replaceState"](null, "", `${url.pathname}?${url.searchParams}`);
+}
 
 function getView(): ViewMode {
   const saved = localStorage.getItem(preferenceKey);
@@ -434,151 +456,6 @@ function GameGrid({ items }: { items: GameCollectionItem[] }) {
   );
 }
 
-function MonthCalendar({
-  upcoming,
-  past,
-  todayKey,
-  weekStart,
-  monthKey,
-  onMonthChange,
-}: {
-  upcoming: GameCollectionItem[];
-  past: GameCollectionItem[];
-  todayKey: string;
-  weekStart: "sunday" | "monday";
-  monthKey: string;
-  onMonthChange: (monthKey: string) => void;
-}) {
-  const month = new Date(`${monthKey}-01T00:00:00Z`);
-  const year = month.getUTCFullYear();
-  const monthIndex = month.getUTCMonth();
-  const leadingDays = weekStart === "monday" ? (month.getUTCDay() + 6) % 7 : month.getUTCDay();
-  const dayCount = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-  const games = [
-    ...upcoming.map((game) => ({ ...game, phase: game.status === "live" ? ("live" as const) : ("upcoming" as const) })),
-    ...past.map((game) => ({ ...game, phase: "past" as const })),
-  ];
-  const gamesByDate = new Map<string, typeof games>();
-  games.forEach((game) => gamesByDate.set(game.dateKey, [...(gamesByDate.get(game.dateKey) ?? []), game]));
-  const changeMonth = (amount: number) => {
-    const next = new Date(Date.UTC(year, monthIndex + amount, 1));
-    onMonthChange(`${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}`);
-  };
-  const title = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: "UTC" }).format(month);
-  const cells = [
-    ...Array.from({ length: leadingDays }, () => null),
-    ...Array.from({ length: dayCount }, (_, index) => index + 1),
-  ];
-
-  return (
-    <section aria-labelledby="calendar-month">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 id="calendar-month" className="text-xl font-[680]">
-            {title}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            <span className="text-live">● Live</span>
-            <span className="mx-2">·</span>
-            <span className="text-primary">● Upcoming</span>
-            <span className="mx-2">·</span>Past
-          </p>
-        </div>
-        <div className="flex self-end gap-1 sm:self-auto">
-          <button
-            type="button"
-            onClick={() => changeMonth(-1)}
-            aria-label="Previous month"
-            className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
-          >
-            <CaretLeft aria-hidden size={16} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMonthChange(todayKey.slice(0, 7))}
-            className="pressable min-h-9 rounded-md px-2.5 text-[13px] font-[650] text-muted hover:bg-surface-strong hover:text-ink"
-          >
-            Today
-          </button>
-          <button
-            type="button"
-            onClick={() => changeMonth(1)}
-            aria-label="Next month"
-            className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
-          >
-            <CaretRight aria-hidden size={16} />
-          </button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 text-center text-xs font-[650] text-muted">
-        {(weekStart === "monday"
-          ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-          : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-        ).map((day) => (
-          <div key={day} className="py-2">
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 border-l border-t border-line">
-        {cells.map((day, index) => {
-          if (!day)
-            return (
-              <div
-                key={`empty-${index}`}
-                aria-hidden
-                className="min-h-14 border-b border-r border-line bg-surface/35 sm:min-h-28"
-              />
-            );
-          const dateKey = `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const dayGames = gamesByDate.get(dateKey) ?? [];
-          const fullDate = new Intl.DateTimeFormat("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-            timeZone: "UTC",
-          }).format(new Date(`${dateKey}T00:00:00Z`));
-          return (
-            <div
-              key={dateKey}
-              role="group"
-              aria-label={`${fullDate}, ${dayGames.length} ${dayGames.length === 1 ? "game" : "games"}`}
-              className={`min-h-14 min-w-0 border-b border-r border-line p-1.5 sm:min-h-28 sm:p-2 ${dateKey === todayKey ? "bg-primary-soft/55" : "bg-surface"}`}
-            >
-              <time
-                dateTime={dateKey}
-                className={`score text-xs font-semibold ${dateKey === todayKey ? "text-primary" : "text-muted"}`}
-              >
-                {day}
-              </time>
-              <div className="mt-1 space-y-1">
-                {dayGames.slice(0, 2).map((game) => (
-                  <Link
-                    key={game.id}
-                    href={game.href}
-                    prefetch={false}
-                    style={sessionAccentStyle(game.accentColor)}
-                    className={`block min-h-5 rounded-md px-1.5 py-1 text-left text-[11px] font-[650] leading-4 ${game.phase === "live" ? "bg-live/12 text-live" : game.phase === "upcoming" ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
-                  >
-                    <span className="sr-only sm:not-sr-only sm:line-clamp-1">{game.title}</span>
-                    <span
-                      aria-hidden
-                      className={`mx-auto block h-1.5 w-1.5 rounded-full sm:hidden ${game.phase === "live" ? "bg-live" : game.phase === "upcoming" ? "bg-primary" : "bg-muted"}`}
-                    />
-                  </Link>
-                ))}
-                {dayGames.length > 2 ? (
-                  <p className="text-center text-[10px] text-muted">+{dayGames.length - 2}</p>
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
 function CollectionSection({
   title,
   items,
@@ -620,12 +497,16 @@ export function GameCollection({
   pastPage,
   todayKey,
   initialFilter = "upcoming",
+  initialMonth = todayKey.slice(0, 7),
+  initialDate = todayKey,
 }: {
   upcomingPage: GameCollectionPage;
   invitationPage?: GameInvitationPage;
   pastPage: GameCollectionPage;
   todayKey: string;
   initialFilter?: GameFilter;
+  initialMonth?: string;
+  initialDate?: string;
 }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   const weekStart = useSyncExternalStore(subscribe, getWeekStart, (): "sunday" | "monday" => "sunday");
@@ -639,13 +520,14 @@ export function GameCollection({
   const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(null);
   const [pageErrors, setPageErrors] = useState<Partial<Record<GameCollectionPhase, string>>>({});
   const loadingPhaseRef = useRef<GameCollectionPhase | null>(null);
-  const [monthKey, setMonthKey] = useState(todayKey.slice(0, 7));
-  const [calendarData, setCalendarData] = useState<{
-    upcoming: GameCollectionItem[];
-    past: GameCollectionItem[];
-  } | null>(null);
+  const [monthKey, setMonthKey] = useState(initialMonth);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [calendarData, setCalendarData] = useState<CalendarPage | null>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [calendarRetry, setCalendarRetry] = useState(0);
+  const calendarCache = useRef(new Map<string, CalendarPage>());
+  const calendarEnabled = filter !== "invites";
 
   const loadMore = useCallback(
     async (phase: GameCollectionPhase) => {
@@ -693,9 +575,27 @@ export function GameCollection({
   );
 
   useEffect(() => {
-    if (mode !== "calendar" || filter === "invites") return;
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const nextMonth = validMonth(params.get("month")) ? params.get("month")! : todayKey.slice(0, 7);
+      const requestedDate = params.get("date");
+      const nextDate =
+        validDate(requestedDate) && requestedDate.startsWith(nextMonth) ? requestedDate : `${nextMonth}-01`;
+      const requestedFilter = params.get("filter");
+      setFilter(requestedFilter === "invites" ? "invites" : requestedFilter === "past" ? "past" : "upcoming");
+      setMonthKey(nextMonth);
+      setSelectedDate(nextDate);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [todayKey]);
+
+  useEffect(() => {
+    if (mode !== "calendar" || !calendarEnabled) return;
     const controller = new AbortController();
-    setCalendarData(null);
+    const cached = calendarCache.current.get(monthKey);
+    setCalendarData(cached ?? null);
+    setCalendarLoading(true);
     setCalendarError(null);
     void fetch(`/api/games?month=${monthKey}`, {
       credentials: "same-origin",
@@ -706,14 +606,18 @@ export function GameCollection({
         if (!response.ok) throw new Error("This month could not be loaded.");
         const parsed = calendarPageSchema.safeParse(await response.json());
         if (!parsed.success) throw new Error("The server returned invalid calendar data.");
+        calendarCache.current.set(monthKey, parsed.data);
         setCalendarData(parsed.data);
       })
       .catch((cause: unknown) => {
         if (controller.signal.aborted) return;
         setCalendarError(cause instanceof Error ? cause.message : "This month could not be loaded.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCalendarLoading(false);
       });
     return () => controller.abort();
-  }, [calendarRetry, filter, mode, monthKey]);
+  }, [calendarEnabled, calendarRetry, mode, monthKey]);
 
   const handleInviteResponse = useCallback((game: GameCollectionItem, response: ActiveRsvp | "declined") => {
     setInvitations((current) => current.filter((item) => item.id !== game.id));
@@ -761,6 +665,19 @@ export function GameCollection({
       onLoad={loadMore}
     />
   );
+  const handleFilterChange = (nextFilter: GameFilter) => {
+    setFilter(nextFilter);
+    updateGamesUrl({ filter: nextFilter }, "push");
+  };
+  const handleMonthChange = (nextMonth: string, nextDate: string) => {
+    setMonthKey(nextMonth);
+    setSelectedDate(nextDate);
+    updateGamesUrl({ month: nextMonth, date: nextDate }, "push");
+  };
+  const handleDateSelect = (nextDate: string) => {
+    setSelectedDate(nextDate);
+    updateGamesUrl({ month: nextDate.slice(0, 7), date: nextDate });
+  };
 
   return (
     <div className="mt-2 sm:mt-3">
@@ -771,7 +688,7 @@ export function GameCollection({
               label="Filter games"
               items={filterItems}
               value={filter}
-              onChange={setFilter}
+              onChange={handleFilterChange}
               className="min-w-0"
             />
           </div>
@@ -797,33 +714,21 @@ export function GameCollection({
         ) : null}
         {filter !== "invites" ? (
           mode === "calendar" ? (
-            calendarError ? (
-              <div role="alert" className="border-y border-line py-8 text-center">
-                <p className="text-sm text-muted">{calendarError}</p>
-                <button
-                  type="button"
-                  onClick={() => setCalendarRetry((value) => value + 1)}
-                  className="mt-3 min-h-11 font-semibold text-primary"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : calendarData ? (
-              <div data-testid="games-calendar">
-                <MonthCalendar
-                  upcoming={filter === "past" ? [] : calendarData.upcoming}
-                  past={filter === "upcoming" ? [] : calendarData.past}
-                  todayKey={todayKey}
-                  weekStart={weekStart}
-                  monthKey={monthKey}
-                  onMonthChange={setMonthKey}
-                />
-              </div>
-            ) : (
-              <div role="status" className="border-y border-line py-10 text-center text-sm text-muted">
-                Loading game calendar…
-              </div>
-            )
+            <div data-testid="games-calendar">
+              <GamesCalendar
+                upcoming={filter === "past" ? [] : (calendarData?.upcoming ?? [])}
+                past={filter === "upcoming" ? [] : (calendarData?.past ?? [])}
+                todayKey={todayKey}
+                weekStart={weekStart}
+                monthKey={monthKey}
+                selectedDate={selectedDate}
+                loading={calendarLoading}
+                error={calendarError}
+                onMonthChange={handleMonthChange}
+                onSelectDate={handleDateSelect}
+                onRetry={() => setCalendarRetry((value) => value + 1)}
+              />
+            </div>
           ) : (
             <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-10 sm:space-y-12">
               {filter === "upcoming" && liveGames.length ? (

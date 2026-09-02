@@ -93,6 +93,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -229,9 +230,20 @@ describe("GameCollection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Calendar view" }));
 
     await waitFor(() => expect(screen.getByRole("heading", { name: "August 2026" })).toBeVisible());
-    expect(screen.getByLabelText("Saturday, August 22, 1 game")).toHaveTextContent("Saturday Night Pickle");
+    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ })).toBeVisible();
+    expect(screen.getAllByRole("gridcell")).toHaveLength(42);
+    expect(screen.getAllByRole("button", { name: /Saturday, August 22, 2026, 1 game/ })).toHaveLength(2);
     expect(fetch).toHaveBeenCalledWith(
       "/api/games?month=2026-08",
+      expect.objectContaining({ credentials: "same-origin" }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    await waitFor(() => expect(screen.getByRole("heading", { name: "September 2026" })).toBeVisible());
+    expect(window.location.search).toContain("month=2026-09");
+    expect(window.location.search).toContain("date=2026-09-01");
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/games?month=2026-09",
       expect.objectContaining({ credentials: "same-origin" }),
     );
     expect(localStorage.getItem("relay-games-view")).toBe("calendar");
