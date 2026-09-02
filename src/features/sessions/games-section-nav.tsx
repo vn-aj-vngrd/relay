@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function GamesSectionNav({ current }: { current: "mine" | "open" }) {
   return (
-    <nav aria-label="Games sections" className="mt-5 overflow-x-auto border-b border-line">
+    <nav aria-label="Games sections" className="mt-2 overflow-x-auto border-b border-line">
       <ul className="flex min-w-max">
         {[
           { value: "mine" as const, label: "My games", href: "/games" },

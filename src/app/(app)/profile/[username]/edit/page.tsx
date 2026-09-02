@@ -18,12 +18,12 @@ export default async function EditProfilePage({ params }: { params: Promise<{ us
   if (!profile || profile.userId !== user.id) notFound();
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
+    <div className="mx-auto w-full max-w-6xl">
       <header className="flex items-center gap-2 border-b border-line pb-5">
         <Link
           href={`/profile/${profile.username}`}
           aria-label="Back to profile"
-          className="pressable grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+          className="pressable -ml-3 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>
