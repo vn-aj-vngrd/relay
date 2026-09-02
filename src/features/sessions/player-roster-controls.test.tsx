@@ -19,28 +19,66 @@ beforeAll(() => {
     this.removeAttribute("open");
   };
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("AddPlayerForm", () => {
-  it("switches between adding a guest and inviting a Relay username", () => {
+  it("switches between adding a guest and finding a Relay username", () => {
     render(<AddPlayerForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
 
-    const entry = screen.getByRole("textbox", { name: "Guest name or Relay username" });
+    const entry = screen.getByRole("combobox", { name: "Guest name or Relay username" });
     expect(screen.getByRole("button", { name: "Add" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Guest playing experience" })).toBeEnabled();
 
-    fireEvent.change(entry, { target: { value: "@mika" } });
+    fireEvent.change(entry, { target: { value: "@m" } });
 
-    expect(screen.getByRole("button", { name: "Invite" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Guest playing experience" })).toBeDisabled();
-    expect(screen.getByText(/use @username to invite a Relay player/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Invite" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Guest playing experience" })).not.toBeInTheDocument();
+    expect(screen.getByText(/type at least 2 characters/i)).toBeVisible();
+  });
+
+  it("suggests Relay players and requires a resolved selection before inviting", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          items: [
+            {
+              id: "user-1",
+              type: "players",
+              title: "Mika Reyes",
+              subtitle: "@mika · Cebu City",
+              href: "/profile/mika",
+              imageUrl: null,
+            },
+          ],
+          nextCursor: null,
+        }),
+      ),
+    );
+    render(<AddPlayerForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
+
+    const entry = screen.getByRole("combobox", { name: "Guest name or Relay username" });
+    fireEvent.change(entry, { target: { value: "@mi" } });
+
+    const option = await screen.findByRole("option", { name: /Mika Reyes/i });
+    expect(fetch).toHaveBeenCalledWith("/api/search?q=mi&type=players&cursor=0", expect.any(Object));
+    expect(screen.getByRole("button", { name: "Invite" })).toBeDisabled();
+
+    fireEvent.click(option);
+
+    expect(entry).toHaveValue("@mika");
+    expect(screen.getByText("Mika Reyes (@mika) selected.")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Invite" })).toBeEnabled();
   });
 
   it("clears a guest name after the guest is added", async () => {
     vi.mocked(addPlayerAction).mockResolvedValueOnce({ success: true, playerOutcome: "added" });
     render(<AddPlayerForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
 
-    const entry = screen.getByRole("textbox", { name: "Guest name or Relay username" });
+    const entry = screen.getByRole("combobox", { name: "Guest name or Relay username" });
     fireEvent.change(entry, { target: { value: "Mika Reyes" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
