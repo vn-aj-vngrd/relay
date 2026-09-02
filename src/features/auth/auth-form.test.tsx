@@ -12,6 +12,18 @@ import { AuthForm } from "./auth-form";
 afterEach(cleanup);
 
 describe("AuthForm", () => {
+  it("keeps an unsuccessful sign-in password without applying account-creation rules", () => {
+    render(<AuthForm />);
+    const password = screen.getByLabelText("Password");
+
+    expect(password).not.toHaveAttribute("minlength");
+    fireEvent.change(password, { target: { value: "legacy" } });
+    fireEvent.click(screen.getByRole("link", { name: "Create account" }));
+    fireEvent.click(screen.getByRole("link", { name: "Sign in" }));
+
+    expect(screen.getByLabelText("Password")).toHaveValue("legacy");
+  });
+
   it("presents one clear primary authentication action at a time", () => {
     render(<AuthForm />);
     expect(screen.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();

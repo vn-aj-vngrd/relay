@@ -51,6 +51,9 @@ export function AuthForm({
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [captchaReady, setCaptchaReady] = useState(false);
+  const [signInPassword, setSignInPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [signInState, signInAction] = useActionState(signInWithPasswordState, {});
   const [createState, createAction] = useActionState(createPasswordAccountState, {});
   const turnstileRef = useRef<TurnstileInstance>(undefined);
@@ -139,8 +142,10 @@ export function AuthForm({
           id="password"
           name="password"
           label="Password"
-          minLength={8}
+          minLength={creating ? 8 : undefined}
           autoComplete={creating ? "new-password" : "current-password"}
+          value={creating ? newPassword : signInPassword}
+          onChange={(event) => (creating ? setNewPassword(event.target.value) : setSignInPassword(event.target.value))}
           required
           aria-invalid={Boolean(activeState.fieldErrors?.password)}
           aria-describedby={activeState.fieldErrors?.password ? "password-error" : undefined}
@@ -165,6 +170,8 @@ export function AuthForm({
             label="Confirm password"
             minLength={8}
             autoComplete="new-password"
+            value={passwordConfirmation}
+            onChange={(event) => setPasswordConfirmation(event.target.value)}
             required
             aria-invalid={Boolean(createState.fieldErrors?.confirmation)}
             aria-describedby={createState.fieldErrors?.confirmation ? "password-confirmation-error" : undefined}

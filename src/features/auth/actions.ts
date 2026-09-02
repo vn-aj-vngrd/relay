@@ -15,6 +15,7 @@ import { passwordResetRequestErrorMessage, recoveredPasswordErrorMessage } from 
 import { getCurrentUser } from "./session";
 
 const emailSchema = z.email();
+const signInPasswordSchema = z.string().min(1).max(4096);
 const passwordSchema = z
   .string()
   .min(8)
@@ -100,12 +101,12 @@ export type AuthFormState = { error?: string; fieldErrors?: Record<string, strin
 async function attemptPasswordSignIn(formData: FormData): Promise<AuthFormState> {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
-  const password = passwordSchema.safeParse(formData.get("password"));
+  const password = signInPasswordSchema.safeParse(formData.get("password"));
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
   if (!email.success || !password.success) {
     const fieldErrors: Record<string, string[]> = {};
     if (!email.success) fieldErrors.email = ["Enter a valid email address."];
-    if (!password.success) fieldErrors.password = ["Use at least 8 characters, including a letter and number."];
+    if (!password.success) fieldErrors.password = ["Enter your password."];
     return { error: "Check the fields marked below.", fieldErrors };
   }
   if (!captchaToken.success) return { error: "Complete the security check and try again." };

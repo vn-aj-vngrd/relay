@@ -135,6 +135,22 @@ describe("signInWithPassword", () => {
     });
   });
 
+  it("passes short existing passwords to the provider instead of applying signup rules", async () => {
+    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("password", "legacy");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({ error: "Email or password is incorrect." });
+
+    expect(mocks.signInWithPassword).toHaveBeenCalledWith({
+      email: "player@example.com",
+      password: "legacy",
+      options: { captchaToken: "verified-turnstile-token" },
+    });
+  });
+
   it("returns invalid credentials to the mounted form without redirecting it", async () => {
     mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
     const formData = new FormData();
