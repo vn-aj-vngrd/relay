@@ -1,13 +1,19 @@
-import { UploadSimple } from "@phosphor-icons/react/dist/ssr";
+"use client";
 
+import { UploadSimple } from "@phosphor-icons/react";
+import { useActionState } from "react";
+
+import { Alert } from "@/components/ui/alert";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
-import { uploadMemoryPhoto } from "./actions";
+import { uploadMemoryPhotoState } from "./actions";
 
 export function MemoryPhotoForm({ sessionId }: { sessionId: string }) {
+  const [state, action] = useActionState(uploadMemoryPhotoState, {});
   return (
-    <form action={uploadMemoryPhoto} className="border-y border-line py-5">
+    <form noValidate action={action} className="border-y border-line py-5">
+      {state.error ? <Alert className="mb-4">{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <ImageFileField
         id="memory-photo"

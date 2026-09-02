@@ -5,28 +5,22 @@ import { notFound } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
-import { ImageFileField } from "@/components/ui/image-file-field";
-import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { db } from "@/db/client";
 import { expenses, paymentAccounts, playerPayments, profiles, sessionPlayers } from "@/db/schema";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
+import { confirmPayment, togglePaymentExcluded } from "@/features/payments/actions";
 import {
-  confirmPayment,
-  createExpense,
-  requestNewPaymentProof,
-  togglePaymentExcluded,
-  updatePlayerPaymentAmount,
-} from "@/features/payments/actions";
+  CreateExpenseForm,
+  PaymentAmountForm,
+  PaymentProofRequestForm,
+} from "@/features/payments/payment-management-forms";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { peso } from "@/features/sessions/format";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
-const input =
-  "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
 function paymentLabel(status: string, requested: boolean) {
   if (status === "confirmed") return "Paid";
@@ -175,28 +169,12 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                                 Adjust player share
                               </summary>
                               <div className="mt-2 flex flex-wrap items-center gap-2">
-                                <form action={updatePlayerPaymentAmount} className="flex items-center gap-2">
-                                  <input type="hidden" name="paymentId" value={payment.id} />
-                                  <label className="sr-only" htmlFor={`amount-${payment.id}`}>
-                                    Amount for {name}
-                                  </label>
-                                  <div className="relative">
-                                    <span className="absolute left-2.5 top-2 text-xs text-muted">₱</span>
-                                    <input
-                                      id={`amount-${payment.id}`}
-                                      name="amount"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      defaultValue={payment.amountCents / 100}
-                                      className="score h-9 w-28 rounded-md border border-line bg-surface pl-6 pr-2 text-sm"
-                                    />
-                                  </div>
-                                  <SubmitButton pendingLabel="Saving…" variant="secondary" className="min-h-9">
-                                    Save
-                                  </SubmitButton>
-                                </form>
-                                <form action={togglePaymentExcluded}>
+                                <PaymentAmountForm
+                                  paymentId={payment.id}
+                                  name={name}
+                                  amount={payment.amountCents / 100}
+                                />
+                                <form noValidate action={togglePaymentExcluded}>
                                   <input type="hidden" name="paymentId" value={payment.id} />
                                   <SubmitButton pendingLabel="Updating…" variant="quiet" className="min-h-9">
                                     {payment.status === "excluded" ? "Include" : "Exclude"}
@@ -237,7 +215,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                                 </p>
                                 {canManagePayments ? (
                                   <div className="mt-3 flex flex-wrap items-start gap-2">
-                                    <form action={confirmPayment}>
+                                    <form noValidate action={confirmPayment}>
                                       <input type="hidden" name="paymentId" value={payment.id} />
                                       <SubmitButton pendingLabel="Confirming…">Confirm paid</SubmitButton>
                                     </form>
@@ -245,27 +223,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
                                       <summary className="pressable inline-flex min-h-9 cursor-pointer items-center rounded-lg border border-line bg-surface px-3 text-[13px] font-[600] leading-none text-ink hover:bg-surface-strong">
                                         Request new proof
                                       </summary>
-                                      <form
-                                        action={requestNewPaymentProof}
-                                        className="mt-2 flex flex-col gap-2 sm:flex-row"
-                                      >
-                                        <input type="hidden" name="paymentId" value={payment.id} />
-                                        <label className="sr-only" htmlFor={`note-${payment.id}`}>
-                                          Reason for requesting new proof
-                                        </label>
-                                        <input
-                                          id={`note-${payment.id}`}
-                                          name="note"
-                                          required
-                                          minLength={2}
-                                          maxLength={240}
-                                          placeholder="What needs to be clearer?"
-                                          className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-sm"
-                                        />
-                                        <SubmitButton pendingLabel="Sending request…" variant="secondary">
-                                          Send request
-                                        </SubmitButton>
-                                      </form>
+                                      <PaymentProofRequestForm paymentId={payment.id} />
                                     </details>
                                   </div>
                                 ) : null}
@@ -328,81 +286,7 @@ export default async function PaymentsPage({ params }: { params: Promise<{ id: s
           <p className="mt-2 text-sm leading-6 text-muted">
             You paid the expense upfront. Relay divides it among the other players, then helps you review repayments.
           </p>
-          <form action={createExpense} className="mt-7 space-y-4">
-            <input type="hidden" name="sessionId" value={sessionId} />
-            <div>
-              <label className="text-sm font-semibold" htmlFor="label">
-                Expense
-              </label>
-              <input className={input} id="label" name="label" defaultValue="Court" required />
-            </div>
-            <div>
-              <label className="text-sm font-semibold" htmlFor="total">
-                Total amount
-              </label>
-              <input
-                className={`${input} score`}
-                id="total"
-                name="total"
-                type="number"
-                min="1"
-                step="0.01"
-                required
-                inputMode="decimal"
-                autoComplete="off"
-                defaultValue={data.session.bookingTotalCents == null ? undefined : data.session.bookingTotalCents / 100}
-                placeholder="2400"
-              />
-              {data.session.bookingTotalCents != null ? (
-                <p className="mt-1.5 text-sm text-muted">
-                  Prefilled from the court booking. Confirm or change it here.
-                </p>
-              ) : null}
-            </div>
-            <SelectField
-              id="method"
-              name="method"
-              label="Payment method"
-              defaultValue="GCash"
-              options={[
-                { value: "GCash", label: "GCash" },
-                { value: "Maya", label: "Maya" },
-                { value: "Bank transfer", label: "Bank transfer" },
-                { value: "Cash", label: "Cash" },
-                { value: "Custom", label: "Custom" },
-              ]}
-            />
-            <div>
-              <label className="text-sm font-semibold" htmlFor="details">
-                Payment details
-              </label>
-              <textarea
-                className="mt-1.5 min-h-24 w-full rounded-lg border border-line bg-surface p-3.5"
-                id="details"
-                name="details"
-                required
-                autoComplete="off"
-                placeholder="Account name and number…"
-              />
-            </div>
-            <ImageFileField
-              id="payment-qr"
-              name="qr"
-              label="Payment QR (optional)"
-              hint="Players can scan this to repay you."
-              buttonLabel="Choose QR image"
-            />
-            <ImageFileField
-              id="expense-receipt"
-              name="receipt"
-              label="Receipt (optional)"
-              hint="Show players that you already paid for the court or shared expense."
-              buttonLabel="Choose receipt"
-            />
-            <SubmitButton pendingLabel="Creating split…" className="w-full">
-              Create collection
-            </SubmitButton>
-          </form>
+          <CreateExpenseForm sessionId={sessionId} bookingTotalCents={data.session.bookingTotalCents} />
         </section>
       ) : (
         <section className="mx-auto max-w-xl py-4 sm:py-14">

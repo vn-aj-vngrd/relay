@@ -25,7 +25,7 @@ export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl
   }
 
   return (
-    <form action={action} className="shrink-0">
+    <form noValidate action={action} className="shrink-0">
       <input
         id="profile-avatar"
         name="avatar"

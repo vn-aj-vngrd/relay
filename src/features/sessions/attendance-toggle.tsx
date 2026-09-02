@@ -12,7 +12,7 @@ export function AttendanceBulkActions({ sessionId, allPresent }: { sessionId: st
   const [state, action] = useActionState(setAllAttendanceAction, {} as AttendanceActionState);
   return (
     <div>
-      <form action={action}>
+      <form noValidate action={action}>
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="present" value={allPresent ? "false" : "true"} />
         <SubmitButton pendingLabel="Updating…" variant="quiet" className="whitespace-nowrap">
@@ -44,7 +44,7 @@ export function AttendanceToggle({
 }) {
   const [state, action, pending] = useActionState(setAttendanceAction, {} as AttendanceActionState);
   return (
-    <form action={action} className={compact ? "" : "flex min-h-14 flex-wrap items-center gap-3 py-2"}>
+    <form noValidate action={action} className={compact ? "" : "flex min-h-14 flex-wrap items-center gap-3 py-2"}>
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="sessionPlayerId" value={sessionPlayerId} />
       <input type="hidden" name="present" value={present ? "false" : "true"} />

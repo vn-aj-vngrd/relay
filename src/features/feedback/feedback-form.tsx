@@ -33,7 +33,7 @@ export function FeedbackForm() {
   }, [state]);
 
   return (
-    <form ref={formRef} action={action} className="border-y border-line py-6 sm:py-8">
+    <form noValidate ref={formRef} action={action} className="border-y border-line py-6 sm:py-8">
       <fieldset>
         <legend className="text-sm font-[650]">What would you like to share?</legend>
         <div className="mt-2 divide-y divide-line border-y border-line">

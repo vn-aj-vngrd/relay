@@ -109,7 +109,7 @@ export function SidebarAccount({
               Admin console
             </Link>
           ) : null}
-          <form action={signOut} className="mt-1 border-t border-line pt-1">
+          <form noValidate action={signOut} className="mt-1 border-t border-line pt-1">
             <SignOutButton />
           </form>
         </div>

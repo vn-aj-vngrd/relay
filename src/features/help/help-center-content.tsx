@@ -42,7 +42,7 @@ export function HelpCenterContent({ courts, query: rawQuery = "" }: { courts: Co
             Replay app tour
           </ButtonLink>
         </div>
-        <form className="relative mt-5 max-w-xl">
+        <form noValidate className="relative mt-5 max-w-xl">
           <MagnifyingGlass aria-hidden className="absolute left-3.5 top-3.5 text-muted" size={18} />
           <label htmlFor="help-search" className="sr-only">
             Search manuals and answers

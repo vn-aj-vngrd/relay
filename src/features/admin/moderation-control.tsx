@@ -86,7 +86,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
         ref={dialogRef}
         className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
       >
-        <form action={formAction} className="p-5 sm:p-6">
+        <form noValidate action={formAction} className="p-5 sm:p-6">
           <input type="hidden" name={details.field} value={targetId} />
           <div className="flex items-start gap-3">
             <span

@@ -122,7 +122,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
           : "Finding Relay players…";
 
   return (
-    <form ref={formRef} action={action} onReset={resetPlayerEntry} className="mt-4">
+    <form noValidate ref={formRef} action={action} onReset={resetPlayerEntry} className="mt-4">
       <input type="hidden" name="sessionId" value={sessionId} />
       <div
         className={`grid gap-2 sm:items-end ${isRelayInvite ? "sm:grid-cols-[minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_260px_auto]"}`}
@@ -255,7 +255,7 @@ export function PendingPlayerActions({ sessionId, playerId }: { sessionId: strin
   return (
     <div>
       <div className="flex gap-2">
-        <form action={approveAction}>
+        <form noValidate action={approveAction}>
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="sessionPlayerId" value={playerId} />
           <SubmitButton pendingLabel="Approving…" className="min-h-9 px-3">
@@ -263,7 +263,7 @@ export function PendingPlayerActions({ sessionId, playerId }: { sessionId: strin
             Approve
           </SubmitButton>
         </form>
-        <form action={removeAction}>
+        <form noValidate action={removeAction}>
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="sessionPlayerId" value={playerId} />
           <SubmitButton pendingLabel="Rejecting…" variant="quiet" className="min-h-9 px-3 text-danger">
@@ -313,7 +313,7 @@ export function RemovePlayerButton({
         aria-describedby={`remove-${playerId}-description`}
         className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_24px_oklch(0.1_0.02_250/.16)] backdrop:bg-ink/35"
       >
-        <form action={action} className="p-5 sm:p-6">
+        <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="sessionPlayerId" value={playerId} />
           <div className="flex items-start gap-3">
@@ -350,7 +350,7 @@ export function RemovePlayerButton({
 
 export function RosterLockButton({ sessionId, locked }: { sessionId: string; locked: boolean }) {
   return (
-    <form action={toggleRosterLockAction}>
+    <form noValidate action={toggleRosterLockAction}>
       <input type="hidden" name="sessionId" value={sessionId} />
       <SubmitButton pendingLabel={locked ? "Unlocking…" : "Locking…"} variant="secondary">
         {locked ? <LockKeyOpen aria-hidden size={17} /> : <LockKey aria-hidden size={17} />}

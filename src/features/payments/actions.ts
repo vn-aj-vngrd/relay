@@ -2,6 +2,7 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
@@ -16,6 +17,12 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
 
 export type PaymentActionState = { error?: string; success?: boolean };
+
+function paymentActionError(error: unknown, fallback: string): PaymentActionState {
+  return {
+    error: error instanceof Error && !(error instanceof z.ZodError) && error.message ? error.message : fallback,
+  };
+}
 
 async function guardPaymentManagement(userId: string) {
   await assertRateLimit(
@@ -39,7 +46,31 @@ async function hasPaymentCapability(
   return can(sessionActor({ userId, hostId: session.hostId, membership }), action);
 }
 
-export async function createExpense(formData: FormData) {
+export async function createExpenseState(_: PaymentActionState, formData: FormData): Promise<PaymentActionState> {
+  const parsed = z
+    .object({
+      label: z.string().trim().min(2).max(80),
+      total: z.coerce.number().positive(),
+      method: z.string().trim().min(2).max(40),
+      details: z.string().trim().min(2).max(300),
+    })
+    .safeParse({
+      label: formData.get("label"),
+      total: formData.get("total"),
+      method: formData.get("method"),
+      details: formData.get("details"),
+    });
+  if (!parsed.success) return { error: "Complete the expense, amount, payment method, and payment details." };
+  try {
+    await createExpense(formData);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return paymentActionError(error, "The payment collection could not be created. Try again.");
+  }
+}
+
+async function createExpense(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const sessionId = z.uuid().parse(formData.get("sessionId"));
@@ -207,7 +238,22 @@ export async function confirmPayment(formData: FormData) {
   revalidatePath(`/games/${row.session.id}/payments`);
 }
 
-export async function updatePlayerPaymentAmount(formData: FormData) {
+export async function updatePlayerPaymentAmountState(
+  _: PaymentActionState,
+  formData: FormData,
+): Promise<PaymentActionState> {
+  const amount = z.coerce.number().nonnegative().safeParse(formData.get("amount"));
+  if (!amount.success) return { error: "Enter an amount of zero or more." };
+  try {
+    await updatePlayerPaymentAmount(formData);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return paymentActionError(error, "The player share could not be saved. Try again.");
+  }
+}
+
+async function updatePlayerPaymentAmount(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
@@ -265,7 +311,22 @@ export async function togglePaymentExcluded(formData: FormData) {
   revalidatePath(`/games/${row.session.id}/payments`);
 }
 
-export async function requestNewPaymentProof(formData: FormData) {
+export async function requestNewPaymentProofState(
+  _: PaymentActionState,
+  formData: FormData,
+): Promise<PaymentActionState> {
+  const note = z.string().trim().min(2).max(240).safeParse(formData.get("note"));
+  if (!note.success) return { error: "Add a short note explaining what needs to be clearer." };
+  try {
+    await requestNewPaymentProof(formData);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return paymentActionError(error, "The proof request could not be sent. Try again.");
+  }
+}
+
+async function requestNewPaymentProof(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));

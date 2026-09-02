@@ -71,7 +71,7 @@ export function CreateUserForm() {
   }
 
   return (
-    <form action={action} className="max-w-xl space-y-5">
+    <form noValidate action={action} className="max-w-xl space-y-5">
       <div>
         <label htmlFor="admin-user-email" className="text-sm font-semibold">
           Email

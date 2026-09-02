@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("./actions", () => ({
-  createPasswordAccount: vi.fn(),
+  createPasswordAccountState: vi.fn(async () => ({})),
   signInWithGoogle: vi.fn(),
   signInWithPassword: vi.fn(),
   signInWithPasswordState: vi.fn(async () => ({})),

@@ -138,7 +138,7 @@ export async function SessionChatView({
                         >
                           <time className="px-1 text-[11px] text-muted">{time.format(message.createdAt)}</time>
                           {viewer.canWrite ? (
-                            <form action={toggleMessageReaction}>
+                            <form noValidate action={toggleMessageReaction}>
                               <input type="hidden" name="messageId" value={message.id} />
                               {slug ? <input type="hidden" name="slug" value={slug} /> : null}
                               <PendingSubmit

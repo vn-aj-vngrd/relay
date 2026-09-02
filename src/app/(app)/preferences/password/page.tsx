@@ -34,7 +34,7 @@ export default async function ChangePasswordPage({
           </Alert>
         ) : null}
         {error ? <Alert className="mb-6">{error}</Alert> : null}
-        <form action={changePassword} className="space-y-5">
+        <form noValidate action={changePassword} className="space-y-5">
           <PasswordField
             id="current-password"
             name="currentPassword"

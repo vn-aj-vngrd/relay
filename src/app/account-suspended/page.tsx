@@ -22,7 +22,7 @@ export default function AccountSuspendedPage() {
           Relay has temporarily paused access to this account. If you think this is a mistake, contact the person who
           manages your Relay community.
         </p>
-        <form action={signOut} className="mt-7">
+        <form noValidate action={signOut} className="mt-7">
           <SubmitButton type="submit" variant="secondary" pendingLabel="Signing out…">
             Sign out
           </SubmitButton>

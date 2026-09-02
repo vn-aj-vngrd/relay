@@ -1,6 +1,7 @@
 "use server";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
@@ -27,7 +28,30 @@ async function requireCompletedParticipant(sessionId: string) {
   return { user, session, memory };
 }
 
-export async function uploadMemoryPhoto(formData: FormData) {
+export type MemoryPhotoActionState = { error?: string; success?: boolean };
+
+export async function uploadMemoryPhotoState(
+  _: MemoryPhotoActionState,
+  formData: FormData,
+): Promise<MemoryPhotoActionState> {
+  const photo = formData.get("photo");
+  if (!(photo instanceof File) || photo.size === 0)
+    return { error: "Choose a game photo before adding it to the memory." };
+  try {
+    await uploadMemoryPhoto(formData);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return {
+      error:
+        error instanceof Error && !(error instanceof z.ZodError) && error.message
+          ? error.message
+          : "The photo could not be saved. Try again.",
+    };
+  }
+}
+
+async function uploadMemoryPhoto(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const { user, session, memory } = await requireCompletedParticipant(sessionId);
   const file = formData.get("photo");

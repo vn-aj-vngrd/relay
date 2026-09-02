@@ -164,7 +164,7 @@ export default async function GameOverviewPage({
   });
   const bookingAction =
     isHost && !session.bookedAt ? (
-      <form action={markSessionBookedAction}>
+      <form noValidate action={markSessionBookedAction}>
         <input type="hidden" name="sessionId" value={session.id} />
         <SubmitButton pendingLabel="Confirming…" variant="quiet" className="-ml-3 text-primary hover:bg-primary-soft">
           Confirm booking

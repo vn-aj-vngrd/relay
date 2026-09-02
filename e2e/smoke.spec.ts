@@ -372,18 +372,27 @@ test("an authenticated host and guest can complete the core session flow", async
 test("login and account creation have distinct entry routes", async ({ page }) => {
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
+  const authForm = page.locator("form").filter({ has: page.locator("#password-email") });
+  await expect(authForm).toHaveAttribute("novalidate", "");
+  expect(await page.locator("#password-email").evaluate((input: HTMLInputElement) => input.checkValidity())).toBe(
+    false,
+  );
   const authTabs = page.getByRole("group", { name: "Authentication method" });
   const signInPosition = await authTabs.boundingBox();
   await authTabs.getByRole("link", { name: "Create account" }).click();
   const createPosition = await authTabs.boundingBox();
   expect(createPosition?.y).toBe(signInPosition?.y);
-  const panelBox = await authTabs.locator("..").boundingBox();
+  const panelBox = await page.locator("main > div").boundingBox();
   const mainBox = await page.locator("main").boundingBox();
   expect(panelBox && mainBox).toBeTruthy();
   expect(Math.abs(panelBox!.y + panelBox!.height / 2 - (mainBox!.y + mainBox!.height / 2))).toBeLessThan(1);
 
   await page.goto("/signup");
   await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+  await expect(page.locator("form").filter({ has: page.locator("#password-confirmation") })).toHaveAttribute(
+    "novalidate",
+    "",
+  );
   await expect(page.locator("#password")).toHaveAttribute("autocomplete", "new-password");
   await expect(page.getByText("What you can do")).toHaveCount(0);
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);

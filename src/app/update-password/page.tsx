@@ -41,7 +41,7 @@ export default async function UpdatePasswordPage({ searchParams }: { searchParam
             description="The reset email confirmed your inbox. Enter your authenticator code to approve this password change."
           />
         ) : (
-          <form action={updateRecoveredPassword} className="mt-8 space-y-5">
+          <form noValidate action={updateRecoveredPassword} className="mt-8 space-y-5">
             <PasswordField
               id="recovery-password"
               name="password"

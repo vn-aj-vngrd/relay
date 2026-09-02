@@ -9,9 +9,17 @@ import { Alert } from "@/components/ui/alert";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { PasswordField } from "@/components/ui/password-field";
 
-import { createPasswordAccount, signInWithPasswordState } from "./actions";
+import { createPasswordAccountState, signInWithPasswordState } from "./actions";
 
 type Mode = "signin" | "create";
+
+function FieldError({ id, errors }: { id: string; errors?: string[] }) {
+  return errors?.[0] ? (
+    <p id={id} role="alert" className="mt-1.5 text-sm font-medium text-danger">
+      {errors[0]}
+    </p>
+  ) : null;
+}
 
 function AuthSubmit({ mode, blocked = false }: { mode: Mode; blocked?: boolean }) {
   const { pending } = useFormStatus();
@@ -44,16 +52,18 @@ export function AuthForm({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [captchaReady, setCaptchaReady] = useState(false);
   const [signInState, signInAction] = useActionState(signInWithPasswordState, {});
+  const [createState, createAction] = useActionState(createPasswordAccountState, {});
   const turnstileRef = useRef<TurnstileInstance>(undefined);
   const creating = mode === "create";
+  const activeState = creating ? createState : signInState;
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const modeHref = (path: "/login" | "/signup") =>
     next && next !== "/home" ? `${path}?next=${encodeURIComponent(next)}` : path;
 
   useEffect(() => {
-    if (!signInState.error) return;
+    if (!activeState.error) return;
     turnstileRef.current?.reset();
-  }, [signInState]);
+  }, [activeState.error]);
 
   return (
     <div>
@@ -102,9 +112,9 @@ export function AuthForm({
         </Alert>
       ) : null}
 
-      {!creating && signInState.error ? <Alert className="mb-5">{signInState.error}</Alert> : null}
+      {activeState.error ? <Alert className="mb-5">{activeState.error}</Alert> : null}
 
-      <form action={creating ? createPasswordAccount : signInAction} className="space-y-4 sm:space-y-5">
+      <form noValidate action={creating ? createAction : signInAction} className="space-y-4 sm:space-y-5">
         <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="password-email" className="text-sm font-[650]">
@@ -118,9 +128,12 @@ export function AuthForm({
             autoComplete="email"
             spellCheck={false}
             required
+            aria-invalid={Boolean(activeState.fieldErrors?.email)}
+            aria-describedby={activeState.fieldErrors?.email ? "password-email-error" : undefined}
             className="field"
             placeholder="you@example.com"
           />
+          <FieldError id="password-email-error" errors={activeState.fieldErrors?.email} />
         </div>
         <PasswordField
           id="password"
@@ -129,6 +142,8 @@ export function AuthForm({
           minLength={8}
           autoComplete={creating ? "new-password" : "current-password"}
           required
+          aria-invalid={Boolean(activeState.fieldErrors?.password)}
+          aria-describedby={activeState.fieldErrors?.password ? "password-error" : undefined}
           labelClassName="font-[650]"
           hint={
             creating ? (
@@ -142,6 +157,7 @@ export function AuthForm({
             )
           }
         />
+        <FieldError id="password-error" errors={activeState.fieldErrors?.password} />
         {creating ? (
           <PasswordField
             id="password-confirmation"
@@ -150,7 +166,10 @@ export function AuthForm({
             minLength={8}
             autoComplete="new-password"
             required
+            aria-invalid={Boolean(createState.fieldErrors?.confirmation)}
+            aria-describedby={createState.fieldErrors?.confirmation ? "password-confirmation-error" : undefined}
             labelClassName="font-[650]"
+            hint={<FieldError id="password-confirmation-error" errors={createState.fieldErrors?.confirmation} />}
           />
         ) : null}
         {turnstileSiteKey ? (

@@ -20,7 +20,7 @@ export function AdminFeedbackReviewForm({
   const [state, action] = useActionState<FeedbackActionState, FormData>(updateFeedbackAction, {});
 
   return (
-    <form action={action} className="border-y border-line py-6">
+    <form noValidate action={action} className="border-y border-line py-6">
       <input type="hidden" name="feedbackId" value={feedbackId} />
       <div className="grid gap-6 sm:grid-cols-[220px_1fr]">
         <SelectField

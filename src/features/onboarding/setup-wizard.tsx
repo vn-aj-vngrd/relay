@@ -411,7 +411,7 @@ export function SetupWizard({
         </div>
       </div>
 
-      <form action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center">
+      <form noValidate action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center">
         <input type="hidden" name="next" value={next} />
         <PendingSubmit
           pendingLabel="Skipping setup…"

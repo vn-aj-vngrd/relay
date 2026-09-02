@@ -91,7 +91,7 @@ export function RsvpControl({
         </div>
       ) : (
         <>
-          <form action={action} className="space-y-3">
+          <form noValidate action={action} className="space-y-3">
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="choice" value={choice} />
             {discoverySource ? <input type="hidden" name="discoverySource" value={discoverySource} /> : null}

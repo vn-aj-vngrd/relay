@@ -96,7 +96,7 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref }: Sessio
             </p>
           </div>
           {viewer.canManagePlay && canStartRotation && data.activeMatches.length > 0 ? (
-            <form action={createQueueMatch}>
+            <form noValidate action={createQueueMatch}>
               <input type="hidden" name="sessionId" value={data.session.id} />
               <SubmitButton pendingLabel="Creating match…" variant="secondary" className="whitespace-nowrap">
                 <Shuffle size={17} />
@@ -153,7 +153,7 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref }: Sessio
                     : "The next four players are ready."}
             </p>
             {viewer.canManagePlay && canStartRotation ? (
-              <form action={createQueueMatch} className="mt-5">
+              <form noValidate action={createQueueMatch} className="mt-5">
                 <input type="hidden" name="sessionId" value={data.session.id} />
                 <SubmitButton pendingLabel={roundMode ? "Starting round…" : "Starting match…"}>
                   <Shuffle size={17} />
@@ -304,7 +304,7 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref }: Sessio
         ) : null}
 
         {viewer.canCompleteSession && !data.activeMatches.length ? (
-          <form action={completeSession} className="mt-9 border-t border-line pt-5">
+          <form noValidate action={completeSession} className="mt-9 border-t border-line pt-5">
             <input type="hidden" name="sessionId" value={data.session.id} />
             <ConfirmSubmitButton
               variant="secondary"

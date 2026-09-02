@@ -95,15 +95,19 @@ export async function sendMagicLink(formData: FormData) {
   redirect("/login?sent=1");
 }
 
-export type AuthFormState = { error?: string };
+export type AuthFormState = { error?: string; fieldErrors?: Record<string, string[]> };
 
 async function attemptPasswordSignIn(formData: FormData): Promise<AuthFormState> {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
-  if (!email.success || !password.success)
-    return { error: "Enter a valid email and a password with at least 8 characters, including a letter and number." };
+  if (!email.success || !password.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    if (!email.success) fieldErrors.email = ["Enter a valid email address."];
+    if (!password.success) fieldErrors.password = ["Use at least 8 characters, including a letter and number."];
+    return { error: "Check the fields marked below.", fieldErrors };
+  }
   if (!captchaToken.success) return { error: "Complete the security check and try again." };
   const allowed = await authAttemptAllowed({
     scope: "password-sign-in",
@@ -133,29 +137,32 @@ export async function signInWithPassword(formData: FormData) {
   authError(result.error ?? "Sign in could not be completed. Try again.", "/login", nextPath(formData));
 }
 
-export async function createPasswordAccount(formData: FormData) {
+async function attemptPasswordAccountCreation(formData: FormData): Promise<AuthFormState> {
   const next = nextPath(formData);
   const email = emailSchema.safeParse(formData.get("email"));
   const password = passwordSchema.safeParse(formData.get("password"));
   const confirmation = formData.get("confirmation");
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
-  if (!email.success || !password.success)
-    authError(
-      "Enter a valid email and a password with at least 8 characters, including a letter and number.",
-      "/signup",
-      next,
-    );
-  if (password.data !== confirmation) authError("Passwords do not match.", "/signup", next);
-  if (!captchaToken.success) authError("Complete the security check and try again.", "/signup", next);
-  await guardAuthAttempt({
+  if (!email.success || !password.success) {
+    const fieldErrors: Record<string, string[]> = {};
+    if (!email.success) fieldErrors.email = ["Enter a valid email address."];
+    if (!password.success) fieldErrors.password = ["Use at least 8 characters, including a letter and number."];
+    return { error: "Check the fields marked below.", fieldErrors };
+  }
+  if (password.data !== confirmation)
+    return {
+      error: "Check the fields marked below.",
+      fieldErrors: { confirmation: ["Passwords do not match."] },
+    };
+  if (!captchaToken.success) return { error: "Complete the security check and try again." };
+  const allowed = await authAttemptAllowed({
     scope: "password-sign-up",
     email: email.data,
     ipLimit: 30,
     accountLimit: 10,
     windowSeconds: 3600,
-    destination: "/signup",
-    next,
   });
+  if (!allowed) return { error: "Too many attempts. Wait a few minutes and try again." };
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signUp({
     email: email.data,
@@ -166,15 +173,14 @@ export async function createPasswordAccount(formData: FormData) {
     },
   });
   if (error)
-    authError(
-      error.message === "User already registered"
-        ? "An account already exists for this email. Log in instead."
-        : error.message.includes("beta signup is full")
-          ? "Relay’s beta is full right now. Try again after more places open."
-          : "We couldn’t create your account. Please try again.",
-      "/signup",
-      next,
-    );
+    return {
+      error:
+        error.message === "User already registered"
+          ? "An account already exists for this email. Log in instead."
+          : error.message.includes("beta signup is full")
+            ? "Relay’s beta is full right now. Try again after more places open."
+            : "We couldn’t create your account. Please try again.",
+    };
   if (data.session && data.user) redirect(await resolvePostAuthDestination(next, data.user.id));
   const cookieStore = await cookies();
   cookieStore.set("relay_confirmation_email", email.data, {
@@ -185,6 +191,20 @@ export async function createPasswordAccount(formData: FormData) {
     path: "/signup",
   });
   redirect("/signup?sent=account");
+}
+
+export async function createPasswordAccountState(_: AuthFormState, formData: FormData) {
+  return attemptPasswordAccountCreation(formData);
+}
+
+export async function createPasswordAccount(formData: FormData) {
+  const result = await attemptPasswordAccountCreation(formData);
+  const firstFieldError = Object.values(result.fieldErrors ?? {})[0]?.[0];
+  authError(
+    firstFieldError ?? result.error ?? "Account creation could not be completed. Try again.",
+    "/signup",
+    nextPath(formData),
+  );
 }
 
 export async function requestPasswordReset(formData: FormData) {

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({ uploadMemoryPhoto: vi.fn() }));
+vi.mock("./actions", () => ({ uploadMemoryPhotoState: vi.fn(async () => ({})) }));
 vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: vi.fn() }));
 
 import { buildSessionRecap, type RecapMatch } from "./recap";

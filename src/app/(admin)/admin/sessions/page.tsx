@@ -23,7 +23,7 @@ export default async function AdminSessionsPage({
         title="Games"
         description="Review sessions across Relay, find a host’s game, and intervene only when production support requires it."
       />
-      <form role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
+      <form noValidate role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <span className="sr-only">Search games</span>
           <MagnifyingGlass

@@ -90,7 +90,7 @@ export function PlaySetupForm({
   const missingExperience = players.filter((player) => activeIds.has(player.id) && !player.skillLevel).length;
 
   return (
-    <form action={action} className="mt-8 text-left">
+    <form noValidate action={action} className="mt-8 text-left">
       <input type="hidden" name="sessionId" value={sessionId} />
       <fieldset>
         <legend className="sr-only">Play setup</legend>

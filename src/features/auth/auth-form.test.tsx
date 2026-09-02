@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
-  createPasswordAccount: vi.fn(),
+  createPasswordAccountState: vi.fn(async () => ({})),
   signInWithPassword: vi.fn(),
   signInWithPasswordState: vi.fn(async () => ({})),
 }));

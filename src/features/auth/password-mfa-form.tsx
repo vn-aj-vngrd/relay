@@ -18,7 +18,7 @@ export function PasswordMfaForm({
           <p className="mt-1 text-sm leading-6 text-muted">{description}</p>
         </div>
       </div>
-      <form action={action} className="mt-6 space-y-5">
+      <form noValidate action={action} className="mt-6 space-y-5">
         <div>
           <label htmlFor="password-mfa-code" className="text-sm font-semibold">
             Six-digit code

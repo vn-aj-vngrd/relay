@@ -21,7 +21,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           </ButtonLink>
         }
       />
-      <form role="search" className="mb-5 flex max-w-xl items-center gap-2">
+      <form noValidate role="search" className="mb-5 flex max-w-xl items-center gap-2">
         <label className="relative flex-1">
           <span className="sr-only">Search users</span>
           <MagnifyingGlass

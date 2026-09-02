@@ -23,7 +23,7 @@ export default async function AdminCourtsPage({
         title="Courts"
         description="Verify Philippines court listings, review community submissions, and keep booking and map information accurate."
       />
-      <form role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
+      <form noValidate role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative flex-1">
           <span className="sr-only">Search courts</span>
           <MagnifyingGlass

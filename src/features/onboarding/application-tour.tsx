@@ -195,7 +195,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
           <p className="score text-xs font-semibold text-primary">
             {step + 1} / {steps.length}
           </p>
-          <form ref={closeForm} action={completeProductTour}>
+          <form noValidate ref={closeForm} action={completeProductTour}>
             <input type="hidden" name="destination" value="/home" />
             <button
               type="submit"
@@ -238,7 +238,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
           )}
           {finalStep ? (
             <div className="flex items-center gap-2">
-              <form action={completeProductTour}>
+              <form noValidate action={completeProductTour}>
                 <input type="hidden" name="destination" value="/home" />
                 <PendingSubmit
                   pendingLabel="Finishing…"
@@ -247,7 +247,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
                   Home
                 </PendingSubmit>
               </form>
-              <form action={completeProductTour}>
+              <form noValidate action={completeProductTour}>
                 <input type="hidden" name="destination" value="/games/new" />
                 <PendingSubmit
                   data-tour-primary

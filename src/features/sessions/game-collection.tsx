@@ -305,7 +305,7 @@ function InvitationCard({
           <p className="mt-3 text-xs leading-5 text-muted">Going sends a request for the host to approve.</p>
         ) : null}
       </div>
-      <form action={action} className="mt-4 border-t border-line pt-4">
+      <form noValidate action={action} className="mt-4 border-t border-line pt-4">
         <input type="hidden" name="sessionId" value={game.id} />
         <input type="hidden" name="inviteSource" value="games" />
         <InviteResponseButtons />

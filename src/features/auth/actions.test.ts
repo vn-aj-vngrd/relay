@@ -57,6 +57,7 @@ vi.mock("./session", () => ({ getCurrentUser: vi.fn() }));
 
 import {
   createPasswordAccount,
+  createPasswordAccountState,
   requestPasswordReset,
   signInWithGoogle,
   signInWithPassword,
@@ -213,6 +214,40 @@ describe("updateRecoveredPassword", () => {
 });
 
 describe("createPasswordAccount", () => {
+  it("returns branded field errors without invoking native browser validation", async () => {
+    const formData = new FormData();
+    formData.set("email", "not-an-email");
+    formData.set("password", "short");
+    formData.set("confirmation", "different");
+
+    await expect(createPasswordAccountState({}, formData)).resolves.toEqual({
+      error: "Check the fields marked below.",
+      fieldErrors: {
+        email: ["Enter a valid email address."],
+        password: ["Use at least 8 characters, including a letter and number."],
+      },
+    });
+
+    expect(mocks.signUp).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("returns a field error when password confirmation does not match", async () => {
+    const formData = new FormData();
+    formData.set("email", "player@example.com");
+    formData.set("password", "RelayPass123");
+    formData.set("confirmation", "DifferentPass123");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(createPasswordAccountState({}, formData)).resolves.toEqual({
+      error: "Check the fields marked below.",
+      fieldErrors: { confirmation: ["Passwords do not match."] },
+    });
+
+    expect(mocks.signUp).not.toHaveBeenCalled();
+    expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
   it("rejects mismatched password confirmation before creating an account", async () => {
     const formData = new FormData();
     formData.set("email", "player@example.com");

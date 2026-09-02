@@ -29,7 +29,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </p>
         </div>
         {unreadCount ? (
-          <form action={markAllNotificationsRead}>
+          <form noValidate action={markAllNotificationsRead}>
             <SubmitButton variant="secondary" pendingLabel="Marking read…">
               <Check aria-hidden size={16} />
               Mark all read

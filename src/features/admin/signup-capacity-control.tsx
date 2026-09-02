@@ -30,7 +30,7 @@ export function SignupCapacityControl({ accountCap, userCount }: { accountCap: n
           </p>
         </div>
 
-        <form action={action} className="min-w-0">
+        <form noValidate action={action} className="min-w-0">
           <label htmlFor="signup-account-cap" className="text-sm font-semibold">
             Maximum accounts
           </label>

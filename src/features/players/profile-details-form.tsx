@@ -25,7 +25,7 @@ export function ProfileDetailsForm({
 }) {
   const [state, action] = useActionState<ProfileDetailsActionState, FormData>(updateOwnProfileAction, {});
   return (
-    <form action={action} className="border-y border-line py-5">
+    <form noValidate action={action} className="border-y border-line py-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="profile-name" className="text-sm font-semibold">

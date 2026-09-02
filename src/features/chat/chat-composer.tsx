@@ -30,6 +30,7 @@ export function ChatComposer({
 
   return (
     <form
+      noValidate
       ref={formRef}
       action={action}
       onReset={() => {

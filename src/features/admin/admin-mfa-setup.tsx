@@ -108,7 +108,7 @@ export function AdminMfaSetup() {
       ) : null}
 
       {setup ? (
-        <form onSubmit={verify} className="mt-6 space-y-4">
+        <form noValidate onSubmit={verify} className="mt-6 space-y-4">
           <div>
             <label htmlFor="admin-mfa-code" className="text-sm font-[650]">
               Six-digit code

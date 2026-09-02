@@ -39,7 +39,7 @@ export function UpdateUserForm({
 }) {
   const [state, action] = useActionState<AdminActionState, FormData>(updateUserProfileAction, {});
   return (
-    <form action={action} className="max-w-xl space-y-5">
+    <form noValidate action={action} className="max-w-xl space-y-5">
       <input type="hidden" name="userId" value={userId} />
       <div>
         <label htmlFor="admin-profile-name" className="text-sm font-semibold">

@@ -39,7 +39,7 @@ export function PaymentProofForm({
 }) {
   const [state, action] = useActionState(markPaymentSent, {});
   return (
-    <form action={action} className="mt-4 w-full sm:max-w-md">
+    <form noValidate action={action} className="mt-4 w-full sm:max-w-md">
       <input type="hidden" name="paymentId" value={paymentId} />
       {slug ? <input type="hidden" name="slug" value={slug} /> : null}
       {reviewNote ? (

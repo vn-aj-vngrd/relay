@@ -166,7 +166,7 @@ async function AccountSection({ profilePromise }: { profilePromise: Promise<Prof
             <CaretRight size={15} className="text-muted" />
           </Link>
         ) : null}
-        <form action={signOut}>
+        <form noValidate action={signOut}>
           <PendingSubmit pendingLabel="Signing out…" className="flex min-h-12 w-full items-center gap-3 py-2 text-sm">
             <SignOut size={18} className="text-muted" />
             Sign out

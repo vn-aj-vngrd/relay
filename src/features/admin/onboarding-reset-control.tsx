@@ -42,7 +42,7 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
         ref={dialogRef}
         className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
       >
-        <form action={action} className="p-5 sm:p-6">
+        <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">

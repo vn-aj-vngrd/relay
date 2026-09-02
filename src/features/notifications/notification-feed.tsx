@@ -108,6 +108,7 @@ export function NotificationFeed({
                 const createdAt = new Date(item.createdAt);
                 return (
                   <form
+                    noValidate
                     action={openNotification}
                     key={item.id}
                     className="[content-visibility:auto] [contain-intrinsic-size:auto_80px]"

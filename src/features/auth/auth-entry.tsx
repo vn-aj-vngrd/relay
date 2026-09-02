@@ -77,7 +77,7 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
                 or
                 <span className="h-px flex-1 bg-line" />
               </div>
-              <form action={signInWithGoogle}>
+              <form noValidate action={signInWithGoogle}>
                 <input type="hidden" name="next" value={next ?? "/home"} />
                 <SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">
                   <Image src="/google-g.svg" alt="" aria-hidden width={18} height={18} />

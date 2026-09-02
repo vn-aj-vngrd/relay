@@ -20,7 +20,7 @@ export function PasswordRecoveryForm() {
           Password recovery is temporarily unavailable while the security check is being configured.
         </Alert>
       ) : null}
-      <form action={requestPasswordReset} className={`${turnstileSiteKey ? "mt-8" : "mt-5"} space-y-5`}>
+      <form noValidate action={requestPasswordReset} className={`${turnstileSiteKey ? "mt-8" : "mt-5"} space-y-5`}>
         <div>
           <label htmlFor="recovery-email" className="text-sm font-semibold">
             Email

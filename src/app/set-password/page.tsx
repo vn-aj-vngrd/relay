@@ -40,7 +40,7 @@ export default async function SetPasswordPage({ searchParams }: { searchParams: 
             description="Enter your authenticator code before replacing the temporary password. Your existing authenticator stays connected."
           />
         ) : (
-          <form action={setTemporaryPassword} className="mt-8 space-y-5">
+          <form noValidate action={setTemporaryPassword} className="mt-8 space-y-5">
             <PasswordField
               id="new-password"
               name="password"

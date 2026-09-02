@@ -39,7 +39,11 @@ export default async function AdminFeedbackPage({
         ))}
       </section>
 
-      <form role="search" className="my-6 grid gap-2 sm:grid-cols-[minmax(220px,1fr)_180px_180px_auto] sm:items-center">
+      <form
+        noValidate
+        role="search"
+        className="my-6 grid gap-2 sm:grid-cols-[minmax(220px,1fr)_180px_180px_auto] sm:items-center"
+      >
         <label className="relative">
           <span className="sr-only">Search feedback</span>
           <MagnifyingGlass

@@ -11,7 +11,7 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
   const hasFilters = Boolean(filters.location || filters.date !== "any" || filters.available);
 
   return (
-    <form action="/games/open" method="get" className="mt-6">
+    <form noValidate action="/games/open" method="get" className="mt-6">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,.65fr)] lg:grid-cols-[minmax(0,1fr)_14rem_auto] lg:items-end">
         <div>
           <label htmlFor="open-location" className="block text-sm font-semibold">

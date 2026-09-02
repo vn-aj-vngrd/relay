@@ -128,7 +128,7 @@ function ManagedLiveCourt({
       keepExpandedContentMounted
       finishControl={
         canScore ? (
-          <form action={finishMatch}>
+          <form noValidate action={finishMatch}>
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="matchId" value={matchId} />
             <SubmitButton
