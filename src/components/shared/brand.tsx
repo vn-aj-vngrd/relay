@@ -7,7 +7,15 @@ export function RelayMark({ className = "h-7 w-7" }: { inverse?: boolean; classN
   );
 }
 
-export function Brand({ inverse = false, href = "/" }: { inverse?: boolean; href?: string }) {
+export function Brand({
+  inverse = false,
+  href = "/",
+  showLabel = true,
+}: {
+  inverse?: boolean;
+  href?: string;
+  showLabel?: boolean;
+}) {
   return (
     <a
       href={href}
@@ -15,7 +23,7 @@ export function Brand({ inverse = false, href = "/" }: { inverse?: boolean; href
       aria-label="Relay home"
     >
       <RelayMark inverse={inverse} />
-      <span className="brand-wordmark">Relay</span>
+      {showLabel ? <span className="brand-wordmark">Relay</span> : null}
     </a>
   );
 }

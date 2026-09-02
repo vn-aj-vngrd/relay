@@ -9,6 +9,7 @@ import { updateVenueAction } from "./actions";
 
 const field = "field";
 const statuses = ["unverified", "pending", "verified", "rejected", "archived"];
+const amenities = ["Restrooms", "Showers", "Seating", "Water station", "Changing rooms", "Lockers", "Pro shop"];
 
 export type AdminVenueDefaults = {
   id: string;
@@ -21,7 +22,10 @@ export type AdminVenueDefaults = {
   priceRange: string | null;
   hours: Record<string, string> | null;
   parking: string | null;
+  amenities: string[] | null;
+  paddleRental: boolean;
   contact: string | null;
+  sourceUrl: string | null;
   websiteUrl: string | null;
   socialUrl: string | null;
   bookingUrl: string | null;
@@ -95,6 +99,7 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
             { value: "semi-indoor", label: "Semi-indoor" },
             { value: "covered", label: "Covered" },
             { value: "outdoor", label: "Outdoor" },
+            { value: "mixed", label: "Mixed settings" },
           ]}
         />
         <div>
@@ -135,9 +140,41 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
           </label>
           <input id="contact" name="contact" defaultValue={venue.contact ?? ""} className={field} />
         </div>
+        <fieldset className="sm:col-span-2">
+          <legend className="text-sm font-semibold">Amenities</legend>
+          <div className="mt-2 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+            {amenities.map((amenity) => (
+              <label key={amenity} className="flex min-h-10 cursor-pointer items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  name="amenities"
+                  value={amenity}
+                  defaultChecked={venue.amenities?.includes(amenity)}
+                  className="size-4 rounded border-line accent-primary"
+                />
+                {amenity}
+              </label>
+            ))}
+            <label className="flex min-h-10 cursor-pointer items-center gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="paddleRental"
+                defaultChecked={venue.paddleRental}
+                className="size-4 rounded border-line accent-primary"
+              />
+              Paddle rental available
+            </label>
+          </div>
+        </fieldset>
       </section>
 
       <section className="grid gap-5 border-t border-line pt-7 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor="sourceUrl" className="text-sm font-semibold">
+            Verification source
+          </label>
+          <input id="sourceUrl" name="sourceUrl" type="url" defaultValue={venue.sourceUrl ?? ""} className={field} />
+        </div>
         <div className="sm:col-span-2">
           <label htmlFor="websiteUrl" className="text-sm font-semibold">
             Website

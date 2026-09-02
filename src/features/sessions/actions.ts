@@ -901,7 +901,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
   const accountProfile = user
     ? await db.query.profiles.findFirst({ columns: { skillLevel: true }, where: eq(profiles.userId, user.id) })
     : null;
-  const selectedExperience = parsed.data.skillLevel ?? accountProfile?.skillLevel ?? null;
+  const selectedExperience = user ? (accountProfile?.skillLevel ?? null) : (parsed.data.skillLevel ?? null);
   let newGuestToken: string | null = null;
   let resolvedRsvp: SessionActionState["rsvp"];
 
@@ -954,7 +954,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
           .update(sessionPlayers)
           .set({
             guestTokenHash: claimedTokenHash,
-            skillLevel: selectedExperience ?? identity.skillLevel,
+            skillLevel: user ? selectedExperience : (selectedExperience ?? identity.skillLevel),
             ...transition.target,
             respondedAt: new Date(),
             checkedInAt: nextRsvp === "going" ? identity.checkedInAt : null,

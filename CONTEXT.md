@@ -57,7 +57,7 @@ The Story destination and completed session’s expressive layer: a manually con
 _Avoid_: Social feed, freeform design editor, fabricated highlight
 
 **Playing experience**:
-A participant’s optional self-description—Just starting, Casual, Regular, or Experienced—used only to help friends form enjoyable teams. An account profile supplies a default; a session participant may use a session-specific value.
+A participant’s optional self-description—Just starting, Casual, Regular, or Experienced—used only to help friends form enjoyable teams. An account player’s value comes from their profile and changes only in profile settings; a guest player may choose a session-specific value while responding.
 _Avoid_: Rating, rank, proficiency score
 
 **Court directory coverage**:

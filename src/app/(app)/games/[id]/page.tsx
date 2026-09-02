@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { ensureProfile } from "@/features/players/profile";
 import { markSessionBookedAction } from "@/features/sessions/actions";
 import { formatSessionDateLong, peso } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
@@ -28,6 +29,7 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   const data = await getSessionForUser((await params).id, user.id);
   if (!data) notFound();
   const { session, membership, roster } = data;
+  const accountProfile = roster.find(({ player }) => player.userId === user.id)?.profile ?? (await ensureProfile(user));
   const going = roster.filter(({ player }) => player.rsvp === "going");
   const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
   const pending = roster.filter(({ player }) => player.rsvp === "pending");
@@ -65,8 +67,9 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
                 slug={session.slug}
                 signedIn
                 accountName={accountName}
+                accountUsername={accountProfile.username}
                 currentRsvp="invited"
-                currentSkillLevel={membership.skillLevel}
+                currentSkillLevel={accountProfile.skillLevel}
                 locked={session.rosterLocked}
                 full={going.length >= session.capacity}
               />

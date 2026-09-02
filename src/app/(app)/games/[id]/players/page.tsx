@@ -34,7 +34,7 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
       />
       <div className="mx-auto w-full max-w-6xl">
         {isHost ? (
-          <section className="mb-9 border-y border-line py-5" aria-labelledby="add-player-title">
+          <section className="mb-9 border-b border-line py-5" aria-labelledby="add-player-title">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex gap-3">
                 <UsersThree aria-hidden size={20} className="mt-0.5 text-primary" />

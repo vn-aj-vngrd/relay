@@ -23,6 +23,24 @@ describe("RsvpControl", () => {
     );
   });
 
+  it("uses the account profile experience without allowing a session override", () => {
+    render(
+      <RsvpControl
+        sessionId={sessionId}
+        slug="friends-night"
+        signedIn
+        accountName="Mika Reyes"
+        accountUsername="mika"
+        currentSkillLevel="regular"
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Playing experience (optional)" })).not.toBeInTheDocument();
+    expect(screen.getByText("Regular")).toBeVisible();
+    expect(screen.getByText("Uses your profile setting")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Edit profile" })).toHaveAttribute("href", "/profile/mika/edit");
+  });
+
   it("sets the right expectation when going means joining a waitlist", () => {
     render(<RsvpControl sessionId={sessionId} slug="friends-night" full />);
     expect(screen.getByRole("button", { name: "Join waitlist" })).toBeVisible();

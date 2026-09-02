@@ -1,14 +1,14 @@
-import { CaretLeft, PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { AppBreadcrumbs } from "@/components/shared/app-breadcrumbs";
-import { AuthenticatedSessionNav } from "@/components/shared/authenticated-session-nav";
+import { AuthenticatedSessionNav, MobileAuthenticatedSessionNav } from "@/components/shared/authenticated-session-nav";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { GameWorkspaceActions } from "@/features/sessions/game-workspace-actions";
 import { getSessionForUser } from "@/features/sessions/queries";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
-import { ShareButton } from "@/features/sessions/share-button";
 
 export default async function GameWorkspaceLayout({
   children,
@@ -38,45 +38,44 @@ export default async function GameWorkspaceLayout({
           items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
         />
       </div>
-      <div className="game-workspace-actions flex shrink-0 items-center justify-between gap-3 py-2.5 sm:py-4 lg:py-2">
-        <div className="flex min-w-0 flex-1 items-center gap-1">
-          <ButtonLink
-            href="/games"
-            variant="quiet"
-            aria-label="Back to games"
-            className="game-workspace-action-button -ml-3 h-11 min-h-11 w-11 shrink-0 px-0 sm:-ml-2 sm:h-9 sm:min-h-9 sm:w-9 lg:h-8 lg:min-h-8 lg:w-8"
-          >
-            <CaretLeft aria-hidden size={18} />
-            <span className="sr-only">Games</span>
-          </ButtonLink>
-          <p title={data.session.title} className="min-w-0 flex-1 truncate text-sm font-semibold text-primary">
-            {data.session.title}
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-0 sm:gap-2">
-          {canManage ? (
+      <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0">
+        <div className="px-4 pb-3 sm:hidden">
+          <div className="flex h-14 min-w-0 items-center gap-1">
             <ButtonLink
-              href={`/games/${id}/settings`}
-              variant="secondary"
-              aria-label="Edit game"
-              className="game-workspace-action-button h-11 min-h-11 w-11 border-transparent bg-transparent px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:border-line sm:bg-surface sm:px-3"
+              href="/games"
+              variant="quiet"
+              aria-label="Back to games"
+              className="-ml-3 h-11 min-h-11 w-11 shrink-0 px-0"
             >
-              <PencilSimple aria-hidden size={16} />
-              <span className="game-workspace-action-label sr-only sm:not-sr-only">Edit game</span>
+              <CaretLeft aria-hidden size={18} />
             </ButtonLink>
-          ) : null}
-          <ShareButton
-            url={`/s/${data.session.slug}`}
+            <p title={data.session.title} className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+              {data.session.title}
+            </p>
+            <GameWorkspaceActions
+              mode="mobile"
+              canManage={canManage}
+              editHref={`/games/${id}/settings`}
+              shareUrl={`/s/${data.session.slug}`}
+              title={data.session.title}
+              sessionId={data.session.id}
+            />
+          </div>
+          <MobileAuthenticatedSessionNav id={id} />
+        </div>
+        <div className="hidden items-center pr-8 sm:flex lg:pr-0">
+          <AuthenticatedSessionNav id={id} />
+          <GameWorkspaceActions
+            mode="desktop"
+            canManage={canManage}
+            editHref={`/games/${id}/settings`}
+            shareUrl={`/s/${data.session.slug}`}
             title={data.session.title}
             sessionId={data.session.id}
-            compactOnMobile
           />
         </div>
       </div>
-      <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0">
-        <AuthenticatedSessionNav id={id} />
-      </div>
-      <div className="min-h-0 flex-1 pt-3 sm:pt-4">{children}</div>
+      <div className="game-workspace-content min-h-0 flex-1 pt-3 sm:pt-4">{children}</div>
     </div>
   );
 }

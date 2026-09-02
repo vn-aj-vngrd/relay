@@ -7,6 +7,7 @@ import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
+import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDateLong, formatSessionTime, spotsRemainingLabel } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
@@ -126,7 +127,10 @@ export default async function PublicSessionPage({
   const discoverySource = query.source === "open-games" || query.source === "search" ? query.source : undefined;
   const [data, user] = await Promise.all([getPublicSession(slug), getCurrentUser()]);
   if (!data) notFound();
-  const viewer = await getSessionViewer(data.session.id, slug);
+  const [viewer, accountProfile] = await Promise.all([
+    getSessionViewer(data.session.id, slug),
+    user ? ensureProfile(user) : null,
+  ]);
   const { session, roster, hostProfile } = data;
   const going = roster.filter(({ player }) => player.rsvp === "going");
   const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
@@ -138,8 +142,7 @@ export default async function PublicSessionPage({
     typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : user?.email?.split("@")[0];
   const guestName = viewer?.isGuest ? viewer.player.guestName : null;
   const currentRsvp = viewer?.player.rsvp;
-  const currentSkillLevel =
-    viewer?.player.skillLevel ?? data.roster.find(({ player }) => player.userId === user?.id)?.profile?.skillLevel;
+  const currentSkillLevel = user ? accountProfile?.skillLevel : viewer?.player.skillLevel;
   const canManage = Boolean(user && (user.id === session.hostId || viewer?.player.role === "cohost"));
   const publicUrl = `${getPublicEnv().NEXT_PUBLIC_APP_URL}/s/${session.slug}`;
   const eventJsonLd = {
@@ -245,6 +248,7 @@ export default async function PublicSessionPage({
                     slug={session.slug}
                     signedIn={Boolean(user)}
                     accountName={accountName}
+                    accountUsername={accountProfile?.username}
                     guestName={guestName}
                     currentRsvp={currentRsvp}
                     currentSkillLevel={currentSkillLevel}
@@ -290,6 +294,7 @@ export default async function PublicSessionPage({
                   slug={session.slug}
                   signedIn={Boolean(user)}
                   accountName={accountName}
+                  accountUsername={accountProfile?.username}
                   guestName={guestName}
                   currentRsvp={currentRsvp}
                   currentSkillLevel={currentSkillLevel}

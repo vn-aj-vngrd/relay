@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { profiles } from "@/db/schema";
+import { profiles, sessionPlayers } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -46,17 +46,21 @@ export async function updateOwnProfileAction(
   if (!parsed.success)
     return { error: "Check the fields marked below.", fieldErrors: parsed.error.flatten().fieldErrors };
 
-  await db
-    .update(profiles)
-    .set({
-      name: parsed.data.name,
-      bio: parsed.data.bio || null,
-      city: parsed.data.city || null,
-      skillLevel: parsed.data.skillLevel || null,
-      dominantHand: parsed.data.dominantHand || null,
-      updatedAt: new Date(),
-    })
-    .where(eq(profiles.userId, user.id));
+  const skillLevel = parsed.data.skillLevel || null;
+  await db.transaction(async (tx) => {
+    await tx
+      .update(profiles)
+      .set({
+        name: parsed.data.name,
+        bio: parsed.data.bio || null,
+        city: parsed.data.city || null,
+        skillLevel,
+        dominantHand: parsed.data.dominantHand || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(profiles.userId, user.id));
+    await tx.update(sessionPlayers).set({ skillLevel }).where(eq(sessionPlayers.userId, user.id));
+  });
   revalidatePath(`/profile/${profile.username}`);
   revalidatePath("/", "layout");
   return { success: "Player details saved." };

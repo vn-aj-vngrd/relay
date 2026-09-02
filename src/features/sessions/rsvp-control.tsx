@@ -6,7 +6,7 @@ import { useActionState, useState } from "react";
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
-import { playingExperienceOptions } from "@/features/players/playing-experience";
+import { playingExperienceLabel, playingExperienceOptions } from "@/features/players/playing-experience";
 
 import { rsvpAction } from "./actions";
 
@@ -28,6 +28,7 @@ export function RsvpControl({
   slug,
   signedIn = false,
   accountName,
+  accountUsername,
   guestName,
   currentRsvp,
   currentSkillLevel,
@@ -40,6 +41,7 @@ export function RsvpControl({
   slug: string;
   signedIn?: boolean;
   accountName?: string;
+  accountUsername?: string;
   guestName?: string | null;
   currentRsvp?: CurrentRsvp;
   currentSkillLevel?: string | null;
@@ -128,19 +130,36 @@ export function RsvpControl({
                 <p className="mt-1.5 text-xs text-muted">Your name is only visible in this game.</p>
               </div>
             )}
-            <SelectField
-              id={`rsvp-experience-${instance}-${sessionId}`}
-              name="skillLevel"
-              label="Playing experience (optional)"
-              defaultValue={currentSkillLevel ?? ""}
-              options={[
-                { value: "", label: "Prefer not to say" },
-                ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
-              ]}
-            />
-            <p className="-mt-1 text-xs leading-5 text-muted">
-              Helps Relay make closer teams when the host chooses Balanced Mix.
-            </p>
+            {signedIn ? (
+              <div className="flex min-h-11 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Playing experience</p>
+                  <p className="text-xs leading-5 text-ink">{playingExperienceLabel(currentSkillLevel)}</p>
+                  <p className="text-xs leading-5 text-muted">Uses your profile setting</p>
+                </div>
+                {accountUsername ? (
+                  <ButtonLink href={`/profile/${accountUsername}/edit`} variant="quiet" className="-mr-3 shrink-0">
+                    Edit profile
+                  </ButtonLink>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <SelectField
+                  id={`rsvp-experience-${instance}-${sessionId}`}
+                  name="skillLevel"
+                  label="Playing experience (optional)"
+                  defaultValue={currentSkillLevel ?? ""}
+                  options={[
+                    { value: "", label: "Prefer not to say" },
+                    ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+                  ]}
+                />
+                <p className="-mt-1 text-xs leading-5 text-muted">
+                  Helps Relay make closer teams when the host chooses Balanced Mix.
+                </p>
+              </>
+            )}
             <div className="grid grid-cols-3 gap-2">
               {choices.map(({ value, label, icon: Icon }) => (
                 <button

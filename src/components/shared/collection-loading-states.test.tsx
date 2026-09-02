@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import GamesLoading from "@/app/(app)/games/loading";
+import GamesLoading from "@/app/(app)/games/(list)/loading";
 import NewGameLoading from "@/app/(app)/games/new/loading";
 import OpenGamesLoading from "@/app/(app)/games/open/loading";
 import GroupsLoading from "@/app/(app)/groups/loading";

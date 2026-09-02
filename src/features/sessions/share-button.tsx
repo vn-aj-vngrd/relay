@@ -10,14 +10,19 @@ export function ShareButton({
   title,
   sessionId,
   compactOnMobile = false,
+  menuItem = false,
+  onSelect,
 }: {
   url: string;
   title: string;
   sessionId?: string;
   compactOnMobile?: boolean;
+  menuItem?: boolean;
+  onSelect?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   async function share() {
+    onSelect?.();
     const absolute = new URL(url, window.location.origin).toString();
     try {
       if (navigator.share) await navigator.share({ title, url: absolute });
@@ -34,17 +39,23 @@ export function ShareButton({
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant={menuItem ? "quiet" : "secondary"}
+      role={menuItem ? "menuitem" : undefined}
       onClick={share}
       aria-label={copied ? "Game link copied" : "Share game"}
       className={
-        compactOnMobile
-          ? "game-workspace-action-button h-11 min-h-11 w-11 border-transparent bg-transparent px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:border-line sm:bg-surface sm:px-3"
-          : ""
+        menuItem
+          ? "min-h-11 w-full justify-start rounded-md px-3 text-sm"
+          : compactOnMobile
+            ? "game-workspace-action-button h-11 min-h-11 w-11 border-transparent bg-transparent px-0 sm:h-auto sm:min-h-9 sm:w-auto sm:border-line sm:bg-surface sm:px-3"
+            : ""
       }
     >
       <ShareNetwork aria-hidden size={16} />
-      <span aria-live="polite" className={compactOnMobile ? "game-workspace-action-label sr-only sm:not-sr-only" : ""}>
+      <span
+        aria-live="polite"
+        className={compactOnMobile && !menuItem ? "game-workspace-action-label sr-only sm:not-sr-only" : ""}
+      >
         {copied ? "Link copied" : "Share game"}
       </span>
     </Button>

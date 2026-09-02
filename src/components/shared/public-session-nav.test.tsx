@@ -44,7 +44,11 @@ describe("PublicSessionNav", () => {
       />,
     );
 
-    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
+    const gameTitle = screen.getByText("Saturday Night Pickle");
+    expect(gameTitle).toBeVisible();
+    expect(gameTitle).toHaveClass("truncate");
+    expect(gameTitle.parentElement).toContainElement(screen.getByRole("link", { name: "Relay home" }));
+    expect(screen.queryByText("Relay")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveClass(
       "border-transparent",
       "bg-transparent",

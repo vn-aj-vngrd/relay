@@ -25,25 +25,23 @@ export function PublicSessionHeader({
   return (
     <>
       <header className="app-chrome safe-top" style={accentStyle}>
-        <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Brand />
-          <div className="flex items-center gap-1">
-            <ButtonLink
-              href={destination}
-              variant={signedIn ? "primary" : "secondary"}
-              className={signedIn ? "" : "border-transparent bg-transparent sm:border-line sm:bg-surface"}
-            >
-              {label}
-            </ButtonLink>
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Brand showLabel={false} />
+            {gameTitle ? (
+              <p title={gameTitle} className="min-w-0 truncate text-sm font-semibold text-primary">
+                {gameTitle}
+              </p>
+            ) : null}
           </div>
+          <ButtonLink
+            href={destination}
+            variant={signedIn ? "primary" : "secondary"}
+            className={`shrink-0 ${signedIn ? "" : "border-transparent bg-transparent sm:border-line sm:bg-surface"}`}
+          >
+            {label}
+          </ButtonLink>
         </div>
-        {gameTitle ? (
-          <div className="mx-auto w-full max-w-6xl px-4 py-3 sm:px-6">
-            <p title={gameTitle} className="truncate text-sm font-semibold text-primary">
-              {gameTitle}
-            </p>
-          </div>
-        ) : null}
       </header>
       <div className="app-chrome sticky top-0 z-20" style={accentStyle}>
         <PublicSessionNav slug={slug} />

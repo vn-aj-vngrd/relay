@@ -17,7 +17,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(page.locator("#password")).toBeVisible();
   await expect(page.locator("form").getByRole("button", { name: "Sign in" })).toBeVisible();
   await expect(
-    page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }),
+    page.locator('[aria-label="Authentication method"]').getByRole("link", { name: "Create account" }),
   ).toBeVisible();
   await expect(page.getByText("What you can do")).toHaveCount(0);
   await expect(page.getByText("Have an invite?", { exact: false })).toHaveCount(0);
@@ -80,7 +80,7 @@ test("an authenticated host and guest can complete the core session flow", async
 
   await page.goto("/login");
   if (process.env.E2E_AUTH_EXISTING !== "true") {
-    await page.locator('[aria-label="Authentication method"]').getByRole("button", { name: "Create account" }).click();
+    await page.locator('[aria-label="Authentication method"]').getByRole("link", { name: "Create account" }).click();
   }
   await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
   await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
@@ -374,7 +374,7 @@ test("login and account creation have distinct entry routes", async ({ page }) =
   await expect(page.getByRole("heading", { name: "Log in to Relay" })).toBeVisible();
   const authTabs = page.getByRole("group", { name: "Authentication method" });
   const signInPosition = await authTabs.boundingBox();
-  await authTabs.getByRole("button", { name: "Create account" }).click();
+  await authTabs.getByRole("link", { name: "Create account" }).click();
   const createPosition = await authTabs.boundingBox();
   expect(createPosition?.y).toBe(signInPosition?.y);
   const panelBox = await authTabs.locator("..").boundingBox();

@@ -425,6 +425,9 @@ p:not(.truncate) {
   }
 }
 @media (max-width: 39.999rem) {
+  .game-workspace-content:has(.authenticated-chat-page) {
+    padding-top: 0;
+  }
   .game-workspace .game-page-intro,
   .public-session-tab-content .game-page-intro {
     padding-bottom: 0;
@@ -778,6 +781,64 @@ html.lenis.lenis-smooth iframe {
 }
 .public-session-scroll::-webkit-scrollbar {
   display: none;
+}
+@keyframes menu-popover-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes menu-popover-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.125rem) scale(0.985);
+  }
+}
+.menu-popover {
+  transform-origin: top right;
+  will-change: transform, opacity;
+}
+.menu-popover[data-align="stretch"] {
+  transform-origin: top center;
+}
+.menu-popover[data-state="open"] {
+  animation: menu-popover-enter 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.menu-popover[data-state="closed"] {
+  pointer-events: none;
+  animation: menu-popover-exit 120ms ease-in both;
+}
+@keyframes menu-popover-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes menu-popover-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-popover[data-state="open"] {
+    animation: menu-popover-fade-in 80ms ease-out both;
+  }
+  .menu-popover[data-state="closed"] {
+    animation: menu-popover-fade-out 60ms ease-in both;
+  }
 }
 .tab-chip-fade-right {
   -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2rem), transparent 100%);

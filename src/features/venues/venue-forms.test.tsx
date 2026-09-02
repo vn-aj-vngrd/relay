@@ -14,6 +14,12 @@ describe("venue forms", () => {
     render(<VenueSubmissionForm />);
     expect(screen.getByLabelText("Court name")).toBeRequired();
     expect(screen.getByLabelText("Philippine city or municipality")).toBeRequired();
+    expect(screen.getByLabelText("Source or Google Maps link")).toBeRequired();
+    expect(screen.getByRole("button", { name: "Setting" })).toHaveTextContent("I don’t know");
+    expect(screen.getByLabelText(/Number of playable courts/)).toHaveAttribute("type", "number");
+    expect(screen.getByLabelText(/Price guidance/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Operating hours/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Paddle rental available")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Submit for review" })).toBeInTheDocument();
   });
 
@@ -31,7 +37,10 @@ describe("venue forms", () => {
           priceRange: null,
           hours: null,
           parking: null,
+          amenities: ["Restrooms"],
+          paddleRental: true,
           contact: null,
+          sourceUrl: "https://maps.google.com/example",
           websiteUrl: null,
           socialUrl: null,
           bookingUrl: null,
@@ -42,6 +51,9 @@ describe("venue forms", () => {
     );
     expect(screen.getByLabelText("Latitude")).not.toBeRequired();
     expect(screen.getByLabelText("Longitude")).not.toBeRequired();
+    expect(screen.getByLabelText("Verification source")).toHaveValue("https://maps.google.com/example");
+    expect(screen.getByLabelText("Restrooms")).toBeChecked();
+    expect(screen.getByLabelText("Paddle rental available")).toBeChecked();
     expect(screen.getByRole("button", { name: "Listing status" })).toHaveTextContent("Pending");
     expect(screen.getByRole("button", { name: "Save court" })).toBeInTheDocument();
   });
