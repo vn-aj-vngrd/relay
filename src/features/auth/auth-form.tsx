@@ -51,6 +51,8 @@ export function AuthForm({
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [captchaReady, setCaptchaReady] = useState(false);
+  const [signInEmail, setSignInEmail] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -130,6 +132,8 @@ export function AuthForm({
             inputMode="email"
             autoComplete="email"
             spellCheck={false}
+            value={creating ? createEmail : signInEmail}
+            onChange={(event) => (creating ? setCreateEmail(event.target.value) : setSignInEmail(event.target.value))}
             required
             aria-invalid={Boolean(activeState.fieldErrors?.email)}
             aria-describedby={activeState.fieldErrors?.email ? "password-email-error" : undefined}

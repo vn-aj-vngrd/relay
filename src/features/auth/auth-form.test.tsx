@@ -1,26 +1,46 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const mocks = vi.hoisted(() => ({
+  signIn: vi.fn(async () => ({ error: "Email or password is incorrect." })),
+}));
+
+vi.mock("@marsidev/react-turnstile", () => ({
+  Turnstile: ({ onSuccess }: { onSuccess: () => void }) => (
+    <button type="button" onClick={onSuccess}>
+      Complete security check
+    </button>
+  ),
+}));
 
 vi.mock("./actions", () => ({
   createPasswordAccountState: vi.fn(async () => ({})),
   signInWithPassword: vi.fn(),
-  signInWithPasswordState: vi.fn(async () => ({})),
+  signInWithPasswordState: mocks.signIn,
 }));
 
 import { AuthForm } from "./auth-form";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllEnvs();
+});
 
 describe("AuthForm", () => {
-  it("keeps an unsuccessful sign-in password without applying account-creation rules", () => {
+  it("keeps login values after an unsuccessful sign-in without applying account-creation rules", async () => {
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "test-site-key");
     render(<AuthForm />);
+    const email = screen.getByLabelText("Email");
     const password = screen.getByLabelText("Password");
 
     expect(password).not.toHaveAttribute("minlength");
+    fireEvent.change(email, { target: { value: "player@example.com" } });
     fireEvent.change(password, { target: { value: "legacy" } });
-    fireEvent.click(screen.getByRole("link", { name: "Create account" }));
-    fireEvent.click(screen.getByRole("link", { name: "Sign in" }));
+    fireEvent.click(screen.getByRole("button", { name: "Complete security check" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Email or password is incorrect."));
+    expect(screen.getByLabelText("Email")).toHaveValue("player@example.com");
     expect(screen.getByLabelText("Password")).toHaveValue("legacy");
   });
 
