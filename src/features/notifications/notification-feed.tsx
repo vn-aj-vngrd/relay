@@ -1,10 +1,18 @@
 "use client";
 
-import { Bell, CalendarCheck, CaretRight, CurrencyCircleDollar, Trophy, UsersThree } from "@phosphor-icons/react";
+import {
+  Bell,
+  CalendarCheck,
+  CaretRight,
+  Check,
+  CurrencyCircleDollar,
+  Trophy,
+  UsersThree,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { openNotification } from "./actions";
+import { markNotificationRead, openNotification } from "./actions";
 import {
   type NotificationGroup,
   notificationGroup,
@@ -73,6 +81,36 @@ export function NotificationFeed({
     return () => observer.disconnect();
   }, [loadMore, nextCursor]);
 
+  const markReadAction = async (formData: FormData) => {
+    const id = String(formData.get("notificationId"));
+    const item = items.find((candidate) => candidate.id === id);
+    if (!item) return;
+
+    setError("");
+    setItems((current) =>
+      filter === "unread"
+        ? current.filter((candidate) => candidate.id !== id)
+        : current.map((candidate) =>
+            candidate.id === id ? { ...candidate, readAt: new Date().toISOString() } : candidate,
+          ),
+    );
+
+    try {
+      await markNotificationRead(formData);
+    } catch {
+      setItems((current) => {
+        if (filter === "all") {
+          return current.map((candidate) => (candidate.id === id ? item : candidate));
+        }
+        if (current.some((candidate) => candidate.id === id)) return current;
+        return [...current, item].toSorted(
+          (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+        );
+      });
+      setError("That notification couldn’t be marked as read. Try again.");
+    }
+  };
+
   const grouped = useMemo(() => {
     const groups = new Map<NotificationGroup, NotificationFeedItem[]>();
     for (const item of items) {
@@ -106,48 +144,62 @@ export function NotificationFeed({
                 const Icon = toneIcons[presentation.tone];
                 const unread = !item.readAt;
                 const createdAt = new Date(item.createdAt);
+                const markReadLabel = `Mark ${item.sessionTitle ?? presentation.title} as read`;
                 return (
-                  <form
-                    noValidate
-                    action={openNotification}
+                  <div
                     key={item.id}
-                    className="[content-visibility:auto] [contain-intrinsic-size:auto_80px]"
+                    className="group flex items-stretch hover:bg-surface-strong/45 [content-visibility:auto] [contain-intrinsic-size:auto_80px]"
                   >
-                    <input type="hidden" name="notificationId" value={item.id} />
-                    <button
-                      type="submit"
-                      className="pressable group relative flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left hover:bg-surface-strong/45 sm:px-3"
-                    >
-                      <span
-                        className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
+                    <form noValidate action={openNotification} className="min-w-0 flex-1">
+                      <input type="hidden" name="notificationId" value={item.id} />
+                      <button
+                        type="submit"
+                        className="pressable flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
                       >
-                        <Icon aria-hidden size={17} weight={unread ? "fill" : "regular"} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-start gap-2">
-                          <strong className="text-sm font-semibold leading-5 text-ink">{presentation.title}</strong>
-                          {unread ? (
-                            <span
-                              role="img"
-                              className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
-                              aria-label="Unread"
-                            />
-                          ) : null}
+                        <span
+                          className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
+                        >
+                          <Icon aria-hidden size={17} weight={unread ? "fill" : "regular"} />
                         </span>
-                        <span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">{presentation.body}</span>
-                      </span>
-                      <span className="flex shrink-0 items-center gap-2 pt-0.5">
-                        <time dateTime={item.createdAt} className="score text-[11px] text-muted">
-                          {notificationTime(createdAt, group)}
-                        </time>
-                        <CaretRight
-                          aria-hidden
-                          size={13}
-                          className="text-muted transition-transform group-hover:translate-x-0.5"
-                        />
-                      </span>
-                    </button>
-                  </form>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-start gap-2">
+                            <strong className="text-sm font-semibold leading-5 text-ink">{presentation.title}</strong>
+                            {unread ? (
+                              <span
+                                role="img"
+                                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+                                aria-label="Unread"
+                              />
+                            ) : null}
+                          </span>
+                          <span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">{presentation.body}</span>
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2 pt-0.5">
+                          <time dateTime={item.createdAt} className="score text-[11px] text-muted">
+                            {notificationTime(createdAt, group)}
+                          </time>
+                          <CaretRight
+                            aria-hidden
+                            size={13}
+                            className="text-muted transition-transform group-hover:translate-x-0.5"
+                          />
+                        </span>
+                      </button>
+                    </form>
+                    {unread ? (
+                      <form noValidate action={markReadAction} className="flex shrink-0 items-center pr-1 sm:pr-3">
+                        <input type="hidden" name="notificationId" value={item.id} />
+                        <button
+                          type="submit"
+                          className="pressable grid min-h-11 min-w-11 place-items-center rounded-lg text-muted hover:bg-primary-soft hover:text-primary"
+                          aria-label={markReadLabel}
+                          title="Mark as read"
+                        >
+                          <Check aria-hidden size={17} />
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

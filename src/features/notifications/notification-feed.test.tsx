@@ -1,7 +1,12 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({ openNotification: vi.fn() }));
+const notificationActions = vi.hoisted(() => ({
+  markNotificationRead: vi.fn(),
+  openNotification: vi.fn(),
+}));
+
+vi.mock("./actions", () => notificationActions);
 
 import { NotificationFeed } from "./notification-feed";
 import type { NotificationFeedItem } from "./queries";
@@ -9,6 +14,8 @@ import type { NotificationFeedItem } from "./queries";
 let observerCallback: IntersectionObserverCallback;
 
 beforeEach(() => {
+  vi.clearAllMocks();
+  notificationActions.markNotificationRead.mockResolvedValue(undefined);
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -50,6 +57,36 @@ const second: NotificationFeedItem = {
 };
 
 describe("NotificationFeed", () => {
+  it("marks one notification as read without opening it", async () => {
+    render(<NotificationFeed filter="all" initialPage={{ items: [first, second], nextCursor: null }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+
+    await waitFor(() => expect(notificationActions.markNotificationRead).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("button", { name: "Mark Friday Pickle as read" })).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("img", { name: "Unread" })).toHaveLength(0);
+  });
+
+  it("removes a marked notification from the unread filter", async () => {
+    render(<NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+
+    await waitFor(() => expect(screen.getByText("No unread updates")).toBeVisible());
+  });
+
+  it("restores a notification when marking it as read fails", async () => {
+    notificationActions.markNotificationRead.mockRejectedValueOnce(new Error("offline"));
+    render(<NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "That notification couldn’t be marked as read. Try again.",
+    );
+    expect(screen.getByRole("button", { name: "Mark Friday Pickle as read" })).toBeVisible();
+  });
+
   it("loads and deduplicates the next cursor page", async () => {
     vi.stubGlobal(
       "fetch",

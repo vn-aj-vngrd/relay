@@ -20,6 +20,16 @@ export async function markAllNotificationsRead() {
   revalidatePath("/notifications");
 }
 
+export async function markNotificationRead(formData: FormData) {
+  const user = await requireUser();
+  const id = z.uuid().parse(formData.get("notificationId"));
+  await db
+    .update(notifications)
+    .set({ readAt: new Date() })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, user.id), isNull(notifications.readAt)));
+  revalidatePath("/notifications");
+}
+
 export async function openNotification(formData: FormData) {
   const user = await requireUser();
   const id = z.uuid().parse(formData.get("notificationId"));

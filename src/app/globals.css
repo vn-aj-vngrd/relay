@@ -647,6 +647,24 @@ html.lenis.lenis-smooth iframe {
 .marketing-hero-product {
   animation: marketing-product-enter 900ms 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+.marketing-hero-slide {
+  height: 34rem;
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .marketing-hero-slide {
+    height: 40rem;
+  }
+}
+@media (min-width: 1024px) {
+  .marketing-hero-slide {
+    height: 43rem;
+  }
+}
+.marketing-hero-slide-content {
+  height: 100%;
+  animation: marketing-hero-slide-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 .marketing-reveal-ready {
   transform: translate3d(0, 28px, 0);
   transition: transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -743,6 +761,31 @@ html.lenis.lenis-smooth iframe {
     clip-path: inset(0);
     transform: translate3d(0, 0, 0) scale(1);
   }
+}
+@keyframes marketing-hero-slide-enter {
+  from {
+    opacity: 0.55;
+    clip-path: inset(0 0 3% 0);
+    transform: translate3d(14px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes marketing-hero-progress-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.marketing-hero-progress {
+  animation-name: marketing-hero-progress-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
 }
 
 @media (max-width: 63.999rem) {
@@ -982,6 +1025,7 @@ html[data-density="compact"] .public-session-chat-thread {
   }
   .marketing-hero-copy,
   .marketing-hero-product,
+  .marketing-hero-slide-content,
   .marketing-reveal-ready {
     animation: none;
     opacity: 1;

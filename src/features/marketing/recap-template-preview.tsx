@@ -56,7 +56,7 @@ const common = {
   recap,
 };
 
-export function RecapTemplatePreview() {
+export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolean }) {
   return (
     <figure className="min-w-0">
       <div
@@ -93,63 +93,75 @@ export function RecapTemplatePreview() {
           className="w-full min-w-[190px] snap-center border border-white/10 shadow-[0_4px_8px_rgb(20_24_34_/_0.1)] sm:min-w-0 sm:rotate-2"
         />
       </div>
-      <div className="mt-3 rounded-xl border border-line bg-surface-strong p-4 text-ink">
-        <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
-          <div>
-            <p className="text-[10px] font-semibold text-muted">LAYOUT</p>
-            <div className="mt-2 grid grid-cols-4 gap-1.5 text-center text-[9px] font-semibold">
-              <span className="rounded-md border border-line py-2">Low</span>
-              <span className="rounded-md border border-line py-2">Center</span>
-              <span className="rounded-md border border-line py-2">Poster</span>
-              <span className="rounded-md border border-primary bg-primary-soft py-2 text-primary-hover">Snapshot</span>
+      {cardsOnly ? null : (
+        <>
+          <div className="mt-3 rounded-xl border border-line bg-surface-strong p-4 text-ink">
+            <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
+              <div>
+                <p className="text-[10px] font-semibold text-muted">LAYOUT</p>
+                <div className="mt-2 grid grid-cols-4 gap-1.5 text-center text-[9px] font-semibold">
+                  <span className="rounded-md border border-line py-2">Low</span>
+                  <span className="rounded-md border border-line py-2">Center</span>
+                  <span className="rounded-md border border-line py-2">Poster</span>
+                  <span className="rounded-md border border-primary bg-primary-soft py-2 text-primary-hover">
+                    Snapshot
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold text-muted">BACKGROUND</p>
+                <div className="mt-2 flex gap-2">
+                  <span className="relative h-9 w-9 overflow-hidden rounded-md border-2 border-primary">
+                    <Image
+                      src="/images/story/pickleball-court.webp"
+                      alt=""
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                    />
+                  </span>
+                  <span className="relative h-9 w-9 overflow-hidden rounded-md">
+                    <Image src="/images/story/paddles-fence.webp" alt="" fill sizes="36px" className="object-cover" />
+                  </span>
+                  <span className="h-9 w-9 rounded-md bg-[#18233b]" />
+                  <span className="h-9 w-9 rounded-md bg-[#b7d62e]" />
+                  <span className="grid h-9 w-9 place-items-center rounded-md border border-dashed border-muted text-base text-muted">
+                    +
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-[1fr_1fr]">
+              <div>
+                <div className="flex justify-between text-[9px] font-semibold">
+                  <span>Photo position</span>
+                  <span className="text-muted">58%</span>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-line">
+                  <span className="block h-full w-[58%] rounded-full bg-primary" />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-[9px] font-semibold">
+                  <span>Text contrast</span>
+                  <span className="text-muted">46%</span>
+                </div>
+                <div className="mt-2 h-1.5 rounded-full bg-line">
+                  <span className="block h-full w-[46%] rounded-full bg-primary" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 rounded-md border border-line bg-surface px-3 py-2 text-[10px]">
+              <span className="text-muted">Personal line</span>
+              <strong className="ml-2">Same time next Saturday?</strong>
             </div>
           </div>
-          <div>
-            <p className="text-[10px] font-semibold text-muted">BACKGROUND</p>
-            <div className="mt-2 flex gap-2">
-              <span className="relative h-9 w-9 overflow-hidden rounded-md border-2 border-primary">
-                <Image src="/images/story/pickleball-court.webp" alt="" fill sizes="36px" className="object-cover" />
-              </span>
-              <span className="relative h-9 w-9 overflow-hidden rounded-md">
-                <Image src="/images/story/paddles-fence.webp" alt="" fill sizes="36px" className="object-cover" />
-              </span>
-              <span className="h-9 w-9 rounded-md bg-[#18233b]" />
-              <span className="h-9 w-9 rounded-md bg-[#b7d62e]" />
-              <span className="grid h-9 w-9 place-items-center rounded-md border border-dashed border-muted text-base text-muted">
-                +
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-[1fr_1fr]">
-          <div>
-            <div className="flex justify-between text-[9px] font-semibold">
-              <span>Photo position</span>
-              <span className="text-muted">58%</span>
-            </div>
-            <div className="mt-2 h-1.5 rounded-full bg-line">
-              <span className="block h-full w-[58%] rounded-full bg-primary" />
-            </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-[9px] font-semibold">
-              <span>Text contrast</span>
-              <span className="text-muted">46%</span>
-            </div>
-            <div className="mt-2 h-1.5 rounded-full bg-line">
-              <span className="block h-full w-[46%] rounded-full bg-primary" />
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 rounded-md border border-line bg-surface px-3 py-2 text-[10px]">
-          <span className="text-muted">Personal line</span>
-          <strong className="ml-2">Same time next Saturday?</strong>
-        </div>
-      </div>
-      <figcaption className="mt-3 flex items-center gap-2 text-xs text-muted">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#b7d62e]" />
-        Choose the focus, layout, background, and words · actual Relay story templates
-      </figcaption>
+          <figcaption className="mt-3 flex items-center gap-2 text-xs text-muted">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#b7d62e]" />
+            Choose the focus, layout, background, and words · actual Relay story templates
+          </figcaption>
+        </>
+      )}
     </figure>
   );
 }
