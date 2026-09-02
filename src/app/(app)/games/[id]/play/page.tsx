@@ -4,12 +4,12 @@ import { notFound } from "next/navigation";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
-import { getLiveSession } from "@/features/matches/queries";
+import { getWorkspaceLiveSession } from "@/features/matches/queries";
 import { SessionPlay, type SessionPlayViewer } from "@/features/matches/session-play";
 
 export default async function PlayPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
-  const data = await getLiveSession((await params).id, user.id);
+  const data = await getWorkspaceLiveSession((await params).id, user.id);
   if (!data) notFound();
 
   const actor = sessionActor({ userId: user.id, hostId: data.session.hostId, membership: data.membership });

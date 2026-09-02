@@ -7,8 +7,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { GameWorkspaceActions } from "@/features/sessions/game-workspace-actions";
-import { getSessionForUser } from "@/features/sessions/queries";
+import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
+import { canManageSessionWorkspace } from "@/features/sessions/session-access";
 
 export default async function GameWorkspaceLayout({
   children,
@@ -19,13 +20,9 @@ export default async function GameWorkspaceLayout({
 }) {
   const user = await requireUser();
   const id = (await params).id;
-  const data = await getSessionForUser(id, user.id);
+  const data = await getSessionForWorkspace(id, user.id);
   if (!data) notFound();
-  const participant =
-    data.session.hostId === user.id ||
-    Boolean(data.membership && ["going", "maybe", "waitlisted"].includes(data.membership.rsvp));
-  if (!participant) return children;
-  const canManage = data.session.hostId === user.id || data.membership?.role === "cohost";
+  const canManage = canManageSessionWorkspace(data.access);
 
   return (
     <div

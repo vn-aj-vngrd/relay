@@ -263,10 +263,20 @@ describe("CourtFinder", () => {
     expect(screen.getAllByRole("option")).toHaveLength(4);
     expect(screen.queryByRole("option", { name: "Open today at 8:00 PM" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: "Open during a time range" }));
+    fireEvent.click(screen.getByLabelText("Booking day"));
+    fireEvent.click(screen.getByRole("option", { name: "Monday" }));
     fireEvent.click(screen.getByLabelText("Booking starts"));
-    fireEvent.click(screen.getByRole("option", { name: "From 6:00 PM" }));
+    fireEvent.click(
+      within(screen.getByRole("listbox", { name: "Booking starts options" })).getByRole("option", {
+        name: "6:00 PM",
+      }),
+    );
     fireEvent.click(screen.getByLabelText("Booking ends"));
-    fireEvent.click(screen.getByRole("option", { name: "Until 8:00 PM" }));
+    fireEvent.click(
+      within(screen.getByRole("listbox", { name: "Booking ends options" })).getByRole("option", {
+        name: "8:00 PM",
+      }),
+    );
     expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
     expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
   });

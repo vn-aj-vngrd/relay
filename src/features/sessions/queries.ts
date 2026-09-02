@@ -15,6 +15,7 @@ import type {
 } from "./game-collection-types";
 import { encodeGameCursor, type GameCursor } from "./game-pagination";
 import { sessionReadiness } from "./readiness";
+import { resolveSessionWorkspaceAccess } from "./session-access";
 
 export async function getUserSessions(userId: string) {
   return db
@@ -314,6 +315,37 @@ export async function getSessionMembership(sessionId: string, userId: string) {
     where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)),
   });
 }
+
+export const getSessionForWorkspace = cache(async function getSessionForWorkspace(sessionId: string, userId: string) {
+  const [session, membership] = await Promise.all([
+    db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
+    getSessionMembership(sessionId, userId),
+  ]);
+  if (!session) return null;
+  const access = resolveSessionWorkspaceAccess({
+    userId,
+    hostId: session.hostId,
+    visibility: session.visibility,
+    status: session.status,
+    endsAt: session.endsAt,
+    estimatedCostCents: session.estimatedCostCents,
+    membership,
+  });
+  if (!access) return null;
+  const publicRosterOnly = access === "discoverer" || access === "invited" || access === "pending";
+  const roster = await db
+    .select({ player: sessionPlayers, profile: profiles })
+    .from(sessionPlayers)
+    .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
+    .where(
+      and(
+        eq(sessionPlayers.sessionId, sessionId),
+        publicRosterOnly ? inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"]) : undefined,
+      ),
+    )
+    .orderBy(asc(sessionPlayers.waitlistPosition), asc(sessionPlayers.createdAt));
+  return { session, membership, roster, access };
+});
 
 export const getSessionForUser = cache(async function getSessionForUser(sessionId: string, userId: string) {
   const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });

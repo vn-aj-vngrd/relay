@@ -32,8 +32,6 @@ async function findGames(userId: string, query: string, offset: number, limit: n
       title: sessions.title,
       startsAt: sessions.startsAt,
       venueName: sessions.venueName,
-      visibility: sessions.visibility,
-      slug: sessions.slug,
       accentColor: sessions.accentColor,
       membershipId: sessionPlayers.id,
       membershipRsvp: sessionPlayers.rsvp,
@@ -114,10 +112,7 @@ async function findGames(userId: string, query: string, offset: number, limit: n
         ]
           .filter(Boolean)
           .join(" · "),
-        href:
-          session.visibility === "private" || session.membershipId
-            ? `/games/${session.id}`
-            : `/s/${session.slug}?source=search`,
+        href: session.membershipId ? `/games/${session.id}` : `/games/${session.id}?source=search`,
         accentColor: session.accentColor,
       };
     }),

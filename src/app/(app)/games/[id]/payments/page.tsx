@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";
+import { ButtonLink } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -20,7 +21,8 @@ import {
 } from "@/features/payments/actions";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { peso } from "@/features/sessions/format";
-import { getSessionForParticipant } from "@/features/sessions/queries";
+import { getSessionForWorkspace } from "@/features/sessions/queries";
+import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const input =
@@ -36,8 +38,28 @@ function paymentLabel(status: string, requested: boolean) {
 export default async function PaymentsPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const sessionId = (await params).id;
-  const data = await getSessionForParticipant(sessionId, user.id);
+  const data = await getSessionForWorkspace(sessionId, user.id);
   if (!data) notFound();
+  if (!canParticipateInWorkspace(data.access))
+    return (
+      <>
+        <GamePageIntro title="Payments" description="Payment details stay private to players in this game." />
+        <section className="mx-auto w-full max-w-xl border-y border-line py-10 text-center">
+          <CurrencyCircleDollar aria-hidden size={26} className="mx-auto text-primary" />
+          <h2 className="mt-4 text-xl font-bold">
+            {data.access === "pending" ? "Waiting for host approval" : "Payments are for players"}
+          </h2>
+          <p className="mt-2 leading-7 text-muted">
+            {data.access === "pending"
+              ? "Payment details will unlock if the host approves your request."
+              : "Join the game first to see the host’s payment details and your assigned share."}
+          </p>
+          <ButtonLink href={`/games/${sessionId}`} variant="secondary" className="mt-6">
+            {data.access === "pending" ? "View approval status" : "Join on Overview"}
+          </ButtonLink>
+        </section>
+      </>
+    );
   const actor = sessionActor({ userId: user.id, hostId: data.session.hostId, membership: data.membership });
   const canManagePayments = can(actor, "confirm_payment");
   const canCreateExpense = can(actor, "create_expense");

@@ -24,14 +24,16 @@ import { Button } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { SelectField } from "@/components/ui/select-field";
 
+import type { CourtDay } from "./details";
 import {
   courtAvailabilityOptions,
-  courtBookingEndTimeOptions,
-  courtBookingStartTimeOptions,
+  courtBookingDayOptions,
+  courtBookingTimeOptions,
   formatCourtOperatingHours,
   isCourtOpen24Hours,
   isCourtOpenAt,
   isCourtOpenDuring,
+  isCourtOpenDuringOnDay,
 } from "./details";
 import type { CourtListing } from "./directory";
 import { distanceInKilometers, formatDistance } from "./distance";
@@ -55,6 +57,7 @@ type SettingFilter = "all" | "indoor" | "outdoor";
 type ParkingFilter = "all" | "available" | "unavailable";
 type PriceFilter = "all" | "free" | "under-500" | "500-1000" | "over-1000";
 type AvailabilityFilter = "all" | "open" | "24-hours" | "during";
+type BookingDayFilter = "today" | `${CourtDay}`;
 
 const courtViewOptions = [
   { value: "map" as const, label: "Map", icon: MapTrifold },
@@ -362,6 +365,7 @@ export function CourtFinder({
   const [parking, setParking] = useState<ParkingFilter>("all");
   const [price, setPrice] = useState<PriceFilter>("all");
   const [availability, setAvailability] = useState<AvailabilityFilter>("all");
+  const [bookingDay, setBookingDay] = useState<BookingDayFilter>("today");
   const [bookingStartTime, setBookingStartTime] = useState("18:00");
   const [bookingEndTime, setBookingEndTime] = useState("20:00");
   const [mobileView, setMobileView] = useState<CourtView>("map");
@@ -408,7 +412,14 @@ export function CourtFinder({
           (availability === "open" && isCourtOpenAt(venue.operatingHours) === true) ||
           (availability === "24-hours" && isCourtOpen24Hours(venue.operatingHours)) ||
           (availability === "during" &&
-            isCourtOpenDuring(venue.operatingHours, bookingStartTime, bookingEndTime) === true);
+            (bookingDay === "today"
+              ? isCourtOpenDuring(venue.operatingHours, bookingStartTime, bookingEndTime) === true
+              : isCourtOpenDuringOnDay(
+                  venue.operatingHours,
+                  bookingStartTime,
+                  bookingEndTime,
+                  Number(bookingDay) as CourtDay,
+                ) === true));
         return settingMatches && queryMatches && parkingMatches && priceMatches && hoursMatch;
       })
       .map(({ venue }) => ({
@@ -417,7 +428,18 @@ export function CourtFinder({
       }));
     if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
     return matching;
-  }, [availability, bookingEndTime, bookingStartTime, parking, price, query, searchableVenues, setting, userLocation]);
+  }, [
+    availability,
+    bookingDay,
+    bookingEndTime,
+    bookingStartTime,
+    parking,
+    price,
+    query,
+    searchableVenues,
+    setting,
+    userLocation,
+  ]);
 
   const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
@@ -450,6 +472,7 @@ export function CourtFinder({
     setParking("all");
     setPrice("all");
     setAvailability("all");
+    setBookingDay("today");
     setSelectedId(null);
   }
 
@@ -628,40 +651,6 @@ export function CourtFinder({
                 className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
               />
             </div>
-            {availability === "during" ? (
-              <>
-                <div>
-                  <SelectField
-                    id="court-booking-start-time-filter"
-                    name="courtBookingStartTimeFilter"
-                    label="Booking starts"
-                    hideLabel
-                    value={bookingStartTime}
-                    onValueChange={(value) => {
-                      setBookingStartTime(value);
-                      setSelectedId(null);
-                    }}
-                    options={courtBookingStartTimeOptions}
-                    className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
-                  />
-                </div>
-                <div>
-                  <SelectField
-                    id="court-booking-end-time-filter"
-                    name="courtBookingEndTimeFilter"
-                    label="Booking ends"
-                    hideLabel
-                    value={bookingEndTime}
-                    onValueChange={(value) => {
-                      setBookingEndTime(value);
-                      setSelectedId(null);
-                    }}
-                    options={courtBookingEndTimeOptions}
-                    className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
-                  />
-                </div>
-              </>
-            ) : null}
             {filtersActive ? (
               <button
                 type="button"
@@ -673,6 +662,52 @@ export function CourtFinder({
             ) : null}
           </div>
         </div>
+        {availability === "during" ? (
+          <fieldset className="mt-3">
+            <legend className="sr-only">When you want to play</legend>
+            <div className="grid grid-cols-3 gap-2 lg:flex">
+              <SelectField
+                id="court-booking-day-filter"
+                name="courtBookingDayFilter"
+                label="Booking day"
+                hideLabel
+                value={bookingDay}
+                onValueChange={(value) => {
+                  setBookingDay(value as BookingDayFilter);
+                  setSelectedId(null);
+                }}
+                options={courtBookingDayOptions}
+                className="mt-0 !w-full px-2 text-xs font-semibold lg:!w-auto lg:px-3"
+              />
+              <SelectField
+                id="court-booking-start-time-filter"
+                name="courtBookingStartTimeFilter"
+                label="Booking starts"
+                hideLabel
+                value={bookingStartTime}
+                onValueChange={(value) => {
+                  setBookingStartTime(value);
+                  setSelectedId(null);
+                }}
+                options={courtBookingTimeOptions}
+                className="mt-0 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
+              />
+              <SelectField
+                id="court-booking-end-time-filter"
+                name="courtBookingEndTimeFilter"
+                label="Booking ends"
+                hideLabel
+                value={bookingEndTime}
+                onValueChange={(value) => {
+                  setBookingEndTime(value);
+                  setSelectedId(null);
+                }}
+                options={courtBookingTimeOptions}
+                className="mt-0 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
+              />
+            </div>
+          </fieldset>
+        ) : null}
         {locationMessage ? (
           <p role="status" className={`mt-3 text-xs ${locationStatus === "error" ? "text-warning" : "text-muted"}`}>
             {locationMessage}

@@ -13,7 +13,7 @@ import {
   sessionPlayers,
   sessionQueue,
 } from "@/db/schema";
-import { getPublicSession, getSessionForParticipant } from "@/features/sessions/queries";
+import { getPublicSession, getSessionForParticipant, getSessionForWorkspace } from "@/features/sessions/queries";
 
 import { calculateStandings } from "./domain";
 import { deriveLiveState } from "./live-state";
@@ -104,6 +104,12 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
 
 export async function getLiveSession(sessionId: string, userId: string) {
   const base = await getSessionForParticipant(sessionId, userId);
+  if (!base) return null;
+  return { ...base, ...(await getLiveDetails(sessionId, base.session.rotationMode)) };
+}
+
+export async function getWorkspaceLiveSession(sessionId: string, userId: string) {
+  const base = await getSessionForWorkspace(sessionId, userId);
   if (!base) return null;
   return { ...base, ...(await getLiveDetails(sessionId, base.session.rotationMode)) };
 }

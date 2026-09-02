@@ -49,7 +49,7 @@ function rosterState(game: OpenGameItem) {
 function OpenGameRow({ game }: { game: OpenGameItem }) {
   return (
     <Link
-      href={`/s/${game.slug}?source=open-games`}
+      href={`/games/${game.id}?source=open-games`}
       prefetch={false}
       onClick={() =>
         void trackDiscoveryEvent({ event: "public_game_opened", sessionId: game.id, source: "open-games" })

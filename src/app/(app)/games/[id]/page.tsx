@@ -1,4 +1,4 @@
-import { CalendarCheck, CaretRight, HourglassMedium, Play } from "@phosphor-icons/react/dist/ssr";
+import { CalendarCheck, CaretRight, Play } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
@@ -9,9 +9,9 @@ import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { markSessionBookedAction } from "@/features/sessions/actions";
-import { formatSessionDateLong, peso } from "@/features/sessions/format";
+import { peso } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
-import { getSessionForUser } from "@/features/sessions/queries";
+import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
@@ -24,9 +24,15 @@ function responseLabel(rsvp?: string) {
   return "You’re going";
 }
 
-export default async function GameOverviewPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
-  const data = await getSessionForUser((await params).id, user.id);
+export default async function GameOverviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ source?: string }>;
+}) {
+  const [user, query] = await Promise.all([requireUser(), searchParams]);
+  const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
   const { session, membership, roster } = data;
   const accountProfile = roster.find(({ player }) => player.userId === user.id)?.profile ?? (await ensureProfile(user));
@@ -37,18 +43,45 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
   const playerAvatarUrls = going.map(({ profile }) => profileAvatarUrl(profile?.avatarPath));
   const hostName = roster.find(({ player }) => player.role === "host")?.profile?.name ?? "the host";
   const isHost = session.hostId === user.id || membership?.role === "cohost";
-  if (membership?.rsvp === "declined") notFound();
-  if (membership?.rsvp === "invited") {
+  if (["invited", "pending"].includes(membership?.rsvp ?? "") || data.access === "discoverer") {
+    const isInvitation = membership?.rsvp === "invited";
+    const isPending = membership?.rsvp === "pending";
+    const discoverySource = query.source === "open-games" || query.source === "search" ? query.source : undefined;
+    const currentRsvp = isInvitation
+      ? ("invited" as const)
+      : isPending
+        ? ("pending" as const)
+        : membership?.rsvp === "declined"
+          ? ("declined" as const)
+          : undefined;
     const accountName =
       typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : user.email?.split("@")[0];
+    const responseOverview = await getSessionOverview(session.id);
     return (
       <>
-        <GamePageIntro title="Invitation" description="Review the plan and respond without leaving the Relay app." />
+        <GamePageIntro
+          title={isInvitation ? "Invitation" : "Overview"}
+          description={
+            isInvitation
+              ? "Review the plan and respond without leaving the Relay app."
+              : isPending
+                ? "Your request is with the host. You can keep reviewing the game here."
+                : "Review the plan, availability, and cost before you join."
+          }
+        />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
             <SessionHero session={session} hostLabel={`Hosted by ${hostName}`} headingLevel="h2" />
             <div className="px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
+              <SessionAtAGlance
+                overview={responseOverview}
+                hrefBase={`/games/${session.id}`}
+                status={session.status}
+                goingCount={going.length}
+                capacity={session.capacity}
+                waitlistCount={waitlisted.length}
+              />
               {session.notes ? (
                 <section className="pt-7">
                   <h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2>
@@ -57,53 +90,70 @@ export default async function GameOverviewPage({ params }: { params: Promise<{ i
               ) : null}
             </div>
           </article>
-          <aside className="self-start rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-6">
-            <p className="text-sm font-semibold text-primary">You’re invited</p>
-            <h2 className="mt-1 text-lg font-bold">Can you make it?</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">Your response stays attached to your Relay account.</p>
-            <div className="mt-5">
-              <RsvpControl
-                sessionId={session.id}
-                slug={session.slug}
-                signedIn
-                accountName={accountName}
-                accountUsername={accountProfile.username}
-                currentRsvp="invited"
-                currentSkillLevel={accountProfile.skillLevel}
-                locked={session.rosterLocked}
-                full={going.length >= session.capacity}
-              />
-            </div>
-            <ButtonLink href={`/s/${session.slug}`} variant="quiet" className="mt-3 w-full">
-              Preview shared link
-            </ButtonLink>
+          <aside className="space-y-7 self-start lg:sticky lg:top-6">
+            <section className="rounded-xl border border-line bg-surface p-5">
+              <p className="text-sm font-semibold text-primary">
+                {isInvitation
+                  ? "You’re invited"
+                  : isPending
+                    ? "Awaiting approval"
+                    : session.requiresApproval
+                      ? "Host approval required"
+                      : "Open game"}
+              </p>
+              <h2 className="mt-1 text-lg font-bold">
+                {isInvitation
+                  ? "Can you make it?"
+                  : isPending
+                    ? "Your request was sent"
+                    : going.length >= session.capacity
+                      ? "Join the waitlist"
+                      : "Join this game"}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {isPending
+                  ? "You’ll see the update here when the host responds."
+                  : "Your response stays attached to your Relay account."}
+              </p>
+              <div className="mt-5">
+                <RsvpControl
+                  sessionId={session.id}
+                  slug={session.slug}
+                  signedIn
+                  accountName={accountName}
+                  accountUsername={accountProfile.username}
+                  currentRsvp={currentRsvp}
+                  currentSkillLevel={accountProfile.skillLevel}
+                  locked={session.rosterLocked}
+                  full={going.length >= session.capacity}
+                  discoverySource={data.access === "discoverer" ? discoverySource : undefined}
+                />
+              </div>
+              {isInvitation ? (
+                <ButtonLink href={`/s/${session.slug}`} variant="quiet" className="mt-3 w-full">
+                  Preview shared link
+                </ButtonLink>
+              ) : null}
+            </section>
+            <section>
+              <div className="mb-3 flex items-end justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">Who’s playing</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    {going.length} of {session.capacity} going
+                  </p>
+                </div>
+                <AvatarStack names={names.slice(0, 3)} imageUrls={playerAvatarUrls.slice(0, 3)} total={going.length} />
+              </div>
+              <ButtonLink href={`/games/${session.id}/players`} variant="quiet" className="w-full">
+                View players <CaretRight aria-hidden size={14} />
+              </ButtonLink>
+            </section>
           </aside>
         </div>
       </>
     );
   }
-  if (membership?.rsvp === "pending")
-    return (
-      <div className="mx-auto w-full max-w-6xl">
-        <p className="sport-label text-primary">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
-        <h1 title={session.title} className="mt-2 truncate app-title">
-          {session.title}
-        </h1>
-        <section className="mt-8 border-y border-line py-10 text-center">
-          <HourglassMedium aria-hidden size={26} className="mx-auto text-warning" />
-          <h2 className="mt-4 text-xl font-bold">Waiting for host approval</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-            Your request is with the host. Once approved, this page unlocks the roster, chat, payments, Play, and live
-            scores.
-          </p>
-          <div className="mt-6">
-            <ButtonLink href={`/s/${session.slug}`} variant="secondary">
-              View shared game
-            </ButtonLink>
-          </div>
-        </section>
-      </div>
-    );
 
   const overview = await getSessionOverview(session.id, { sessionPlayerId: membership?.id ?? "", canManage: isHost });
   const readiness = sessionReadiness({

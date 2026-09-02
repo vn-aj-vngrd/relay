@@ -12,11 +12,12 @@ import {
   RemovePlayerButton,
   RosterLockButton,
 } from "@/features/sessions/player-roster-controls";
-import { getSessionForParticipant } from "@/features/sessions/queries";
+import { getSessionForWorkspace } from "@/features/sessions/queries";
+import { canManageSessionWorkspace } from "@/features/sessions/session-access";
 
 export default async function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
-  const data = await getSessionForParticipant((await params).id, user.id);
+  const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const pending = data.roster.filter(({ player }) => player.rsvp === "pending");
@@ -24,13 +25,17 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
   const otherResponses = data.roster.filter(
     ({ player }) => !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp),
   );
-  const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
+  const isHost = canManageSessionWorkspace(data.access);
 
   return (
     <>
       <GamePageIntro
         title="Players"
-        description="Manage who’s going, join requests, waitlist movement, and roster access."
+        description={
+          isHost
+            ? "Manage who’s going, join requests, waitlist movement, and roster access."
+            : "See who’s going and whether there is room to join."
+        }
       />
       <div className="mx-auto w-full max-w-6xl">
         {isHost ? (

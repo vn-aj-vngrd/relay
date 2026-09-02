@@ -108,7 +108,7 @@ The shared game link and authenticated session workspace are two access paths to
 - Overview: the at-a-glance session home—plan, roster and waitlist state, current play, payment state, and the viewer’s next useful action.
 - Play: the courtside workspace for assignments, paddle stack, rotations, scores, and session standings.
 - Shared game link: optimized for understanding the invitation and joining as an account player or guest player. It uses the authenticated app’s 1152px content canvas, left-aligned game tabs, destination title hierarchy, section rhythm, and opaque surface rather than presenting a separate microsite aesthetic. A full game says **Join waitlist** before mutation. Every link carries a session-specific Open Graph image and Event JSON-LD; link-only games remain `noindex` while retaining rich message previews. On desktop, RSVP and a five-person roster preview share the right rail, matching the authenticated Overview; on mobile, both stay in the main reading flow and Overview exposes an immediate Join game shortcut. Full rosters belong in Players.
-- Account player workspace: the shared experience inside Relay’s app shell, plus personal chat, payment, history, and participation actions.
+- Account player workspace: the shared experience inside Relay’s app shell, plus personal chat, payment, history, and participation actions. Signed-in invitees and Open games viewers stay on this route; capabilities progressively unlock after RSVP or host approval instead of sending them to the shared-link shell.
 - Host workspace: the same account player workspace with contextual edit, roster, payment-review, court, scoring, and completion controls.
 - Platform administration never appears as a session role.
 

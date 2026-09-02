@@ -3,13 +3,15 @@ import { notFound } from "next/navigation";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { requireUser } from "@/features/auth/session";
 import { SessionChatView } from "@/features/chat/session-chat-view";
-import { getSessionForParticipant } from "@/features/sessions/queries";
+import { getSessionForWorkspace } from "@/features/sessions/queries";
+import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 
 export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const sessionId = (await params).id;
-  const data = await getSessionForParticipant(sessionId, user.id);
-  if (!data || !data.membership) notFound();
+  const data = await getSessionForWorkspace(sessionId, user.id);
+  if (!data) notFound();
+  const canWrite = Boolean(data.membership && canParticipateInWorkspace(data.access));
 
   return (
     <div className="authenticated-chat-page flex h-full min-h-0 flex-col overflow-hidden">
@@ -19,7 +21,8 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
           <SessionChatView
             sessionId={sessionId}
             timezone={data.session.timezone}
-            viewer={{ userId: user.id, playerId: data.membership.id, canWrite: true }}
+            viewer={{ userId: user.id, playerId: data.membership?.id ?? "", canWrite }}
+            readOnlyMessage="Join the game to send messages and photos."
             className="authenticated-chat-viewport h-full"
           />
         </div>

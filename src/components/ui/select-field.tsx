@@ -85,6 +85,8 @@ export function SelectField({
         <div
           role="listbox"
           aria-label={`${label} options`}
+          aria-hidden={!open}
+          inert={!open}
           data-state={open ? "open" : "closed"}
           data-align="stretch"
           className="menu-popover fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 max-h-[55svh] w-auto overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-[calc(100%+.5rem)] sm:max-h-64 sm:w-full sm:min-w-44"

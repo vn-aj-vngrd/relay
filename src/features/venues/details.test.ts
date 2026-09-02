@@ -8,6 +8,7 @@ import {
   isCourtOpen24Hours,
   isCourtOpenAt,
   isCourtOpenDuring,
+  isCourtOpenDuringOnDay,
   pesosToCents,
   toCourtPriceStorage,
 } from "./details";
@@ -63,6 +64,8 @@ describe("structured court details", () => {
     expect(isCourtOpenAt(operatingHours, new Date("2026-09-07T15:00:00.000Z"))).toBe(false);
     expect(isCourtOpenDuring(operatingHours, "08:00", "20:00", new Date("2026-09-07T04:00:00.000Z"))).toBe(true);
     expect(isCourtOpenDuring(operatingHours, "20:00", "23:00", new Date("2026-09-07T04:00:00.000Z"))).toBe(false);
+    expect(isCourtOpenDuringOnDay(operatingHours, "08:00", "20:00", 1)).toBe(true);
+    expect(isCourtOpenDuringOnDay(operatingHours, "08:00", "20:00", 2)).toBe(false);
     expect(isCourtOpen24Hours(operatingHours)).toBe(false);
     expect(
       isCourtOpen24Hours(

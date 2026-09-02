@@ -43,7 +43,7 @@ describe("OpenGamesCollection", () => {
 
     expect(screen.getByRole("link", { name: /Saturday Pickle/ })).toHaveAttribute(
       "href",
-      "/s/saturday-pickle?source=open-games",
+      "/games/game-1?source=open-games",
     );
     expect(screen.getByText(/₱300/)).toBeVisible();
     expect(screen.getByText(/2 spots left/)).toBeVisible();

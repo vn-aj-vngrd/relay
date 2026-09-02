@@ -74,15 +74,12 @@ export const courtAvailabilityOptions = [
   { value: "during", label: "Open during a time range" },
 ] as const;
 
+export const courtBookingDayOptions = [
+  { value: "today", label: "Today" },
+  ...courtDays.map((day) => ({ value: String(day.value), label: day.label })),
+] as const;
+
 export const courtBookingTimeOptions = courtTimeOptions.slice(1);
-export const courtBookingStartTimeOptions = courtBookingTimeOptions.map((option) => ({
-  ...option,
-  label: `From ${option.label}`,
-}));
-export const courtBookingEndTimeOptions = courtBookingTimeOptions.map((option) => ({
-  ...option,
-  label: `Until ${option.label}`,
-}));
 
 const php = new Intl.NumberFormat("en-PH", {
   style: "currency",
@@ -251,6 +248,21 @@ export function isCourtOpenAt(periods: CourtOperatingPeriod[], date = new Date()
   );
 }
 
+export function isCourtOpenDuringOnDay(
+  periods: CourtOperatingPeriod[],
+  startTime: string,
+  endTime: string,
+  dayOfWeek: CourtDay,
+): boolean | null {
+  if (!periods.length) return null;
+  const startsAt = minutes(startTime);
+  const endsAtRaw = minutes(endTime);
+  const endsAt = endsAtRaw <= startsAt ? endsAtRaw + 24 * 60 : endsAtRaw;
+  return periodsForDayTimeline(periods, dayOfWeek).some(
+    (period) => startsAt >= period.opensAt && endsAt <= period.closesAt,
+  );
+}
+
 export function isCourtOpenDuring(
   periods: CourtOperatingPeriod[],
   startTime: string,
@@ -259,13 +271,7 @@ export function isCourtOpenDuring(
 ): boolean | null {
   if (!periods.length) return null;
   const { dayOfWeek } = courtTimeForDate(date);
-  if (!dayOfWeek) return null;
-  const startsAt = minutes(startTime);
-  const endsAtRaw = minutes(endTime);
-  const endsAt = endsAtRaw <= startsAt ? endsAtRaw + 24 * 60 : endsAtRaw;
-  return periodsForDayTimeline(periods, dayOfWeek).some(
-    (period) => startsAt >= period.opensAt && endsAt <= period.closesAt,
-  );
+  return dayOfWeek ? isCourtOpenDuringOnDay(periods, startTime, endTime, dayOfWeek) : null;
 }
 
 export function isCourtOpen24Hours(periods: CourtOperatingPeriod[]) {

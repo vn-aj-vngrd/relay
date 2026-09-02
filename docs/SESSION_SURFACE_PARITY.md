@@ -11,6 +11,13 @@ A Relay game has two access paths to one product:
 
 Both paths represent the same session and use the same vocabulary, information order, visual grammar, and live state. Access changes available actions—not the underlying product.
 
+## Route ownership
+
+- Signed-in players stay on `/games/[id]` when they open an invite, notification, search result, or Open games result inside Relay.
+- A signed-in nonparticipant may open `/games/[id]` only when the game is currently eligible for public discovery: public, published or live, not ended, and carrying a stated cost expectation. The workspace is read-only except for the viewer’s RSVP.
+- `/s/[slug]` remains the account-optional shared entry point and the host’s explicit shared-link preview. Signing in does not make a private or link-only game discoverable by identifier.
+- RSVP changes update capabilities in place. Hosts and co-hosts see management controls; participants see personal actions; invitees, pending players, and discoverers see only actions they can complete.
+
 ## Canonical navigation
 
 Keep these destinations and labels in this order:

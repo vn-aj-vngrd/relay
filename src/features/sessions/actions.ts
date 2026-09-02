@@ -1121,6 +1121,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
   revalidatePath("/home");
   revalidatePath("/games");
   revalidatePath("/notifications");
+  revalidatePath(`/games/${session.id}`);
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/s/${session.slug}`);
   return { success: true, rsvp: resolvedRsvp };

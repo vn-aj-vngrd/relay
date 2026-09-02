@@ -65,7 +65,7 @@ The geographic area where Relay accepts court submissions, verified listing coor
 _Avoid_: Complete court coverage, court inventory
 
 **Open game**:
-A published or live public session that has not ended and discloses either Free or an estimated per-player cost. Signed-in players may discover it in Games or Search, then use its shared game link to join, request approval, or waitlist.
+A published or live public session that has not ended and discloses either Free or an estimated per-player cost. Signed-in players discover and open it inside the authenticated session workspace, where they can join, request approval, or waitlist without leaving the app shell. The shared game link remains the account-optional external entry point.
 _Avoid_: Community post, pickup feed
 
 **Cost expectation**:

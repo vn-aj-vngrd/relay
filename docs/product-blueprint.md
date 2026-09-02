@@ -52,7 +52,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 /games                    authenticated player's upcoming and past sessions
 /games/open               authenticated public-game discovery
 /games/new                progressive Plan → Players and access → optional Details → read-only Review flow
-/games/[id]               private session workspace
+/games/[id]               authenticated session workspace with capability-based controls
 /games/[id]/players       roster and waitlist
 /games/[id]/payments      expenses and payment status
 /games/[id]/live          legacy courts-first redirect
@@ -78,7 +78,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **Session workspace:** Overview, Players, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** unanswered invites → next confirmed or active game → upcoming games → recent games. An unanswered invite never replaces the player’s next accepted game. No generic analytics.
-- **Games:** My games uses Upcoming, Invites, and Past. Invites are also pinned above Upcoming, can be answered inline, and become RSVP-labeled Upcoming rows after response. Open games lists authenticated discovery rows for public, unended sessions with a stated cost expectation; date, location, and available-spots filters reset stable cursor pagination.
+- **Games:** My games uses Upcoming, Invites, and Past. Invites are also pinned above Upcoming, can be answered inline, and become RSVP-labeled Upcoming rows after response. Open games lists authenticated discovery rows for public, unended sessions with a stated cost expectation and opens them inside `/games/[id]`; date, location, and available-spots filters reset stable cursor pagination.
 - **Search:** recent searches when idle → two-character minimum → 280 ms debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. A bounded in-memory cache reuses filter results during the current search visit. PostgreSQL trigram indexes back searchable names and addresses; exact and prefix matches lead fuzzy relevance. Public game rows include cost, availability, approval, and RSVP state. Link-only/private/completed content remains authorization-scoped.
 - **Completed session:** memory summary → media → matches and standings → conversation → Play again.
 
