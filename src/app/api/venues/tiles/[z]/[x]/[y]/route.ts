@@ -4,23 +4,96 @@ import { courtDirectoryCoverage } from "@/features/venues/coverage";
 import { getServerEnv } from "@/lib/env";
 import { checkRateLimit, rateLimitHeaders, requestIdentity } from "@/lib/rate-limit";
 
-const mapStyles = new Set(["osm-bright", "dark-matter"]);
-const transparentTile = Uint8Array.from(
-  Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"),
-);
+type MapStyle = "osm-bright" | "dark-matter";
+const fallbackTiles = {
+  "osm-bright": Uint8Array.from(
+    Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN4/fIJAAV7ArmVLcmiAAAAAElFTkSuQmCC",
+      "base64",
+    ),
+  ),
+  "dark-matter": Uint8Array.from(
+    Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGMQlFAHAACOAFFPOrt4AAAAAElFTkSuQmCC",
+      "base64",
+    ),
+  ),
+} satisfies Record<MapStyle, Uint8Array>;
+const providerConcurrency = 4;
+type ProviderQueueEntry = {
+  resolve: () => void;
+  reject: (reason: unknown) => void;
+  signal: AbortSignal;
+  abort: () => void;
+};
+let activeProviderRequests = 0;
+const providerQueue: ProviderQueueEntry[] = [];
 
-async function fetchProviderTile(endpoint: URL) {
+async function acquireProviderSlot(signal: AbortSignal) {
+  signal.throwIfAborted();
+  if (activeProviderRequests < providerConcurrency) {
+    activeProviderRequests += 1;
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const entry: ProviderQueueEntry = {
+      resolve,
+      reject,
+      signal,
+      abort: () => {
+        const index = providerQueue.indexOf(entry);
+        if (index !== -1) providerQueue.splice(index, 1);
+        reject(signal.reason);
+      },
+    };
+    signal.addEventListener("abort", entry.abort, { once: true });
+    providerQueue.push(entry);
+  });
+}
+
+function releaseProviderSlot() {
+  activeProviderRequests -= 1;
+  // Newer requests represent the current viewport after a rapid zoom.
+  let entry = providerQueue.pop();
+  while (entry) {
+    entry.signal.removeEventListener("abort", entry.abort);
+    if (!entry.signal.aborted) {
+      activeProviderRequests += 1;
+      entry.resolve();
+      return;
+    }
+    entry.reject(entry.signal.reason);
+    entry = providerQueue.pop();
+  }
+}
+
+async function withProviderSlot<T>(signal: AbortSignal, request: () => Promise<T>) {
+  await acquireProviderSlot(signal);
+  try {
+    return await request();
+  } finally {
+    releaseProviderSlot();
+  }
+}
+
+async function fetchProviderTile(endpoint: URL, requestSignal: AbortSignal) {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    requestSignal.throwIfAborted();
     try {
-      const response = await fetch(endpoint, {
-        next: { revalidate: 2_592_000 },
-        signal: AbortSignal.timeout(5_000),
-      });
+      const providerSignal = AbortSignal.any([requestSignal, AbortSignal.timeout(6_000)]);
+      const response = await withProviderSlot(providerSignal, () =>
+        fetch(endpoint, {
+          next: { revalidate: 2_592_000 },
+          signal: providerSignal,
+        }),
+      );
       if (response.ok) return response;
       lastError = new Error(`Geoapify returned ${response.status}`);
       if (response.status < 500 && response.status !== 429) break;
     } catch (error) {
+      requestSignal.throwIfAborted();
       lastError = error;
     }
   }
@@ -65,12 +138,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
   }
 
   const requestedStyle = new URL(request.url).searchParams.get("style") ?? "osm-bright";
-  const style = mapStyles.has(requestedStyle) ? requestedStyle : "osm-bright";
+  const style: MapStyle = requestedStyle === "dark-matter" ? "dark-matter" : "osm-bright";
   const endpoint = new URL(`https://maps.geoapify.com/v1/tile/${style}/${zoom}/${tileX}/${tileY}@2x.png`);
   endpoint.searchParams.set("apiKey", getServerEnv().GEOAPIFY_API_KEY);
 
   try {
-    const response = await fetchProviderTile(endpoint);
+    const response = await fetchProviderTile(endpoint, request.signal);
     return new Response(await response.arrayBuffer(), {
       headers: {
         "Content-Type": response.headers.get("content-type") || "image/png",
@@ -78,8 +151,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
       },
     });
   } catch (error) {
+    if (request.signal.aborted) return new Response(null, { status: 499 });
     console.error("Philippines map tile failed", error instanceof Error ? error.message : "Unknown provider error");
-    return new Response(transparentTile, {
+    return new Response(fallbackTiles[style], {
       headers: {
         "Content-Type": "image/png",
         "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
