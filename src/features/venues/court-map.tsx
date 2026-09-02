@@ -188,7 +188,7 @@ export function CourtMap({
         map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
         map.addControl(createMobileSafeFullscreenControl(maplibre.FullscreenControl, shell), "top-right");
         map.addControl(new maplibre.AttributionControl({ compact: true }), "bottom-right");
-        map.once("load", () => {
+        map.once("style.load", () => {
           if (disposed) return;
           mapRef.current = map;
           fitVenues(map, venues, true);

@@ -55,6 +55,15 @@ test("the public court finder works without an account", async ({ page }) => {
   await expect(page).toHaveURL(/\/login/);
 });
 
+test("the court map leaves its loading state when raster tiles stall", async ({ page }) => {
+  await page.route("**/api/venues/tiles/**", () => {});
+
+  await page.goto("/courts");
+  await expect(page.getByText("Loading interactive map…")).toBeVisible();
+  await expect(page.getByText("Loading interactive map…")).toHaveCount(0, { timeout: 5_000 });
+  await expect(page.getByRole("region", { name: "Interactive map of pickleball courts" })).toBeVisible();
+});
+
 test("public Quick Play prepares players, rotates, and scores without an account", async ({ page }) => {
   await page.goto("/play");
   await expect(page.getByRole("heading", { name: "Set up Play" })).toBeVisible();
