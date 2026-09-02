@@ -8,6 +8,7 @@ import { setThemePreference, type Theme } from "@/components/shared/theme-toggle
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { SelectField } from "@/components/ui/select-field";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { completeProfileSetup, type OnboardingActionState, skipProfileSetup } from "./actions";
 import { discoverySourceOptions } from "./discovery-source";
@@ -143,6 +144,7 @@ export function SetupWizard({
   const [localError, setLocalError] = useState("");
   const [state, action] = useActionState<OnboardingActionState, FormData>(completeProfileSetup, {});
   const formRef = useRef<HTMLFormElement>(null);
+  const preserveValues = usePreserveFormValuesOnError(state);
   const StepIcon = steps[step].icon;
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, (): Theme => "light");
   const density = useSyncExternalStore(subscribeDensity, currentDensity, (): Density => "comfortable");
@@ -208,7 +210,7 @@ export function SetupWizard({
               ) : null}
             </div>
           ) : null}
-          <form ref={formRef} action={action} noValidate>
+          <form ref={formRef} action={action} onSubmitCapture={preserveValues} noValidate>
             <input type="hidden" name="next" value={next} />
             <fieldset hidden={step !== 0} className="space-y-5">
               <legend className="sr-only">Player profile</legend>

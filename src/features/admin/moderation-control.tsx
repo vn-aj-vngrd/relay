@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, cancelSessionAction, restoreUserAction, suspendUserAction } from "./actions";
 
@@ -62,6 +63,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
   const action =
     mode === "suspend-user" ? suspendUserAction : mode === "restore-user" ? restoreUserAction : cancelSessionAction;
   const [state, formAction] = useActionState<AdminActionState, FormData>(action, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   const details = copy[mode];
   const restore = mode === "restore-user";
 
@@ -86,7 +88,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
         ref={dialogRef}
         className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
       >
-        <form noValidate action={formAction} className="p-5 sm:p-6">
+        <form noValidate action={formAction} onSubmitCapture={preserveValues} className="p-5 sm:p-6">
           <input type="hidden" name={details.field} value={targetId} />
           <div className="flex items-start gap-3">
             <span

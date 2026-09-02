@@ -5,12 +5,14 @@ import { useActionState, useEffect, useState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AvatarActionState, uploadAvatarAction } from "./actions";
 
 export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl?: string }) {
   const [state, action] = useActionState<AvatarActionState, FormData>(uploadAvatarAction, {});
   const [preview, setPreview] = useState<string>();
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   useEffect(
     () => () => {
@@ -25,7 +27,7 @@ export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl
   }
 
   return (
-    <form noValidate action={action} className="shrink-0">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="shrink-0">
       <input
         id="profile-avatar"
         name="avatar"

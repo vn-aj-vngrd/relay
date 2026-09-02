@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { DatePickerField, TimePickerField } from "@/components/ui/date-time-picker";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { type CourtSuggestion, VenueCombobox } from "@/features/venues/venue-combobox";
 
 import { createSessionAction, type SessionActionState } from "./actions";
@@ -207,6 +208,7 @@ export function CreateSessionForm({
   const [review, setReview] = useState<ReviewValues | null>(null);
   const [booked, setBooked] = useState(state.values?.booked === "on");
   const formRef = useRef<HTMLFormElement>(null);
+  const preserveValues = usePreserveFormValuesOnError(state);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const value = (field: string, initial?: string | number) =>
     state.values ? (state.values[field] ?? "") : initial == null ? "" : String(initial);
@@ -364,6 +366,7 @@ export function CreateSessionForm({
       ref={formRef}
       className="mx-auto w-full max-w-2xl"
       action={action}
+      onSubmitCapture={preserveValues}
       autoComplete="off"
       noValidate
       onChange={(event) => {

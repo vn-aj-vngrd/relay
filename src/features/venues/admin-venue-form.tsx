@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { updateVenueAction } from "./actions";
 import {
@@ -47,10 +48,11 @@ export type AdminVenueDefaults = {
 
 export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
   const [state, action] = useActionState(updateVenueAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   const periodForDay = (dayOfWeek: number) => venue.operatingHours.find((period) => period.dayOfWeek === dayOfWeek);
   const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>(venue.priceStatus);
   return (
-    <form action={action} className="space-y-7" noValidate>
+    <form action={action} onSubmitCapture={preserveValues} className="space-y-7" noValidate>
       <input type="hidden" name="venueId" value={venue.id} />
       {state.error ? (
         <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger">

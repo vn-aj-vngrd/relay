@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { startPlay, type StartPlayActionState } from "./actions";
 import { playModeOptions } from "./play-mode-options";
@@ -79,6 +80,7 @@ export function PlaySetupForm({
   const [mode, setMode] = useState<PlayMode>("queue");
   const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
   const [state, action] = useActionState(startPlay, {} as StartPlayActionState);
+  const preserveValues = usePreserveFormValuesOnError(state);
   const goingRosterCount = players.length || playerCount;
   const climbPlayers = courtCount * 4;
   const climbAvailable = courtCount >= 2 && playerCount === climbPlayers && goingRosterCount === playerCount;
@@ -90,7 +92,7 @@ export function PlaySetupForm({
   const missingExperience = players.filter((player) => activeIds.has(player.id) && !player.skillLevel).length;
 
   return (
-    <form noValidate action={action} className="mt-8 text-left">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="mt-8 text-left">
       <input type="hidden" name="sessionId" value={sessionId} />
       <fieldset>
         <legend className="sr-only">Play setup</legend>

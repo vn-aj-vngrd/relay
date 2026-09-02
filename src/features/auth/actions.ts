@@ -96,7 +96,11 @@ export async function sendMagicLink(formData: FormData) {
   redirect("/login?sent=1");
 }
 
-export type AuthFormState = { error?: string; fieldErrors?: Record<string, string[]> };
+export type AuthFormState = {
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+  refreshCaptcha?: boolean;
+};
 
 async function attemptPasswordSignIn(formData: FormData): Promise<AuthFormState> {
   const next = nextPath(formData);
@@ -125,7 +129,7 @@ async function attemptPasswordSignIn(formData: FormData): Promise<AuthFormState>
     password: password.data,
     options: { captchaToken: captchaToken.data },
   });
-  if (error || !data.user) return { error: "Email or password is incorrect." };
+  if (error || !data.user) return { error: "Email or password is incorrect.", refreshCaptcha: true };
   redirect(await resolvePostAuthDestination(next, data.user.id));
 }
 
@@ -181,6 +185,7 @@ async function attemptPasswordAccountCreation(formData: FormData): Promise<AuthF
           : error.message.includes("beta signup is full")
             ? "Relay’s beta is full right now. Try again after more places open."
             : "We couldn’t create your account. Please try again.",
+      refreshCaptcha: true,
     };
   if (data.session && data.user) redirect(await resolvePostAuthDestination(next, data.user.id));
   const cookieStore = await cookies();
@@ -208,19 +213,20 @@ export async function createPasswordAccount(formData: FormData) {
   );
 }
 
-export async function requestPasswordReset(formData: FormData) {
+async function attemptPasswordResetRequest(formData: FormData): Promise<AuthFormState> {
   const email = emailSchema.safeParse(formData.get("email"));
   const captchaToken = z.string().min(1).max(4096).safeParse(formData.get("cf-turnstile-response"));
-  if (!email.success) authError("Enter a valid email address.", "/forgot-password");
-  if (!captchaToken.success) authError("Complete the security check and try again.", "/forgot-password");
-  await guardAuthAttempt({
+  if (!email.success)
+    return { error: "Check the field marked below.", fieldErrors: { email: ["Enter a valid email address."] } };
+  if (!captchaToken.success) return { error: "Complete the security check and try again." };
+  const allowed = await authAttemptAllowed({
     scope: "password-reset",
     email: email.data,
     ipLimit: 8,
     accountLimit: 3,
     windowSeconds: 3600,
-    destination: "/forgot-password",
   });
+  if (!allowed) return { error: "Too many attempts. Wait a few minutes and try again." };
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
@@ -229,7 +235,7 @@ export async function requestPasswordReset(formData: FormData) {
   });
   if (error) {
     console.error("[relay-password-reset-request]", { code: error.code, status: error.status });
-    authError(passwordResetRequestErrorMessage(error), "/forgot-password");
+    return { error: passwordResetRequestErrorMessage(error), refreshCaptcha: true };
   }
   const cookieStore = await cookies();
   cookieStore.set("relay_recovery_email", email.data, {
@@ -240,6 +246,19 @@ export async function requestPasswordReset(formData: FormData) {
     path: "/forgot-password",
   });
   redirect("/forgot-password?sent=1");
+}
+
+export async function requestPasswordResetState(_: AuthFormState, formData: FormData) {
+  return attemptPasswordResetRequest(formData);
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const result = await attemptPasswordResetRequest(formData);
+  const firstFieldError = Object.values(result.fieldErrors ?? {})[0]?.[0];
+  authError(
+    firstFieldError ?? result.error ?? "Password recovery could not be started. Try again.",
+    "/forgot-password",
+  );
 }
 
 async function verifyPasswordMfa(formData: FormData, mode: "recovery" | "temporary-password") {

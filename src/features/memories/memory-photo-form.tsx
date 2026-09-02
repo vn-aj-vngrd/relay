@@ -6,13 +6,15 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { uploadMemoryPhotoState } from "./actions";
 
 export function MemoryPhotoForm({ sessionId }: { sessionId: string }) {
   const [state, action] = useActionState(uploadMemoryPhotoState, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} className="border-y border-line py-5">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-5">
       {state.error ? <Alert className="mb-4">{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <ImageFileField

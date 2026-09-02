@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { markPaymentSent } from "./actions";
 
@@ -38,8 +39,9 @@ export function PaymentProofForm({
   slug?: string;
 }) {
   const [state, action] = useActionState(markPaymentSent, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} className="mt-4 w-full sm:max-w-md">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="mt-4 w-full sm:max-w-md">
       <input type="hidden" name="paymentId" value={paymentId} />
       {slug ? <input type="hidden" name="slug" value={slug} /> : null}
       {reviewNote ? (

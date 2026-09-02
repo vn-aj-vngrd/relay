@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { submitVenueAction } from "./actions";
 import {
@@ -32,6 +33,7 @@ function Optional() {
 export function VenueSubmissionForm() {
   const [state, action] = useActionState(submitVenueAction, {});
   const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>("unknown");
+  const preserveValues = usePreserveFormValuesOnError(state);
   if (state.success)
     return (
       <section role="status" className="border-y border-line py-8">
@@ -41,7 +43,7 @@ export function VenueSubmissionForm() {
     );
 
   return (
-    <form action={action} className="max-w-2xl space-y-9" noValidate>
+    <form action={action} onSubmitCapture={preserveValues} className="max-w-2xl space-y-9" noValidate>
       {state.error ? <Alert>{state.error}</Alert> : null}
 
       <fieldset className="space-y-5">

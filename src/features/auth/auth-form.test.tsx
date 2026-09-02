@@ -1,25 +1,48 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  signIn: vi.fn(async () => ({ error: "Email or password is incorrect." })),
+  createAccount: vi.fn(async () => ({})),
+  signIn: vi.fn(async () => ({ error: "Email or password is incorrect.", refreshCaptcha: true })),
 }));
 
-vi.mock("@marsidev/react-turnstile", () => ({
-  Turnstile: ({ onSuccess }: { onSuccess: () => void }) => (
-    <button type="button" onClick={onSuccess}>
-      Complete security check
-    </button>
-  ),
-}));
+vi.mock("@marsidev/react-turnstile", async () => {
+  const { forwardRef, useImperativeHandle } = await import("react");
+  return {
+    Turnstile: forwardRef(function MockTurnstile(
+      {
+        onSuccess,
+        options,
+      }: {
+        onSuccess: (token: string) => void;
+        options: { appearance?: string };
+      },
+      ref,
+    ) {
+      useImperativeHandle(ref, () => ({ reset: () => onSuccess("refreshed-token") }));
+      return (
+        <button type="button" data-appearance={options.appearance} onClick={() => onSuccess("initial-token")}>
+          Complete security check
+        </button>
+      );
+    }),
+  };
+});
 
 vi.mock("./actions", () => ({
-  createPasswordAccountState: vi.fn(async () => ({})),
+  createPasswordAccountState: mocks.createAccount,
   signInWithPassword: vi.fn(),
   signInWithPasswordState: mocks.signIn,
 }));
 
 import { AuthForm } from "./auth-form";
+
+beforeEach(() => {
+  mocks.createAccount.mockReset();
+  mocks.createAccount.mockResolvedValue({});
+  mocks.signIn.mockReset();
+  mocks.signIn.mockResolvedValue({ error: "Email or password is incorrect.", refreshCaptcha: true });
+});
 
 afterEach(() => {
   cleanup();
@@ -42,6 +65,37 @@ describe("AuthForm", () => {
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Email or password is incorrect."));
     expect(screen.getByLabelText("Email")).toHaveValue("player@example.com");
     expect(screen.getByLabelText("Password")).toHaveValue("legacy");
+    expect(screen.getByRole("button", { name: "Complete security check" })).toHaveAttribute(
+      "data-appearance",
+      "interaction-only",
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled());
+
+    fireEvent.change(password, { target: { value: "another-password" } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("clears a field error as soon as the user edits that field without repeating an unused challenge", async () => {
+    vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "test-site-key");
+    mocks.createAccount.mockResolvedValueOnce({
+      error: "Check the fields marked below.",
+      fieldErrors: { email: ["Enter a valid email address."] },
+    });
+    render(<AuthForm initialMode="create" />);
+
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "wrong" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "RelayPass123" } });
+    fireEvent.change(screen.getByLabelText("Confirm password"), { target: { value: "RelayPass123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Complete security check" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
+
+    await waitFor(() => expect(screen.getByText("Enter a valid email address.")).toBeVisible());
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "player@example.com" } });
+
+    expect(screen.queryByText("Enter a valid email address.")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
   });
 
   it("presents one clear primary authentication action at a time", () => {

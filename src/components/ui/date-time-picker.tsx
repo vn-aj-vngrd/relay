@@ -80,14 +80,15 @@ export function DatePickerField({
   describedBy?: string;
 }) {
   const [internalValue, setInternalValue] = useState(defaultValue);
+  const root = useRef<HTMLDivElement>(null);
   const value = controlledValue ?? internalValue;
   const selectValue = (nextValue: string) => {
     if (controlledValue === undefined) setInternalValue(nextValue);
     onValueChange?.(nextValue);
+    root.current?.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const [open, setOpen] = useState(false);
   const [view, setView] = useState(() => parseDate(defaultValue) ?? new Date());
-  const root = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), root);
   const selected = parseDate(value);
   const first = new Date(view.getFullYear(), view.getMonth(), 1);
@@ -227,10 +228,12 @@ export function TimePickerField({
   describedBy?: string;
 }) {
   const [internalValue, setInternalValue] = useState(defaultValue);
+  const root = useRef<HTMLDivElement>(null);
   const value = controlledValue ?? internalValue;
   const selectValue = (nextValue: string) => {
     if (controlledValue === undefined) setInternalValue(nextValue);
     onValueChange?.(nextValue);
+    root.current?.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const options = timeOptions.filter(
     (option) =>
@@ -239,7 +242,6 @@ export function TimePickerField({
       (!beforeValue || option < beforeValue),
   );
   const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
   useDismiss(open, () => setOpen(false), root);
   return (
     <div ref={root} className="relative min-w-0">

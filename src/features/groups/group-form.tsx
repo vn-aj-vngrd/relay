@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { createGroupAction, type GroupActionState } from "./actions";
 
@@ -19,8 +20,9 @@ export function CreateGroupForm({
   savedPlayerCount?: number;
 }) {
   const [state, action] = useActionState<GroupActionState, FormData>(createGroupAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form action={action} noValidate className="mt-8 space-y-6">
+    <form action={action} onSubmitCapture={preserveValues} noValidate className="mt-8 space-y-6">
       {sourceSessionId ? <input type="hidden" name="sourceSessionId" value={sourceSessionId} /> : null}
       {state.error ? (
         <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger">

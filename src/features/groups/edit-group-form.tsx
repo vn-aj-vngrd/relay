@@ -6,6 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type GroupActionState, updateGroupAction } from "./actions";
 
@@ -22,6 +23,7 @@ export function EditGroupForm({
   const [state, action] = useActionState<GroupActionState, FormData>(updateGroupAction, {});
   const [preview, setPreview] = useState<string>();
   const [removeImage, setRemoveImage] = useState(false);
+  const preserveValues = usePreserveFormValuesOnError(state);
   const shownImage = removeImage ? undefined : (preview ?? imageUrl);
 
   useEffect(
@@ -44,7 +46,7 @@ export function EditGroupForm({
   }
 
   return (
-    <form action={action} noValidate className="mt-8 space-y-6">
+    <form action={action} onSubmitCapture={preserveValues} noValidate className="mt-8 space-y-6">
       <input type="hidden" name="groupId" value={group.id} />
       <input type="hidden" name="removeImage" value={removeImage ? "true" : "false"} />
 

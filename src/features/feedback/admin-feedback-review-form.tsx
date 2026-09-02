@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type FeedbackActionState, updateFeedbackAction } from "./actions";
 import { type FeedbackStatus, feedbackStatuses, feedbackStatusLabels } from "./domain";
@@ -18,9 +19,10 @@ export function AdminFeedbackReviewForm({
   adminNote: string | null;
 }) {
   const [state, action] = useActionState<FeedbackActionState, FormData>(updateFeedbackAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   return (
-    <form noValidate action={action} className="border-y border-line py-6">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-6">
       <input type="hidden" name="feedbackId" value={feedbackId} />
       <div className="grid gap-6 sm:grid-cols-[220px_1fr]">
         <SelectField

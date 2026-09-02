@@ -1,17 +1,30 @@
 "use client";
 
-import { Turnstile } from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import Link from "next/link";
-import { useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { SubmitButton } from "@/components/ui/submit-button";
 
-import { requestPasswordReset } from "./actions";
+import { requestPasswordResetState } from "./actions";
 
 export function PasswordRecoveryForm() {
-  const [captchaReady, setCaptchaReady] = useState(false);
+  const [state, action] = useActionState(requestPasswordResetState, {});
+  const [email, setEmail] = useState("");
+  const [editedAfterError, setEditedAfterError] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [submittedCaptcha, setSubmittedCaptcha] = useState("");
+  const turnstileRef = useRef<TurnstileInstance>(undefined);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+  const emailError = editedAfterError ? undefined : state.fieldErrors?.email;
+  const visibleError = state.error && !editedAfterError ? state.error : undefined;
+  const captchaNeedsRefresh = state.refreshCaptcha && submittedCaptcha === captchaToken;
+
+  useEffect(() => {
+    if (!state.refreshCaptcha) return;
+    turnstileRef.current?.reset();
+  }, [state]);
 
   return (
     <>
@@ -20,7 +33,16 @@ export function PasswordRecoveryForm() {
           Password recovery is temporarily unavailable while the security check is being configured.
         </Alert>
       ) : null}
-      <form noValidate action={requestPasswordReset} className={`${turnstileSiteKey ? "mt-8" : "mt-5"} space-y-5`}>
+      {visibleError ? <Alert className="mt-8">{visibleError}</Alert> : null}
+      <form
+        noValidate
+        action={action}
+        onSubmitCapture={() => {
+          setEditedAfterError(false);
+          setSubmittedCaptcha(captchaToken);
+        }}
+        className={`${turnstileSiteKey || visibleError ? "mt-5" : "mt-8"} space-y-5`}
+      >
         <div>
           <label htmlFor="recovery-email" className="text-sm font-semibold">
             Email
@@ -32,19 +54,39 @@ export function PasswordRecoveryForm() {
             inputMode="email"
             autoComplete="email"
             spellCheck={false}
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setEditedAfterError(true);
+            }}
             required
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? "recovery-email-error" : undefined}
             className="field"
             placeholder="you@example.com"
           />
+          {emailError?.[0] ? (
+            <p id="recovery-email-error" role="alert" className="mt-1.5 text-sm font-medium text-danger">
+              {emailError[0]}
+            </p>
+          ) : null}
         </div>
         {turnstileSiteKey ? (
           <div role="group" className="min-h-[65px] overflow-hidden" aria-label="Password reset security check">
             <Turnstile
+              ref={turnstileRef}
               siteKey={turnstileSiteKey}
-              options={{ size: "flexible", theme: "auto" }}
-              onSuccess={() => setCaptchaReady(true)}
-              onExpire={() => setCaptchaReady(false)}
-              onError={() => setCaptchaReady(false)}
+              options={{
+                size: "flexible",
+                theme: "auto",
+                appearance: "interaction-only",
+                refreshExpired: "auto",
+                refreshTimeout: "auto",
+              }}
+              onSuccess={setCaptchaToken}
+              onBeforeInteractive={() => setCaptchaToken("")}
+              onExpire={() => setCaptchaToken("")}
+              onError={() => setCaptchaToken("")}
             />
           </div>
         ) : null}
@@ -52,7 +94,7 @@ export function PasswordRecoveryForm() {
           type="submit"
           className="h-12 w-full text-[15px]"
           pendingLabel="Sending reset link…"
-          disabled={!turnstileSiteKey || !captchaReady}
+          disabled={!turnstileSiteKey || !captchaToken || captchaNeedsRefresh}
         >
           Send reset link
         </SubmitButton>

@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, updateUserProfileAction } from "./actions";
 
@@ -38,8 +39,9 @@ export function UpdateUserForm({
   } | null;
 }) {
   const [state, action] = useActionState<AdminActionState, FormData>(updateUserProfileAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} className="max-w-xl space-y-5">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="max-w-xl space-y-5">
       <input type="hidden" name="userId" value={userId} />
       <div>
         <label htmlFor="admin-profile-name" className="text-sm font-semibold">

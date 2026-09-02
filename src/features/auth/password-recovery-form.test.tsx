@@ -2,15 +2,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@marsidev/react-turnstile", () => ({
-  Turnstile: ({ onSuccess }: { onSuccess: () => void }) => (
-    <button type="button" onClick={onSuccess}>
+  Turnstile: ({ onSuccess }: { onSuccess: (token: string) => void }) => (
+    <button type="button" onClick={() => onSuccess("test-token")}>
       Complete security check
     </button>
   ),
 }));
 
 vi.mock("./actions", () => ({
-  requestPasswordReset: vi.fn(),
+  requestPasswordResetState: vi.fn(async () => ({})),
 }));
 
 import { PasswordRecoveryForm } from "./password-recovery-form";

@@ -3,13 +3,15 @@
 import { useActionState } from "react";
 
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { addGroupMemberAction, type GroupActionState } from "./actions";
 
 export function AddGroupMemberForm({ groupId }: { groupId: string }) {
   const [state, action] = useActionState<GroupActionState, FormData>(addGroupMemberAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} className="mt-4 flex flex-col gap-2 sm:flex-row">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="mt-4 flex flex-col gap-2 sm:flex-row">
       <input type="hidden" name="groupId" value={groupId} />
       <div className="min-w-0 flex-1">
         <label htmlFor="member-username" className="sr-only">

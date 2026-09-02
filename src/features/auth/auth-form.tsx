@@ -50,7 +50,9 @@ export function AuthForm({
   onModeChange?: (mode: Mode) => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
-  const [captchaReady, setCaptchaReady] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [submittedCaptcha, setSubmittedCaptcha] = useState("");
+  const [editedAfterError, setEditedAfterError] = useState<Record<string, boolean>>({});
   const [signInEmail, setSignInEmail] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -61,14 +63,27 @@ export function AuthForm({
   const turnstileRef = useRef<TurnstileInstance>(undefined);
   const creating = mode === "create";
   const activeState = creating ? createState : signInState;
+  const stateKey = creating ? "create" : "signin";
+  const fieldError = (field: string) =>
+    editedAfterError[`${stateKey}:${field}`] ? undefined : activeState.fieldErrors?.[field];
+  const hasVisibleFieldErrors = Object.keys(activeState.fieldErrors ?? {}).some(
+    (field) => !editedAfterError[`${stateKey}:${field}`],
+  );
+  const visibleFormError =
+    activeState.error && (activeState.fieldErrors ? hasVisibleFieldErrors : !editedAfterError[`${stateKey}:form`])
+      ? activeState.error
+      : undefined;
+  const captchaNeedsRefresh = activeState.refreshCaptcha && submittedCaptcha === captchaToken;
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const modeHref = (path: "/login" | "/signup") =>
     next && next !== "/home" ? `${path}?next=${encodeURIComponent(next)}` : path;
+  const markEdited = (field: string) =>
+    setEditedAfterError((current) => ({ ...current, [`${stateKey}:${field}`]: true, [`${stateKey}:form`]: true }));
 
   useEffect(() => {
-    if (!activeState.error) return;
+    if (!activeState.refreshCaptcha) return;
     turnstileRef.current?.reset();
-  }, [activeState.error]);
+  }, [activeState]);
 
   return (
     <div>
@@ -117,9 +132,17 @@ export function AuthForm({
         </Alert>
       ) : null}
 
-      {activeState.error ? <Alert className="mb-5">{activeState.error}</Alert> : null}
+      {visibleFormError ? <Alert className="mb-5">{visibleFormError}</Alert> : null}
 
-      <form noValidate action={creating ? createAction : signInAction} className="space-y-4 sm:space-y-5">
+      <form
+        noValidate
+        action={creating ? createAction : signInAction}
+        onSubmitCapture={() => {
+          setSubmittedCaptcha(captchaToken);
+          setEditedAfterError({});
+        }}
+        className="space-y-4 sm:space-y-5"
+      >
         <input type="hidden" name="next" value={next} />
         <div>
           <label htmlFor="password-email" className="text-sm font-[650]">
@@ -133,14 +156,18 @@ export function AuthForm({
             autoComplete="email"
             spellCheck={false}
             value={creating ? createEmail : signInEmail}
-            onChange={(event) => (creating ? setCreateEmail(event.target.value) : setSignInEmail(event.target.value))}
+            onChange={(event) => {
+              if (creating) setCreateEmail(event.target.value);
+              else setSignInEmail(event.target.value);
+              markEdited("email");
+            }}
             required
-            aria-invalid={Boolean(activeState.fieldErrors?.email)}
-            aria-describedby={activeState.fieldErrors?.email ? "password-email-error" : undefined}
+            aria-invalid={Boolean(fieldError("email"))}
+            aria-describedby={fieldError("email") ? "password-email-error" : undefined}
             className="field"
             placeholder="you@example.com"
           />
-          <FieldError id="password-email-error" errors={activeState.fieldErrors?.email} />
+          <FieldError id="password-email-error" errors={fieldError("email")} />
         </div>
         <PasswordField
           id="password"
@@ -149,10 +176,14 @@ export function AuthForm({
           minLength={creating ? 8 : undefined}
           autoComplete={creating ? "new-password" : "current-password"}
           value={creating ? newPassword : signInPassword}
-          onChange={(event) => (creating ? setNewPassword(event.target.value) : setSignInPassword(event.target.value))}
+          onChange={(event) => {
+            if (creating) setNewPassword(event.target.value);
+            else setSignInPassword(event.target.value);
+            markEdited("password");
+          }}
           required
-          aria-invalid={Boolean(activeState.fieldErrors?.password)}
-          aria-describedby={activeState.fieldErrors?.password ? "password-error" : undefined}
+          aria-invalid={Boolean(fieldError("password"))}
+          aria-describedby={fieldError("password") ? "password-error" : undefined}
           labelClassName="font-[650]"
           hint={
             creating ? (
@@ -166,7 +197,7 @@ export function AuthForm({
             )
           }
         />
-        <FieldError id="password-error" errors={activeState.fieldErrors?.password} />
+        <FieldError id="password-error" errors={fieldError("password")} />
         {creating ? (
           <PasswordField
             id="password-confirmation"
@@ -175,12 +206,15 @@ export function AuthForm({
             minLength={8}
             autoComplete="new-password"
             value={passwordConfirmation}
-            onChange={(event) => setPasswordConfirmation(event.target.value)}
+            onChange={(event) => {
+              setPasswordConfirmation(event.target.value);
+              markEdited("confirmation");
+            }}
             required
-            aria-invalid={Boolean(createState.fieldErrors?.confirmation)}
-            aria-describedby={createState.fieldErrors?.confirmation ? "password-confirmation-error" : undefined}
+            aria-invalid={Boolean(fieldError("confirmation"))}
+            aria-describedby={fieldError("confirmation") ? "password-confirmation-error" : undefined}
             labelClassName="font-[650]"
-            hint={<FieldError id="password-confirmation-error" errors={createState.fieldErrors?.confirmation} />}
+            hint={<FieldError id="password-confirmation-error" errors={fieldError("confirmation")} />}
           />
         ) : null}
         {turnstileSiteKey ? (
@@ -192,15 +226,21 @@ export function AuthForm({
             <Turnstile
               ref={turnstileRef}
               siteKey={turnstileSiteKey}
-              options={{ size: "flexible", theme: "auto" }}
-              onSuccess={() => setCaptchaReady(true)}
-              onBeforeInteractive={() => setCaptchaReady(false)}
-              onExpire={() => setCaptchaReady(false)}
-              onError={() => setCaptchaReady(false)}
+              options={{
+                size: "flexible",
+                theme: "auto",
+                appearance: "interaction-only",
+                refreshExpired: "auto",
+                refreshTimeout: "auto",
+              }}
+              onSuccess={setCaptchaToken}
+              onBeforeInteractive={() => setCaptchaToken("")}
+              onExpire={() => setCaptchaToken("")}
+              onError={() => setCaptchaToken("")}
             />
           </div>
         ) : null}
-        <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaReady} />
+        <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaToken || captchaNeedsRefresh} />
       </form>
     </div>
   );

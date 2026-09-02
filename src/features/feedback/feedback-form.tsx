@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type FeedbackActionState, submitFeedbackAction } from "./actions";
 import { feedbackAreaLabels, feedbackAreas, type FeedbackType, feedbackTypeLabels, feedbackTypes } from "./domain";
@@ -27,13 +28,20 @@ export function FeedbackForm() {
   const [state, action] = useActionState<FeedbackActionState, FormData>(submitFeedbackAction, {});
   const [type, setType] = useState<FeedbackType>("bug");
   const formRef = useRef<HTMLFormElement>(null);
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   useEffect(() => {
     if (state.success) formRef.current?.reset();
   }, [state]);
 
   return (
-    <form noValidate ref={formRef} action={action} className="border-y border-line py-6 sm:py-8">
+    <form
+      noValidate
+      ref={formRef}
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="border-y border-line py-6 sm:py-8"
+    >
       <fieldset>
         <legend className="text-sm font-[650]">What would you like to share?</legend>
         <div className="mt-2 divide-y divide-line border-y border-line">

@@ -28,7 +28,8 @@ test("the landing page introduces Relay and protected routes open a usable login
   expect(brandBox).not.toBeNull();
   expect(headerBox).not.toBeNull();
   expect(Math.abs(brandBox!.x + brandBox!.width / 2 - (headerBox!.x + headerBox!.width / 2))).toBeLessThan(1);
-  await expect(page.getByText("Continue with Google")).toHaveCount(0);
+  const googleButton = page.getByRole("button", { name: "Continue with Google" });
+  if (await googleButton.count()) await expect(googleButton).toBeVisible();
   await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
   await page.getByRole("link", { name: "Forgot password?" }).click();
   await expect(page).toHaveURL(/\/forgot-password$/);
@@ -57,6 +58,10 @@ test("the public court finder works without an account", async ({ page }) => {
 test("public Quick Play prepares players, rotates, and scores without an account", async ({ page }) => {
   await page.goto("/play");
   await expect(page.getByRole("heading", { name: "Set up Play" })).toBeVisible();
+  await expect(page.locator("select")).toHaveCount(0);
+  await page.getByRole("button", { name: "Queue rule" }).click();
+  await page.getByRole("option", { name: "Four rotate — a fresh group every match" }).click();
+  await expect(page.getByRole("button", { name: "Queue rule" })).toContainText("Four rotate");
   for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
     await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
   }

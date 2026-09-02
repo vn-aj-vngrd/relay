@@ -86,6 +86,21 @@ describe("PublicQuickPlay", () => {
     expect(screen.getByRole("radio", { name: /Team Round Robin/ })).toBeEnabled();
   });
 
+  it("uses Relay listboxes instead of browser-native dropdowns", () => {
+    const { container } = render(<PublicQuickPlay />);
+
+    expect(container.querySelector("select")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Queue rule" }));
+    fireEvent.click(screen.getByRole("option", { name: "Four rotate — a fresh group every match" }));
+    expect(screen.getByRole("button", { name: "Queue rule" })).toHaveTextContent(
+      "Four rotate — a fresh group every match",
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
+    expect(screen.getAllByRole("button", { name: "Playing experience" })).toHaveLength(4);
+    expect(container.querySelector("select")).not.toBeInTheDocument();
+  });
+
   it("collects playing experience for Balanced Mix", () => {
     render(<PublicQuickPlay />);
     fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));

@@ -4,6 +4,7 @@ import { ImageSquare, PaperPlaneRight, X } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { sendMessage } from "./actions";
 import { DEFAULT_CHAT_IMAGE_MAX_BYTES, formatChatImageLimit, validateChatImageMetadata } from "./config";
@@ -22,6 +23,7 @@ export function ChatComposer({
   const [imageError, setImageError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   useEffect(() => {
     if (!state.success) return;
@@ -33,6 +35,7 @@ export function ChatComposer({
       noValidate
       ref={formRef}
       action={action}
+      onSubmitCapture={preserveValues}
       onReset={() => {
         setFileName("");
         setImageError("");

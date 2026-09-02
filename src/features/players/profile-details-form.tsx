@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type ProfileDetailsActionState, updateOwnProfileAction } from "./actions";
 import { playingExperienceOptions } from "./playing-experience";
@@ -24,8 +25,9 @@ export function ProfileDetailsForm({
   };
 }) {
   const [state, action] = useActionState<ProfileDetailsActionState, FormData>(updateOwnProfileAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} className="border-y border-line py-5">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="profile-name" className="text-sm font-semibold">

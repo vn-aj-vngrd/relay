@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, resetUserPasswordAction } from "./actions";
 
@@ -29,6 +30,7 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, action] = useActionState<AdminActionState, FormData>(resetUserPasswordAction, {});
   const [copied, setCopied] = useState(false);
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   if (state.temporaryPassword && state.accountEmail) {
     const credentials = `Email: ${state.accountEmail}\nTemporary password: ${state.temporaryPassword}`;
@@ -75,7 +77,7 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
         ref={dialogRef}
         className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
       >
-        <form noValidate action={action} className="p-5 sm:p-6">
+        <form noValidate action={action} onSubmitCapture={preserveValues} className="p-5 sm:p-6">
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">

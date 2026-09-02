@@ -3,11 +3,13 @@
 import { useActionState } from "react";
 
 import { PendingSubmit } from "@/components/ui/pending-submit";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, updateSignupCapacityAction } from "./actions";
 
 export function SignupCapacityControl({ accountCap, userCount }: { accountCap: number; userCount: number }) {
   const [state, action] = useActionState<AdminActionState, FormData>(updateSignupCapacityAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   const remaining = Math.max(0, accountCap - userCount);
   const full = remaining === 0;
 
@@ -30,7 +32,7 @@ export function SignupCapacityControl({ accountCap, userCount }: { accountCap: n
           </p>
         </div>
 
-        <form noValidate action={action} className="min-w-0">
+        <form noValidate action={action} onSubmitCapture={preserveValues} className="min-w-0">
           <label htmlFor="signup-account-cap" className="text-sm font-semibold">
             Maximum accounts
           </label>

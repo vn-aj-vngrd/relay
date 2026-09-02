@@ -31,13 +31,14 @@ export function SelectField({
   className?: string;
 }) {
   const [localValue, setLocalValue] = useState(defaultValue);
+  const root = useRef<HTMLDivElement>(null);
   const value = controlledValue ?? localValue;
   const setValue = (next: string) => {
     if (controlledValue === undefined) setLocalValue(next);
     onValueChange?.(next);
+    root.current?.dispatchEvent(new Event("input", { bubbles: true }));
   };
   const { open, rendered, hide, toggle } = usePopoverTransition();
-  const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const selected = options.find((option) => option.value === value) ?? options[0];
   useEffect(() => {

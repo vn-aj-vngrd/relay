@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import { playingExperienceLabel, playingExperienceOptions } from "@/features/players/playing-experience";
 
@@ -53,6 +54,7 @@ export function RsvpControl({
   const [choice, setChoice] = useState<Choice>(() => initialChoice(currentRsvp));
   const [state, action, pending] = useActionState(rsvpAction, {});
   const [shareMessage, setShareMessage] = useState("");
+  const preserveValues = usePreserveFormValuesOnError(state);
   const isReturningGuest = Boolean(guestName);
   const nameInputId = `guest-${instance}-${sessionId}`;
   const signInHref = `/login?next=${encodeURIComponent(`/s/${slug}`)}`;
@@ -91,7 +93,7 @@ export function RsvpControl({
         </div>
       ) : (
         <>
-          <form noValidate action={action} className="space-y-3">
+          <form noValidate action={action} onSubmitCapture={preserveValues} className="space-y-3">
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="choice" value={choice} />
             {discoverySource ? <input type="hidden" name="discoverySource" value={discoverySource} /> : null}

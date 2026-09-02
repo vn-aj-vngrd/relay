@@ -59,6 +59,7 @@ import {
   createPasswordAccount,
   createPasswordAccountState,
   requestPasswordReset,
+  requestPasswordResetState,
   signInWithGoogle,
   signInWithPassword,
   signInWithPasswordState,
@@ -142,7 +143,10 @@ describe("signInWithPassword", () => {
     formData.set("password", "legacy");
     formData.set("cf-turnstile-response", "verified-turnstile-token");
 
-    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({ error: "Email or password is incorrect." });
+    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({
+      error: "Email or password is incorrect.",
+      refreshCaptcha: true,
+    });
 
     expect(mocks.signInWithPassword).toHaveBeenCalledWith({
       email: "player@example.com",
@@ -158,13 +162,29 @@ describe("signInWithPassword", () => {
     formData.set("password", "RelayPass123");
     formData.set("cf-turnstile-response", "verified-turnstile-token");
 
-    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({ error: "Email or password is incorrect." });
+    await expect(signInWithPasswordState({}, formData)).resolves.toEqual({
+      error: "Email or password is incorrect.",
+      refreshCaptcha: true,
+    });
 
     expect(mocks.redirect).not.toHaveBeenCalled();
   });
 });
 
 describe("requestPasswordReset", () => {
+  it("returns an inline email error without consuming the existing challenge", async () => {
+    const formData = new FormData();
+    formData.set("email", "not-an-email");
+    formData.set("cf-turnstile-response", "verified-turnstile-token");
+
+    await expect(requestPasswordResetState({}, formData)).resolves.toEqual({
+      error: "Check the field marked below.",
+      fieldErrors: { email: ["Enter a valid email address."] },
+    });
+
+    expect(mocks.resetPasswordForEmail).not.toHaveBeenCalled();
+  });
+
   it("forwards Turnstile to Supabase and remembers which email received the request", async () => {
     mocks.resetPasswordForEmail.mockResolvedValue({ error: null });
     const formData = new FormData();

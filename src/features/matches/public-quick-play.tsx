@@ -4,6 +4,7 @@ import { ArrowCounterClockwise, ArrowsLeftRight, Shuffle, Trash, UserPlus } from
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
+import { SelectField } from "@/components/ui/select-field";
 import {
   type PlayingExperience,
   playingExperienceOptions,
@@ -137,23 +138,20 @@ function PairBuilder({
             {([0, 1] as const).map((member) => {
               const index = pairIndex * 2 + member;
               return (
-                <label key={member} className="text-xs font-medium text-muted">
-                  <span className="sr-only">
-                    Pair {pairIndex + 1}, player {member + 1}
-                  </span>
-                  <select
-                    value={order[index]}
-                    onChange={(event) => choose(index, event.target.value)}
-                    aria-label={`Pair ${pairIndex + 1}, player ${member + 1}`}
-                    className="field mt-0 h-11 text-sm text-ink"
-                  >
-                    {players.map((player, playerIndex) => (
-                      <option key={player.id} value={player.id}>
-                        {player.name.trim() || `Player ${playerIndex + 1}`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <SelectField
+                  key={member}
+                  id={`quick-pair-${pairIndex + 1}-player-${member + 1}`}
+                  name={`quick-pair-${pairIndex + 1}-player-${member + 1}`}
+                  label={`Pair ${pairIndex + 1}, player ${member + 1}`}
+                  hideLabel
+                  value={order[index]}
+                  onValueChange={(value) => choose(index, value)}
+                  options={players.map((player, playerIndex) => ({
+                    value: player.id,
+                    label: player.name.trim() || `Player ${playerIndex + 1}`,
+                  }))}
+                  className="!mt-0"
+                />
               );
             })}
           </div>
@@ -260,22 +258,14 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
                     />
                   </label>
                   {mode === "balanced" ? (
-                    <label className="block text-sm font-[650]">
-                      Playing experience
-                      <select
-                        value={player.experience}
-                        onChange={(event) =>
-                          updatePlayer(player.id, { experience: event.target.value as PlayingExperience })
-                        }
-                        className="field h-11"
-                      >
-                        {playingExperienceOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <SelectField
+                      id={`quick-player-${index + 1}-experience`}
+                      name={`quick-player-${index + 1}-experience`}
+                      label="Playing experience"
+                      value={player.experience}
+                      onValueChange={(value) => updatePlayer(player.id, { experience: value as PlayingExperience })}
+                      options={playingExperienceOptions}
+                    />
                   ) : null}
                 </div>
                 <button
@@ -420,26 +410,28 @@ function QuickPlaySetup({ onStart }: { onStart: (session: QuickPlaySession) => v
                 </div>
               </fieldset>
               <div>
-                <label className="block text-sm font-[650]">
-                  Queue rule
-                  <select
-                    value={queueRule}
-                    onChange={(event) => setQueueRule(event.target.value as QueueRule)}
-                    className="field h-11"
-                  >
-                    <option value="adaptive">Adaptive — Relay responds to the queue</option>
-                    <option value="four_off">
-                      {fixedPartners
+                <SelectField
+                  id="quick-queue-rule"
+                  name="quick-queue-rule"
+                  label="Queue rule"
+                  value={queueRule}
+                  onValueChange={(value) => setQueueRule(value as QueueRule)}
+                  options={[
+                    { value: "adaptive", label: "Adaptive — Relay responds to the queue" },
+                    {
+                      value: "four_off",
+                      label: fixedPartners
                         ? "Both pairs rotate — two fresh teams"
-                        : "Four rotate — a fresh group every match"}
-                    </option>
-                    <option value="winner_stays">
-                      {fixedPartners
+                        : "Four rotate — a fresh group every match",
+                    },
+                    {
+                      value: "winner_stays",
+                      label: fixedPartners
                         ? "Winning pair stays — up to two games"
-                        : "Winners stay — split and take the next two"}
-                    </option>
-                  </select>
-                </label>
+                        : "Winners stay — split and take the next two",
+                    },
+                  ]}
+                />
                 <p className="mt-1.5 text-xs leading-5 text-muted">
                   {fixedPartners
                     ? "Adaptive keeps the winning pair for a short queue and rotates both pairs when another two teams are waiting."

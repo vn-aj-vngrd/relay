@@ -6,6 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { DatePickerField, TimePickerField } from "@/components/ui/date-time-picker";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { VenueCombobox } from "@/features/venues/venue-combobox";
 
 import { type SessionActionState, updateSessionAction } from "./actions";
@@ -50,6 +51,7 @@ export type SessionSettingsDefaults = {
 
 export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDefaults }) {
   const [state, action] = useActionState<SessionActionState, FormData>(updateSessionAction, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
   const [booked, setBooked] = useState(state.values ? state.values.booked === "on" : defaults.booked);
   const [visibility, setVisibility] = useState<"public" | "link" | "private">(
     (state.values?.visibility as "public" | "link" | "private" | undefined) ?? defaults.visibility,
@@ -69,7 +71,7 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
   const error = (key: string) => state.fieldErrors?.[key]?.[0];
 
   return (
-    <form action={action} noValidate className="space-y-9">
+    <form action={action} onSubmitCapture={preserveValues} noValidate className="space-y-9">
       <input type="hidden" name="sessionId" value={defaults.id} />
       <input type="hidden" name="version" value={defaults.version} />
       {state.error ? (

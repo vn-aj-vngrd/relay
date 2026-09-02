@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
+import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, createUserAction } from "./actions";
 
@@ -27,6 +28,7 @@ function CreateButton() {
 export function CreateUserForm() {
   const [state, action] = useActionState<AdminActionState, FormData>(createUserAction, {});
   const [copied, setCopied] = useState(false);
+  const preserveValues = usePreserveFormValuesOnError(state);
 
   if (state.temporaryPassword && state.accountEmail) {
     const credentials = `Email: ${state.accountEmail}\nTemporary password: ${state.temporaryPassword}`;
@@ -71,7 +73,7 @@ export function CreateUserForm() {
   }
 
   return (
-    <form noValidate action={action} className="max-w-xl space-y-5">
+    <form noValidate action={action} onSubmitCapture={preserveValues} className="max-w-xl space-y-5">
       <div>
         <label htmlFor="admin-user-email" className="text-sm font-semibold">
           Email
