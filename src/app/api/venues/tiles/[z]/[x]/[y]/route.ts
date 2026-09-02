@@ -113,21 +113,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ z: s
   // cache, so charging its persistent buckets would exhaust production-style
   // limits during ordinary local reloads and leave MapLibre with 429 tile errors.
   if (process.env.NODE_ENV === "production") {
-    // MapLibre requests many tiles concurrently. Sharding preserves the same hard
-    // aggregate ceilings without making every cold map load contend on one row.
-    const tileShard = Math.abs(zoom * 73_856_093 + tileX * 19_349_663 + tileY * 83_492_791);
-    const globalShard = tileShard % 32;
-    const visitorShard = tileShard % 8;
+    // Keep the provider budget global. Coordinate-based shards made popular
+    // Cebu tiles exhaust one tiny bucket while most of the daily budget sat idle.
     const visitor = await requestIdentity();
     const [dailyBudget, visitorLimit] = await Promise.all([
-      checkRateLimit(
-        { scope: "philippines-map-tiles-global", limit: 78, windowSeconds: 86_400 },
-        `shard:${globalShard}`,
-      ),
-      checkRateLimit(
-        { scope: "philippines-map-tiles", limit: 75, windowSeconds: 600 },
-        `${visitor}:shard:${visitorShard}`,
-      ),
+      checkRateLimit({ scope: "philippines-map-tiles-global", limit: 2_500, windowSeconds: 86_400 }, "global"),
+      checkRateLimit({ scope: "philippines-map-tiles", limit: 600, windowSeconds: 600 }, visitor),
     ]);
     const limit = dailyBudget.allowed ? visitorLimit : dailyBudget;
     if (!limit.allowed)

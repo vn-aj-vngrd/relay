@@ -53,6 +53,31 @@ describe("venue tile route", () => {
     expect(mocks.checkRateLimit).not.toHaveBeenCalled();
   });
 
+  it("uses the complete provider budget instead of coordinate-based production shards", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    mocks.checkRateLimit.mockResolvedValue({
+      allowed: true,
+      limit: 2_500,
+      remaining: 2_499,
+      retryAfterSeconds: 86_400,
+    });
+
+    const response = await GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), {
+      params,
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.checkRateLimit).toHaveBeenCalledWith(
+      { scope: "philippines-map-tiles-global", limit: 2_500, windowSeconds: 86_400 },
+      "global",
+    );
+    expect(mocks.checkRateLimit).toHaveBeenCalledWith(
+      { scope: "philippines-map-tiles", limit: 600, windowSeconds: 600 },
+      "ip:test",
+    );
+    expect(mocks.checkRateLimit.mock.calls.flatMap((call) => call).join(" ")).not.toContain("shard:");
+  });
+
   it("bounds zoom bursts so provider requests do not time out under concurrency", async () => {
     let activeRequests = 0;
     let maximumConcurrency = 0;
