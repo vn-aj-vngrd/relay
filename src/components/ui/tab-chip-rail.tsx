@@ -63,7 +63,7 @@ export function TabChipRail<T extends string>({
     <div
       ref={scroller}
       onScroll={updateFade}
-      className={`public-session-scroll -mx-1 overflow-x-auto px-1 pb-1 ${fadeClass} ${className}`}
+      className={`public-session-scroll -mx-1.5 -my-1.5 overflow-x-auto px-1.5 py-1.5 ${fadeClass} ${className}`}
     >
       <div role="group" aria-label={label} className="flex min-w-max gap-2">
         {items.map((item) => {

@@ -254,7 +254,12 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
           userId,
           sessionId: session.id,
           type: "session_invite",
-          payload: { groupId: groupMembership?.groupId ?? null },
+          payload: {
+            groupId: groupMembership?.groupId ?? null,
+            hostName: hostProfile.name,
+            startsAt: session.startsAt.toISOString(),
+            venueName: session.venueName,
+          },
         })),
       );
     }
@@ -857,6 +862,7 @@ const rsvpInput = z.object({
   guestName: z.string().trim().min(2).max(60).optional(),
   skillLevel: z.enum(playingExperienceValues).optional(),
   discoverySource: z.enum(["open-games", "search"]).optional(),
+  inviteSource: z.enum(["games", "home", "notification", "game"]).optional(),
 });
 
 export async function rsvpAction(_: SessionActionState, formData: FormData): Promise<SessionActionState> {
@@ -866,6 +872,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
     guestName: formData.get("guestName") || undefined,
     skillLevel: formData.get("skillLevel") || undefined,
     discoverySource: formData.get("discoverySource") || undefined,
+    inviteSource: formData.get("inviteSource") || undefined,
   });
   if (!parsed.success) return { error: "Add your name before responding." };
   const session = await db.query.sessions.findFirst({
@@ -974,6 +981,17 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
           .returning({ id: sessionPlayers.id });
         actorPlayerId = createdPlayer.id;
       }
+      if (user)
+        await tx
+          .update(notifications)
+          .set({ readAt: new Date() })
+          .where(
+            and(
+              eq(notifications.userId, user.id),
+              eq(notifications.sessionId, session.id),
+              eq(notifications.type, "session_invite"),
+            ),
+          );
       if (nextRsvp === "pending" && actorPlayerId)
         await tx.insert(notifications).values({
           userId: session.hostId,
@@ -1062,8 +1080,8 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       maxAge: 60 * 60 * 24 * 90,
       path: "/",
     });
-  await reconcileUnpaidExpenseShares(session.id);
   await Promise.all([
+    reconcileUnpaidExpenseShares(session.id),
     trackProductEvent({
       name: "rsvp_saved",
       userId: user?.id,
@@ -1071,6 +1089,17 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       source: user ? "authenticated" : "guest",
       metadata: { response: resolvedRsvp ?? "unknown" },
     }),
+    ...(parsed.data.inviteSource
+      ? [
+          trackProductEvent({
+            name: "invitation_responded" as const,
+            userId: user?.id,
+            sessionId: session.id,
+            source: user ? ("authenticated" as const) : ("guest" as const),
+            metadata: { inviteSource: parsed.data.inviteSource, response: resolvedRsvp ?? "unknown" },
+          }),
+        ]
+      : []),
     ...(session.visibility === "public" && parsed.data.discoverySource
       ? [
           trackProductEvent({
@@ -1089,6 +1118,9 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
         ]
       : []),
   ]);
+  revalidatePath("/home");
+  revalidatePath("/games");
+  revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/s/${session.slug}`);
   return { success: true, rsvp: resolvedRsvp };

@@ -11,6 +11,12 @@ export type GameCollectionItem = {
   capacity: number;
   status: "draft" | "published" | "live" | "completed" | "cancelled";
   accentColor: string;
+  viewerRsvp: "invited" | "pending" | "going" | "maybe" | "waitlisted" | "declined";
+  invitedAt: string;
+  hostName: string;
+  estimatedCostCents: number | null;
+  requiresApproval: boolean;
+  spotsRemaining: number;
   readiness?: {
     ready: boolean;
     percent: number;
@@ -23,6 +29,11 @@ export type GameCollectionItem = {
 export type GameCollectionPage = {
   items: GameCollectionItem[];
   nextCursor: string | null;
+};
+
+export type GameInvitationPage = {
+  items: GameCollectionItem[];
+  total: number;
 };
 
 export type GameCollectionPhase = "upcoming" | "past";

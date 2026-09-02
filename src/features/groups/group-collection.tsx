@@ -178,6 +178,27 @@ export function GroupViewMenu() {
   return <MobileViewMenu label="Group view" value={mode} options={viewOptions} onChange={saveView} />;
 }
 
+export function GroupDesktopViewControls() {
+  const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+
+  return (
+    <div role="group" aria-label="Group view" className="inline-flex rounded-lg bg-surface-strong p-0.5">
+      {viewOptions.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          type="button"
+          aria-label={`${label} view`}
+          aria-pressed={mode === value}
+          onClick={() => saveView(value)}
+          className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+        >
+          <Icon aria-hidden size={value === "grid" ? 17 : 18} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function GroupCollection({
   items: initialItems,
   nextCursor: initialNextCursor = null,
@@ -248,32 +269,11 @@ export function GroupCollection({
           />
         </div>
         <div className="hidden shrink-0 items-center gap-3 sm:flex">
-          <div role="group" aria-label="Group view" className="inline-flex rounded-lg bg-surface-strong p-0.5">
-            <button
-              type="button"
-              aria-label="List view"
-              aria-pressed={mode === "list"}
-              onClick={() => saveView("list")}
-              className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === "list" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-            >
-              <List aria-hidden size={18} />
-            </button>
-            <button
-              type="button"
-              aria-label="Grid view"
-              aria-pressed={mode === "grid"}
-              onClick={() => saveView("grid")}
-              className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === "grid" ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-            >
-              <GridFour aria-hidden size={17} />
-            </button>
-          </div>
-          {items.length ? (
-            <ButtonLink href="/groups/new">
-              <Plus aria-hidden size={16} />
-              Create group
-            </ButtonLink>
-          ) : null}
+          <GroupDesktopViewControls />
+          <ButtonLink href="/groups/new">
+            <Plus aria-hidden size={16} />
+            Create group
+          </ButtonLink>
         </div>
       </div>
       <section aria-label="Your groups">

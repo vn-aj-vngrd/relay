@@ -73,6 +73,9 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
       : null;
   if (username?.success === true && !invitee) return { error: `No Relay player found for @${username.data}.` };
   if (invitee?.userId === command.actorUserId) return { error: "You’re already the host of this game." };
+  const hostProfile = invitee
+    ? await db.query.profiles.findFirst({ columns: { name: true }, where: eq(profiles.userId, session.hostId) })
+    : null;
 
   try {
     await db.transaction(async (tx) => {
@@ -110,7 +113,11 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
           userId: invitee.userId,
           sessionId: session.id,
           type: "session_invite",
-          payload: {},
+          payload: {
+            hostName: hostProfile?.name ?? "The host",
+            startsAt: session.startsAt.toISOString(),
+            venueName: session.venueName,
+          },
         });
         await tx.insert(messages).values({
           sessionId: session.id,

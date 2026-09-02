@@ -1,13 +1,18 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, ne, or } from "drizzle-orm";
 import { cache } from "react";
 
 import { db } from "@/db/client";
 import { expenses, matches, profiles, sessionPlayers, sessions } from "@/db/schema";
 
 import { formatSessionDate, formatSessionTime, sessionDateKey } from "./format";
-import type { GameCollectionItem, GameCollectionPage, GameCollectionPhase } from "./game-collection-types";
+import type {
+  GameCollectionItem,
+  GameCollectionPage,
+  GameCollectionPhase,
+  GameInvitationPage,
+} from "./game-collection-types";
 import { encodeGameCursor, type GameCursor } from "./game-pagination";
 import { sessionReadiness } from "./readiness";
 
@@ -37,12 +42,33 @@ const HOME_RECENT_LIMIT = 4;
 export async function getHomeSessions(userId: string) {
   const now = new Date();
   const membershipCondition = userSessionCondition(userId);
-  const [upcoming, recent] = await Promise.all([
+  const [invitations, upcoming, recent] = await Promise.all([
     db
       .select({ session: sessions, player: sessionPlayers })
       .from(sessionPlayers)
       .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
-      .where(and(membershipCondition, gt(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])))
+      .where(
+        and(
+          eq(sessionPlayers.userId, userId),
+          eq(sessionPlayers.rsvp, "invited"),
+          gt(sessions.endsAt, now),
+          inArray(sessions.status, ["published", "live"]),
+        ),
+      )
+      .orderBy(asc(sessions.startsAt), asc(sessions.id))
+      .limit(3),
+    db
+      .select({ session: sessions, player: sessionPlayers })
+      .from(sessionPlayers)
+      .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+      .where(
+        and(
+          membershipCondition,
+          inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]),
+          gt(sessions.endsAt, now),
+          inArray(sessions.status, ["published", "live"]),
+        ),
+      )
       .orderBy(asc(sessions.startsAt), asc(sessions.id))
       .limit(HOME_UPCOMING_LIMIT),
     db
@@ -61,7 +87,7 @@ export async function getHomeSessions(userId: string) {
       .orderBy(desc(sessions.startsAt), desc(sessions.id))
       .limit(HOME_RECENT_LIMIT + 1),
   ]);
-  const rows = [...upcoming, ...recent];
+  const rows = [...invitations, ...upcoming, ...recent];
   const sessionIds = rows.map(({ session }) => session.id);
   const [counts, expenseRows] = rows.length
     ? await Promise.all([
@@ -82,6 +108,7 @@ export async function getHomeSessions(userId: string) {
   });
 
   return {
+    invitations: invitations.map(enrich),
     upcoming: upcoming.map(enrich),
     recent: recent.map(enrich),
   };
@@ -94,18 +121,21 @@ type UserSessionRow = Awaited<ReturnType<typeof getUserSessions>>[number];
 async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Promise<GameCollectionItem[]> {
   if (!rows.length) return [];
   const sessionIds = rows.map(({ session }) => session.id);
-  const [counts, expenseRows] = await Promise.all([
+  const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
+  const [counts, expenseRows, hostProfiles] = await Promise.all([
     db
       .select({ sessionId: sessionPlayers.sessionId, total: count() })
       .from(sessionPlayers)
       .where(and(inArray(sessionPlayers.sessionId, sessionIds), eq(sessionPlayers.rsvp, "going")))
       .groupBy(sessionPlayers.sessionId),
     db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
+    db.select({ userId: profiles.userId, name: profiles.name }).from(profiles).where(inArray(profiles.userId, hostIds)),
   ]);
   const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
   const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
+  const hostNames = new Map(hostProfiles.map(({ userId, name }) => [userId, name]));
 
-  return rows.map(({ session }) => {
+  return rows.map(({ session, player }) => {
     const playerCount = playerCounts.get(session.id) ?? 0;
     return {
       id: session.id,
@@ -120,6 +150,12 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       capacity: session.capacity,
       status: session.status,
       accentColor: session.accentColor,
+      viewerRsvp: player.rsvp,
+      invitedAt: player.invitedAt.toISOString(),
+      hostName: hostNames.get(session.hostId) ?? "Relay host",
+      estimatedCostCents: session.estimatedCostCents,
+      requiresApproval: session.requiresApproval,
+      spotsRemaining: Math.max(0, session.capacity - playerCount),
       ...(session.hostId === userId
         ? {
             readiness: sessionReadiness({
@@ -147,6 +183,34 @@ function userSessionCondition(userId: string) {
   );
 }
 
+function invitationCondition(userId: string, now = new Date()) {
+  return and(
+    eq(sessionPlayers.userId, userId),
+    eq(sessionPlayers.rsvp, "invited"),
+    gt(sessions.endsAt, now),
+    inArray(sessions.status, ["published", "live"]),
+  );
+}
+
+export async function getInvitationCount(userId: string) {
+  const [result] = await db
+    .select({ total: count() })
+    .from(sessionPlayers)
+    .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+    .where(invitationCondition(userId));
+  return Number(result?.total ?? 0);
+}
+
+export async function getGameInvitations(userId: string): Promise<GameInvitationPage> {
+  const rows = await db
+    .select({ session: sessions, player: sessionPlayers })
+    .from(sessionPlayers)
+    .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+    .where(invitationCondition(userId))
+    .orderBy(asc(sessions.startsAt), asc(sessions.id));
+  return { items: await toGameCollectionItems(userId, rows), total: rows.length };
+}
+
 export async function getGameCollectionPage(
   userId: string,
   phase: GameCollectionPhase,
@@ -169,7 +233,14 @@ export async function getGameCollectionPage(
     .select({ session: sessions, player: sessionPlayers })
     .from(sessionPlayers)
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
-    .where(and(userSessionCondition(userId), phaseCondition, cursorCondition))
+    .where(
+      and(
+        userSessionCondition(userId),
+        phase === "upcoming" ? ne(sessionPlayers.rsvp, "invited") : undefined,
+        phaseCondition,
+        cursorCondition,
+      ),
+    )
     .orderBy(
       ascending ? asc(sessions.startsAt) : desc(sessions.startsAt),
       ascending ? asc(sessions.id) : desc(sessions.id),
@@ -197,6 +268,7 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
     .where(
       and(
         userSessionCondition(userId),
+        ne(sessionPlayers.rsvp, "invited"),
         gte(sessions.startsAt, rangeStart),
         lt(sessions.startsAt, rangeEnd),
         inArray(sessions.status, ["published", "live", "completed"]),

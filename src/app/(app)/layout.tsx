@@ -21,14 +21,16 @@ import { NotificationRealtimeRefresh } from "@/features/notifications/realtime-r
 import { ApplicationTour } from "@/features/onboarding/application-tour";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
+import { getInvitationCount } from "@/features/sessions/queries";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const [profile, unreadCount] = await Promise.all([
+  const [profile, unreadCount, invitationCount] = await Promise.all([
     ensureProfile(user),
     db.$count(notifications, and(eq(notifications.userId, user.id), isNull(notifications.readAt))),
+    getInvitationCount(user.id),
   ]);
   if (!profile.onboardingCompletedAt) redirect("/onboarding");
   const isAdmin = isAdminEmail(user.email);
@@ -47,7 +49,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <SidebarCollapseToggle />
         </div>
         <SidebarUtilityNav />
-        <AppNav mode="sidebar" />
+        <AppNav mode="sidebar" invitationCount={invitationCount} />
         <div className="mt-auto">
           <SidebarSupportNav unreadCount={unreadCount} isAdmin={isAdmin} />
           <div className="mt-1 border-t border-line pt-1">
@@ -115,7 +117,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
-      <AppNav mode="mobile" />
+      <AppNav mode="mobile" invitationCount={invitationCount} />
     </div>
   );
 }

@@ -1,22 +1,44 @@
 "use client";
 
-import { CalendarBlank, CalendarPlus, CaretLeft, CaretRight, GridFour, List, MapPin } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  CalendarPlus,
+  CaretLeft,
+  CaretRight,
+  Check,
+  Coins,
+  MapPin,
+  Question,
+  Users,
+  X,
+} from "@phosphor-icons/react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useFormStatus } from "react-dom";
 import { z } from "zod";
 
 import { ButtonLink } from "@/components/ui/button";
-import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 
 import { sessionAccentStyle } from "./accent";
-import type { GameCollectionItem, GameCollectionPage, GameCollectionPhase } from "./game-collection-types";
+import { rsvpAction } from "./actions";
+import { peso } from "./format";
+import type {
+  GameCollectionItem,
+  GameCollectionPage,
+  GameCollectionPhase,
+  GameInvitationPage,
+} from "./game-collection-types";
+import { GameDesktopViewControls } from "./game-view-menu";
 
 export type { GameCollectionItem } from "./game-collection-types";
+export { GameViewMenu } from "./game-view-menu";
 
 type ViewMode = "list" | "grid" | "calendar";
-type GameFilter = "all" | "upcoming" | "past";
+type GameFilter = "upcoming" | "invites" | "past";
+type ActiveRsvp = "going" | "maybe" | "pending" | "waitlisted";
 const preferenceKey = "relay-games-view";
+const emptyInvitationPage: GameInvitationPage = { items: [], total: 0 };
 
 const gameItemSchema = z.object({
   id: z.string(),
@@ -31,6 +53,12 @@ const gameItemSchema = z.object({
   capacity: z.number(),
   status: z.enum(["draft", "published", "live", "completed", "cancelled"]),
   accentColor: z.string(),
+  viewerRsvp: z.enum(["invited", "pending", "going", "maybe", "waitlisted", "declined"]),
+  invitedAt: z.string(),
+  hostName: z.string(),
+  estimatedCostCents: z.number().nullable(),
+  requiresApproval: z.boolean(),
+  spotsRemaining: z.number(),
   readiness: z
     .object({
       ready: z.boolean(),
@@ -65,22 +93,6 @@ function subscribe(callback: () => void) {
     window.removeEventListener("relay-games-view-change", callback);
     window.removeEventListener("relay-preferences-change", callback);
   };
-}
-
-function saveView(mode: ViewMode) {
-  localStorage.setItem(preferenceKey, mode);
-  window.dispatchEvent(new Event("relay-games-view-change"));
-}
-
-const viewOptions = [
-  { value: "list" as const, label: "List", icon: List },
-  { value: "grid" as const, label: "Grid", icon: GridFour },
-  { value: "calendar" as const, label: "Calendar", icon: CalendarBlank },
-];
-
-export function GameViewMenu() {
-  const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
-  return <MobileViewMenu label="Game view" value={mode} options={viewOptions} onChange={saveView} />;
 }
 
 function GamePageSentinel({
@@ -164,6 +176,155 @@ function EmptyCollection({ past }: { past?: boolean }) {
   );
 }
 
+function EmptyInvitations() {
+  return (
+    <div className="border-y border-line py-5 sm:py-8">
+      <p className="font-[650]">No invites waiting</p>
+      <p className="mt-1 text-sm text-muted">New game invites will appear here until you respond.</p>
+    </div>
+  );
+}
+
+function rsvpLabel(rsvp: GameCollectionItem["viewerRsvp"]) {
+  if (rsvp === "pending") return "Awaiting approval";
+  if (rsvp === "waitlisted") return "Waitlisted";
+  if (rsvp === "maybe") return "Maybe";
+  if (rsvp === "going") return "Going";
+  return null;
+}
+
+function InviteResponseButtons() {
+  const { data, pending } = useFormStatus();
+  const pendingChoice = data?.get("choice");
+  const choices = [
+    { value: "going" as const, label: "Going", icon: Check },
+    { value: "maybe" as const, label: "Maybe", icon: Question },
+    { value: "declined" as const, label: "Can’t go", icon: X },
+  ];
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {choices.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          type="submit"
+          name="choice"
+          value={value}
+          disabled={pending}
+          className={`pressable inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-[13px] font-[650] disabled:cursor-wait disabled:opacity-65 ${value === "going" ? "border-primary bg-primary text-white hover:bg-primary-hover" : "border-line bg-surface hover:bg-surface-strong"}`}
+        >
+          <Icon aria-hidden size={15} weight={value === "going" ? "bold" : "regular"} className="shrink-0" />
+          <span>{pending && pendingChoice === value ? "Saving…" : label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function InvitationCard({
+  game,
+  onResponded,
+}: {
+  game: GameCollectionItem;
+  onResponded: (game: GameCollectionItem, response: ActiveRsvp | "declined") => void;
+}) {
+  const [state, action] = useActionState(rsvpAction, {});
+
+  useEffect(() => {
+    if (state.success && state.rsvp) onResponded(game, state.rsvp);
+  }, [game, onResponded, state.rsvp, state.success]);
+
+  const cost =
+    game.estimatedCostCents === 0
+      ? "Free"
+      : game.estimatedCostCents
+        ? `${peso(game.estimatedCostCents)} estimated`
+        : "Cost not added";
+  const availability = game.spotsRemaining ? `${game.spotsRemaining} spots open` : "Waitlist available";
+
+  return (
+    <article
+      style={sessionAccentStyle(game.accentColor)}
+      className="rounded-xl border border-line bg-surface p-4 sm:p-5"
+    >
+      <div className="min-w-0">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <Link
+              href={game.href}
+              prefetch={false}
+              className="line-clamp-2 font-[680] text-ink underline-offset-4 hover:text-primary hover:underline"
+            >
+              {game.title}
+            </Link>
+            <p className="mt-1 text-sm text-muted">Hosted by {game.hostName}</p>
+          </div>
+          <time className="score shrink-0 text-xs font-bold text-primary">{game.date}</time>
+        </div>
+        <ul className="mt-4 grid gap-2 text-sm text-muted sm:grid-cols-2">
+          <li className="flex min-w-0 items-center gap-2">
+            <CalendarBlank aria-hidden size={16} className="shrink-0" />
+            <span className="min-w-0 truncate">{game.time}</span>
+          </li>
+          <li className="flex min-w-0 items-center gap-2">
+            <MapPin aria-hidden size={16} className="shrink-0" />
+            <span className="min-w-0 truncate">{game.venue}</span>
+          </li>
+          <li className="flex min-w-0 items-center gap-2">
+            <Coins aria-hidden size={16} className="shrink-0" />
+            <span>{cost}</span>
+          </li>
+          <li className="flex min-w-0 items-center gap-2">
+            <Users aria-hidden size={16} className="shrink-0" />
+            <span>{availability}</span>
+          </li>
+        </ul>
+        {game.requiresApproval ? (
+          <p className="mt-3 text-xs leading-5 text-muted">Going sends a request for the host to approve.</p>
+        ) : null}
+      </div>
+      <form action={action} className="mt-4 border-t border-line pt-4">
+        <input type="hidden" name="sessionId" value={game.id} />
+        <input type="hidden" name="inviteSource" value="games" />
+        <InviteResponseButtons />
+        {state.error ? (
+          <p role="alert" className="mt-3 text-sm font-medium text-danger">
+            {state.error}
+          </p>
+        ) : null}
+      </form>
+    </article>
+  );
+}
+
+function InvitationSection({
+  items,
+  onResponded,
+}: {
+  items: GameCollectionItem[];
+  onResponded: (game: GameCollectionItem, response: ActiveRsvp | "declined") => void;
+}) {
+  return (
+    <section aria-labelledby="game-invites-heading">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 id="game-invites-heading" className="text-lg font-[680]">
+          Invites
+        </h2>
+        {items.length ? <span className="score text-sm text-muted">{items.length}</span> : null}
+      </div>
+      {items.length ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {items.map((game) => (
+            <InvitationCard key={game.id} game={game} onResponded={onResponded} />
+          ))}
+        </div>
+      ) : (
+        <EmptyInvitations />
+      )}
+    </section>
+  );
+}
+
 function GameList({ items }: { items: GameCollectionItem[] }) {
   return (
     <div className="divide-y divide-line border-y border-line">
@@ -182,6 +343,7 @@ function GameList({ items }: { items: GameCollectionItem[] }) {
               <time className="score font-bold text-primary sm:hidden">{game.date}</time>
               <span className="sm:hidden"> · </span>
               {game.time} · {game.venue}
+              {rsvpLabel(game.viewerRsvp) ? <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span> : null}
             </p>
           </div>
           {game.readiness ? (
@@ -191,8 +353,13 @@ function GameList({ items }: { items: GameCollectionItem[] }) {
               {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
             </span>
           ) : (
-            <span className="score hidden text-sm text-muted sm:block">
-              {game.playerCount} / {game.capacity}
+            <span className="hidden text-right sm:block">
+              {rsvpLabel(game.viewerRsvp) ? (
+                <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
+              ) : null}
+              <span className="score mt-0.5 block text-sm text-muted">
+                {game.playerCount} / {game.capacity}
+              </span>
             </span>
           )}
           <CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" />
@@ -216,8 +383,13 @@ function GameGrid({ items }: { items: GameCollectionItem[] }) {
           <article className="flex h-full min-w-0 flex-col">
             <div className="flex items-center justify-between gap-4">
               <time className="score text-xs font-bold text-primary">{game.date}</time>
-              <span className="score text-xs text-muted">
-                {game.playerCount} / {game.capacity}
+              <span className="text-right">
+                {rsvpLabel(game.viewerRsvp) ? (
+                  <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
+                ) : null}
+                <span className="score mt-0.5 block text-xs text-muted">
+                  {game.playerCount} / {game.capacity}
+                </span>
               </span>
             </div>
             <h3 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 sm:mt-5 sm:truncate sm:text-lg sm:leading-normal">
@@ -444,18 +616,24 @@ function CollectionSection({
 
 export function GameCollection({
   upcomingPage,
+  invitationPage = emptyInvitationPage,
   pastPage,
   todayKey,
+  initialFilter = "upcoming",
 }: {
   upcomingPage: GameCollectionPage;
+  invitationPage?: GameInvitationPage;
   pastPage: GameCollectionPage;
   todayKey: string;
+  initialFilter?: GameFilter;
 }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   const weekStart = useSyncExternalStore(subscribe, getWeekStart, (): "sunday" | "monday" => "sunday");
-  const [filter, setFilter] = useState<GameFilter>("upcoming");
+  const [filter, setFilter] = useState<GameFilter>(initialFilter);
+  const [invitations, setInvitations] = useState(invitationPage.items);
   const [upcoming, setUpcoming] = useState(upcomingPage.items);
   const [past, setPast] = useState(pastPage.items);
+  const [responseAnnouncement, setResponseAnnouncement] = useState("");
   const [upcomingCursor, setUpcomingCursor] = useState(upcomingPage.nextCursor);
   const [pastCursor, setPastCursor] = useState(pastPage.nextCursor);
   const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(null);
@@ -515,7 +693,7 @@ export function GameCollection({
   );
 
   useEffect(() => {
-    if (mode !== "calendar") return;
+    if (mode !== "calendar" || filter === "invites") return;
     const controller = new AbortController();
     setCalendarData(null);
     setCalendarError(null);
@@ -535,13 +713,33 @@ export function GameCollection({
         setCalendarError(cause instanceof Error ? cause.message : "This month could not be loaded.");
       });
     return () => controller.abort();
-  }, [calendarRetry, mode, monthKey]);
+  }, [calendarRetry, filter, mode, monthKey]);
+
+  const handleInviteResponse = useCallback((game: GameCollectionItem, response: ActiveRsvp | "declined") => {
+    setInvitations((current) => current.filter((item) => item.id !== game.id));
+    setResponseAnnouncement(
+      response === "declined"
+        ? `You declined ${game.title}.`
+        : response === "pending"
+          ? `Your request to join ${game.title} was sent.`
+          : response === "waitlisted"
+            ? `You joined the waitlist for ${game.title}.`
+            : `Your response to ${game.title} was saved.`,
+    );
+    if (response !== "declined")
+      setUpcoming((current) => {
+        if (current.some((item) => item.id === game.id)) return current;
+        return [...current, { ...game, viewerRsvp: response }].toSorted(
+          (left, right) => left.dateKey.localeCompare(right.dateKey) || left.title.localeCompare(right.title),
+        );
+      });
+  }, []);
 
   const liveGames = upcoming.filter((game) => game.status === "live");
   const scheduledGames = upcoming.filter((game) => game.status !== "live");
   const filterItems = [
     { value: "upcoming" as const, label: "Upcoming" },
-    { value: "all" as const, label: "All" },
+    { value: "invites" as const, label: invitations.length ? `Invites ${invitations.length}` : "Invites" },
     { value: "past" as const, label: "Past" },
   ];
 
@@ -565,7 +763,7 @@ export function GameCollection({
   );
 
   return (
-    <div className="mt-4 sm:mt-5">
+    <div className="mt-2 sm:mt-3">
       <div className="mb-6 pb-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="min-w-0 flex-1">
@@ -577,24 +775,11 @@ export function GameCollection({
               className="min-w-0"
             />
           </div>
-          <div
-            role="group"
-            aria-label="Game view"
-            className="hidden shrink-0 rounded-lg bg-surface-strong p-0.5 sm:inline-flex"
-          >
-            {viewOptions.map(({ value, label, icon: Icon }) => (
-              <button
-                key={value}
-                type="button"
-                aria-label={`${label} view`}
-                aria-pressed={mode === value}
-                onClick={() => saveView(value)}
-                className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
-              >
-                <Icon aria-hidden size={value === "grid" ? 17 : 18} />
-              </button>
-            ))}
-          </div>
+          {filter !== "invites" ? (
+            <span className="hidden shrink-0 sm:block">
+              <GameDesktopViewControls />
+            </span>
+          ) : null}
           <span className="hidden shrink-0 sm:block">
             <ButtonLink href="/games/new">
               <CalendarPlus aria-hidden size={17} />
@@ -603,47 +788,57 @@ export function GameCollection({
           </span>
         </div>
       </div>
-      {mode === "calendar" ? (
-        calendarError ? (
-          <div role="alert" className="border-y border-line py-8 text-center">
-            <p className="text-sm text-muted">{calendarError}</p>
-            <button
-              type="button"
-              onClick={() => setCalendarRetry((value) => value + 1)}
-              className="mt-3 font-semibold text-primary"
-            >
-              Retry
-            </button>
-          </div>
-        ) : calendarData ? (
-          <div data-testid="games-calendar">
-            <MonthCalendar
-              upcoming={filter === "past" ? [] : calendarData.upcoming}
-              past={filter === "upcoming" ? [] : calendarData.past}
-              todayKey={todayKey}
-              weekStart={weekStart}
-              monthKey={monthKey}
-              onMonthChange={setMonthKey}
-            />
-          </div>
-        ) : (
-          <div role="status" className="border-y border-line py-10 text-center text-sm text-muted">
-            Loading game calendar…
-          </div>
-        )
-      ) : (
-        <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-10 sm:space-y-12">
-          {filter !== "past" && liveGames.length ? (
-            <CollectionSection title="Live now" items={liveGames} mode={mode} live />
-          ) : null}
-          {filter !== "past" && (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
-            <CollectionSection title="Upcoming" items={scheduledGames} mode={mode} footer={upcomingFooter} />
-          ) : null}
-          {filter !== "upcoming" ? (
-            <CollectionSection title="Past games" items={past} mode={mode} past footer={pastFooter} />
-          ) : null}
-        </div>
-      )}
+      <p className="sr-only" aria-live="polite">
+        {responseAnnouncement}
+      </p>
+      <div className="space-y-10 sm:space-y-12">
+        {filter === "invites" || (filter === "upcoming" && invitations.length) ? (
+          <InvitationSection items={invitations} onResponded={handleInviteResponse} />
+        ) : null}
+        {filter !== "invites" ? (
+          mode === "calendar" ? (
+            calendarError ? (
+              <div role="alert" className="border-y border-line py-8 text-center">
+                <p className="text-sm text-muted">{calendarError}</p>
+                <button
+                  type="button"
+                  onClick={() => setCalendarRetry((value) => value + 1)}
+                  className="mt-3 min-h-11 font-semibold text-primary"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : calendarData ? (
+              <div data-testid="games-calendar">
+                <MonthCalendar
+                  upcoming={filter === "past" ? [] : calendarData.upcoming}
+                  past={filter === "upcoming" ? [] : calendarData.past}
+                  todayKey={todayKey}
+                  weekStart={weekStart}
+                  monthKey={monthKey}
+                  onMonthChange={setMonthKey}
+                />
+              </div>
+            ) : (
+              <div role="status" className="border-y border-line py-10 text-center text-sm text-muted">
+                Loading game calendar…
+              </div>
+            )
+          ) : (
+            <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-10 sm:space-y-12">
+              {filter === "upcoming" && liveGames.length ? (
+                <CollectionSection title="Live now" items={liveGames} mode={mode} live />
+              ) : null}
+              {filter === "upcoming" && (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
+                <CollectionSection title="Upcoming" items={scheduledGames} mode={mode} footer={upcomingFooter} />
+              ) : null}
+              {filter === "past" ? (
+                <CollectionSection title="Past games" items={past} mode={mode} past footer={pastFooter} />
+              ) : null}
+            </div>
+          )
+        ) : null}
+      </div>
     </div>
   );
 }

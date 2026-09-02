@@ -44,7 +44,7 @@ export default async function GameWorkspaceLayout({
             href="/games"
             variant="quiet"
             aria-label="Back to games"
-            className="game-workspace-action-button -ml-3 h-11 min-h-11 w-11 shrink-0 px-0 sm:ml-0 sm:h-9 sm:min-h-9 sm:w-9 lg:h-8 lg:min-h-8 lg:w-8"
+            className="game-workspace-action-button -ml-3 h-11 min-h-11 w-11 shrink-0 px-0 sm:-ml-2 sm:h-9 sm:min-h-9 sm:w-9 lg:h-8 lg:min-h-8 lg:w-8"
           >
             <CaretLeft aria-hidden size={18} />
             <span className="sr-only">Games</span>

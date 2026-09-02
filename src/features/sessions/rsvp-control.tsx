@@ -93,6 +93,7 @@ export function RsvpControl({
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="choice" value={choice} />
             {discoverySource ? <input type="hidden" name="discoverySource" value={discoverySource} /> : null}
+            {currentRsvp === "invited" ? <input type="hidden" name="inviteSource" value="game" /> : null}
             {isReturningGuest ? (
               <div className="flex min-h-14 items-center gap-3 rounded-lg bg-surface-strong px-3 py-2.5">
                 <UserCircle aria-hidden size={21} className="shrink-0 text-primary" />

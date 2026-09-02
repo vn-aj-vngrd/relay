@@ -24,6 +24,12 @@ describe("AppNav", () => {
     expect(screen.queryByRole("link", { name: "Profile" })).not.toBeInTheDocument();
   });
 
+  it("shows waiting invites on the Games destination", () => {
+    render(<AppNav mode="mobile" invitationCount={3} />);
+
+    expect(screen.getByRole("link", { name: "Games, 3 invites" })).toHaveTextContent("3");
+  });
+
   it("removes global mobile navigation inside a focused game workspace", () => {
     navigationState.pathname = "/games/game-1/chat";
 

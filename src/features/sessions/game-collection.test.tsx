@@ -1,6 +1,13 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("./actions", () => ({
+  rsvpAction: vi.fn(async (_: unknown, formData: FormData) => ({
+    success: true,
+    rsvp: formData.get("choice"),
+  })),
+}));
+
 import { GameCollection, type GameCollectionItem, GameViewMenu } from "./game-collection";
 
 const game: GameCollectionItem = {
@@ -16,6 +23,12 @@ const game: GameCollectionItem = {
   capacity: 10,
   status: "published",
   accentColor: "coral",
+  viewerRsvp: "going",
+  invitedAt: "2026-08-01T00:00:00.000Z",
+  hostName: "Mika Reyes",
+  estimatedCostCents: 30000,
+  requiresApproval: false,
+  spotsRemaining: 2,
   readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
@@ -27,6 +40,15 @@ const liveGame: GameCollectionItem = {
   date: "AUG 20",
   dateKey: "2026-08-20",
   status: "live",
+  readiness: undefined,
+};
+
+const invitation: GameCollectionItem = {
+  ...game,
+  id: "game-invite",
+  href: "/games/game-invite",
+  title: "Sunday Open Play",
+  viewerRsvp: "invited",
   readiness: undefined,
 };
 
@@ -118,21 +140,48 @@ describe("GameCollection", () => {
     expect(screen.queryByRole("menu", { name: "Game view" })).not.toBeInTheDocument();
   });
 
-  it("defaults to upcoming while keeping all and past filters available", () => {
-    render(<GameCollection upcomingPage={page([game])} pastPage={page([pastGame])} todayKey="2026-08-15" />);
+  it("defaults to upcoming while keeping invites and past easy to find", () => {
+    render(
+      <GameCollection
+        upcomingPage={page([game])}
+        invitationPage={{ items: [invitation], total: 1 }}
+        pastPage={page([pastGame])}
+        todayKey="2026-08-15"
+      />,
+    );
 
     expect(screen.getByRole("button", { name: "Upcoming" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
+    expect(screen.getByText("Sunday Open Play")).toBeVisible();
     expect(screen.queryByText("Friday Crew")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "All" }));
-    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
-    expect(screen.getByText("Friday Crew")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Invites 1" }));
+    expect(screen.getByText("Sunday Open Play")).toBeVisible();
+    expect(screen.queryByText("Saturday Night Pickle")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Past" }));
-    expect(screen.queryByText("Saturday Night Pickle")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sunday Open Play")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
+  });
+
+  it("lets a player respond to an invite without opening the game", async () => {
+    render(
+      <GameCollection
+        upcomingPage={page([])}
+        invitationPage={{ items: [invitation], total: 1 }}
+        pastPage={page([])}
+        todayKey="2026-08-15"
+        initialFilter="invites"
+      />,
+    );
+
+    expect(screen.getByText("Hosted by Mika Reyes")).toBeVisible();
+    expect(screen.getByText("₱300 estimated")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Going" }));
+
+    await waitFor(() => expect(screen.getByText("No invites waiting")).toBeVisible());
+    expect(screen.getByRole("button", { name: "Invites" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("pins live games above scheduled games and never shows them in past", () => {

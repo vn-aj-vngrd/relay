@@ -19,6 +19,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 7. Invitee opens `/s/[slug]`, sees the complete plan without signing in, and chooses Going, Maybe, or Can't make it.
 8. An unauthenticated invitee supplies only a display name; Relay stores a scoped guest identity.
 9. Going RSVPs fill capacity; later Going responses become ordered waitlist entries. Public games require Free or an estimated per-player cost; link-only/private games may leave cost unspecified.
+10. A signed-in player invited through a group, replay, or direct roster invite sees it on Home and under Games → Invites, with a count on Games. Inline Going, Maybe, or Can’t go responses remove the unanswered invite; Going may resolve to Awaiting approval or Waitlisted.
 
 ### Book externally → coordinate payment
 
@@ -76,8 +77,8 @@ Relay coordinates everything around a recreational pickleball session; it does n
 - **Global mobile navigation:** Home, Games, Create, Groups, Profile.
 - **Session workspace:** Overview, Players, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
-- **Home:** next game → applicable action items → upcoming games → recent games. No generic analytics.
-- **Games:** My games retains personal list/grid/calendar history. Open games lists authenticated discovery rows for public, unended sessions with a stated cost expectation; date, location, and available-spots filters reset stable cursor pagination.
+- **Home:** unanswered invites → next confirmed or active game → upcoming games → recent games. An unanswered invite never replaces the player’s next accepted game. No generic analytics.
+- **Games:** My games uses Upcoming, Invites, and Past. Invites are also pinned above Upcoming, can be answered inline, and become RSVP-labeled Upcoming rows after response. Open games lists authenticated discovery rows for public, unended sessions with a stated cost expectation; date, location, and available-spots filters reset stable cursor pagination.
 - **Search:** recent searches when idle → two-character minimum → 280 ms debounced typeahead → Games, Players, Groups, and Courts filters → incremental results. A bounded in-memory cache reuses filter results during the current search visit. PostgreSQL trigram indexes back searchable names and addresses; exact and prefix matches lead fuzzy relevance. Public game rows include cost, availability, approval, and RSVP state. Link-only/private/completed content remains authorization-scoped.
 - **Completed session:** memory summary → media → matches and standings → conversation → Play again.
 

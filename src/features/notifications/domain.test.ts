@@ -3,6 +3,26 @@ import { describe, expect, it } from "vitest";
 import { notificationGroup, notificationPresentation } from "./domain";
 
 describe("notificationPresentation", () => {
+  it("gives game invites enough context to respond confidently", () => {
+    expect(
+      notificationPresentation({
+        type: "session_invite",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {
+          hostName: "Mika Reyes",
+          startsAt: "2026-08-22T11:00:00.000Z",
+          venueName: "Central Pickle",
+        },
+      }),
+    ).toEqual({
+      title: "You’re invited",
+      body: "Mika Reyes invited you to Saturday Pickle on Sat, Aug 22 at Central Pickle.",
+      href: "/games/session-1",
+      tone: "session",
+    });
+  });
+
   it("routes join requests to roster management with useful guest context", () => {
     expect(
       notificationPresentation({

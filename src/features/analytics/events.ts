@@ -19,6 +19,7 @@ export const productEventNames = [
   "open_games_viewed",
   "public_game_opened",
   "public_join_submitted",
+  "invitation_responded",
 ] as const;
 
 const productEventSchema = z.object({

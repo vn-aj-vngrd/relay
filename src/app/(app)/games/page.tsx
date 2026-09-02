@@ -2,12 +2,14 @@ import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
 import { GameCollection, GameViewMenu } from "@/features/sessions/game-collection";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
-import { getGameCollectionPage } from "@/features/sessions/queries";
+import { getGameCollectionPage, getGameInvitations } from "@/features/sessions/queries";
 
-export default async function GamesPage() {
+export default async function GamesPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const user = await requireUser();
-  const [upcomingPage, pastPage] = await Promise.all([
+  const [{ filter }, upcomingPage, invitationPage, pastPage] = await Promise.all([
+    searchParams,
     getGameCollectionPage(user.id, "upcoming"),
+    getGameInvitations(user.id),
     getGameCollectionPage(user.id, "past"),
   ]);
 
@@ -20,7 +22,13 @@ export default async function GamesPage() {
         </div>
       </div>
       <GamesSectionNav current="mine" />
-      <GameCollection upcomingPage={upcomingPage} pastPage={pastPage} todayKey={sessionDateKey(new Date())} />
+      <GameCollection
+        upcomingPage={upcomingPage}
+        invitationPage={invitationPage}
+        pastPage={pastPage}
+        todayKey={sessionDateKey(new Date())}
+        initialFilter={filter === "invites" ? "invites" : filter === "past" ? "past" : "upcoming"}
+      />
     </div>
   );
 }

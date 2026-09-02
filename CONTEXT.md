@@ -76,6 +76,10 @@ _Avoid_: Price guarantee, checkout amount
 The account-optional URL used to understand and join a public or link-only session. It is the canonical entry point for guests and invitees, not a separate copy of the session. A private session never becomes accessible merely because someone knows its identifier.
 _Avoid_: Public version, guest app
 
+**Invite**:
+A host’s unanswered request for a Relay account player to join one session. Invites appear separately on Home and Games until the player chooses Going, Maybe, or Can’t go. Going may become **pending** when host approval is required or **waitlisted** when capacity is full; those are participation states, not unanswered invites.
+_Avoid_: Pending game, notification only
+
 **Account player**:
 A session participant linked to a persistent Relay account and history.
 _Avoid_: Authenticated user type

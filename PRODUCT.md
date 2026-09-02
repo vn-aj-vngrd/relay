@@ -42,6 +42,7 @@ The public shared surface and authenticated workspace expose the same session fa
 
 - Password authentication is the baseline; configured Google or magic-link authentication is optional. Public game links and named guest RSVP do not require an account.
 - A session owns its historical roster, courts, queue, pairings, matches, score events, expenses, chat, and memories. RSVP state and courtside attendance are distinct.
+- Unanswered account invitations stay visible in Home, a counted Games destination, and the Games **Invites** filter. Players can respond inline; accepted, approval-pending, maybe, and waitlisted games then move into Upcoming, while related invite notifications are cleared.
 - Going responses respect capacity and ordered waitlists transactionally. Guest identity is scoped and token-bound to one session.
 - Supported play formats include Paddle Stack with mixed or fixed partners, Mix It Up, Balanced Mix, Court Climb, and Team Round Robin.
 - Relay coordinates payment methods, player shares, receipts, proof, and host confirmation. Money moves through external methods such as GCash, Maya, bank transfer, or cash; Relay never processes the transaction.

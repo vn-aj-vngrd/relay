@@ -3,6 +3,7 @@ import {
   CalendarBlank,
   CaretRight,
   CurrencyCircleDollar,
+  EnvelopeSimpleOpen,
   MapPin,
   SquaresFour,
   Users,
@@ -42,6 +43,48 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {data.invitations.length ? (
+        <section aria-labelledby="home-invites-heading">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <h2 id="home-invites-heading" className="text-lg font-bold">
+              Invites
+            </h2>
+            <Link
+              href="/games?filter=invites"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-primary"
+            >
+              Review all
+            </Link>
+          </div>
+          <div className="divide-y divide-line border-y border-line">
+            {data.invitations.map(({ session }) => (
+              <Link
+                href={`/games/${session.id}`}
+                prefetch={false}
+                key={session.id}
+                style={sessionAccentStyle(session.accentColor)}
+                className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
+              >
+                <EnvelopeSimpleOpen aria-hidden className="shrink-0 text-primary" size={20} />
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-semibold">{session.title}</h3>
+                  <p className="mt-1 truncate text-sm text-muted">
+                    <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
+                    {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
+                  </p>
+                </div>
+                <span className="hidden shrink-0 text-sm font-semibold text-primary sm:block">Respond</span>
+                <CaretRight
+                  aria-hidden
+                  className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+                  size={16}
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {next ? (
         <section aria-labelledby="next-game-heading" style={sessionAccentStyle(next.session.accentColor)}>
           <h2 id="next-game-heading" className="mb-3 text-sm font-semibold text-muted">
@@ -53,18 +96,14 @@ export default async function HomePage() {
                 <div className="mb-7 flex items-center justify-between">
                   <span className="sport-label text-white/65">{formatSessionDate(next.session.startsAt)}</span>
                   <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
-                    <span
-                      className={`h-2 w-2 rounded-full ${next.player.rsvp === "invited" || next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
-                    />
-                    {next.player.rsvp === "invited"
-                      ? "RSVP needed"
-                      : nextReadiness
-                        ? nextReadiness.ready
-                          ? "Ready to play"
-                          : `${nextReadiness.percent}% ready`
-                        : next.session.bookedAt
-                          ? "Court confirmed"
-                          : "Booking pending"}
+                    <span className={`h-2 w-2 rounded-full ${next.session.bookedAt ? "bg-signal" : "bg-white/35"}`} />
+                    {nextReadiness
+                      ? nextReadiness.ready
+                        ? "Ready to play"
+                        : `${nextReadiness.percent}% ready`
+                      : next.session.bookedAt
+                        ? "Court confirmed"
+                        : "Booking pending"}
                   </span>
                 </div>
                 <h3
@@ -95,9 +134,7 @@ export default async function HomePage() {
               >
                 <span>
                   <span className="block text-sm text-white/75">Players, courts, and payments</span>
-                  <span className="mt-1 block text-lg">
-                    {next.player.rsvp === "invited" ? "Review invite" : "View game"}
-                  </span>
+                  <span className="mt-1 block text-lg">View game</span>
                 </span>
                 <ArrowRight className="transition-transform group-hover:translate-x-1" />
               </Link>

@@ -33,6 +33,13 @@ describe("collection loading boundaries", () => {
     const navigation = screen.getByRole("navigation", { name: "Games sections" });
     expect(navigation).toHaveTextContent("My games");
     expect(navigation).toHaveTextContent("Open games");
+
+    cleanup();
+    render(<GamesLoading />);
+    const filters = screen.getByRole("group", { name: "Filter games" });
+    expect(filters).toHaveTextContent("Upcoming");
+    expect(filters).toHaveTextContent("Invites");
+    expect(filters).toHaveTextContent("Past");
   });
 
   it("keeps notification filters real while notifications load", () => {

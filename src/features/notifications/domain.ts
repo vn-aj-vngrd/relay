@@ -14,6 +14,22 @@ type NotificationInput = {
   payload: Record<string, unknown>;
 };
 
+function invitationBody(game: string, payload: Record<string, unknown>) {
+  const host = typeof payload.hostName === "string" ? payload.hostName : "The host";
+  const venue = typeof payload.venueName === "string" ? payload.venueName : null;
+  const startsAt = typeof payload.startsAt === "string" ? new Date(payload.startsAt) : null;
+  const date =
+    startsAt && Number.isFinite(startsAt.getTime())
+      ? new Intl.DateTimeFormat("en-PH", {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          timeZone: "Asia/Manila",
+        }).format(startsAt)
+      : null;
+  return `${host} invited you to ${game}${date ? ` on ${date}` : ""}${venue ? ` at ${venue}` : ""}.`;
+}
+
 function changedFields(payload: Record<string, unknown>) {
   const fields = Array.isArray(payload.fields)
     ? payload.fields.filter((field): field is string => typeof field === "string")
@@ -42,7 +58,7 @@ export function notificationPresentation({
     case "session_invite":
       return {
         title: customTitle ?? "You’re invited",
-        body: customBody ?? `${game} has a spot for you.`,
+        body: customBody ?? invitationBody(game, payload),
         href: gameHref,
         tone: "session",
       };
