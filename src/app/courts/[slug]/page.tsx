@@ -1,9 +1,11 @@
 import { ArrowSquareOut, MapPin } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/session";
+import { formatCourtOperatingHours } from "@/features/venues/details";
 import { getCourtListingBySlug } from "@/features/venues/directory";
 import { getPublicEnv } from "@/lib/env";
 
@@ -46,7 +48,9 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
       court.courtCount ? { "@type": "PropertyValue", name: "Pickleball courts", value: court.courtCount } : null,
       court.environment ? { "@type": "PropertyValue", name: "Setting", value: court.environment } : null,
       court.paddleRental ? { "@type": "LocationFeatureSpecification", name: "Paddle rental", value: true } : null,
-      court.parking ? { "@type": "LocationFeatureSpecification", name: "Parking", value: court.parking } : null,
+      court.parkingLabel
+        ? { "@type": "LocationFeatureSpecification", name: "Parking", value: court.parkingLabel }
+        : null,
     ].filter(Boolean),
   };
 
@@ -55,7 +59,8 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <script
+      <Script
+        id={`court-json-ld-${court.id}`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(courtJsonLd).replaceAll("<", "\\u003c") }}
       />
@@ -76,19 +81,21 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
         </div>
         <div>
           <p className="text-sm text-muted">Price</p>
-          <p className="mt-1 font-semibold">{court.priceRange ?? "Ask the court"}</p>
+          <p className="mt-1 font-mono font-semibold tabular-nums">{court.priceLabel ?? "Ask the court"}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Parking</p>
+          <p className="mt-1 font-semibold">{court.parkingLabel ?? "Not listed"}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Paddle rental</p>
           <p className="mt-1 font-semibold">{court.paddleRental ? "Available" : "Not listed"}</p>
         </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted">Operating hours</p>
+          <p className="mt-1 font-semibold">{formatCourtOperatingHours(court.operatingHours) ?? "Ask the court"}</p>
+        </div>
       </div>
-      {court.parking ? (
-        <section className="mt-8">
-          <h2 className="font-bold">Parking</h2>
-          <p className="mt-2 text-muted">{court.parking}</p>
-        </section>
-      ) : null}
       {court.amenities?.length ? (
         <section className="mt-8">
           <h2 className="font-bold">Amenities</h2>

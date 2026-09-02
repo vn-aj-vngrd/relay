@@ -1,5 +1,7 @@
 import postgres from "postgres";
 
+import { structureImportedOperatingHours, structureImportedPrice } from "./court-import-details";
+
 const sourceName = "cebupickleballcourts.com";
 const sourceEndpoint =
   "https://cebupickleballcourts.com/wp-json/wp/v2/posts?per_page=100&_fields=link,slug,title,content,date,modified";
@@ -23,9 +25,9 @@ type VenueImport = {
   longitude: number;
   environment: string | null;
   courtCount: number | null;
-  hours: { summary: string } | null;
-  priceRange: string | null;
-  parking: string | null;
+  operatingHoursText: string | null;
+  priceText: string | null;
+  parkingStatus: "available" | "unavailable" | null;
   amenities: string[];
   paddleRental: boolean;
   contact: string | null;
@@ -86,6 +88,7 @@ function parsePost(post: SourcePost): VenueImport | null {
   const environment = field(html, "Court Type")?.toLowerCase() ?? null;
   const schedule = field(html, "Schedule");
   const price = field(html, "Price");
+  const parking = field(html, "Parking");
   const phone = field(html, "Phone");
   const websiteUrl = linkField(html, "Website");
   const socialUrl = linkField(html, "Facebook");
@@ -105,9 +108,9 @@ function parsePost(post: SourcePost): VenueImport | null {
     longitude,
     environment,
     courtCount: courtCount ? Number(courtCount) : null,
-    hours: schedule ? { summary: schedule } : null,
-    priceRange: price,
-    parking: yes(field(html, "Parking")) ? "Available" : null,
+    operatingHoursText: schedule,
+    priceText: price,
+    parkingStatus: parking ? (yes(parking) ? "available" : "unavailable") : null,
     amenities,
     paddleRental: yes(field(html, "Paddle for Rent Availability")),
     contact: phone,
@@ -151,9 +154,9 @@ const officialCandidates: VenueImport[] = [
     longitude: 123.8795782,
     environment: "outdoor",
     courtCount: 1,
-    hours: null,
-    priceRange: "Free play",
-    parking: null,
+    operatingHoursText: null,
+    priceText: "Free play",
+    parkingStatus: null,
     amenities: [],
     paddleRental: false,
     contact: null,
@@ -192,16 +195,19 @@ try {
         AND NOT (source_external_id = ANY(${transaction.array(activeSourceIds)}))
     `;
     for (const venue of records) {
-      const hours = venue.hours ? transaction.json(venue.hours) : null;
-      await transaction`
+      const operatingHours = structureImportedOperatingHours(venue.operatingHoursText);
+      const pricing = structureImportedPrice(venue.priceText);
+      const saved = await transaction<{ id: string }[]>`
         INSERT INTO venues (
-          slug, name, address, latitude, longitude, environment, court_count, hours, price_range,
-          parking, amenities, paddle_rental, contact, website_url, social_url, booking_url,
+          slug, name, address, latitude, longitude, environment, court_count,
+          price_status, price_amount_cents, price_max_cents, price_unit, parking_status,
+          amenities, paddle_rental, contact, website_url, social_url, booking_url,
           listing_status, source, source_external_id, source_url, last_seen_at
         ) VALUES (
           ${venue.slug}, ${venue.name}, ${venue.address}, ${venue.latitude}, ${venue.longitude},
-          ${venue.environment}, ${venue.courtCount}, ${hours}, ${venue.priceRange},
-          ${venue.parking}, ${venue.amenities}, ${venue.paddleRental}, ${venue.contact}, ${venue.websiteUrl},
+          ${venue.environment}, ${venue.courtCount}, ${pricing.status}, ${pricing.amountCents},
+          ${pricing.maxCents}, ${pricing.unit}, ${venue.parkingStatus}, ${venue.amenities}, ${venue.paddleRental},
+          ${venue.contact}, ${venue.websiteUrl},
           ${venue.socialUrl}, ${venue.bookingUrl}, 'unverified', ${venue.source}, ${venue.sourceExternalId},
           ${venue.sourceUrl}, ${venue.lastSeenAt}
         )
@@ -212,9 +218,11 @@ try {
           longitude = EXCLUDED.longitude,
           environment = EXCLUDED.environment,
           court_count = EXCLUDED.court_count,
-          hours = EXCLUDED.hours,
-          price_range = EXCLUDED.price_range,
-          parking = EXCLUDED.parking,
+          price_status = EXCLUDED.price_status,
+          price_amount_cents = EXCLUDED.price_amount_cents,
+          price_max_cents = EXCLUDED.price_max_cents,
+          price_unit = EXCLUDED.price_unit,
+          parking_status = EXCLUDED.parking_status,
           amenities = EXCLUDED.amenities,
           paddle_rental = EXCLUDED.paddle_rental,
           contact = EXCLUDED.contact,
@@ -224,7 +232,16 @@ try {
           source_url = EXCLUDED.source_url,
           last_seen_at = EXCLUDED.last_seen_at,
           updated_at = now()
+        RETURNING id
       `;
+      const venueId = saved[0]?.id;
+      if (!venueId) throw new Error(`Failed to save operating hours for ${venue.name}.`);
+      await transaction`DELETE FROM venue_operating_periods WHERE venue_id = ${venueId}`;
+      for (const period of operatingHours)
+        await transaction`
+          INSERT INTO venue_operating_periods (venue_id, day_of_week, sequence, opens_at, closes_at)
+          VALUES (${venueId}, ${period.dayOfWeek}, ${period.sequence}, ${period.opensAt}, ${period.closesAt})
+        `;
     }
   });
   console.log(`Imported ${records.length} sourced Cebu court listings as unverified candidates.`);

@@ -2,14 +2,85 @@ import { describe, expect, it } from "vitest";
 
 import { adminVenueSchema, venueSubmissionSchema } from "./domain";
 
+const optionalOperatingHours = {
+  mondayOpen: "" as const,
+  mondayClose: "" as const,
+  tuesdayOpen: "" as const,
+  tuesdayClose: "" as const,
+  wednesdayOpen: "" as const,
+  wednesdayClose: "" as const,
+  thursdayOpen: "" as const,
+  thursdayClose: "" as const,
+  fridayOpen: "" as const,
+  fridayClose: "" as const,
+  saturdayOpen: "" as const,
+  saturdayClose: "" as const,
+  sundayOpen: "" as const,
+  sundayClose: "" as const,
+};
+
+const optionalSubmissionDetails = {
+  environment: "" as const,
+  courtCount: "" as const,
+  priceStatus: "unknown" as const,
+  priceAmount: "" as const,
+  priceMax: "" as const,
+  priceUnit: "" as const,
+  ...optionalOperatingHours,
+  parkingStatus: "" as const,
+  amenities: [] as string[],
+  paddleRental: false,
+  contact: "",
+  websiteUrl: "",
+  socialUrl: "",
+  bookingUrl: "",
+  note: "",
+};
+
+const optionalAdminDetails = {
+  latitude: "" as const,
+  longitude: "" as const,
+  environment: "" as const,
+  courtCount: "" as const,
+  priceStatus: "unknown" as const,
+  priceAmount: "" as const,
+  priceMax: "" as const,
+  priceUnit: "" as const,
+  ...optionalOperatingHours,
+  parkingStatus: "" as const,
+  amenities: [] as string[],
+  paddleRental: false,
+  contact: "",
+  sourceUrl: "",
+  websiteUrl: "",
+  socialUrl: "",
+  bookingUrl: "",
+};
+
 describe("Philippines venue moderation", () => {
-  it("accepts a Philippines community submission without publishing it directly", () => {
+  it("accepts a detailed Philippines community submission without publishing it directly", () => {
     expect(
       venueSubmissionSchema.safeParse({
         name: "Neighborhood Pickle",
         address: "Barangay Lahug",
         city: "Cebu City",
         officialUrl: "https://example.com/court",
+        ...optionalSubmissionDetails,
+        environment: "covered",
+        courtCount: "2",
+        priceStatus: "paid",
+        priceAmount: "500",
+        priceMax: "650",
+        priceUnit: "court_hour",
+        mondayOpen: "06:00",
+        mondayClose: "22:00",
+        saturdayOpen: "08:00",
+        saturdayClose: "20:00",
+        parkingStatus: "available",
+        amenities: ["Restrooms"],
+        paddleRental: true,
+        contact: "court@example.com",
+        websiteUrl: "https://example.com",
         note: "Two covered courts",
       }).success,
     ).toBe(true);
@@ -21,20 +92,32 @@ describe("Philippines venue moderation", () => {
       address: "Lahug",
       city: "Cebu City",
       officialUrl: "javascript:alert(1)",
-      note: "",
+      ...optionalSubmissionDetails,
     });
     expect(result.success).toBe(false);
   });
 
-  it("accepts submissions from elsewhere in the Philippines", () => {
+  it("requires a public source for submissions elsewhere in the Philippines", () => {
     const result = venueSubmissionSchema.safeParse({
       name: "Manila Pickle",
       address: "Makati Avenue",
       city: "Makati",
       officialUrl: "",
-      note: "",
+      ...optionalSubmissionDetails,
     });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects amounts unless paid pricing and a mode are selected", () => {
+    const result = venueSubmissionSchema.safeParse({
+      name: "Manila Pickle",
+      address: "Makati Avenue",
+      city: "Makati",
+      officialUrl: "https://example.com/court",
+      ...optionalSubmissionDetails,
+      priceAmount: "500",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("allows an admin to reject a pending submission before geocoding it", () => {
@@ -42,17 +125,7 @@ describe("Philippines venue moderation", () => {
       venueId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
       name: "Outside Court",
       address: "Submitted address",
-      latitude: "",
-      longitude: "",
-      environment: "",
-      courtCount: "",
-      priceRange: "",
-      hours: "",
-      parking: "",
-      contact: "",
-      websiteUrl: "",
-      socialUrl: "",
-      bookingUrl: "",
+      ...optionalAdminDetails,
       listingStatus: "rejected",
       verificationNote: "Could not verify this place.",
     });
@@ -64,17 +137,11 @@ describe("Philippines venue moderation", () => {
       venueId: "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
       name: "Cebu Court",
       address: "Cebu City",
+      ...optionalAdminDetails,
       latitude: "35.68",
       longitude: "139.69",
       environment: "indoor",
       courtCount: "2",
-      priceRange: "",
-      hours: "",
-      parking: "",
-      contact: "",
-      websiteUrl: "",
-      socialUrl: "",
-      bookingUrl: "",
       listingStatus: "verified",
       verificationNote: "",
     });

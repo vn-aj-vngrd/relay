@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, type AnyColumn, count, desc, eq, gte, ilike, isNotNull, lt, or, type SQL, sql } from "drizzle-orm";
+import { and, type AnyColumn, asc, count, desc, eq, gte, ilike, isNotNull, lt, or, type SQL, sql } from "drizzle-orm";
 import { connection } from "next/server";
 
 import { db } from "@/db/client";
@@ -16,6 +16,7 @@ import {
   sessions,
   signupSettings,
   users,
+  venueOperatingPeriods,
   venues,
 } from "@/db/schema";
 import {
@@ -300,7 +301,14 @@ export async function getAdminVenues(
 
 export async function getAdminVenue(venueId: string) {
   await connection();
-  return db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  if (!venue) return null;
+  const operatingHours = await db
+    .select()
+    .from(venueOperatingPeriods)
+    .where(eq(venueOperatingPeriods.venueId, venueId))
+    .orderBy(asc(venueOperatingPeriods.dayOfWeek), asc(venueOperatingPeriods.sequence));
+  return { ...venue, operatingHours };
 }
 
 export async function getAdminAuditLog(cursor: AdminCursor | null = null) {

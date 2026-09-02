@@ -7,7 +7,7 @@ import { getCourtListings } from "@/features/venues/directory";
 export const metadata: Metadata = {
   title: "Pickleball courts in the Philippines",
   description:
-    "Find verified pickleball courts across the Philippines. Search by city or province and compare setting, court count, price, paddle rental, parking, directions, and booking links.",
+    "Find verified pickleball courts across the Philippines. Search by city or province and compare setting, court count, structured pricing, parking, operating hours, directions, and booking links.",
   alternates: { canonical: "/courts" },
   openGraph: {
     title: "Pickleball courts in the Philippines",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Pickleball courts in the Philippines",
-    description: "Search verified courts by city, province, setting, paddle rental, and parking.",
+    description: "Search verified courts by city, province, setting, price, parking, and operating hours.",
     images: ["/opengraph-image"],
   },
 };

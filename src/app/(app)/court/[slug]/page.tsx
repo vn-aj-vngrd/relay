@@ -1,22 +1,14 @@
 import { ArrowSquareOut, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { and, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
-import { db } from "@/db/client";
-import { venues } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
-
-const getCourt = cache(async (slug: string) =>
-  db.query.venues.findFirst({
-    where: and(eq(venues.slug, slug), eq(venues.listingStatus, "verified")),
-  }),
-);
+import { formatCourtOperatingHours } from "@/features/venues/details";
+import { getCourtListingBySlug } from "@/features/venues/directory";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const court = await getCourt((await params).slug);
+  const court = await getCourtListingBySlug((await params).slug);
   if (!court) return { title: "Court not found" };
   return {
     title: court.name,
@@ -26,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CourtPage({ params }: { params: Promise<{ slug: string }> }) {
   const slug = (await params).slug;
-  const [court, user] = await Promise.all([getCourt(slug), getCurrentUser()]);
+  const [court, user] = await Promise.all([getCourtListingBySlug(slug), getCurrentUser()]);
   if (!court) notFound();
 
   const gamePath = `/games/new?${new URLSearchParams({ venue: court.name, address: court.address }).toString()}`;
@@ -51,19 +43,21 @@ export default async function CourtPage({ params }: { params: Promise<{ slug: st
         </div>
         <div>
           <p className="text-sm text-muted">Price</p>
-          <p className="mt-1 font-semibold">{court.priceRange ?? "Ask the court"}</p>
+          <p className="mt-1 font-mono font-semibold tabular-nums">{court.priceLabel ?? "Ask the court"}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted">Parking</p>
+          <p className="mt-1 font-semibold">{court.parkingLabel ?? "Not listed"}</p>
         </div>
         <div>
           <p className="text-sm text-muted">Paddle rental</p>
           <p className="mt-1 font-semibold">{court.paddleRental ? "Available" : "Not listed"}</p>
         </div>
+        <div className="sm:col-span-2">
+          <p className="text-sm text-muted">Operating hours</p>
+          <p className="mt-1 font-semibold">{formatCourtOperatingHours(court.operatingHours) ?? "Ask the court"}</p>
+        </div>
       </div>
-      {court.parking ? (
-        <section className="mt-8">
-          <h2 className="font-bold">Parking</h2>
-          <p className="mt-2 text-muted">{court.parking}</p>
-        </section>
-      ) : null}
       {court.amenities?.length ? (
         <section className="mt-8">
           <h2 className="font-bold">Amenities</h2>

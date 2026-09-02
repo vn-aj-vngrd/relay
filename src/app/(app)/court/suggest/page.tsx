@@ -8,8 +8,8 @@ export default async function SuggestCourtPage() {
       <header className="mb-8 max-w-2xl border-b border-line pb-7">
         <h1 className="app-title">Suggest a court</h1>
         <p className="mt-2 text-pretty leading-6 text-muted">
-          Know a court we missed? Send the basics. Relay will verify its location and public details before adding it to
-          the map.
+          Know a court we missed? Share its location, facilities, hours, pricing, and booking details. Relay will verify
+          the information before adding it to the map.
         </p>
       </header>
       <VenueSubmissionForm />

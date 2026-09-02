@@ -13,11 +13,6 @@
       "longitude": 121.018764,
       "environment": "outdoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "3:00 PM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -26,7 +21,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-center-shaw",
@@ -37,11 +81,6 @@
       "longitude": 121.0453163,
       "environment": "outdoor",
       "courtCount": 3,
-      "hours": {
-        "summary": "2:00 PM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -50,7 +89,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-four-e-com-center",
@@ -61,11 +149,6 @@
       "longitude": 120.9825,
       "environment": "outdoor",
       "courtCount": 6,
-      "hours": {
-        "summary": "10:00 AM–11:00 PM"
-      },
-      "priceRange": "Court ₱600/hour · open play ₱280/person · paddle ₱100",
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": true,
       "contact": null,
@@ -74,7 +157,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/whats-new/lifestyle/pickleball-comes-to-the-workplace-with-new-courts-at-four-e-com-center",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "paid",
+      "priceAmountCents": 60000,
+      "priceMaxCents": null,
+      "priceUnit": "player"
     },
     {
       "sourceExternalId": "sm-active-hub-sm-southmall-sm-game-park",
@@ -85,11 +217,6 @@
       "longitude": 121.0100751,
       "environment": "indoor",
       "courtCount": 1,
-      "hours": {
-        "summary": "11:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -98,7 +225,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-novaliches-pickleball-badminton-court",
@@ -109,11 +285,6 @@
       "longitude": 121.0373388,
       "environment": "indoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "8:00 AM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -122,7 +293,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-marikina",
@@ -133,11 +353,6 @@
       "longitude": 121.0840561,
       "environment": "indoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "7:00 AM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -146,7 +361,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-telabastagan",
@@ -157,11 +421,6 @@
       "longitude": 120.6017192,
       "environment": "outdoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "2:00 PM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -170,7 +429,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-center-antipolo-downtown",
@@ -181,11 +489,6 @@
       "longitude": 121.1337595,
       "environment": "indoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "7:00 AM–10:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -194,7 +497,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-bicutan",
@@ -205,11 +557,6 @@
       "longitude": 121.042492,
       "environment": "covered",
       "courtCount": 6,
-      "hours": {
-        "summary": "2:00 PM–11:00 PM"
-      },
-      "priceRange": "Court ₱450/hour · open play ₱250/person · paddle ₱100",
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": true,
       "contact": null,
@@ -218,7 +565,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/whats-new/lifestyle/sm-city-bicutan-unveils-four-world-class-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "14:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "paid",
+      "priceAmountCents": 45000,
+      "priceMaxCents": null,
+      "priceUnit": "player"
     },
     {
       "sourceExternalId": "sm-active-hub-sm-center-muntinlupa",
@@ -229,11 +625,6 @@
       "longitude": 121.0449748,
       "environment": "indoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "10:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -242,7 +633,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-santa-rosa",
@@ -253,11 +693,6 @@
       "longitude": 121.0977045,
       "environment": "covered",
       "courtCount": 4,
-      "hours": {
-        "summary": "7:00 AM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -266,7 +701,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-seaside-city-cebu-lot-11",
@@ -277,9 +761,6 @@
       "longitude": 123.8795782,
       "environment": "outdoor",
       "courtCount": 7,
-      "hours": null,
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -288,7 +769,13 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-roxas",
@@ -299,11 +786,6 @@
       "longitude": 122.7478335,
       "environment": "covered",
       "courtCount": 1,
-      "hours": {
-        "summary": "10:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -312,7 +794,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-general-santos",
@@ -323,11 +854,6 @@
       "longitude": 125.18152,
       "environment": "outdoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "6:00 AM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -336,7 +862,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-southmall-mev-events-hall",
@@ -347,11 +922,6 @@
       "longitude": 121.0100751,
       "environment": "indoor",
       "courtCount": 4,
-      "hours": {
-        "summary": "6:00 PM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -360,7 +930,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "18:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-novaliches-mall-atrium",
@@ -371,11 +990,6 @@
       "longitude": 121.0373388,
       "environment": "indoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "8:00 AM–11:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -384,7 +998,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-rosales",
@@ -395,11 +1058,6 @@
       "longitude": 120.6024718,
       "environment": "covered",
       "courtCount": 2,
-      "hours": {
-        "summary": "8:00 AM–6:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -408,7 +1066,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "18:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-laoag",
@@ -419,11 +1126,6 @@
       "longitude": 120.58523,
       "environment": "outdoor",
       "courtCount": 5,
-      "hours": {
-        "summary": "5:00 PM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -432,7 +1134,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "17:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-urdaneta-central",
@@ -443,11 +1194,6 @@
       "longitude": 120.572699,
       "environment": "indoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "11:00 AM–9:00 PM, subject to event-center availability"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -456,7 +1202,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-center-dagupan",
@@ -467,11 +1262,6 @@
       "longitude": 120.3431852,
       "environment": "indoor",
       "courtCount": 1,
-      "hours": {
-        "summary": "11:00 AM–7:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -480,7 +1270,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "19:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-center-tuguegarao-downtown",
@@ -491,11 +1330,6 @@
       "longitude": 121.7237902,
       "environment": "covered",
       "courtCount": 2,
-      "hours": {
-        "summary": "11:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -504,7 +1338,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "11:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-cabanatuan",
@@ -515,11 +1398,6 @@
       "longitude": 120.9550739,
       "environment": "outdoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "11:00 AM–9:00 PM weekdays; 10:00 AM–9:00 PM weekends"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -528,7 +1406,13 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-olongapo-central",
@@ -539,11 +1423,6 @@
       "longitude": 120.2828655,
       "environment": "outdoor",
       "courtCount": 1,
-      "hours": {
-        "summary": "10:00 AM–7:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -552,7 +1431,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "19:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-rosario",
@@ -563,11 +1491,6 @@
       "longitude": 120.8569122,
       "environment": "indoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "10:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -576,7 +1499,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-lucena",
@@ -587,11 +1559,6 @@
       "longitude": 121.626204,
       "environment": "indoor",
       "courtCount": 1,
-      "hours": {
-        "summary": "11:00 AM–9:00 PM weekdays; 10:00 AM–9:00 PM weekends"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -600,7 +1567,13 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-seaside-city-cebu-pickleball-court",
@@ -611,11 +1584,6 @@
       "longitude": 123.8795782,
       "environment": "outdoor",
       "courtCount": 2,
-      "hours": {
-        "summary": "10:00 AM–9:00 PM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -624,7 +1592,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-j-mall",
@@ -635,11 +1652,6 @@
       "longitude": 123.9344709,
       "environment": "covered",
       "courtCount": 3,
-      "hours": {
-        "summary": "3:00 PM–9:00 PM weekdays; 3:00 PM–10:00 PM weekends"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -648,7 +1660,13 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-city-cdo-uptown",
@@ -659,11 +1677,6 @@
       "longitude": 124.62332,
       "environment": "outdoor",
       "courtCount": 1,
-      "hours": {
-        "summary": "10:00 AM–1:00 AM"
-      },
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -672,7 +1685,56 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "10:00",
+          "closesAt": "01:00"
+        }
+      ],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     },
     {
       "sourceExternalId": "sm-active-hub-sm-light-mall",
@@ -683,9 +1745,6 @@
       "longitude": 121.0490646,
       "environment": "indoor",
       "courtCount": 3,
-      "hours": null,
-      "priceRange": null,
-      "parking": "Mall parking available",
       "amenities": [],
       "paddleRental": false,
       "contact": null,
@@ -694,7 +1753,13 @@
       "bookingUrl": "https://click.smmallsonline.com/DFqS/SMACTIVEHUB",
       "listingStatus": "verified",
       "sourceUrl": "https://www.smsupermalls.com/sm-active-hub-pickleball-courts",
-      "lastSeenAt": "2026-09-01T00:00:00+08:00"
+      "lastSeenAt": "2026-09-01T00:00:00+08:00",
+      "operatingHours": [],
+      "parkingStatus": "available",
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null
     }
   ]
 }

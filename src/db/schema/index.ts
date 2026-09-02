@@ -10,6 +10,7 @@ import {
   pgTable,
   primaryKey,
   text,
+  time,
   timestamp,
   unique,
   uniqueIndex,
@@ -47,6 +48,24 @@ export const venueListingStatus = pgEnum("venue_listing_status", [
   "verified",
   "rejected",
   "archived",
+]);
+export const venueParkingStatus = pgEnum("venue_parking_status", ["available", "unavailable"]);
+export const venuePriceUnit = pgEnum("venue_price_unit", [
+  "hour",
+  "player",
+  "court",
+  "session",
+  "court_hour",
+  "player_session",
+]);
+export const venuePriceStatus = pgEnum("venue_price_status", [
+  "unknown",
+  "free",
+  "paid",
+  "contact",
+  "donation",
+  "members",
+  "invitation",
 ]);
 
 export const users = pgTable(
@@ -91,9 +110,11 @@ export const venues = pgTable(
     longitude: numeric("longitude", { precision: 9, scale: 6 }),
     environment: text("environment"),
     courtCount: integer("court_count"),
-    hours: jsonb("hours").$type<Record<string, string>>(),
-    priceRange: text("price_range"),
-    parking: text("parking"),
+    priceStatus: venuePriceStatus("price_status").notNull().default("unknown"),
+    priceAmountCents: integer("price_amount_cents"),
+    priceMaxCents: integer("price_max_cents"),
+    priceUnit: venuePriceUnit("price_unit"),
+    parkingStatus: venueParkingStatus("parking_status"),
     amenities: text("amenities").array(),
     paddleRental: boolean("paddle_rental").notNull().default(false),
     contact: text("contact"),
@@ -114,6 +135,37 @@ export const venues = pgTable(
   (table) => [
     uniqueIndex("venues_source_external_id_idx").on(table.source, table.sourceExternalId),
     index("venues_updated_id_idx").on(table.updatedAt.desc(), table.id.desc()),
+    index("venues_listing_environment_idx").on(table.listingStatus, table.environment),
+    index("venues_listing_parking_idx").on(table.listingStatus, table.parkingStatus),
+    index("venues_listing_price_idx").on(table.listingStatus, table.priceStatus, table.priceAmountCents),
+    check("venues_price_amount_nonnegative", sql`${table.priceAmountCents} is null or ${table.priceAmountCents} >= 0`),
+    check(
+      "venues_price_max_valid",
+      sql`${table.priceMaxCents} is null or (${table.priceAmountCents} is not null and ${table.priceMaxCents} >= ${table.priceAmountCents})`,
+    ),
+    check(
+      "venues_price_complete",
+      sql`(${table.priceStatus} = 'paid' and ${table.priceAmountCents} is not null and ${table.priceUnit} is not null) or (${table.priceStatus} = 'free' and ${table.priceAmountCents} = 0 and ${table.priceUnit} is null and ${table.priceMaxCents} is null) or (${table.priceStatus} not in ('paid', 'free') and ${table.priceAmountCents} is null and ${table.priceUnit} is null and ${table.priceMaxCents} is null)`,
+    ),
+  ],
+);
+
+export const venueOperatingPeriods = pgTable(
+  "venue_operating_periods",
+  {
+    venueId: uuid("venue_id")
+      .notNull()
+      .references(() => venues.id, { onDelete: "cascade" }),
+    dayOfWeek: integer("day_of_week").notNull(),
+    sequence: integer("sequence").notNull().default(0),
+    opensAt: time("opens_at", { precision: 0 }).notNull(),
+    closesAt: time("closes_at", { precision: 0 }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.venueId, table.dayOfWeek, table.sequence] }),
+    index("venue_operating_periods_venue_day_idx").on(table.venueId, table.dayOfWeek),
+    check("venue_operating_periods_day_valid", sql`${table.dayOfWeek} between 1 and 7`),
+    check("venue_operating_periods_sequence_nonnegative", sql`${table.sequence} >= 0`),
   ],
 );
 

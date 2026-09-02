@@ -1,12 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { submitVenueAction } from "./actions";
+import {
+  courtDays,
+  courtParkingOptions,
+  type CourtPriceStatus,
+  courtPriceStatusOptions,
+  courtPriceUnitOptions,
+  courtTimeOptions,
+} from "./details";
 
 const inputClass =
   "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
@@ -23,6 +31,7 @@ function Optional() {
 
 export function VenueSubmissionForm() {
   const [state, action] = useActionState(submitVenueAction, {});
+  const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>("unknown");
   if (state.success)
     return (
       <section role="status" className="border-y border-line py-8">
@@ -88,7 +97,9 @@ export function VenueSubmissionForm() {
 
       <fieldset className="space-y-5 border-t border-line pt-8">
         <legend className="text-lg font-[680] text-ink">Court details</legend>
-        <p className="text-sm leading-6 text-muted">Add what you know. Leave anything uncertain blank instead of guessing.</p>
+        <p className="text-sm leading-6 text-muted">
+          Add what you know. Leave anything uncertain blank instead of guessing.
+        </p>
         <div className="grid gap-5 sm:grid-cols-2">
           <SelectField
             id="environment"
@@ -121,48 +132,117 @@ export function VenueSubmissionForm() {
           </div>
         </div>
         <div>
-          <label htmlFor="priceRange" className="text-sm font-[650]">
-            Price guidance <Optional />
-          </label>
-          <input
-            id="priceRange"
-            name="priceRange"
-            maxLength={160}
-            className={inputClass}
-            placeholder="₱500 per court per hour; ₱600 after 6 PM"
+          <SelectField
+            id="priceStatus"
+            name="priceStatus"
+            label="Pricing"
+            value={priceStatus}
+            onValueChange={(value) => setPriceStatus(value as CourtPriceStatus)}
+            options={courtPriceStatusOptions}
           />
-          <p className="mt-1.5 text-sm text-muted">Include the amount, whether it is per court or player, and peak rates.</p>
-          <ErrorMessage messages={state.fieldErrors?.priceRange} />
+          <ErrorMessage messages={state.fieldErrors?.priceStatus} />
+          {priceStatus === "paid" ? (
+            <div className="mt-5 grid gap-5 sm:grid-cols-3">
+              <div>
+                <label htmlFor="priceAmount" className="text-sm font-[650]">
+                  Starting price
+                </label>
+                <div className="relative">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                    ₱
+                  </span>
+                  <input
+                    id="priceAmount"
+                    name="priceAmount"
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    max="1000000"
+                    step="0.01"
+                    required
+                    className={`${inputClass} pl-8 font-mono tabular-nums`}
+                    placeholder="500"
+                  />
+                </div>
+                <ErrorMessage messages={state.fieldErrors?.priceAmount} />
+              </div>
+              <div>
+                <label htmlFor="priceMax" className="text-sm font-[650]">
+                  Maximum price <Optional />
+                </label>
+                <div className="relative">
+                  <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                    ₱
+                  </span>
+                  <input
+                    id="priceMax"
+                    name="priceMax"
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    max="1000000"
+                    step="0.01"
+                    className={`${inputClass} pl-8 font-mono tabular-nums`}
+                    placeholder="650"
+                  />
+                </div>
+                <ErrorMessage messages={state.fieldErrors?.priceMax} />
+              </div>
+              <div>
+                <SelectField id="priceUnit" name="priceUnit" label="Pricing mode" options={courtPriceUnitOptions} />
+                <ErrorMessage messages={state.fieldErrors?.priceUnit} />
+              </div>
+            </div>
+          ) : null}
         </div>
-        <div>
-          <label htmlFor="hours" className="text-sm font-[650]">
+        <fieldset>
+          <legend className="text-sm font-[650]">
             Operating hours <Optional />
-          </label>
-          <textarea
-            id="hours"
-            name="hours"
-            maxLength={240}
-            rows={3}
-            className={`${inputClass} h-auto min-h-24 resize-y py-3`}
-            placeholder="Mon–Fri 6 AM–10 PM; Sat–Sun 7 AM–11 PM"
-          />
-          <ErrorMessage messages={state.fieldErrors?.hours} />
+          </legend>
+          <p className="mt-1.5 text-sm text-muted">
+            Philippine time. Add each day so players can filter by their full booking window. Matching times mean open
+            24 hours.
+          </p>
+          <div className="mt-3 divide-y divide-line border-y border-line">
+            {courtDays.map((day) => (
+              <div
+                key={day.value}
+                className="grid grid-cols-[72px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 py-2"
+              >
+                <span className="text-sm font-semibold">{day.shortLabel}</span>
+                <SelectField
+                  id={`${day.key}Open`}
+                  name={`${day.key}Open`}
+                  label={`${day.label} opening time`}
+                  hideLabel
+                  options={courtTimeOptions}
+                  className="mt-0"
+                />
+                <SelectField
+                  id={`${day.key}Close`}
+                  name={`${day.key}Close`}
+                  label={`${day.label} closing time`}
+                  hideLabel
+                  options={courtTimeOptions}
+                  className="mt-0"
+                />
+                <div className="col-span-2 col-start-2">
+                  <ErrorMessage
+                    messages={state.fieldErrors?.[`${day.key}Open`] ?? state.fieldErrors?.[`${day.key}Close`]}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </fieldset>
+        <div>
+          <SelectField id="parkingStatus" name="parkingStatus" label="Parking" options={courtParkingOptions} />
+          <ErrorMessage messages={state.fieldErrors?.parkingStatus} />
         </div>
         <div>
-          <label htmlFor="parking" className="text-sm font-[650]">
-            Parking details <Optional />
-          </label>
-          <input
-            id="parking"
-            name="parking"
-            maxLength={160}
-            className={inputClass}
-            placeholder="Free on-site parking"
-          />
-          <ErrorMessage messages={state.fieldErrors?.parking} />
-        </div>
-        <div>
-          <span className="text-sm font-[650]">Amenities <Optional /></span>
+          <span className="text-sm font-[650]">
+            Amenities <Optional />
+          </span>
           <div className="mt-3 grid gap-x-5 gap-y-3 sm:grid-cols-2">
             {amenities.map((amenity) => (
               <label key={amenity} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-ink">
@@ -186,7 +266,9 @@ export function VenueSubmissionForm() {
 
       <fieldset className="space-y-5 border-t border-line pt-8">
         <legend className="text-lg font-[680] text-ink">Booking and contact</legend>
-        <p className="text-sm leading-6 text-muted">Only add public business contact details—never a private person’s information.</p>
+        <p className="text-sm leading-6 text-muted">
+          Only add public business contact details—never a private person’s information.
+        </p>
         <div>
           <label htmlFor="contact" className="text-sm font-[650]">
             Public phone or email <Optional />

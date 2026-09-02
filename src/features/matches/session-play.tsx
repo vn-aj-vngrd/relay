@@ -70,7 +70,7 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref }: Sessio
             Start Play
           </ButtonLink>
         ) : viewer.rsvp === "going" && viewer.playerId ? (
-          <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5 text-left">
+          <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5 text-center">
             <p className="mb-2 text-center text-sm text-muted">At the court? Mark yourself here.</p>
             <AttendanceToggle
               sessionId={data.session.id}

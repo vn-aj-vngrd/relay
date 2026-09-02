@@ -198,7 +198,7 @@ export const faqSections = [
       ],
       [
         "How do I add a missing Philippines court?",
-        "Choose Suggest a court in Court Finder and send the name, location, and an official or Google Maps link. The suggestion stays private until Relay verifies it.",
+        "Choose Suggest a court in Court Finder and send the name, location, source link, and any court count, setting, hours, pricing, amenities, or booking details you know. The suggestion stays private until Relay verifies it.",
       ],
       [
         "Can I replay the app tour?",

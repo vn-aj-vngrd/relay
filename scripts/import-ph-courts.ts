@@ -12,9 +12,19 @@ const courtSchema = z.object({
   longitude: z.number().min(116.8).max(126.7).nullable(),
   environment: z.enum(["indoor", "outdoor", "covered"]).nullable(),
   courtCount: z.number().int().positive().nullable(),
-  hours: z.object({ summary: z.string().min(1) }).nullable(),
-  priceRange: z.string().nullable(),
-  parking: z.string().nullable(),
+  operatingHours: z.array(
+    z.object({
+      dayOfWeek: z.number().int().min(1).max(7),
+      sequence: z.number().int().nonnegative(),
+      opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+      closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+    }),
+  ),
+  priceStatus: z.enum(["unknown", "free", "paid", "contact", "donation", "members", "invitation"]),
+  priceAmountCents: z.number().int().nonnegative().nullable(),
+  priceMaxCents: z.number().int().nonnegative().nullable(),
+  priceUnit: z.enum(["hour", "player", "court", "session", "court_hour", "player_session"]).nullable(),
+  parkingStatus: z.enum(["available", "unavailable"]).nullable(),
   amenities: z.array(z.string()),
   paddleRental: z.boolean(),
   contact: z.string().nullable(),
@@ -89,6 +99,31 @@ for (const source of sources) {
     }
     if (record.listingStatus === "verified" && record.latitude == null) {
       throw new Error(`Verified court has no reviewed coordinate: ${record.name}`);
+    }
+    const paidPricingComplete =
+      record.priceStatus === "paid" && record.priceAmountCents != null && record.priceUnit != null;
+    const freePricingComplete =
+      record.priceStatus === "free" &&
+      record.priceAmountCents === 0 &&
+      record.priceMaxCents == null &&
+      record.priceUnit == null;
+    const nonAmountPricingComplete =
+      !["paid", "free"].includes(record.priceStatus) &&
+      record.priceAmountCents == null &&
+      record.priceMaxCents == null &&
+      record.priceUnit == null;
+    if (!paidPricingComplete && !freePricingComplete && !nonAmountPricingComplete)
+      throw new Error(`Invalid structured pricing: ${record.name}`);
+    if (
+      record.priceMaxCents != null &&
+      (record.priceAmountCents == null || record.priceMaxCents < record.priceAmountCents)
+    )
+      throw new Error(`Invalid maximum price: ${record.name}`);
+    const operatingPeriodKeys = new Set<string>();
+    for (const period of record.operatingHours) {
+      const key = `${period.dayOfWeek}:${period.sequence}`;
+      if (operatingPeriodKeys.has(key)) throw new Error(`Duplicate operating period: ${record.name} (${key})`);
+      operatingPeriodKeys.add(key);
     }
     externalIds.add(record.sourceExternalId);
     slugs.add(record.slug);
@@ -165,17 +200,18 @@ try {
       }
 
       for (const { source, record, slug } of planned) {
-        const hours = record.hours ? transaction.json(record.hours) : null;
         const verifiedAt = record.listingStatus === "verified" ? new Date("2026-09-01T00:00:00+08:00") : null;
-        await transaction`
+        const saved = await transaction<{ id: string }[]>`
           INSERT INTO venues (
-            slug, name, address, latitude, longitude, environment, court_count, hours, price_range,
-            parking, amenities, paddle_rental, contact, website_url, social_url, booking_url,
+            slug, name, address, latitude, longitude, environment, court_count,
+            price_status, price_amount_cents, price_max_cents, price_unit, parking_status,
+            amenities, paddle_rental, contact, website_url, social_url, booking_url,
             listing_status, source, source_external_id, source_url, verification_note, verified_at, last_seen_at
           ) VALUES (
             ${slug}, ${record.name}, ${record.address}, ${record.latitude}, ${record.longitude},
-            ${record.environment}, ${record.courtCount}, ${hours}, ${record.priceRange}, ${record.parking},
-            ${record.amenities}, ${record.paddleRental}, ${record.contact}, ${record.websiteUrl},
+            ${record.environment}, ${record.courtCount}, ${record.priceStatus}, ${record.priceAmountCents},
+            ${record.priceMaxCents}, ${record.priceUnit}, ${record.parkingStatus}, ${record.amenities}, ${record.paddleRental},
+            ${record.contact}, ${record.websiteUrl},
             ${record.socialUrl}, ${record.bookingUrl}, ${record.listingStatus}, ${source.source},
             ${record.sourceExternalId}, ${record.sourceUrl}, ${verificationNote(source, record)},
             ${verifiedAt}, ${new Date(record.lastSeenAt)}
@@ -188,9 +224,11 @@ try {
             longitude = EXCLUDED.longitude,
             environment = EXCLUDED.environment,
             court_count = EXCLUDED.court_count,
-            hours = EXCLUDED.hours,
-            price_range = EXCLUDED.price_range,
-            parking = EXCLUDED.parking,
+            price_status = EXCLUDED.price_status,
+            price_amount_cents = EXCLUDED.price_amount_cents,
+            price_max_cents = EXCLUDED.price_max_cents,
+            price_unit = EXCLUDED.price_unit,
+            parking_status = EXCLUDED.parking_status,
             amenities = EXCLUDED.amenities,
             paddle_rental = EXCLUDED.paddle_rental,
             contact = EXCLUDED.contact,
@@ -203,7 +241,16 @@ try {
             verified_at = EXCLUDED.verified_at,
             last_seen_at = EXCLUDED.last_seen_at,
             updated_at = now()
+          RETURNING id
         `;
+        const venueId = saved[0]?.id;
+        if (!venueId) throw new Error(`Failed to save operating hours for ${record.name}.`);
+        await transaction`DELETE FROM venue_operating_periods WHERE venue_id = ${venueId}`;
+        for (const period of record.operatingHours)
+          await transaction`
+            INSERT INTO venue_operating_periods (venue_id, day_of_week, sequence, opens_at, closes_at)
+            VALUES (${venueId}, ${period.dayOfWeek}, ${period.sequence}, ${period.opensAt}, ${period.closesAt})
+          `;
       }
     });
     console.log(

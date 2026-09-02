@@ -1,11 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import { updateVenueAction } from "./actions";
+import {
+  courtDays,
+  courtParkingOptions,
+  type CourtParkingStatus,
+  type CourtPriceStatus,
+  courtPriceStatusOptions,
+  courtPriceUnitOptions,
+  courtTimeOptions,
+} from "./details";
 
 const field = "field";
 const statuses = ["unverified", "pending", "verified", "rejected", "archived"];
@@ -19,9 +28,12 @@ export type AdminVenueDefaults = {
   longitude: string | null;
   environment: string | null;
   courtCount: number | null;
-  priceRange: string | null;
-  hours: Record<string, string> | null;
-  parking: string | null;
+  priceStatus: CourtPriceStatus;
+  priceAmountCents: number | null;
+  priceMaxCents: number | null;
+  priceUnit: string | null;
+  operatingHours: Array<{ dayOfWeek: number; opensAt: string; closesAt: string }>;
+  parkingStatus: CourtParkingStatus | null;
   amenities: string[] | null;
   paddleRental: boolean;
   contact: string | null;
@@ -35,6 +47,8 @@ export type AdminVenueDefaults = {
 
 export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
   const [state, action] = useActionState(updateVenueAction, {});
+  const periodForDay = (dayOfWeek: number) => venue.operatingHours.find((period) => period.dayOfWeek === dayOfWeek);
+  const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>(venue.priceStatus);
   return (
     <form action={action} className="space-y-7" noValidate>
       <input type="hidden" name="venueId" value={venue.id} />
@@ -116,24 +130,109 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
             className={field}
           />
         </div>
-        <div>
-          <label htmlFor="priceRange" className="text-sm font-semibold">
-            Price guidance
-          </label>
-          <input id="priceRange" name="priceRange" defaultValue={venue.priceRange ?? ""} className={field} />
-        </div>
-        <div>
-          <label htmlFor="hours" className="text-sm font-semibold">
-            Hours
-          </label>
-          <input id="hours" name="hours" defaultValue={venue.hours?.summary ?? ""} className={field} />
-        </div>
-        <div>
-          <label htmlFor="parking" className="text-sm font-semibold">
-            Parking
-          </label>
-          <input id="parking" name="parking" defaultValue={venue.parking ?? ""} className={field} />
-        </div>
+        <SelectField
+          id="priceStatus"
+          name="priceStatus"
+          label="Pricing"
+          value={priceStatus}
+          onValueChange={(value) => setPriceStatus(value as CourtPriceStatus)}
+          options={courtPriceStatusOptions}
+        />
+        {priceStatus === "paid" ? (
+          <div className="grid gap-5 sm:col-span-2 sm:grid-cols-3">
+            <div>
+              <label htmlFor="priceAmount" className="text-sm font-semibold">
+                Starting price
+              </label>
+              <div className="relative">
+                <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                  ₱
+                </span>
+                <input
+                  id="priceAmount"
+                  name="priceAmount"
+                  type="number"
+                  min="0.01"
+                  max="1000000"
+                  step="0.01"
+                  defaultValue={venue.priceAmountCents == null ? "" : venue.priceAmountCents / 100}
+                  className={`${field} pl-8 font-mono tabular-nums`}
+                />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="priceMax" className="text-sm font-semibold">
+                Maximum price
+              </label>
+              <div className="relative">
+                <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+                  ₱
+                </span>
+                <input
+                  id="priceMax"
+                  name="priceMax"
+                  type="number"
+                  min="0.01"
+                  max="1000000"
+                  step="0.01"
+                  defaultValue={venue.priceMaxCents == null ? "" : venue.priceMaxCents / 100}
+                  className={`${field} pl-8 font-mono tabular-nums`}
+                />
+              </div>
+            </div>
+            <SelectField
+              id="priceUnit"
+              name="priceUnit"
+              label="Pricing mode"
+              defaultValue={venue.priceUnit ?? ""}
+              options={courtPriceUnitOptions}
+            />
+          </div>
+        ) : null}
+        <fieldset className="sm:col-span-2">
+          <legend className="text-sm font-semibold">Operating hours</legend>
+          <p className="mt-1.5 text-sm text-muted">
+            Philippine time. Matching open and close times mean open 24 hours.
+          </p>
+          <div className="mt-3 divide-y divide-line border-y border-line">
+            {courtDays.map((day) => {
+              const period = periodForDay(day.value);
+              return (
+                <div
+                  key={day.value}
+                  className="grid grid-cols-[72px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 py-2"
+                >
+                  <span className="text-sm font-semibold">{day.shortLabel}</span>
+                  <SelectField
+                    id={`${day.key}Open`}
+                    name={`${day.key}Open`}
+                    label={`${day.label} opening time`}
+                    hideLabel
+                    defaultValue={period?.opensAt.slice(0, 5) ?? ""}
+                    options={courtTimeOptions}
+                    className="mt-0"
+                  />
+                  <SelectField
+                    id={`${day.key}Close`}
+                    name={`${day.key}Close`}
+                    label={`${day.label} closing time`}
+                    hideLabel
+                    defaultValue={period?.closesAt.slice(0, 5) ?? ""}
+                    options={courtTimeOptions}
+                    className="mt-0"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </fieldset>
+        <SelectField
+          id="parkingStatus"
+          name="parkingStatus"
+          label="Parking"
+          defaultValue={venue.parkingStatus ?? ""}
+          options={courtParkingOptions}
+        />
         <div>
           <label htmlFor="contact" className="text-sm font-semibold">
             Contact

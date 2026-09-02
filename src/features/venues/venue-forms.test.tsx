@@ -17,8 +17,11 @@ describe("venue forms", () => {
     expect(screen.getByLabelText("Source or Google Maps link")).toBeRequired();
     expect(screen.getByRole("button", { name: "Setting" })).toHaveTextContent("I don’t know");
     expect(screen.getByLabelText(/Number of playable courts/)).toHaveAttribute("type", "number");
-    expect(screen.getByLabelText(/Price guidance/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Operating hours/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Pricing" })).toHaveTextContent("Not listed");
+    expect(screen.queryByLabelText("Starting price")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Parking" })).toHaveTextContent("Not listed");
+    expect(screen.getByRole("button", { name: "Monday opening time" })).toHaveTextContent("Not listed");
+    expect(screen.getByRole("button", { name: "Sunday closing time" })).toHaveTextContent("Not listed");
     expect(screen.getByLabelText("Paddle rental available")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Submit for review" })).toBeInTheDocument();
   });
@@ -34,9 +37,12 @@ describe("venue forms", () => {
           longitude: null,
           environment: null,
           courtCount: null,
-          priceRange: null,
-          hours: null,
-          parking: null,
+          priceStatus: "paid",
+          priceAmountCents: 50000,
+          priceMaxCents: 65000,
+          priceUnit: "court_hour",
+          operatingHours: [],
+          parkingStatus: "unavailable",
           amenities: ["Restrooms"],
           paddleRental: true,
           contact: null,
@@ -51,6 +57,12 @@ describe("venue forms", () => {
     );
     expect(screen.getByLabelText("Latitude")).not.toBeRequired();
     expect(screen.getByLabelText("Longitude")).not.toBeRequired();
+    expect(screen.getByRole("button", { name: "Pricing" })).toHaveTextContent("Paid");
+    expect(screen.getByLabelText("Starting price")).toHaveValue(500);
+    expect(screen.getByLabelText("Maximum price")).toHaveValue(650);
+    expect(screen.getByRole("button", { name: "Pricing mode" })).toHaveTextContent("Per court per hour");
+    expect(screen.getByRole("button", { name: "Parking" })).toHaveTextContent("Not available");
+    expect(screen.getByRole("button", { name: "Monday opening time" })).toHaveTextContent("Not listed");
     expect(screen.getByLabelText("Verification source")).toHaveValue("https://maps.google.com/example");
     expect(screen.getByLabelText("Restrooms")).toBeChecked();
     expect(screen.getByLabelText("Paddle rental available")).toBeChecked();

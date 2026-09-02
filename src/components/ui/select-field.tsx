@@ -3,6 +3,8 @@
 import { CaretDown, Check } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
+import { usePopoverTransition } from "./use-popover-transition";
+
 type Option = { value: string; label: string };
 
 export function SelectField({
@@ -34,16 +36,19 @@ export function SelectField({
     if (controlledValue === undefined) setLocalValue(next);
     onValueChange?.(next);
   };
-  const [open, setOpen] = useState(false);
+  const { open, rendered, hide, toggle } = usePopoverTransition();
   const root = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const selected = options.find((option) => option.value === value) ?? options[0];
   useEffect(() => {
     if (!open) return;
     const pointer = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) setOpen(false);
+      if (!root.current?.contains(event.target as Node)) hide();
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key !== "Escape") return;
+      hide();
+      trigger.current?.focus();
     };
     document.addEventListener("pointerdown", pointer);
     document.addEventListener("keydown", key);
@@ -51,7 +56,7 @@ export function SelectField({
       document.removeEventListener("pointerdown", pointer);
       document.removeEventListener("keydown", key);
     };
-  }, [open]);
+  }, [hide, open]);
 
   return (
     <div ref={root} className="relative min-w-0">
@@ -60,12 +65,13 @@ export function SelectField({
       </label>
       <input type="hidden" name={name} value={value} />
       <button
+        ref={trigger}
         id={id}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open && !disabled}
         disabled={disabled}
-        onClick={() => setOpen((current) => !current)}
+        onClick={toggle}
         className={`mt-1.5 flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${className}`}
       >
         <span className="truncate">{selected?.label}</span>
@@ -75,11 +81,13 @@ export function SelectField({
           className={`shrink-0 text-muted transition-transform ${open && !disabled ? "rotate-180" : ""}`}
         />
       </button>
-      {open && !disabled ? (
+      {rendered && !disabled ? (
         <div
           role="listbox"
           aria-label={`${label} options`}
-          className="fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 max-h-[55svh] w-auto overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-[calc(100%+.5rem)] sm:max-h-64 sm:w-full sm:min-w-44"
+          data-state={open ? "open" : "closed"}
+          data-align="stretch"
+          className="menu-popover fixed inset-x-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 max-h-[55svh] w-auto overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)] sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-0 sm:top-[calc(100%+.5rem)] sm:max-h-64 sm:w-full sm:min-w-44"
         >
           {options.map((option) => (
             <button
@@ -89,7 +97,7 @@ export function SelectField({
               aria-selected={value === option.value}
               onClick={() => {
                 setValue(option.value);
-                setOpen(false);
+                hide();
               }}
               className={`pressable flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm ${value === option.value ? "bg-primary-soft font-semibold text-primary" : "hover:bg-surface-strong"}`}
             >

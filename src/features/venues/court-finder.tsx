@@ -22,7 +22,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
+import { SelectField } from "@/components/ui/select-field";
 
+import {
+  courtAvailabilityOptions,
+  courtBookingEndTimeOptions,
+  courtBookingStartTimeOptions,
+  formatCourtOperatingHours,
+  isCourtOpen24Hours,
+  isCourtOpenAt,
+  isCourtOpenDuring,
+} from "./details";
 import type { CourtListing } from "./directory";
 import { distanceInKilometers, formatDistance } from "./distance";
 
@@ -41,6 +51,10 @@ type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
 type CourtView = "map" | "list";
 type CourtResult = { venue: CourtListing; distance: number | null };
+type SettingFilter = "all" | "indoor" | "outdoor";
+type ParkingFilter = "all" | "available" | "unavailable";
+type PriceFilter = "all" | "free" | "under-500" | "500-1000" | "over-1000";
+type AvailabilityFilter = "all" | "open" | "24-hours" | "during";
 
 const courtViewOptions = [
   { value: "map" as const, label: "Map", icon: MapTrifold },
@@ -66,7 +80,12 @@ function venueMeta(venue: CourtListing) {
   return [
     environmentLabel(venue.environment),
     venue.courtCount ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}` : null,
-    venue.priceRange,
+    venue.priceLabel,
+    venue.parkingStatus === "available"
+      ? "Parking available"
+      : venue.parkingStatus === "unavailable"
+        ? "No parking"
+        : null,
     venue.paddleRental ? "Paddle rental" : null,
   ].filter(Boolean);
 }
@@ -87,10 +106,10 @@ function SelectedCourtOverlay({
   detailBasePath: "/court" | "/courts";
 }) {
   const { venue, distance } = result;
-  const hours = venue.hours?.summary;
+  const hours = formatCourtOperatingHours(venue.operatingHours);
   const facts = [
     hours ? { label: "Hours", value: hours, icon: Clock } : null,
-    venue.parking ? { label: "Parking", value: venue.parking, icon: Car } : null,
+    { label: "Parking", value: venue.parkingLabel ?? "Not listed", icon: Car },
     venue.paddleRental ? { label: "Paddles", value: "Rental available", icon: Racquet } : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
@@ -339,9 +358,12 @@ export function CourtFinder({
   className?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [setting, setSetting] = useState<"all" | "indoor" | "outdoor">("all");
-  const [paddleRentalOnly, setPaddleRentalOnly] = useState(false);
-  const [parkingOnly, setParkingOnly] = useState(false);
+  const [setting, setSetting] = useState<SettingFilter>("all");
+  const [parking, setParking] = useState<ParkingFilter>("all");
+  const [price, setPrice] = useState<PriceFilter>("all");
+  const [availability, setAvailability] = useState<AvailabilityFilter>("all");
+  const [bookingStartTime, setBookingStartTime] = useState("18:00");
+  const [bookingEndTime, setBookingEndTime] = useState("20:00");
   const [mobileView, setMobileView] = useState<CourtView>("map");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -350,34 +372,58 @@ export function CourtFinder({
   const [locationMessage, setLocationMessage] = useState("");
   const selectionTriggerRef = useRef<HTMLElement | null>(null);
   const mapSectionRef = useRef<HTMLElement>(null);
+  const searchableVenues = useMemo(
+    () =>
+      venues.map((venue) => ({
+        venue,
+        searchText:
+          `${venue.name} ${venue.address} ${venue.environment ?? ""} ${venue.priceLabel ?? ""} ${venue.parkingStatus === "available" ? "parking available" : venue.parkingStatus === "unavailable" ? "no parking parking not available" : ""} ${formatCourtOperatingHours(venue.operatingHours) ?? ""} ${venue.amenities.join(" ")}`.toLowerCase(),
+      })),
+    [venues],
+  );
 
   const results = useMemo(() => {
     const term = query.trim().toLowerCase();
-    const matching = venues
-      .filter((venue) => venue.listingStatus === "verified")
-      .filter((venue) => {
-        const indoor =
-          venue.environment === "indoor" || venue.environment === "semi-indoor" || venue.environment === "covered";
-        const settingMatches = setting === "all" || (setting === "indoor" ? indoor : venue.environment === "outdoor");
-        const queryMatches =
-          !term ||
-          `${venue.name} ${venue.address} ${venue.priceRange ?? ""} ${venue.amenities.join(" ")}`
-            .toLowerCase()
-            .includes(term);
-        const parkingMatches = !parkingOnly || Boolean(venue.parking?.trim());
-        return settingMatches && queryMatches && parkingMatches && (!paddleRentalOnly || venue.paddleRental);
+    const matching = searchableVenues
+      .filter(({ venue }) => venue.listingStatus === "verified")
+      .filter(({ venue, searchText }) => {
+        const indoor = ["indoor", "covered", "semi-indoor", "mixed"].includes(venue.environment ?? "");
+        const outdoor = ["outdoor", "mixed"].includes(venue.environment ?? "");
+        const settingMatches = setting === "all" || (setting === "indoor" ? indoor : outdoor);
+        const queryMatches = !term || searchText.includes(term);
+        const parkingMatches = parking === "all" || venue.parkingStatus === parking;
+        const amount = venue.priceAmountCents;
+        const priceMatches =
+          price === "all" ||
+          (price === "free" && venue.priceStatus === "free") ||
+          (price === "under-500" && venue.priceStatus === "paid" && amount != null && amount <= 50000) ||
+          (price === "500-1000" &&
+            venue.priceStatus === "paid" &&
+            amount != null &&
+            amount > 50000 &&
+            amount <= 100000) ||
+          (price === "over-1000" && venue.priceStatus === "paid" && amount != null && amount > 100000);
+        const hoursMatch =
+          availability === "all" ||
+          (availability === "open" && isCourtOpenAt(venue.operatingHours) === true) ||
+          (availability === "24-hours" && isCourtOpen24Hours(venue.operatingHours)) ||
+          (availability === "during" &&
+            isCourtOpenDuring(venue.operatingHours, bookingStartTime, bookingEndTime) === true);
+        return settingMatches && queryMatches && parkingMatches && priceMatches && hoursMatch;
       })
-      .map((venue) => ({
+      .map(({ venue }) => ({
         venue,
         distance: userLocation ? distanceInKilometers(userLocation, venue) : null,
       }));
     if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
     return matching;
-  }, [paddleRentalOnly, parkingOnly, query, setting, userLocation, venues]);
+  }, [availability, bookingEndTime, bookingStartTime, parking, price, query, searchableVenues, setting, userLocation]);
 
   const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
-  const filtersActive = Boolean(query.trim() || setting !== "all" || paddleRentalOnly || parkingOnly);
+  const filtersActive = Boolean(
+    query.trim() || setting !== "all" || parking !== "all" || price !== "all" || availability !== "all",
+  );
 
   function selectCourt(id: string, revealMap = false) {
     selectionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -401,8 +447,9 @@ export function CourtFinder({
   function clearFilters() {
     setQuery("");
     setSetting("all");
-    setPaddleRentalOnly(false);
-    setParkingOnly(false);
+    setParking("all");
+    setPrice("all");
+    setAvailability("all");
     setSelectedId(null);
   }
 
@@ -505,53 +552,116 @@ export function CourtFinder({
           </Button>
         </div>
 
-        <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1">
+        <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1 sm:overflow-visible">
           <div className="flex min-w-max gap-1.5 sm:gap-2" aria-label="Court filters">
-            {(["all", "indoor", "outdoor"] as const).map((value) => {
-              const selected = setting === value;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => {
-                    setSetting(value);
-                    setSelectedId(null);
-                  }}
-                  aria-pressed={selected}
-                  className={`court-compact-control pressable inline-flex min-h-11 items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${selected ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
-                >
-                  {value === "all" ? "All" : value === "indoor" ? "Indoor" : "Outdoor"}
-                </button>
-              );
-            })}
-            <label
-              className={`court-compact-control pressable inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${paddleRentalOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
-            >
-              <input
-                type="checkbox"
-                checked={paddleRentalOnly}
-                onChange={(event) => {
-                  setPaddleRentalOnly(event.target.checked);
+            <div>
+              <SelectField
+                id="court-setting-filter"
+                name="courtSettingFilter"
+                label="Setting"
+                hideLabel
+                value={setting}
+                onValueChange={(value) => {
+                  setSetting(value as SettingFilter);
                   setSelectedId(null);
                 }}
-                className="sr-only"
+                options={[
+                  { value: "all", label: "Any setting" },
+                  { value: "indoor", label: "Indoor" },
+                  { value: "outdoor", label: "Outdoor" },
+                ]}
+                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
               />
-              Paddle rental
-            </label>
-            <label
-              className={`court-compact-control pressable inline-flex min-h-11 cursor-pointer items-center rounded-full border px-3 text-xs font-semibold sm:min-h-9 sm:px-3.5 sm:text-[13px] ${parkingOnly ? "border-primary/20 bg-primary-soft text-primary-hover" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
-            >
-              <input
-                type="checkbox"
-                checked={parkingOnly}
-                onChange={(event) => {
-                  setParkingOnly(event.target.checked);
+            </div>
+            <div>
+              <SelectField
+                id="court-parking-filter"
+                name="courtParkingFilter"
+                label="Parking"
+                hideLabel
+                value={parking}
+                onValueChange={(value) => {
+                  setParking(value as ParkingFilter);
                   setSelectedId(null);
                 }}
-                className="sr-only"
+                options={[
+                  { value: "all", label: "Any parking" },
+                  { value: "available", label: "Parking available" },
+                  { value: "unavailable", label: "No parking" },
+                ]}
+                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
               />
-              Parking
-            </label>
+            </div>
+            <div>
+              <SelectField
+                id="court-price-filter"
+                name="courtPriceFilter"
+                label="Starting price"
+                hideLabel
+                value={price}
+                onValueChange={(value) => {
+                  setPrice(value as PriceFilter);
+                  setSelectedId(null);
+                }}
+                options={[
+                  { value: "all", label: "Any price" },
+                  { value: "free", label: "Free" },
+                  { value: "under-500", label: "₱1–₱500" },
+                  { value: "500-1000", label: "₱501–₱1,000" },
+                  { value: "over-1000", label: "Over ₱1,000" },
+                ]}
+                className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
+              />
+            </div>
+            <div>
+              <SelectField
+                id="court-availability-filter"
+                name="courtAvailabilityFilter"
+                label="Availability"
+                hideLabel
+                value={availability}
+                onValueChange={(value) => {
+                  setAvailability(value as AvailabilityFilter);
+                  setSelectedId(null);
+                }}
+                options={courtAvailabilityOptions}
+                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+              />
+            </div>
+            {availability === "during" ? (
+              <>
+                <div>
+                  <SelectField
+                    id="court-booking-start-time-filter"
+                    name="courtBookingStartTimeFilter"
+                    label="Booking starts"
+                    hideLabel
+                    value={bookingStartTime}
+                    onValueChange={(value) => {
+                      setBookingStartTime(value);
+                      setSelectedId(null);
+                    }}
+                    options={courtBookingStartTimeOptions}
+                    className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
+                  />
+                </div>
+                <div>
+                  <SelectField
+                    id="court-booking-end-time-filter"
+                    name="courtBookingEndTimeFilter"
+                    label="Booking ends"
+                    hideLabel
+                    value={bookingEndTime}
+                    onValueChange={(value) => {
+                      setBookingEndTime(value);
+                      setSelectedId(null);
+                    }}
+                    options={courtBookingEndTimeOptions}
+                    className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
+                  />
+                </div>
+              </>
+            ) : null}
             {filtersActive ? (
               <button
                 type="button"

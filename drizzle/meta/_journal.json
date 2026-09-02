@@ -190,6 +190,41 @@
       "when": 1788279439237,
       "tag": "0026_public_open_games",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1788326159475,
+      "tag": "0027_structured_court_pricing_parking",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788328422981,
+      "tag": "0028_remove_legacy_court_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788331562627,
+      "tag": "0029_structured_court_operating_hours",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1788332892883,
+      "tag": "0030_simplify_court_parking",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788333684420,
+      "tag": "0031_index_court_directory_filters",
+      "breakpoints": true
     }
   ]
 }

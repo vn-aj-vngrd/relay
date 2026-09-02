@@ -4,12 +4,21 @@ import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { unstable_cache, updateTag } from "next/cache";
 
 import { db } from "@/db/client";
-import { venues } from "@/db/schema";
+import { venueOperatingPeriods, venues } from "@/db/schema";
 
 import { courtDirectoryCoverage } from "./coverage";
+import {
+  type CourtDay,
+  type CourtOperatingPeriod,
+  type CourtParkingStatus,
+  type CourtPriceStatus,
+  type CourtPriceUnit,
+  formatCourtParking,
+  formatCourtPrice,
+} from "./details";
 
 const courtDirectoryTag = "court-directory";
-const courtDirectorySnapshot = "2026-09-01";
+const courtDirectorySnapshot = "2026-09-02-structured-hours-and-parking";
 
 export type CourtListing = {
   id: string;
@@ -20,9 +29,12 @@ export type CourtListing = {
   longitude: number;
   environment: string | null;
   courtCount: number | null;
-  hours: Record<string, string> | null;
-  priceRange: string | null;
-  parking: string | null;
+  operatingHours: CourtOperatingPeriod[];
+  priceStatus: CourtPriceStatus;
+  priceAmountCents: number | null;
+  priceLabel: string | null;
+  parkingStatus: CourtParkingStatus | null;
+  parkingLabel: string | null;
   amenities: string[];
   paddleRental: boolean;
   contact: string | null;
@@ -34,11 +46,39 @@ export type CourtListing = {
 };
 
 async function queryCourtListings(): Promise<CourtListing[]> {
-  const rows = await db
-    .select()
-    .from(venues)
-    .where(and(eq(venues.listingStatus, "verified"), isNotNull(venues.latitude), isNotNull(venues.longitude)))
-    .orderBy(asc(venues.name));
+  const directoryCondition = and(
+    eq(venues.listingStatus, "verified"),
+    isNotNull(venues.latitude),
+    isNotNull(venues.longitude),
+  );
+  const [rows, operatingPeriods] = await Promise.all([
+    db.select().from(venues).where(directoryCondition).orderBy(asc(venues.name)),
+    db
+      .select({
+        venueId: venueOperatingPeriods.venueId,
+        dayOfWeek: venueOperatingPeriods.dayOfWeek,
+        opensAt: venueOperatingPeriods.opensAt,
+        closesAt: venueOperatingPeriods.closesAt,
+      })
+      .from(venueOperatingPeriods)
+      .innerJoin(venues, eq(venues.id, venueOperatingPeriods.venueId))
+      .where(directoryCondition)
+      .orderBy(
+        asc(venueOperatingPeriods.venueId),
+        asc(venueOperatingPeriods.dayOfWeek),
+        asc(venueOperatingPeriods.sequence),
+      ),
+  ]);
+  const periodsByVenue = new Map<string, CourtOperatingPeriod[]>();
+  for (const period of operatingPeriods) {
+    const venuePeriods = periodsByVenue.get(period.venueId) ?? [];
+    venuePeriods.push({
+      dayOfWeek: period.dayOfWeek as CourtDay,
+      opensAt: period.opensAt.slice(0, 5),
+      closesAt: period.closesAt.slice(0, 5),
+    });
+    periodsByVenue.set(period.venueId, venuePeriods);
+  }
 
   return rows.flatMap((venue) => {
     const latitude = Number(venue.latitude);
@@ -54,9 +94,17 @@ async function queryCourtListings(): Promise<CourtListing[]> {
         longitude,
         environment: venue.environment,
         courtCount: venue.courtCount,
-        hours: venue.hours,
-        priceRange: venue.priceRange,
-        parking: venue.parking,
+        operatingHours: periodsByVenue.get(venue.id) ?? [],
+        priceStatus: venue.priceStatus as CourtPriceStatus,
+        priceAmountCents: venue.priceAmountCents,
+        priceLabel: formatCourtPrice({
+          priceStatus: venue.priceStatus as CourtPriceStatus,
+          priceAmountCents: venue.priceAmountCents,
+          priceMaxCents: venue.priceMaxCents,
+          priceUnit: venue.priceUnit as CourtPriceUnit | null,
+        }),
+        parkingStatus: venue.parkingStatus,
+        parkingLabel: formatCourtParking(venue.parkingStatus),
         amenities: venue.amenities ?? [],
         paddleRental: venue.paddleRental,
         contact: venue.contact,

@@ -46,9 +46,16 @@ const venue: CourtListing = {
   longitude: 123.9928,
   environment: "semi-indoor",
   courtCount: 3,
-  hours: { summary: "8:00 AM – 12:00 AM" },
-  priceRange: "₱450–₱500 per hour",
-  parking: "Available",
+  operatingHours: Array.from({ length: 7 }, (_, index) => ({
+    dayOfWeek: (index + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7,
+    opensAt: "00:00",
+    closesAt: "00:00",
+  })),
+  priceStatus: "paid",
+  priceAmountCents: 45000,
+  priceLabel: "₱450–₱500 per hour",
+  parkingStatus: "available",
+  parkingLabel: "Available",
   amenities: ["Open play"],
   paddleRental: true,
   contact: null,
@@ -66,8 +73,14 @@ const fartherVenue: CourtListing = {
   name: "Farther Court",
   address: "Talisay, Cebu",
   latitude: 10.2447,
+  environment: "outdoor",
   longitude: 123.8494,
-  parking: null,
+  operatingHours: [],
+  priceStatus: "paid",
+  priceAmountCents: 120000,
+  priceLabel: "₱1,200 per court per hour",
+  parkingStatus: "unavailable",
+  parkingLabel: "Not available",
   paddleRental: false,
 };
 
@@ -217,15 +230,43 @@ describe("CourtFinder", () => {
     expect(screen.queryByText("Suggested Court")).not.toBeInTheDocument();
   });
 
-  it("filters courts by equipment and parking", () => {
+  it("filters courts by parking, price, and operating hours", () => {
     const { rerender } = render(<CourtFinder venues={[venue, fartherVenue]} />);
 
-    fireEvent.click(screen.getByLabelText("Paddle rental"));
-    expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
-    expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
+    expect(screen.queryByLabelText("Paddle rental")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Setting"));
+    fireEvent.click(screen.getByRole("option", { name: "Outdoor" }));
+    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
+    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
 
     rerender(<CourtFinder key="parking-filter" venues={[venue, fartherVenue]} />);
     fireEvent.click(screen.getByLabelText("Parking"));
+    fireEvent.click(screen.getByRole("option", { name: "Parking available" }));
+    expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
+    expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
+
+    rerender(<CourtFinder key="no-parking-filter" venues={[venue, fartherVenue]} />);
+    fireEvent.click(screen.getByLabelText("Parking"));
+    expect(screen.queryByRole("option", { name: "Limited parking" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "No parking" }));
+    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
+    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
+
+    rerender(<CourtFinder key="price-filter" venues={[venue, fartherVenue]} />);
+    fireEvent.click(screen.getByLabelText("Starting price"));
+    fireEvent.click(screen.getByRole("option", { name: "Over ₱1,000" }));
+    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
+    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
+
+    rerender(<CourtFinder key="hours-filter" venues={[venue, fartherVenue]} />);
+    fireEvent.click(screen.getByLabelText("Availability"));
+    expect(screen.getAllByRole("option")).toHaveLength(4);
+    expect(screen.queryByRole("option", { name: "Open today at 8:00 PM" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: "Open during a time range" }));
+    fireEvent.click(screen.getByLabelText("Booking starts"));
+    fireEvent.click(screen.getByRole("option", { name: "From 6:00 PM" }));
+    fireEvent.click(screen.getByLabelText("Booking ends"));
+    fireEvent.click(screen.getByRole("option", { name: "Until 8:00 PM" }));
     expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
     expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
   });
