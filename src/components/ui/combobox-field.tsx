@@ -86,11 +86,18 @@ export function ComboboxField({
       setQuery(selected?.label ?? "");
       return;
     }
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    if (
+      event.key === "ArrowDown" ||
+      event.key === "ArrowUp" ||
+      event.key === "Home" ||
+      event.key === "End"
+    ) {
       event.preventDefault();
       setOpen(true);
       if (!matches.length) return;
       setActiveIndex((current) => {
+        if (event.key === "Home") return 0;
+        if (event.key === "End") return matches.length - 1;
         if (event.key === "ArrowDown")
           return current < matches.length - 1 ? current + 1 : 0;
         return current > 0 ? current - 1 : matches.length - 1;
@@ -132,7 +139,12 @@ export function ComboboxField({
           placeholder={placeholder}
           onFocus={() => {
             setOpen(true);
-            setActiveIndex(-1);
+            setActiveIndex(
+              matches.findIndex((option) => option.value === value)
+            );
+          }}
+          onBlur={(event) => {
+            if (!rootRef.current?.contains(event.relatedTarget)) setOpen(false);
           }}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -163,6 +175,7 @@ export function ComboboxField({
                 id={`${listboxId}-${index}`}
                 type="button"
                 role="option"
+                tabIndex={-1}
                 aria-selected={option.value === value}
                 onMouseDown={(event) => event.preventDefault()}
                 onMouseEnter={() => setActiveIndex(index)}

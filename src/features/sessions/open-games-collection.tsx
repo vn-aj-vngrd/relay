@@ -153,6 +153,11 @@ export function OpenGamesCollection({
       const params = new URLSearchParams({
         cursor: nextCursor,
         date: filters.date,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        time: filters.time,
+        timeFrom: filters.timeFrom,
+        timeTo: filters.timeTo,
         location: filters.location,
         available: filters.available ? "1" : "",
       });
@@ -169,7 +174,7 @@ export function OpenGamesCollection({
     } finally {
       setLoading(false);
     }
-  }, [filters.available, filters.date, filters.location, loading, nextCursor]);
+  }, [filters, loading, nextCursor]);
 
   useEffect(() => {
     const target = sentinelRef.current;

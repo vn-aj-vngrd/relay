@@ -730,7 +730,7 @@ export function CourtFinder({
           >
             <div
               role="group"
-              className="flex min-w-max gap-1.5 sm:gap-2"
+              className="flex min-w-max items-center gap-1.5 sm:gap-2"
               aria-label="Court filters"
             >
               <div>
@@ -841,9 +841,9 @@ export function CourtFinder({
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="compact-control pressable h-9 min-h-9 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
+                  className="compact-control pressable inline-flex h-9 min-h-9 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
                 >
-                  Clear
+                  Clear filters
                 </button>
               ) : null}
             </div>

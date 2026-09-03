@@ -183,7 +183,20 @@ export function GlobalSearch({
   const [recent, setRecent] = useState<RecentSearch[]>([]);
   const requestRef = useRef<AbortController | null>(null);
   const responseCacheRef = useRef(new Map<string, SearchResponse>());
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (
+      typeof window.matchMedia !== "function" ||
+      !window.matchMedia("(min-width: 640px)").matches
+    )
+      return;
+    const frame = window.requestAnimationFrame(() =>
+      searchInputRef.current?.focus()
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() =>
@@ -342,7 +355,7 @@ export function GlobalSearch({
             Search Relay
           </label>
           <input
-            autoFocus
+            ref={searchInputRef}
             id="global-search"
             value={query}
             onChange={(event) => updateQuery(event.target.value)}

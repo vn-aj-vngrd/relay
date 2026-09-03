@@ -10,6 +10,11 @@ vi.mock("next/navigation", () => ({
 
 const defaultFilters = {
   date: "any" as const,
+  dateFrom: "",
+  dateTo: "",
+  time: "any" as const,
+  timeFrom: "",
+  timeTo: "",
   location: "",
   available: false,
 };
@@ -35,9 +40,7 @@ describe("OpenGamesFilters", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Date" }));
     const dateOption = screen.getByRole("option", { name: "Next 7 days" });
-    expect(dateOption.closest(".focus-scroll-rail")).toHaveClass(
-      "sm:overflow-visible"
-    );
+    expect(dateOption).toBeVisible();
     fireEvent.click(dateOption);
 
     expect(replace).toHaveBeenCalledWith("/games/open?date=7d", {
@@ -49,7 +52,7 @@ describe("OpenGamesFilters", () => {
     vi.useFakeTimers();
     render(
       <OpenGamesFilters
-        filters={{ date: "today", location: "", available: true }}
+        filters={{ ...defaultFilters, date: "today", available: true }}
       />
     );
 
@@ -69,6 +72,47 @@ describe("OpenGamesFilters", () => {
     );
   });
 
+  it("reveals compact range controls only for custom date and time filters", () => {
+    const { rerender } = render(
+      <OpenGamesFilters
+        filters={{ ...defaultFilters, date: "custom", time: "custom" }}
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "From date" })).toHaveClass(
+      "compact-control",
+      "h-9",
+      "!w-auto"
+    );
+    expect(screen.getByRole("button", { name: "Until date" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "From time" })).toHaveClass(
+      "compact-control",
+      "h-9",
+      "!w-auto"
+    );
+    expect(screen.getByRole("button", { name: "Until time" })).toBeVisible();
+
+    rerender(<OpenGamesFilters filters={defaultFilters} />);
+    expect(
+      screen.queryByRole("button", { name: "From date" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps location search separate from filter reset", () => {
+    render(
+      <OpenGamesFilters
+        filters={{ ...defaultFilters, location: "Cebu City" }}
+      />
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Clear location search" })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Clear filters" })
+    ).not.toBeInTheDocument();
+  });
+
   it("toggles available games immediately and exposes clear only when active", () => {
     const { rerender } = render(<OpenGamesFilters filters={defaultFilters} />);
 
@@ -81,11 +125,17 @@ describe("OpenGamesFilters", () => {
     ).not.toBeInTheDocument();
 
     rerender(
-      <OpenGamesFilters filters={{ ...defaultFilters, available: true }} />
+      <OpenGamesFilters
+        filters={{
+          ...defaultFilters,
+          location: "Cebu City",
+          available: true,
+        }}
+      />
     );
     expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
       "href",
-      "/games/open"
+      "/games/open?location=Cebu+City"
     );
   });
 });

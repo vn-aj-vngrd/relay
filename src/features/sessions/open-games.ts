@@ -1,20 +1,56 @@
 import { z } from "zod";
 
-export const openGameDateFilters = ["any", "today", "7d", "30d"] as const;
+export const openGameDateFilters = [
+  "any",
+  "today",
+  "7d",
+  "30d",
+  "custom",
+] as const;
 export type OpenGameDateFilter = (typeof openGameDateFilters)[number];
+export const openGameTimeFilters = [
+  "any",
+  "morning",
+  "afternoon",
+  "evening",
+  "custom",
+] as const;
 
-export const openGamesFilterSchema = z.object({
-  date: z.enum(openGameDateFilters).default("any"),
-  location: z
-    .string()
-    .trim()
-    .max(80, "Keep the location search under 80 characters.")
-    .default(""),
-  available: z
-    .union([z.literal("1"), z.literal("0"), z.literal("")])
-    .default("")
-    .transform((value) => value === "1"),
-});
+const optionalDate = z.union([z.iso.date(), z.literal("")]).default("");
+const optionalTime = z
+  .union([z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), z.literal("")])
+  .default("");
+
+export const openGamesFilterSchema = z
+  .object({
+    date: z.enum(openGameDateFilters).default("any"),
+    dateFrom: optionalDate,
+    dateTo: optionalDate,
+    time: z.enum(openGameTimeFilters).default("any"),
+    timeFrom: optionalTime,
+    timeTo: optionalTime,
+    location: z
+      .string()
+      .trim()
+      .max(80, "Keep the location search under 80 characters.")
+      .default(""),
+    available: z
+      .union([z.literal("1"), z.literal("0"), z.literal("")])
+      .default("")
+      .transform((value) => value === "1"),
+  })
+  .refine(
+    (filters) =>
+      !(filters.dateFrom && filters.dateTo) ||
+      filters.dateFrom <= filters.dateTo,
+    { message: "The end date must be on or after the start date." }
+  )
+  .refine(
+    (filters) =>
+      !(filters.timeFrom && filters.timeTo) ||
+      filters.timeFrom < filters.timeTo,
+    { message: "The end time must be after the start time." }
+  );
 
 const cursorSchema = z.object({
   at: z.iso.datetime({ offset: true }),

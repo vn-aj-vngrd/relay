@@ -21,6 +21,30 @@ describe("date and time pickers", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("moves through the calendar with arrow, Home, End, and Page keys", () => {
+    const { container } = render(
+      <DatePickerField id="date" label="Date" defaultValue="2030-09-06" />
+    );
+    const trigger = screen.getByRole("button", { name: "Date" });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const selected = screen.getByRole("button", {
+      name: "Friday, September 6, 2030",
+    });
+
+    fireEvent.keyDown(selected, { key: "ArrowRight" });
+    const saturday = screen.getByRole("button", {
+      name: "Saturday, September 7, 2030",
+    });
+    expect(saturday).toHaveAttribute("tabindex", "0");
+    fireEvent.keyDown(saturday, { key: "Enter" });
+
+    expect(container.querySelector('input[name="date"]')).toHaveValue(
+      "2030-09-07"
+    );
+    expect(trigger).toHaveFocus();
+  });
+
   it("disables dates before the creation boundary", () => {
     render(
       <DatePickerField
@@ -49,6 +73,20 @@ describe("date and time pickers", () => {
     expect(
       screen.getByRole("button", { name: "Start time" })
     ).toHaveTextContent("7:15 PM");
+  });
+
+  it("chooses a time with the shared listbox keyboard model", () => {
+    const { container } = render(
+      <TimePickerField id="start" label="Start time" defaultValue="19:00" />
+    );
+    const trigger = screen.getByRole("button", { name: "Start time" });
+    trigger.focus();
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    fireEvent.keyDown(trigger, { key: "Enter" });
+
+    expect(container.querySelector('input[name="start"]')).toHaveValue("19:15");
+    expect(trigger).toHaveFocus();
   });
 
   it("offers end times after the start and start times before the end", () => {

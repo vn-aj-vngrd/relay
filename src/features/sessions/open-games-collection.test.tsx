@@ -7,7 +7,16 @@ vi.mock("@/features/analytics/actions", () => ({
 
 import { OpenGamesCollection } from "./open-games-collection";
 
-const filters = { date: "any" as const, location: "", available: false };
+const filters = {
+  date: "any" as const,
+  dateFrom: "",
+  dateTo: "",
+  time: "any" as const,
+  timeFrom: "",
+  timeTo: "",
+  location: "",
+  available: false,
+};
 
 afterEach(cleanup);
 

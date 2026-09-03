@@ -34,8 +34,13 @@ export async function GET(request: NextRequest) {
 
   const parsedFilters = openGamesFilterSchema.safeParse({
     date: request.nextUrl.searchParams.get("date") ?? "any",
+    dateFrom: request.nextUrl.searchParams.get("dateFrom") ?? "",
+    dateTo: request.nextUrl.searchParams.get("dateTo") ?? "",
+    time: request.nextUrl.searchParams.get("time") ?? "any",
+    timeFrom: request.nextUrl.searchParams.get("timeFrom") ?? "",
+    timeTo: request.nextUrl.searchParams.get("timeTo") ?? "",
     location: request.nextUrl.searchParams.get("location") ?? "",
-    available: request.nextUrl.searchParams.get("available") ?? "",
+    available: request.nextUrl.searchParams.get("available") ?? undefined,
   });
   const cursorValue = request.nextUrl.searchParams.get("cursor");
   const cursor = parseOpenGameCursor(cursorValue);

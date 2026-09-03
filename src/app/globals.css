@@ -377,8 +377,8 @@ p:not(.truncate) {
     min-width: 2.75rem;
   }
   .court-finder-workspace .maplibregl-ctrl-group button {
-    min-width: 2rem !important;
-    min-height: 2rem !important;
+    min-width: 2.75rem !important;
+    min-height: 2.75rem !important;
   }
   .app-scroll-surface:has(.court-finder-workspace) {
     overflow-y: hidden;
@@ -847,6 +847,7 @@ html.lenis.lenis-smooth iframe {
 }
 /* Shared dialog motion keeps every modal dialog's entrance, dismissal, and backdrop in sync. */
 .relay-dialog {
+  overscroll-behavior: contain;
   opacity: 0;
   transform: translateY(0.5rem) scale(0.985);
   transition:
@@ -920,6 +921,7 @@ html.lenis.lenis-smooth iframe {
   }
 }
 .menu-popover {
+  overscroll-behavior: contain;
   transform-origin: top right;
   will-change: transform, opacity;
 }

@@ -5,6 +5,11 @@ import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
 
 const defaultFilters: OpenGamesFilterValues = {
   date: "any",
+  dateFrom: "",
+  dateTo: "",
+  time: "any",
+  timeFrom: "",
+  timeTo: "",
   location: "",
   available: false,
 };

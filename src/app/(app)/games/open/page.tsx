@@ -10,6 +10,11 @@ export default async function OpenGamesPage({
 }: {
   searchParams: Promise<{
     date?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    time?: string;
+    timeFrom?: string;
+    timeTo?: string;
     location?: string;
     available?: string;
   }>;
@@ -17,8 +22,13 @@ export default async function OpenGamesPage({
   const params = await searchParams;
   const parsed = openGamesFilterSchema.safeParse({
     date: params.date ?? "any",
+    dateFrom: params.dateFrom ?? "",
+    dateTo: params.dateTo ?? "",
+    time: params.time ?? "any",
+    timeFrom: params.timeFrom ?? "",
+    timeTo: params.timeTo ?? "",
     location: params.location ?? "",
-    available: params.available ?? "",
+    available: params.available,
   });
   const filters = parsed.success
     ? parsed.data
@@ -41,7 +51,7 @@ export default async function OpenGamesPage({
       <OpenGamesFilters filters={filters} />
       <div className="mt-6">
         <OpenGamesCollection
-          key={`${filters.date}:${filters.location}:${filters.available}`}
+          key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}`}
           initialPage={page}
           filters={filters}
         />

@@ -33,9 +33,9 @@ const manilaDay = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
-function dateCondition(filter: OpenGamesFilters["date"], now: Date) {
-  if (filter === "any") return;
-  if (filter === "today") {
+function dateCondition(filters: OpenGamesFilters, now: Date) {
+  if (filters.date === "any") return;
+  if (filters.date === "today") {
     const start = new Date(`${manilaDay.format(now)}T00:00:00+08:00`);
     const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
     return and(
@@ -43,10 +43,43 @@ function dateCondition(filter: OpenGamesFilters["date"], now: Date) {
       lt(sessions.startsAt, end)
     );
   }
-  const days = filter === "7d" ? 7 : 30;
+  if (filters.date === "custom") {
+    const start = filters.dateFrom
+      ? new Date(`${filters.dateFrom}T00:00:00+08:00`)
+      : null;
+    const end = filters.dateTo
+      ? new Date(
+          new Date(`${filters.dateTo}T00:00:00+08:00`).getTime() +
+            24 * 60 * 60 * 1000
+        )
+      : null;
+    return and(
+      start ? sql`${sessions.startsAt} >= ${start}` : undefined,
+      end ? lt(sessions.startsAt, end) : undefined
+    );
+  }
+  const days = filters.date === "7d" ? 7 : 30;
   return lt(
     sessions.startsAt,
     new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
+  );
+}
+
+function timeCondition(filters: OpenGamesFilters) {
+  if (filters.time === "any") return;
+  const bounds =
+    filters.time === "morning"
+      ? ["05:00", "12:00"]
+      : filters.time === "afternoon"
+        ? ["12:00", "17:00"]
+        : filters.time === "evening"
+          ? ["17:00", "24:00"]
+          : [filters.timeFrom, filters.timeTo];
+  const [start, end] = bounds;
+  const localStart = sql`(${sessions.startsAt} at time zone 'Asia/Manila')::time`;
+  return and(
+    start ? sql`${localStart} >= ${start}::time` : undefined,
+    end && end !== "24:00" ? sql`${localStart} < ${end}::time` : undefined
   );
 }
 
@@ -89,7 +122,8 @@ export async function discoverOpenGames(
         inArray(sessions.status, ["published", "live"]),
         gt(sessions.endsAt, now),
         isNotNull(sessions.estimatedCostCents),
-        dateCondition(filters.date, now),
+        dateCondition(filters, now),
+        timeCondition(filters),
         filters.location
           ? or(
               ilike(sessions.venueName, locationPattern),

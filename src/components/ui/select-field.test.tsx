@@ -28,6 +28,44 @@ describe("SelectField", () => {
     ).toHaveTextContent("Private");
   });
 
+  it("supports arrows, Home, End, typeahead, and focus restoration", () => {
+    render(
+      <SelectField
+        id="visibility"
+        label="Visibility"
+        options={options}
+        defaultValue="link"
+      />
+    );
+    const trigger = screen.getByRole("button", { name: "Visibility" });
+    trigger.focus();
+
+    fireEvent.keyDown(trigger, { key: "ArrowDown" });
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(trigger).toHaveAttribute(
+      "aria-activedescendant",
+      screen.getByRole("option", { name: "Anyone with the link" }).id
+    );
+
+    fireEvent.keyDown(trigger, { key: "End" });
+    expect(trigger).toHaveAttribute(
+      "aria-activedescendant",
+      screen.getByRole("option", { name: "Private" }).id
+    );
+    fireEvent.keyDown(trigger, { key: "Enter" });
+    expect(trigger).toHaveTextContent("Private");
+    expect(trigger).toHaveFocus();
+
+    fireEvent.keyDown(trigger, { key: "a" });
+    expect(trigger).toHaveAttribute(
+      "aria-activedescendant",
+      screen.getByRole("option", { name: "Anyone with the link" }).id
+    );
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+  });
+
   it("provides one shared compact density for filter chips", () => {
     render(
       <SelectField

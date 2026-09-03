@@ -16,6 +16,11 @@ describe("Open games request domain", () => {
       })
     ).toEqual({
       date: "7d",
+      dateFrom: "",
+      dateTo: "",
+      time: "any",
+      timeFrom: "",
+      timeTo: "",
       location: "Cebu",
       available: true,
     });
@@ -31,6 +36,26 @@ describe("Open games request domain", () => {
         date: "any",
         location: "x".repeat(81),
         available: "",
+      }).success
+    ).toBe(false);
+  });
+
+  it("accepts bounded date and time ranges and rejects reversed ranges", () => {
+    expect(
+      openGamesFilterSchema.safeParse({
+        date: "custom",
+        dateFrom: "2030-09-06",
+        dateTo: "2030-09-12",
+        time: "custom",
+        timeFrom: "18:00",
+        timeTo: "21:00",
+      }).success
+    ).toBe(true);
+    expect(
+      openGamesFilterSchema.safeParse({
+        date: "custom",
+        dateFrom: "2030-09-12",
+        dateTo: "2030-09-06",
       }).success
     ).toBe(false);
   });

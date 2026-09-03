@@ -1,5 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+}));
 
 import GamesLoading from "@/app/(app)/games/(list)/loading";
 import NewGameLoading from "@/app/(app)/games/new/loading";
