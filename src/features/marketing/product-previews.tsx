@@ -84,14 +84,7 @@ function HeroOverviewPanel() {
             <div className="hidden sm:block">
               <SessionPlanDetails session={heroSession} />
             </div>
-            <SessionAtAGlance
-              overview={heroOverview}
-              hrefBase="#"
-              status="published"
-              goingCount={8}
-              capacity={10}
-              waitlistCount={1}
-            />
+            <SessionAtAGlance overview={heroOverview} hrefBase="#" status="published" />
           </div>
         </article>
         <aside className="hidden space-y-6 lg:block">

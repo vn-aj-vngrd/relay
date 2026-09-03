@@ -6,7 +6,7 @@ import { SessionOverviewStatus } from "./session-overview-status";
 const readiness = { ready: true, percent: 100, completed: 3, total: 3, missing: [] };
 const base = {
   sessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
-  estimatedCostCents: null,
+  payment: { view: "none", canManage: false } as const,
   readiness,
 };
 
@@ -41,5 +41,29 @@ describe("SessionOverviewStatus", () => {
     render(<SessionOverviewStatus {...base} status="live" isHost />);
 
     expect(screen.getByRole("link", { name: /Open Play/ })).toHaveAttribute("href", `/games/${base.sessionId}/play`);
+  });
+
+  it("does not turn an estimated cost into a payment request", () => {
+    render(<SessionOverviewStatus {...base} status="published" isHost={false} rsvp="going" />);
+
+    expect(screen.getByText("You’re confirmed for this game.")).toBeVisible();
+    expect(screen.queryByRole("link", { name: /payment/i })).not.toBeInTheDocument();
+  });
+
+  it("shows the authoritative amount when a player payment is due", () => {
+    render(
+      <SessionOverviewStatus
+        {...base}
+        status="published"
+        isHost={false}
+        rsvp="going"
+        payment={{ view: "player", amountCents: 29900, status: "unpaid", reviewRequested: false }}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View payment · ₱299 due" })).toHaveAttribute(
+      "href",
+      `/games/${base.sessionId}/payments`,
+    );
   });
 });

@@ -20,24 +20,22 @@ function renderOverview(
       overview={{ ...overview, messageCount: overview.messageCount ?? 0 }}
       hrefBase="/games/session-1"
       status={status}
-      goingCount={8}
-      capacity={10}
-      waitlistCount={2}
-      pendingCount={1}
     />,
   );
 }
 
 describe("SessionAtAGlance", () => {
-  it("summarizes roster, play, and payment without replacing their detailed pages", () => {
+  it("summarizes game activity without replacing the detailed pages", () => {
     renderOverview({ play, payment: { view: "hidden" } });
 
-    expect(screen.getByText("8 of 10 going")).toBeVisible();
-    expect(screen.getByText("2 waitlisted · 1 to approve")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Game activity" })).toBeVisible();
     expect(screen.getByText("Not started")).toBeVisible();
     expect(screen.getByText("Players only")).toBeVisible();
-    expect(screen.getByRole("link", { name: /^PlayNot started/ })).toHaveAttribute("href", "/games/session-1/play");
-    expect(screen.getByRole("link", { name: /ChatNo messages yet/ })).toHaveAttribute("href", "/games/session-1/chat");
+    expect(screen.getByRole("link", { name: /^Play.*Not started/ })).toHaveAttribute("href", "/games/session-1/play");
+    expect(screen.getByRole("link", { name: /^Chat.*No messages yet/ })).toHaveAttribute(
+      "href",
+      "/games/session-1/chat",
+    );
   });
 
   it("surfaces the active score and host payment work", () => {
@@ -74,10 +72,9 @@ describe("SessionAtAGlance", () => {
       "completed",
     );
 
-    expect(screen.getByText("8 played")).toBeVisible();
-    expect(screen.getByText("Final roster")).toBeVisible();
     expect(screen.getByText("2 matches played")).toBeVisible();
     expect(screen.getByText("Game conversation saved")).toBeVisible();
+    expect(screen.getByText("Recap")).toBeVisible();
     expect(screen.queryByText(/going/)).not.toBeInTheDocument();
   });
 });

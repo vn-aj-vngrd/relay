@@ -21,20 +21,13 @@ describe("SessionNav", () => {
     );
   });
 
-  it("keeps every destination directly reachable in a mobile chip rail", () => {
+  it("keeps every destination directly reachable in a mobile underlined rail", () => {
     render(<SessionNav id="session-1" embedded active="Overview" />);
 
-    expect(screen.getByRole("group", { name: "Game navigation" })).toHaveClass("min-w-max", "gap-2");
+    expect(screen.getByRole("group", { name: "Game navigation" })).toHaveClass("min-w-max");
     const activeTab = screen.getByRole("link", { name: "Overview" });
-    expect(activeTab).toHaveClass(
-      "min-h-9",
-      "rounded-full",
-      "border",
-      "border-primary/20",
-      "bg-primary-soft",
-      "text-primary-hover",
-    );
-    expect(screen.getByRole("link", { name: "Players" })).toHaveClass("border-line", "bg-surface");
+    expect(activeTab).toHaveClass("min-h-11", "px-3", "text-ink", "after:bg-primary");
+    expect(screen.getByRole("link", { name: "Players" })).toHaveClass("text-muted", "hover:text-ink");
     expect(screen.queryByRole("button", { name: "More" })).not.toBeInTheDocument();
   });
 

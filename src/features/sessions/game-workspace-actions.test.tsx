@@ -15,43 +15,45 @@ const props = {
 };
 
 describe("GameWorkspaceActions", () => {
-  it("groups mobile actions behind one labeled menu button", () => {
+  it("groups mobile actions behind one labeled disclosure button", () => {
     render(<GameWorkspaceActions {...props} />);
 
     const trigger = screen.getByRole("button", { name: "Game actions" });
     expect(trigger).toHaveClass("h-11", "w-11");
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Edit game" })).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
 
-    expect(screen.getByRole("menu", { name: "Game actions" })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "Edit game" })).toHaveAttribute("href", "/games/session-1/settings");
-    expect(screen.getByRole("menuitem", { name: "Share game" })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "Show QR" })).toBeVisible();
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Edit game" })).toHaveAttribute("href", "/games/session-1/settings");
+    expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
 
   it("does not offer edit access to players", () => {
     render(<GameWorkspaceActions {...props} canManage={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Game actions" }));
 
-    expect(screen.queryByRole("menuitem", { name: "Edit game" })).not.toBeInTheDocument();
-    expect(screen.getByRole("menuitem", { name: "Share game" })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: "Show QR" })).toBeVisible();
+    expect(screen.queryByRole("link", { name: "Edit game" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
 
   it("hides QR sharing when private access would block onsite players", () => {
     render(<GameWorkspaceActions {...props} qrEnabled={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Game actions" }));
 
-    expect(screen.queryByRole("menuitem", { name: "Show QR" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show QR" })).not.toBeInTheDocument();
   });
 
-  it("keeps direct labeled actions on larger screens", () => {
+  it("keeps sharing direct and groups secondary desktop actions", () => {
     render(<GameWorkspaceActions {...props} mode="desktop" />);
 
-    expect(screen.queryByRole("button", { name: "Game actions" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Edit game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
+    const more = screen.getByRole("button", { name: "More game actions" });
+    fireEvent.click(more);
+
+    expect(screen.getByRole("link", { name: "Edit game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
 });

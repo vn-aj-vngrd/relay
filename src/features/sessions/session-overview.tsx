@@ -1,10 +1,4 @@
-import {
-  CaretRight,
-  ChatCircleDots,
-  CurrencyCircleDollar,
-  PlayCircle,
-  UsersThree,
-} from "@phosphor-icons/react/dist/ssr";
+import { CaretRight, ChatCircleDots, CurrencyCircleDollar, PlayCircle } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { Skeleton } from "@/components/shared/skeleton";
@@ -62,18 +56,17 @@ function paymentCopy(payment: SessionOverview["payment"]) {
 export function SessionAtAGlanceSkeleton() {
   return (
     <section className="pt-7">
-      <Skeleton className="h-5 w-28" />
-      <div className="mt-4 grid grid-cols-2 border-t border-line">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div
-            key={index}
-            className={`flex min-h-28 min-w-0 items-start gap-2.5 py-4 ${index % 2 ? "border-l border-line pl-3 sm:pl-4" : "pr-3 sm:pr-4"} ${index < 2 ? "border-b border-line" : ""}`}
-          >
+      <Skeleton className="h-5 w-32" />
+      <div className="mt-3 divide-y divide-line border-y border-line">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="flex min-h-16 items-center gap-3 py-3">
             <Skeleton className="h-5 w-5 shrink-0" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-4 w-full max-w-32" />
-              <Skeleton className="h-3 w-full max-w-36" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-center justify-between gap-4">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-3 w-full max-w-48" />
             </div>
           </div>
         ))}
@@ -86,37 +79,22 @@ export function SessionAtAGlance({
   overview,
   hrefBase,
   status,
-  goingCount,
-  capacity,
-  waitlistCount,
-  pendingCount = 0,
 }: {
   overview: SessionOverview;
   hrefBase: string;
   status: string;
-  goingCount: number;
-  capacity: number;
-  waitlistCount: number;
-  pendingCount?: number;
 }) {
   const completed = status === "completed";
   const play = playCopy(overview, status);
   const payment = paymentCopy(overview.payment);
-  const rosterDetail = [
-    waitlistCount ? `${waitlistCount} waitlisted` : "No waitlist",
-    pendingCount ? `${pendingCount} to approve` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   const items = [
     {
-      href: `${hrefBase}/players`,
-      icon: UsersThree,
-      label: "Players",
-      value: completed ? `${goingCount} played` : `${goingCount} of ${capacity} going`,
-      detail: completed ? "Final roster" : rosterDetail,
+      href: `${hrefBase}/play`,
+      icon: PlayCircle,
+      label: completed ? "Recap" : "Play",
+      value: play.value,
+      detail: play.detail,
     },
-    { href: `${hrefBase}/play`, icon: PlayCircle, label: "Play", value: play.value, detail: play.detail },
     {
       href: `${hrefBase}/payments`,
       icon: CurrencyCircleDollar,
@@ -142,27 +120,29 @@ export function SessionAtAGlance({
   ];
 
   return (
-    <section aria-labelledby="session-glance-title" className="pt-7">
-      <h2 id="session-glance-title" className="text-lg font-bold">
-        At a glance
+    <section aria-labelledby="session-activity-title" className="pt-7">
+      <h2 id="session-activity-title" className="text-lg font-bold">
+        Game activity
       </h2>
-      <div className="mt-4 grid grid-cols-2 border-t border-line">
-        {items.map(({ href, icon: Icon, label, value, detail }, index) => (
+      <div className="mt-3 divide-y divide-line border-y border-line">
+        {items.map(({ href, icon: Icon, label, value, detail }) => (
           <Link
             key={label}
             href={href}
-            className={`group flex min-h-28 min-w-0 items-start gap-2.5 py-4 ${index % 2 ? "border-l border-line pl-3 sm:pl-4" : "pr-3 sm:pr-4"} ${index < 2 ? "border-b border-line" : ""}`}
+            className="group flex min-h-16 min-w-0 items-start gap-3 py-3 hover:bg-surface-strong sm:px-2"
           >
-            <Icon aria-hidden size={18} className="mt-0.5 shrink-0 text-primary" />
+            <Icon aria-hidden size={19} className="mt-0.5 shrink-0 text-primary" />
             <span className="min-w-0 flex-1">
-              <span className="block text-xs font-medium text-muted">{label}</span>
-              <strong className="mt-1 block text-sm font-semibold leading-5 text-ink">{value}</strong>
-              <span className="mt-1 block text-xs leading-5 text-muted">{detail}</span>
+              <span className="block text-sm font-medium leading-5 text-muted">{label}</span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted">{detail}</span>
             </span>
+            <strong className="w-28 shrink-0 text-left text-sm font-semibold leading-5 text-ink sm:w-36">
+              {value}
+            </strong>
             <CaretRight
               aria-hidden
-              size={13}
-              className="mt-0.5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+              size={14}
+              className="mt-0.5 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
             />
           </Link>
         ))}

@@ -45,7 +45,6 @@ export function ShareButton({
     <Button
       type="button"
       variant={menuItem ? "quiet" : primary ? "primary" : "secondary"}
-      role={menuItem ? "menuitem" : undefined}
       onClick={share}
       aria-label={copied ? "Game link copied" : "Share game"}
       className={

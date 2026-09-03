@@ -80,7 +80,7 @@ export function SessionPlanDetails({
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(session.venueAddress || session.venueName)}`}
             target="_blank"
             rel="noreferrer"
-            className="mt-2 inline-flex min-h-9 items-center gap-1 text-[13px] font-semibold text-primary"
+            className="mt-1 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-primary sm:min-h-9"
           >
             Get directions <ArrowSquareOut aria-hidden size={14} />
           </a>

@@ -115,7 +115,6 @@ export function GameQrShare({
       <Button
         type="button"
         variant={menuItem ? "quiet" : "secondary"}
-        role={menuItem ? "menuitem" : undefined}
         onClick={() => void openDialog()}
         className={menuItem ? "min-h-11 w-full justify-start rounded-md px-3 text-sm" : ""}
       >

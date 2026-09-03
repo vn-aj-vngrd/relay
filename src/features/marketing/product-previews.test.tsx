@@ -16,7 +16,7 @@ describe("HeroProductShot", () => {
 
     expect(screen.getByRole("heading", { name: "Saturday Night Pickle" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show Story" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "At a glance" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Game activity" })).toBeVisible();
     expect(screen.getByRole("region", { name: "A Relay game from overview to story" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show Overview" })).toHaveAttribute("aria-current", "true");
     expect(screen.queryByRole("tab")).not.toBeInTheDocument();

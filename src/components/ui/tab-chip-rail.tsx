@@ -17,6 +17,7 @@ export function TabChipRail<T extends string>({
   hrefFor,
   className = "",
   itemClassName = "",
+  variant = "chip",
 }: {
   label: string;
   items: readonly TabChipItem<T>[];
@@ -25,6 +26,7 @@ export function TabChipRail<T extends string>({
   hrefFor?: (item: TabChipItem<T>) => string;
   className?: string;
   itemClassName?: string;
+  variant?: "chip" | "underline";
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const activeItem = useRef<HTMLElement | null>(null);
@@ -63,17 +65,24 @@ export function TabChipRail<T extends string>({
     <div
       ref={scroller}
       onScroll={updateFade}
-      className={`public-session-scroll -mx-1.5 -my-1.5 overflow-x-auto px-1.5 py-1.5 ${fadeClass} ${className}`}
+      className={`public-session-scroll -mx-1.5 overflow-x-auto px-1.5 ${variant === "underline" ? "" : "-my-1.5 py-1.5"} ${fadeClass} ${className}`}
     >
-      <div role="group" aria-label={label} className="flex min-w-max gap-2">
+      <div role="group" aria-label={label} className={`flex min-w-max ${variant === "underline" ? "" : "gap-2"}`}>
         {items.map((item) => {
           const selected = item.value === value;
           const ariaLabel = item.count === undefined ? item.label : `${item.label}, ${item.count}`;
-          const classes = `tab-chip pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-[650] ${itemClassName} ${
-            selected
-              ? "border-primary/20 bg-primary-soft text-primary-hover"
-              : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"
-          }`;
+          const classes =
+            variant === "underline"
+              ? `tab-chip pressable relative inline-flex min-h-11 items-center px-3 text-sm font-semibold ${itemClassName} ${
+                  selected
+                    ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
+                    : "text-muted hover:text-ink"
+                }`
+              : `tab-chip pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-[650] ${itemClassName} ${
+                  selected
+                    ? "border-primary/20 bg-primary-soft text-primary-hover"
+                    : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"
+                }`;
           const setActiveItem = (node: HTMLElement | null) => {
             if (selected) activeItem.current = node;
           };

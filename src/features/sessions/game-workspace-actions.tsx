@@ -2,9 +2,9 @@
 
 import { DotsThree, PencilSimple } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
-import { ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { usePopoverTransition } from "@/components/ui/use-popover-transition";
 
 import { GameQrShare } from "./game-qr-share";
@@ -32,6 +32,7 @@ export function GameWorkspaceActions({
   const { open, rendered, hide, toggle } = usePopoverTransition();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const popoverId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -53,17 +54,54 @@ export function GameWorkspaceActions({
     };
   }, [hide, open]);
 
+  const actionItems = (
+    <>
+      {canManage ? (
+        <Link
+          href={editHref}
+          onClick={hide}
+          className="pressable flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-[600] text-ink hover:bg-surface-strong"
+        >
+          <PencilSimple aria-hidden size={17} />
+          Edit game
+        </Link>
+      ) : null}
+      {mode === "mobile" ? (
+        <ShareButton url={shareUrl} title={title} sessionId={sessionId} menuItem onSelect={hide} />
+      ) : null}
+      {qrEnabled ? (
+        <GameQrShare url={shareUrl} title={title} details={qrDetails} sessionId={sessionId} menuItem onClose={hide} />
+      ) : null}
+    </>
+  );
+
   if (mode === "desktop") {
     return (
-      <div className="flex shrink-0 items-center gap-2">
-        {canManage ? (
-          <ButtonLink href={editHref} variant="secondary" aria-label="Edit game">
-            <PencilSimple aria-hidden size={16} />
-            Edit game
-          </ButtonLink>
-        ) : null}
+      <div ref={root} className="relative flex shrink-0 items-center gap-2">
         <ShareButton url={shareUrl} title={title} sessionId={sessionId} />
-        {qrEnabled ? <GameQrShare url={shareUrl} title={title} details={qrDetails} sessionId={sessionId} /> : null}
+        {canManage || qrEnabled ? (
+          <Button
+            ref={trigger}
+            type="button"
+            variant="secondary"
+            aria-label="More game actions"
+            aria-expanded={open}
+            aria-controls={popoverId}
+            onClick={toggle}
+          >
+            <DotsThree aria-hidden size={18} weight="bold" />
+            More
+          </Button>
+        ) : null}
+        {rendered ? (
+          <div
+            id={popoverId}
+            data-state={open ? "open" : "closed"}
+            className="menu-popover absolute right-0 top-[calc(100%+6px)] z-30 min-w-44 rounded-lg border border-line bg-surface p-1 shadow-[0_4px_8px_oklch(0.1_0.01_275/.12)]"
+          >
+            {actionItems}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -74,42 +112,20 @@ export function GameWorkspaceActions({
         ref={trigger}
         type="button"
         aria-label="Game actions"
-        aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls={popoverId}
         onClick={toggle}
-        className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+        className="pressable grid h-11 w-11 place-items-center rounded-lg text-ink hover:bg-surface-strong"
       >
-        <DotsThree aria-hidden size={22} weight="bold" />
+        <DotsThree aria-hidden size={24} weight="bold" />
       </button>
       {rendered ? (
         <div
-          role="menu"
-          aria-label="Game actions"
+          id={popoverId}
           data-state={open ? "open" : "closed"}
           className="menu-popover absolute right-0 top-[calc(100%+6px)] z-30 min-w-44 rounded-lg border border-line bg-surface p-1 shadow-[0_4px_8px_oklch(0.1_0.01_275/.12)]"
         >
-          {canManage ? (
-            <Link
-              href={editHref}
-              role="menuitem"
-              onClick={hide}
-              className="pressable flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-[600] text-ink hover:bg-surface-strong"
-            >
-              <PencilSimple aria-hidden size={17} />
-              Edit game
-            </Link>
-          ) : null}
-          <ShareButton url={shareUrl} title={title} sessionId={sessionId} menuItem onSelect={hide} />
-          {qrEnabled ? (
-            <GameQrShare
-              url={shareUrl}
-              title={title}
-              details={qrDetails}
-              sessionId={sessionId}
-              menuItem
-              onClose={hide}
-            />
-          ) : null}
+          {actionItems}
         </div>
       ) : null}
     </div>

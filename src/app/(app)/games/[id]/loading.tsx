@@ -22,13 +22,15 @@ export default function SessionLoading() {
             <Skeleton className="mt-3 h-8 w-3/4 bg-white/15 sm:mt-4 sm:h-10" />
             <Skeleton className="mt-2 h-5 w-32 bg-white/15 sm:mt-3 sm:h-6" />
           </div>
+          <div className="border-b border-line px-4 py-5 lg:hidden">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-2 h-5 w-36" />
+            <Skeleton className="mt-3 h-3.5 w-48 max-w-full" />
+          </div>
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <div className="grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line pb-7">
               {Array.from({ length: 4 }, (_, index) => (
-                <div
-                  key={index}
-                  className={`flex gap-3 ${index < 2 ? "col-span-2 sm:col-span-1" : "col-span-2 min-[360px]:col-span-1"}`}
-                >
+                <div key={index} className="col-span-2 flex gap-3 sm:col-span-1">
                   <Skeleton className="h-5 w-5 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
@@ -41,7 +43,7 @@ export default function SessionLoading() {
           </div>
         </article>
         <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-xl border border-line p-4 sm:p-5">
+          <div className="hidden rounded-xl border border-line p-4 sm:p-5 lg:block">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="mt-2 h-5 w-44" />
             <Skeleton className="mt-3 h-3.5 w-full" />

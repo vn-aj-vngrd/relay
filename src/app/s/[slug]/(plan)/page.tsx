@@ -221,14 +221,7 @@ export default async function PublicSessionPage({
             ) : null}
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
-              <SessionAtAGlance
-                overview={overview}
-                hrefBase={`/s/${session.slug}`}
-                status={session.status}
-                goingCount={going.length}
-                capacity={session.capacity}
-                waitlistCount={waitlisted.length}
-              />
+              <SessionAtAGlance overview={overview} hrefBase={`/s/${session.slug}`} status={session.status} />
               {session.status !== "completed" ? (
                 <section
                   aria-labelledby="public-rsvp-title"

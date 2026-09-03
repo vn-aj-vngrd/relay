@@ -16,11 +16,12 @@ export function ResponsiveSessionTabs({
   const items = SESSION_TABS.map((tab) => ({ value: tab.label, label: tab.label }));
 
   return (
-    <div className={`${padded ? "px-4 sm:px-8 lg:px-0" : ""} py-2`}>
+    <div className={`${padded ? "px-4 py-2 sm:px-8 lg:px-0" : ""}`}>
       <TabChipRail
         label="Game navigation"
         items={items}
         value={active}
+        variant="underline"
         hrefFor={(item) => {
           const tab = SESSION_TABS.find(({ label }) => label === item.value);
           return `${hrefBase}${tab?.path ?? ""}`;

@@ -23,11 +23,13 @@ export function ChatComposer({
   const [imageError, setImageError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const preserveValues = usePreserveFormValuesOnError(state);
 
   useEffect(() => {
     if (!state.success) return;
     formRef.current?.reset();
+    if (messageRef.current) messageRef.current.style.height = "auto";
   }, [state]);
 
   return (
@@ -91,13 +93,26 @@ export function ChatComposer({
           Message
         </label>
         <textarea
+          ref={messageRef}
           id="message"
           name="body"
           maxLength={1000}
           rows={1}
           autoComplete="off"
-          placeholder="Message the group"
-          className="max-h-32 min-h-11 min-w-0 flex-1 resize-none rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[15px] leading-6 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          enterKeyHint="send"
+          placeholder="Message the group…"
+          onInput={(event) => {
+            const textarea = event.currentTarget;
+            textarea.style.height = "auto";
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+            textarea.style.overflowY = textarea.scrollHeight > 128 ? "auto" : "hidden";
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            if (!pending) event.currentTarget.form?.requestSubmit();
+          }}
+          className="max-h-32 min-h-12 min-w-0 flex-1 resize-none overflow-y-hidden rounded-[14px] border border-line bg-canvas px-3.5 py-3 text-[15px] leading-6 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
         <Button type="submit" aria-label="Send message" disabled={pending} className="h-11 min-h-11 w-11 shrink-0 px-0">
           {pending ? <ButtonSpinner /> : <PaperPlaneRight aria-hidden size={18} weight="fill" />}

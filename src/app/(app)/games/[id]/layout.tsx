@@ -38,8 +38,8 @@ export default async function GameWorkspaceLayout({
         />
       </div>
       <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0">
-        <div className="px-4 pb-3 sm:hidden">
-          <div className="flex h-14 min-w-0 items-center gap-1">
+        <div className="px-4 pb-1 sm:hidden">
+          <div className="flex h-12 min-w-0 items-center gap-1">
             <ButtonLink
               href="/games"
               variant="quiet"

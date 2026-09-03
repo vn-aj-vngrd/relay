@@ -2,17 +2,16 @@ import { ThumbsUp } from "@phosphor-icons/react/dist/ssr";
 import { desc, eq, inArray } from "drizzle-orm";
 
 import { Avatar } from "@/components/shared/avatar-stack";
-import { PendingSubmit } from "@/components/ui/pending-submit";
 import { db } from "@/db/client";
 import { messageReactions, messages, profiles, sessionPlayers } from "@/db/schema";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { getServerEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-import { toggleMessageReaction } from "./actions";
 import { ChatComposer } from "./chat-composer";
 import { ChatPhotoViewer } from "./chat-photo-viewer";
 import { ChatThread } from "./chat-thread";
+import { MessageLikeButton } from "./message-like-button";
 
 export async function SessionChatView({
   sessionId,
@@ -138,22 +137,12 @@ export async function SessionChatView({
                         >
                           <time className="px-1 text-[11px] text-muted">{time.format(message.createdAt)}</time>
                           {viewer.canWrite ? (
-                            <form noValidate action={toggleMessageReaction}>
-                              <input type="hidden" name="messageId" value={message.id} />
-                              {slug ? <input type="hidden" name="slug" value={slug} /> : null}
-                              <PendingSubmit
-                                pendingLabel="…"
-                                aria-label={ownReactions.has(message.id) ? "Remove like" : "Like message"}
-                                className={`inline-flex min-h-7 items-center gap-1 rounded-md px-1.5 text-xs ${ownReactions.has(message.id) ? "bg-primary-soft text-primary" : "text-muted hover:bg-surface-strong"}`}
-                              >
-                                <ThumbsUp
-                                  aria-hidden
-                                  size={13}
-                                  weight={ownReactions.has(message.id) ? "fill" : "regular"}
-                                />
-                                {reactions || null}
-                              </PendingSubmit>
-                            </form>
+                            <MessageLikeButton
+                              messageId={message.id}
+                              slug={slug}
+                              liked={ownReactions.has(message.id)}
+                              count={reactions}
+                            />
                           ) : reactions ? (
                             <span className="inline-flex items-center gap-1 px-1.5 text-xs text-muted">
                               <ThumbsUp aria-hidden size={13} />

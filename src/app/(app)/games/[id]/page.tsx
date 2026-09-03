@@ -38,7 +38,6 @@ export default async function GameOverviewPage({
   const { session, membership, roster } = data;
   const accountProfile = roster.find(({ player }) => player.userId === user.id)?.profile ?? (await ensureProfile(user));
   const going = roster.filter(({ player }) => player.rsvp === "going");
-  const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
   const pending = roster.filter(({ player }) => player.rsvp === "pending");
   const names = going.map(({ player, profile }) => profile?.name ?? player.guestName ?? "Guest");
   const playerAvatarUrls = going.map(({ profile }) => profileAvatarUrl(profile?.avatarPath));
@@ -75,14 +74,7 @@ export default async function GameOverviewPage({
             <SessionHero session={session} hostLabel={`Hosted by ${hostName}`} headingLevel="h2" />
             <div className="px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
-              <SessionAtAGlance
-                overview={responseOverview}
-                hrefBase={`/games/${session.id}`}
-                status={session.status}
-                goingCount={going.length}
-                capacity={session.capacity}
-                waitlistCount={waitlisted.length}
-              />
+              <SessionAtAGlance overview={responseOverview} hrefBase={`/games/${session.id}`} status={session.status} />
               {session.notes ? (
                 <section className="pt-7">
                   <h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2>
@@ -205,17 +197,21 @@ export default async function GameOverviewPage({
             hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`}
             headingLevel="h2"
           />
+          <div className="border-b border-line px-4 lg:hidden">
+            <SessionOverviewStatus
+              sessionId={session.id}
+              status={session.status}
+              isHost={isHost}
+              canReplay={session.hostId === user.id}
+              rsvp={membership?.rsvp}
+              payment={overview.payment}
+              readiness={readiness}
+              embedded
+            />
+          </div>
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <SessionPlanDetails session={session} bookingAction={bookingAction} />
-            <SessionAtAGlance
-              overview={overview}
-              hrefBase={`/games/${session.id}`}
-              status={session.status}
-              goingCount={going.length}
-              capacity={session.capacity}
-              waitlistCount={waitlisted.length}
-              pendingCount={isHost ? pending.length : 0}
-            />
+            <SessionAtAGlance overview={overview} hrefBase={`/games/${session.id}`} status={session.status} />
             {session.notes ? (
               <section className="pt-7">
                 <h2 className="text-lg font-bold">A note from {hostName.split(" ")[0]}</h2>
@@ -226,15 +222,17 @@ export default async function GameOverviewPage({
         </article>
 
         <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
-          <SessionOverviewStatus
-            sessionId={session.id}
-            status={session.status}
-            isHost={isHost}
-            canReplay={session.hostId === user.id}
-            rsvp={membership?.rsvp}
-            estimatedCostCents={session.estimatedCostCents}
-            readiness={readiness}
-          />
+          <div className="hidden lg:block">
+            <SessionOverviewStatus
+              sessionId={session.id}
+              status={session.status}
+              isHost={isHost}
+              canReplay={session.hostId === user.id}
+              rsvp={membership?.rsvp}
+              payment={overview.payment}
+              readiness={readiness}
+            />
+          </div>
 
           <section>
             <div className="mb-3 flex items-end justify-between">
@@ -243,7 +241,7 @@ export default async function GameOverviewPage({
                 <p className="mt-1 text-sm text-muted">
                   {session.status === "completed"
                     ? `${going.length} players`
-                    : `${going.length} of ${session.capacity} going`}
+                    : `${going.length} of ${session.capacity} going${isHost && pending.length ? ` · ${pending.length} to approve` : ""}`}
                 </p>
               </div>
               <AvatarStack names={names.slice(0, 3)} imageUrls={playerAvatarUrls.slice(0, 3)} total={going.length} />
