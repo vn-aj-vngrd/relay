@@ -96,7 +96,7 @@ Session collaboration uses one public Broadcast topic per mounted session: `sess
 
 Broadcast covers roster, courts, matches, score events, queue, pair assignments, chat, payments, and memories. Score writes remain version-checked and are debounced client-side into absolute score snapshots. Presence is intentionally absent until online state improves a real session decision.
 
-`notifications` remains in `supabase_realtime` and uses user-filtered Postgres Changes. Existing collaborative tables may remain in the publication for migration compatibility, but session clients do not open one logical-replication subscription per table.
+`notifications` remains in `supabase_realtime` and uses user-filtered Postgres Changes. The authenticated shell refetches on every notification change and whenever the channel subscribes or reconnects, recovering events missed while offline. The notification feed reconciles each authoritative first page into its local cursor history instead of discarding older loaded rows. Existing collaborative tables may remain in the publication for migration compatibility, but session clients do not open one logical-replication subscription per table.
 
 Authenticated Data API access still depends on the self-membership `SELECT` policy from migration `0013_realtime_participant_membership`; without it, participant-scoped table reads fail even when an invalidation arrives.
 

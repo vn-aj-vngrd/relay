@@ -41,4 +41,19 @@ describe("RealtimeRefresh", () => {
     await act(async () => vi.advanceTimersByTime(121));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
+
+  it("coalesces rapid session changes into one authoritative refetch", async () => {
+    render(<RealtimeRefresh sessionId="session-1" compact />);
+    await act(async () => Promise.resolve());
+    await act(async () => vi.advanceTimersByTime(121));
+    refresh.mockClear();
+
+    const changed = channel.on.mock.calls[0]?.[2] as () => void;
+    changed();
+    changed();
+    changed();
+    await act(async () => vi.advanceTimersByTime(121));
+
+    expect(refresh).toHaveBeenCalledOnce();
+  });
 });

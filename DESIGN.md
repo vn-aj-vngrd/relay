@@ -124,7 +124,7 @@ First-run profile setup uses four clear phases: Identity, optional Profile detai
 
 ## Notifications
 
-Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. Tomorrow reminders open Overview, starting-soon reminders open Play for arrival, and completion notices open the saved recap. Resolving a join request from Players also marks its matching host notification read, including when a co-host handles the request. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
+Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. Tomorrow reminders open Overview, starting-soon reminders open Play for arrival, and completion notices open the saved recap. Resolving a join request from Players also marks its matching host notification read, including when a co-host handles the request. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. The feed reconciles new and resolved notifications into already-loaded history after realtime changes or reconnects without resetting pagination or scroll position. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
 
 ## Admin console
 

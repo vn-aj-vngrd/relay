@@ -87,6 +87,17 @@ describe("NotificationFeed", () => {
     expect(screen.getByRole("button", { name: "Mark Friday Pickle as read" })).toBeVisible();
   });
 
+  it("reconciles authoritative refreshes into the unread feed", async () => {
+    const { rerender } = render(
+      <NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />,
+    );
+
+    rerender(<NotificationFeed filter="unread" initialPage={{ items: [], nextCursor: null }} />);
+
+    expect(await screen.findByText("No unread updates")).toBeVisible();
+    expect(screen.queryByText("You’re invited")).not.toBeInTheDocument();
+  });
+
   it("loads and deduplicates the next cursor page", async () => {
     vi.stubGlobal(
       "fetch",
@@ -102,5 +113,32 @@ describe("NotificationFeed", () => {
     await waitFor(() => expect(screen.getByText("Payment confirmed")).toBeVisible());
     expect(screen.getAllByText("You’re invited")).toHaveLength(1);
     expect(screen.getByText("You’ve reached the first update.")).toBeVisible();
+  });
+
+  it("adds refreshed notifications without discarding loaded history", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [second], nextCursor: null }) }),
+    );
+    const { rerender } = render(
+      <NotificationFeed filter="all" initialPage={{ items: [first], nextCursor: "next-page" }} />,
+    );
+    await act(async () => {
+      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+    });
+    await waitFor(() => expect(screen.getByText("Payment confirmed")).toBeVisible());
+
+    const newest = {
+      ...first,
+      id: "860fa72f-ee97-4651-8e76-17d2779de461",
+      type: "session_completed",
+      sessionTitle: "Sunday Pickle",
+      createdAt: new Date(Date.now() + 1_000).toISOString(),
+    };
+    rerender(<NotificationFeed filter="all" initialPage={{ items: [newest, first], nextCursor: null }} />);
+
+    expect(await screen.findByText("Game wrapped")).toBeVisible();
+    expect(screen.getByText("Payment confirmed")).toBeVisible();
+    expect(screen.getAllByText("You’re invited")).toHaveLength(1);
   });
 });

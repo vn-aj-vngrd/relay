@@ -14,6 +14,10 @@ export function NotificationRealtimeRefresh({ userId }: { userId: string }) {
     const supabase = createSupabaseBrowserClient();
     let channel: RealtimeChannel | null = null;
     let cancelled = false;
+    const refresh = () => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => router.refresh(), 150);
+    };
 
     void (async () => {
       const { data } = await supabase.auth.getSession();
@@ -24,13 +28,12 @@ export function NotificationRealtimeRefresh({ userId }: { userId: string }) {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-          () => {
-            if (timer.current) clearTimeout(timer.current);
-            timer.current = setTimeout(() => router.refresh(), 150);
-          },
+          refresh,
         );
       channel = nextChannel;
-      nextChannel.subscribe();
+      nextChannel.subscribe((status: string) => {
+        if (status === "SUBSCRIBED") refresh();
+      });
     })();
 
     return () => {

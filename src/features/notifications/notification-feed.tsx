@@ -21,6 +21,7 @@ import {
   type NotificationTone,
 } from "./domain";
 import type { NotificationFeedItem, NotificationFilter, NotificationPage } from "./queries";
+import { reconcileNotificationHead } from "./reconciliation";
 
 const groupOrder: NotificationGroup[] = ["Today", "This week", "Earlier"];
 const toneIcons = {
@@ -44,6 +45,21 @@ export function NotificationFeed({
   const [error, setError] = useState("");
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
+  const loadedHistoryRef = useRef(false);
+  const headIdsRef = useRef<ReadonlySet<string>>(new Set(initialPage.items.map((item) => item.id)));
+
+  useEffect(() => {
+    setItems((current) =>
+      reconcileNotificationHead({
+        current,
+        previousHeadIds: headIdsRef.current,
+        refreshed: initialPage.items,
+        filter,
+      }),
+    );
+    headIdsRef.current = new Set(initialPage.items.map((item) => item.id));
+    if (!loadedHistoryRef.current) setNextCursor(initialPage.nextCursor);
+  }, [filter, initialPage]);
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loadingRef.current) return;
@@ -59,6 +75,7 @@ export function NotificationFeed({
         const seen = new Set(current.map((item) => item.id));
         return [...current, ...page.items.filter((item) => !seen.has(item.id))];
       });
+      loadedHistoryRef.current = true;
       setNextCursor(page.nextCursor);
     } catch {
       setError("Older notifications couldn’t be loaded. Try again.");
