@@ -99,6 +99,7 @@ export function SessionAtAGlance({
   waitlistCount: number;
   pendingCount?: number;
 }) {
+  const completed = status === "completed";
   const play = playCopy(overview, status);
   const payment = paymentCopy(overview.payment);
   const rosterDetail = [
@@ -112,8 +113,8 @@ export function SessionAtAGlance({
       href: `${hrefBase}/players`,
       icon: UsersThree,
       label: "Players",
-      value: `${goingCount} of ${capacity} going`,
-      detail: rosterDetail,
+      value: completed ? `${goingCount} played` : `${goingCount} of ${capacity} going`,
+      detail: completed ? "Final roster" : rosterDetail,
     },
     { href: `${hrefBase}/play`, icon: PlayCircle, label: "Play", value: play.value, detail: play.detail },
     {
@@ -130,7 +131,13 @@ export function SessionAtAGlance({
       value: overview.messageCount
         ? `${overview.messageCount} ${overview.messageCount === 1 ? "message" : "messages"}`
         : "No messages yet",
-      detail: overview.messageCount ? "Open the game conversation" : "Start the conversation",
+      detail: completed
+        ? overview.messageCount
+          ? "Game conversation saved"
+          : "No game conversation"
+        : overview.messageCount
+          ? "Open the game conversation"
+          : "Start the conversation",
     },
   ];
 

@@ -75,7 +75,7 @@ function shortTime(time: string) {
 
 function phaseLabel(phase: CalendarPhase) {
   if (phase === "live") return "Live";
-  if (phase === "past") return "Completed";
+  if (phase === "past") return "Ended";
   return "Upcoming";
 }
 
@@ -123,10 +123,10 @@ function DayAgenda({ dateKey, games, loading }: { dateKey: string; games: Calend
               <p className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
                 <Users aria-hidden size={15} className="shrink-0" />
                 <span className="score">
-                  {game.playerCount} / {game.capacity}
+                  {game.phase === "past" ? game.playerCount : `${game.playerCount} / ${game.capacity}`}
                 </span>
-                <span>going</span>
-                {game.readiness ? (
+                <span>{game.phase === "past" ? "played" : "going"}</span>
+                {game.readiness && game.phase !== "past" ? (
                   <span className={game.readiness.ready ? "font-[650] text-success" : "text-muted"}>
                     · {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
                   </span>

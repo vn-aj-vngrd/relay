@@ -347,7 +347,7 @@ function InvitationSection({
   );
 }
 
-function GameList({ items }: { items: GameCollectionItem[] }) {
+function GameList({ items, past = false }: { items: GameCollectionItem[]; past?: boolean }) {
   return (
     <div className="divide-y divide-line border-y border-line">
       {items.map((game) => (
@@ -365,10 +365,16 @@ function GameList({ items }: { items: GameCollectionItem[] }) {
               <time className="score font-bold text-primary sm:hidden">{game.date}</time>
               <span className="sm:hidden"> · </span>
               {game.time} · {game.venue}
-              {rsvpLabel(game.viewerRsvp) ? <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span> : null}
+              {past ? (
+                <span className="sm:hidden"> · Ended</span>
+              ) : rsvpLabel(game.viewerRsvp) ? (
+                <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span>
+              ) : null}
             </p>
           </div>
-          {game.readiness ? (
+          {past ? (
+            <span className="hidden text-xs font-[650] text-muted sm:block">Ended</span>
+          ) : game.readiness ? (
             <span
               className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
             >
@@ -391,7 +397,7 @@ function GameList({ items }: { items: GameCollectionItem[] }) {
   );
 }
 
-function GameGrid({ items }: { items: GameCollectionItem[] }) {
+function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?: boolean }) {
   return (
     <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
       {items.map((game) => (
@@ -406,11 +412,13 @@ function GameGrid({ items }: { items: GameCollectionItem[] }) {
             <div className="flex items-center justify-between gap-4">
               <time className="score text-xs font-bold text-primary">{game.date}</time>
               <span className="text-right">
-                {rsvpLabel(game.viewerRsvp) ? (
+                {past ? (
+                  <span className="block text-xs font-[650] text-muted">Ended</span>
+                ) : rsvpLabel(game.viewerRsvp) ? (
                   <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
                 ) : null}
                 <span className="score mt-0.5 block text-xs text-muted">
-                  {game.playerCount} / {game.capacity}
+                  {game.playerCount} {past ? "played" : `/ ${game.capacity}`}
                 </span>
               </span>
             </div>
@@ -427,7 +435,7 @@ function GameGrid({ items }: { items: GameCollectionItem[] }) {
                 <span className="truncate">{game.venue}</span>
               </p>
             </div>
-            {game.readiness ? (
+            {game.readiness && !past ? (
               <div className="mt-3 sm:mt-5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted">Game setup</span>
@@ -479,9 +487,9 @@ function CollectionSection({
       </h2>
       {items.length ? (
         mode === "grid" ? (
-          <GameGrid items={items} />
+          <GameGrid items={items} past={past} />
         ) : (
-          <GameList items={items} />
+          <GameList items={items} past={past} />
         )
       ) : (
         <EmptyCollection past={past} />

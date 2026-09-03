@@ -1,7 +1,8 @@
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ArrowClockwise, ArrowRight, ShareNetwork, UsersThree } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";
 import { formatSessionDateLong } from "@/features/sessions/format";
+import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import type { SessionRecap as SessionRecapData } from "./recap";
 
@@ -9,6 +10,7 @@ export function SessionRecap({
   session,
   recap,
   storyHref,
+  continuation,
 }: {
   session: {
     id: string;
@@ -19,6 +21,7 @@ export function SessionRecap({
   };
   recap: SessionRecapData;
   storyHref: string;
+  continuation?: PostGameContinuation;
 }) {
   const date = formatSessionDateLong(session.startsAt);
   const completed = session.status === "completed";
@@ -183,19 +186,45 @@ export function SessionRecap({
         </section>
       ) : null}
 
-      <section className="border-t border-line pb-8 pt-6" aria-labelledby="recap-story-title">
-        <h2 id="recap-story-title" className="text-lg font-bold">
-          {completed ? "Keep what happened off the scoreboard" : "Story opens after the last point"}
-        </h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-          {completed
-            ? "Build a story-ready highlight, add photos, and leave notes with the crew in Story."
-            : "When the host ends the session, Story shows the final scores and game photos."}
-        </p>
-        <ButtonLink href={storyHref} variant="secondary" className="mt-4">
-          Open story <ArrowRight aria-hidden size={16} />
-        </ButtonLink>
-      </section>
+      {completed && continuation ? (
+        <section className="border-y border-line py-7 sm:py-8" aria-labelledby="post-game-title">
+          <p className="sport-label text-primary">Next game</p>
+          <h2 id="post-game-title" className="mt-2 text-2xl font-bold tracking-[-0.025em] text-balance">
+            Keep this crew moving.
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Replay copies the plan and brings signed-in players forward as fresh invitations. Previous responses and
+            scores stay with this game.
+          </p>
+          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+            <ButtonLink href={continuation.replayHref} size="large" className="sm:min-w-36">
+              <ArrowClockwise aria-hidden size={17} /> Play again
+            </ButtonLink>
+            {continuation.saveCrewHref ? (
+              <ButtonLink href={continuation.saveCrewHref} variant="secondary" size="large" className="sm:min-w-36">
+                <UsersThree aria-hidden size={17} /> Save this crew
+              </ButtonLink>
+            ) : null}
+            <ButtonLink href={storyHref} variant="quiet" size="large" className="sm:min-w-36">
+              <ShareNetwork aria-hidden size={17} /> Share recap
+            </ButtonLink>
+          </div>
+        </section>
+      ) : (
+        <section className="border-t border-line pb-8 pt-6" aria-labelledby="recap-story-title">
+          <h2 id="recap-story-title" className="text-lg font-bold">
+            {completed ? "Keep what happened off the scoreboard" : "Story opens after the last point"}
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+            {completed
+              ? "Build a story-ready highlight, add photos, and leave notes with the crew in Story."
+              : "When the host ends the session, Story shows the final scores and game photos."}
+          </p>
+          <ButtonLink href={storyHref} variant="secondary" className="mt-4">
+            Open story <ArrowRight aria-hidden size={16} />
+          </ButtonLink>
+        </section>
+      )}
     </div>
   );
 }

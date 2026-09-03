@@ -10,6 +10,7 @@ import { getSessionRecapData } from "@/features/memories/queries";
 import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
+import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
 import { rotationDescription, rotationName } from "./rotation";
@@ -32,6 +33,7 @@ type SessionPlayProps = {
   viewer: SessionPlayViewer;
   setupHref?: string;
   storyHref: string;
+  continuation?: PostGameContinuation;
 };
 
 function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
@@ -44,10 +46,10 @@ function canScoreMatch(viewer: SessionPlayViewer, playerIds: string[]) {
   );
 }
 
-export async function SessionPlay({ data, viewer, setupHref, storyHref }: SessionPlayProps) {
+export async function SessionPlay({ data, viewer, setupHref, storyHref, continuation }: SessionPlayProps) {
   if (data.session.status === "completed") {
     const recap = await getSessionRecapData(data.session.id);
-    return <SessionRecap session={data.session} recap={recap} storyHref={storyHref} />;
+    return <SessionRecap session={data.session} recap={recap} storyHref={storyHref} continuation={continuation} />;
   }
 
   const { canStartRotation, rotationLabel, roundMode, roundRobinComplete, roundStartedAt, waiting, waitingPairs } =

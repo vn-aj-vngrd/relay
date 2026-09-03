@@ -6,6 +6,7 @@ import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { getWorkspaceLiveSession } from "@/features/matches/queries";
 import { SessionPlay, type SessionPlayViewer } from "@/features/matches/session-play";
+import { postGameContinuation } from "@/features/sessions/post-game";
 
 export default async function PlayPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -23,6 +24,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     canScoreAssigned: can({ ...actor, assignedScorer: true }, "score"),
   };
   const completed = data.session.status === "completed";
+  const continuation = postGameContinuation(data.session, user.id);
 
   return (
     <>
@@ -48,6 +50,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           viewer={viewer}
           setupHref={`/games/${data.session.id}/play/setup`}
           storyHref={`/games/${data.session.id}/story`}
+          continuation={continuation}
         />
       </div>
     </>

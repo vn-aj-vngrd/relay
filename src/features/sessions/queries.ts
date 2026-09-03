@@ -121,6 +121,7 @@ type UserSessionRow = Awaited<ReturnType<typeof getUserSessions>>[number];
 
 async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Promise<GameCollectionItem[]> {
   if (!rows.length) return [];
+  const now = new Date();
   const sessionIds = rows.map(({ session }) => session.id);
   const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
   const [counts, expenseRows, hostProfiles] = await Promise.all([
@@ -157,7 +158,7 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       estimatedCostCents: session.estimatedCostCents,
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
-      ...(session.hostId === userId
+      ...(session.hostId === userId && session.endsAt > now && ["published", "live"].includes(session.status)
         ? {
             readiness: sessionReadiness({
               goingCount: playerCount,

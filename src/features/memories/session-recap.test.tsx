@@ -22,7 +22,11 @@ const match: RecapMatch = {
   finishedAt: new Date("2026-08-19T10:12:00Z"),
 };
 
-function renderRecap(status: "published" | "live" | "completed", matches: RecapMatch[]) {
+function renderRecap(
+  status: "published" | "live" | "completed",
+  matches: RecapMatch[],
+  continuation?: { replayHref: string; saveCrewHref?: string },
+) {
   return render(
     <SessionRecap
       session={{
@@ -34,6 +38,7 @@ function renderRecap(status: "published" | "live" | "completed", matches: RecapM
       }}
       recap={buildSessionRecap(matches, players)}
       storyHref="/games/session/story"
+      continuation={continuation}
     />,
   );
 }
@@ -58,12 +63,32 @@ describe("SessionRecap states", () => {
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
   });
 
-  it("keeps completed results factual and links to Story", () => {
+  it("keeps completed results factual and links participants to Story", () => {
     renderRecap("completed", [match]);
 
     expect(screen.getByText("Final recap")).toBeInTheDocument();
     expect(screen.getByText("Session highlights")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open story/ })).toHaveAttribute("href", "/games/session/story");
+  });
+
+  it("consolidates the host’s post-game actions", () => {
+    renderRecap("completed", [match], {
+      replayHref: "/games/new?from=session",
+      saveCrewHref: "/groups/new?from=session",
+    });
+
+    expect(screen.getByRole("heading", { name: "Keep this crew moving." })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Play again/ })).toHaveAttribute("href", "/games/new?from=session");
+    expect(screen.getByRole("link", { name: /Save this crew/ })).toHaveAttribute("href", "/groups/new?from=session");
+    expect(screen.getByRole("link", { name: /Share recap/ })).toHaveAttribute("href", "/games/session/story");
+    expect(screen.queryByRole("link", { name: /Open story/ })).not.toBeInTheDocument();
+  });
+
+  it("hides Save this crew when the completed game already belongs to a group", () => {
+    renderRecap("completed", [match], { replayHref: "/games/new?from=session" });
+
+    expect(screen.queryByRole("link", { name: /Save this crew/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Play again/ })).toBeInTheDocument();
   });
 });

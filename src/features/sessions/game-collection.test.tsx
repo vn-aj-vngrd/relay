@@ -61,7 +61,7 @@ const pastGame: GameCollectionItem = {
   dateKey: "2026-08-15",
   endsAt: "2026-08-15T13:00:00.000Z",
   status: "completed",
-  readiness: undefined,
+  readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
 function page(items: GameCollectionItem[], nextCursor: string | null = null) {
@@ -163,7 +163,13 @@ describe("GameCollection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Past" }));
     expect(screen.queryByText("Sunday Open Play")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
+    expect(screen.getByText("Ended")).toBeVisible();
+    expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
+    expect(screen.getByText("8 played")).toBeVisible();
+    expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
   });
 
   it("lets a player respond to an invite without opening the game", async () => {

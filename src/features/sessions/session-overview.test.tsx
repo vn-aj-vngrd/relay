@@ -67,4 +67,17 @@ describe("SessionAtAGlance", () => {
     expect(screen.getByText("₱300 due")).toBeVisible();
     expect(screen.getByText("Upload one screenshot after paying")).toBeVisible();
   });
+
+  it("uses final-state roster and conversation copy after completion", () => {
+    renderOverview(
+      { play: { ...play, completedMatchCount: 2 }, messageCount: 1, payment: { view: "none", canManage: true } },
+      "completed",
+    );
+
+    expect(screen.getByText("8 played")).toBeVisible();
+    expect(screen.getByText("Final roster")).toBeVisible();
+    expect(screen.getByText("2 matches played")).toBeVisible();
+    expect(screen.getByText("Game conversation saved")).toBeVisible();
+    expect(screen.queryByText(/going/)).not.toBeInTheDocument();
+  });
 });
