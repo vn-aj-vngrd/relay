@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, ne, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, ne, or, sql } from "drizzle-orm";
 import { cache } from "react";
 
 import { db } from "@/db/client";
@@ -43,7 +43,7 @@ const HOME_RECENT_LIMIT = 4;
 export async function getHomeSessions(userId: string) {
   const now = new Date();
   const membershipCondition = userSessionCondition(userId);
-  const [invitations, upcoming, recent] = await Promise.all([
+  const [invitations, primaryRows, upcoming, recent] = await Promise.all([
     db
       .select({ session: sessions, player: sessionPlayers })
       .from(sessionPlayers)
@@ -58,6 +58,20 @@ export async function getHomeSessions(userId: string) {
       )
       .orderBy(asc(sessions.startsAt), asc(sessions.id))
       .limit(3),
+    db
+      .select({ session: sessions, player: sessionPlayers })
+      .from(sessionPlayers)
+      .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+      .where(
+        and(
+          membershipCondition,
+          or(eq(sessions.hostId, userId), eq(sessionPlayers.rsvp, "going")),
+          gt(sessions.endsAt, now),
+          inArray(sessions.status, ["published", "live"]),
+        ),
+      )
+      .orderBy(sql`case when ${sessions.status} = 'live' then 0 else 1 end`, asc(sessions.startsAt), asc(sessions.id))
+      .limit(1),
     db
       .select({ session: sessions, player: sessionPlayers })
       .from(sessionPlayers)
@@ -88,7 +102,7 @@ export async function getHomeSessions(userId: string) {
       .orderBy(desc(sessions.startsAt), desc(sessions.id))
       .limit(HOME_RECENT_LIMIT + 1),
   ]);
-  const rows = [...invitations, ...upcoming, ...recent];
+  const rows = [...invitations, ...primaryRows, ...upcoming, ...recent];
   const sessionIds = rows.map(({ session }) => session.id);
   const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
   const [counts, expenseRows, hostProfiles] = rows.length
@@ -117,6 +131,7 @@ export async function getHomeSessions(userId: string) {
 
   return {
     invitations: invitations.map(enrich),
+    primary: primaryRows[0] ? enrich(primaryRows[0]) : null,
     upcoming: upcoming.map(enrich),
     recent: recent.map(enrich),
   };

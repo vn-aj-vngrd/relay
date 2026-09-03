@@ -17,14 +17,18 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDate, formatSessionTime, peso, sessionDateKey } from "@/features/sessions/format";
 import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
 import { HomeInvitations } from "@/features/sessions/home-invitations";
+import { homeHeading, homeParticipationLabel } from "@/features/sessions/home-presentation";
 import { getHomeSessions } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 
 export default async function HomePage() {
   const user = await requireUser();
   const [profile, data] = await Promise.all([ensureProfile(user), getHomeSessions(user.id)]);
-  const next = data.upcoming[0];
+  const next = data.primary;
   const nextHref = next ? `/games/${next.session.id}` : "";
+  const nextIsLive = next?.session.status === "live";
+  const upcoming = data.upcoming.filter(({ session }) => session.id !== next?.session.id);
+  const hasTentative = !next && upcoming.length > 0;
   const nextReadiness =
     next && next.session.hostId === user.id
       ? sessionReadiness({
@@ -60,7 +64,10 @@ export default async function HomePage() {
       <section className="flex items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm text-muted">Good to see you, {profile.name.split(" ")[0]}</p>
-          <h1 className="app-title">{next ? "Your next game is set." : "Ready for your next game?"}</h1>
+          <h1 className="app-title">{homeHeading({ live: nextIsLive, hasPrimary: Boolean(next), hasTentative })}</h1>
+          {hasTentative ? (
+            <p className="mt-2 text-sm text-muted">Your upcoming responses are still pending or tentative.</p>
+          ) : null}
         </div>
       </section>
 
@@ -69,7 +76,7 @@ export default async function HomePage() {
       {next ? (
         <section aria-labelledby="next-game-heading" style={sessionAccentStyle(next.session.accentColor)}>
           <h2 id="next-game-heading" className="mb-3 text-sm font-semibold text-muted">
-            Next game
+            {nextIsLive ? "Live now" : "Next game"}
           </h2>
           <article className="overflow-hidden rounded-xl bg-[var(--session-cover)] text-white ring-1 ring-black/5">
             <div className="grid md:grid-cols-[1fr_260px]">
@@ -77,14 +84,18 @@ export default async function HomePage() {
                 <div className="mb-7 flex items-center justify-between">
                   <span className="sport-label text-white/65">{formatSessionDate(next.session.startsAt)}</span>
                   <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
-                    <span className={`h-2 w-2 rounded-full ${next.session.bookedAt ? "bg-signal" : "bg-white/35"}`} />
-                    {nextReadiness
-                      ? nextReadiness.ready
-                        ? "Ready to play"
-                        : `${nextReadiness.percent}% ready`
-                      : next.session.bookedAt
-                        ? "Court confirmed"
-                        : "Booking pending"}
+                    <span
+                      className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
+                    />
+                    {nextIsLive
+                      ? "Live now"
+                      : nextReadiness
+                        ? nextReadiness.ready
+                          ? "Ready to play"
+                          : `${nextReadiness.percent}% ready`
+                        : next.session.bookedAt
+                          ? "Court confirmed"
+                          : "Booking pending"}
                   </span>
                 </div>
                 <h3
@@ -109,13 +120,15 @@ export default async function HomePage() {
                 </div>
               </div>
               <Link
-                href={nextHref}
+                href={nextIsLive ? `${nextHref}/play` : nextHref}
                 prefetch={false}
                 className="pressable group flex min-h-20 items-center justify-between bg-primary px-5 py-4 font-semibold hover:bg-primary-hover md:flex-col md:items-start md:justify-end md:p-6"
               >
                 <span>
-                  <span className="block text-sm text-white/75">Players, courts, and payments</span>
-                  <span className="mt-1 block text-lg">View game</span>
+                  <span className="block text-sm text-white/75">
+                    {nextIsLive ? "Courts, queue, and scores" : "Players, courts, and payments"}
+                  </span>
+                  <span className="mt-1 block text-lg">{nextIsLive ? "Open Play" : "View game"}</span>
                 </span>
                 <ArrowRight className="transition-transform group-hover:translate-x-1" />
               </Link>
@@ -159,7 +172,7 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
-      ) : (
+      ) : !hasTentative ? (
         <section
           className="border-y border-line lg:grid lg:grid-cols-[.9fr_1.1fr]"
           aria-labelledby="first-game-heading"
@@ -208,9 +221,9 @@ export default async function HomePage() {
             </dl>
           </div>
         </section>
-      )}
+      ) : null}
 
-      {data.upcoming.length > 1 ? (
+      {upcoming.length ? (
         <section aria-labelledby="upcoming-heading">
           <div className="mb-3 flex items-center justify-between">
             <h2 id="upcoming-heading" className="text-lg font-bold">
@@ -221,32 +234,39 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="divide-y divide-line border-y border-line">
-            {data.upcoming.slice(1, 4).map(({ session, playerCount }) => (
-              <Link
-                href={`/games/${session.id}`}
-                prefetch={false}
-                key={session.id}
-                style={sessionAccentStyle(session.accentColor)}
-                className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
-              >
-                <CalendarBlank aria-hidden className="shrink-0 text-primary" size={20} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold">{session.title}</h3>
-                  <p className="mt-1 truncate text-sm text-muted">
-                    <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
-                    {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
-                  </p>
-                </div>
-                <span className="score hidden shrink-0 text-sm text-muted sm:block">
-                  {playerCount} / {session.capacity}
-                </span>
-                <CaretRight
-                  aria-hidden
-                  className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
-                  size={16}
-                />
-              </Link>
-            ))}
+            {upcoming.slice(0, 3).map(({ session, player, playerCount }) => {
+              const participation = homeParticipationLabel(player.rsvp, session.hostId === user.id);
+              return (
+                <Link
+                  href={`/games/${session.id}`}
+                  prefetch={false}
+                  key={session.id}
+                  style={sessionAccentStyle(session.accentColor)}
+                  className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
+                >
+                  <CalendarBlank aria-hidden className="shrink-0 text-primary" size={20} />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate font-semibold">{session.title}</h3>
+                    <p className="mt-1 truncate text-sm text-muted">
+                      <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
+                      {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
+                      <span className="sm:hidden">{participation ? ` · ${participation}` : ""}</span>
+                    </p>
+                  </div>
+                  <span className="hidden shrink-0 text-right sm:block">
+                    <span className="block text-sm font-[650] text-primary">{participation}</span>
+                    <span className="score mt-1 block text-xs text-muted">
+                      {playerCount} / {session.capacity} players
+                    </span>
+                  </span>
+                  <CaretRight
+                    aria-hidden
+                    className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+                    size={16}
+                  />
+                </Link>
+              );
+            })}
           </div>
         </section>
       ) : null}
