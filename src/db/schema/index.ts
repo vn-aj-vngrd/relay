@@ -599,6 +599,74 @@ export const notifications = pgTable(
   ],
 );
 
+export type NotificationCategoryPreferences = {
+  invitations: boolean;
+  roster: boolean;
+  reminders: boolean;
+  changes: boolean;
+  booking: boolean;
+  payments: boolean;
+  recap: boolean;
+};
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  emailEnabled: boolean("email_enabled").notNull().default(false),
+  pushEnabled: boolean("push_enabled").notNull().default(false),
+  emailCategories: jsonb("email_categories").$type<NotificationCategoryPreferences>().notNull(),
+  pushCategories: jsonb("push_categories").$type<NotificationCategoryPreferences>().notNull(),
+  dayBeforeReminder: boolean("day_before_reminder").notNull().default(true),
+  hourBeforeReminder: boolean("hour_before_reminder").notNull().default(true),
+  quietHoursStart: time("quiet_hours_start"),
+  quietHoursEnd: time("quiet_hours_end"),
+  timeZone: text("time_zone").notNull().default("Asia/Manila"),
+  ...timestamps,
+});
+
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull().unique(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    deviceLabel: text("device_label"),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }).notNull().defaultNow(),
+    ...timestamps,
+  },
+  (table) => [index("push_subscriptions_user_idx").on(table.userId, table.createdAt)],
+);
+
+export const notificationDeliveries = pgTable(
+  "notification_deliveries",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    notificationId: uuid("notification_id")
+      .notNull()
+      .references(() => notifications.id, { onDelete: "cascade" }),
+    channel: text("channel").notNull(),
+    destinationKey: text("destination_key").notNull(),
+    pushSubscriptionId: uuid("push_subscription_id").references(() => pushSubscriptions.id, {
+      onDelete: "set null",
+    }),
+    status: text("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    errorCode: text("error_code"),
+    ...timestamps,
+  },
+  (table) => [
+    unique("notification_delivery_destination_unique").on(table.notificationId, table.channel, table.destinationKey),
+    index("notification_delivery_pending_idx").on(table.status, table.nextAttemptAt),
+  ],
+);
+
 export const productEvents = pgTable(
   "product_events",
   {

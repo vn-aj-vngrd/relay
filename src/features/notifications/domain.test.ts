@@ -74,6 +74,22 @@ describe("notificationPresentation", () => {
     });
   });
 
+  it("routes cancellations away from an inaccessible game", () => {
+    expect(
+      notificationPresentation({
+        type: "session_cancelled",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      }),
+    ).toEqual({
+      title: "Saturday Pickle was cancelled",
+      body: "The game is no longer going ahead. Open Relay to review your games.",
+      href: "/games",
+      tone: "session",
+    });
+  });
+
   it("routes scheduled reminders to the plan and arrival flow", () => {
     expect(
       notificationPresentation({

@@ -10,6 +10,7 @@ const readOnlyWriteExceptions = [
   "/login",
   "/signup",
   "/auth/callback",
+  "/api/notifications/unsubscribe",
   "/admin-security",
   "/forgot-password",
   "/set-password",

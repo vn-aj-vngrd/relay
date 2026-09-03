@@ -76,6 +76,13 @@ export function notificationPresentation({
         href: gameHref,
         tone: "payment",
       };
+    case "session_cancelled":
+      return {
+        title: customTitle ?? `${game} was cancelled`,
+        body: customBody ?? "The game is no longer going ahead. Open Relay to review your games.",
+        href: "/games",
+        tone: "session",
+      };
     case "booking_confirmed":
       return {
         title: customTitle ?? "Court booking confirmed",

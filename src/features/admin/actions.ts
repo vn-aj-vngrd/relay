@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
-import { adminAuditLogs, profiles, sessions, signupSettings, users } from "@/db/schema";
+import { adminAuditLogs, notifications, profiles, sessionPlayers, sessions, signupSettings, users } from "@/db/schema";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { requireAdmin } from "./auth";
@@ -344,6 +344,21 @@ export async function cancelSessionAction(_: AdminActionState, formData: FormDat
       .update(sessions)
       .set({ status: "cancelled", updatedAt: new Date(), version: session.version + 1 })
       .where(eq(sessions.id, session.id));
+    const recipients = await tx
+      .select({ userId: sessionPlayers.userId })
+      .from(sessionPlayers)
+      .where(eq(sessionPlayers.sessionId, session.id));
+    const userIds = [...new Set(recipients.flatMap(({ userId }) => (userId ? [userId] : [])))];
+    if (userIds.length)
+      await tx.insert(notifications).values(
+        userIds.map((userId) => ({
+          userId,
+          sessionId: session.id,
+          type: "session_cancelled",
+          payload: {},
+          dedupeKey: `session-cancelled:${session.id}:${userId}`,
+        })),
+      );
     await tx.insert(adminAuditLogs).values({
       actorUserId: actor.id,
       action: "session.cancelled",

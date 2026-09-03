@@ -232,6 +232,13 @@
       "when": 1788413632257,
       "tag": "0032_product_event_dedupe",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788432782474,
+      "tag": "0033_notification_delivery_preferences",
+      "breakpoints": true
     }
   ]
 }

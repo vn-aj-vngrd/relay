@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCircle, Question, ShareNetwork, UserCircle, X } from "@phosphor-icons/react";
+import { Bell, Check, CheckCircle, Question, ShareNetwork, UserCircle, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 
@@ -275,6 +275,19 @@ export function RsvpControl({
               signInHref={signInHref}
               titleId={`keep-game-title-${instance}-${sessionId}`}
             />
+          ) : state.success && signedIn && !currentRsvp && state.rsvp !== "declined" ? (
+            <div className="mt-4 flex items-start gap-3 border-y border-line py-4">
+              <Bell aria-hidden size={18} className="mt-0.5 shrink-0 text-primary" />
+              <div>
+                <p className="text-sm font-semibold">Keep up with this game</p>
+                <p className="mt-1 text-xs leading-5 text-muted">
+                  Choose email or push reminders after confirming your response.
+                </p>
+                <ButtonLink href="/preferences#notifications" variant="quiet" className="mt-2 -ml-2.5">
+                  Set game reminders
+                </ButtonLink>
+              </div>
+            </div>
           ) : null}
         </>
       )}

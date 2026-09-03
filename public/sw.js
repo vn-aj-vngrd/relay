@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const VERSION = "relay-pwa-v1";
+const VERSION = "relay-pwa-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const OFFLINE_URL = "/offline";
 const PRECACHE = [
@@ -26,6 +26,39 @@ self.addEventListener("activate", (event) => {
       self.registration.navigationPreload?.enable(),
       self.clients.claim(),
     ]),
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data?.json() ?? {};
+  } catch {
+    payload = {};
+  }
+  const title = typeof payload.title === "string" ? payload.title : "Relay update";
+  const body = typeof payload.body === "string" ? payload.body : "Open Relay for details.";
+  const href = typeof payload.href === "string" && payload.href.startsWith("/") ? payload.href : "/notifications";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/pwa-192.png",
+      badge: "/pwa-192.png",
+      tag: typeof payload.tag === "string" ? payload.tag : undefined,
+      data: { href },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const href = event.notification.data?.href || "/notifications";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => "focus" in client);
+      if (existing) return existing.navigate(href).then((client) => client?.focus());
+      return self.clients.openWindow(href);
+    }),
   );
 });
 

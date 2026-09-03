@@ -12,7 +12,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy"
       summary="Relay uses only the information needed to organize a game, keep participants in sync, and preserve the session afterward."
-      updated="August 19, 2026"
+      updated="September 3, 2026"
     >
       <section>
         <h2>Information Relay stores</h2>
@@ -23,7 +23,8 @@ export default function PrivacyPage() {
             Messages, reactions, photos, booking evidence, payment instructions, and payment proof you choose to add.
           </li>
           <li>
-            Operational records such as notifications, moderation history, and a small set of product lifecycle events.
+            Operational records such as notification preferences, registered push-device endpoints, delivery status,
+            moderation history, and a small set of product lifecycle events.
           </li>
         </ul>
       </section>
@@ -55,6 +56,8 @@ export default function PrivacyPage() {
         <ul>
           <li>Supabase provides authentication, PostgreSQL, file storage, realtime updates, and scheduled jobs.</li>
           <li>Vercel hosts the application and provides privacy-conscious aggregate web analytics and runtime logs.</li>
+          <li>Resend delivers account email and game reminder email only when the relevant channel is enabled.</li>
+          <li>Browser push providers deliver opted-in device notifications through encrypted push subscriptions.</li>
           <li>
             Geoapify supplies map tiles through Relay’s server-side proxy. Game-creation suggestions come from Relay’s
             reviewed court directory, so typed search text is not sent to Geoapify.
@@ -76,9 +79,10 @@ export default function PrivacyPage() {
       <section>
         <h2>Retention and control</h2>
         <p>
-          Hosts may delete sessions they own. Players may update profile details and RSVP status. Some completed-session
-          and moderation facts may be retained to preserve shared history, prevent abuse, or meet legal obligations.
-          Account deletion requests are handled with care for records shared with other participants.
+          Hosts may delete sessions they own. Players may update profile details, RSVP status, notification categories,
+          reminder timing, quiet hours, email delivery, and registered push devices. Email includes an unsubscribe path.
+          Some completed-session and moderation facts may be retained to preserve shared history, prevent abuse, or meet
+          legal obligations. Account deletion requests are handled with care for records shared with other participants.
         </p>
       </section>
 

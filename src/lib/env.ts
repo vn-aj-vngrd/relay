@@ -28,6 +28,18 @@ const serverSchema = publicSchema.extend({
 });
 
 const healthcheckSecretSchema = z.string().default("");
+const notificationEnvSchema = z.object({
+  enabled: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  dispatchSecret: z.string().default(""),
+  resendApiKey: z.string().default(""),
+  fromEmail: z.string().default(""),
+  vapidPublicKey: z.string().default(""),
+  vapidPrivateKey: z.string().default(""),
+  vapidSubject: z.string().default("mailto:relay@vanajvanguardia.tech"),
+});
 
 export type PublicEnv = z.infer<typeof publicSchema>;
 export type ServerEnv = z.infer<typeof serverSchema>;
@@ -44,6 +56,18 @@ export function getPublicEnv(): PublicEnv {
 
 export function getHealthcheckSecret() {
   return healthcheckSecretSchema.parse(process.env.HEALTHCHECK_SECRET);
+}
+
+export function getNotificationEnv() {
+  return notificationEnvSchema.parse({
+    enabled: process.env.NOTIFICATION_DELIVERY_ENABLED,
+    dispatchSecret: process.env.NOTIFICATION_DISPATCH_SECRET,
+    resendApiKey: process.env.RESEND_API_KEY,
+    fromEmail: process.env.NOTIFICATION_FROM_EMAIL,
+    vapidPublicKey: process.env.VAPID_PUBLIC_KEY,
+    vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
+    vapidSubject: process.env.VAPID_SUBJECT,
+  });
 }
 
 export function getServerEnv(): ServerEnv {

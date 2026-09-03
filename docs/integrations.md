@@ -29,27 +29,33 @@ Keep the button disabled until Google and Supabase are both configured. Google c
 
 ## Environment contract
 
-| Variable                               | Source                                        | Exposure                  | Destination   |
-| -------------------------------------- | --------------------------------------------- | ------------------------- | ------------- |
-| `NEXT_PUBLIC_APP_URL`                  | Localhost or Vercel project alias             | Public                    | Local, Vercel |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project reference                    | Public                    | Local, Vercel |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys                             | Public                    | Local, Vercel |
-| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`      | `true` after Google provider setup            | Public                    | Local, Vercel |
-| `NEXT_PUBLIC_MAGIC_LINK_ENABLED`       | `true` only after production SMTP is verified | Public                    | Local, Vercel |
-| `SUPABASE_SECRET_KEY`                  | Supabase API Keys                             | Secret, server-only       | Local, Vercel |
-| `RESEND_API_KEY`                       | Resend API Keys                               | Secret, setup-only        | Local only    |
-| `SMTP_FROM_EMAIL`                      | Verified Resend domain sender                 | Setup-only configuration  | Local only    |
-| `DATABASE_URL`                         | Supabase Connect → Transaction pooler         | Secret, server-only       | Local, Vercel |
-| `SUPABASE_PROJECT_REF`                 | Supabase project                              | Local setup metadata      | Local only    |
-| `SUPABASE_REGION`                      | Provisioning decision                         | Local setup metadata      | Local only    |
-| `GEOAPIFY_API_KEY`                     | Geoapify project                              | Secret, server-only       | Local, Vercel |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | Cloudflare Turnstile widget                   | Public                    | Local, Vercel |
-| `TURNSTILE_SECRET_KEY`                 | Cloudflare Turnstile widget                   | Secret, setup-only        | Local only    |
-| `HEALTHCHECK_SECRET`                   | `openssl rand -base64 32`                     | Secret, server-only       | Local, Vercel |
-| `ADMIN_EMAILS`                         | Relay owner                                   | Secret, server-only       | Local, Vercel |
-| `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                           | Server-only configuration | Local, Vercel |
+| Variable                               | Source                                         | Exposure                  | Destination   |
+| -------------------------------------- | ---------------------------------------------- | ------------------------- | ------------- |
+| `NEXT_PUBLIC_APP_URL`                  | Localhost or Vercel project alias              | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project reference                     | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys                              | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`      | `true` after Google provider setup             | Public                    | Local, Vercel |
+| `NEXT_PUBLIC_MAGIC_LINK_ENABLED`       | `true` only after production SMTP is verified  | Public                    | Local, Vercel |
+| `SUPABASE_SECRET_KEY`                  | Supabase API Keys                              | Secret, server-only       | Local, Vercel |
+| `RESEND_API_KEY`                       | Resend API Keys                                | Secret, server-only       | Local, Vercel |
+| `SMTP_FROM_EMAIL`                      | Verified Resend domain sender                  | Setup-only configuration  | Local only    |
+| `NOTIFICATION_FROM_EMAIL`              | Verified Resend sender, including display name | Server-only configuration | Local, Vercel |
+| `NOTIFICATION_DELIVERY_ENABLED`        | `true` after provider smoke tests              | Server-only feature flag  | Local, Vercel |
+| `NOTIFICATION_DISPATCH_SECRET`         | `openssl rand -base64 32`                      | Secret, server-only       | Local, Vercel |
+| `VAPID_PUBLIC_KEY`                     | `web-push generate-vapid-keys`                 | Served through auth API   | Local, Vercel |
+| `VAPID_PRIVATE_KEY`                    | `web-push generate-vapid-keys`                 | Secret, server-only       | Local, Vercel |
+| `VAPID_SUBJECT`                        | Relay mailto contact                           | Server-only configuration | Local, Vercel |
+| `DATABASE_URL`                         | Supabase Connect → Transaction pooler          | Secret, server-only       | Local, Vercel |
+| `SUPABASE_PROJECT_REF`                 | Supabase project                               | Local setup metadata      | Local only    |
+| `SUPABASE_REGION`                      | Provisioning decision                          | Local setup metadata      | Local only    |
+| `GEOAPIFY_API_KEY`                     | Geoapify project                               | Secret, server-only       | Local, Vercel |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`       | Cloudflare Turnstile widget                    | Public                    | Local, Vercel |
+| `TURNSTILE_SECRET_KEY`                 | Cloudflare Turnstile widget                    | Secret, setup-only        | Local only    |
+| `HEALTHCHECK_SECRET`                   | `openssl rand -base64 32`                      | Secret, server-only       | Local, Vercel |
+| `ADMIN_EMAILS`                         | Relay owner                                    | Secret, server-only       | Local, Vercel |
+| `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                            | Server-only configuration | Local, Vercel |
 
-`SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. `RESEND_API_KEY` and `SMTP_FROM_EMAIL` are expanded only when `supabase config push` applies Auth SMTP settings; Relay does not need them at runtime. The production sender is `Relay <relay@vanajvanguardia.tech>`. A verified `vanajvanguardia.tech` domain covers that address, so a separately verified `relay.vanajvanguardia.tech` subdomain is unnecessary unless mail should originate from that subdomain.
+`SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. `SMTP_FROM_EMAIL` is expanded when `supabase config push` applies Auth SMTP settings; `RESEND_API_KEY` is also available to Relay at runtime only for opted-in application notifications. The production sender is `Relay <relay@vanajvanguardia.tech>` for both paths. A verified `vanajvanguardia.tech` domain covers that address, so a separately verified `relay.vanajvanguardia.tech` subdomain is unnecessary unless mail should originate from that subdomain.
 
 Use the transaction pooler on Vercel because free deployments require an IPv4-compatible database endpoint. `postgres` is configured with prepared statements disabled for pooler compatibility. `vercel.json` pins application functions to Singapore (`sin1`) so authenticated requests stay close to the Supabase Singapore project and Philippine users.
 
@@ -116,11 +122,15 @@ Use `--scope signup`, `password-reset`, or `password-login` to narrow the reset 
 
 **Complete when:** anonymous PostgREST access to `rate_limit_buckets` is denied, a test identity exceeds a low test limit atomically, and the cleanup Cron appears in Supabase Cron.
 
-## Scheduled reminders
+## Scheduled reminders and external delivery
 
 Supabase Cron runs `public.create_session_reminders()` every 15 minutes through the `relay-session-reminders` job. It creates account-only in-app notifications for tomorrow’s games and games starting in roughly one hour. `notifications.dedupe_key` makes overlapping windows and retries idempotent. Inspect runs in Supabase Dashboard → Integrations → Cron.
 
-**Complete when:** calling the function once creates reminders for eligible going players, calling it again creates none, and the Cron history shows successful 15-minute runs.
+Migration `0033_notification_delivery_preferences` queues email and per-device push outbox rows whenever an in-app notification is created. Configure a scheduler to `POST /api/notifications/dispatch` every five minutes with `Authorization: Bearer $NOTIFICATION_DISPATCH_SECRET`. The dispatcher rechecks the latest user preferences, RSVP, session status, channel policy, reminder timing, and quiet hours. It retries transient failures, removes expired push subscriptions, and never blocks the source game mutation.
+
+Keep `NOTIFICATION_DELIVERY_ENABLED=false` until the migration is applied, the verified Resend sender works, VAPID keys are configured, and the dispatch route passes a manual smoke test. Auth SMTP and application notification email share the Resend account but are separate integrations: Supabase uses SMTP, while Relay’s dispatcher uses the Resend HTTPS API.
+
+**Complete when:** calling the reminder function twice creates no duplicate in-app reminders; dispatching twice sends no duplicate external message; declined players and cancelled games receive no reminders; email unsubscribe, push removal, quiet hours, and a stale push endpoint all pass; and Cron history shows successful reminder and dispatch runs.
 
 ## Database migration
 
@@ -132,7 +142,7 @@ Relay publishes `/manifest.webmanifest`, standard and maskable PNG icons, and a 
 
 `experimental.useOffline` keeps supported Next.js navigations and Server Actions pending until connectivity returns. The global offline indicator communicates that state; direct client `fetch()` calls retain their own error behavior. Test offline behavior with `pnpm build && pnpm start`, not `next dev`. Development unregisters any production worker left on the localhost origin and clears Relay’s service-worker caches before hydration; this prevents cached development chunks from causing hydration mismatches.
 
-When changing service-worker caching behavior, bump `VERSION` in `public/sw.js`, deploy, and verify the old cache is removed during activation. Keep `/sw.js` on `no-cache, no-store` and never add private application routes to `PRECACHE`.
+When changing service-worker caching behavior, bump `VERSION` in `public/sw.js`, deploy, and verify the old cache is removed during activation. Keep `/sw.js` on `no-cache, no-store` and never add private application routes to `PRECACHE`. Push payloads contain only presentation copy and a same-origin path; notification clicks focus an existing Relay window when possible and otherwise open that path.
 
 ## Admin console
 
