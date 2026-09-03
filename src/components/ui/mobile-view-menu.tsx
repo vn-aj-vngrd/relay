@@ -54,7 +54,7 @@ export function MobileViewMenu<T extends string>({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((currentOpen) => !currentOpen)}
-        className="mobile-view-menu-trigger pressable grid h-9 w-9 place-items-center rounded-lg border border-transparent bg-transparent text-muted hover:bg-surface-strong hover:text-ink"
+        className="compact-control mobile-view-menu-trigger pressable grid h-9 w-9 place-items-center rounded-lg border border-transparent bg-transparent text-muted hover:bg-surface-strong hover:text-ink"
       >
         <span aria-hidden>
           <CurrentIcon size={18} />

@@ -30,7 +30,7 @@ function Segmented<T extends string>({
             type="button"
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
-            className={`preference-segment-control pressable flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-medium sm:min-h-9 sm:gap-1.5 sm:px-2.5 ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
+            className={`compact-control preference-segment-control pressable flex min-h-8 items-center gap-1 rounded-md px-2 text-xs font-medium sm:min-h-9 sm:gap-1.5 sm:px-2.5 ${value === option.value ? "bg-surface text-ink shadow-[0_1px_3px_oklch(0.1_0.01_275/.1)]" : "text-muted hover:text-ink"}`}
           >
             {Icon ? <Icon size={15} /> : null}
             {option.label}

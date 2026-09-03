@@ -34,7 +34,7 @@ describe("TabChipRail", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveClass("tab-chip", "min-h-9");
+    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveClass("compact-control", "tab-chip", "min-h-9");
 
     const rail = screen.getByRole("group", { name: "Game filters" }).parentElement!;
     expect(rail).toHaveClass("tab-chip-fade-right", "px-1.5", "py-1.5", "-mx-1.5", "-my-1.5");

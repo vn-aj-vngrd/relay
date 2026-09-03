@@ -73,12 +73,12 @@ export function TabChipRail<T extends string>({
           const ariaLabel = item.count === undefined ? item.label : `${item.label}, ${item.count}`;
           const classes =
             variant === "underline"
-              ? `tab-chip pressable relative inline-flex min-h-11 items-center px-3 text-sm font-semibold ${itemClassName} ${
+              ? `compact-control tab-chip pressable relative inline-flex min-h-11 items-center px-3 text-sm font-semibold ${itemClassName} ${
                   selected
                     ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
                     : "text-muted hover:text-ink"
                 }`
-              : `tab-chip pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-[650] ${itemClassName} ${
+              : `compact-control tab-chip pressable inline-flex min-h-9 items-center rounded-full border px-3.5 text-[13px] font-[650] ${itemClassName} ${
                   selected
                     ? "border-primary/20 bg-primary-soft text-primary-hover"
                     : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"

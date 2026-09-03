@@ -356,16 +356,16 @@ p:not(.truncate) {
   }
 }
 @media (max-width: 63.999rem) {
-  button:not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control):not(.preference-segment-control),
-  a.pressable:not(.tab-chip),
-  label:not(.court-compact-control):has(input),
+  button:not(.compact-control),
+  a.pressable:not(.compact-control),
+  label:not(.compact-control):has(input),
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
   select,
   textarea {
     min-height: 2.75rem;
   }
-  button[aria-label]:not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control),
-  a.pressable[aria-label]:not(.tab-chip) {
+  button[aria-label]:not(.compact-control),
+  a.pressable[aria-label]:not(.compact-control) {
     min-width: 2.75rem;
   }
   .court-finder-workspace .maplibregl-ctrl-group button {

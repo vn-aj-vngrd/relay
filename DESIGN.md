@@ -83,7 +83,7 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 - Controls: 8–10px radius.
 - Discrete session/match objects: 14–16px radius.
 - Compact identity/status: full circle or pill only when its semantics justify the shape.
-- Inputs are 48px high. Standard buttons are a compact 36px, large actions are 40px, and courtside score controls remain 64px.
+- Inputs are 48px high. Standard buttons and pill-shaped filter chips use the shared compact 36px density at every viewport; large actions are 40px, and courtside score controls remain 64px. Dropdown options keep comfortable touch rows even when their trigger is compact.
 - Use rows, dividers, and whitespace before cards. Nested cards are not allowed.
 
 ## Layout

@@ -146,7 +146,7 @@ function SelectedCourtOverlay({
           type="button"
           onClick={onClose}
           aria-label="Close court details"
-          className="court-compact-control pressable grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink sm:h-9 sm:w-9"
+          className="compact-control pressable grid h-8 w-8 shrink-0 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink sm:h-9 sm:w-9"
         >
           <X aria-hidden size={17} />
         </button>
@@ -173,7 +173,7 @@ function SelectedCourtOverlay({
       <div className="mt-4 grid gap-2 min-[420px]:grid-cols-2">
         <Link
           href={createHref(venue, isAuthenticated)}
-          className="court-compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-hover sm:px-3 sm:text-[13px]"
+          className="compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-hover sm:px-3 sm:text-[13px]"
         >
           <Plus aria-hidden size={15} /> Plan a game here
         </Link>
@@ -181,7 +181,7 @@ function SelectedCourtOverlay({
           href={directionsHref(venue)}
           target="_blank"
           rel="noopener noreferrer"
-          className="court-compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-xs font-semibold text-ink hover:bg-surface-strong sm:px-3 sm:text-[13px]"
+          className="compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-xs font-semibold text-ink hover:bg-surface-strong sm:px-3 sm:text-[13px]"
         >
           <MapPin aria-hidden size={15} /> Directions
         </Link>
@@ -189,7 +189,7 @@ function SelectedCourtOverlay({
       <div className="mt-1 flex flex-wrap items-center gap-1">
         <Link
           href={`${detailBasePath}/${venue.slug}`}
-          className="court-compact-control pressable inline-flex min-h-11 items-center rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:text-[13px]"
+          className="compact-control pressable inline-flex min-h-11 items-center rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:text-[13px]"
         >
           Court details
         </Link>
@@ -198,7 +198,7 @@ function SelectedCourtOverlay({
             href={venue.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="court-compact-control pressable inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:gap-1.5 sm:text-[13px]"
+            className="compact-control pressable inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:gap-1.5 sm:text-[13px]"
           >
             External booking <ArrowSquareOut aria-hidden size={14} />
           </Link>
@@ -206,14 +206,14 @@ function SelectedCourtOverlay({
         <Button
           type="button"
           variant="quiet"
-          className="court-compact-control min-h-11 px-2 text-xs text-muted sm:text-[13px]"
+          className="compact-control min-h-11 px-2 text-xs text-muted sm:text-[13px]"
           onClick={onCopy}
         >
           <Copy aria-hidden size={15} /> {copied ? "Copied" : "Copy location"}
         </Button>
         <Link
           href={suggestUpdateHref(venue, isAuthenticated)}
-          className="court-compact-control pressable inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:text-[13px]"
+          className="compact-control pressable inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:text-[13px]"
         >
           <PencilSimple aria-hidden size={14} /> Suggest an update
         </Link>
@@ -590,7 +590,7 @@ export function CourtFinder({
                   ? "Stop sorting by distance"
                   : "Use my location"
             }
-            className="court-compact-control h-11 min-h-11 w-11 px-0 lg:w-auto lg:px-3"
+            className="compact-control h-11 min-h-11 w-11 px-0 lg:w-auto lg:px-3"
           >
             <Crosshair aria-hidden size={17} />
             <span className="hidden lg:inline">
@@ -607,6 +607,7 @@ export function CourtFinder({
                 name="courtSettingFilter"
                 label="Setting"
                 hideLabel
+                density="compact"
                 value={setting}
                 onValueChange={(value) => {
                   setSetting(value as SettingFilter);
@@ -617,7 +618,7 @@ export function CourtFinder({
                   { value: "indoor", label: "Indoor" },
                   { value: "outdoor", label: "Outdoor" },
                 ]}
-                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
               />
             </div>
             <div>
@@ -626,6 +627,7 @@ export function CourtFinder({
                 name="courtAccessFilter"
                 label="Access"
                 hideLabel
+                density="compact"
                 value={access}
                 onValueChange={(value) => {
                   setAccess(value as AccessFilter);
@@ -637,7 +639,7 @@ export function CourtFinder({
                   { value: "commercial", label: "Commercial courts" },
                   { value: "restricted", label: "Restricted access" },
                 ]}
-                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
               />
             </div>
             <div>
@@ -646,6 +648,7 @@ export function CourtFinder({
                 name="courtParkingFilter"
                 label="Parking"
                 hideLabel
+                density="compact"
                 value={parking}
                 onValueChange={(value) => {
                   setParking(value as ParkingFilter);
@@ -656,7 +659,7 @@ export function CourtFinder({
                   { value: "available", label: "Parking available" },
                   { value: "unavailable", label: "No parking" },
                 ]}
-                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
               />
             </div>
             <div>
@@ -665,6 +668,7 @@ export function CourtFinder({
                 name="courtPriceFilter"
                 label="Starting price"
                 hideLabel
+                density="compact"
                 value={price}
                 onValueChange={(value) => {
                   setPrice(value as PriceFilter);
@@ -677,7 +681,7 @@ export function CourtFinder({
                   { value: "500-1000", label: "₱501–₱1,000" },
                   { value: "over-1000", label: "Over ₱1,000" },
                 ]}
-                className="mt-0 !w-auto !rounded-full px-3 font-mono text-xs font-semibold tabular-nums sm:h-9 sm:text-[13px]"
+                className="mt-0 !w-auto !rounded-full font-mono font-semibold tabular-nums"
               />
             </div>
             <div>
@@ -686,20 +690,21 @@ export function CourtFinder({
                 name="courtAvailabilityFilter"
                 label="Availability"
                 hideLabel
+                density="compact"
                 value={availability}
                 onValueChange={(value) => {
                   setAvailability(value as AvailabilityFilter);
                   setSelectedId(null);
                 }}
                 options={courtAvailabilityOptions}
-                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
               />
             </div>
             {filtersActive ? (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="court-compact-control pressable min-h-11 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:min-h-9 sm:px-3 sm:text-[13px]"
+                className="compact-control pressable h-9 min-h-9 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
               >
                 Clear
               </button>
@@ -715,39 +720,42 @@ export function CourtFinder({
                 name="courtBookingDayFilter"
                 label="Booking day"
                 hideLabel
+                density="compact"
                 value={bookingDay}
                 onValueChange={(value) => {
                   setBookingDay(value as BookingDayFilter);
                   setSelectedId(null);
                 }}
                 options={courtBookingDayOptions}
-                className="mt-0 !w-full px-2 text-xs font-semibold lg:!w-auto lg:px-3"
+                className="mt-0 !w-full font-semibold lg:!w-auto"
               />
               <SelectField
                 id="court-booking-start-time-filter"
                 name="courtBookingStartTimeFilter"
                 label="Booking starts"
                 hideLabel
+                density="compact"
                 value={bookingStartTime}
                 onValueChange={(value) => {
                   setBookingStartTime(value);
                   setSelectedId(null);
                 }}
                 options={courtBookingTimeOptions}
-                className="mt-0 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
+                className="compact-control mt-0 h-9 min-h-9 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
               />
               <SelectField
                 id="court-booking-end-time-filter"
                 name="courtBookingEndTimeFilter"
                 label="Booking ends"
                 hideLabel
+                density="compact"
                 value={bookingEndTime}
                 onValueChange={(value) => {
                   setBookingEndTime(value);
                   setSelectedId(null);
                 }}
                 options={courtBookingTimeOptions}
-                className="mt-0 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
+                className="compact-control mt-0 h-9 min-h-9 !w-full px-2 font-mono text-xs font-semibold tabular-nums lg:!w-auto lg:px-3"
               />
             </div>
           </fieldset>

@@ -17,6 +17,7 @@ export function SelectField({
   onValueChange,
   hideLabel = false,
   disabled = false,
+  density = "default",
   className = "",
 }: {
   id: string;
@@ -28,6 +29,7 @@ export function SelectField({
   onValueChange?: (value: string) => void;
   hideLabel?: boolean;
   disabled?: boolean;
+  density?: "default" | "compact";
   className?: string;
 }) {
   const [localValue, setLocalValue] = useState(defaultValue);
@@ -73,7 +75,7 @@ export function SelectField({
         aria-expanded={open && !disabled}
         disabled={disabled}
         onClick={toggle}
-        className={`mt-1.5 flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${className}`}
+        className={`mt-1.5 flex w-full items-center justify-between rounded-lg border border-line bg-surface text-left text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${density === "compact" ? "compact-control h-9 min-h-9 gap-2 px-3 text-[13px]" : "h-11 gap-3 px-3 text-sm"} ${className}`}
       >
         <span className="truncate">{selected?.label}</span>
         <CaretDown
