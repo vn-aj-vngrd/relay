@@ -73,7 +73,7 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
 
       <div className="mt-3">
         <div
-          className="focus-scroll-rail public-session-scroll -mx-1 overflow-x-auto px-1"
+          className="focus-scroll-rail public-session-scroll -mx-1 overflow-x-auto px-1 sm:overflow-visible"
           onFocusCapture={(event) =>
             event.target.scrollIntoView({ block: "nearest", inline: "nearest" })
           }

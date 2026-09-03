@@ -40,7 +40,11 @@ export default async function OpenGamesPage({
       ) : null}
       <OpenGamesFilters filters={filters} />
       <div className="mt-6">
-        <OpenGamesCollection initialPage={page} filters={filters} />
+        <OpenGamesCollection
+          key={`${filters.date}:${filters.location}:${filters.available}`}
+          initialPage={page}
+          filters={filters}
+        />
       </div>
     </div>
   );

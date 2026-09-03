@@ -34,7 +34,11 @@ describe("OpenGamesFilters", () => {
     ).toHaveAttribute("aria-pressed", "false");
 
     fireEvent.click(screen.getByRole("button", { name: "Date" }));
-    fireEvent.click(screen.getByRole("option", { name: "Next 7 days" }));
+    const dateOption = screen.getByRole("option", { name: "Next 7 days" });
+    expect(dateOption.closest(".focus-scroll-rail")).toHaveClass(
+      "sm:overflow-visible"
+    );
+    fireEvent.click(dateOption);
 
     expect(replace).toHaveBeenCalledWith("/games/open?date=7d", {
       scroll: false,
