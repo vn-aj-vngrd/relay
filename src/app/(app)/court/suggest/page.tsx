@@ -17,8 +17,8 @@ export default async function SuggestCourtPage({
     params.court ? getCourtListingBySlug(params.court) : Promise.resolve(null),
   ]);
   return (
-    <div>
-      <header className="mb-8 max-w-2xl border-b border-line pb-7">
+    <div className="mx-auto w-full max-w-2xl">
+      <header className="mb-8 border-b border-line pb-7">
         <h1 className="app-title">Improve Court Finder</h1>
         <p className="mt-2 text-pretty leading-6 text-muted">
           Add a missing court or suggest a correction to an existing listing.

@@ -279,6 +279,16 @@ p:not(.truncate) {
   outline: 3px solid oklch(0.68 0.15 248);
   outline-offset: 3px;
 }
+/* Horizontal rails reserve the full 6px halo instead of clipping it at the
+   scrollport. Negative margins preserve the surrounding layout rhythm. */
+.focus-scroll-rail {
+  margin-block: -0.375rem;
+  padding-block: 0.375rem;
+  scroll-padding-inline: 0.5rem;
+}
+.focus-scroll-rail :focus-visible {
+  scroll-margin-inline: 0.5rem;
+}
 .score {
   font-family: var(--score);
   font-variant-numeric: tabular-nums;

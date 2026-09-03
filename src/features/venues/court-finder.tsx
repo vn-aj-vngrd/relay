@@ -718,124 +718,135 @@ export function CourtFinder({
           </Button>
         </div>
 
-        <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1 sm:overflow-visible">
+        <div className="mt-3">
           <div
-            className="flex min-w-max gap-1.5 sm:gap-2"
-            aria-label="Court filters"
+            className="focus-scroll-rail public-session-scroll -mx-1 overflow-x-auto px-1 sm:overflow-visible"
+            onFocusCapture={(event) =>
+              event.target.scrollIntoView({
+                block: "nearest",
+                inline: "nearest",
+              })
+            }
           >
-            <div>
-              <SelectField
-                id="court-setting-filter"
-                name="courtSettingFilter"
-                label="Setting"
-                hideLabel
-                density="compact"
-                leadingIcon={<Buildings aria-hidden size={14} />}
-                value={setting}
-                onValueChange={(value) => {
-                  setSetting(value as SettingFilter);
-                  setSelectedId(null);
-                }}
-                options={[
-                  { value: "all", label: "Any setting" },
-                  { value: "indoor", label: "Indoor" },
-                  { value: "outdoor", label: "Outdoor" },
-                ]}
-                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
-              />
+            <div
+              role="group"
+              className="flex min-w-max gap-1.5 sm:gap-2"
+              aria-label="Court filters"
+            >
+              <div>
+                <SelectField
+                  id="court-setting-filter"
+                  name="courtSettingFilter"
+                  label="Setting"
+                  hideLabel
+                  density="compact"
+                  leadingIcon={<Buildings aria-hidden size={14} />}
+                  value={setting}
+                  onValueChange={(value) => {
+                    setSetting(value as SettingFilter);
+                    setSelectedId(null);
+                  }}
+                  options={[
+                    { value: "all", label: "Any setting" },
+                    { value: "indoor", label: "Indoor" },
+                    { value: "outdoor", label: "Outdoor" },
+                  ]}
+                  className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
+                />
+              </div>
+              <div>
+                <SelectField
+                  id="court-access-filter"
+                  name="courtAccessFilter"
+                  label="Access"
+                  hideLabel
+                  density="compact"
+                  leadingIcon={<Key aria-hidden size={14} />}
+                  value={access}
+                  onValueChange={(value) => {
+                    setAccess(value as AccessFilter);
+                    setSelectedId(null);
+                  }}
+                  options={[
+                    { value: "all", label: "Any access" },
+                    { value: "public", label: "Public courts" },
+                    { value: "commercial", label: "Commercial courts" },
+                    { value: "restricted", label: "Restricted access" },
+                  ]}
+                  className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
+                />
+              </div>
+              <div>
+                <SelectField
+                  id="court-parking-filter"
+                  name="courtParkingFilter"
+                  label="Parking"
+                  hideLabel
+                  density="compact"
+                  leadingIcon={<Car aria-hidden size={14} />}
+                  value={parking}
+                  onValueChange={(value) => {
+                    setParking(value as ParkingFilter);
+                    setSelectedId(null);
+                  }}
+                  options={[
+                    { value: "all", label: "Any parking" },
+                    { value: "available", label: "Parking available" },
+                    { value: "unavailable", label: "No parking" },
+                  ]}
+                  className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
+                />
+              </div>
+              <div>
+                <SelectField
+                  id="court-price-filter"
+                  name="courtPriceFilter"
+                  label="Starting price"
+                  hideLabel
+                  density="compact"
+                  leadingIcon={<CurrencyCircleDollar aria-hidden size={14} />}
+                  value={price}
+                  onValueChange={(value) => {
+                    setPrice(value as PriceFilter);
+                    setSelectedId(null);
+                  }}
+                  options={[
+                    { value: "all", label: "Any price" },
+                    { value: "free", label: "Free" },
+                    { value: "under-500", label: "₱1–₱500" },
+                    { value: "500-1000", label: "₱501–₱1,000" },
+                    { value: "over-1000", label: "Over ₱1,000" },
+                  ]}
+                  className="mt-0 !w-auto !rounded-full font-mono font-semibold tabular-nums"
+                />
+              </div>
+              <div>
+                <SelectField
+                  id="court-availability-filter"
+                  name="courtAvailabilityFilter"
+                  label="Availability"
+                  hideLabel
+                  density="compact"
+                  leadingIcon={<Clock aria-hidden size={14} />}
+                  value={availability}
+                  onValueChange={(value) => {
+                    setAvailability(value as AvailabilityFilter);
+                    setSelectedId(null);
+                  }}
+                  options={courtAvailabilityOptions}
+                  className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
+                />
+              </div>
+              {filtersActive ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="compact-control pressable h-9 min-h-9 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
+                >
+                  Clear
+                </button>
+              ) : null}
             </div>
-            <div>
-              <SelectField
-                id="court-access-filter"
-                name="courtAccessFilter"
-                label="Access"
-                hideLabel
-                density="compact"
-                leadingIcon={<Key aria-hidden size={14} />}
-                value={access}
-                onValueChange={(value) => {
-                  setAccess(value as AccessFilter);
-                  setSelectedId(null);
-                }}
-                options={[
-                  { value: "all", label: "Any access" },
-                  { value: "public", label: "Public courts" },
-                  { value: "commercial", label: "Commercial courts" },
-                  { value: "restricted", label: "Restricted access" },
-                ]}
-                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
-              />
-            </div>
-            <div>
-              <SelectField
-                id="court-parking-filter"
-                name="courtParkingFilter"
-                label="Parking"
-                hideLabel
-                density="compact"
-                leadingIcon={<Car aria-hidden size={14} />}
-                value={parking}
-                onValueChange={(value) => {
-                  setParking(value as ParkingFilter);
-                  setSelectedId(null);
-                }}
-                options={[
-                  { value: "all", label: "Any parking" },
-                  { value: "available", label: "Parking available" },
-                  { value: "unavailable", label: "No parking" },
-                ]}
-                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
-              />
-            </div>
-            <div>
-              <SelectField
-                id="court-price-filter"
-                name="courtPriceFilter"
-                label="Starting price"
-                hideLabel
-                density="compact"
-                leadingIcon={<CurrencyCircleDollar aria-hidden size={14} />}
-                value={price}
-                onValueChange={(value) => {
-                  setPrice(value as PriceFilter);
-                  setSelectedId(null);
-                }}
-                options={[
-                  { value: "all", label: "Any price" },
-                  { value: "free", label: "Free" },
-                  { value: "under-500", label: "₱1–₱500" },
-                  { value: "500-1000", label: "₱501–₱1,000" },
-                  { value: "over-1000", label: "Over ₱1,000" },
-                ]}
-                className="mt-0 !w-auto !rounded-full font-mono font-semibold tabular-nums"
-              />
-            </div>
-            <div>
-              <SelectField
-                id="court-availability-filter"
-                name="courtAvailabilityFilter"
-                label="Availability"
-                hideLabel
-                density="compact"
-                leadingIcon={<Clock aria-hidden size={14} />}
-                value={availability}
-                onValueChange={(value) => {
-                  setAvailability(value as AvailabilityFilter);
-                  setSelectedId(null);
-                }}
-                options={courtAvailabilityOptions}
-                className="compact-control mt-0 h-9 min-h-9 !w-auto !rounded-full px-3 text-xs font-semibold sm:text-[13px]"
-              />
-            </div>
-            {filtersActive ? (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="compact-control pressable h-9 min-h-9 rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
-              >
-                Clear
-              </button>
-            ) : null}
           </div>
         </div>
         {availability === "during" ? (

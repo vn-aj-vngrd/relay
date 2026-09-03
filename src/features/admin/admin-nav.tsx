@@ -31,7 +31,10 @@ export function AdminNav({ mode }: { mode: "sidebar" | "mobile" }) {
     return (
       <nav
         aria-label="Admin navigation"
-        className="overflow-x-auto border-b border-line"
+        className="focus-scroll-rail overflow-x-auto border-b border-line"
+        onFocusCapture={(event) =>
+          event.target.scrollIntoView({ block: "nearest", inline: "nearest" })
+        }
       >
         <ul className="flex min-w-max px-3">
           {items.map(({ href, label }) => (

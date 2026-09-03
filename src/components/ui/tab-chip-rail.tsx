@@ -70,13 +70,36 @@ export function TabChipRail<T extends string>({
     };
   }, [items.length, updateFade, value]);
 
+  const revealFocusedItem = (item: HTMLElement) => {
+    const rail = scroller.current;
+    if (!rail) return;
+
+    const focusGutter = 8;
+    const itemLeft = item.offsetLeft;
+    const itemRight = itemLeft + item.offsetWidth;
+    const visibleLeft = rail.scrollLeft + focusGutter;
+    const visibleRight = rail.scrollLeft + rail.clientWidth - focusGutter;
+
+    if (itemLeft < visibleLeft) {
+      rail.scrollTo({
+        left: Math.max(0, itemLeft - focusGutter),
+        behavior: "auto",
+      });
+    } else if (itemRight > visibleRight) {
+      rail.scrollTo({
+        left: itemRight - rail.clientWidth + focusGutter,
+        behavior: "auto",
+      });
+    }
+  };
+
   const fadeClass = fade === "none" ? "" : `tab-chip-fade-${fade}`;
 
   return (
     <div
       ref={scroller}
       onScroll={updateFade}
-      className={`public-session-scroll -mx-1.5 overflow-x-auto px-1.5 ${variant === "underline" ? "" : "-my-1.5 py-1.5"} ${fadeClass} ${className}`}
+      className={`focus-scroll-rail public-session-scroll -mx-1.5 overflow-x-auto px-1.5 ${fadeClass} ${className}`}
     >
       <div
         role="group"
@@ -112,6 +135,7 @@ export function TabChipRail<T extends string>({
               href={hrefFor(item)}
               aria-current={selected ? "page" : undefined}
               aria-label={ariaLabel}
+              onFocus={(event) => revealFocusedItem(event.currentTarget)}
               className={classes}
             >
               {item.label}
@@ -124,6 +148,7 @@ export function TabChipRail<T extends string>({
               aria-pressed={selected}
               aria-label={ariaLabel}
               onClick={() => onChange?.(item.value)}
+              onFocus={(event) => revealFocusedItem(event.currentTarget)}
               className={classes}
             >
               {item.label}

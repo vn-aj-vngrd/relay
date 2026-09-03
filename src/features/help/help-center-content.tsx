@@ -173,28 +173,30 @@ export function HelpCenterContent({
         <div className="min-w-0">
           <nav
             aria-label="Manual shortcuts"
-            className="-mx-4 mb-8 overflow-x-auto border-b border-line px-4 lg:hidden"
+            className="-mx-4 mb-8 border-b border-line lg:hidden"
           >
-            <ul className="flex w-max gap-5">
-              {navigationGuides.map((guide) => (
-                <li key={guide.id}>
+            <div className="focus-scroll-rail overflow-x-auto px-4">
+              <ul className="flex w-max gap-5">
+                {navigationGuides.map((guide) => (
+                  <li key={guide.id}>
+                    <a
+                      href={`#${guide.id}`}
+                      className="flex min-h-11 items-center whitespace-nowrap text-sm text-muted"
+                    >
+                      {guide.title}
+                    </a>
+                  </li>
+                ))}
+                <li>
                   <a
-                    href={`#${guide.id}`}
+                    href="#quick-answers"
                     className="flex min-h-11 items-center whitespace-nowrap text-sm text-muted"
                   >
-                    {guide.title}
+                    Quick answers
                   </a>
                 </li>
-              ))}
-              <li>
-                <a
-                  href="#quick-answers"
-                  className="flex min-h-11 items-center whitespace-nowrap text-sm text-muted"
-                >
-                  Quick answers
-                </a>
-              </li>
-            </ul>
+              </ul>
+            </div>
           </nav>
 
           {query ? (

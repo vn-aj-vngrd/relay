@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ButtonSpinner } from "@/components/ui/button";
+import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 
@@ -364,24 +365,17 @@ export function GlobalSearch({
             </button>
           ) : null}
         </div>
-        <nav
-          aria-label="Search filters"
-          className="public-session-scroll mt-3 overflow-x-auto border-b border-line"
-        >
-          <ul className="flex min-w-max">
-            {searchFilters.map((type) => (
-              <li key={type}>
-                <button
-                  type="button"
-                  onClick={() => chooseFilter(type)}
-                  aria-pressed={filter === type}
-                  className={`relative min-h-10 px-3 text-[13px] font-medium ${filter === type ? "text-ink after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary" : "text-muted hover:text-ink"}`}
-                >
-                  {labels[type]}
-                </button>
-              </li>
-            ))}
-          </ul>
+        <nav aria-label="Search filters" className="mt-3 border-b border-line">
+          <TabChipRail
+            label="Search filters"
+            items={searchFilters.map((type) => ({
+              value: type,
+              label: labels[type],
+            }))}
+            value={filter}
+            variant="underline"
+            onChange={chooseFilter}
+          />
         </nav>
       </div>
 

@@ -56,7 +56,7 @@ export default async function AdminInsightsPage() {
 
       <nav
         aria-label="Insight topics"
-        className="public-session-scroll overflow-x-auto border-b border-line"
+        className="focus-scroll-rail public-session-scroll overflow-x-auto border-b border-line"
       >
         <div className="flex min-w-max gap-5">
           {[

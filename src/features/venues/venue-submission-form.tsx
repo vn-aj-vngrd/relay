@@ -116,7 +116,7 @@ export function VenueSubmissionForm({
     <form
       action={action}
       onSubmitCapture={preserveValues}
-      className="max-w-2xl space-y-9"
+      className="w-full space-y-9"
       noValidate
     >
       <input type="hidden" name="requestType" value={requestType} />
