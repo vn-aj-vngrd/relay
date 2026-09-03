@@ -3,7 +3,6 @@ import {
   CalendarBlank,
   CaretRight,
   CurrencyCircleDollar,
-  EnvelopeSimpleOpen,
   MapPin,
   SquaresFour,
   Users,
@@ -15,7 +14,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDate, formatSessionTime, peso } from "@/features/sessions/format";
+import { formatSessionDate, formatSessionTime, peso, sessionDateKey } from "@/features/sessions/format";
+import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
+import { HomeInvitations } from "@/features/sessions/home-invitations";
 import { getHomeSessions } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 
@@ -33,6 +34,26 @@ export default async function HomePage() {
           collectionCreated: next.hasExpense,
         })
       : null;
+  const invitations: GameCollectionItem[] = data.invitations.map(({ session, player, playerCount, hostName }) => ({
+    id: session.id,
+    href: `/games/${session.id}`,
+    title: session.title,
+    date: formatSessionDate(session.startsAt, session.timezone),
+    dateKey: sessionDateKey(session.startsAt, session.timezone),
+    endsAt: session.endsAt.toISOString(),
+    time: formatSessionTime(session.startsAt, session.endsAt, session.timezone),
+    venue: session.venueName,
+    playerCount,
+    capacity: session.capacity,
+    status: session.status,
+    accentColor: session.accentColor,
+    viewerRsvp: player.rsvp,
+    invitedAt: player.invitedAt.toISOString(),
+    hostName,
+    estimatedCostCents: session.estimatedCostCents,
+    requiresApproval: session.requiresApproval,
+    spotsRemaining: Math.max(0, session.capacity - playerCount),
+  }));
 
   return (
     <div className="space-y-8 sm:space-y-16">
@@ -43,47 +64,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {data.invitations.length ? (
-        <section aria-labelledby="home-invites-heading">
-          <div className="mb-3 flex items-center justify-between gap-4">
-            <h2 id="home-invites-heading" className="text-lg font-bold">
-              Invites
-            </h2>
-            <Link
-              href="/games?filter=invites"
-              className="inline-flex min-h-11 items-center text-sm font-semibold text-primary"
-            >
-              Review all
-            </Link>
-          </div>
-          <div className="divide-y divide-line border-y border-line">
-            {data.invitations.map(({ session }) => (
-              <Link
-                href={`/games/${session.id}`}
-                prefetch={false}
-                key={session.id}
-                style={sessionAccentStyle(session.accentColor)}
-                className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
-              >
-                <EnvelopeSimpleOpen aria-hidden className="shrink-0 text-primary" size={20} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold">{session.title}</h3>
-                  <p className="mt-1 truncate text-sm text-muted">
-                    <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
-                    {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
-                  </p>
-                </div>
-                <span className="hidden shrink-0 text-sm font-semibold text-primary sm:block">Respond</span>
-                <CaretRight
-                  aria-hidden
-                  className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
-                  size={16}
-                />
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <HomeInvitations initialItems={invitations} />
 
       {next ? (
         <section aria-labelledby="next-game-heading" style={sessionAccentStyle(next.session.accentColor)}>

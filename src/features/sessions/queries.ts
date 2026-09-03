@@ -90,7 +90,8 @@ export async function getHomeSessions(userId: string) {
   ]);
   const rows = [...invitations, ...upcoming, ...recent];
   const sessionIds = rows.map(({ session }) => session.id);
-  const [counts, expenseRows] = rows.length
+  const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
+  const [counts, expenseRows, hostProfiles] = rows.length
     ? await Promise.all([
         db
           .select({ sessionId: sessionPlayers.sessionId, total: count() })
@@ -98,14 +99,20 @@ export async function getHomeSessions(userId: string) {
           .where(and(inArray(sessionPlayers.sessionId, sessionIds), eq(sessionPlayers.rsvp, "going")))
           .groupBy(sessionPlayers.sessionId),
         db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
+        db
+          .select({ userId: profiles.userId, name: profiles.name })
+          .from(profiles)
+          .where(inArray(profiles.userId, hostIds)),
       ])
-    : [[], []];
+    : [[], [], []];
   const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
   const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
+  const hostNames = new Map(hostProfiles.map(({ userId, name }) => [userId, name]));
   const enrich = (row: (typeof rows)[number]) => ({
     ...row,
     playerCount: playerCounts.get(row.session.id) ?? 0,
     hasExpense: sessionsWithExpense.has(row.session.id),
+    hostName: hostNames.get(row.session.hostId) ?? "Relay host",
   });
 
   return {
