@@ -5,19 +5,28 @@ import type { CourtListing } from "@/features/venues/directory";
 
 export function CourtFinderShowcase({ courts }: { courts: CourtListing[] }) {
   return (
-    <section id="court-finder" className="border-b border-line bg-surface px-5 py-20 sm:px-8 sm:py-28">
+    <section
+      id="court-finder"
+      className="border-b border-line bg-surface px-5 py-20 sm:px-8 sm:py-28"
+    >
       <div className="mx-auto max-w-[1180px]">
-        <div data-marketing-reveal="split" className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]">
+        <div
+          data-marketing-reveal="split"
+          className="grid items-end gap-8 lg:grid-cols-[.9fr_1.1fr]"
+        >
           <div>
-            <p className="text-sm font-semibold text-marketing-accent">Philippines Court Finder</p>
+            <p className="text-sm font-semibold text-marketing-accent">
+              Philippines Court Finder
+            </p>
             <h2 className="mt-4 max-w-xl text-3xl font-[620] tracking-[-0.038em] sm:text-5xl">
               Find a court across the Philippines.
             </h2>
           </div>
           <div className="lg:justify-self-end">
             <p className="max-w-xl text-base leading-7 text-muted">
-              Search by court, city, province, or neighborhood. Check the setting, price, distance, directions, and
-              booking link, then pick a court to start a game.
+              Search by court, city, province, or neighborhood. Check the
+              setting, price, distance, directions, and booking link, then pick
+              a court to start a game.
             </p>
             <Link
               href="/courts"
@@ -39,8 +48,9 @@ export function CourtFinderShowcase({ courts }: { courts: CourtListing[] }) {
           />
         </div>
         <p className="mt-3 text-xs leading-5 text-muted">
-          Court Finder covers the Philippines only. These are representative listings from the reviewed directory;
-          confirm current rates and hours before booking.
+          Court Finder covers the Philippines only. These are representative
+          listings from the reviewed directory; confirm current rates and hours
+          before booking.
         </p>
       </div>
     </section>

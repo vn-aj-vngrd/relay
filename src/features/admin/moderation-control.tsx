@@ -1,6 +1,11 @@
 "use client";
 
-import { PauseCircle, Prohibit, ShieldCheck, Warning } from "@phosphor-icons/react";
+import {
+  PauseCircle,
+  Prohibit,
+  ShieldCheck,
+  Warning,
+} from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -8,7 +13,12 @@ import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
-import { type AdminActionState, cancelSessionAction, restoreUserAction, suspendUserAction } from "./actions";
+import {
+  type AdminActionState,
+  cancelSessionAction,
+  restoreUserAction,
+  suspendUserAction,
+} from "./actions";
 
 type Mode = "suspend-user" | "restore-user" | "cancel-session";
 
@@ -46,7 +56,11 @@ function SubmitButton({ mode }: { mode: Mode }) {
   const { pending } = useFormStatus();
   const restore = mode === "restore-user";
   return (
-    <Button type="submit" variant={restore ? "primary" : "danger"} disabled={pending}>
+    <Button
+      type="submit"
+      variant={restore ? "primary" : "danger"}
+      disabled={pending}
+    >
       {pending ? (
         <>
           <ButtonSpinner />
@@ -59,11 +73,24 @@ function SubmitButton({ mode }: { mode: Mode }) {
   );
 }
 
-export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: string }) {
+export function ModerationControl({
+  mode,
+  targetId,
+}: {
+  mode: Mode;
+  targetId: string;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const action =
-    mode === "suspend-user" ? suspendUserAction : mode === "restore-user" ? restoreUserAction : cancelSessionAction;
-  const [state, formAction] = useActionState<AdminActionState, FormData>(action, {});
+    mode === "suspend-user"
+      ? suspendUserAction
+      : mode === "restore-user"
+        ? restoreUserAction
+        : cancelSessionAction;
+  const [state, formAction] = useActionState<AdminActionState, FormData>(
+    action,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   const details = copy[mode];
   const restore = mode === "restore-user";
@@ -72,7 +99,11 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
     if (state.success) dialogRef.current?.close();
   }, [state]);
 
-  const Icon = restore ? ShieldCheck : mode === "cancel-session" ? Prohibit : PauseCircle;
+  const Icon = restore
+    ? ShieldCheck
+    : mode === "cancel-session"
+      ? Prohibit
+      : PauseCircle;
 
   return (
     <div>
@@ -86,7 +117,12 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
         {details.trigger}
       </Button>
       <Dialog ref={dialogRef}>
-        <form noValidate action={formAction} onSubmitCapture={preserveValues} className="p-5 sm:p-6">
+        <form
+          noValidate
+          action={formAction}
+          onSubmitCapture={preserveValues}
+          className="p-5 sm:p-6"
+        >
           <input type="hidden" name={details.field} value={targetId} />
           <div className="flex items-start gap-3">
             <span
@@ -96,7 +132,9 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
             </span>
             <div>
               <h2 className="text-lg font-[680]">{details.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted">{details.description}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {details.description}
+              </p>
             </div>
           </div>
           <div className="mt-6">
@@ -120,7 +158,11 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
             ) : null}
           </div>
           <div className="mt-7 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
               Keep unchanged
             </Button>
             <SubmitButton mode={mode} />

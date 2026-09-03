@@ -1,8 +1,14 @@
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
-import { GameCollection, GameViewMenu } from "@/features/sessions/game-collection";
+import {
+  GameCollection,
+  GameViewMenu,
+} from "@/features/sessions/game-collection";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
-import { getGameCollectionPage, getGameInvitations } from "@/features/sessions/queries";
+import {
+  getGameCollectionPage,
+  getGameInvitations,
+} from "@/features/sessions/queries";
 
 export default async function GamesPage({
   searchParams,
@@ -18,7 +24,9 @@ export default async function GamesPage({
   ]);
 
   const todayKey = sessionDateKey(new Date());
-  const initialMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.month ?? "") ? params.month! : todayKey.slice(0, 7);
+  const initialMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.month ?? "")
+    ? params.month!
+    : todayKey.slice(0, 7);
   const requestedDate = new Date(`${params.date}T00:00:00Z`);
   const initialDate =
     /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(params.date ?? "") &&
@@ -44,7 +52,13 @@ export default async function GamesPage({
         invitationPage={invitationPage}
         pastPage={pastPage}
         todayKey={todayKey}
-        initialFilter={params.filter === "invites" ? "invites" : params.filter === "past" ? "past" : "upcoming"}
+        initialFilter={
+          params.filter === "invites"
+            ? "invites"
+            : params.filter === "past"
+              ? "past"
+              : "upcoming"
+        }
         initialMonth={initialMonth}
         initialDate={initialDate}
       />

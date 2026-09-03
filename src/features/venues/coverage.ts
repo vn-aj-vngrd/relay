@@ -1,5 +1,8 @@
 export type CourtCoordinate = { latitude: number; longitude: number };
-export type CourtCoverageIssue = { path: "latitude" | "longitude"; message: string };
+export type CourtCoverageIssue = {
+  path: "latitude" | "longitude";
+  message: string;
+};
 export type CourtMapTile = { zoom: number; x: number; y: number };
 export type CourtMapViewport = {
   center: [number, number];
@@ -39,7 +42,9 @@ function tileLongitude(x: number, zoom: number) {
 }
 
 function tileLatitude(y: number, zoom: number) {
-  return (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / 2 ** zoom))) * 180) / Math.PI;
+  return (
+    (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / 2 ** zoom))) * 180) / Math.PI
+  );
 }
 
 function contains({ latitude, longitude }: CourtCoordinate) {
@@ -53,23 +58,47 @@ function contains({ latitude, longitude }: CourtCoordinate) {
   );
 }
 
-function validatePublishingCoordinate(input: { latitude: number | ""; longitude: number | "" }) {
+function validatePublishingCoordinate(input: {
+  latitude: number | "";
+  longitude: number | "";
+}) {
   const issues: CourtCoverageIssue[] = [];
   if (input.latitude === "")
-    issues.push({ path: "latitude", message: "Add a Philippines latitude before publishing." });
-  else if (!Number.isFinite(input.latitude) || input.latitude < bounds.south || input.latitude > bounds.north)
-    issues.push({ path: "latitude", message: "Latitude must be inside the Philippines." });
+    issues.push({
+      path: "latitude",
+      message: "Add a Philippines latitude before publishing.",
+    });
+  else if (
+    !Number.isFinite(input.latitude) ||
+    input.latitude < bounds.south ||
+    input.latitude > bounds.north
+  )
+    issues.push({
+      path: "latitude",
+      message: "Latitude must be inside the Philippines.",
+    });
 
   if (input.longitude === "")
-    issues.push({ path: "longitude", message: "Add a Philippines longitude before publishing." });
-  else if (!Number.isFinite(input.longitude) || input.longitude < bounds.west || input.longitude > bounds.east)
-    issues.push({ path: "longitude", message: "Longitude must be inside the Philippines." });
+    issues.push({
+      path: "longitude",
+      message: "Add a Philippines longitude before publishing.",
+    });
+  else if (
+    !Number.isFinite(input.longitude) ||
+    input.longitude < bounds.west ||
+    input.longitude > bounds.east
+  )
+    issues.push({
+      path: "longitude",
+      message: "Longitude must be inside the Philippines.",
+    });
 
   return issues;
 }
 
 function allowsTile({ zoom, x, y }: CourtMapTile) {
-  if (!Number.isInteger(zoom) || !Number.isInteger(x) || !Number.isInteger(y)) return false;
+  if (!Number.isInteger(zoom) || !Number.isInteger(x) || !Number.isInteger(y))
+    return false;
   if (zoom < minimumZoom || zoom > maximumZoom) return false;
   const tileCount = 2 ** zoom;
   if (x < 0 || y < 0 || x >= tileCount || y >= tileCount) return false;
@@ -79,7 +108,12 @@ function allowsTile({ zoom, x, y }: CourtMapTile) {
   const north = tileLatitude(y, zoom);
   const south = tileLatitude(y + 1, zoom);
 
-  return !(east < bounds.west || west > bounds.east || north < bounds.south || south > bounds.north);
+  return !(
+    east < bounds.west ||
+    west > bounds.east ||
+    north < bounds.south ||
+    south > bounds.north
+  );
 }
 
 /** The single policy interface for Relay's Court directory coverage. */

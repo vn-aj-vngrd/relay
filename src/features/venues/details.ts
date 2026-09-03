@@ -59,21 +59,45 @@ export const courtOperationalStatusOptions = [
 ] as const;
 
 export function formatCourtAccess(value: CourtAccessType) {
-  return courtAccessOptions.find((option) => option.value === value)?.label ?? "Not listed";
+  return (
+    courtAccessOptions.find((option) => option.value === value)?.label ??
+    "Not listed"
+  );
 }
 
 export function formatCourtReservation(value: CourtReservationPolicy) {
-  return courtReservationOptions.find((option) => option.value === value)?.label ?? "Not listed";
+  return (
+    courtReservationOptions.find((option) => option.value === value)?.label ??
+    "Not listed"
+  );
 }
 
 export function formatCourtOperationalStatus(value: CourtOperationalStatus) {
-  return courtOperationalStatusOptions.find((option) => option.value === value)?.label ?? "Not confirmed";
+  return (
+    courtOperationalStatusOptions.find((option) => option.value === value)
+      ?.label ?? "Not confirmed"
+  );
 }
 
-export const courtPriceUnits = ["hour", "player", "court", "session", "court_hour", "player_session"] as const;
+export const courtPriceUnits = [
+  "hour",
+  "player",
+  "court",
+  "session",
+  "court_hour",
+  "player_session",
+] as const;
 export type CourtPriceUnit = (typeof courtPriceUnits)[number];
 
-export const courtPriceStatuses = ["unknown", "free", "paid", "contact", "donation", "members", "invitation"] as const;
+export const courtPriceStatuses = [
+  "unknown",
+  "free",
+  "paid",
+  "contact",
+  "donation",
+  "members",
+  "invitation",
+] as const;
 export type CourtPriceStatus = (typeof courtPriceStatuses)[number];
 
 export const courtParkingOptions = [
@@ -112,7 +136,10 @@ export const courtDays = [
 
 export type CourtDay = (typeof courtDays)[number]["value"];
 type CourtDayKey = (typeof courtDays)[number]["key"];
-type CourtOperatingHoursInput = Record<`${CourtDayKey}${"Open" | "Close"}`, string>;
+type CourtOperatingHoursInput = Record<
+  `${CourtDayKey}${"Open" | "Close"}`,
+  string
+>;
 export type CourtOperatingPeriod = {
   dayOfWeek: CourtDay;
   opensAt: string;
@@ -176,9 +203,17 @@ export function formatCourtPrice(input: {
   if (input.priceStatus === "donation") return "Donation";
   if (input.priceStatus === "members") return "Members only";
   if (input.priceStatus === "invitation") return "Invitation only";
-  if (input.priceStatus !== "paid" || input.priceAmountCents == null || !input.priceUnit) return null;
+  if (
+    input.priceStatus !== "paid" ||
+    input.priceAmountCents == null ||
+    !input.priceUnit
+  )
+    return null;
   const amount = php.format(input.priceAmountCents / 100);
-  const range = input.priceMaxCents == null ? amount : `${amount}–${php.format(input.priceMaxCents / 100)}`;
+  const range =
+    input.priceMaxCents == null
+      ? amount
+      : `${amount}–${php.format(input.priceMaxCents / 100)}`;
   const unit = priceUnitLabels[input.priceUnit];
   return unit ? `${range} ${unit}` : range;
 }
@@ -200,7 +235,12 @@ export function toCourtPriceStorage(input: {
   priceUnit: CourtPriceUnit | "";
 }) {
   if (input.priceStatus === "free")
-    return { priceStatus: input.priceStatus, priceAmountCents: 0, priceMaxCents: null, priceUnit: null };
+    return {
+      priceStatus: input.priceStatus,
+      priceAmountCents: 0,
+      priceMaxCents: null,
+      priceUnit: null,
+    };
   if (input.priceStatus === "paid")
     return {
       priceStatus: input.priceStatus,
@@ -208,20 +248,32 @@ export function toCourtPriceStorage(input: {
       priceMaxCents: pesosToCents(input.priceMax),
       priceUnit: input.priceUnit || null,
     };
-  return { priceStatus: input.priceStatus, priceAmountCents: null, priceMaxCents: null, priceUnit: null };
+  return {
+    priceStatus: input.priceStatus,
+    priceAmountCents: null,
+    priceMaxCents: null,
+    priceUnit: null,
+  };
 }
 
-export function buildCourtOperatingHours(input: Partial<CourtOperatingHoursInput>): CourtOperatingPeriod[] {
+export function buildCourtOperatingHours(
+  input: Partial<CourtOperatingHoursInput>
+): CourtOperatingPeriod[] {
   return courtDays.flatMap(({ value, key }) => {
     const opensAt = input[`${key}Open`];
     const closesAt = input[`${key}Close`];
-    return typeof opensAt === "string" && typeof closesAt === "string" && opensAt && closesAt
+    return typeof opensAt === "string" &&
+      typeof closesAt === "string" &&
+      opensAt &&
+      closesAt
       ? [{ dayOfWeek: value, opensAt, closesAt }]
       : [];
   });
 }
 
-function periodLabel(period: Pick<CourtOperatingPeriod, "opensAt" | "closesAt">) {
+function periodLabel(
+  period: Pick<CourtOperatingPeriod, "opensAt" | "closesAt">
+) {
   if (period.opensAt === period.closesAt) return "Open 24 hours";
   return `${timeLabel(period.opensAt)}–${timeLabel(period.closesAt)}`;
 }
@@ -229,17 +281,32 @@ function periodLabel(period: Pick<CourtOperatingPeriod, "opensAt" | "closesAt">)
 export function formatCourtOperatingHours(periods: CourtOperatingPeriod[]) {
   if (!periods.length) return null;
   const byDay = new Map<CourtDay, CourtOperatingPeriod[]>();
-  for (const period of periods) byDay.set(period.dayOfWeek, [...(byDay.get(period.dayOfWeek) ?? []), period]);
+  for (const period of periods)
+    byDay.set(period.dayOfWeek, [
+      ...(byDay.get(period.dayOfWeek) ?? []),
+      period,
+    ]);
   const signature = (day: CourtDay) =>
-    (byDay.get(day) ?? []).map((period) => `${period.opensAt}-${period.closesAt}`).join(",");
-  const allDaysMatch = courtDays.every((day) => signature(day.value) && signature(day.value) === signature(1));
-  if (allDaysMatch) return `Daily · ${(byDay.get(1) ?? []).map(periodLabel).join(", ")}`;
-  const weekdaysMatch = [1, 2, 3, 4, 5].every((day) => signature(day as CourtDay) === signature(1));
+    (byDay.get(day) ?? [])
+      .map((period) => `${period.opensAt}-${period.closesAt}`)
+      .join(",");
+  const allDaysMatch = courtDays.every(
+    (day) => signature(day.value) && signature(day.value) === signature(1)
+  );
+  if (allDaysMatch)
+    return `Daily · ${(byDay.get(1) ?? []).map(periodLabel).join(", ")}`;
+  const weekdaysMatch = [1, 2, 3, 4, 5].every(
+    (day) => signature(day as CourtDay) === signature(1)
+  );
   const weekendsMatch = signature(6) === signature(7);
   if (weekdaysMatch && weekendsMatch) {
     return [
-      signature(1) ? `Mon–Fri ${(byDay.get(1) ?? []).map(periodLabel).join(", ")}` : null,
-      signature(6) ? `Sat–Sun ${(byDay.get(6) ?? []).map(periodLabel).join(", ")}` : null,
+      signature(1)
+        ? `Mon–Fri ${(byDay.get(1) ?? []).map(periodLabel).join(", ")}`
+        : null,
+      signature(6)
+        ? `Sat–Sun ${(byDay.get(6) ?? []).map(periodLabel).join(", ")}`
+        : null,
     ]
       .filter(Boolean)
       .join("; ");
@@ -247,7 +314,9 @@ export function formatCourtOperatingHours(periods: CourtOperatingPeriod[]) {
   return courtDays
     .flatMap((day) => {
       const dayPeriods = byDay.get(day.value);
-      return dayPeriods?.length ? [`${day.shortLabel} ${dayPeriods.map(periodLabel).join(", ")}`] : [];
+      return dayPeriods?.length
+        ? [`${day.shortLabel} ${dayPeriods.map(periodLabel).join(", ")}`]
+        : [];
     })
     .join("; ");
 }
@@ -279,16 +348,26 @@ function adjacentDay(dayOfWeek: CourtDay, offset: -1 | 1): CourtDay {
   return (dayOfWeek === 7 ? 1 : dayOfWeek + 1) as CourtDay;
 }
 
-function periodsForDayTimeline(periods: CourtOperatingPeriod[], dayOfWeek: CourtDay) {
+function periodsForDayTimeline(
+  periods: CourtOperatingPeriod[],
+  dayOfWeek: CourtDay
+) {
   const interval = (period: CourtOperatingPeriod, offset = 0) => {
     const opensAt = minutes(period.opensAt) + offset;
     const rawClosesAt = minutes(period.closesAt) + offset;
-    return { opensAt, closesAt: rawClosesAt <= opensAt ? rawClosesAt + 24 * 60 : rawClosesAt };
+    return {
+      opensAt,
+      closesAt: rawClosesAt <= opensAt ? rawClosesAt + 24 * 60 : rawClosesAt,
+    };
   };
-  const current = periods.filter((period) => period.dayOfWeek === dayOfWeek).map((period) => interval(period));
+  const current = periods
+    .filter((period) => period.dayOfWeek === dayOfWeek)
+    .map((period) => interval(period));
   const carriedOver = periods
     .filter(
-      (period) => period.dayOfWeek === adjacentDay(dayOfWeek, -1) && minutes(period.closesAt) < minutes(period.opensAt),
+      (period) =>
+        period.dayOfWeek === adjacentDay(dayOfWeek, -1) &&
+        minutes(period.closesAt) < minutes(period.opensAt)
     )
     .map((period) => interval(period, -24 * 60));
   const following = periods
@@ -306,12 +385,17 @@ function periodsForDayTimeline(periods: CourtOperatingPeriod[], dayOfWeek: Court
     }, []);
 }
 
-export function isCourtOpenAt(periods: CourtOperatingPeriod[], date = new Date()): boolean | null {
+export function isCourtOpenAt(
+  periods: CourtOperatingPeriod[],
+  date = new Date()
+): boolean | null {
   if (!periods.length) return null;
   const courtTime = courtTimeForDate(date);
   if (!courtTime.dayOfWeek) return null;
   return periodsForDayTimeline(periods, courtTime.dayOfWeek).some(
-    (period) => courtTime.currentMinutes >= period.opensAt && courtTime.currentMinutes < period.closesAt,
+    (period) =>
+      courtTime.currentMinutes >= period.opensAt &&
+      courtTime.currentMinutes < period.closesAt
   );
 }
 
@@ -319,14 +403,14 @@ export function isCourtOpenDuringOnDay(
   periods: CourtOperatingPeriod[],
   startTime: string,
   endTime: string,
-  dayOfWeek: CourtDay,
+  dayOfWeek: CourtDay
 ): boolean | null {
   if (!periods.length) return null;
   const startsAt = minutes(startTime);
   const endsAtRaw = minutes(endTime);
   const endsAt = endsAtRaw <= startsAt ? endsAtRaw + 24 * 60 : endsAtRaw;
   return periodsForDayTimeline(periods, dayOfWeek).some(
-    (period) => startsAt >= period.opensAt && endsAt <= period.closesAt,
+    (period) => startsAt >= period.opensAt && endsAt <= period.closesAt
   );
 }
 
@@ -334,15 +418,20 @@ export function isCourtOpenDuring(
   periods: CourtOperatingPeriod[],
   startTime: string,
   endTime: string,
-  date = new Date(),
+  date = new Date()
 ): boolean | null {
   if (!periods.length) return null;
   const { dayOfWeek } = courtTimeForDate(date);
-  return dayOfWeek ? isCourtOpenDuringOnDay(periods, startTime, endTime, dayOfWeek) : null;
+  return dayOfWeek
+    ? isCourtOpenDuringOnDay(periods, startTime, endTime, dayOfWeek)
+    : null;
 }
 
 export function isCourtOpen24Hours(periods: CourtOperatingPeriod[]) {
   return courtDays.every(({ value }) =>
-    periods.some((period) => period.dayOfWeek === value && period.opensAt === period.closesAt),
+    periods.some(
+      (period) =>
+        period.dayOfWeek === value && period.opensAt === period.closesAt
+    )
   );
 }

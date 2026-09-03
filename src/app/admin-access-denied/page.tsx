@@ -16,9 +16,12 @@ export default function AdminAccessDeniedPage() {
         <span className="grid h-11 w-11 place-items-center rounded-full bg-surface-strong text-muted">
           <LockKey aria-hidden size={22} weight="fill" />
         </span>
-        <h1 className="mt-5 text-2xl font-bold tracking-[-0.025em]">Admin access required</h1>
+        <h1 className="mt-5 text-2xl font-bold tracking-[-0.025em]">
+          Admin access required
+        </h1>
         <p className="mt-3 max-w-md leading-7 text-muted">
-          Your account is signed in, but it is not allowed to manage Relay’s production space.
+          Your account is signed in, but it is not allowed to manage Relay’s
+          production space.
         </p>
         <div className="mt-7">
           <ButtonLink href="/home">Back to Relay</ButtonLink>

@@ -12,11 +12,15 @@ describe("PWA manifest", () => {
         expect.objectContaining({ sizes: "192x192", purpose: "any" }),
         expect.objectContaining({ sizes: "512x512", purpose: "any" }),
         expect.objectContaining({ sizes: "512x512", purpose: "maskable" }),
-      ]),
+      ])
     );
-    expect(value.shortcuts?.map((shortcut) => shortcut.short_name)).toEqual(["Create", "Games", "Court"]);
-    expect(value.shortcuts?.find((shortcut) => shortcut.short_name === "Court")?.url).toBe(
-      "/court?source=pwa-shortcut",
-    );
+    expect(value.shortcuts?.map((shortcut) => shortcut.short_name)).toEqual([
+      "Create",
+      "Games",
+      "Court",
+    ]);
+    expect(
+      value.shortcuts?.find((shortcut) => shortcut.short_name === "Court")?.url
+    ).toBe("/court?source=pwa-shortcut");
   });
 });

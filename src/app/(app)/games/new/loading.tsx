@@ -40,11 +40,17 @@ export default function NewGameLoading() {
 
       <div className="mx-auto w-full max-w-2xl lg:mt-9">
         <CreateGameProgress step={1} />
-        <section role="status" aria-label="Loading game details" aria-busy="true" className="space-y-6">
+        <section
+          role="status"
+          aria-label="Loading game details"
+          aria-busy="true"
+          className="space-y-6"
+        >
           <div>
             <h2 className="text-xl font-[680]">The plan</h2>
             <p className="mt-1 text-sm text-muted">
-              Start with what players need to recognize the game and arrive on time.
+              Start with what players need to recognize the game and arrive on
+              time.
             </p>
           </div>
           <PendingField label="Game name" />

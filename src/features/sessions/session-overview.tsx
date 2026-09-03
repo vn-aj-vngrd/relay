@@ -1,4 +1,9 @@
-import { CaretRight, ChatCircleDots, CurrencyCircleDollar, PlayCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  CaretRight,
+  ChatCircleDots,
+  CurrencyCircleDollar,
+  PlayCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { Skeleton } from "@/components/shared/skeleton";
@@ -28,7 +33,8 @@ function playCopy(overview: SessionOverview, status: string) {
 }
 
 function paymentCopy(payment: SessionOverview["payment"]) {
-  if (payment.view === "hidden") return { value: "Players only", detail: "Join to view your share" };
+  if (payment.view === "hidden")
+    return { value: "Players only", detail: "Join to view your share" };
   if (payment.view === "none")
     return payment.canManage
       ? { value: "Set up payment", detail: "No split created yet" }
@@ -40,17 +46,33 @@ function paymentCopy(payment: SessionOverview["payment"]) {
         detail: `${payment.unpaidCount} still unpaid`,
       };
     return {
-      value: payment.unpaidCount ? `${payment.unpaidCount} unpaid` : "All settled",
-      detail: payment.unpaidCount ? "No proofs waiting for review" : "Everyone in the split is paid",
+      value: payment.unpaidCount
+        ? `${payment.unpaidCount} unpaid`
+        : "All settled",
+      detail: payment.unpaidCount
+        ? "No proofs waiting for review"
+        : "Everyone in the split is paid",
     };
   }
   if (payment.reviewRequested)
-    return { value: "New proof needed", detail: `${peso(payment.amountCents)} assigned to you` };
+    return {
+      value: "New proof needed",
+      detail: `${peso(payment.amountCents)} assigned to you`,
+    };
   if (payment.status === "sent")
-    return { value: "Proof sent", detail: `${peso(payment.amountCents)} awaiting host review` };
+    return {
+      value: "Proof sent",
+      detail: `${peso(payment.amountCents)} awaiting host review`,
+    };
   if (payment.status === "confirmed")
-    return { value: "Payment confirmed", detail: `${peso(payment.amountCents)} paid` };
-  return { value: `${peso(payment.amountCents)} due`, detail: "Upload one screenshot after paying" };
+    return {
+      value: "Payment confirmed",
+      detail: `${peso(payment.amountCents)} paid`,
+    };
+  return {
+    value: `${peso(payment.amountCents)} due`,
+    detail: "Upload one screenshot after paying",
+  };
 }
 
 export function SessionAtAGlanceSkeleton() {
@@ -131,10 +153,18 @@ export function SessionAtAGlance({
             href={href}
             className="group flex min-h-16 min-w-0 items-start gap-3 py-3 hover:bg-surface-strong sm:px-2"
           >
-            <Icon aria-hidden size={19} className="mt-0.5 shrink-0 text-primary" />
+            <Icon
+              aria-hidden
+              size={19}
+              className="mt-0.5 shrink-0 text-primary"
+            />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium leading-5 text-muted">{label}</span>
-              <span className="mt-0.5 block text-xs leading-5 text-muted">{detail}</span>
+              <span className="block text-sm font-medium leading-5 text-muted">
+                {label}
+              </span>
+              <span className="mt-0.5 block text-xs leading-5 text-muted">
+                {detail}
+              </span>
             </span>
             <strong className="w-28 shrink-0 text-left text-sm font-semibold leading-5 text-ink sm:w-36">
               {value}

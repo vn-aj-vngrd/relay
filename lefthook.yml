@@ -1,0 +1,10 @@
+pre-commit:
+  commands:
+    quality:
+      glob: "*.{css,js,json,jsonc,jsx,mjs,ts,tsx}"
+      run: 'PATH="$PWD/node_modules/.bin:$PATH" ultracite check {staged_files}'
+
+commit-msg:
+  commands:
+    conventional:
+      run: "node scripts/validate-commit-message.mjs {1}"

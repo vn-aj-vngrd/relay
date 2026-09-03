@@ -14,7 +14,12 @@ export function MemoryPhotoForm({ sessionId }: { sessionId: string }) {
   const [state, action] = useActionState(uploadMemoryPhotoState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-5">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="border-y border-line py-5"
+    >
       {state.error ? <Alert className="mb-4">{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <ImageFileField
@@ -38,7 +43,10 @@ export function MemoryPhotoForm({ sessionId }: { sessionId: string }) {
           className="field"
         />
       </div>
-      <SubmitButton pendingLabel="Adding photo…" className="mt-4 w-full sm:w-auto">
+      <SubmitButton
+        pendingLabel="Adding photo…"
+        className="mt-4 w-full sm:w-auto"
+      >
         <UploadSimple aria-hidden size={16} />
         Add to memory
       </SubmitButton>

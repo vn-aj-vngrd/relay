@@ -14,7 +14,7 @@ describe("notificationPresentation", () => {
           startsAt: "2026-08-22T11:00:00.000Z",
           venueName: "Central Pickle",
         },
-      }),
+      })
     ).toEqual({
       title: "You’re invited",
       body: "Mika Reyes invited you to Saturday Pickle on Sat, Aug 22 at Central Pickle.",
@@ -30,7 +30,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: { guestName: "Mika" },
-      }),
+      })
     ).toEqual({
       title: "New join request",
       body: "Mika wants to join Saturday Pickle.",
@@ -46,7 +46,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }).href,
+      }).href
     ).toBe("/games/session-1/payments");
     expect(
       notificationPresentation({
@@ -54,8 +54,12 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: { courtLabel: "Court 2" },
-      }),
-    ).toMatchObject({ body: "Head to Court 2 for your next match.", href: "/games/session-1/play", tone: "play" });
+      })
+    ).toMatchObject({
+      body: "Head to Court 2 for your next match.",
+      href: "/games/session-1/play",
+      tone: "play",
+    });
   });
 
   it("presents a cost change as a repayment-relevant update", () => {
@@ -64,8 +68,10 @@ describe("notificationPresentation", () => {
         type: "session_cost_changed",
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
-        payload: { body: "Estimated cost updated from ₱300 per player to ₱400 per player." },
-      }),
+        payload: {
+          body: "Estimated cost updated from ₱300 per player to ₱400 per player.",
+        },
+      })
     ).toEqual({
       title: "Saturday Pickle cost updated",
       body: "Estimated cost updated from ₱300 per player to ₱400 per player.",
@@ -81,7 +87,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }),
+      })
     ).toEqual({
       title: "Saturday Pickle was cancelled",
       body: "The game is no longer going ahead. Open Relay to review your games.",
@@ -97,7 +103,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }).href,
+      }).href
     ).toBe("/games/session-1");
     expect(
       notificationPresentation({
@@ -105,7 +111,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }),
+      })
     ).toMatchObject({ href: "/games/session-1/play", tone: "play" });
   });
 
@@ -116,7 +122,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }),
+      })
     ).toMatchObject({ href: "/games/session-1/play", tone: "play" });
   });
 
@@ -127,7 +133,7 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {},
-      }).href,
+      }).href
     ).toBe("/games");
   });
 });
@@ -136,8 +142,14 @@ describe("notificationGroup", () => {
   const now = new Date("2026-08-17T06:00:00.000Z");
 
   it("groups notifications into today, this week, and earlier in Manila time", () => {
-    expect(notificationGroup(new Date("2026-08-17T01:00:00.000Z"), now)).toBe("Today");
-    expect(notificationGroup(new Date("2026-08-14T01:00:00.000Z"), now)).toBe("This week");
-    expect(notificationGroup(new Date("2026-08-01T01:00:00.000Z"), now)).toBe("Earlier");
+    expect(notificationGroup(new Date("2026-08-17T01:00:00.000Z"), now)).toBe(
+      "Today"
+    );
+    expect(notificationGroup(new Date("2026-08-14T01:00:00.000Z"), now)).toBe(
+      "This week"
+    );
+    expect(notificationGroup(new Date("2026-08-01T01:00:00.000Z"), now)).toBe(
+      "Earlier"
+    );
   });
 });

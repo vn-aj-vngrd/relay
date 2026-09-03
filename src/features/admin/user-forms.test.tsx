@@ -17,7 +17,9 @@ describe("admin user forms", () => {
     expect(screen.getByLabelText("Email")).toBeRequired();
     expect(screen.getByLabelText("Display name")).toBeRequired();
     expect(screen.getByLabelText("Username")).toHaveAttribute("pattern");
-    expect(screen.getByRole("button", { name: "Create account" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Create account" })
+    ).toBeEnabled();
   });
 
   it("loads an existing recreational profile for editing", () => {
@@ -31,10 +33,14 @@ describe("admin user forms", () => {
           skillLevel: "regular",
           dominantHand: "right",
         }}
-      />,
+      />
     );
     expect(screen.getByLabelText("Display name")).toHaveValue("Mika Santos");
-    expect(container.querySelector('input[name="skillLevel"]')).toHaveValue("regular");
-    expect(container.querySelector('input[name="dominantHand"]')).toHaveValue("right");
+    expect(container.querySelector('input[name="skillLevel"]')).toHaveValue(
+      "regular"
+    );
+    expect(container.querySelector('input[name="dominantHand"]')).toHaveValue(
+      "right"
+    );
   });
 });

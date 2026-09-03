@@ -9,7 +9,8 @@ function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);
-    if (extname(entry.name) !== ".tsx" || entry.name.includes(".test.")) return [];
+    if (extname(entry.name) !== ".tsx" || entry.name.includes(".test."))
+      return [];
     return [path];
   });
 }
@@ -26,6 +27,9 @@ describe("form validation policy", () => {
         });
     });
 
-    expect(violations, "Forms must use Relay validation feedback instead of browser-native messages").toEqual([]);
+    expect(
+      violations,
+      "Forms must use Relay validation feedback instead of browser-native messages"
+    ).toEqual([]);
   });
 });

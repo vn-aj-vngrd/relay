@@ -11,7 +11,13 @@ describe("live session state", () => {
   it("orders complete waiting pairs by their earliest queue position", () => {
     const state = deriveLiveState({
       rotationMode: "queue",
-      queue: [queued("c", 1), queued("a", 2), queued("d", 3), queued("b", 4), queued("away", 5, "playing")],
+      queue: [
+        queued("c", 1),
+        queued("a", 2),
+        queued("d", 3),
+        queued("b", 4),
+        queued("away", 5, "playing"),
+      ],
       pairs: [
         { id: "pair-a", position: 1, members: ["a", "b"] },
         { id: "pair-c", position: 2, members: ["c", "d"] },
@@ -22,7 +28,10 @@ describe("live session state", () => {
       completedMatchCount: 0,
     });
 
-    expect(state.waitingPairs.map((pair) => pair.id)).toEqual(["pair-c", "pair-a"]);
+    expect(state.waitingPairs.map((pair) => pair.id)).toEqual([
+      "pair-c",
+      "pair-a",
+    ]);
     expect(state.canStartRotation).toBe(true);
     expect(state.rotationLabel).toBe("Start first match");
   });

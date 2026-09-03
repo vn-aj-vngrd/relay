@@ -1,7 +1,14 @@
 "use client";
 
 import { CaretDown, Check } from "@phosphor-icons/react";
-import { type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 type ComboboxOption = { value: string; label: string; description?: string };
 
@@ -48,8 +55,12 @@ export function ComboboxField({
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase();
   const matches = useMemo(
-    () => options.filter((option) => !normalizedQuery || searchableText(option).includes(normalizedQuery)),
-    [normalizedQuery, options],
+    () =>
+      options.filter(
+        (option) =>
+          !normalizedQuery || searchableText(option).includes(normalizedQuery)
+      ),
+    [normalizedQuery, options]
   );
 
   useEffect(() => {
@@ -80,12 +91,18 @@ export function ComboboxField({
       setOpen(true);
       if (!matches.length) return;
       setActiveIndex((current) => {
-        if (event.key === "ArrowDown") return current < matches.length - 1 ? current + 1 : 0;
+        if (event.key === "ArrowDown")
+          return current < matches.length - 1 ? current + 1 : 0;
         return current > 0 ? current - 1 : matches.length - 1;
       });
       return;
     }
-    if (event.key === "Enter" && open && activeIndex >= 0 && matches[activeIndex]) {
+    if (
+      event.key === "Enter" &&
+      open &&
+      activeIndex >= 0 &&
+      matches[activeIndex]
+    ) {
       event.preventDefault();
       choose(matches[activeIndex]);
     }
@@ -106,7 +123,9 @@ export function ComboboxField({
           aria-autocomplete="list"
           aria-expanded={open}
           aria-controls={listboxId}
-          aria-activedescendant={open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined}
+          aria-activedescendant={
+            open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
+          }
           autoComplete="off"
           required={required}
           value={query}
@@ -151,12 +170,22 @@ export function ComboboxField({
                 className={`pressable flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left ${activeIndex === index ? "bg-surface-strong" : "hover:bg-surface-strong/70"}`}
               >
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-ink">{option.label}</span>
+                  <span className="block truncate text-sm font-semibold text-ink">
+                    {option.label}
+                  </span>
                   {option.description ? (
-                    <span className="mt-0.5 block truncate text-xs text-muted">{option.description}</span>
+                    <span className="mt-0.5 block truncate text-xs text-muted">
+                      {option.description}
+                    </span>
                   ) : null}
                 </span>
-                {option.value === value ? <Check aria-hidden className="shrink-0 text-primary" size={15} /> : null}
+                {option.value === value ? (
+                  <Check
+                    aria-hidden
+                    className="shrink-0 text-primary"
+                    size={15}
+                  />
+                ) : null}
               </button>
             ))
           ) : (

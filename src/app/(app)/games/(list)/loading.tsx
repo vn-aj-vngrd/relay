@@ -2,7 +2,10 @@ import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
 
 import { RowsSkeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
-import { GameDesktopViewControls, GameViewMenu } from "@/features/sessions/game-view-menu";
+import {
+  GameDesktopViewControls,
+  GameViewMenu,
+} from "@/features/sessions/game-view-menu";
 import { GamesLoadingFilterRail } from "@/features/sessions/games-loading-filter-rail";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 

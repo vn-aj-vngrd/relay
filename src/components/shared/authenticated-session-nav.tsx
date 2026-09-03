@@ -20,5 +20,12 @@ export function AuthenticatedSessionNav({ id }: { id: string }) {
 }
 
 export function MobileAuthenticatedSessionNav({ id }: { id: string }) {
-  return <SessionNav id={id} active={activeTab(usePathname())} embedded padded={false} />;
+  return (
+    <SessionNav
+      id={id}
+      active={activeTab(usePathname())}
+      embedded
+      padded={false}
+    />
+  );
 }

@@ -43,10 +43,12 @@ export function GameQrShare({
   const mounted = useSyncExternalStore(
     subscribeToBrowser,
     () => true,
-    () => false,
+    () => false
   );
   const absoluteUrlRef = useRef("");
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
+    "idle"
+  );
   const [message, setMessage] = useState("");
 
   async function openDialog() {
@@ -72,7 +74,9 @@ export function GameQrShare({
       setStatus("ready");
     } catch {
       setStatus("error");
-      setMessage("The QR code couldn’t be generated. Copy the game link instead.");
+      setMessage(
+        "The QR code couldn’t be generated. Copy the game link instead."
+      );
     }
   }
 
@@ -94,7 +98,9 @@ export function GameQrShare({
   async function downloadQr() {
     const canvas = canvasRef.current;
     if (!canvas || status !== "ready") return;
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png")
+    );
     if (!blob) {
       setMessage("The QR code couldn’t be downloaded. Try copying the link.");
       return;
@@ -116,7 +122,11 @@ export function GameQrShare({
         type="button"
         variant={menuItem ? "quiet" : "secondary"}
         onClick={() => void openDialog()}
-        className={menuItem ? "min-h-11 w-full justify-start rounded-md px-3 text-sm" : ""}
+        className={
+          menuItem
+            ? "min-h-11 w-full justify-start rounded-md px-3 text-sm"
+            : ""
+        }
       >
         <QrCode aria-hidden size={17} />
         Show QR
@@ -136,8 +146,12 @@ export function GameQrShare({
                     <h2 id={titleId} className="text-lg font-[680]">
                       Scan to join {title}
                     </h2>
-                    <p id={descriptionId} className="mt-1 text-sm leading-6 text-muted">
-                      {details}. Players can scan this with their phone camera to view the plan and RSVP.
+                    <p
+                      id={descriptionId}
+                      className="mt-1 text-sm leading-6 text-muted"
+                    >
+                      {details}. Players can scan this with their phone camera
+                      to view the plan and RSVP.
                     </p>
                   </div>
                   <Button
@@ -168,13 +182,23 @@ export function GameQrShare({
                   ) : null}
                 </div>
 
-                <p className="mt-4 text-center text-sm font-semibold">Scan to view and RSVP</p>
+                <p className="mt-4 text-center text-sm font-semibold">
+                  Scan to view and RSVP
+                </p>
                 <div className="mt-5 grid grid-cols-2 gap-2">
-                  <Button type="button" variant="secondary" onClick={() => void copyLink()}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void copyLink()}
+                  >
                     <Copy aria-hidden size={16} />
                     Copy link
                   </Button>
-                  <Button type="button" onClick={() => void downloadQr()} disabled={status !== "ready"}>
+                  <Button
+                    type="button"
+                    onClick={() => void downloadQr()}
+                    disabled={status !== "ready"}
+                  >
                     <DownloadSimple aria-hidden size={16} />
                     Download PNG
                   </Button>
@@ -187,7 +211,7 @@ export function GameQrShare({
                 </p>
               </div>
             </Dialog>,
-            document.body,
+            document.body
           )
         : null}
     </>

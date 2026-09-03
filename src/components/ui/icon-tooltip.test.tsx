@@ -10,18 +10,23 @@ describe("IconTooltip", () => {
         <button type="button" aria-describedby="coverage-help">
           Help
         </button>
-      </IconTooltip>,
+      </IconTooltip>
     );
 
-    expect(screen.getByRole("button", { name: "Help" })).toHaveAttribute("aria-describedby", "coverage-help");
+    expect(screen.getByRole("button", { name: "Help" })).toHaveAttribute(
+      "aria-describedby",
+      "coverage-help"
+    );
     expect(screen.getByRole("tooltip")).toHaveAttribute("id", "coverage-help");
-    expect(screen.getByRole("tooltip")).toHaveTextContent("Coverage is currently limited.");
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Coverage is currently limited."
+    );
     expect(screen.getByRole("tooltip")).toHaveClass(
       "relay-tooltip",
       "top-full",
       "mt-2",
       "sm:bottom-full",
-      "sm:top-auto",
+      "sm:top-auto"
     );
   });
 
@@ -29,20 +34,26 @@ describe("IconTooltip", () => {
     render(
       <IconTooltip label="Court coverage" align="center">
         <button type="button">Coverage</button>
-      </IconTooltip>,
+      </IconTooltip>
     );
 
-    expect(screen.getByRole("tooltip")).toHaveClass("left-1/2", "-translate-x-1/2");
+    expect(screen.getByRole("tooltip")).toHaveClass(
+      "left-1/2",
+      "-translate-x-1/2"
+    );
   });
 
   it("can stay below controls near the top of a page", () => {
     render(
       <IconTooltip label="Court coverage" side="bottom">
         <button type="button">Coverage</button>
-      </IconTooltip>,
+      </IconTooltip>
     );
 
     expect(screen.getByRole("tooltip")).toHaveClass("top-full", "mt-2");
-    expect(screen.getByRole("tooltip")).not.toHaveClass("sm:bottom-full", "bottom-full");
+    expect(screen.getByRole("tooltip")).not.toHaveClass(
+      "sm:bottom-full",
+      "bottom-full"
+    );
   });
 });

@@ -38,10 +38,18 @@ export function UpdateUserForm({
     dominantHand: string | null;
   } | null;
 }) {
-  const [state, action] = useActionState<AdminActionState, FormData>(updateUserProfileAction, {});
+  const [state, action] = useActionState<AdminActionState, FormData>(
+    updateUserProfileAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="max-w-xl space-y-5">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="max-w-xl space-y-5"
+    >
       <input type="hidden" name="userId" value={userId} />
       <div>
         <label htmlFor="admin-profile-name" className="text-sm font-semibold">
@@ -57,7 +65,10 @@ export function UpdateUserForm({
         />
       </div>
       <div>
-        <label htmlFor="admin-profile-username" className="text-sm font-semibold">
+        <label
+          htmlFor="admin-profile-username"
+          className="text-sm font-semibold"
+        >
           Username
         </label>
         <input

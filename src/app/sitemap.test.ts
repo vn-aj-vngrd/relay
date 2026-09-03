@@ -7,7 +7,12 @@ vi.mock("@/lib/env", () => ({
 }));
 
 vi.mock("@/features/venues/directory", () => ({
-  getCourtSitemapEntries: vi.fn().mockResolvedValue([{ slug: "nice-serve" }, { slug: "makati-pickleball-club" }]),
+  getCourtSitemapEntries: vi
+    .fn()
+    .mockResolvedValue([
+      { slug: "nice-serve" },
+      { slug: "makati-pickleball-club" },
+    ]),
 }));
 
 describe("sitemap", () => {
@@ -18,10 +23,14 @@ describe("sitemap", () => {
       expect.arrayContaining([
         expect.objectContaining({ url: "https://relay.example" }),
         expect.objectContaining({ url: "https://relay.example/courts" }),
-        expect.objectContaining({ url: "https://relay.example/courts/nice-serve" }),
-        expect.objectContaining({ url: "https://relay.example/courts/makati-pickleball-club" }),
+        expect.objectContaining({
+          url: "https://relay.example/courts/nice-serve",
+        }),
+        expect.objectContaining({
+          url: "https://relay.example/courts/makati-pickleball-club",
+        }),
         expect.objectContaining({ url: "https://relay.example/play" }),
-      ]),
+      ])
     );
   });
 });

@@ -45,7 +45,7 @@ const recap = buildSessionRecap(
       finishedAt: new Date("2026-08-16T19:52:00+08:00"),
     },
   ],
-  players,
+  players
 );
 
 const common = {
@@ -56,7 +56,11 @@ const common = {
   recap,
 };
 
-export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolean }) {
+export function RecapTemplatePreview({
+  cardsOnly = false,
+}: {
+  cardsOnly?: boolean;
+}) {
   return (
     <figure className="min-w-0">
       <div
@@ -73,7 +77,11 @@ export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolea
           photoPosition={58}
           customNote="Same time next Saturday?"
           viewerPlayerId="van"
-          background={{ id: "court-photo", label: "Court photo", imageUrl: "/images/story/pickleball-court.webp" }}
+          background={{
+            id: "court-photo",
+            label: "Court photo",
+            imageUrl: "/images/story/pickleball-court.webp",
+          }}
           className="w-full min-w-[190px] snap-center border border-black/10 shadow-[0_4px_8px_rgb(20_24_34_/_0.1)] sm:min-w-0 sm:-rotate-2"
         />
         <RecapStoryCard
@@ -82,7 +90,11 @@ export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolea
           layout="snapshot"
           overlay={62}
           photoPosition={45}
-          background={{ id: "paddles", label: "Paddles", imageUrl: "/images/story/paddles-fence.webp" }}
+          background={{
+            id: "paddles",
+            label: "Paddles",
+            imageUrl: "/images/story/paddles-fence.webp",
+          }}
           className="z-10 w-full min-w-[190px] snap-center shadow-[0_5px_10px_rgb(20_24_34_/_0.14)] sm:min-w-0"
         />
         <RecapStoryCard
@@ -100,16 +112,24 @@ export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolea
               <div>
                 <p className="text-[10px] font-semibold text-muted">LAYOUT</p>
                 <div className="mt-2 grid grid-cols-4 gap-1.5 text-center text-[9px] font-semibold">
-                  <span className="rounded-md border border-line py-2">Low</span>
-                  <span className="rounded-md border border-line py-2">Center</span>
-                  <span className="rounded-md border border-line py-2">Poster</span>
+                  <span className="rounded-md border border-line py-2">
+                    Low
+                  </span>
+                  <span className="rounded-md border border-line py-2">
+                    Center
+                  </span>
+                  <span className="rounded-md border border-line py-2">
+                    Poster
+                  </span>
                   <span className="rounded-md border border-primary bg-primary-soft py-2 text-primary-hover">
                     Snapshot
                   </span>
                 </div>
               </div>
               <div>
-                <p className="text-[10px] font-semibold text-muted">BACKGROUND</p>
+                <p className="text-[10px] font-semibold text-muted">
+                  BACKGROUND
+                </p>
                 <div className="mt-2 flex gap-2">
                   <span className="relative h-9 w-9 overflow-hidden rounded-md border-2 border-primary">
                     <Image
@@ -121,7 +141,13 @@ export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolea
                     />
                   </span>
                   <span className="relative h-9 w-9 overflow-hidden rounded-md">
-                    <Image src="/images/story/paddles-fence.webp" alt="" fill sizes="36px" className="object-cover" />
+                    <Image
+                      src="/images/story/paddles-fence.webp"
+                      alt=""
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                    />
                   </span>
                   <span className="h-9 w-9 rounded-md bg-[#18233b]" />
                   <span className="h-9 w-9 rounded-md bg-[#b7d62e]" />
@@ -158,7 +184,8 @@ export function RecapTemplatePreview({ cardsOnly = false }: { cardsOnly?: boolea
           </div>
           <figcaption className="mt-3 flex items-center gap-2 text-xs text-muted">
             <span className="h-1.5 w-1.5 rounded-full bg-[#b7d62e]" />
-            Choose the focus, layout, background, and words · actual Relay story templates
+            Choose the focus, layout, background, and words · actual Relay story
+            templates
           </figcaption>
         </>
       )}

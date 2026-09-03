@@ -38,15 +38,34 @@ function saveView(mode: GameViewMode) {
 }
 
 export function GameViewMenu() {
-  const mode = useSyncExternalStore(subscribe, getView, (): GameViewMode => "list");
-  return <MobileViewMenu label="Game view" value={mode} options={viewOptions} onChange={saveView} />;
+  const mode = useSyncExternalStore(
+    subscribe,
+    getView,
+    (): GameViewMode => "list"
+  );
+  return (
+    <MobileViewMenu
+      label="Game view"
+      value={mode}
+      options={viewOptions}
+      onChange={saveView}
+    />
+  );
 }
 
 export function GameDesktopViewControls() {
-  const mode = useSyncExternalStore(subscribe, getView, (): GameViewMode => "list");
+  const mode = useSyncExternalStore(
+    subscribe,
+    getView,
+    (): GameViewMode => "list"
+  );
 
   return (
-    <div role="group" aria-label="Game view" className="inline-flex shrink-0 rounded-lg bg-surface-strong p-0.5">
+    <div
+      role="group"
+      aria-label="Game view"
+      className="inline-flex shrink-0 rounded-lg bg-surface-strong p-0.5"
+    >
       {viewOptions.map(({ value, label, icon: Icon }) => (
         <button
           key={value}

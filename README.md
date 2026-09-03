@@ -31,11 +31,10 @@ Without Supabase credentials, the demo UI still builds because clients are insta
 ## Quality commands
 
 ```bash
-corepack pnpm lint
+corepack pnpm check:fast
 corepack pnpm typecheck
-corepack pnpm test
+corepack pnpm check:full
 corepack pnpm test:e2e
-corepack pnpm build
 corepack pnpm db:generate
 corepack pnpm release:check
 ```

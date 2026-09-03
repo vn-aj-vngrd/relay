@@ -1,6 +1,20 @@
 import "server-only";
 
-import { and, type AnyColumn, asc, count, desc, eq, gte, ilike, isNotNull, lt, or, type SQL, sql } from "drizzle-orm";
+import {
+  type AnyColumn,
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  isNotNull,
+  lt,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { connection } from "next/server";
 
 import { db } from "@/db/client";
@@ -27,7 +41,10 @@ import {
   type AdminUserRecord,
   type AdminVenueRecord,
 } from "@/features/admin/records";
-import { buildHostRetention, type SessionFunnel } from "@/features/analytics/insights";
+import {
+  buildHostRetention,
+  type SessionFunnel,
+} from "@/features/analytics/insights";
 
 import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
@@ -92,7 +109,10 @@ export async function getAdminInsights() {
       .select({ total: sql<number>`count(distinct ${sessions.id})::int` })
       .from(sessions)
       .innerJoin(fourPlayerGames, eq(fourPlayerGames.sessionId, sessions.id))
-      .innerJoin(completedMatchGames, eq(completedMatchGames.sessionId, sessions.id))
+      .innerJoin(
+        completedMatchGames,
+        eq(completedMatchGames.sessionId, sessions.id)
+      )
       .where(eq(sessions.status, "completed")),
     db
       .select({
@@ -111,8 +131,13 @@ export async function getAdminInsights() {
       })
       .from(productEvents),
   ]);
-  const discovery = new Map(discoveryRows.map(({ source, total }) => [source, Number(total)]));
-  const answeredDiscovery = [...discovery.values()].reduce((sum, total) => sum + total, 0);
+  const discovery = new Map(
+    discoveryRows.map(({ source, total }) => [source, Number(total)])
+  );
+  const answeredDiscovery = [...discovery.values()].reduce(
+    (sum, total) => sum + total,
+    0
+  );
   const emptyFunnel: SessionFunnel = {
     published: 0,
     inviteShared: 0,
@@ -125,7 +150,10 @@ export async function getAdminInsights() {
   };
   const funnel = funnelRows[0] ?? emptyFunnel;
   const experience = new Map(
-    experienceRows.map((row) => [row.experience, { responses: Number(row.responses), games: Number(row.games) }]),
+    experienceRows.map((row) => [
+      row.experience,
+      { responses: Number(row.responses), games: Number(row.games) },
+    ])
   );
   return {
     profileCount,
@@ -133,9 +161,13 @@ export async function getAdminInsights() {
     tourCount,
     unansweredDiscovery: Math.max(0, profileCount - answeredDiscovery),
     discovery,
-    funnel: Object.fromEntries(Object.entries(funnel).map(([key, total]) => [key, Number(total)])) as SessionFunnel,
+    funnel: Object.fromEntries(
+      Object.entries(funnel).map(([key, total]) => [key, Number(total)])
+    ) as SessionFunnel,
     hostRetention: buildHostRetention(
-      publicationRows.flatMap(({ hostId, publishedAt }) => (publishedAt ? [{ hostId, publishedAt }] : [])),
+      publicationRows.flatMap(({ hostId, publishedAt }) =>
+        publishedAt ? [{ hostId, publishedAt }] : []
+      )
     ),
     betaReadiness: {
       qualifyingGames: Number(qualifyingRows[0]?.total ?? 0),
@@ -153,42 +185,43 @@ export async function getAdminOverview() {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const [totalsRows, recentActions, lifecycleEvents, signupCapacity] = await Promise.all([
-    db
-      .select({
-        userCount: sql<number>`count(*)::int`,
-        newUsers: sql<number>`count(*) filter (where ${users.createdAt} >= ${weekAgo.toISOString()}::timestamptz)::int`,
-        suspendedUsers: sql<number>`count(*) filter (where ${users.suspendedAt} is not null)::int`,
-        sessionCount: sql<number>`(select count(*)::int from ${sessions})`,
-        upcomingSessions: sql<number>`(
+  const [totalsRows, recentActions, lifecycleEvents, signupCapacity] =
+    await Promise.all([
+      db
+        .select({
+          userCount: sql<number>`count(*)::int`,
+          newUsers: sql<number>`count(*) filter (where ${users.createdAt} >= ${weekAgo.toISOString()}::timestamptz)::int`,
+          suspendedUsers: sql<number>`count(*) filter (where ${users.suspendedAt} is not null)::int`,
+          sessionCount: sql<number>`(select count(*)::int from ${sessions})`,
+          upcomingSessions: sql<number>`(
           select count(*)::int from ${sessions}
           where ${sessions.startsAt} >= ${now.toISOString()}::timestamptz
             and ${sessions.status} in ('published', 'live')
         )`,
-        liveSessions: sql<number>`(
+          liveSessions: sql<number>`(
           select count(*)::int from ${sessions} where ${sessions.status} = 'live'
         )`,
-        newFeedbackCount: sql<number>`(
+          newFeedbackCount: sql<number>`(
           select count(*)::int from ${feedbackSubmissions} where ${feedbackSubmissions.status} = 'new'
         )`,
-      })
-      .from(users),
-    db
-      .select({ log: adminAuditLogs, actorEmail: users.email })
-      .from(adminAuditLogs)
-      .innerJoin(users, eq(adminAuditLogs.actorUserId, users.id))
-      .orderBy(desc(adminAuditLogs.createdAt))
-      .limit(6),
-    db
-      .select({ name: productEvents.name, total: count() })
-      .from(productEvents)
-      .where(gte(productEvents.createdAt, monthAgo))
-      .groupBy(productEvents.name),
-    db.query.signupSettings.findFirst({
-      columns: { accountCap: true },
-      where: eq(signupSettings.id, "global"),
-    }),
-  ]);
+        })
+        .from(users),
+      db
+        .select({ log: adminAuditLogs, actorEmail: users.email })
+        .from(adminAuditLogs)
+        .innerJoin(users, eq(adminAuditLogs.actorUserId, users.id))
+        .orderBy(desc(adminAuditLogs.createdAt))
+        .limit(6),
+      db
+        .select({ name: productEvents.name, total: count() })
+        .from(productEvents)
+        .where(gte(productEvents.createdAt, monthAgo))
+        .groupBy(productEvents.name),
+      db.query.signupSettings.findFirst({
+        columns: { accountCap: true },
+        where: eq(signupSettings.id, "global"),
+      }),
+    ]);
   const totals = totalsRows[0] ?? {
     userCount: 0,
     newUsers: 0,
@@ -202,32 +235,59 @@ export async function getAdminOverview() {
     ...totals,
     recentActions,
     accountCap: signupCapacity?.accountCap ?? 200,
-    lifecycle: new Map(lifecycleEvents.map(({ name, total }) => [name, Number(total)])),
+    lifecycle: new Map(
+      lifecycleEvents.map(({ name, total }) => [name, Number(total)])
+    ),
   };
 }
 
-function afterCursor(column: AnyColumn, idColumn: AnyColumn, cursor: AdminCursor | null) {
-  return cursor ? or(lt(column, cursor.at), and(eq(column, cursor.at), lt(idColumn, cursor.id))) : undefined;
+function afterCursor(
+  column: AnyColumn,
+  idColumn: AnyColumn,
+  cursor: AdminCursor | null
+) {
+  return cursor
+    ? or(
+        lt(column, cursor.at),
+        and(eq(column, cursor.at), lt(idColumn, cursor.id))
+      )
+    : undefined;
 }
 
-function paged<T extends { id: string }>(rows: T[], dateFor: (item: T) => Date): AdminPage<T> {
+function paged<T extends { id: string }>(
+  rows: T[],
+  dateFor: (item: T) => Date
+): AdminPage<T> {
   const items = rows.slice(0, ADMIN_PAGE_SIZE);
   const last = items.at(-1);
   return {
     items,
-    nextCursor: rows.length > ADMIN_PAGE_SIZE && last ? encodeAdminCursor({ at: dateFor(last), id: last.id }) : null,
+    nextCursor:
+      rows.length > ADMIN_PAGE_SIZE && last
+        ? encodeAdminCursor({ at: dateFor(last), id: last.id })
+        : null,
   };
 }
 
-export async function getAdminUsers(input: { query?: string; cursor?: AdminCursor | null } = {}) {
+export async function getAdminUsers(
+  input: { query?: string; cursor?: AdminCursor | null } = {}
+) {
   await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
-    const search = or(ilike(users.email, pattern), ilike(profiles.name, pattern), ilike(profiles.username, pattern));
+    const search = or(
+      ilike(users.email, pattern),
+      ilike(profiles.name, pattern),
+      ilike(profiles.username, pattern)
+    );
     if (search) conditions.push(search);
   }
-  const cursorCondition = afterCursor(users.createdAt, users.id, input.cursor ?? null);
+  const cursorCondition = afterCursor(
+    users.createdAt,
+    users.id,
+    input.cursor ?? null
+  );
   if (cursorCondition) conditions.push(cursorCondition);
 
   const rows: AdminUserRecord[] = await db
@@ -264,25 +324,40 @@ export async function getAdminUser(userId: string) {
   return account[0] ? { ...account[0], hostedCount, joinedCount } : null;
 }
 
-const validStatuses = new Set(["draft", "published", "live", "completed", "cancelled"]);
+const validStatuses = new Set([
+  "draft",
+  "published",
+  "live",
+  "completed",
+  "cancelled",
+]);
 
 export async function getAdminSessions(
-  input: {
-    query?: string;
-    status?: string;
-    cursor?: AdminCursor | null;
-  } = {},
+  input: { query?: string; status?: string; cursor?: AdminCursor | null } = {}
 ) {
   await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
-    const search = or(ilike(sessions.title, pattern), ilike(sessions.venueName, pattern), ilike(users.email, pattern));
+    const search = or(
+      ilike(sessions.title, pattern),
+      ilike(sessions.venueName, pattern),
+      ilike(users.email, pattern)
+    );
     if (search) conditions.push(search);
   }
   if (input.status && validStatuses.has(input.status))
-    conditions.push(eq(sessions.status, input.status as (typeof sessions.status.enumValues)[number]));
-  const cursorCondition = afterCursor(sessions.startsAt, sessions.id, input.cursor ?? null);
+    conditions.push(
+      eq(
+        sessions.status,
+        input.status as (typeof sessions.status.enumValues)[number]
+      )
+    );
+  const cursorCondition = afterCursor(
+    sessions.startsAt,
+    sessions.id,
+    input.cursor ?? null
+  );
   if (cursorCondition) conditions.push(cursorCondition);
 
   const rows: AdminSessionRecord[] = await db
@@ -309,45 +384,65 @@ export async function getAdminSessions(
 
 export async function getAdminSession(sessionId: string) {
   await connection();
-  const [record, playerCount, matchCount, messageCount, expenseCount] = await Promise.all([
-    db
-      .select({ session: sessions, hostEmail: users.email, hostName: profiles.name })
-      .from(sessions)
-      .innerJoin(users, eq(users.id, sessions.hostId))
-      .leftJoin(profiles, eq(profiles.userId, users.id))
-      .where(eq(sessions.id, sessionId))
-      .limit(1),
-    db.$count(sessionPlayers, eq(sessionPlayers.sessionId, sessionId)),
-    db.$count(matches, eq(matches.sessionId, sessionId)),
-    db.$count(messages, eq(messages.sessionId, sessionId)),
-    db.$count(expenses, eq(expenses.sessionId, sessionId)),
-  ]);
-  return record[0] ? { ...record[0], playerCount, matchCount, messageCount, expenseCount } : null;
+  const [record, playerCount, matchCount, messageCount, expenseCount] =
+    await Promise.all([
+      db
+        .select({
+          session: sessions,
+          hostEmail: users.email,
+          hostName: profiles.name,
+        })
+        .from(sessions)
+        .innerJoin(users, eq(users.id, sessions.hostId))
+        .leftJoin(profiles, eq(profiles.userId, users.id))
+        .where(eq(sessions.id, sessionId))
+        .limit(1),
+      db.$count(sessionPlayers, eq(sessionPlayers.sessionId, sessionId)),
+      db.$count(matches, eq(matches.sessionId, sessionId)),
+      db.$count(messages, eq(messages.sessionId, sessionId)),
+      db.$count(expenses, eq(expenses.sessionId, sessionId)),
+    ]);
+  return record[0]
+    ? { ...record[0], playerCount, matchCount, messageCount, expenseCount }
+    : null;
 }
 
-const venueStatuses = new Set(["unverified", "pending", "verified", "rejected", "archived"]);
+const venueStatuses = new Set([
+  "unverified",
+  "pending",
+  "verified",
+  "rejected",
+  "archived",
+]);
 
 export async function getAdminVenues(
-  input: {
-    query?: string;
-    status?: string;
-    cursor?: AdminCursor | null;
-  } = {},
+  input: { query?: string; status?: string; cursor?: AdminCursor | null } = {}
 ) {
   await connection();
   const conditions: SQL[] = [];
   if (input.query?.trim()) {
     const pattern = `%${input.query.trim()}%`;
-    const search = or(ilike(venues.name, pattern), ilike(venues.address, pattern));
+    const search = or(
+      ilike(venues.name, pattern),
+      ilike(venues.address, pattern)
+    );
     if (search) conditions.push(search);
   }
   if (input.status && venueStatuses.has(input.status))
-    conditions.push(eq(venues.listingStatus, input.status as (typeof venues.listingStatus.enumValues)[number]));
+    conditions.push(
+      eq(
+        venues.listingStatus,
+        input.status as (typeof venues.listingStatus.enumValues)[number]
+      )
+    );
   const priority = sql<number>`case when ${venues.listingStatus} = 'pending' then 1 else 0 end`;
   if (input.cursor) {
     const cursorCondition = or(
       lt(priority, input.cursor.priority ?? 0),
-      and(eq(priority, input.cursor.priority ?? 0), lt(venues.id, input.cursor.id)),
+      and(
+        eq(priority, input.cursor.priority ?? 0),
+        lt(venues.id, input.cursor.id)
+      )
     );
     if (cursorCondition) conditions.push(cursorCondition);
   }
@@ -383,7 +478,11 @@ export async function getAdminVenues(
     items,
     nextCursor:
       rows.length > ADMIN_PAGE_SIZE && last
-        ? encodeAdminCursor({ at: last.updatedAt, id: last.id, priority: last.priority })
+        ? encodeAdminCursor({
+            at: last.updatedAt,
+            id: last.id,
+            priority: last.priority,
+          })
         : null,
   };
 }
@@ -408,30 +507,47 @@ export async function getAdminVenueChangeRequests() {
 
 export async function getAdminVenueChangeRequest(requestId: string) {
   await connection();
-  const request = await db.query.venueChangeRequests.findFirst({ where: eq(venueChangeRequests.id, requestId) });
+  const request = await db.query.venueChangeRequests.findFirst({
+    where: eq(venueChangeRequests.id, requestId),
+  });
   if (!request) return null;
   const [venue, submitter] = await Promise.all([
-    request.venueId ? db.query.venues.findFirst({ where: eq(venues.id, request.venueId) }) : null,
-    request.submittedById ? db.query.profiles.findFirst({ where: eq(profiles.userId, request.submittedById) }) : null,
+    request.venueId
+      ? db.query.venues.findFirst({ where: eq(venues.id, request.venueId) })
+      : null,
+    request.submittedById
+      ? db.query.profiles.findFirst({
+          where: eq(profiles.userId, request.submittedById),
+        })
+      : null,
   ]);
   return { ...request, venue: venue ?? null, submitter: submitter ?? null };
 }
 
 export async function getAdminVenue(venueId: string) {
   await connection();
-  const venue = await db.query.venues.findFirst({ where: eq(venues.id, venueId) });
+  const venue = await db.query.venues.findFirst({
+    where: eq(venues.id, venueId),
+  });
   if (!venue) return null;
   const operatingHours = await db
     .select()
     .from(venueOperatingPeriods)
     .where(eq(venueOperatingPeriods.venueId, venueId))
-    .orderBy(asc(venueOperatingPeriods.dayOfWeek), asc(venueOperatingPeriods.sequence));
+    .orderBy(
+      asc(venueOperatingPeriods.dayOfWeek),
+      asc(venueOperatingPeriods.sequence)
+    );
   return { ...venue, operatingHours };
 }
 
 export async function getAdminAuditLog(cursor: AdminCursor | null = null) {
   await connection();
-  const cursorCondition = afterCursor(adminAuditLogs.createdAt, adminAuditLogs.id, cursor);
+  const cursorCondition = afterCursor(
+    adminAuditLogs.createdAt,
+    adminAuditLogs.id,
+    cursor
+  );
   const rows = await db
     .select({
       id: adminAuditLogs.id,

@@ -1,4 +1,8 @@
-import { Broadcast, DotsSixVertical, Shuffle } from "@phosphor-icons/react/dist/ssr";
+import {
+  Broadcast,
+  DotsSixVertical,
+  Shuffle,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
@@ -6,11 +10,14 @@ import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { PostGameFeedback } from "@/features/feedback/post-game-feedback";
 import { completeSession, createQueueMatch } from "@/features/matches/actions";
-import { getLiveSession } from "@/features/matches/queries";
+import type { getLiveSession } from "@/features/matches/queries";
 import { getSessionRecapData } from "@/features/memories/queries";
 import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import { AttendanceToggle, PlayAvailabilityControl } from "@/features/sessions/attendance-toggle";
+import {
+  AttendanceToggle,
+  PlayAvailabilityControl,
+} from "@/features/sessions/attendance-toggle";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
@@ -18,7 +25,10 @@ import { MatchResults } from "./match-results";
 import { rotationDescription, rotationName } from "./rotation";
 import { RoundTimer } from "./round-timer";
 
-export type SessionPlayData = Omit<NonNullable<Awaited<ReturnType<typeof getLiveSession>>>, "membership">;
+export type SessionPlayData = Omit<
+  NonNullable<Awaited<ReturnType<typeof getLiveSession>>>,
+  "membership"
+>;
 
 export type SessionPlayViewer = {
   playerId?: string;
@@ -40,13 +50,21 @@ type SessionPlayProps = {
   showPostGameFeedback?: boolean;
 };
 
-function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
+function playerName(
+  player: { guestName: string | null },
+  profile: { name: string } | null
+) {
   return profile?.name ?? player.guestName ?? "Guest";
 }
 
 function canScoreMatch(viewer: SessionPlayViewer, playerIds: string[]) {
   return (
-    viewer.canScoreAll || Boolean(viewer.canScoreAssigned && viewer.playerId && playerIds.includes(viewer.playerId))
+    viewer.canScoreAll ||
+    Boolean(
+      viewer.canScoreAssigned &&
+        viewer.playerId &&
+        playerIds.includes(viewer.playerId)
+    )
   );
 }
 
@@ -69,20 +87,35 @@ export async function SessionPlay({
         canCorrectScores={viewer.canManagePlay}
         feedback={
           showPostGameFeedback ? (
-            <PostGameFeedback sessionId={data.session.id} issueHref={`/feedback?session=${data.session.id}`} />
+            <PostGameFeedback
+              sessionId={data.session.id}
+              issueHref={`/feedback?session=${data.session.id}`}
+            />
           ) : undefined
         }
       />
     );
   }
 
-  const { canStartRotation, rotationLabel, roundMode, roundRobinComplete, roundStartedAt, waiting, waitingPairs } =
-    data.play;
+  const {
+    canStartRotation,
+    rotationLabel,
+    roundMode,
+    roundRobinComplete,
+    roundStartedAt,
+    waiting,
+    waitingPairs,
+  } = data.play;
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
-  const queueByPlayerId = new Map(data.queue.map(({ queue }) => [queue.sessionPlayerId, queue]));
+  const queueByPlayerId = new Map(
+    data.queue.map(({ queue }) => [queue.sessionPlayerId, queue])
+  );
   const readyCount = going.filter(({ player }) => {
     const state = queueByPlayerId.get(player.id)?.state;
-    return player.playState !== "resting" && (state === "playing" || state === "waiting");
+    return (
+      player.playState !== "resting" &&
+      (state === "playing" || state === "waiting")
+    );
   }).length;
 
   if (data.session.status !== "live") {
@@ -101,7 +134,9 @@ export async function SessionPlay({
           </ButtonLink>
         ) : viewer.rsvp === "going" && viewer.playerId ? (
           <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5 text-center">
-            <p className="mb-2 text-center text-sm text-muted">At the court? Mark yourself here.</p>
+            <p className="mb-2 text-center text-sm text-muted">
+              At the court? Mark yourself here.
+            </p>
             <AttendanceToggle
               sessionId={data.session.id}
               sessionPlayerId={viewer.playerId}
@@ -122,13 +157,20 @@ export async function SessionPlay({
           <div>
             <h2 className="text-lg font-bold">Active courts</h2>
             <p className="mt-1 text-sm text-muted">
-              {rotationName(data.session.rotationMode)} · scores update for everyone
+              {rotationName(data.session.rotationMode)} · scores update for
+              everyone
             </p>
           </div>
-          {viewer.canManagePlay && canStartRotation && data.activeMatches.length > 0 ? (
+          {viewer.canManagePlay &&
+          canStartRotation &&
+          data.activeMatches.length > 0 ? (
             <form noValidate action={createQueueMatch}>
               <input type="hidden" name="sessionId" value={data.session.id} />
-              <SubmitButton pendingLabel="Creating match…" variant="secondary" className="whitespace-nowrap">
+              <SubmitButton
+                pendingLabel="Creating match…"
+                variant="secondary"
+                className="whitespace-nowrap"
+              >
                 <Shuffle size={17} />
                 {rotationLabel}
               </SubmitButton>
@@ -137,7 +179,10 @@ export async function SessionPlay({
         </div>
         {data.session.roundDurationMinutes && roundStartedAt ? (
           <div className="mb-5">
-            <RoundTimer startedAt={roundStartedAt.toISOString()} durationMinutes={data.session.roundDurationMinutes} />
+            <RoundTimer
+              startedAt={roundStartedAt.toISOString()}
+              durationMinutes={data.session.roundDurationMinutes}
+            />
           </div>
         ) : null}
         {data.activeMatches.length ? (
@@ -185,7 +230,11 @@ export async function SessionPlay({
             {viewer.canManagePlay && canStartRotation ? (
               <form noValidate action={createQueueMatch} className="mt-5">
                 <input type="hidden" name="sessionId" value={data.session.id} />
-                <SubmitButton pendingLabel={roundMode ? "Starting round…" : "Starting match…"}>
+                <SubmitButton
+                  pendingLabel={
+                    roundMode ? "Starting round…" : "Starting match…"
+                  }
+                >
                   <Shuffle size={17} />
                   {rotationLabel}
                 </SubmitButton>
@@ -210,7 +259,8 @@ export async function SessionPlay({
             Player availability
           </h2>
           <p className="mt-1 text-sm leading-5 text-muted">
-            {readyCount} of {going.length} ready · late arrivals and returning players join the end of the queue.
+            {readyCount} of {going.length} ready · late arrivals and returning
+            players join the end of the queue.
           </p>
           {viewer.canManagePlay ? (
             <div className="mt-3 divide-y divide-line border-y border-line">
@@ -242,7 +292,11 @@ export async function SessionPlay({
         <div className="mt-9 flex items-end justify-between">
           <div>
             <h2 className="text-lg font-bold">
-              {data.pairs.length ? "Team queue" : roundMode ? "Waiting & resting" : "Paddle stack"}
+              {data.pairs.length
+                ? "Team queue"
+                : roundMode
+                  ? "Waiting & resting"
+                  : "Paddle stack"}
             </h2>
             <p className="mt-1 text-sm text-muted">
               {data.session.rotationMode === "round_robin"
@@ -260,10 +314,17 @@ export async function SessionPlay({
           waitingPairs.length ? (
             <ol className="mt-3 divide-y divide-line border-y border-line">
               {waitingPairs.map((pair, index) => {
-                const names = pair.players.map(({ player, profile }) => playerName(player, profile));
+                const names = pair.players.map(({ player, profile }) =>
+                  playerName(player, profile)
+                );
                 return (
-                  <li key={pair.id} className="flex min-h-16 items-center gap-3 py-2">
-                    <span className="score w-5 text-center text-sm font-bold text-muted">{index + 1}</span>
+                  <li
+                    key={pair.id}
+                    className="flex min-h-16 items-center gap-3 py-2"
+                  >
+                    <span className="score w-5 text-center text-sm font-bold text-muted">
+                      {index + 1}
+                    </span>
                     <span className="flex -space-x-2">
                       {pair.players.map(({ player, profile }, playerIndex) => (
                         <Avatar
@@ -275,41 +336,70 @@ export async function SessionPlay({
                         />
                       ))}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">{names.join(" + ")}</span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      {names.join(" + ")}
+                    </span>
                     {viewer.canManagePlay ? (
-                      <DotsSixVertical aria-label={`Move ${names.join(" and ")}`} className="text-muted" size={18} />
+                      <DotsSixVertical
+                        aria-label={`Move ${names.join(" and ")}`}
+                        className="text-muted"
+                        size={18}
+                      />
                     ) : null}
                   </li>
                 );
               })}
             </ol>
           ) : (
-            <p className="mt-3 border-y border-line py-7 text-sm text-muted">Every pair is currently playing.</p>
+            <p className="mt-3 border-y border-line py-7 text-sm text-muted">
+              Every pair is currently playing.
+            </p>
           )
         ) : waiting.length ? (
           <ol className="mt-3 divide-y divide-line border-y border-line">
             {waiting.map(({ queue, player, profile }, index) => {
               const name = playerName(player, profile);
               return (
-                <li key={queue.sessionPlayerId} className="flex min-h-16 items-center gap-3 py-2">
-                  <span className="score w-5 text-center text-sm font-bold text-muted">{index + 1}</span>
-                  <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index + 1} size="sm" />
+                <li
+                  key={queue.sessionPlayerId}
+                  className="flex min-h-16 items-center gap-3 py-2"
+                >
+                  <span className="score w-5 text-center text-sm font-bold text-muted">
+                    {index + 1}
+                  </span>
+                  <Avatar
+                    name={name}
+                    imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                    index={index + 1}
+                    size="sm"
+                  />
                   <span className="flex-1 text-sm font-semibold">{name}</span>
                   {viewer.canManagePlay ? (
-                    <DotsSixVertical aria-label={`Move ${name}`} className="text-muted" size={18} />
+                    <DotsSixVertical
+                      aria-label={`Move ${name}`}
+                      className="text-muted"
+                      size={18}
+                    />
                   ) : null}
                 </li>
               );
             })}
           </ol>
         ) : (
-          <p className="mt-3 border-y border-line py-7 text-sm text-muted">Everyone is currently playing.</p>
+          <p className="mt-3 border-y border-line py-7 text-sm text-muted">
+            Everyone is currently playing.
+          </p>
         )}
 
         <div className="mt-7 rounded-lg bg-primary-soft p-4">
-          <p className="text-sm font-semibold">{rotationName(data.session.rotationMode)}</p>
+          <p className="text-sm font-semibold">
+            {rotationName(data.session.rotationMode)}
+          </p>
           <p className="mt-1 text-sm leading-5 text-muted">
-            {rotationDescription(data.session.rotationMode, data.session.rotationConfig)}
+            {rotationDescription(
+              data.session.rotationMode,
+              data.session.rotationConfig
+            )}
           </p>
         </div>
 
@@ -345,7 +435,11 @@ export async function SessionPlay({
         ) : null}
 
         {viewer.canCompleteSession && !data.activeMatches.length ? (
-          <form noValidate action={completeSession} className="mt-9 border-t border-line pt-5">
+          <form
+            noValidate
+            action={completeSession}
+            className="mt-9 border-t border-line pt-5"
+          >
             <input type="hidden" name="sessionId" value={data.session.id} />
             <ConfirmSubmitButton
               variant="secondary"

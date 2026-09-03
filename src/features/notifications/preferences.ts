@@ -12,14 +12,38 @@ export const notificationCategories = [
 export type NotificationCategory = (typeof notificationCategories)[number];
 export type DeliveryChannel = "email" | "push";
 
-export const notificationCategoryLabels: Record<NotificationCategory, { label: string; description: string }> = {
-  invitations: { label: "Invitations", description: "New invitations to games." },
-  roster: { label: "RSVP and waitlist", description: "Approvals, removals, and available spots." },
-  reminders: { label: "Game reminders", description: "Day-before and starting-soon reminders." },
-  changes: { label: "Important changes", description: "Time, venue, cancellation, and cost changes." },
-  booking: { label: "Booking updates", description: "Court booking confirmations." },
-  payments: { label: "Payments", description: "Payment requests, proof reviews, and confirmations." },
-  recap: { label: "Recap ready", description: "When a completed game is ready to revisit." },
+export const notificationCategoryLabels: Record<
+  NotificationCategory,
+  { label: string; description: string }
+> = {
+  invitations: {
+    label: "Invitations",
+    description: "New invitations to games.",
+  },
+  roster: {
+    label: "RSVP and waitlist",
+    description: "Approvals, removals, and available spots.",
+  },
+  reminders: {
+    label: "Game reminders",
+    description: "Day-before and starting-soon reminders.",
+  },
+  changes: {
+    label: "Important changes",
+    description: "Time, venue, cancellation, and cost changes.",
+  },
+  booking: {
+    label: "Booking updates",
+    description: "Court booking confirmations.",
+  },
+  payments: {
+    label: "Payments",
+    description: "Payment requests, proof reviews, and confirmations.",
+  },
+  recap: {
+    label: "Recap ready",
+    description: "When a completed game is ready to revisit.",
+  },
 };
 
 export const defaultCategoryPreferences: NotificationCategoryPreferences = {
@@ -55,7 +79,13 @@ const categoriesByType: Record<string, NotificationCategory> = {
   session_completed: "recap",
 };
 
-const emailCategories = new Set<NotificationCategory>(["invitations", "roster", "reminders", "changes", "booking"]);
+const emailCategories = new Set<NotificationCategory>([
+  "invitations",
+  "roster",
+  "reminders",
+  "changes",
+  "booking",
+]);
 const pushCategories = new Set<NotificationCategory>(notificationCategories);
 
 const emailTypes = new Set([
@@ -77,7 +107,10 @@ const pushTypes = new Set([
   "session_completed",
 ]);
 
-export function channelSupportsCategory(channel: DeliveryChannel, category: NotificationCategory) {
+export function channelSupportsCategory(
+  channel: DeliveryChannel,
+  category: NotificationCategory
+) {
   return (channel === "email" ? emailCategories : pushCategories).has(category);
 }
 
@@ -85,21 +118,36 @@ export function notificationCategory(type: string) {
   return categoriesByType[type] ?? null;
 }
 
-export function channelAllowsNotification(channel: DeliveryChannel, type: string) {
+export function channelAllowsNotification(
+  channel: DeliveryChannel,
+  type: string
+) {
   return (channel === "email" ? emailTypes : pushTypes).has(type);
 }
 
-export function categoryEnabled(preferences: NotificationCategoryPreferences, category: NotificationCategory) {
+export function categoryEnabled(
+  preferences: NotificationCategoryPreferences,
+  category: NotificationCategory
+) {
   return preferences[category] !== false;
 }
 
-export function reminderTimingEnabled(type: string, dayBefore: boolean, hourBefore: boolean) {
+export function reminderTimingEnabled(
+  type: string,
+  dayBefore: boolean,
+  hourBefore: boolean
+) {
   if (type === "session_tomorrow") return dayBefore;
   if (type === "session_starting_soon") return hourBefore;
   return true;
 }
 
-export function isWithinQuietHours(now: Date, timeZone: string, start: string | null, end: string | null) {
+export function isWithinQuietHours(
+  now: Date,
+  timeZone: string,
+  start: string | null,
+  end: string | null
+) {
   if (!start || !end || start === end) return false;
   let localMinutes: number;
   try {

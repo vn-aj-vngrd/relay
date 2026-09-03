@@ -2,7 +2,10 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicChatLoading() {
   return (
-    <main id="main-content" className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface">
+    <main
+      id="main-content"
+      className="public-session-page public-chat-page min-h-0 overflow-hidden bg-surface"
+    >
       <div
         role="status"
         aria-label="Loading session chat"

@@ -1,10 +1,30 @@
 import "server-only";
 
-import { and, asc, count, desc, eq, gt, gte, inArray, lt, lte, ne, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  lt,
+  lte,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm";
 import { cache } from "react";
 
 import { db } from "@/db/client";
-import { expenses, matches, profiles, sessionPlayers, sessions } from "@/db/schema";
+import {
+  expenses,
+  matches,
+  profiles,
+  sessionPlayers,
+  sessions,
+} from "@/db/schema";
 
 import { formatSessionDate, formatSessionTime, sessionDateKey } from "./format";
 import type {
@@ -27,13 +47,21 @@ export async function getUserSessions(userId: string) {
       and(
         eq(sessionPlayers.userId, userId),
         or(
-          and(eq(sessionPlayers.rsvp, "invited"), inArray(sessions.status, ["published", "live"])),
           and(
-            inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]),
-            inArray(sessions.status, ["published", "live", "completed"]),
+            eq(sessionPlayers.rsvp, "invited"),
+            inArray(sessions.status, ["published", "live"])
           ),
-        ),
-      ),
+          and(
+            inArray(sessionPlayers.rsvp, [
+              "pending",
+              "going",
+              "maybe",
+              "waitlisted",
+            ]),
+            inArray(sessions.status, ["published", "live", "completed"])
+          )
+        )
+      )
     )
     .orderBy(asc(sessions.startsAt));
 }
@@ -54,8 +82,8 @@ export async function getHomeSessions(userId: string) {
           eq(sessionPlayers.userId, userId),
           eq(sessionPlayers.rsvp, "invited"),
           gt(sessions.endsAt, now),
-          inArray(sessions.status, ["published", "live"]),
-        ),
+          inArray(sessions.status, ["published", "live"])
+        )
       )
       .orderBy(asc(sessions.startsAt), asc(sessions.id))
       .limit(3),
@@ -68,10 +96,14 @@ export async function getHomeSessions(userId: string) {
           membershipCondition,
           or(eq(sessions.hostId, userId), eq(sessionPlayers.rsvp, "going")),
           gt(sessions.endsAt, now),
-          inArray(sessions.status, ["published", "live"]),
-        ),
+          inArray(sessions.status, ["published", "live"])
+        )
       )
-      .orderBy(sql`case when ${sessions.status} = 'live' then 0 else 1 end`, asc(sessions.startsAt), asc(sessions.id))
+      .orderBy(
+        sql`case when ${sessions.status} = 'live' then 0 else 1 end`,
+        asc(sessions.startsAt),
+        asc(sessions.id)
+      )
       .limit(1),
     db
       .select({ session: sessions, player: sessionPlayers })
@@ -80,10 +112,15 @@ export async function getHomeSessions(userId: string) {
       .where(
         and(
           membershipCondition,
-          inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]),
+          inArray(sessionPlayers.rsvp, [
+            "pending",
+            "going",
+            "maybe",
+            "waitlisted",
+          ]),
           gt(sessions.endsAt, now),
-          inArray(sessions.status, ["published", "live"]),
-        ),
+          inArray(sessions.status, ["published", "live"])
+        )
       )
       .orderBy(asc(sessions.startsAt), asc(sessions.id))
       .limit(HOME_UPCOMING_LIMIT),
@@ -96,9 +133,12 @@ export async function getHomeSessions(userId: string) {
           membershipCondition,
           or(
             eq(sessions.status, "completed"),
-            and(lte(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])),
-          ),
-        ),
+            and(
+              lte(sessions.endsAt, now),
+              inArray(sessions.status, ["published", "live"])
+            )
+          )
+        )
       )
       .orderBy(desc(sessions.startsAt), desc(sessions.id))
       .limit(HOME_RECENT_LIMIT + 1),
@@ -117,23 +157,41 @@ export async function getHomeSessions(userId: string) {
           .from(sessionPlayers)
           .where(inArray(sessionPlayers.sessionId, sessionIds))
           .groupBy(sessionPlayers.sessionId),
-        db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
+        db
+          .select({ sessionId: expenses.sessionId })
+          .from(expenses)
+          .where(inArray(expenses.sessionId, sessionIds)),
         db
           .select({ userId: profiles.userId, name: profiles.name })
           .from(profiles)
           .where(inArray(profiles.userId, hostIds)),
       ])
     : [[], [], []];
-  const playerCounts = new Map(counts.map(({ sessionId, goingTotal }) => [sessionId, Number(goingTotal)]));
-  const pendingCounts = new Map(counts.map(({ sessionId, pendingTotal }) => [sessionId, Number(pendingTotal)]));
-  const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
-  const hostNames = new Map(hostProfiles.map(({ userId, name }) => [userId, name]));
+  const playerCounts = new Map(
+    counts.map(({ sessionId, goingTotal }) => [sessionId, Number(goingTotal)])
+  );
+  const pendingCounts = new Map(
+    counts.map(({ sessionId, pendingTotal }) => [
+      sessionId,
+      Number(pendingTotal),
+    ])
+  );
+  const sessionsWithExpense = new Set(
+    expenseRows.map(({ sessionId }) => sessionId)
+  );
+  const hostNames = new Map(
+    hostProfiles.map(({ userId, name }) => [userId, name])
+  );
   const enrich = (row: (typeof rows)[number]) => {
     const pendingCount = pendingCounts.get(row.session.id) ?? 0;
     return {
       ...row,
       playerCount: playerCounts.get(row.session.id) ?? 0,
-      pendingCount: visibleHomePendingCount(pendingCount, row.player.role, row.session.hostId === userId),
+      pendingCount: visibleHomePendingCount(
+        pendingCount,
+        row.player.role,
+        row.session.hostId === userId
+      ),
       hasExpense: sessionsWithExpense.has(row.session.id),
       hostName: hostNames.get(row.session.hostId) ?? "Relay host",
     };
@@ -151,7 +209,10 @@ const GAME_PAGE_SIZE = 24;
 
 type UserSessionRow = Awaited<ReturnType<typeof getUserSessions>>[number];
 
-async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Promise<GameCollectionItem[]> {
+async function toGameCollectionItems(
+  userId: string,
+  rows: UserSessionRow[]
+): Promise<GameCollectionItem[]> {
   if (!rows.length) return [];
   const now = new Date();
   const sessionIds = rows.map(({ session }) => session.id);
@@ -160,14 +221,31 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
     db
       .select({ sessionId: sessionPlayers.sessionId, total: count() })
       .from(sessionPlayers)
-      .where(and(inArray(sessionPlayers.sessionId, sessionIds), eq(sessionPlayers.rsvp, "going")))
+      .where(
+        and(
+          inArray(sessionPlayers.sessionId, sessionIds),
+          eq(sessionPlayers.rsvp, "going")
+        )
+      )
       .groupBy(sessionPlayers.sessionId),
-    db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
-    db.select({ userId: profiles.userId, name: profiles.name }).from(profiles).where(inArray(profiles.userId, hostIds)),
+    db
+      .select({ sessionId: expenses.sessionId })
+      .from(expenses)
+      .where(inArray(expenses.sessionId, sessionIds)),
+    db
+      .select({ userId: profiles.userId, name: profiles.name })
+      .from(profiles)
+      .where(inArray(profiles.userId, hostIds)),
   ]);
-  const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
-  const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
-  const hostNames = new Map(hostProfiles.map(({ userId, name }) => [userId, name]));
+  const playerCounts = new Map(
+    counts.map(({ sessionId, total }) => [sessionId, Number(total)])
+  );
+  const sessionsWithExpense = new Set(
+    expenseRows.map(({ sessionId }) => sessionId)
+  );
+  const hostNames = new Map(
+    hostProfiles.map(({ userId, name }) => [userId, name])
+  );
 
   return rows.map(({ session, player }) => {
     const playerCount = playerCounts.get(session.id) ?? 0;
@@ -178,7 +256,11 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       date: formatSessionDate(session.startsAt, session.timezone),
       dateKey: sessionDateKey(session.startsAt, session.timezone),
       endsAt: session.endsAt.toISOString(),
-      time: formatSessionTime(session.startsAt, session.endsAt, session.timezone),
+      time: formatSessionTime(
+        session.startsAt,
+        session.endsAt,
+        session.timezone
+      ),
       venue: session.venueName,
       playerCount,
       capacity: session.capacity,
@@ -191,12 +273,16 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
       canReplay: session.hostId === userId && session.status === "completed",
-      ...(session.hostId === userId && session.endsAt > now && ["published", "live"].includes(session.status)
+      ...(session.hostId === userId &&
+      session.endsAt > now &&
+      ["published", "live"].includes(session.status)
         ? {
             readiness: sessionReadiness({
               goingCount: playerCount,
               booked: Boolean(session.bookedAt),
-              expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents),
+              expectsCollection: Boolean(
+                session.estimatedCostCents || session.bookingTotalCents
+              ),
               collectionCreated: sessionsWithExpense.has(session.id),
             }),
           }
@@ -209,12 +295,20 @@ function userSessionCondition(userId: string) {
   return and(
     eq(sessionPlayers.userId, userId),
     or(
-      and(eq(sessionPlayers.rsvp, "invited"), inArray(sessions.status, ["published", "live"])),
       and(
-        inArray(sessionPlayers.rsvp, ["pending", "going", "maybe", "waitlisted"]),
-        inArray(sessions.status, ["published", "live", "completed"]),
+        eq(sessionPlayers.rsvp, "invited"),
+        inArray(sessions.status, ["published", "live"])
       ),
-    ),
+      and(
+        inArray(sessionPlayers.rsvp, [
+          "pending",
+          "going",
+          "maybe",
+          "waitlisted",
+        ]),
+        inArray(sessions.status, ["published", "live", "completed"])
+      )
+    )
   );
 }
 
@@ -223,7 +317,7 @@ function invitationCondition(userId: string, now = new Date()) {
     eq(sessionPlayers.userId, userId),
     eq(sessionPlayers.rsvp, "invited"),
     gt(sessions.endsAt, now),
-    inArray(sessions.status, ["published", "live"]),
+    inArray(sessions.status, ["published", "live"])
   );
 }
 
@@ -236,33 +330,50 @@ export async function getInvitationCount(userId: string) {
   return Number(result?.total ?? 0);
 }
 
-export async function getGameInvitations(userId: string): Promise<GameInvitationPage> {
+export async function getGameInvitations(
+  userId: string
+): Promise<GameInvitationPage> {
   const rows = await db
     .select({ session: sessions, player: sessionPlayers })
     .from(sessionPlayers)
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
     .where(invitationCondition(userId))
     .orderBy(asc(sessions.startsAt), asc(sessions.id));
-  return { items: await toGameCollectionItems(userId, rows), total: rows.length };
+  return {
+    items: await toGameCollectionItems(userId, rows),
+    total: rows.length,
+  };
 }
 
 export async function getGameCollectionPage(
   userId: string,
   phase: GameCollectionPhase,
-  cursor: GameCursor | null = null,
+  cursor: GameCursor | null = null
 ): Promise<GameCollectionPage> {
   const now = new Date();
   const ascending = phase === "upcoming";
   const phaseCondition = ascending
-    ? and(gt(sessions.endsAt, now), inArray(sessions.status, ["published", "live"]))
+    ? and(
+        gt(sessions.endsAt, now),
+        inArray(sessions.status, ["published", "live"])
+      )
     : or(
         eq(sessions.status, "completed"),
-        and(lte(sessions.endsAt, now), inArray(sessions.status, ["published", "live"])),
+        and(
+          lte(sessions.endsAt, now),
+          inArray(sessions.status, ["published", "live"])
+        )
       );
   const cursorCondition = cursor
     ? ascending
-      ? or(gt(sessions.startsAt, cursor.at), and(eq(sessions.startsAt, cursor.at), gt(sessions.id, cursor.id)))
-      : or(lt(sessions.startsAt, cursor.at), and(eq(sessions.startsAt, cursor.at), lt(sessions.id, cursor.id)))
+      ? or(
+          gt(sessions.startsAt, cursor.at),
+          and(eq(sessions.startsAt, cursor.at), gt(sessions.id, cursor.id))
+        )
+      : or(
+          lt(sessions.startsAt, cursor.at),
+          and(eq(sessions.startsAt, cursor.at), lt(sessions.id, cursor.id))
+        )
     : undefined;
   const rows = await db
     .select({ session: sessions, player: sessionPlayers })
@@ -273,12 +384,12 @@ export async function getGameCollectionPage(
         userSessionCondition(userId),
         phase === "upcoming" ? ne(sessionPlayers.rsvp, "invited") : undefined,
         phaseCondition,
-        cursorCondition,
-      ),
+        cursorCondition
+      )
     )
     .orderBy(
       ascending ? asc(sessions.startsAt) : desc(sessions.startsAt),
-      ascending ? asc(sessions.id) : desc(sessions.id),
+      ascending ? asc(sessions.id) : desc(sessions.id)
     )
     .limit(GAME_PAGE_SIZE + 1);
   const hasMore = rows.length > GAME_PAGE_SIZE;
@@ -287,7 +398,10 @@ export async function getGameCollectionPage(
 
   return {
     items: await toGameCollectionItems(userId, pageRows),
-    nextCursor: hasMore && last ? encodeGameCursor({ at: last.startsAt, id: last.id }) : null,
+    nextCursor:
+      hasMore && last
+        ? encodeGameCursor({ at: last.startsAt, id: last.id })
+        : null,
   };
 }
 
@@ -295,7 +409,9 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
   const monthStart = new Date(`${monthKey}-01T00:00:00.000Z`);
   const rangeStart = new Date(monthStart);
   rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-  const rangeEnd = new Date(Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 2));
+  const rangeEnd = new Date(
+    Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 2)
+  );
   const rows = await db
     .select({ session: sessions, player: sessionPlayers })
     .from(sessionPlayers)
@@ -306,83 +422,117 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
         ne(sessionPlayers.rsvp, "invited"),
         gte(sessions.startsAt, rangeStart),
         lt(sessions.startsAt, rangeEnd),
-        inArray(sessions.status, ["published", "live", "completed"]),
-      ),
+        inArray(sessions.status, ["published", "live", "completed"])
+      )
     )
     .orderBy(asc(sessions.startsAt), asc(sessions.id));
-  const items = (await toGameCollectionItems(userId, rows)).filter((item) => item.dateKey.startsWith(monthKey));
+  const items = (await toGameCollectionItems(userId, rows)).filter((item) =>
+    item.dateKey.startsWith(monthKey)
+  );
   const now = Date.now();
   return {
     upcoming: items.filter(
-      (item) => ["published", "live"].includes(item.status) && new Date(item.endsAt).getTime() > now,
+      (item) =>
+        ["published", "live"].includes(item.status) &&
+        new Date(item.endsAt).getTime() > now
     ),
-    past: items.filter((item) => item.status === "completed" || new Date(item.endsAt).getTime() <= now),
+    past: items.filter(
+      (item) =>
+        item.status === "completed" || new Date(item.endsAt).getTime() <= now
+    ),
   };
 }
 
-export const getPublicSession = cache(async function getPublicSession(slug: string) {
+export const getPublicSession = cache(async function getPublicSession(
+  slug: string
+) {
   const session = await db.query.sessions.findFirst({
     where: and(
       eq(sessions.slug, slug),
       inArray(sessions.status, ["published", "live", "completed"]),
-      inArray(sessions.visibility, ["public", "link"]),
+      inArray(sessions.visibility, ["public", "link"])
     ),
   });
   if (!session) return null;
-  const roster = await db
-    .select({ player: sessionPlayers, profile: profiles })
-    .from(sessionPlayers)
-    .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
-    .where(
-      and(eq(sessionPlayers.sessionId, session.id), inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"])),
-    )
-    .orderBy(asc(sessionPlayers.waitlistPosition), asc(sessionPlayers.createdAt));
-  const [hostProfile, matchCount] = await Promise.all([
-    db.query.profiles.findFirst({ where: eq(profiles.userId, session.hostId) }),
-    db.$count(matches, and(eq(matches.sessionId, session.id), eq(matches.status, "completed"))),
-  ]);
-  return { session, roster, hostProfile, matchCount };
-});
-
-export async function getSessionMembership(sessionId: string, userId: string) {
-  return db.query.sessionPlayers.findFirst({
-    where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)),
-  });
-}
-
-export const getSessionForWorkspace = cache(async function getSessionForWorkspace(sessionId: string, userId: string) {
-  const [session, membership] = await Promise.all([
-    db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
-    getSessionMembership(sessionId, userId),
-  ]);
-  if (!session) return null;
-  const access = resolveSessionWorkspaceAccess({
-    userId,
-    hostId: session.hostId,
-    visibility: session.visibility,
-    status: session.status,
-    endsAt: session.endsAt,
-    estimatedCostCents: session.estimatedCostCents,
-    membership,
-  });
-  if (!access) return null;
-  const publicRosterOnly = access === "discoverer" || access === "invited" || access === "pending";
   const roster = await db
     .select({ player: sessionPlayers, profile: profiles })
     .from(sessionPlayers)
     .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
     .where(
       and(
-        eq(sessionPlayers.sessionId, sessionId),
-        publicRosterOnly ? inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"]) : undefined,
-      ),
+        eq(sessionPlayers.sessionId, session.id),
+        inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"])
+      )
     )
-    .orderBy(asc(sessionPlayers.waitlistPosition), asc(sessionPlayers.createdAt));
-  return { session, membership, roster, access };
+    .orderBy(
+      asc(sessionPlayers.waitlistPosition),
+      asc(sessionPlayers.createdAt)
+    );
+  const [hostProfile, matchCount] = await Promise.all([
+    db.query.profiles.findFirst({ where: eq(profiles.userId, session.hostId) }),
+    db.$count(
+      matches,
+      and(eq(matches.sessionId, session.id), eq(matches.status, "completed"))
+    ),
+  ]);
+  return { session, roster, hostProfile, matchCount };
 });
 
-export const getSessionForUser = cache(async function getSessionForUser(sessionId: string, userId: string) {
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
+export async function getSessionMembership(sessionId: string, userId: string) {
+  return db.query.sessionPlayers.findFirst({
+    where: and(
+      eq(sessionPlayers.sessionId, sessionId),
+      eq(sessionPlayers.userId, userId)
+    ),
+  });
+}
+
+export const getSessionForWorkspace = cache(
+  async function getSessionForWorkspace(sessionId: string, userId: string) {
+    const [session, membership] = await Promise.all([
+      db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
+      getSessionMembership(sessionId, userId),
+    ]);
+    if (!session) return null;
+    const access = resolveSessionWorkspaceAccess({
+      userId,
+      hostId: session.hostId,
+      visibility: session.visibility,
+      status: session.status,
+      endsAt: session.endsAt,
+      estimatedCostCents: session.estimatedCostCents,
+      membership,
+    });
+    if (!access) return null;
+    const publicRosterOnly =
+      access === "discoverer" || access === "invited" || access === "pending";
+    const roster = await db
+      .select({ player: sessionPlayers, profile: profiles })
+      .from(sessionPlayers)
+      .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
+      .where(
+        and(
+          eq(sessionPlayers.sessionId, sessionId),
+          publicRosterOnly
+            ? inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"])
+            : undefined
+        )
+      )
+      .orderBy(
+        asc(sessionPlayers.waitlistPosition),
+        asc(sessionPlayers.createdAt)
+      );
+    return { session, membership, roster, access };
+  }
+);
+
+export const getSessionForUser = cache(async function getSessionForUser(
+  sessionId: string,
+  userId: string
+) {
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+  });
   if (!session) return null;
   const membership = await getSessionMembership(sessionId, userId);
   if (!membership && session.hostId !== userId) return null;
@@ -395,9 +545,15 @@ export const getSessionForUser = cache(async function getSessionForUser(sessionI
   return { session, membership, roster };
 });
 
-export async function getSessionForParticipant(sessionId: string, userId: string) {
+export async function getSessionForParticipant(
+  sessionId: string,
+  userId: string
+) {
   const data = await getSessionForUser(sessionId, userId);
   if (!data) return null;
   if (data.session.hostId === userId) return data;
-  return data.membership && ["going", "maybe", "waitlisted"].includes(data.membership.rsvp) ? data : null;
+  return data.membership &&
+    ["going", "maybe", "waitlisted"].includes(data.membership.rsvp)
+    ? data
+    : null;
 }

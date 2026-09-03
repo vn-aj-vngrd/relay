@@ -19,7 +19,11 @@ describe("buildBreadcrumbItems", () => {
   });
 
   it("defers game detail breadcrumbs to the session layout", () => {
-    expect(buildBreadcrumbItems("/games/859aab56-17cd-44fc-bd52-716d15c8d93f/payments")).toEqual([]);
+    expect(
+      buildBreadcrumbItems(
+        "/games/859aab56-17cd-44fc-bd52-716d15c8d93f/payments"
+      )
+    ).toEqual([]);
   });
 
   it("uses a concise profile trail instead of exposing the username as navigation", () => {
@@ -45,7 +49,9 @@ describe("buildBreadcrumbItems", () => {
   });
 
   it("uses Courts consistently for admin directory records", () => {
-    expect(buildBreadcrumbItems("/admin/courts/859aab56-17cd-44fc-bd52-716d15c8d93f")).toEqual([
+    expect(
+      buildBreadcrumbItems("/admin/courts/859aab56-17cd-44fc-bd52-716d15c8d93f")
+    ).toEqual([
       { href: "/admin", label: "Admin Console" },
       { href: "/admin/courts", label: "Courts" },
       { href: undefined, label: "Court" },
@@ -53,10 +59,17 @@ describe("buildBreadcrumbItems", () => {
   });
 
   it("builds admin record trails without exposing ids", () => {
-    expect(buildBreadcrumbItems("/admin/users/859aab56-17cd-44fc-bd52-716d15c8d93f/edit")).toEqual([
+    expect(
+      buildBreadcrumbItems(
+        "/admin/users/859aab56-17cd-44fc-bd52-716d15c8d93f/edit"
+      )
+    ).toEqual([
       { href: "/admin", label: "Admin Console" },
       { href: "/admin/users", label: "Users" },
-      { href: "/admin/users/859aab56-17cd-44fc-bd52-716d15c8d93f", label: "User" },
+      {
+        href: "/admin/users/859aab56-17cd-44fc-bd52-716d15c8d93f",
+        label: "User",
+      },
       { href: undefined, label: "Edit" },
     ]);
   });

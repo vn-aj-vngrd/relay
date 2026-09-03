@@ -7,7 +7,11 @@ import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminUser } from "@/features/admin/queries";
 import { UpdateUserForm } from "@/features/admin/update-user-form";
 
-export default async function EditAdminUserPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditAdminUserPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const parsed = z.uuid().safeParse((await params).id);
   if (!parsed.success) notFound();
   const account = await getAdminUser(parsed.data);

@@ -9,8 +9,17 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 
 import { type AvatarActionState, uploadAvatarAction } from "./actions";
 
-export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl?: string }) {
-  const [state, action] = useActionState<AvatarActionState, FormData>(uploadAvatarAction, {});
+export function ProfileAvatarEditor({
+  name,
+  imageUrl,
+}: {
+  name: string;
+  imageUrl?: string;
+}) {
+  const [state, action] = useActionState<AvatarActionState, FormData>(
+    uploadAvatarAction,
+    {}
+  );
   const [preview, setPreview] = useState<string>();
   const preserveValues = usePreserveFormValuesOnError(state);
 
@@ -18,7 +27,7 @@ export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl
     () => () => {
       if (preview) URL.revokeObjectURL(preview);
     },
-    [preview],
+    [preview]
   );
 
   function previewFile(file?: File) {
@@ -27,7 +36,12 @@ export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl
   }
 
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="shrink-0">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="shrink-0"
+    >
       <input
         id="profile-avatar"
         name="avatar"
@@ -48,7 +62,10 @@ export function ProfileAvatarEditor({ name, imageUrl }: { name: string; imageUrl
         </label>
       </div>
       {preview ? (
-        <SubmitButton pendingLabel="Uploading…" className="mt-3 min-h-9 w-full px-3 text-xs">
+        <SubmitButton
+          pendingLabel="Uploading…"
+          className="mt-3 min-h-9 w-full px-3 text-xs"
+        >
           Save photo
         </SubmitButton>
       ) : null}

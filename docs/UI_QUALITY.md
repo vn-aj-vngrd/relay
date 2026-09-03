@@ -58,11 +58,8 @@ Reject the change when it introduces decorative gradients, glowing blobs, gradie
 Run:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
+pnpm check:full
 pnpm test:e2e
-pnpm build
 ```
 
 Use Agent Browser at 390px and 1440px in light and dark mode. Check the accessibility tree, console errors, horizontal overflow, focus order, target sizes, reduced motion, long text, empty data, and a realistic end-to-end workflow.

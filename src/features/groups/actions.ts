@@ -5,20 +5,31 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
-import { groupMembers, groups, profiles, sessionPlayers, sessions } from "@/db/schema";
+import {
+  groupMembers,
+  groups,
+  profiles,
+  sessionPlayers,
+  sessions,
+} from "@/db/schema";
 import { trackSessionMilestone } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 import { validateAvatarFile } from "@/features/players/avatar-validation";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-import { addGroupMemberSchema, createGroupSchema, groupSlug, updateGroupSchema } from "./domain";
+import {
+  addGroupMemberSchema,
+  createGroupSchema,
+  groupSlug,
+  updateGroupSchema,
+} from "./domain";
 
 async function guardGroupMutation(userId: string) {
   await assertRateLimit(
     { scope: "group-mutation", limit: 30, windowSeconds: 60 },
     `user:${userId}`,
-    "Group changes are happening too quickly. Wait a moment and try again.",
+    "Group changes are happening too quickly. Wait a moment and try again."
   );
 }
 
@@ -28,7 +39,10 @@ export type GroupActionState = {
   values?: Record<string, string>;
 };
 
-export async function createGroupAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
+export async function createGroupAction(
+  _: GroupActionState,
+  formData: FormData
+): Promise<GroupActionState> {
   const user = await requireUser();
   await guardGroupMutation(user.id);
   const parsed = createGroupSchema.safeParse({
@@ -39,22 +53,37 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
   if (!parsed.success)
     return {
       error: "Check the group details below.",
-      values: { name: String(formData.get("name") ?? ""), description: String(formData.get("description") ?? "") },
+      values: {
+        name: String(formData.get("name") ?? ""),
+        description: String(formData.get("description") ?? ""),
+      },
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
 
   let sourcePlayerIds: string[] = [];
   if (parsed.data.sourceSessionId) {
     const source = await db.query.sessions.findFirst({
-      where: and(eq(sessions.id, parsed.data.sourceSessionId), eq(sessions.hostId, user.id)),
+      where: and(
+        eq(sessions.id, parsed.data.sourceSessionId),
+        eq(sessions.hostId, user.id)
+      ),
     });
-    if (!source) return { error: "Only the session host can save this crew as a group." };
-    if (source.groupId) return { error: "This session already belongs to a group." };
+    if (!source)
+      return { error: "Only the session host can save this crew as a group." };
+    if (source.groupId)
+      return { error: "This session already belongs to a group." };
     const players = await db
       .select({ userId: sessionPlayers.userId })
       .from(sessionPlayers)
-      .where(and(eq(sessionPlayers.sessionId, source.id), eq(sessionPlayers.rsvp, "going")));
-    sourcePlayerIds = players.map(({ userId }) => userId).filter((id): id is string => Boolean(id));
+      .where(
+        and(
+          eq(sessionPlayers.sessionId, source.id),
+          eq(sessionPlayers.rsvp, "going")
+        )
+      );
+    sourcePlayerIds = players
+      .map(({ userId }) => userId)
+      .filter((id): id is string => Boolean(id));
   }
 
   const group = await db.transaction(async (tx) => {
@@ -73,12 +102,16 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
         groupId: created.id,
         userId,
         role: userId === user.id ? ("owner" as const) : ("member" as const),
-      })),
+      }))
     );
     if (parsed.data.sourceSessionId)
       await tx
         .update(sessions)
-        .set({ groupId: created.id, version: sql`${sessions.version} + 1`, updatedAt: new Date() })
+        .set({
+          groupId: created.id,
+          version: sql`${sessions.version} + 1`,
+          updatedAt: new Date(),
+        })
         .where(eq(sessions.id, parsed.data.sourceSessionId));
     return created;
   });
@@ -92,11 +125,15 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
       metadata: { memberCount: sourcePlayerIds.length },
     });
   revalidatePath("/groups");
-  if (parsed.data.sourceSessionId) revalidatePath(`/games/${parsed.data.sourceSessionId}`);
+  if (parsed.data.sourceSessionId)
+    revalidatePath(`/games/${parsed.data.sourceSessionId}`);
   redirect(`/groups/${group.slug}`);
 }
 
-export async function updateGroupAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
+export async function updateGroupAction(
+  _: GroupActionState,
+  formData: FormData
+): Promise<GroupActionState> {
   const user = await requireUser();
   await guardGroupMutation(user.id);
   const parsed = updateGroupSchema.safeParse({
@@ -108,7 +145,10 @@ export async function updateGroupAction(_: GroupActionState, formData: FormData)
   if (!parsed.success)
     return {
       error: "Check the group details below.",
-      values: { name: String(formData.get("name") ?? ""), description: String(formData.get("description") ?? "") },
+      values: {
+        name: String(formData.get("name") ?? ""),
+        description: String(formData.get("description") ?? ""),
+      },
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
 
@@ -125,31 +165,45 @@ export async function updateGroupAction(_: GroupActionState, formData: FormData)
     if ("error" in validated)
       return {
         error: validated.error,
-        values: { name: parsed.data.name, description: parsed.data.description ?? "" },
+        values: {
+          name: parsed.data.name,
+          description: parsed.data.description ?? "",
+        },
       };
     const limit = await checkRateLimit(
       { scope: "group-image-upload", limit: 10, windowSeconds: 86400 },
-      `user:${user.id}`,
+      `user:${user.id}`
     );
     if (!limit.allowed)
       return {
-        error: "Group photo changes are temporarily limited. Try again tomorrow.",
-        values: { name: parsed.data.name, description: parsed.data.description ?? "" },
+        error:
+          "Group photo changes are temporarily limited. Try again tomorrow.",
+        values: {
+          name: parsed.data.name,
+          description: parsed.data.description ?? "",
+        },
       };
     uploadedPath = `${user.id}/group-${group.id}-${crypto.randomUUID()}.${validated.extension}`;
-    const { error } = await createSupabaseAdminClient().storage.from("avatars").upload(uploadedPath, validated.file, {
-      contentType: validated.file.type,
-      cacheControl: "31536000",
-      upsert: false,
-    });
+    const { error } = await createSupabaseAdminClient()
+      .storage.from("avatars")
+      .upload(uploadedPath, validated.file, {
+        contentType: validated.file.type,
+        cacheControl: "31536000",
+        upsert: false,
+      });
     if (error)
       return {
-        error: "The group photo couldn’t be uploaded. Check your connection and try again.",
-        values: { name: parsed.data.name, description: parsed.data.description ?? "" },
+        error:
+          "The group photo couldn’t be uploaded. Check your connection and try again.",
+        values: {
+          name: parsed.data.name,
+          description: parsed.data.description ?? "",
+        },
       };
   }
 
-  const nextImagePath = uploadedPath ?? (parsed.data.removeImage ? null : group.imagePath);
+  const nextImagePath =
+    uploadedPath ?? (parsed.data.removeImage ? null : group.imagePath);
   try {
     await db
       .update(groups)
@@ -161,11 +215,17 @@ export async function updateGroupAction(_: GroupActionState, formData: FormData)
       })
       .where(and(eq(groups.id, group.id), eq(groups.ownerId, user.id)));
   } catch (error) {
-    if (uploadedPath) await createSupabaseAdminClient().storage.from("avatars").remove([uploadedPath]);
+    if (uploadedPath)
+      await createSupabaseAdminClient()
+        .storage.from("avatars")
+        .remove([uploadedPath]);
     console.error("Group update failed", error);
     return {
       error: "The group couldn’t be saved. Try again.",
-      values: { name: parsed.data.name, description: parsed.data.description ?? "" },
+      values: {
+        name: parsed.data.name,
+        description: parsed.data.description ?? "",
+      },
     };
   }
 
@@ -174,32 +234,48 @@ export async function updateGroupAction(_: GroupActionState, formData: FormData)
     group.imagePath !== nextImagePath &&
     group.imagePath.startsWith(`${user.id}/group-${group.id}-`)
   )
-    await createSupabaseAdminClient().storage.from("avatars").remove([group.imagePath]);
+    await createSupabaseAdminClient()
+      .storage.from("avatars")
+      .remove([group.imagePath]);
 
   revalidatePath("/groups");
   revalidatePath(`/groups/${group.slug}`);
   redirect(`/groups/${group.slug}`);
 }
 
-export async function addGroupMemberAction(_: GroupActionState, formData: FormData): Promise<GroupActionState> {
+export async function addGroupMemberAction(
+  _: GroupActionState,
+  formData: FormData
+): Promise<GroupActionState> {
   const user = await requireUser();
   await guardGroupMutation(user.id);
   const parsed = addGroupMemberSchema.safeParse({
     groupId: formData.get("groupId"),
     username: formData.get("username"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid username." };
+  if (!parsed.success)
+    return {
+      error: parsed.error.issues[0]?.message ?? "Enter a valid username.",
+    };
   const group = await db.query.groups.findFirst({
     where: and(eq(groups.id, parsed.data.groupId), eq(groups.ownerId, user.id)),
   });
   if (!group) return { error: "Only the group owner can add members." };
-  const profile = await db.query.profiles.findFirst({ where: eq(profiles.username, parsed.data.username) });
-  if (!profile) return { error: `No Relay player found for @${parsed.data.username}.` };
+  const profile = await db.query.profiles.findFirst({
+    where: eq(profiles.username, parsed.data.username),
+  });
+  if (!profile)
+    return { error: `No Relay player found for @${parsed.data.username}.` };
   const existing = await db.query.groupMembers.findFirst({
-    where: and(eq(groupMembers.groupId, group.id), eq(groupMembers.userId, profile.userId)),
+    where: and(
+      eq(groupMembers.groupId, group.id),
+      eq(groupMembers.userId, profile.userId)
+    ),
   });
   if (existing) return { error: `${profile.name} is already in this group.` };
-  await db.insert(groupMembers).values({ groupId: group.id, userId: profile.userId, role: "member" });
+  await db
+    .insert(groupMembers)
+    .values({ groupId: group.id, userId: profile.userId, role: "member" });
   revalidatePath(`/groups/${group.slug}`);
   return {};
 }

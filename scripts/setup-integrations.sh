@@ -393,10 +393,7 @@ fi
 stage "Verification — local, database, and production"
 export DATABASE_URL
 step "Checking code quality and the production build."
-corepack pnpm lint
-corepack pnpm typecheck
-corepack pnpm test
-corepack pnpm build
+corepack pnpm check:full
 step "Checking the deployed application."
 if curl --fail --silent --show-error --head "$PRODUCTION_URL" >/dev/null; then
   say "Production responded successfully."

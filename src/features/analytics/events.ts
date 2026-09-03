@@ -30,7 +30,12 @@ const productEventSchema = z.object({
   userId: z.uuid().nullable().optional(),
   sessionId: z.uuid().nullable().optional(),
   source: z.enum(["server", "authenticated", "guest"]).default("server"),
-  metadata: z.record(z.string(), z.union([z.string().max(120), z.number(), z.boolean(), z.null()])).default({}),
+  metadata: z
+    .record(
+      z.string(),
+      z.union([z.string().max(120), z.number(), z.boolean(), z.null()])
+    )
+    .default({}),
   dedupeKey: z.string().max(180).nullable().optional(),
 });
 
@@ -52,20 +57,26 @@ const sessionMilestoneSchema = productEventSchema.extend({
 });
 
 export type ProductEvent = z.input<typeof productEventSchema>;
-type SessionMilestone = Omit<z.input<typeof sessionMilestoneSchema>, "dedupeKey">;
+type SessionMilestone = Omit<
+  z.input<typeof sessionMilestoneSchema>,
+  "dedupeKey"
+>;
 
 /** Analytics is best-effort and must never block the game workflow it measures. */
 export async function trackProductEvent(input: ProductEvent) {
   const parsed = productEventSchema.parse(input);
   try {
-    await db.insert(productEvents).values(parsed).onConflictDoNothing({ target: productEvents.dedupeKey });
+    await db
+      .insert(productEvents)
+      .values(parsed)
+      .onConflictDoNothing({ target: productEvents.dedupeKey });
   } catch (error) {
     console.error(
       JSON.stringify({
         event: "product_event_write_failed",
         eventName: parsed.name,
         errorName: error instanceof Error ? error.name : "UnknownError",
-      }),
+      })
     );
   }
 }

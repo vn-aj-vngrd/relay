@@ -7,7 +7,10 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { profiles, sessionPlayers } from "@/db/schema";
-import { postSetupDestination, safeNextPath } from "@/features/auth/destination-path";
+import {
+  postSetupDestination,
+  safeNextPath,
+} from "@/features/auth/destination-path";
 import { requireUser } from "@/features/auth/session";
 import { validateAvatarFile } from "@/features/players/avatar-validation";
 import { playingExperienceValues } from "@/features/players/playing-experience";
@@ -21,7 +24,7 @@ async function guardOnboardingMutation(userId: string) {
   await assertRateLimit(
     { scope: "onboarding-mutation", limit: 20, windowSeconds: 60 },
     `user:${userId}`,
-    "Setup changes are happening too quickly. Wait a moment and try again.",
+    "Setup changes are happening too quickly. Wait a moment and try again."
   );
 }
 
@@ -37,15 +40,30 @@ const setupSchema = z.object({
     .toLowerCase()
     .min(3, "Use at least 3 characters.")
     .max(24, "Keep your username under 24 characters.")
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and single hyphens."),
-  city: z.string().trim().max(60, "Keep your city under 60 characters.").optional(),
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Use lowercase letters, numbers, and single hyphens."
+    ),
+  city: z
+    .string()
+    .trim()
+    .max(60, "Keep your city under 60 characters.")
+    .optional(),
   skillLevel: z.enum(playingExperienceValues).optional(),
   dominantHand: z.enum(["right", "left", "both"]).optional(),
-  bio: z.string().trim().max(240, "Keep your About you text under 240 characters.").optional(),
+  bio: z
+    .string()
+    .trim()
+    .max(240, "Keep your About you text under 240 characters.")
+    .optional(),
   discoverySource: z.enum(discoverySourceValues).optional(),
 });
 
-export type OnboardingActionState = { success?: boolean; error?: string; fieldErrors?: Record<string, string[]> };
+export type OnboardingActionState = {
+  success?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+};
 
 function destinationAfterSetup(formData: FormData) {
   return postSetupDestination(formData.get("next"));
@@ -53,7 +71,7 @@ function destinationAfterSetup(formData: FormData) {
 
 export async function completeProfileSetup(
   _: OnboardingActionState,
-  formData: FormData,
+  formData: FormData
 ): Promise<OnboardingActionState> {
   const user = await requireUser();
   await guardOnboardingMutation(user.id);
@@ -68,27 +86,40 @@ export async function completeProfileSetup(
     discoverySource: formData.get("discoverySource") || undefined,
   });
   if (!parsed.success)
-    return { error: "Check the details marked below.", fieldErrors: parsed.error.flatten().fieldErrors };
+    return {
+      error: "Check the details marked below.",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
 
   const usernameOwner = await db.query.profiles.findFirst({
-    where: and(eq(profiles.username, parsed.data.username), ne(profiles.userId, user.id)),
+    where: and(
+      eq(profiles.username, parsed.data.username),
+      ne(profiles.userId, user.id)
+    ),
   });
   if (usernameOwner)
-    return { error: "That username is already taken.", fieldErrors: { username: ["Try another username."] } };
+    return {
+      error: "That username is already taken.",
+      fieldErrors: { username: ["Try another username."] },
+    };
 
   const avatarEntry = formData.get("avatar");
   let newAvatarPath: string | null = null;
   if (avatarEntry instanceof File && avatarEntry.size > 0) {
     const validatedAvatar = await validateAvatarFile(avatarEntry);
     if ("error" in validatedAvatar && validatedAvatar.error)
-      return { error: validatedAvatar.error, fieldErrors: { avatar: [validatedAvatar.error] } };
+      return {
+        error: validatedAvatar.error,
+        fieldErrors: { avatar: [validatedAvatar.error] },
+      };
     const avatarLimit = await checkRateLimit(
       { scope: "avatar-upload", limit: 10, windowSeconds: 86400 },
-      `user:${user.id}`,
+      `user:${user.id}`
     );
     if (!avatarLimit.allowed)
       return {
-        error: "Profile photo changes are temporarily limited. Try again tomorrow.",
+        error:
+          "Profile photo changes are temporarily limited. Try again tomorrow.",
         fieldErrors: { avatar: ["Try again tomorrow."] },
       };
     newAvatarPath = `${user.id}/${crypto.randomUUID()}.${validatedAvatar.extension}`;
@@ -99,7 +130,11 @@ export async function completeProfileSetup(
         cacheControl: "31536000",
         upsert: false,
       });
-    if (uploadError) return { error: "Your profile photo couldn’t be uploaded. Check your connection and try again." };
+    if (uploadError)
+      return {
+        error:
+          "Your profile photo couldn’t be uploaded. Check your connection and try again.",
+      };
   }
 
   const now = new Date();
@@ -126,14 +161,29 @@ export async function completeProfileSetup(
         .where(eq(sessionPlayers.userId, user.id));
     });
   } catch (error) {
-    if (newAvatarPath) await createSupabaseAdminClient().storage.from("avatars").remove([newAvatarPath]);
-    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505")
-      return { error: "That username is already taken.", fieldErrors: { username: ["Try another username."] } };
+    if (newAvatarPath)
+      await createSupabaseAdminClient()
+        .storage.from("avatars")
+        .remove([newAvatarPath]);
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "23505"
+    )
+      return {
+        error: "That username is already taken.",
+        fieldErrors: { username: ["Try another username."] },
+      };
     console.error("Profile setup failed", error);
     return { error: "Your profile couldn’t be saved. Try again." };
   }
 
-  if (newAvatarPath && profile.avatarPath?.startsWith(`${user.id}/`) && profile.avatarPath !== newAvatarPath) {
+  if (
+    newAvatarPath &&
+    profile.avatarPath?.startsWith(`${user.id}/`) &&
+    profile.avatarPath !== newAvatarPath
+  ) {
     await createSupabaseAdminClient()
       .storage.from("avatars")
       .remove([profile.avatarPath])
@@ -162,7 +212,11 @@ export async function completeProductTour(formData: FormData) {
   const now = new Date();
   await db
     .update(profiles)
-    .set({ onboardingCompletedAt: now, productTourCompletedAt: now, updatedAt: now })
+    .set({
+      onboardingCompletedAt: now,
+      productTourCompletedAt: now,
+      updatedAt: now,
+    })
     .where(eq(profiles.userId, user.id));
   revalidatePath("/", "layout");
   redirect(destination);

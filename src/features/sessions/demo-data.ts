@@ -8,7 +8,16 @@ export const session = {
   venue: "Central Pickle",
   address: "Greenfield District, Mandaluyong",
   courts: "Courts 2 & 3",
-  players: ["Van J.", "AJ Santos", "Mika Reyes", "John Lim", "Chris Tan", "Josh Uy", "Mark Dee", "Kyle Cruz"],
+  players: [
+    "Van J.",
+    "AJ Santos",
+    "Mika Reyes",
+    "John Lim",
+    "Chris Tan",
+    "Josh Uy",
+    "Mark Dee",
+    "Kyle Cruz",
+  ],
   capacity: 10,
   price: 300,
   host: "Van",
@@ -42,7 +51,8 @@ export const recent = [
     venue: "Central Pickle",
     players: 8,
     matches: 11,
-    image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=900&q=80",
   },
   {
     title: "Tuesday Dink Club",
@@ -50,6 +60,7 @@ export const recent = [
     venue: "The Pickle Yard",
     players: 7,
     matches: 9,
-    image: "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80",
+    image:
+      "https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=900&q=80",
   },
 ];

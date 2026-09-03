@@ -5,7 +5,7 @@ import { planRosterTransition } from "./roster";
 const player = (
   id: string,
   rsvp: "invited" | "pending" | "going" | "maybe" | "waitlisted" | "declined",
-  waitlistPosition: number | null = null,
+  waitlistPosition: number | null = null
 ) => ({ id, rsvp, waitlistPosition });
 
 describe("roster transitions", () => {
@@ -40,12 +40,20 @@ describe("roster transitions", () => {
       intent: { playerId: "pending", requested: "going" },
     });
 
-    expect(transition.target).toEqual({ rsvp: "going", waitlistPosition: null, playState: "waiting" });
+    expect(transition.target).toEqual({
+      rsvp: "going",
+      waitlistPosition: null,
+      playState: "waiting",
+    });
   });
 
   it("promotes the earliest waitlisted player and compacts the waitlist when a player leaves", () => {
     const transition = planRosterTransition({
-      roster: [player("leaving", "going"), player("later", "waitlisted", 2), player("next", "waitlisted", 1)],
+      roster: [
+        player("leaving", "going"),
+        player("later", "waitlisted", 2),
+        player("next", "waitlisted", 1),
+      ],
       capacity: 2,
       intent: { playerId: "leaving", requested: "declined" },
     });
@@ -53,18 +61,41 @@ describe("roster transitions", () => {
     expect(transition.promotedPlayerIds).toEqual(["next"]);
     expect(transition.updates).toEqual(
       expect.arrayContaining([
-        { id: "leaving", rsvp: "declined", waitlistPosition: null, playState: "unavailable" },
-        { id: "next", rsvp: "going", waitlistPosition: null, playState: "waiting" },
-        { id: "later", rsvp: "waitlisted", waitlistPosition: 1, playState: "unavailable" },
-      ]),
+        {
+          id: "leaving",
+          rsvp: "declined",
+          waitlistPosition: null,
+          playState: "unavailable",
+        },
+        {
+          id: "next",
+          rsvp: "going",
+          waitlistPosition: null,
+          playState: "waiting",
+        },
+        {
+          id: "later",
+          rsvp: "waitlisted",
+          waitlistPosition: 1,
+          playState: "unavailable",
+        },
+      ])
     );
   });
 
   it("preserves a waitlisted player's place when they ask to go again", () => {
     const transition = planRosterTransition({
-      roster: [player("a", "going"), player("b", "going"), player("waiting", "waitlisted", 1)],
+      roster: [
+        player("a", "going"),
+        player("b", "going"),
+        player("waiting", "waitlisted", 1),
+      ],
       capacity: 2,
-      intent: { playerId: "waiting", requested: "going", requiresApproval: true },
+      intent: {
+        playerId: "waiting",
+        requested: "going",
+        requiresApproval: true,
+      },
     });
 
     expect(transition.target).toEqual({

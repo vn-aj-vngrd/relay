@@ -5,7 +5,9 @@ const mocks = vi.hoisted(() => ({
   requestIdentity: vi.fn(),
 }));
 
-vi.mock("@/lib/env", () => ({ getServerEnv: () => ({ GEOAPIFY_API_KEY: "test-key" }) }));
+vi.mock("@/lib/env", () => ({
+  getServerEnv: () => ({ GEOAPIFY_API_KEY: "test-key" }),
+}));
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
   rateLimitHeaders: () => ({ "Retry-After": "60" }),
@@ -32,8 +34,8 @@ describe("venue tile route", () => {
         new Response(new Uint8Array([137, 80, 78, 71]), {
           status: 200,
           headers: { "Content-Type": "image/png" },
-        }),
-      ),
+        })
+      )
     );
   });
 
@@ -44,9 +46,14 @@ describe("venue tile route", () => {
   });
 
   it("does not consume persistent production tile limits during next dev", async () => {
-    const response = await GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), {
-      params,
-    });
+    const response = await GET(
+      new Request(
+        "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"
+      ),
+      {
+        params,
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");
@@ -62,20 +69,31 @@ describe("venue tile route", () => {
       retryAfterSeconds: 86_400,
     });
 
-    const response = await GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), {
-      params,
-    });
+    const response = await GET(
+      new Request(
+        "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"
+      ),
+      {
+        params,
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(mocks.checkRateLimit).toHaveBeenCalledWith(
-      { scope: "philippines-map-tiles-global", limit: 2_500, windowSeconds: 86_400 },
-      "global",
+      {
+        scope: "philippines-map-tiles-global",
+        limit: 2_500,
+        windowSeconds: 86_400,
+      },
+      "global"
     );
     expect(mocks.checkRateLimit).toHaveBeenCalledWith(
       { scope: "philippines-map-tiles", limit: 600, windowSeconds: 600 },
-      "ip:test",
+      "ip:test"
     );
-    expect(mocks.checkRateLimit.mock.calls.flatMap((call) => call).join(" ")).not.toContain("shard:");
+    expect(mocks.checkRateLimit.mock.calls.flat().join(" ")).not.toContain(
+      "shard:"
+    );
   });
 
   it("bounds zoom bursts so provider requests do not time out under concurrency", async () => {
@@ -95,15 +113,26 @@ describe("venue tile route", () => {
         headers: { "Content-Type": "image/png" },
       });
     });
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const error = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const responses = await Promise.all(
       Array.from({ length: 12 }, () =>
-        GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), { params }),
-      ),
+        GET(
+          new Request(
+            "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"
+          ),
+          { params }
+        )
+      )
     );
 
-    expect(responses.every((response) => response.headers.get("x-relay-tile-fallback") === null)).toBe(true);
+    expect(
+      responses.every(
+        (response) => response.headers.get("x-relay-tile-fallback") === null
+      )
+    ).toBe(true);
     expect(maximumConcurrency).toBeLessThanOrEqual(4);
     expect(error).not.toHaveBeenCalled();
   });
@@ -121,16 +150,24 @@ describe("venue tile route", () => {
       });
     });
     const activeRequests = Array.from({ length: 4 }, () =>
-      GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), { params }),
+      GET(
+        new Request(
+          "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"
+        ),
+        { params }
+      )
     );
     await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(4));
 
     const obsoleteTile = new AbortController();
     const obsoleteResponse = GET(
-      new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright", {
-        signal: obsoleteTile.signal,
-      }),
-      { params },
+      new Request(
+        "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright",
+        {
+          signal: obsoleteTile.signal,
+        }
+      ),
+      { params }
     );
     obsoleteTile.abort();
 
@@ -142,11 +179,18 @@ describe("venue tile route", () => {
 
   it("returns a valid short-cached fallback tile when the provider times out", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
-    const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const error = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
-    const response = await GET(new Request("http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"), {
-      params,
-    });
+    const response = await GET(
+      new Request(
+        "http://localhost/api/venues/tiles/12/3456/1928?style=osm-bright"
+      ),
+      {
+        params,
+      }
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("image/png");

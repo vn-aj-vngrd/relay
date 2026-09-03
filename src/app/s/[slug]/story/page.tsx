@@ -6,13 +6,24 @@ import { SessionMemories } from "@/features/memories/session-memories";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 
-export default async function PublicStoryPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicStoryPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const slug = (await params).slug;
-  const [data, user] = await Promise.all([getPublicSession(slug), getCurrentUser()]);
+  const [data, user] = await Promise.all([
+    getPublicSession(slug),
+    getCurrentUser(),
+  ]);
   if (!data) notFound();
   const { recap, memory } = await getSessionRecap(data.session.id);
-  const viewerPlayer = user ? data.roster.find(({ player }) => player.userId === user.id)?.player : null;
-  const canContribute = Boolean(user && (data.session.hostId === user.id || viewerPlayer?.rsvp === "going"));
+  const viewerPlayer = user
+    ? data.roster.find(({ player }) => player.userId === user.id)?.player
+    : null;
+  const canContribute = Boolean(
+    user && (data.session.hostId === user.id || viewerPlayer?.rsvp === "going")
+  );
   const description =
     data.session.status === "completed"
       ? "View the final scores and photos from the game."
@@ -28,7 +39,9 @@ export default async function PublicStoryPage({ params }: { params: Promise<{ sl
     >
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
         <h1 className="public-tab-title app-title">Story</h1>
-        <p className="public-tab-description mt-2 text-sm text-muted">{description}</p>
+        <p className="public-tab-description mt-2 text-sm text-muted">
+          {description}
+        </p>
         <div className="sm:mt-7">
           <SessionMemories
             session={data.session}

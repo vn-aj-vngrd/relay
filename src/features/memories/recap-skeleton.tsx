@@ -2,7 +2,12 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export function RecapSkeleton() {
   return (
-    <div role="status" aria-label="Loading session recap" aria-busy="true" className="space-y-10">
+    <div
+      role="status"
+      aria-label="Loading session recap"
+      aria-busy="true"
+      className="space-y-10"
+    >
       <section className="rounded-xl bg-surface-strong px-5 py-8 sm:px-8 sm:py-10">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="mt-5 h-10 w-full max-w-xl" />

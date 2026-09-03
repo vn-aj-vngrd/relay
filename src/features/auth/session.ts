@@ -18,8 +18,12 @@ export const getCurrentUser = cache(async function getCurrentUser() {
 export async function requireUser(next = "/home") {
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(next)}`);
-  const account = await db.query.users.findFirst({ columns: { suspendedAt: true }, where: eq(users.id, user.id) });
+  const account = await db.query.users.findFirst({
+    columns: { suspendedAt: true },
+    where: eq(users.id, user.id),
+  });
   if (account?.suspendedAt) redirect("/account-suspended");
-  if (user.app_metadata.force_password_change === true) redirect("/set-password");
+  if (user.app_metadata.force_password_change === true)
+    redirect("/set-password");
   return user;
 }

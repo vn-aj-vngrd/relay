@@ -5,7 +5,7 @@ export function parseAdminEmails(value: string) {
     value
       .split(",")
       .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
+      .filter(Boolean)
   );
 }
 
@@ -14,10 +14,19 @@ export const adminReasonSchema = z
   .trim()
   .min(5, "Add a short reason (at least 5 characters).")
   .max(240, "Keep the reason under 240 characters.");
-export const adminUserActionSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
+export const adminUserActionSchema = z.object({
+  userId: z.uuid(),
+  reason: adminReasonSchema,
+});
 export const adminOnboardingResetSchema = z.object({ userId: z.uuid() });
-export const adminPasswordResetSchema = z.object({ userId: z.uuid(), reason: adminReasonSchema });
-export const adminSessionActionSchema = z.object({ sessionId: z.uuid(), reason: adminReasonSchema });
+export const adminPasswordResetSchema = z.object({
+  userId: z.uuid(),
+  reason: adminReasonSchema,
+});
+export const adminSessionActionSchema = z.object({
+  sessionId: z.uuid(),
+  reason: adminReasonSchema,
+});
 export const adminSignupCapacitySchema = z.object({
   accountCap: z.coerce
     .number()
@@ -32,7 +41,10 @@ const usernameSchema = z
   .toLowerCase()
   .min(3, "Use at least 3 characters.")
   .max(24, "Keep the username under 24 characters.")
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and single hyphens only.");
+  .regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    "Use lowercase letters, numbers, and single hyphens only."
+  );
 
 export const adminCreateUserSchema = z.object({
   email: z

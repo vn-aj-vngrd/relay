@@ -14,7 +14,10 @@ const subscriptionSchema = z.object({
     .url()
     .max(2048)
     .refine((value) => value.startsWith("https://")),
-  keys: z.object({ p256dh: z.string().min(16).max(512), auth: z.string().min(8).max(256) }),
+  keys: z.object({
+    p256dh: z.string().min(16).max(512),
+    auth: z.string().min(8).max(256),
+  }),
 });
 
 function deviceLabel(userAgent: string) {
@@ -29,30 +32,44 @@ export async function GET() {
   const env = getNotificationEnv();
   return Response.json(
     {
-      enabled: env.enabled && Boolean(env.vapidPublicKey && env.vapidPrivateKey),
+      enabled:
+        env.enabled && Boolean(env.vapidPublicKey && env.vapidPrivateKey),
       publicKey: env.vapidPublicKey || null,
     },
-    { headers: { "Cache-Control": "private, no-store" } },
+    { headers: { "Cache-Control": "private, no-store" } }
   );
 }
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
-  const limit = await checkRateLimit({ scope: "push-subscription", limit: 10, windowSeconds: 3600 }, `user:${user.id}`);
+  if (!user)
+    return Response.json({ error: "Authentication required" }, { status: 401 });
+  const limit = await checkRateLimit(
+    { scope: "push-subscription", limit: 10, windowSeconds: 3600 },
+    `user:${user.id}`
+  );
   if (!limit.allowed)
     return Response.json(
       { error: "Push setup is temporarily limited." },
-      { status: 429, headers: rateLimitHeaders(limit) },
+      { status: 429, headers: rateLimitHeaders(limit) }
     );
-  const parsed = subscriptionSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return Response.json({ error: "Invalid push subscription" }, { status: 400 });
+  const parsed = subscriptionSchema.safeParse(
+    await request.json().catch(() => null)
+  );
+  if (!parsed.success)
+    return Response.json(
+      { error: "Invalid push subscription" },
+      { status: 400 }
+    );
   const existing = await db.query.pushSubscriptions.findFirst({
     columns: { userId: true },
     where: eq(pushSubscriptions.endpoint, parsed.data.endpoint),
   });
   if (existing && existing.userId !== user.id)
-    return Response.json({ error: "This device subscription belongs to another account." }, { status: 409 });
+    return Response.json(
+      { error: "This device subscription belongs to another account." },
+      { status: 409 }
+    );
   const values = {
     userId: user.id,
     endpoint: parsed.data.endpoint,
@@ -80,25 +97,43 @@ export async function POST(request: NextRequest) {
         set: { pushEnabled: true, updatedAt: new Date() },
       });
   });
-  return Response.json({ success: true }, { headers: { ...rateLimitHeaders(limit), "Cache-Control": "no-store" } });
+  return Response.json(
+    { success: true },
+    { headers: { ...rateLimitHeaders(limit), "Cache-Control": "no-store" } }
+  );
 }
 
 export async function DELETE(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return Response.json({ error: "Authentication required" }, { status: 401 });
+  if (!user)
+    return Response.json({ error: "Authentication required" }, { status: 401 });
   const limit = await checkRateLimit(
     { scope: "push-subscription-remove", limit: 20, windowSeconds: 60 },
-    `user:${user.id}`,
+    `user:${user.id}`
   );
   if (!limit.allowed)
     return Response.json(
       { error: "Push changes are temporarily limited." },
-      { status: 429, headers: rateLimitHeaders(limit) },
+      { status: 429, headers: rateLimitHeaders(limit) }
     );
-  const parsed = z.object({ endpoint: z.url().max(2048) }).safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return Response.json({ error: "Invalid push subscription" }, { status: 400 });
+  const parsed = z
+    .object({ endpoint: z.url().max(2048) })
+    .safeParse(await request.json().catch(() => null));
+  if (!parsed.success)
+    return Response.json(
+      { error: "Invalid push subscription" },
+      { status: 400 }
+    );
   await db
     .delete(pushSubscriptions)
-    .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, parsed.data.endpoint)));
-  return Response.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
+    .where(
+      and(
+        eq(pushSubscriptions.userId, user.id),
+        eq(pushSubscriptions.endpoint, parsed.data.endpoint)
+      )
+    );
+  return Response.json(
+    { success: true },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }

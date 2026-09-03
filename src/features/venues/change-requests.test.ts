@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildVenueProposedChanges, venueProposedChangesSchema, type VenueSubmission } from "./change-requests";
+import {
+  buildVenueProposedChanges,
+  type VenueSubmission,
+  venueProposedChangesSchema,
+} from "./change-requests";
 
 const submission: VenueSubmission = {
   requestType: "create",

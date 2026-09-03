@@ -1,8 +1,15 @@
 export function safeNextPath(value: unknown) {
-  return typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/home";
+  return typeof value === "string" &&
+    value.startsWith("/") &&
+    !value.startsWith("//")
+    ? value
+    : "/home";
 }
 
-export function onboardingDestination(path: string, onboardingComplete: boolean) {
+export function onboardingDestination(
+  path: string,
+  onboardingComplete: boolean
+) {
   if (onboardingComplete) return path;
   const destination = path === "/home" ? "/games/new" : path;
   return `/onboarding?next=${encodeURIComponent(destination)}`;

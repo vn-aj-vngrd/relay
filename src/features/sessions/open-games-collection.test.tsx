@@ -1,7 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/features/analytics/actions", () => ({ trackDiscoveryEvent: vi.fn(async () => undefined) }));
+vi.mock("@/features/analytics/actions", () => ({
+  trackDiscoveryEvent: vi.fn(async () => undefined),
+}));
 
 import { OpenGamesCollection } from "./open-games-collection";
 
@@ -38,21 +40,30 @@ describe("OpenGamesCollection", () => {
             },
           ],
         }}
-      />,
+      />
     );
 
-    expect(screen.getByRole("link", { name: /Saturday Pickle/ })).toHaveAttribute(
-      "href",
-      "/games/game-1?source=open-games",
-    );
+    expect(
+      screen.getByRole("link", { name: /Saturday Pickle/ })
+    ).toHaveAttribute("href", "/games/game-1?source=open-games");
     expect(screen.getByText(/₱300/)).toBeVisible();
     expect(screen.getByText(/2 spots left/)).toBeVisible();
     expect(screen.getByText("Host approval required")).toBeVisible();
   });
 
   it("gives an actionable empty state", () => {
-    render(<OpenGamesCollection filters={filters} initialPage={{ items: [], nextCursor: null }} />);
-    expect(screen.getByRole("heading", { name: "No open games match these filters" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute("href", "/games/open");
+    render(
+      <OpenGamesCollection
+        filters={filters}
+        initialPage={{ items: [], nextCursor: null }}
+      />
+    );
+    expect(
+      screen.getByRole("heading", { name: "No open games match these filters" })
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/games/open"
+    );
   });
 });

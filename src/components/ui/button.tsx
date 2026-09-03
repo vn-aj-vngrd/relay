@@ -5,10 +5,12 @@ type Variant = "primary" | "secondary" | "quiet" | "danger";
 type Size = "default" | "large";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover border-transparent shadow-[inset_0_1px_0_oklch(1_0_0/.22)]",
+  primary:
+    "bg-primary text-white hover:bg-primary-hover border-transparent shadow-[inset_0_1px_0_oklch(1_0_0/.22)]",
   secondary: "bg-surface text-ink hover:bg-surface-strong border-line",
   quiet: "bg-transparent text-ink hover:bg-surface-strong border-transparent",
-  danger: "bg-danger text-white hover:opacity-90 border-transparent shadow-[inset_0_1px_0_oklch(1_0_0/.18)]",
+  danger:
+    "bg-danger text-white hover:opacity-90 border-transparent shadow-[inset_0_1px_0_oklch(1_0_0/.18)]",
 };
 
 const sizes: Record<Size, string> = {
@@ -34,7 +36,12 @@ export function Button({
   className = "",
   ...props
 }: ComponentProps<"button"> & { variant?: Variant; size?: Size }) {
-  return <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props} />;
+  return (
+    <button
+      className={`${base} ${sizes[size]} ${variants[variant]} ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function ButtonLink({
@@ -46,7 +53,12 @@ export function ButtonLink({
   target,
   rel,
   ...props
-}: Omit<ComponentProps<typeof Link>, "href"> & { href: string; children: ReactNode; variant?: Variant; size?: Size }) {
+}: Omit<ComponentProps<typeof Link>, "href"> & {
+  href: string;
+  children: ReactNode;
+  variant?: Variant;
+  size?: Size;
+}) {
   return (
     <Link
       href={href}

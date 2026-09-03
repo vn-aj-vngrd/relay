@@ -5,7 +5,10 @@ import { and, desc, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { notifications, sessions } from "@/db/schema";
 
-import { encodeNotificationCursor, type NotificationCursor } from "./pagination";
+import {
+  encodeNotificationCursor,
+  type NotificationCursor,
+} from "./pagination";
 
 export type NotificationFilter = "all" | "unread";
 export type NotificationFeedItem = {
@@ -17,19 +20,25 @@ export type NotificationFeedItem = {
   createdAt: string;
   sessionTitle: string | null;
 };
-export type NotificationPage = { items: NotificationFeedItem[]; nextCursor: string | null };
+export type NotificationPage = {
+  items: NotificationFeedItem[];
+  nextCursor: string | null;
+};
 
 const NOTIFICATION_PAGE_SIZE = 30;
 
 export async function getNotificationPage(
   userId: string,
   filter: NotificationFilter,
-  cursor: NotificationCursor | null = null,
+  cursor: NotificationCursor | null = null
 ): Promise<NotificationPage> {
   const cursorCondition = cursor
     ? or(
         lt(notifications.createdAt, cursor.at),
-        and(eq(notifications.createdAt, cursor.at), lt(notifications.id, cursor.id)),
+        and(
+          eq(notifications.createdAt, cursor.at),
+          lt(notifications.id, cursor.id)
+        )
       )
     : undefined;
   const rows = await db
@@ -40,8 +49,8 @@ export async function getNotificationPage(
       and(
         eq(notifications.userId, userId),
         filter === "unread" ? isNull(notifications.readAt) : undefined,
-        cursorCondition,
-      ),
+        cursorCondition
+      )
     )
     .orderBy(desc(notifications.createdAt), desc(notifications.id))
     .limit(NOTIFICATION_PAGE_SIZE + 1);
@@ -59,6 +68,9 @@ export async function getNotificationPage(
       createdAt: notification.createdAt.toISOString(),
       sessionTitle,
     })),
-    nextCursor: hasMore && last ? encodeNotificationCursor({ at: last.createdAt, id: last.id }) : null,
+    nextCursor:
+      hasMore && last
+        ? encodeNotificationCursor({ at: last.createdAt, id: last.id })
+        : null,
   };
 }

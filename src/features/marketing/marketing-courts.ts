@@ -90,23 +90,25 @@ const marketingSnapshot = [
   },
 ] as const;
 
-export const marketingCourts: CourtListing[] = marketingSnapshot.map((court) => ({
-  ...court,
-  accessType: "commercial",
-  reservationPolicy: "reservation_required",
-  operationalStatus: "operating",
-  operatingHours: [],
-  priceMaxCents: null,
-  priceUnit: court.priceStatus === "paid" ? "hour" : null,
-  parkingStatus: null,
-  parkingLabel: null,
-  amenities: [],
-  contact: null,
-  websiteUrl: null,
-  socialUrl: null,
-  bookingUrl: null,
-  listingStatus: "verified",
-  sourceUrl: null,
-  verifiedAt: null,
-  lastSeenAt: null,
-}));
+export const marketingCourts: CourtListing[] = marketingSnapshot.map(
+  (court) => ({
+    ...court,
+    accessType: "commercial",
+    reservationPolicy: "reservation_required",
+    operationalStatus: "operating",
+    operatingHours: [],
+    priceMaxCents: null,
+    priceUnit: court.priceStatus === "paid" ? "hour" : null,
+    parkingStatus: null,
+    parkingLabel: null,
+    amenities: [],
+    contact: null,
+    websiteUrl: null,
+    socialUrl: null,
+    bookingUrl: null,
+    listingStatus: "verified",
+    sourceUrl: null,
+    verifiedAt: null,
+    lastSeenAt: null,
+  })
+);

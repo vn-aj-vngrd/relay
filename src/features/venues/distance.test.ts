@@ -6,7 +6,7 @@ describe("venue distance", () => {
   it("calculates practical local distances", () => {
     const distance = distanceInKilometers(
       { latitude: 10.3157, longitude: 123.8854 },
-      { latitude: 10.294, longitude: 123.902 },
+      { latitude: 10.294, longitude: 123.902 }
     );
     expect(distance).toBeGreaterThan(2);
     expect(distance).toBeLessThan(4);

@@ -7,14 +7,25 @@ const mocks = vi.hoisted(() => {
   const refresh = vi.fn();
   const removeChannel = vi.fn();
   const setAuth = vi.fn();
-  const getSession = vi.fn().mockResolvedValue({ data: { session: { access_token: "test-token" } } });
+  const getSession = vi
+    .fn()
+    .mockResolvedValue({ data: { session: { access_token: "test-token" } } });
   const channel = { on: vi.fn(), subscribe: vi.fn() };
   channel.on.mockReturnValue(channel);
   const createChannel = vi.fn(() => channel);
-  return { refresh, removeChannel, setAuth, getSession, channel, createChannel };
+  return {
+    refresh,
+    removeChannel,
+    setAuth,
+    getSession,
+    channel,
+    createChannel,
+  };
 });
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: mocks.refresh }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: mocks.refresh }),
+}));
 vi.mock("@/lib/supabase/client", () => ({
   createSupabaseBrowserClient: () => ({
     auth: { getSession: mocks.getSession },
@@ -38,7 +49,9 @@ describe("NotificationRealtimeRefresh", () => {
     expect(mocks.createChannel).toHaveBeenCalledWith("notifications:user-1");
     expect(mocks.channel.subscribe).toHaveBeenCalledWith(expect.any(Function));
 
-    const status = mocks.channel.subscribe.mock.calls[0]?.[0] as (value: string) => void;
+    const status = mocks.channel.subscribe.mock.calls[0]?.[0] as (
+      value: string
+    ) => void;
     status("SUBSCRIBED");
     await act(async () => vi.advanceTimersByTime(151));
 

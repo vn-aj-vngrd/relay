@@ -8,17 +8,33 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { adminAuditLogs, venueChangeRequests, venueOperatingPeriods, venues } from "@/db/schema";
+import {
+  adminAuditLogs,
+  venueChangeRequests,
+  venueOperatingPeriods,
+  venues,
+} from "@/db/schema";
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 
-import { buildVenueProposedChanges, venueProposedChangesSchema } from "./change-requests";
-import { buildCourtOperatingHours, courtDays, toCourtPriceStorage } from "./details";
+import {
+  buildVenueProposedChanges,
+  venueProposedChangesSchema,
+} from "./change-requests";
+import {
+  buildCourtOperatingHours,
+  courtDays,
+  toCourtPriceStorage,
+} from "./details";
 import { expireCourtDirectory } from "./directory";
 import { adminVenueSchema, venueSubmissionSchema } from "./domain";
 
-export type VenueActionState = { error?: string; success?: string; fieldErrors?: Record<string, string[]> };
+export type VenueActionState = {
+  error?: string;
+  success?: string;
+  fieldErrors?: Record<string, string[]>;
+};
 
 function venueSlug(name: string) {
   const base = name
@@ -35,14 +51,23 @@ function operatingHoursFormData(formData: FormData) {
     courtDays.flatMap(({ key }) => [
       [`${key}Open`, formData.get(`${key}Open`)],
       [`${key}Close`, formData.get(`${key}Close`)],
-    ]),
+    ])
   );
 }
 
-export async function submitVenueAction(_: VenueActionState, formData: FormData): Promise<VenueActionState> {
+export async function submitVenueAction(
+  _: VenueActionState,
+  formData: FormData
+): Promise<VenueActionState> {
   const user = await requireUser();
-  const limit = await checkRateLimit({ scope: "venue-submit", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
-  if (!limit.allowed) return { error: "You’ve submitted several courts recently. Try again tomorrow." };
+  const limit = await checkRateLimit(
+    { scope: "venue-submit", limit: 5, windowSeconds: 86400 },
+    `user:${user.id}`
+  );
+  if (!limit.allowed)
+    return {
+      error: "You’ve submitted several courts recently. Try again tomorrow.",
+    };
   const parsed = venueSubmissionSchema.safeParse({
     requestType: formData.get("requestType"),
     venueId: formData.get("venueId") ?? "",
@@ -80,22 +105,34 @@ export async function submitVenueAction(_: VenueActionState, formData: FormData)
     parsed.data.requestType === "update"
       ? await db.query.venues.findFirst({
           columns: { id: true },
-          where: and(eq(venues.id, parsed.data.venueId), eq(venues.listingStatus, "verified")),
+          where: and(
+            eq(venues.id, parsed.data.venueId),
+            eq(venues.listingStatus, "verified")
+          ),
         })
       : null;
   if (parsed.data.requestType === "update" && !targetVenue)
-    return { error: "This court is no longer available to update. Return to Court Finder and choose another court." };
+    return {
+      error:
+        "This court is no longer available to update. Return to Court Finder and choose another court.",
+    };
 
   if (parsed.data.requestType === "create") {
     const duplicate = await db.query.venues.findFirst({
       columns: { id: true },
       where: or(
         ilike(venues.name, parsed.data.name),
-        and(ilike(venues.address, `%${parsed.data.address}%`), ilike(venues.address, `%${parsed.data.city}%`)),
+        and(
+          ilike(venues.address, `%${parsed.data.address}%`),
+          ilike(venues.address, `%${parsed.data.city}%`)
+        )
       ),
     });
     if (duplicate)
-      return { error: "This court may already be listed. Open its court page and choose Suggest an update instead." };
+      return {
+        error:
+          "This court may already be listed. Open its court page and choose Suggest an update instead.",
+      };
   }
 
   await db.insert(venueChangeRequests).values({
@@ -115,7 +152,10 @@ export async function submitVenueAction(_: VenueActionState, formData: FormData)
   };
 }
 
-export async function updateVenueAction(_: VenueActionState, formData: FormData): Promise<VenueActionState> {
+export async function updateVenueAction(
+  _: VenueActionState,
+  formData: FormData
+): Promise<VenueActionState> {
   const actor = await requireAdmin();
   const parsed = adminVenueSchema.safeParse({
     venueId: formData.get("venueId"),
@@ -144,9 +184,14 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
     listingStatus: formData.get("listingStatus"),
     verificationNote: formData.get("verificationNote"),
   });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the court details." };
+  if (!parsed.success)
+    return {
+      error: parsed.error.issues[0]?.message ?? "Check the court details.",
+    };
 
-  const existing = await db.query.venues.findFirst({ where: eq(venues.id, parsed.data.venueId) });
+  const existing = await db.query.venues.findFirst({
+    where: eq(venues.id, parsed.data.venueId),
+  });
   if (!existing) return { error: "This court no longer exists." };
   const verified = parsed.data.listingStatus === "verified";
 
@@ -156,10 +201,13 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
       .set({
         name: parsed.data.name,
         address: parsed.data.address,
-        latitude: parsed.data.latitude === "" ? null : String(parsed.data.latitude),
-        longitude: parsed.data.longitude === "" ? null : String(parsed.data.longitude),
+        latitude:
+          parsed.data.latitude === "" ? null : String(parsed.data.latitude),
+        longitude:
+          parsed.data.longitude === "" ? null : String(parsed.data.longitude),
         environment: parsed.data.environment || null,
-        courtCount: parsed.data.courtCount === "" ? null : parsed.data.courtCount,
+        courtCount:
+          parsed.data.courtCount === "" ? null : parsed.data.courtCount,
         accessType: parsed.data.accessType,
         reservationPolicy: parsed.data.reservationPolicy,
         operationalStatus: parsed.data.operationalStatus,
@@ -179,7 +227,9 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
         updatedAt: new Date(),
       })
       .where(eq(venues.id, existing.id));
-    await transaction.delete(venueOperatingPeriods).where(eq(venueOperatingPeriods.venueId, existing.id));
+    await transaction
+      .delete(venueOperatingPeriods)
+      .where(eq(venueOperatingPeriods.venueId, existing.id));
     const periods = buildCourtOperatingHours(parsed.data);
     if (periods.length)
       await transaction
@@ -188,13 +238,18 @@ export async function updateVenueAction(_: VenueActionState, formData: FormData)
     if (verified)
       await transaction
         .update(venueChangeRequests)
-        .set({ status: "approved", reviewedById: actor.id, reviewedAt: new Date(), updatedAt: new Date() })
+        .set({
+          status: "approved",
+          reviewedById: actor.id,
+          reviewedAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(venueChangeRequests.venueId, existing.id),
             eq(venueChangeRequests.requestType, "create"),
-            eq(venueChangeRequests.status, "in_review"),
-          ),
+            eq(venueChangeRequests.status, "in_review")
+          )
         );
     await transaction.insert(adminAuditLogs).values({
       actorUserId: actor.id,
@@ -223,18 +278,29 @@ const reviewRequestSchema = z.object({
 export async function applyVenueChangeRequestAction(formData: FormData) {
   const actor = await requireAdmin();
   const requestId = z.uuid().parse(formData.get("requestId"));
-  const request = await db.query.venueChangeRequests.findFirst({ where: eq(venueChangeRequests.id, requestId) });
-  if (!request || !["submitted", "needs_info", "in_review"].includes(request.status)) redirect("/admin/court-requests");
-  const parsedProposal = venueProposedChangesSchema.safeParse(request.proposedChanges);
-  if (!parsedProposal.success) throw new Error("This court request contains invalid proposed changes.");
+  const request = await db.query.venueChangeRequests.findFirst({
+    where: eq(venueChangeRequests.id, requestId),
+  });
+  if (
+    !request ||
+    !["submitted", "needs_info", "in_review"].includes(request.status)
+  )
+    redirect("/admin/court-requests");
+  const parsedProposal = venueProposedChangesSchema.safeParse(
+    request.proposedChanges
+  );
+  if (!parsedProposal.success)
+    throw new Error("This court request contains invalid proposed changes.");
   const proposal = parsedProposal.data;
 
-  if (request.requestType === "create" && request.venueId) redirect(`/admin/courts/${request.venueId}`);
+  if (request.requestType === "create" && request.venueId)
+    redirect(`/admin/courts/${request.venueId}`);
 
   let targetId = request.venueId;
   if (request.requestType === "create") {
     const { name, address } = proposal;
-    if (!name || !address) throw new Error("A new court request needs a name and address.");
+    if (!name || !address)
+      throw new Error("A new court request needs a name and address.");
     targetId = await db.transaction(async (transaction) => {
       const [created] = await transaction
         .insert(venues)
@@ -267,12 +333,21 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
         .returning({ id: venues.id });
       if (!created) throw new Error("The court draft could not be created.");
       if (proposal.operatingHours?.length)
-        await transaction
-          .insert(venueOperatingPeriods)
-          .values(proposal.operatingHours.map((period, sequence) => ({ venueId: created.id, sequence, ...period })));
+        await transaction.insert(venueOperatingPeriods).values(
+          proposal.operatingHours.map((period, sequence) => ({
+            venueId: created.id,
+            sequence,
+            ...period,
+          }))
+        );
       await transaction
         .update(venueChangeRequests)
-        .set({ venueId: created.id, status: "in_review", reviewedById: actor.id, updatedAt: new Date() })
+        .set({
+          venueId: created.id,
+          status: "in_review",
+          reviewedById: actor.id,
+          updatedAt: new Date(),
+        })
         .where(eq(venueChangeRequests.id, request.id));
       await transaction.insert(adminAuditLogs).values({
         actorUserId: actor.id,
@@ -284,31 +359,58 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
       return created.id;
     });
   } else {
-    const existing = targetId ? await db.query.venues.findFirst({ where: eq(venues.id, targetId) }) : null;
-    if (!existing) throw new Error("The court attached to this request no longer exists.");
-    const has = (key: keyof typeof proposal) => Object.prototype.hasOwnProperty.call(proposal, key);
+    const existing = targetId
+      ? await db.query.venues.findFirst({ where: eq(venues.id, targetId) })
+      : null;
+    if (!existing)
+      throw new Error("The court attached to this request no longer exists.");
+    const has = (key: keyof typeof proposal) => Object.hasOwn(proposal, key);
     await db.transaction(async (transaction) => {
       await transaction
         .update(venues)
         .set({
           name: has("name") ? proposal.name : existing.name,
           address: has("address") ? proposal.address : existing.address,
-          environment: has("environment") ? proposal.environment : existing.environment,
-          courtCount: has("courtCount") ? proposal.courtCount : existing.courtCount,
-          accessType: has("accessType") ? proposal.accessType : existing.accessType,
-          reservationPolicy: has("reservationPolicy") ? proposal.reservationPolicy : existing.reservationPolicy,
-          operationalStatus: has("operationalStatus") ? proposal.operationalStatus : existing.operationalStatus,
-          priceStatus: has("priceStatus") ? proposal.priceStatus : existing.priceStatus,
-          priceAmountCents: has("priceAmountCents") ? proposal.priceAmountCents : existing.priceAmountCents,
-          priceMaxCents: has("priceMaxCents") ? proposal.priceMaxCents : existing.priceMaxCents,
+          environment: has("environment")
+            ? proposal.environment
+            : existing.environment,
+          courtCount: has("courtCount")
+            ? proposal.courtCount
+            : existing.courtCount,
+          accessType: has("accessType")
+            ? proposal.accessType
+            : existing.accessType,
+          reservationPolicy: has("reservationPolicy")
+            ? proposal.reservationPolicy
+            : existing.reservationPolicy,
+          operationalStatus: has("operationalStatus")
+            ? proposal.operationalStatus
+            : existing.operationalStatus,
+          priceStatus: has("priceStatus")
+            ? proposal.priceStatus
+            : existing.priceStatus,
+          priceAmountCents: has("priceAmountCents")
+            ? proposal.priceAmountCents
+            : existing.priceAmountCents,
+          priceMaxCents: has("priceMaxCents")
+            ? proposal.priceMaxCents
+            : existing.priceMaxCents,
           priceUnit: has("priceUnit") ? proposal.priceUnit : existing.priceUnit,
-          parkingStatus: has("parkingStatus") ? proposal.parkingStatus : existing.parkingStatus,
+          parkingStatus: has("parkingStatus")
+            ? proposal.parkingStatus
+            : existing.parkingStatus,
           amenities: has("amenities") ? proposal.amenities : existing.amenities,
-          paddleRental: has("paddleRental") ? proposal.paddleRental : existing.paddleRental,
+          paddleRental: has("paddleRental")
+            ? proposal.paddleRental
+            : existing.paddleRental,
           contact: has("contact") ? proposal.contact : existing.contact,
-          websiteUrl: has("websiteUrl") ? proposal.websiteUrl : existing.websiteUrl,
+          websiteUrl: has("websiteUrl")
+            ? proposal.websiteUrl
+            : existing.websiteUrl,
           socialUrl: has("socialUrl") ? proposal.socialUrl : existing.socialUrl,
-          bookingUrl: has("bookingUrl") ? proposal.bookingUrl : existing.bookingUrl,
+          bookingUrl: has("bookingUrl")
+            ? proposal.bookingUrl
+            : existing.bookingUrl,
           verifiedAt: new Date(),
           verifiedById: actor.id,
           lastSeenAt: new Date(),
@@ -316,15 +418,26 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
         })
         .where(eq(venues.id, existing.id));
       if (has("operatingHours")) {
-        await transaction.delete(venueOperatingPeriods).where(eq(venueOperatingPeriods.venueId, existing.id));
+        await transaction
+          .delete(venueOperatingPeriods)
+          .where(eq(venueOperatingPeriods.venueId, existing.id));
         if (proposal.operatingHours?.length)
-          await transaction
-            .insert(venueOperatingPeriods)
-            .values(proposal.operatingHours.map((period, sequence) => ({ venueId: existing.id, sequence, ...period })));
+          await transaction.insert(venueOperatingPeriods).values(
+            proposal.operatingHours.map((period, sequence) => ({
+              venueId: existing.id,
+              sequence,
+              ...period,
+            }))
+          );
       }
       await transaction
         .update(venueChangeRequests)
-        .set({ status: "approved", reviewedById: actor.id, reviewedAt: new Date(), updatedAt: new Date() })
+        .set({
+          status: "approved",
+          reviewedById: actor.id,
+          reviewedAt: new Date(),
+          updatedAt: new Date(),
+        })
         .where(eq(venueChangeRequests.id, request.id));
       await transaction.insert(adminAuditLogs).values({
         actorUserId: actor.id,
@@ -351,8 +464,13 @@ export async function resolveVenueChangeRequestAction(formData: FormData) {
     decision: formData.get("decision"),
     resolutionNote: formData.get("resolutionNote"),
   });
-  const request = await db.query.venueChangeRequests.findFirst({ where: eq(venueChangeRequests.id, parsed.requestId) });
-  if (!request || ["approved", "rejected", "duplicate", "withdrawn"].includes(request.status))
+  const request = await db.query.venueChangeRequests.findFirst({
+    where: eq(venueChangeRequests.id, parsed.requestId),
+  });
+  if (
+    !request ||
+    ["approved", "rejected", "duplicate", "withdrawn"].includes(request.status)
+  )
     redirect("/admin/court-requests");
   await db.transaction(async (transaction) => {
     await transaction

@@ -19,15 +19,28 @@ describe("buildHostRetention", () => {
         { hostId: "late-repeat", publishedAt: daysAgo(5) },
         { hostId: "new", publishedAt: daysAgo(10) },
       ],
-      now,
+      now
     );
 
-    expect(retention.fourteenDay).toEqual({ days: 14, eligibleHosts: 2, retainedHosts: 0, rate: 0 });
-    expect(retention.thirtyDay).toEqual({ days: 30, eligibleHosts: 2, retainedHosts: 1, rate: 50 });
+    expect(retention.fourteenDay).toEqual({
+      days: 14,
+      eligibleHosts: 2,
+      retainedHosts: 0,
+      rate: 0,
+    });
+    expect(retention.thirtyDay).toEqual({
+      days: 30,
+      eligibleHosts: 2,
+      retainedHosts: 1,
+      rate: 50,
+    });
   });
 
   it("does not treat hosts without a second published game as retained", () => {
-    const retention = buildHostRetention([{ hostId: "one-game", publishedAt: daysAgo(60) }], now);
+    const retention = buildHostRetention(
+      [{ hostId: "one-game", publishedAt: daysAgo(60) }],
+      now
+    );
 
     expect(retention.fourteenDay.rate).toBe(0);
     expect(retention.thirtyDay.rate).toBe(0);

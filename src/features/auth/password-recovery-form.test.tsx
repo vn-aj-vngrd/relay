@@ -2,8 +2,18 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@marsidev/react-turnstile", () => ({
-  Turnstile: ({ onSuccess, options }: { onSuccess: (token: string) => void; options: { appearance?: string } }) => (
-    <button type="button" data-appearance={options.appearance} onClick={() => onSuccess("test-token")}>
+  Turnstile: ({
+    onSuccess,
+    options,
+  }: {
+    onSuccess: (token: string) => void;
+    options: { appearance?: string };
+  }) => (
+    <button
+      type="button"
+      data-appearance={options.appearance}
+      onClick={() => onSuccess("test-token")}
+    >
       Complete security check
     </button>
   ),
@@ -29,16 +39,22 @@ describe("PasswordRecoveryForm", () => {
     render(<PasswordRecoveryForm />);
 
     const submit = screen.getByRole("button", { name: "Send reset link" });
-    expect(screen.getByRole("button", { name: "Complete security check" })).toHaveAttribute(
-      "data-appearance",
-      "always",
+    expect(
+      screen.getByRole("button", { name: "Complete security check" })
+    ).toHaveAttribute("data-appearance", "always");
+    expect(screen.getByLabelText("Email")).toHaveAttribute(
+      "autocomplete",
+      "email"
     );
-    expect(screen.getByLabelText("Email")).toHaveAttribute("autocomplete", "email");
     expect(submit).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: "Complete security check" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Complete security check" })
+    );
 
     expect(submit).toBeEnabled();
-    expect(screen.getByRole("link", { name: "Return to login" })).toHaveAttribute("href", "/login");
+    expect(
+      screen.getByRole("link", { name: "Return to login" })
+    ).toHaveAttribute("href", "/login");
   });
 });

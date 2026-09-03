@@ -9,7 +9,10 @@ import { PwaManager } from "@/features/pwa/pwa-manager";
 import { THEME_INIT_SCRIPT } from "@/lib/theme-init";
 
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const viewport: Viewport = {
   themeColor: "oklch(0.965 0.002 75)",
@@ -20,7 +23,10 @@ export const viewport: Viewport = {
 const siteOrigin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3002";
 
 export const metadata: Metadata = {
-  title: { default: "Relay — Pickleball planner, court finder and scorekeeper", template: "%s · Relay" },
+  title: {
+    default: "Relay — Pickleball planner, court finder and scorekeeper",
+    template: "%s · Relay",
+  },
   description:
     "Plan pickleball games, find verified courts in the Philippines, manage RSVPs and rotations, and keep score with Relay.",
   applicationName: "Relay",
@@ -51,18 +57,23 @@ export const metadata: Metadata = {
       { url: "/relay-ball.svg", type: "image/svg+xml", sizes: "any" },
       { url: "/relay-ball-32.png", type: "image/png", sizes: "32x32" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" }],
+    apple: [
+      { url: "/apple-touch-icon.png", type: "image/png", sizes: "180x180" },
+    ],
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   const organizationJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Relay",
     url: siteOrigin,
     logo: new URL("/pwa-512.png", siteOrigin).toString(),
-    description: "Pickleball planning, court discovery, rotations, and scoring for players in the Philippines.",
+    description:
+      "Pickleball planning, court discovery, rotations, and scoring for players in the Philippines.",
   };
   const websiteJsonLd = {
     "@context": "https://schema.org",
@@ -92,7 +103,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify([organizationJsonLd, websiteJsonLd]).replaceAll("<", "\\u003c"),
+            __html: JSON.stringify([
+              organizationJsonLd,
+              websiteJsonLd,
+            ]).replaceAll("<", "\\u003c"),
           }}
         />
         <a href="#main-content" className="skip-link">

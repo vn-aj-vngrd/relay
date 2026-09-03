@@ -1,7 +1,13 @@
-import { ArrowSquareOut, CalendarBlank, CheckCircle, Clock, MapPin } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowSquareOut,
+  CalendarBlank,
+  CheckCircle,
+  Clock,
+  MapPin,
+} from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
-import { sessions } from "@/db/schema";
+import type { sessions } from "@/db/schema";
 
 import { formatSessionDateLong, formatSessionTime, peso } from "./format";
 
@@ -37,14 +43,19 @@ export function SessionHero({
       <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
       <div className="absolute inset-y-0 right-[18%] w-px bg-court-line/20" />
       <div className="absolute right-0 top-[68%] h-px w-[36%] bg-court-line/20" />
-      <p className="sport-label text-white/65">{formatSessionDateLong(session.startsAt).toUpperCase()}</p>
+      <p className="sport-label text-white/65">
+        {formatSessionDateLong(session.startsAt).toUpperCase()}
+      </p>
       <Heading
         title={session.title}
         className="relative mt-3 max-w-xl break-words text-[1.625rem] font-[720] leading-8 tracking-[-0.025em] sm:mt-4 sm:text-4xl sm:leading-[2.5rem]"
       >
         {session.title}
       </Heading>
-      <p title={hostLabel} className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base">
+      <p
+        title={hostLabel}
+        className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base"
+      >
         {hostLabel}
       </p>
     </div>
@@ -58,24 +69,40 @@ export function SessionPlanDetails({
   session: SessionPlanData;
   bookingAction?: ReactNode;
 }) {
-  const durationMinutes = Math.round((session.endsAt.getTime() - session.startsAt.getTime()) / 60000);
+  const durationMinutes = Math.round(
+    (session.endsAt.getTime() - session.startsAt.getTime()) / 60000
+  );
   return (
     <section
       aria-label="Session plan"
       className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-5 border-b border-line sm:gap-y-6"
     >
       <div className="col-span-2 flex gap-3 sm:col-span-1">
-        <CalendarBlank aria-hidden className="mt-0.5 shrink-0 text-primary" size={20} />
+        <CalendarBlank
+          aria-hidden
+          className="mt-0.5 shrink-0 text-primary"
+          size={20}
+        />
         <div>
-          <p className="font-semibold">{formatSessionDateLong(session.startsAt)}</p>
-          <p className="mt-1 text-sm text-muted">{formatSessionTime(session.startsAt, session.endsAt)}</p>
+          <p className="font-semibold">
+            {formatSessionDateLong(session.startsAt)}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            {formatSessionTime(session.startsAt, session.endsAt)}
+          </p>
         </div>
       </div>
       <div className="col-span-2 flex gap-3 sm:col-span-1">
-        <MapPin aria-hidden className="mt-0.5 shrink-0 text-primary" size={21} />
+        <MapPin
+          aria-hidden
+          className="mt-0.5 shrink-0 text-primary"
+          size={21}
+        />
         <div className="min-w-0">
           <p className="font-semibold">{session.venueName}</p>
-          {session.venueAddress ? <p className="mt-1 text-sm text-muted">{session.venueAddress}</p> : null}
+          {session.venueAddress ? (
+            <p className="mt-1 text-sm text-muted">{session.venueAddress}</p>
+          ) : null}
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(session.venueAddress || session.venueName)}`}
             target="_blank"
@@ -108,7 +135,9 @@ export function SessionPlanDetails({
           size={20}
         />
         <div className="min-w-0">
-          <p className="font-semibold">{session.bookedAt ? "Court confirmed" : "Booking pending"}</p>
+          <p className="font-semibold">
+            {session.bookedAt ? "Court confirmed" : "Booking pending"}
+          </p>
           <p className="mt-1 text-sm text-muted">
             {session.estimatedCostCents === 0
               ? "Free"

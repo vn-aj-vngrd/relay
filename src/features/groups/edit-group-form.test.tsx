@@ -18,19 +18,27 @@ describe("EditGroupForm", () => {
       <EditGroupForm
         group={group}
         imageUrl="https://relay.supabase.co/storage/v1/object/public/avatars/owner/group.webp"
-      />,
+      />
     );
 
-    expect(screen.getByRole("textbox", { name: "Group name" })).toHaveValue("Tuesday Dink Club");
-    expect(screen.getByRole("textbox", { name: /Description/ })).toHaveValue("The regular crew.");
+    expect(screen.getByRole("textbox", { name: "Group name" })).toHaveValue(
+      "Tuesday Dink Club"
+    );
+    expect(screen.getByRole("textbox", { name: /Description/ })).toHaveValue(
+      "The regular crew."
+    );
     const preview = screen.getByRole("img", { name: "Group photo preview" });
     expect(preview).toBeVisible();
     expect(preview.parentElement).toHaveClass("rounded-full");
 
     fireEvent.click(screen.getByRole("button", { name: "Remove photo" }));
 
-    expect(screen.queryByRole("img", { name: "Group photo preview" })).not.toBeInTheDocument();
-    expect(container.querySelector('input[name="removeImage"]')).toHaveValue("true");
+    expect(
+      screen.queryByRole("img", { name: "Group photo preview" })
+    ).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="removeImage"]')).toHaveValue(
+      "true"
+    );
     expect(screen.getByRole("button", { name: "Save changes" })).toBeVisible();
   });
 });

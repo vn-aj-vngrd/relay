@@ -15,7 +15,11 @@ describe("game pagination cursor", () => {
   it("rejects malformed cursors", () => {
     expect(parseGameCursor("not-a-cursor")).toBeNull();
     expect(
-      parseGameCursor(Buffer.from(JSON.stringify({ at: "yesterday", id: "no" })).toString("base64url")),
+      parseGameCursor(
+        Buffer.from(JSON.stringify({ at: "yesterday", id: "no" })).toString(
+          "base64url"
+        )
+      )
     ).toBeNull();
   });
 });

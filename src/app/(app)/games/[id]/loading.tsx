@@ -5,7 +5,10 @@ import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 export default function SessionLoading() {
   return (
     <>
-      <GamePageIntro title="Overview" description="The plan, roster, setup progress, and next action for this game." />
+      <GamePageIntro
+        title="Overview"
+        description="The plan, roster, setup progress, and next action for this game."
+      />
       <div
         role="status"
         aria-label="Loading game overview"
@@ -30,7 +33,10 @@ export default function SessionLoading() {
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <div className="grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line pb-7">
               {Array.from({ length: 4 }, (_, index) => (
-                <div key={index} className="col-span-2 flex gap-3 sm:col-span-1">
+                <div
+                  key={index}
+                  className="col-span-2 flex gap-3 sm:col-span-1"
+                >
                   <Skeleton className="h-5 w-5 shrink-0" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />

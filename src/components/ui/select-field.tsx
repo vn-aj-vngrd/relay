@@ -1,6 +1,7 @@
 "use client";
 
 import { CaretDown, Check } from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import { usePopoverTransition } from "./use-popover-transition";
@@ -18,6 +19,7 @@ export function SelectField({
   hideLabel = false,
   disabled = false,
   density = "default",
+  leadingIcon,
   className = "",
 }: {
   id: string;
@@ -30,6 +32,7 @@ export function SelectField({
   hideLabel?: boolean;
   disabled?: boolean;
   density?: "default" | "compact";
+  leadingIcon?: ReactNode;
   className?: string;
 }) {
   const [localValue, setLocalValue] = useState(defaultValue);
@@ -42,7 +45,8 @@ export function SelectField({
   };
   const { open, rendered, hide, toggle } = usePopoverTransition();
   const trigger = useRef<HTMLButtonElement>(null);
-  const selected = options.find((option) => option.value === value) ?? options[0];
+  const selected =
+    options.find((option) => option.value === value) ?? options[0];
   useEffect(() => {
     if (!open) return;
     const pointer = (event: PointerEvent) => {
@@ -63,7 +67,10 @@ export function SelectField({
 
   return (
     <div ref={root} className="relative min-w-0">
-      <label htmlFor={id} className={hideLabel ? "sr-only" : "block text-sm font-[650]"}>
+      <label
+        htmlFor={id}
+        className={hideLabel ? "sr-only" : "block text-sm font-[650]"}
+      >
         {label}
       </label>
       <input type="hidden" name={name} value={value} />
@@ -77,7 +84,14 @@ export function SelectField({
         onClick={toggle}
         className={`mt-1.5 flex w-full items-center justify-between rounded-lg border border-line bg-surface text-left text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${density === "compact" ? "compact-control h-9 min-h-9 gap-2 px-3 text-[13px]" : "h-11 gap-3 px-3 text-sm"} ${className}`}
       >
-        <span className="truncate">{selected?.label}</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          {leadingIcon ? (
+            <span aria-hidden className="shrink-0 text-muted">
+              {leadingIcon}
+            </span>
+          ) : null}
+          <span className="truncate">{selected?.label}</span>
+        </span>
         <CaretDown
           aria-hidden
           size={14}
@@ -107,7 +121,9 @@ export function SelectField({
               className={`pressable flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm ${value === option.value ? "bg-primary-soft font-semibold text-primary" : "hover:bg-surface-strong"}`}
             >
               <span>{option.label}</span>
-              {value === option.value ? <Check aria-hidden size={14} className="shrink-0" /> : null}
+              {value === option.value ? (
+                <Check aria-hidden size={14} className="shrink-0" />
+              ) : null}
             </button>
           ))}
         </div>

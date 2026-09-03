@@ -12,15 +12,24 @@ export const metadata: Metadata = {
   alternates: { canonical: "/play" },
   openGraph: {
     title: "Free pickleball scorekeeper and rotation manager",
-    description: "Add players, run court rotations, and keep score from one phone—no account required.",
+    description:
+      "Add players, run court rotations, and keep score from one phone—no account required.",
     url: "/play",
     type: "website",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Relay pickleball scorekeeper" }],
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Relay pickleball scorekeeper",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Free pickleball scorekeeper and rotation manager",
-    description: "Add players, manage courts and rotations, and keep score from one phone.",
+    description:
+      "Add players, manage courts and rotations, and keep score from one phone.",
     images: ["/opengraph-image"],
   },
 };
@@ -47,7 +56,10 @@ export default function QuickPlayPage() {
           </div>
         </div>
       </header>
-      <main id="main-content" className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-12">
+      <main
+        id="main-content"
+        className="w-full flex-1 px-4 py-8 sm:px-8 sm:py-12"
+      >
         <PublicQuickPlay />
       </main>
       <footer className="border-t border-line px-4 py-7 sm:px-8">

@@ -97,12 +97,16 @@ const suggestedVenue: CourtListing = {
 
 beforeEach(() => {
   captureMapVenues.mockClear();
-  Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+  Object.assign(navigator, {
+    clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
   Object.defineProperty(navigator, "geolocation", {
     configurable: true,
     value: {
       getCurrentPosition: vi.fn((success: PositionCallback) =>
-        success({ coords: { latitude: 10.3045, longitude: 123.9929 } } as GeolocationPosition),
+        success({
+          coords: { latitude: 10.3045, longitude: 123.9929 },
+        } as GeolocationPosition)
       ),
     },
   });
@@ -112,9 +116,15 @@ describe("CourtFinder", () => {
   it("loads the full finder map with court details closed by default", async () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
-    expect(await screen.findByLabelText("Interactive map of pickleball courts")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Load map" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("complementary", { name: /Selected court:/ })).not.toBeInTheDocument();
+    expect(
+      await screen.findByLabelText("Interactive map of pickleball courts")
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Load map" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("complementary", { name: /Selected court:/ })
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the mapped court set stable when opening a marker card", () => {
@@ -122,45 +132,72 @@ describe("CourtFinder", () => {
 
     const map = screen.getByLabelText("Interactive map of pickleball courts");
     const beforeSelection = captureMapVenues.mock.calls.at(-1)?.[0];
-    fireEvent.click(within(map).getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(
+      within(map).getByRole("button", {
+        name: "Select NiceServe Pickleball Court",
+      })
+    );
 
     expect(captureMapVenues.mock.calls.at(-1)?.[0]).toBe(beforeSelection);
   });
 
   it("supports the bounded preview and full finder map layouts", () => {
-    const { rerender } = render(<CourtFinder venues={[venue]} compactPreview />);
-    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass("h-[360px]");
-    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
+    const { rerender } = render(
+      <CourtFinder venues={[venue]} compactPreview />
+    );
+    expect(
+      screen.getByRole("heading", { name: "Courts" }).closest("section")
+    ).toHaveClass("h-[360px]");
+    expect(
+      screen.getByLabelText("Interactive map of pickleball courts")
+    ).toBeVisible();
 
     rerender(<CourtFinder venues={[venue]} />);
-    expect(screen.getByRole("heading", { name: "Courts" }).closest("section")).toHaveClass(
-      "h-[min(60dvh,520px)]",
-      "sm:h-[580px]",
+    expect(
+      screen.getByRole("heading", { name: "Courts" }).closest("section")
+    ).toHaveClass("h-[min(60dvh,520px)]", "sm:h-[580px]");
+    expect(
+      screen.getByLabelText("Interactive map of pickleball courts")
+    ).toBeVisible();
+    expect(document.querySelector(".court-finder-results-grid")).toHaveClass(
+      "xl:flex-1"
     );
-    expect(screen.getByLabelText("Interactive map of pickleball courts")).toBeVisible();
-    expect(document.querySelector(".court-finder-results-grid")).toHaveClass("xl:flex-1");
   });
 
   it("gives mobile and tablet users dedicated map and list views", () => {
     render(<CourtFinder venues={[venue, fartherVenue]} />);
 
     const map = screen.getByRole("region", { name: "Court map" });
-    const listPane = document.querySelector<HTMLElement>("[data-court-list-pane]");
+    const listPane = document.querySelector<HTMLElement>(
+      "[data-court-list-pane]"
+    );
 
-    expect(screen.getByRole("button", { name: "Change court view, currently List" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Change court view, currently List" })
+    ).toBeVisible();
     expect(map).toHaveClass("hidden", "xl:flex");
     expect(listPane).toHaveClass("block");
 
-    fireEvent.click(screen.getByRole("button", { name: "Change court view, currently List" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change court view, currently List" })
+    );
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Map" }));
 
-    expect(screen.getByRole("button", { name: "Change court view, currently Map" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Change court view, currently Map" })
+    ).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(listPane).toHaveClass("hidden", "xl:block");
 
-    fireEvent.click(within(map).getByRole("button", { name: "Select NiceServe Pickleball Court" }));
+    fireEvent.click(
+      within(map).getByRole("button", {
+        name: "Select NiceServe Pickleball Court",
+      })
+    );
 
-    expect(screen.getByRole("button", { name: "Change court view, currently Map" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Change court view, currently Map" })
+    ).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
   });
@@ -168,42 +205,61 @@ describe("CourtFinder", () => {
   it("selects a Cebu court from the list and carries it into game creation", () => {
     render(<CourtFinder venues={[venue]} isAuthenticated />);
 
-    fireEvent.click(screen.getByRole("link", { name: /^NiceServe Pickleball Court/ }));
+    fireEvent.click(
+      screen.getByRole("link", { name: /^NiceServe Pickleball Court/ })
+    );
 
     expect(screen.getByText("Verified by Relay")).toHaveClass("text-primary");
-    expect(screen.getByRole("complementary", { name: "Selected court: NiceServe Pickleball Court" })).toHaveClass(
+    expect(
+      screen.getByRole("complementary", {
+        name: "Selected court: NiceServe Pickleball Court",
+      })
+    ).toHaveClass(
       "inset-x-2",
       "bottom-2",
       "max-h-[min(72%,32rem)]",
       "p-3",
-      "sm:p-4",
+      "sm:p-4"
     );
-    expect(screen.getByRole("link", { name: "Plan a game here" })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: "Plan a game here" })
+    ).toHaveAttribute("href", "/games/new?venueId=nice-serve");
+    expect(screen.getByRole("link", { name: /booking/i })).toHaveAttribute(
       "href",
-      "/games/new?venueId=nice-serve",
+      "https://example.com/book"
     );
-    expect(screen.getByRole("link", { name: /booking/i })).toHaveAttribute("href", "https://example.com/book");
-    expect(screen.getByRole("link", { name: /Can’t find your court/ })).toHaveAttribute("href", "/court/suggest");
+    expect(
+      screen.getByRole("link", { name: /Can’t find your court/ })
+    ).toHaveAttribute("href", "/court/suggest");
   });
 
   it("sends public visitors through signup without losing the selected court", () => {
     render(<CourtFinder venues={[venue]} detailBasePath="/courts" />);
 
-    const courtLink = screen.getByRole("link", { name: /^NiceServe Pickleball Court/ });
+    const courtLink = screen.getByRole("link", {
+      name: /^NiceServe Pickleball Court/,
+    });
     expect(courtLink).toHaveAttribute("href", "/courts/nice-serve");
     fireEvent.click(courtLink);
 
-    expect(screen.getByRole("link", { name: "Court details" })).toHaveAttribute("href", "/courts/nice-serve");
-    expect(screen.getByRole("link", { name: "Plan a game here" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Court details" })).toHaveAttribute(
       "href",
-      "/signup?next=%2Fgames%2Fnew%3FvenueId%3Dnice-serve",
+      "/courts/nice-serve"
+    );
+    expect(
+      screen.getByRole("link", { name: "Plan a game here" })
+    ).toHaveAttribute(
+      "href",
+      "/signup?next=%2Fgames%2Fnew%3FvenueId%3Dnice-serve"
     );
   });
 
   it("filters locally while keeping a submission path", () => {
     render(<CourtFinder venues={[venue]} />);
 
-    fireEvent.change(screen.getByLabelText("Search courts"), { target: { value: "Talisay" } });
+    fireEvent.change(screen.getByLabelText("Search courts"), {
+      target: { value: "Talisay" },
+    });
 
     expect(screen.getByText("No courts match")).toBeInTheDocument();
   });
@@ -214,13 +270,18 @@ describe("CourtFinder", () => {
     fireEvent.click(screen.getByRole("button", { name: "Use my location" }));
 
     expect(await screen.findByText(/sorted by distance/)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Nearest courts" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Nearest courts" })
+    ).toBeInTheDocument();
     const list = screen.getByRole("region", { name: "Nearest courts" });
     expect(
       within(list)
         .getAllByRole("link")
-        .map((link) => link.textContent?.trim()),
-    ).toEqual([expect.stringMatching(/^NiceServe Pickleball Court/), expect.stringMatching(/^Farther Court/)]);
+        .map((link) => link.textContent?.trim())
+    ).toEqual([
+      expect.stringMatching(/^NiceServe Pickleball Court/),
+      expect.stringMatching(/^Farther Court/),
+    ]);
   });
 
   it("never presents unverified court suggestions", () => {
@@ -231,14 +292,23 @@ describe("CourtFinder", () => {
   });
 
   it("filters public, commercial, and restricted access separately", () => {
-    const membersCourt = { ...fartherVenue, id: "members", name: "Members Club", accessType: "members" as const };
+    const membersCourt = {
+      ...fartherVenue,
+      id: "members",
+      name: "Members Club",
+      accessType: "members" as const,
+    };
     render(<CourtFinder venues={[venue, membersCourt]} />);
 
     fireEvent.click(screen.getByLabelText("Access"));
     fireEvent.click(screen.getByRole("option", { name: "Restricted access" }));
 
-    expect(screen.getAllByRole("link", { name: /Members Club/ })).not.toHaveLength(0);
-    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /Members Club/ })
+    ).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).toHaveLength(0);
   });
 
   it("filters courts by parking, price, and operating hours", () => {
@@ -247,59 +317,95 @@ describe("CourtFinder", () => {
     expect(screen.queryByLabelText("Paddle rental")).not.toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Setting"));
     fireEvent.click(screen.getByRole("option", { name: "Outdoor" }));
-    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
-    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /Farther Court/ })
+    ).not.toHaveLength(0);
 
-    rerender(<CourtFinder key="parking-filter" venues={[venue, fartherVenue]} />);
+    rerender(
+      <CourtFinder key="parking-filter" venues={[venue, fartherVenue]} />
+    );
     fireEvent.click(screen.getByLabelText("Parking"));
     fireEvent.click(screen.getByRole("option", { name: "Parking available" }));
-    expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
-    expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /Farther Court/ })
+    ).toHaveLength(0);
 
-    rerender(<CourtFinder key="no-parking-filter" venues={[venue, fartherVenue]} />);
+    rerender(
+      <CourtFinder key="no-parking-filter" venues={[venue, fartherVenue]} />
+    );
     fireEvent.click(screen.getByLabelText("Parking"));
-    expect(screen.queryByRole("option", { name: "Limited parking" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "Limited parking" })
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: "No parking" }));
-    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
-    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /Farther Court/ })
+    ).not.toHaveLength(0);
 
     rerender(<CourtFinder key="price-filter" venues={[venue, fartherVenue]} />);
     fireEvent.click(screen.getByLabelText("Starting price"));
     fireEvent.click(screen.getByRole("option", { name: "Over ₱1,000" }));
-    expect(screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })).toHaveLength(0);
-    expect(screen.getAllByRole("link", { name: /Farther Court/ })).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /Farther Court/ })
+    ).not.toHaveLength(0);
 
     rerender(<CourtFinder key="hours-filter" venues={[venue, fartherVenue]} />);
     fireEvent.click(screen.getByLabelText("Availability"));
     expect(screen.getAllByRole("option")).toHaveLength(4);
-    expect(screen.queryByRole("option", { name: "Open today at 8:00 PM" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("option", { name: "Open during a time range" }));
+    expect(
+      screen.queryByRole("option", { name: "Open today at 8:00 PM" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("option", { name: "Open during a time range" })
+    );
     fireEvent.click(screen.getByLabelText("Booking day"));
     fireEvent.click(screen.getByRole("option", { name: "Monday" }));
     fireEvent.click(screen.getByLabelText("Booking starts"));
     fireEvent.click(
-      within(screen.getByRole("listbox", { name: "Booking starts options" })).getByRole("option", {
+      within(
+        screen.getByRole("listbox", { name: "Booking starts options" })
+      ).getByRole("option", {
         name: "6:00 PM",
-      }),
+      })
     );
     fireEvent.click(screen.getByLabelText("Booking ends"));
     fireEvent.click(
-      within(screen.getByRole("listbox", { name: "Booking ends options" })).getByRole("option", {
+      within(
+        screen.getByRole("listbox", { name: "Booking ends options" })
+      ).getByRole("option", {
         name: "8:00 PM",
-      }),
+      })
     );
-    expect(screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })).not.toHaveLength(0);
-    expect(screen.queryAllByRole("link", { name: /Farther Court/ })).toHaveLength(0);
+    expect(
+      screen.getAllByRole("link", { name: /NiceServe Pickleball Court/ })
+    ).not.toHaveLength(0);
+    expect(
+      screen.queryAllByRole("link", { name: /Farther Court/ })
+    ).toHaveLength(0);
   });
 
   it("copies a Google Maps location without exposing provider credentials", async () => {
     render(<CourtFinder venues={[venue]} />);
 
-    fireEvent.click(screen.getByRole("link", { name: /^NiceServe Pickleball Court/ }));
+    fireEvent.click(
+      screen.getByRole("link", { name: /^NiceServe Pickleball Court/ })
+    );
     fireEvent.click(screen.getByRole("button", { name: "Copy location" }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "https://www.google.com/maps/search/?api=1&query=10.3044,123.9928",
+      "https://www.google.com/maps/search/?api=1&query=10.3044,123.9928"
     );
     expect(await screen.findByText("Copied")).toBeInTheDocument();
   });

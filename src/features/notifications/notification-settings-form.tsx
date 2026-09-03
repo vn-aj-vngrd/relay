@@ -6,7 +6,11 @@ import { PendingSubmit } from "@/components/ui/pending-submit";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { NotificationCategoryPreferences } from "@/db/schema";
 
-import { channelSupportsCategory, notificationCategories, notificationCategoryLabels } from "./preferences";
+import {
+  channelSupportsCategory,
+  notificationCategories,
+  notificationCategoryLabels,
+} from "./preferences";
 import { PushDeviceControl } from "./push-device-control";
 import { removePushDevice, saveNotificationSettings } from "./settings-actions";
 
@@ -59,19 +63,26 @@ export function NotificationSettingsForm({
 }) {
   const [state, action] = useActionState(saveNotificationSettings, {});
   return (
-    <section id="notifications" aria-labelledby="notification-settings-title" className="scroll-mt-6">
+    <section
+      id="notifications"
+      aria-labelledby="notification-settings-title"
+      className="scroll-mt-6"
+    >
       <h2 id="notification-settings-title" className="text-lg font-semibold">
         Notifications
       </h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-        In-app activity remains available in Relay. Choose what may also reach your email or this device.
+        In-app activity remains available in Relay. Choose what may also reach
+        your email or this device.
       </p>
       <form noValidate action={action} className="mt-5 space-y-7">
         <div className="divide-y divide-line border-y border-line">
           <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_9rem_9rem] sm:items-center">
             <div>
               <p className="text-sm font-semibold">Delivery channels</p>
-              <p className="mt-1 text-xs leading-5 text-muted">Both are off until you choose and save them.</p>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                Both are off until you choose and save them.
+              </p>
             </div>
             <Toggle
               name="emailEnabled"
@@ -89,15 +100,24 @@ export function NotificationSettingsForm({
           {notificationCategories.map((category) => {
             const copy = notificationCategoryLabels[category];
             return (
-              <div key={category} className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_9rem_9rem] sm:items-center">
+              <div
+                key={category}
+                className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_9rem_9rem] sm:items-center"
+              >
                 <div>
                   <p className="text-sm font-medium">{copy.label}</p>
-                  <p className="mt-0.5 text-xs leading-5 text-muted">{copy.description}</p>
+                  <p className="mt-0.5 text-xs leading-5 text-muted">
+                    {copy.description}
+                  </p>
                 </div>
                 <Toggle
                   name={`email-${category}`}
                   defaultChecked={preferences.emailCategories[category]}
-                  label={channelSupportsCategory("email", category) ? "Email" : "Not emailed"}
+                  label={
+                    channelSupportsCategory("email", category)
+                      ? "Email"
+                      : "Not emailed"
+                  }
                   disabled={!channelSupportsCategory("email", category)}
                   accessibleLabel={`Email for ${copy.label}`}
                 />
@@ -115,13 +135,23 @@ export function NotificationSettingsForm({
         <div>
           <h3 className="text-sm font-semibold">Reminder timing</h3>
           <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 border-y border-line py-3">
-            <Toggle name="dayBeforeReminder" defaultChecked={preferences.dayBeforeReminder} label="Day before" />
-            <Toggle name="hourBeforeReminder" defaultChecked={preferences.hourBeforeReminder} label="One hour before" />
+            <Toggle
+              name="dayBeforeReminder"
+              defaultChecked={preferences.dayBeforeReminder}
+              label="Day before"
+            />
+            <Toggle
+              name="hourBeforeReminder"
+              defaultChecked={preferences.hourBeforeReminder}
+              label="One hour before"
+            />
           </div>
         </div>
 
         <details className="group border-y border-line py-3">
-          <summary className="cursor-pointer text-sm font-semibold">Quiet hours and time zone</summary>
+          <summary className="cursor-pointer text-sm font-semibold">
+            Quiet hours and time zone
+          </summary>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <label className="text-sm font-medium">
               Quiet from
@@ -161,7 +191,8 @@ export function NotificationSettingsForm({
             </label>
           </div>
           <p className="mt-3 text-xs leading-5 text-muted">
-            Push waits until quiet hours end. Time-sensitive email reminders are suppressed during quiet hours.
+            Push waits until quiet hours end. Time-sensitive email reminders are
+            suppressed during quiet hours.
           </p>
         </details>
 
@@ -174,7 +205,9 @@ export function NotificationSettingsForm({
             {state.success}
           </p>
         ) : null}
-        <SubmitButton pendingLabel="Saving preferences…">Save notification preferences</SubmitButton>
+        <SubmitButton pendingLabel="Saving preferences…">
+          Save notification preferences
+        </SubmitButton>
       </form>
 
       <div className="mt-8">
@@ -188,9 +221,14 @@ export function NotificationSettingsForm({
         {devices.length ? (
           <div className="mt-5 divide-y divide-line border-y border-line">
             {devices.map((device) => (
-              <div key={device.id} className="flex min-h-14 items-center justify-between gap-4 py-2">
+              <div
+                key={device.id}
+                className="flex min-h-14 items-center justify-between gap-4 py-2"
+              >
                 <div>
-                  <p className="text-sm font-medium">{device.deviceLabel ?? "Web browser"}</p>
+                  <p className="text-sm font-medium">
+                    {device.deviceLabel ?? "Web browser"}
+                  </p>
                   <p className="mt-0.5 text-xs text-muted">
                     Used{" "}
                     {new Intl.DateTimeFormat("en-PH", {

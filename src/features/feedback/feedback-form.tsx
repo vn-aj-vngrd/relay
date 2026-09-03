@@ -8,12 +8,27 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type FeedbackActionState, submitFeedbackAction } from "./actions";
-import { feedbackAreaLabels, feedbackAreas, type FeedbackType, feedbackTypeLabels, feedbackTypes } from "./domain";
+import {
+  type FeedbackType,
+  feedbackAreaLabels,
+  feedbackAreas,
+  feedbackTypeLabels,
+  feedbackTypes,
+} from "./domain";
 
-const typeDetails: Record<FeedbackType, { description: string; icon: typeof Bug }> = {
+const typeDetails: Record<
+  FeedbackType,
+  { description: string; icon: typeof Bug }
+> = {
   bug: { description: "Something is broken or confusing", icon: Bug },
-  feature: { description: "A useful improvement for game night", icon: Lightbulb },
-  general: { description: "Share what works or could feel better", icon: ChatCircleText },
+  feature: {
+    description: "A useful improvement for game night",
+    icon: Lightbulb,
+  },
+  general: {
+    description: "Share what works or could feel better",
+    icon: ChatCircleText,
+  },
 };
 
 function FieldError({ errors }: { errors?: string[] }) {
@@ -24,8 +39,15 @@ function FieldError({ errors }: { errors?: string[] }) {
   ) : null;
 }
 
-export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: string; pagePath: string } }) {
-  const [state, action] = useActionState<FeedbackActionState, FormData>(submitFeedbackAction, {});
+export function FeedbackForm({
+  gameContext,
+}: {
+  gameContext?: { sessionId: string; pagePath: string };
+}) {
+  const [state, action] = useActionState<FeedbackActionState, FormData>(
+    submitFeedbackAction,
+    {}
+  );
   const [type, setType] = useState<FeedbackType>("bug");
   const formRef = useRef<HTMLFormElement>(null);
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -45,19 +67,26 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
       {gameContext ? (
         <div className="mb-6 border-y border-line bg-surface-strong px-3 py-3 text-sm">
           <p className="font-semibold">Feedback from your completed game</p>
-          <p className="mt-1 leading-5 text-muted">The game and recap page will be attached automatically.</p>
+          <p className="mt-1 leading-5 text-muted">
+            The game and recap page will be attached automatically.
+          </p>
           <input type="hidden" name="sessionId" value={gameContext.sessionId} />
           <input type="hidden" name="experience" value="issues" />
         </div>
       ) : null}
       <fieldset>
-        <legend className="text-sm font-[650]">What would you like to share?</legend>
+        <legend className="text-sm font-[650]">
+          What would you like to share?
+        </legend>
         <div className="mt-2 divide-y divide-line border-y border-line">
           {feedbackTypes.map((value) => {
             const Icon = typeDetails[value].icon;
             const selected = type === value;
             return (
-              <label key={value} className="flex min-h-16 cursor-pointer items-center gap-3 px-1 py-3 sm:px-2">
+              <label
+                key={value}
+                className="flex min-h-16 cursor-pointer items-center gap-3 px-1 py-3 sm:px-2"
+              >
                 <input
                   type="radio"
                   name="type"
@@ -69,11 +98,19 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${selected ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
                 >
-                  <Icon aria-hidden size={18} weight={selected ? "fill" : "regular"} />
+                  <Icon
+                    aria-hidden
+                    size={18}
+                    weight={selected ? "fill" : "regular"}
+                  />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong className="block text-sm">{feedbackTypeLabels[value]}</strong>
-                  <span className="mt-0.5 block text-sm text-muted">{typeDetails[value].description}</span>
+                  <strong className="block text-sm">
+                    {feedbackTypeLabels[value]}
+                  </strong>
+                  <span className="mt-0.5 block text-sm text-muted">
+                    {typeDetails[value].description}
+                  </span>
                 </span>
                 <span
                   aria-hidden
@@ -92,7 +129,10 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
             name="area"
             label="Which part of Relay?"
             defaultValue={gameContext ? "play" : "general"}
-            options={feedbackAreas.map((area) => ({ value: area, label: feedbackAreaLabels[area] }))}
+            options={feedbackAreas.map((area) => ({
+              value: area,
+              label: feedbackAreaLabels[area],
+            }))}
           />
           <FieldError errors={state.fieldErrors?.area} />
         </div>
@@ -114,14 +154,19 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
                   : "The RSVP flow felt clear"
             }
             className="field"
-            aria-describedby={state.fieldErrors?.title ? "feedback-title-error" : undefined}
+            aria-describedby={
+              state.fieldErrors?.title ? "feedback-title-error" : undefined
+            }
           />
           <div id="feedback-title-error">
             <FieldError errors={state.fieldErrors?.title} />
           </div>
         </div>
         <div>
-          <label htmlFor="feedback-description" className="block text-sm font-[650]">
+          <label
+            htmlFor="feedback-description"
+            className="block text-sm font-[650]"
+          >
             Details
           </label>
           <textarea
@@ -139,7 +184,11 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
                   : "Tell us what worked well or what could be clearer."
             }
             className="field min-h-36 resize-y !p-3.5 leading-6"
-            aria-describedby={state.fieldErrors?.description ? "feedback-description-error" : undefined}
+            aria-describedby={
+              state.fieldErrors?.description
+                ? "feedback-description-error"
+                : undefined
+            }
           />
           <div id="feedback-description-error">
             <FieldError errors={state.fieldErrors?.description} />
@@ -147,7 +196,8 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
         </div>
         <div>
           <label htmlFor="feedback-page" className="block text-sm font-[650]">
-            Related Relay page <span className="font-normal text-muted">(optional)</span>
+            Related Relay page{" "}
+            <span className="font-normal text-muted">(optional)</span>
           </label>
           <input
             id="feedback-page"
@@ -158,7 +208,9 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
             placeholder="/games/…"
             className="field read-only:bg-surface-strong read-only:text-muted"
           />
-          <p className="mt-1.5 text-xs leading-5 text-muted">Paste the path after relay-pickleball.vercel.app.</p>
+          <p className="mt-1.5 text-xs leading-5 text-muted">
+            Paste the path after relay-pickleball.vercel.app.
+          </p>
           <FieldError errors={state.fieldErrors?.pagePath} />
         </div>
       </div>
@@ -171,7 +223,9 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
           className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
         />
         <span>
-          <strong className="block text-sm">Relay may contact me about this</strong>
+          <strong className="block text-sm">
+            Relay may contact me about this
+          </strong>
           <span className="mt-0.5 block text-sm text-muted">
             We will use the email on your account only when clarification helps.
           </span>
@@ -193,7 +247,10 @@ export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: strin
         <p className="hidden max-w-md text-xs leading-5 text-muted sm:block">
           Please avoid passwords, payment details, or other private information.
         </p>
-        <SubmitButton pendingLabel="Sending feedback…" className="ml-auto w-full sm:w-auto">
+        <SubmitButton
+          pendingLabel="Sending feedback…"
+          className="ml-auto w-full sm:w-auto"
+        >
           Send feedback
         </SubmitButton>
       </div>

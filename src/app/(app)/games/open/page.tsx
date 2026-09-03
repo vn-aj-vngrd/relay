@@ -8,7 +8,11 @@ import { discoverOpenGames } from "@/features/sessions/open-games-queries";
 export default async function OpenGamesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; location?: string; available?: string }>;
+  searchParams: Promise<{
+    date?: string;
+    location?: string;
+    available?: string;
+  }>;
 }) {
   const params = await searchParams;
   const parsed = openGamesFilterSchema.safeParse({
@@ -16,7 +20,9 @@ export default async function OpenGamesPage({
     location: params.location ?? "",
     available: params.available ?? "",
   });
-  const filters = parsed.success ? parsed.data : openGamesFilterSchema.parse({});
+  const filters = parsed.success
+    ? parsed.data
+    : openGamesFilterSchema.parse({});
   const user = await requireUser();
   const page = await discoverOpenGames(user.id, filters);
 
@@ -25,7 +31,10 @@ export default async function OpenGamesPage({
       <h1 className="app-title">Games</h1>
       <GamesSectionNav current="open" />
       {!parsed.success ? (
-        <div role="alert" className="mt-5 rounded-lg bg-warning/10 px-4 py-3 text-sm text-ink ring-1 ring-warning/20">
+        <div
+          role="alert"
+          className="mt-5 rounded-lg bg-warning/10 px-4 py-3 text-sm text-ink ring-1 ring-warning/20"
+        >
           Those filters weren’t valid, so Relay restored the full list.
         </div>
       ) : null}

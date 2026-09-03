@@ -14,7 +14,11 @@ function CourtSkeleton() {
         {[0, 1].map((side) => (
           <div
             key={side}
-            className={side === 0 ? "col-start-1 row-start-1" : "col-start-3 row-start-1 border-l border-white/10"}
+            className={
+              side === 0
+                ? "col-start-1 row-start-1"
+                : "col-start-3 row-start-1 border-l border-white/10"
+            }
           >
             <div className="px-3 pb-3 pt-5 text-center sm:px-5">
               <Skeleton className="mx-auto h-4 w-24 max-w-full bg-white/15" />
@@ -26,7 +30,9 @@ function CourtSkeleton() {
             </div>
           </div>
         ))}
-        <span className="col-start-2 row-start-1 self-center px-2 text-white/30">–</span>
+        <span className="col-start-2 row-start-1 self-center px-2 text-white/30">
+          –
+        </span>
       </div>
     </div>
   );
@@ -58,7 +64,10 @@ export default function PublicCourtsLoading() {
             <Skeleton className="h-5 w-24" />
             <div className="mt-3 divide-y divide-line border-y border-line">
               {Array.from({ length: 4 }, (_, index) => (
-                <div key={index} className="public-session-row flex min-h-14 items-center gap-3">
+                <div
+                  key={index}
+                  className="public-session-row flex min-h-14 items-center gap-3"
+                >
                   <Skeleton className="h-3 w-5" />
                   <Skeleton className="h-8 w-8 rounded-full" />
                   <Skeleton className="h-4 w-28 max-w-[45%]" />
@@ -72,7 +81,10 @@ export default function PublicCourtsLoading() {
                 <Skeleton className="h-3 w-20" />
               </div>
               {Array.from({ length: 3 }, (_, index) => (
-                <div key={index} className="public-session-row flex items-center justify-between border-t border-line">
+                <div
+                  key={index}
+                  className="public-session-row flex items-center justify-between border-t border-line"
+                >
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-4 w-16" />
                 </div>

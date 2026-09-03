@@ -1,4 +1,10 @@
-import { ArrowsClockwise, CrownSimple, Scales, Stack, UsersFour } from "@phosphor-icons/react";
+import {
+  ArrowsClockwise,
+  CrownSimple,
+  Scales,
+  Stack,
+  UsersFour,
+} from "@phosphor-icons/react";
 
 import type { PlayMode } from "./rotation";
 
@@ -23,7 +29,8 @@ export const playModeOptions: ReadonlyArray<{
   {
     mode: "balanced",
     title: "Balanced Mix",
-    description: "Build close teams from everyone’s self-described playing experience.",
+    description:
+      "Build close teams from everyone’s self-described playing experience.",
     icon: Scales,
   },
   {

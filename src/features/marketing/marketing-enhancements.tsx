@@ -11,8 +11,12 @@ export function MarketingEnhancements() {
 
   useLayoutEffect(() => {
     document.documentElement.classList.add("marketing-scroll-active");
-    const elements = [...document.querySelectorAll<HTMLElement>("[data-marketing-reveal]")];
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const elements = [
+      ...document.querySelectorAll<HTMLElement>("[data-marketing-reveal]"),
+    ];
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
     const lenis = reduceMotion
       ? null
       : new Lenis({
@@ -35,7 +39,9 @@ export function MarketingEnhancements() {
         event.altKey
       )
         return;
-      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]');
+      const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+        'a[href^="#"]'
+      );
       const hash = link?.hash;
       if (!hash) return;
       const target = document.querySelector<HTMLElement>(hash);
@@ -47,7 +53,9 @@ export function MarketingEnhancements() {
     document.addEventListener("click", onAnchorClick);
 
     if (reduceMotion || !("IntersectionObserver" in window)) {
-      elements.forEach((element) => element.classList.add("marketing-reveal-visible"));
+      elements.forEach((element) =>
+        element.classList.add("marketing-reveal-visible")
+      );
       return () => {
         document.removeEventListener("click", onAnchorClick);
         lenis?.destroy();
@@ -65,7 +73,7 @@ export function MarketingEnhancements() {
           observer.unobserve(element);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
     );
 
     for (const element of elements) {
@@ -90,7 +98,8 @@ export function MarketingEnhancements() {
       setShowTop(window.scrollY > Math.max(900, window.innerHeight));
     };
     const onScroll = () => {
-      if (frame.current === null) frame.current = window.requestAnimationFrame(update);
+      if (frame.current === null)
+        frame.current = window.requestAnimationFrame(update);
     };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -101,7 +110,9 @@ export function MarketingEnhancements() {
   }, []);
 
   function returnToTop() {
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
     if (!reduceMotion && lenisRef.current) lenisRef.current.scrollTo(0);
     else window.scrollTo({ top: 0, behavior: "auto" });
   }

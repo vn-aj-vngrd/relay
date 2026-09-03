@@ -1,4 +1,8 @@
-import { CheckCircle, Info, WarningCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  CheckCircle,
+  Info,
+  WarningCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
 type AlertVariant = "danger" | "info" | "success";

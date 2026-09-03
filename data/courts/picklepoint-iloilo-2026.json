@@ -26,13 +26,48 @@
       "sourceUrl": "https://www.picklepointiloilo.com/",
       "lastSeenAt": "2026-09-03T00:00:00+08:00",
       "operatingHours": [
-        { "dayOfWeek": 1, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 2, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 3, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 4, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 5, "sequence": 0, "opensAt": "00:00", "closesAt": "00:00" },
-        { "dayOfWeek": 6, "sequence": 0, "opensAt": "00:00", "closesAt": "00:00" },
-        { "dayOfWeek": 7, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" }
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "00:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "00:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        }
       ],
       "parkingStatus": null,
       "priceStatus": "paid",
@@ -62,13 +97,48 @@
       "sourceUrl": "https://atria.picklepointiloilo.com/",
       "lastSeenAt": "2026-09-03T00:00:00+08:00",
       "operatingHours": [
-        { "dayOfWeek": 1, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 2, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 3, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 4, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 5, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 6, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" },
-        { "dayOfWeek": 7, "sequence": 0, "opensAt": "06:00", "closesAt": "01:00" }
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "01:00"
+        }
       ],
       "parkingStatus": null,
       "priceStatus": "paid",

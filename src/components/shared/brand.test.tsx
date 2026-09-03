@@ -6,9 +6,14 @@ import { Brand, RelayMark } from "./brand";
 describe("Relay brand", () => {
   it("uses the freestanding signal ball in the wordmark", () => {
     const { container } = render(<Brand />);
-    expect(screen.getByRole("link", { name: "Relay home" })).toHaveTextContent("Relay");
+    expect(screen.getByRole("link", { name: "Relay home" })).toHaveTextContent(
+      "Relay"
+    );
     expect(container.querySelector("svg")).not.toBeInTheDocument();
-    expect(container.querySelector("[aria-hidden='true']")).toHaveClass("rounded-full", "bg-signal");
+    expect(container.querySelector("[aria-hidden='true']")).toHaveClass(
+      "rounded-full",
+      "bg-signal"
+    );
   });
 
   it("scales the same mark without changing its shape", () => {

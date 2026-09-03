@@ -16,7 +16,9 @@ export async function markAllNotificationsRead() {
   await db
     .update(notifications)
     .set({ readAt: new Date() })
-    .where(and(eq(notifications.userId, user.id), isNull(notifications.readAt)));
+    .where(
+      and(eq(notifications.userId, user.id), isNull(notifications.readAt))
+    );
   revalidatePath("/notifications");
 }
 
@@ -26,7 +28,13 @@ export async function markNotificationRead(formData: FormData) {
   await db
     .update(notifications)
     .set({ readAt: new Date() })
-    .where(and(eq(notifications.id, id), eq(notifications.userId, user.id), isNull(notifications.readAt)));
+    .where(
+      and(
+        eq(notifications.id, id),
+        eq(notifications.userId, user.id),
+        isNull(notifications.readAt)
+      )
+    );
   revalidatePath("/notifications");
 }
 
@@ -42,10 +50,16 @@ export async function openNotification(formData: FormData) {
     await db
       .update(notifications)
       .set({ readAt: new Date() })
-      .where(and(eq(notifications.id, item.id), eq(notifications.userId, user.id)));
+      .where(
+        and(eq(notifications.id, item.id), eq(notifications.userId, user.id))
+      );
   revalidatePath("/notifications");
   redirect(
-    notificationPresentation({ type: item.type, sessionId: item.sessionId, sessionTitle: null, payload: item.payload })
-      .href,
+    notificationPresentation({
+      type: item.type,
+      sessionId: item.sessionId,
+      sessionTitle: null,
+      payload: item.payload,
+    }).href
   );
 }

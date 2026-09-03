@@ -11,12 +11,18 @@ const statusStyles: Record<FeedbackStatus, string> = {
 
 export function FeedbackStatusBadge({ status }: { status: FeedbackStatus }) {
   return (
-    <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ${statusStyles[status]}`}>
+    <span
+      className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ${statusStyles[status]}`}
+    >
       {feedbackStatusLabels[status]}
     </span>
   );
 }
 
 export function FeedbackTypeLabel({ type }: { type: FeedbackType }) {
-  return <span className="text-xs font-semibold text-muted">{feedbackTypeLabels[type]}</span>;
+  return (
+    <span className="text-xs font-semibold text-muted">
+      {feedbackTypeLabels[type]}
+    </span>
+  );
 }

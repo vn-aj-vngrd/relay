@@ -22,54 +22,90 @@ describe("CreateSessionForm", () => {
   const now = "2030-08-21T08:00:00.000Z";
 
   function moveToAccess() {
-    fireEvent.click(screen.getByRole("button", { name: "Continue to players" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to players" })
+    );
   }
 
   function moveToDetails() {
     moveToAccess();
-    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
   }
 
   it("starts a new game blank instead of guessing the plan", () => {
     render(<CreateSessionForm defaults={{}} />);
 
     expect(screen.getByLabelText("Game name")).toHaveValue("");
-    expect(screen.getByLabelText("Game name")).toHaveAttribute("placeholder", "Enter a game name");
+    expect(screen.getByLabelText("Game name")).toHaveAttribute(
+      "placeholder",
+      "Enter a game name"
+    );
     expect(screen.getByLabelText("Court")).toHaveValue("");
-    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
-    expect(screen.getByRole("button", { name: "Start time" })).toHaveTextContent("Choose a time");
-    expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent("Choose a time");
+    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent(
+      "Choose a date"
+    );
+    expect(
+      screen.getByRole("button", { name: "Start time" })
+    ).toHaveTextContent("Choose a time");
+    expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent(
+      "Choose a time"
+    );
     expect(screen.getByText("Step 1 of 4")).toBeVisible();
-    expect(screen.queryByRole("spinbutton", { name: "Player limit" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continue to players" })).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("spinbutton", { name: "Player limit" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to players" })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Save draft" })
+    ).not.toBeInTheDocument();
   });
 
   it("clears a field error as soon as the player corrects that field", () => {
     render(<CreateSessionForm defaults={{}} />);
-    fireEvent.click(screen.getByRole("button", { name: "Continue to players" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to players" })
+    );
 
     const title = screen.getByLabelText("Game name");
-    expect(screen.getByText("Add a game name with at least 2 characters.")).toBeVisible();
+    expect(
+      screen.getByText("Add a game name with at least 2 characters.")
+    ).toBeVisible();
     expect(title).toHaveAttribute("aria-invalid", "true");
 
     fireEvent.change(title, { target: { value: "Friday Pickle" } });
-    expect(screen.queryByText("Add a game name with at least 2 characters.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Add a game name with at least 2 characters.")
+    ).not.toBeInTheDocument();
     expect(title).toHaveAttribute("aria-invalid", "false");
 
-    fireEvent.change(screen.getByLabelText("Court"), { target: { value: "3rd Fitness Lab" } });
+    fireEvent.change(screen.getByLabelText("Court"), {
+      target: { value: "3rd Fitness Lab" },
+    });
     expect(screen.queryByText("Add the court name.")).not.toBeInTheDocument();
   });
 
   it("limits a same-day schedule to future and increasing times", () => {
-    render(<CreateSessionForm defaults={{ date: "2030-09-06" }} now="2030-09-06T11:52:00.000Z" />);
+    render(
+      <CreateSessionForm
+        defaults={{ date: "2030-09-06" }}
+        now="2030-09-06T11:52:00.000Z"
+      />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Start time" }));
-    expect(screen.queryByRole("option", { name: "7:45 PM" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "7:45 PM" })
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: "8:00 PM" }));
 
     fireEvent.click(screen.getByRole("button", { name: "End time" }));
-    expect(screen.queryByRole("option", { name: "8:00 PM" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: "8:00 PM" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "8:15 PM" })).toBeVisible();
   });
 
@@ -79,15 +115,21 @@ describe("CreateSessionForm", () => {
     const courts = screen.getByRole("spinbutton", { name: "Court quantity" });
 
     expect(courts).toHaveValue(2);
-    expect(courts.parentElement?.nextElementSibling).toHaveTextContent("1–20 courts. You can label them later.");
+    expect(courts.parentElement?.nextElementSibling).toHaveTextContent(
+      "1–20 courts. You can label them later."
+    );
     const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
     expect(capacity.parentElement?.nextElementSibling).toHaveTextContent(
-      "2–40 players. Extra players join the waitlist.",
+      "2–40 players. Extra players join the waitlist."
     );
-    fireEvent.click(screen.getByRole("button", { name: "Increase court quantity" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Increase court quantity" })
+    );
     expect(courts).toHaveValue(3);
     fireEvent.change(courts, { target: { value: "20" } });
-    expect(screen.getByRole("button", { name: "Increase court quantity" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Increase court quantity" })
+    ).toBeDisabled();
   });
 
   it("shows who will be invited when starting from a group", () => {
@@ -99,10 +141,12 @@ describe("CreateSessionForm", () => {
           groupName: "Tuesday Dink Club",
           inviteeCount: 7,
         }}
-      />,
+      />
     );
     expect(screen.getByText("For Tuesday Dink Club")).toBeVisible();
-    expect(screen.getByText("7 group members will be invited when you publish.")).toBeVisible();
+    expect(
+      screen.getByText("7 group members will be invited when you publish.")
+    ).toBeVisible();
   });
 
   it("explains replayed defaults and preserves access settings without copying game state", () => {
@@ -117,29 +161,43 @@ describe("CreateSessionForm", () => {
           requiresApproval: true,
         }}
         now={now}
-      />,
+      />
     );
 
     expect(screen.getByText("Previous game ready")).toBeVisible();
     expect(screen.getByText(/choose a new date/i)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
+    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent(
+      "Choose a date"
+    );
 
-    expect(document.querySelector('input[name="visibility"][value="public"]')).toBeChecked();
-    expect(document.querySelector('input[name="requiresApproval"]')).toBeChecked();
+    expect(
+      document.querySelector('input[name="visibility"][value="public"]')
+    ).toBeChecked();
+    expect(
+      document.querySelector('input[name="requiresApproval"]')
+    ).toBeChecked();
   });
 
   it("keeps the player note readable as a multiline field on mobile", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToDetails();
 
-    expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveAttribute("rows", "2");
-    expect(screen.getByRole("textbox", { name: "Note for players" })).toHaveClass("min-h-20");
-    expect(screen.getByRole("textbox", { name: "Note for players" })).not.toHaveClass("h-11");
+    expect(
+      screen.getByRole("textbox", { name: "Note for players" })
+    ).toHaveAttribute("rows", "2");
+    expect(
+      screen.getByRole("textbox", { name: "Note for players" })
+    ).toHaveClass("min-h-20");
+    expect(
+      screen.getByRole("textbox", { name: "Note for players" })
+    ).not.toHaveClass("h-11");
   });
 
   it("keeps game color optional and exposes an accessible palette", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
-    expect(screen.queryByRole("radio", { name: "Violet" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("radio", { name: "Violet" })
+    ).not.toBeInTheDocument();
     moveToDetails();
     expect(screen.getByRole("radio", { name: "Violet" })).toBeChecked();
     fireEvent.click(screen.getByRole("radio", { name: "Court blue" }));
@@ -150,13 +208,25 @@ describe("CreateSessionForm", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToDetails();
 
-    expect(screen.getByText(/You can add or change everything here later in Settings/)).toBeVisible();
-    fireEvent.click(screen.getByRole("checkbox", { name: /Court is already booked/ }));
-    fireEvent.change(screen.getByLabelText("Booking reference"), { target: { value: "RES-2048" } });
-    fireEvent.change(screen.getByLabelText("Booking total"), { target: { value: "2400" } });
+    expect(
+      screen.getByText(
+        /You can add or change everything here later in Settings/
+      )
+    ).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: /Court is already booked/ })
+    );
+    fireEvent.change(screen.getByLabelText("Booking reference"), {
+      target: { value: "RES-2048" },
+    });
+    fireEvent.change(screen.getByLabelText("Booking total"), {
+      target: { value: "2400" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
 
-    expect(screen.getByText("Court booked · Reference RES-2048 · ₱2400")).toBeVisible();
+    expect(
+      screen.getByText("Court booked · Reference RES-2048 · ₱2400")
+    ).toBeVisible();
     expect(screen.getByText(/This step is read-only/)).toBeVisible();
     expect(screen.getByLabelText("Booking reference")).not.toBeVisible();
     expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(3);
@@ -166,16 +236,30 @@ describe("CreateSessionForm", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToAccess();
     fireEvent.click(screen.getByRole("radio", { name: /^Public/ }));
-    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
-    expect(screen.getByText("Public games must be marked free or include an estimated cost per player.")).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
+    expect(
+      screen.getByText(
+        "Public games must be marked free or include an estimated cost per player."
+      )
+    ).toBeVisible();
     fireEvent.click(screen.getByRole("radio", { name: "Free" }));
     expect(
-      screen.queryByText("Public games must be marked free or include an estimated cost per player."),
+      screen.queryByText(
+        "Public games must be marked free or include an estimated cost per player."
+      )
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Continue to details" }));
-    expect(screen.getByRole("heading", { name: "Optional details" })).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Optional details" })
+    ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
-    expect(screen.getByRole("heading", { name: "Review your game" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Review your game" })
+    ).toBeVisible();
     expect(screen.getAllByText("Free").at(-1)).toBeVisible();
   });
 });

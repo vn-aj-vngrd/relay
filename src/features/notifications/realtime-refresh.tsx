@@ -23,13 +23,16 @@ export function NotificationRealtimeRefresh({ userId }: { userId: string }) {
       const { data } = await supabase.auth.getSession();
       if (data.session) supabase.realtime.setAuth(data.session.access_token);
       if (cancelled) return;
-      const nextChannel = supabase
-        .channel(`notifications:${userId}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
-          refresh,
-        );
+      const nextChannel = supabase.channel(`notifications:${userId}`).on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        refresh
+      );
       channel = nextChannel;
       nextChannel.subscribe((status: string) => {
         if (status === "SUBSCRIBED") refresh();

@@ -7,7 +7,7 @@ import { useFormStatus } from "react-dom";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
-import { deleteSessionAction, type DeleteSessionState } from "./delete-session";
+import { type DeleteSessionState, deleteSessionAction } from "./delete-session";
 
 function DeleteButton({ enabled }: { enabled: boolean }) {
   const { pending } = useFormStatus();
@@ -25,11 +25,20 @@ function DeleteButton({ enabled }: { enabled: boolean }) {
   );
 }
 
-export function DeleteSessionControl({ sessionId, title }: { sessionId: string; title: string }) {
+export function DeleteSessionControl({
+  sessionId,
+  title,
+}: {
+  sessionId: string;
+  title: string;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmation, setConfirmation] = useState("");
-  const [state, action] = useActionState<DeleteSessionState, FormData>(deleteSessionAction, {});
+  const [state, action] = useActionState<DeleteSessionState, FormData>(
+    deleteSessionAction,
+    {}
+  );
   const matches = confirmation.trim() === title;
 
   function openDialog() {
@@ -61,15 +70,22 @@ export function DeleteSessionControl({ sessionId, title }: { sessionId: string; 
             </span>
             <div className="min-w-0">
               <h2 className="text-lg font-[680]">Delete this game?</h2>
-              <p id="delete-session-description" className="mt-2 text-sm leading-6 text-muted">
-                This permanently removes the roster, payments, chat, matches, scores, and memories. This action cannot
-                be undone.
+              <p
+                id="delete-session-description"
+                className="mt-2 text-sm leading-6 text-muted"
+              >
+                This permanently removes the roster, payments, chat, matches,
+                scores, and memories. This action cannot be undone.
               </p>
             </div>
           </div>
           <div className="mt-6">
-            <label htmlFor="delete-confirmation" className="text-sm font-semibold">
-              Type <span className="break-all font-mono">{title}</span> to confirm
+            <label
+              htmlFor="delete-confirmation"
+              className="text-sm font-semibold"
+            >
+              Type <span className="break-all font-mono">{title}</span> to
+              confirm
             </label>
             <input
               ref={inputRef}

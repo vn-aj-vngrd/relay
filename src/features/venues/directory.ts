@@ -59,10 +59,14 @@ async function queryDirectoryVenueRows() {
   const directoryCondition = and(
     eq(venues.listingStatus, "verified"),
     isNotNull(venues.latitude),
-    isNotNull(venues.longitude),
+    isNotNull(venues.longitude)
   );
   try {
-    return await db.select().from(venues).where(directoryCondition).orderBy(asc(venues.name));
+    return await db
+      .select()
+      .from(venues)
+      .where(directoryCondition)
+      .orderBy(asc(venues.name));
   } catch (error) {
     const databaseCode = (error as { cause?: { code?: string } }).cause?.code;
     if (databaseCode !== "42703") throw error;
@@ -108,7 +112,7 @@ async function queryCourtListings(): Promise<CourtListing[]> {
   const directoryCondition = and(
     eq(venues.listingStatus, "verified"),
     isNotNull(venues.latitude),
-    isNotNull(venues.longitude),
+    isNotNull(venues.longitude)
   );
   const [rows, operatingPeriods] = await Promise.all([
     queryDirectoryVenueRows(),
@@ -125,7 +129,7 @@ async function queryCourtListings(): Promise<CourtListing[]> {
       .orderBy(
         asc(venueOperatingPeriods.venueId),
         asc(venueOperatingPeriods.dayOfWeek),
-        asc(venueOperatingPeriods.sequence),
+        asc(venueOperatingPeriods.sequence)
       ),
   ]);
   const periodsByVenue = new Map<string, CourtOperatingPeriod[]>();
@@ -184,10 +188,14 @@ async function queryCourtListings(): Promise<CourtListing[]> {
   });
 }
 
-export const getCourtListings = unstable_cache(queryCourtListings, [courtDirectoryTag, courtDirectorySnapshot], {
-  revalidate: 3600,
-  tags: [courtDirectoryTag],
-});
+export const getCourtListings = unstable_cache(
+  queryCourtListings,
+  [courtDirectoryTag, courtDirectorySnapshot],
+  {
+    revalidate: 3600,
+    tags: [courtDirectoryTag],
+  }
+);
 
 export async function getCourtSitemapEntries() {
   return db
@@ -198,11 +206,17 @@ export async function getCourtSitemapEntries() {
 }
 
 export async function getCourtListingBySlug(slug: string) {
-  return (await getCourtListings()).find((court) => court.slug === slug) ?? null;
+  return (
+    (await getCourtListings()).find((court) => court.slug === slug) ?? null
+  );
 }
 
 export async function getCourtSuggestions() {
-  return (await getCourtListings()).map(({ id, name, address }) => ({ id, name, address }));
+  return (await getCourtListings()).map(({ id, name, address }) => ({
+    id,
+    name,
+    address,
+  }));
 }
 
 /** Expires every Court Directory read after a verified listing changes. Server Actions only. */

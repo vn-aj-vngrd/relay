@@ -4,7 +4,10 @@ import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { ComponentProps, ReactNode } from "react";
 import { useState } from "react";
 
-type PasswordFieldProps = Omit<ComponentProps<"input">, "className" | "type"> & {
+type PasswordFieldProps = Omit<
+  ComponentProps<"input">,
+  "className" | "type"
+> & {
   label: string;
   hint?: ReactNode;
   className?: string;
@@ -28,7 +31,12 @@ export function PasswordField({
         {label}
       </label>
       <div className="relative">
-        <input id={id} type={visible ? "text" : "password"} className="field pr-12" {...inputProps} />
+        <input
+          id={id}
+          type={visible ? "text" : "password"}
+          className="field pr-12"
+          {...inputProps}
+        />
         <button
           type="button"
           onClick={() => setVisible((shown) => !shown)}
@@ -36,7 +44,11 @@ export function PasswordField({
           aria-pressed={visible}
           className="pressable absolute right-1 top-2 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
         >
-          {visible ? <EyeSlash aria-hidden size={18} /> : <Eye aria-hidden size={18} />}
+          {visible ? (
+            <EyeSlash aria-hidden size={18} />
+          ) : (
+            <Eye aria-hidden size={18} />
+          )}
         </button>
       </div>
       {hint}

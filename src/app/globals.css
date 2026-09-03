@@ -24,7 +24,8 @@
   --warning: oklch(0.66 0.155 77);
   --danger: oklch(0.55 0.205 26);
   --marketing-accent: oklch(0.42 0.1 110);
-  --score: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --score:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @theme inline {
@@ -46,14 +47,17 @@
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --color-marketing-accent: var(--marketing-accent);
-  --font-sans: var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans:
+    var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
 * {
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklch, var(--muted) 38%, transparent) transparent;
+  scrollbar-color: color-mix(in oklch, var(--muted) 38%, transparent)
+    transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
@@ -198,12 +202,8 @@ body {
   background: var(--canvas);
   color: var(--ink);
   font-family:
-    var(--font-geist-sans),
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
   font-size: 16px;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
@@ -257,12 +257,8 @@ h2:not(.truncate),
 h3:not(.truncate) {
   text-wrap: balance;
   font-family:
-    var(--font-geist-sans),
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    var(--font-geist-sans), Inter, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
 }
 p:not(.truncate) {
   text-wrap: pretty;
@@ -359,7 +355,9 @@ p:not(.truncate) {
   button:not(.compact-control),
   a.pressable:not(.compact-control),
   label:not(.compact-control):has(input),
-  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not(
+    [type="hidden"]
+  ),
   select,
   textarea {
     min-height: 2.75rem;
@@ -443,7 +441,9 @@ p:not(.truncate) {
     display: none;
   }
 }
-@media (orientation: landscape) and (max-height: 31.25rem) and (max-width: 63.999rem) {
+@media (orientation: landscape) and (max-height: 31.25rem) and (
+    max-width: 63.999rem
+  ) {
   .app-shell:has(.game-workspace) .mobile-chrome ul {
     height: 3rem;
   }
@@ -545,11 +545,15 @@ html[data-density="compact"] .collection-row {
     opacity: 0;
   }
   html[data-sidebar="compact"] .sidebar-header:hover .sidebar-brand,
-  html[data-sidebar="compact"] .sidebar-header:has(.sidebar-collapse-toggle:focus-visible) .sidebar-brand {
+  html[data-sidebar="compact"]
+    .sidebar-header:has(.sidebar-collapse-toggle:focus-visible)
+    .sidebar-brand {
     opacity: 0;
   }
   html[data-sidebar="compact"] .sidebar-header:hover .sidebar-collapse-toggle,
-  html[data-sidebar="compact"] .sidebar-header:has(.sidebar-collapse-toggle:focus-visible) .sidebar-collapse-toggle {
+  html[data-sidebar="compact"]
+    .sidebar-header:has(.sidebar-collapse-toggle:focus-visible)
+    .sidebar-collapse-toggle {
     opacity: 1;
   }
   html[data-sidebar="compact"] .sidebar-nav-item,
@@ -579,9 +583,15 @@ html[data-density="compact"] .collection-row {
     box-shadow: 0 2px 6px oklch(0.1 0.01 275 / 0.14);
   }
   html[data-sidebar="compact"] .sidebar-nav-item:hover .sidebar-item-tooltip,
-  html[data-sidebar="compact"] .sidebar-nav-item:focus-visible .sidebar-item-tooltip,
-  html[data-sidebar="compact"] .sidebar-account-trigger:hover .sidebar-item-tooltip,
-  html[data-sidebar="compact"] .sidebar-account-trigger:focus-visible .sidebar-item-tooltip {
+  html[data-sidebar="compact"]
+    .sidebar-nav-item:focus-visible
+    .sidebar-item-tooltip,
+  html[data-sidebar="compact"]
+    .sidebar-account-trigger:hover
+    .sidebar-item-tooltip,
+  html[data-sidebar="compact"]
+    .sidebar-account-trigger:focus-visible
+    .sidebar-item-tooltip {
     display: block;
   }
   html[data-sidebar="compact"] .sidebar-badge {
@@ -637,7 +647,8 @@ html.lenis.lenis-smooth iframe {
   animation: none;
 }
 .marketing-hero-product {
-  animation: marketing-product-enter 900ms 100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: marketing-product-enter 900ms 100ms cubic-bezier(0.16, 1, 0.3, 1)
+    both;
 }
 .marketing-hero-slide {
   height: 34rem;
@@ -689,7 +700,9 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready[data-marketing-reveal="sequence"] > :nth-child(3) {
   transition-delay: 170ms;
 }
-.marketing-reveal-ready[data-marketing-reveal="workflow"] > div > :nth-child(2) {
+.marketing-reveal-ready[data-marketing-reveal="workflow"]
+  > div
+  > :nth-child(2) {
   transition-delay: 110ms;
 }
 .marketing-reveal-ready[data-marketing-reveal="split"] > :first-child {
@@ -712,7 +725,9 @@ html.lenis.lenis-smooth iframe {
     [data-marketing-reveal="split-reverse"]
   )
   > *,
-.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="workflow"] > div > * {
+.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="workflow"]
+  > div
+  > * {
   transform: translate3d(0, 0, 0);
   will-change: auto;
 }
@@ -792,11 +807,14 @@ html.lenis.lenis-smooth iframe {
 .public-session-panel {
   --public-section-space: 1.75rem;
 }
-.public-session-tab-content .public-session-panel:not(.public-session-overview-card) {
+.public-session-tab-content
+  .public-session-panel:not(.public-session-overview-card) {
   border: 0;
   border-radius: 0;
 }
-.public-session-tab-content .public-session-panel:not(.public-session-overview-card) .public-session-hero {
+.public-session-tab-content
+  .public-session-panel:not(.public-session-overview-card)
+  .public-session-hero {
   border-radius: 0;
 }
 .public-session-section {
@@ -930,16 +948,43 @@ html.lenis.lenis-smooth iframe {
   }
 }
 .tab-chip-fade-right {
-  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2rem), transparent 100%);
-  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
 }
 .tab-chip-fade-left {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 100%);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 2rem,
+    #000 100%
+  );
   mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 100%);
 }
 .tab-chip-fade-both {
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 calc(100% - 2rem), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 2rem, #000 calc(100% - 2rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 2rem,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 2rem,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
 }
 html[data-density="compact"] .public-session-panel {
   --public-section-space: 1.5rem;
@@ -981,7 +1026,8 @@ html[data-density="compact"] .public-session-chat-thread {
 .chat-thread-scroll:hover,
 .chat-thread-scroll:focus-visible,
 .chat-thread-scroll:focus-within {
-  scrollbar-color: color-mix(in oklch, var(--muted) 42%, transparent) transparent;
+  scrollbar-color: color-mix(in oklch, var(--muted) 42%, transparent)
+    transparent;
 }
 .chat-thread-scroll:hover::-webkit-scrollbar-thumb,
 .chat-thread-scroll:focus-visible::-webkit-scrollbar-thumb,
@@ -991,7 +1037,8 @@ html[data-density="compact"] .public-session-chat-thread {
 }
 .chat-thread-scroll:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px color-mix(in oklch, var(--primary) 55%, transparent);
+  box-shadow: inset 0 0 0 2px
+    color-mix(in oklch, var(--primary) 55%, transparent);
 }
 
 @media (min-width: 1024px) {

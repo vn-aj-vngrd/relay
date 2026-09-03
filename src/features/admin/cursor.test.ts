@@ -15,7 +15,11 @@ describe("admin cursor", () => {
   it("rejects malformed and type-invalid cursors", () => {
     expect(parseAdminCursor("not-base64-json")).toBeNull();
     expect(
-      parseAdminCursor(Buffer.from(JSON.stringify({ at: "yesterday", id: "1" })).toString("base64url")),
+      parseAdminCursor(
+        Buffer.from(JSON.stringify({ at: "yesterday", id: "1" })).toString(
+          "base64url"
+        )
+      )
     ).toBeNull();
   });
 });

@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ updateSessionAction: vi.fn(async () => ({})) }));
 
-import { type SessionSettingsDefaults, SessionSettingsForm } from "./session-settings-form";
+import {
+  type SessionSettingsDefaults,
+  SessionSettingsForm,
+} from "./session-settings-form";
 
 const defaults: SessionSettingsDefaults = {
   id: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
@@ -34,20 +37,32 @@ afterEach(cleanup);
 describe("SessionSettingsForm", () => {
   it("loads the current shared plan and exposes one save action", () => {
     const { container } = render(<SessionSettingsForm defaults={defaults} />);
-    expect(screen.getByLabelText("Game name")).toHaveValue("Saturday Night Pickle");
+    expect(screen.getByLabelText("Game name")).toHaveValue(
+      "Saturday Night Pickle"
+    );
     expect(screen.getByLabelText("Court")).toHaveValue("Central Pickle");
     expect(screen.getByLabelText("Player limit")).toHaveValue(10);
-    expect(container.querySelector('input[name="visibility"]')).toHaveValue("link");
+    expect(container.querySelector('input[name="visibility"]')).toHaveValue(
+      "link"
+    );
     expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
-    expect(screen.getByRole("heading", { name: "Appearance, sharing, and cost" })).toBeVisible();
-    expect(screen.getByText(/Sets the cover, active tabs, and actions/)).toBeVisible();
-    expect(screen.getByRole("checkbox", { name: /Approve new players/ })).not.toBeChecked();
+    expect(
+      screen.getByRole("heading", { name: "Appearance, sharing, and cost" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Sets the cover, active tabs, and actions/)
+    ).toBeVisible();
+    expect(
+      screen.getByRole("checkbox", { name: /Approve new players/ })
+    ).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
   });
 
   it("reveals booking details only when the host confirms a reservation", () => {
     render(<SessionSettingsForm defaults={defaults} />);
-    expect(screen.queryByLabelText("Booking reference")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Booking reference")
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: /Court is booked/ }));
     expect(screen.getByLabelText("Booking reference")).toBeVisible();
     expect(screen.getByLabelText("Booking total")).toBeVisible();

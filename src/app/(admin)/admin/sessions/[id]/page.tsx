@@ -17,7 +17,11 @@ import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import { getAdminSession } from "@/features/admin/queries";
 import { formatSessionTime, peso } from "@/features/sessions/format";
 
-export default async function AdminSessionPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminSessionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const parsed = z.uuid().safeParse((await params).id);
   if (!parsed.success) notFound();
   const record = await getAdminSession(parsed.data);
@@ -65,7 +69,9 @@ export default async function AdminSessionPage({ params }: { params: Promise<{ i
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="text-sm text-muted">Time</dt>
-              <dd className="score text-sm font-semibold">{formatSessionTime(game.startsAt, game.endsAt)}</dd>
+              <dd className="score text-sm font-semibold">
+                {formatSessionTime(game.startsAt, game.endsAt)}
+              </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="flex items-center gap-2 text-sm text-muted">
@@ -75,25 +81,33 @@ export default async function AdminSessionPage({ params }: { params: Promise<{ i
               <dd className="text-sm font-medium">
                 {game.venueName}
                 {game.venueAddress ? (
-                  <span className="mt-1 block font-normal text-muted">{game.venueAddress}</span>
+                  <span className="mt-1 block font-normal text-muted">
+                    {game.venueAddress}
+                  </span>
                 ) : null}
               </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="text-sm text-muted">Visibility</dt>
-              <dd className="text-sm font-medium capitalize">{game.visibility}</dd>
+              <dd className="text-sm font-medium capitalize">
+                {game.visibility}
+              </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="text-sm text-muted">Estimated cost</dt>
               <dd className="score text-sm font-semibold">
-                {game.estimatedCostCents ? peso(game.estimatedCostCents) : "Not set"}
+                {game.estimatedCostCents
+                  ? peso(game.estimatedCostCents)
+                  : "Not set"}
               </dd>
             </div>
           </dl>
           {game.notes ? (
             <div className="mt-8">
               <h2 className="text-lg font-bold">Host notes</h2>
-              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-muted">{game.notes}</p>
+              <p className="mt-3 max-w-2xl whitespace-pre-wrap text-sm leading-7 text-muted">
+                {game.notes}
+              </p>
             </div>
           ) : null}
         </section>
@@ -137,11 +151,14 @@ export default async function AdminSessionPage({ params }: { params: Promise<{ i
           <section className="border-t border-line pt-5">
             <h2 className="text-sm font-semibold">Production action</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Cancellation preserves the roster, messages, payments, and match history.
+              Cancellation preserves the roster, messages, payments, and match
+              history.
             </p>
             <div className="mt-4">
               {game.status === "cancelled" || game.status === "completed" ? (
-                <p className="text-sm font-medium text-muted">No moderation action is available for this game.</p>
+                <p className="text-sm font-medium text-muted">
+                  No moderation action is available for this game.
+                </p>
               ) : (
                 <ModerationControl mode="cancel-session" targetId={game.id} />
               )}

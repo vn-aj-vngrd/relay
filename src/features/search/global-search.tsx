@@ -1,6 +1,12 @@
 "use client";
 
-import { ClockCounterClockwise, MagnifyingGlass, MapPin, TennisBall, UsersThree } from "@phosphor-icons/react";
+import {
+  ClockCounterClockwise,
+  MagnifyingGlass,
+  MapPin,
+  TennisBall,
+  UsersThree,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,9 +21,9 @@ import {
   minimumSearchLength,
   type RecentSearch,
   type SearchFilter,
-  searchFilters,
   type SearchResponse,
   type SearchResult,
+  searchFilters,
 } from "./domain";
 
 const recentKey = "relay-recent-searches-v1";
@@ -43,7 +49,7 @@ function readRecentSearches(): RecentSearch[] {
           item !== null &&
           typeof item.query === "string" &&
           searchFilters.includes(item.filter) &&
-          typeof item.savedAt === "number",
+          typeof item.savedAt === "number"
       )
       .slice(0, 8);
   } catch {
@@ -51,10 +57,24 @@ function readRecentSearches(): RecentSearch[] {
   }
 }
 
-function ResultIdentity({ result, index }: { result: SearchResult; index: number }) {
+function ResultIdentity({
+  result,
+  index,
+}: {
+  result: SearchResult;
+  index: number;
+}) {
   if (result.type === "players")
-    return <Avatar name={result.title} imageUrl={result.imageUrl ?? undefined} index={index} size="sm" />;
-  if (result.type === "games") return <span aria-hidden className="h-9 w-1 rounded-full bg-primary" />;
+    return (
+      <Avatar
+        name={result.title}
+        imageUrl={result.imageUrl ?? undefined}
+        index={index}
+        size="sm"
+      />
+    );
+  if (result.type === "games")
+    return <span aria-hidden className="h-9 w-1 rounded-full bg-primary" />;
   if (result.type === "groups")
     return (
       <span
@@ -69,28 +89,49 @@ function ResultIdentity({ result, index }: { result: SearchResult; index: number
       </span>
     );
   return (
-    <span aria-hidden className="grid h-9 w-9 place-items-center rounded-full bg-surface-strong text-muted">
+    <span
+      aria-hidden
+      className="grid h-9 w-9 place-items-center rounded-full bg-surface-strong text-muted"
+    >
       <MapPin size={17} />
     </span>
   );
 }
 
-function SearchResultRow({ result, index, onOpen }: { result: SearchResult; index: number; onOpen: () => void }) {
+function SearchResultRow({
+  result,
+  index,
+  onOpen,
+}: {
+  result: SearchResult;
+  index: number;
+  onOpen: () => void;
+}) {
   return (
     <Link
       href={result.href}
       onClick={() => {
         onOpen();
         if (result.type === "games")
-          void trackDiscoveryEvent({ event: "public_game_opened", sessionId: result.id, source: "search" });
+          void trackDiscoveryEvent({
+            event: "public_game_opened",
+            sessionId: result.id,
+            source: "search",
+          });
       }}
-      style={result.accentColor ? sessionAccentStyle(result.accentColor) : undefined}
+      style={
+        result.accentColor ? sessionAccentStyle(result.accentColor) : undefined
+      }
       className="collection-row pressable group flex min-h-16 items-center gap-3 py-3 hover:bg-surface-strong sm:px-2"
     >
       <ResultIdentity result={result} index={index} />
       <span className="min-w-0 flex-1">
-        <strong className="block truncate text-sm font-semibold">{result.title}</strong>
-        <span className="mt-1 block truncate text-sm text-muted">{result.subtitle}</span>
+        <strong className="block truncate text-sm font-semibold">
+          {result.title}
+        </strong>
+        <span className="mt-1 block truncate text-sm text-muted">
+          {result.subtitle}
+        </span>
       </span>
       <span className="shrink-0 text-xs text-muted">{labels[result.type]}</span>
     </Link>
@@ -99,7 +140,12 @@ function SearchResultRow({ result, index, onOpen }: { result: SearchResult; inde
 
 function ResultSkeleton() {
   return (
-    <div role="status" aria-label="Searching" aria-busy="true" className="divide-y divide-line border-y border-line">
+    <div
+      role="status"
+      aria-label="Searching"
+      aria-busy="true"
+      className="divide-y divide-line border-y border-line"
+    >
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex min-h-16 items-center gap-3 py-3">
           <span className="h-9 w-9 animate-pulse rounded-full bg-surface-strong" />
@@ -123,13 +169,13 @@ export function GlobalSearch({
   const initialSearch = initialQuery.trim();
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(
-    initialSearch.length >= minimumSearchLength ? initialSearch : "",
+    initialSearch.length >= minimumSearchLength ? initialSearch : ""
   );
   const [filter, setFilter] = useState<SearchFilter>(initialFilter);
   const [items, setItems] = useState<SearchResult[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">(
-    initialSearch.length >= minimumSearchLength ? "loading" : "idle",
+    initialSearch.length >= minimumSearchLength ? "loading" : "idle"
   );
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadMoreError, setLoadMoreError] = useState(false);
@@ -139,7 +185,9 @@ export function GlobalSearch({
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setRecent(readRecentSearches()));
+    const frame = window.requestAnimationFrame(() =>
+      setRecent(readRecentSearches())
+    );
     return () => window.cancelAnimationFrame(frame);
   }, []);
   useEffect(() => {
@@ -160,7 +208,11 @@ export function GlobalSearch({
         setLoadMoreError(false);
       }
       try {
-        const params = new URLSearchParams({ q: debouncedQuery.toLowerCase(), type: filter, cursor: String(cursor) });
+        const params = new URLSearchParams({
+          q: debouncedQuery.toLowerCase(),
+          type: filter,
+          cursor: String(cursor),
+        });
         const cacheKey = params.toString();
         let data = responseCacheRef.current.get(cacheKey);
         if (!data) {
@@ -176,10 +228,14 @@ export function GlobalSearch({
             if (oldest) responseCacheRef.current.delete(oldest);
           }
         }
-        setItems((current) => (append ? [...current, ...data.items] : data.items));
+        setItems((current) =>
+          append ? [...current, ...data.items] : data.items
+        );
         setNextCursor(data.nextCursor);
         setStatus("ready");
-        syncSearchUrl(`/search?q=${encodeURIComponent(debouncedQuery)}${filter === "all" ? "" : `&type=${filter}`}`);
+        syncSearchUrl(
+          `/search?q=${encodeURIComponent(debouncedQuery)}${filter === "all" ? "" : `&type=${filter}`}`
+        );
       } catch (error) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           if (append) setLoadMoreError(true);
@@ -192,7 +248,7 @@ export function GlobalSearch({
         }
       }
     },
-    [debouncedQuery, filter],
+    [debouncedQuery, filter]
   );
 
   useEffect(() => {
@@ -216,7 +272,7 @@ export function GlobalSearch({
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { rootMargin: "240px" },
+      { rootMargin: "240px" }
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -244,12 +300,17 @@ export function GlobalSearch({
     else syncSearchUrl(next === "all" ? "/search" : `/search?type=${next}`);
   }
   function saveRecent() {
-    const next = mergeRecentSearches(recent, { query: debouncedQuery || query, filter });
+    const next = mergeRecentSearches(recent, {
+      query: debouncedQuery || query,
+      filter,
+    });
     setRecent(next);
     localStorage.setItem(recentKey, JSON.stringify(next));
   }
   function removeRecent(saved: RecentSearch) {
-    const next = recent.filter((item) => item.query !== saved.query || item.filter !== saved.filter);
+    const next = recent.filter(
+      (item) => item.query !== saved.query || item.filter !== saved.filter
+    );
     setRecent(next);
     localStorage.setItem(recentKey, JSON.stringify(next));
   }
@@ -261,14 +322,21 @@ export function GlobalSearch({
   const normalizedQuery = query.trim();
   const grouped = searchFilters
     .slice(1)
-    .map((type) => ({ type, items: items.filter((item) => item.type === type) }))
+    .map((type) => ({
+      type,
+      items: items.filter((item) => item.type === type),
+    }))
     .filter((section) => section.items.length);
   return (
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="app-title">Search Relay</h1>
       <div className="sticky top-[56px] z-10 -mx-4 mt-6 bg-surface px-4 pb-1 pt-1 sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:p-0">
         <div className="relative">
-          <MagnifyingGlass aria-hidden className="pointer-events-none absolute left-3.5 top-3.5 text-muted" size={18} />
+          <MagnifyingGlass
+            aria-hidden
+            className="pointer-events-none absolute left-3.5 top-3.5 text-muted"
+            size={18}
+          />
           <label htmlFor="global-search" className="sr-only">
             Search Relay
           </label>
@@ -296,7 +364,10 @@ export function GlobalSearch({
             </button>
           ) : null}
         </div>
-        <nav aria-label="Search filters" className="public-session-scroll mt-3 overflow-x-auto border-b border-line">
+        <nav
+          aria-label="Search filters"
+          className="public-session-scroll mt-3 overflow-x-auto border-b border-line"
+        >
           <ul className="flex min-w-max">
             {searchFilters.map((type) => (
               <li key={type}>
@@ -344,15 +415,26 @@ export function GlobalSearch({
               </div>
               <ul className="mt-3 divide-y divide-line border-y border-line">
                 {recent.map((saved) => (
-                  <li key={`${saved.filter}-${saved.query}`} className="flex min-h-14 items-center gap-2">
+                  <li
+                    key={`${saved.filter}-${saved.query}`}
+                    className="flex min-h-14 items-center gap-2"
+                  >
                     <button
                       type="button"
                       onClick={() => applyRecent(saved)}
                       className="flex min-h-14 min-w-0 flex-1 items-center gap-3 text-left"
                     >
-                      <ClockCounterClockwise aria-hidden size={17} className="shrink-0 text-muted" />
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{saved.query}</span>
-                      <span className="text-xs text-muted">{labels[saved.filter]}</span>
+                      <ClockCounterClockwise
+                        aria-hidden
+                        size={17}
+                        className="shrink-0 text-muted"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {saved.query}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {labels[saved.filter]}
+                      </span>
                     </button>
                     <button
                       type="button"
@@ -371,20 +453,25 @@ export function GlobalSearch({
               <TennisBall aria-hidden size={23} className="text-primary" />
               <h2 className="mt-4 text-xl font-bold">Find your next game</h2>
               <p className="mt-2 max-w-md text-sm leading-6 text-muted">
-                Search a friend’s name, a regular group, a court, or a game title. Results appear as you type.
+                Search a friend’s name, a regular group, a court, or a game
+                title. Results appear as you type.
               </p>
             </section>
           )
         ) : normalizedQuery.length < minimumSearchLength ? (
           <section className="border-y border-line py-8">
-            <p className="text-sm text-muted">Type at least {minimumSearchLength} characters to search.</p>
+            <p className="text-sm text-muted">
+              Type at least {minimumSearchLength} characters to search.
+            </p>
           </section>
         ) : status === "loading" && !items.length ? (
           <ResultSkeleton />
         ) : status === "error" ? (
           <section className="border-y border-line py-9">
             <h2 className="font-bold">Search is unavailable</h2>
-            <p className="mt-2 text-sm text-muted">Check your connection and try again.</p>
+            <p className="mt-2 text-sm text-muted">
+              Check your connection and try again.
+            </p>
             <button
               type="button"
               onClick={() => void fetchPage(0, false)}
@@ -396,23 +483,34 @@ export function GlobalSearch({
         ) : status === "ready" && !items.length ? (
           <section className="border-y border-line py-10">
             <MagnifyingGlass aria-hidden size={22} className="text-primary" />
-            <h2 className="mt-4 text-xl font-bold">No results for “{debouncedQuery}”</h2>
-            <p className="mt-2 text-sm text-muted">Try a player username, court name, or a shorter phrase.</p>
+            <h2 className="mt-4 text-xl font-bold">
+              No results for “{debouncedQuery}”
+            </h2>
+            <p className="mt-2 text-sm text-muted">
+              Try a player username, court name, or a shorter phrase.
+            </p>
             {filter === "courts" ? (
               <Link
                 href="/court"
                 className="pressable mt-4 inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
               >
-                <MapPin aria-hidden size={15} /> Browse the Philippines court map
+                <MapPin aria-hidden size={15} /> Browse the Philippines court
+                map
               </Link>
             ) : null}
           </section>
         ) : filter === "all" ? (
           <div className="space-y-8">
             {grouped.map((section) => (
-              <section key={section.type} aria-labelledby={`results-${section.type}`}>
+              <section
+                key={section.type}
+                aria-labelledby={`results-${section.type}`}
+              >
                 <div className="mb-2 flex items-center justify-between">
-                  <h2 id={`results-${section.type}`} className="text-sm font-bold">
+                  <h2
+                    id={`results-${section.type}`}
+                    className="text-sm font-bold"
+                  >
                     {labels[section.type]}
                   </h2>
                   <button
@@ -439,12 +537,22 @@ export function GlobalSearch({
         ) : (
           <div className="divide-y divide-line border-y border-line">
             {items.map((result, index) => (
-              <SearchResultRow key={`${result.type}-${result.id}`} result={result} index={index} onOpen={saveRecent} />
+              <SearchResultRow
+                key={`${result.type}-${result.id}`}
+                result={result}
+                index={index}
+                onOpen={saveRecent}
+              />
             ))}
           </div>
         )}
-        {normalizedQuery.length >= minimumSearchLength && nextCursor !== null && status === "ready" ? (
-          <div ref={sentinelRef} className="flex min-h-20 items-center justify-center">
+        {normalizedQuery.length >= minimumSearchLength &&
+        nextCursor !== null &&
+        status === "ready" ? (
+          <div
+            ref={sentinelRef}
+            className="flex min-h-20 items-center justify-center"
+          >
             <button
               type="button"
               onClick={loadMore}

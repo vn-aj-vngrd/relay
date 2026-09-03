@@ -22,7 +22,13 @@ describe("MessageLikeButton", () => {
   it("shows a like immediately while the server action is pending", async () => {
     const action = deferred();
     mocks.toggle.mockReturnValue(action.promise);
-    render(<MessageLikeButton messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" liked={false} count={1} />);
+    render(
+      <MessageLikeButton
+        messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        liked={false}
+        count={1}
+      />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Like message" }));
 
@@ -38,7 +44,13 @@ describe("MessageLikeButton", () => {
   it("shows an unlike immediately while the server action is pending", async () => {
     const action = deferred();
     mocks.toggle.mockReturnValue(action.promise);
-    render(<MessageLikeButton messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" liked count={2} />);
+    render(
+      <MessageLikeButton
+        messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        liked
+        count={2}
+      />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Remove like" }));
 
@@ -52,7 +64,13 @@ describe("MessageLikeButton", () => {
   it("allows another optimistic toggle before the previous request settles", async () => {
     const action = deferred();
     mocks.toggle.mockReturnValue(action.promise);
-    render(<MessageLikeButton messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" liked={false} count={1} />);
+    render(
+      <MessageLikeButton
+        messageId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        liked={false}
+        count={1}
+      />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Like message" }));
     fireEvent.click(screen.getByRole("button", { name: "Remove like" }));

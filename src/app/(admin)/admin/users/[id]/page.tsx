@@ -22,10 +22,17 @@ import { getAdminUser } from "@/features/admin/queries";
 import { discoverySourceLabel } from "@/features/onboarding/discovery-source";
 import { playingExperienceLabel } from "@/features/players/playing-experience";
 
-export default async function AdminUserPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminUserPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const parsed = z.uuid().safeParse((await params).id);
   if (!parsed.success) notFound();
-  const [admin, account] = await Promise.all([requireAdmin(), getAdminUser(parsed.data)]);
+  const [admin, account] = await Promise.all([
+    requireAdmin(),
+    getAdminUser(parsed.data),
+  ]);
   if (!account) notFound();
   const { user, profile } = account;
 
@@ -44,7 +51,10 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
         action={
           <div className="flex items-center gap-3">
             <AdminStatus value={user.suspendedAt ? "suspended" : "active"} />
-            <ButtonLink href={`/admin/users/${user.id}/edit`} variant="secondary">
+            <ButtonLink
+              href={`/admin/users/${user.id}/edit`}
+              variant="secondary"
+            >
               <PencilSimple aria-hidden size={16} />
               Edit profile
             </ButtonLink>
@@ -72,7 +82,10 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
               </dt>
               <dd className="text-sm font-medium">
                 {profile ? (
-                  <Link href={`/profile/${profile.username}`} className="text-primary">
+                  <Link
+                    href={`/profile/${profile.username}`}
+                    className="text-primary"
+                  >
                     @{profile.username}
                   </Link>
                 ) : (
@@ -85,27 +98,36 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
                 <MapPin size={17} />
                 City
               </dt>
-              <dd className="text-sm font-medium">{profile?.city ?? "Not set"}</dd>
+              <dd className="text-sm font-medium">
+                {profile?.city ?? "Not set"}
+              </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="flex items-center gap-2 text-sm text-muted">
                 <Compass size={17} />
                 Discovered via
               </dt>
-              <dd className="text-sm font-medium">{discoverySourceLabel(profile?.discoverySource)}</dd>
+              <dd className="text-sm font-medium">
+                {discoverySourceLabel(profile?.discoverySource)}
+              </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="flex items-center gap-2 text-sm text-muted">
                 <TennisBall size={17} />
                 Experience
               </dt>
-              <dd className="text-sm font-medium">{playingExperienceLabel(profile?.skillLevel)}</dd>
+              <dd className="text-sm font-medium">
+                {playingExperienceLabel(profile?.skillLevel)}
+              </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
               <dt className="text-sm text-muted">Setup completed</dt>
               <dd>
                 {profile?.onboardingCompletedAt ? (
-                  <AdminDate value={profile.onboardingCompletedAt} includeTime />
+                  <AdminDate
+                    value={profile.onboardingCompletedAt}
+                    includeTime
+                  />
                 ) : (
                   "Not yet"
                 )}
@@ -115,7 +137,10 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
               <dt className="text-sm text-muted">Tour completed</dt>
               <dd>
                 {profile?.productTourCompletedAt ? (
-                  <AdminDate value={profile.productTourCompletedAt} includeTime />
+                  <AdminDate
+                    value={profile.productTourCompletedAt}
+                    includeTime
+                  />
                 ) : (
                   "Not yet"
                 )}
@@ -132,7 +157,9 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
           {user.suspendedAt ? (
             <div className="mt-8 border-y border-line py-5">
               <h3 className="font-semibold text-danger">Suspension details</h3>
-              <p className="mt-2 text-sm leading-6 text-muted">{user.suspensionReason ?? "No reason recorded."}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                {user.suspensionReason ?? "No reason recorded."}
+              </p>
               <p className="mt-2 text-xs text-muted">
                 Suspended <AdminDate value={user.suspendedAt} includeTime />
               </p>
@@ -146,34 +173,45 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
             <dl className="mt-3 grid grid-cols-2 divide-x divide-line border-y border-line">
               <div className="py-4 pr-4">
                 <dt className="text-xs text-muted">Hosted</dt>
-                <dd className="score mt-1 text-2xl font-bold">{account.hostedCount}</dd>
+                <dd className="score mt-1 text-2xl font-bold">
+                  {account.hostedCount}
+                </dd>
               </div>
               <div className="py-4 pl-4">
                 <dt className="text-xs text-muted">Joined</dt>
-                <dd className="score mt-1 text-2xl font-bold">{account.joinedCount}</dd>
+                <dd className="score mt-1 text-2xl font-bold">
+                  {account.joinedCount}
+                </dd>
               </div>
             </dl>
           </section>
           <section className="border-t border-line pt-5">
             <h2 className="text-sm font-semibold">Onboarding</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Queue profile setup and the product tour for the next time this user opens Relay.
+              Queue profile setup and the product tour for the next time this
+              user opens Relay.
             </p>
             <div className="mt-4">
               {profile ? (
                 <OnboardingResetControl
                   targetId={user.id}
-                  queued={!profile.onboardingCompletedAt && !profile.productTourCompletedAt}
+                  queued={
+                    !profile.onboardingCompletedAt &&
+                    !profile.productTourCompletedAt
+                  }
                 />
               ) : (
-                <p className="text-sm font-medium text-muted">A profile is required before onboarding can start.</p>
+                <p className="text-sm font-medium text-muted">
+                  A profile is required before onboarding can start.
+                </p>
               )}
             </div>
           </section>
           <section className="border-t border-line pt-5">
             <h2 className="text-sm font-semibold">Password recovery</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Create a temporary password after verifying the account owner. Existing MFA stays enforced.
+              Create a temporary password after verifying the account owner.
+              Existing MFA stays enforced.
             </p>
             <div className="mt-4">
               <PasswordResetControl targetId={user.id} email={user.email} />
@@ -186,9 +224,14 @@ export default async function AdminUserPage({ params }: { params: Promise<{ id: 
             </p>
             <div className="mt-4">
               {admin.id === user.id ? (
-                <p className="text-sm font-medium text-muted">You cannot change your own access.</p>
+                <p className="text-sm font-medium text-muted">
+                  You cannot change your own access.
+                </p>
               ) : (
-                <ModerationControl mode={user.suspendedAt ? "restore-user" : "suspend-user"} targetId={user.id} />
+                <ModerationControl
+                  mode={user.suspendedAt ? "restore-user" : "suspend-user"}
+                  targetId={user.id}
+                />
               )}
             </div>
           </section>

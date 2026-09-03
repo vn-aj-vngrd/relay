@@ -3,7 +3,10 @@
 import { useActionState, useState } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
-import { DatePickerField, TimePickerField } from "@/components/ui/date-time-picker";
+import {
+  DatePickerField,
+  TimePickerField,
+} from "@/components/ui/date-time-picker";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -49,14 +52,26 @@ export type SessionSettingsDefaults = {
   bookingNotes: string;
 };
 
-export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDefaults }) {
-  const [state, action] = useActionState<SessionActionState, FormData>(updateSessionAction, {});
-  const preserveValues = usePreserveFormValuesOnError(state);
-  const [booked, setBooked] = useState(state.values ? state.values.booked === "on" : defaults.booked);
-  const [visibility, setVisibility] = useState<"public" | "link" | "private">(
-    (state.values?.visibility as "public" | "link" | "private" | undefined) ?? defaults.visibility,
+export function SessionSettingsForm({
+  defaults,
+}: {
+  defaults: SessionSettingsDefaults;
+}) {
+  const [state, action] = useActionState<SessionActionState, FormData>(
+    updateSessionAction,
+    {}
   );
-  const [costKind, setCostKind] = useState<"unspecified" | "free" | "estimated">(
+  const preserveValues = usePreserveFormValuesOnError(state);
+  const [booked, setBooked] = useState(
+    state.values ? state.values.booked === "on" : defaults.booked
+  );
+  const [visibility, setVisibility] = useState<"public" | "link" | "private">(
+    (state.values?.visibility as "public" | "link" | "private" | undefined) ??
+      defaults.visibility
+  );
+  const [costKind, setCostKind] = useState<
+    "unspecified" | "free" | "estimated"
+  >(
     state.values?.costKind === "free" || state.values?.costKind === "estimated"
       ? state.values.costKind
       : state.values?.costKind === "unspecified"
@@ -65,17 +80,26 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
           ? "free"
           : defaults.cost
             ? "estimated"
-            : "unspecified",
+            : "unspecified"
   );
-  const value = (key: keyof SessionSettingsDefaults) => state.values?.[key] ?? String(defaults[key] ?? "");
+  const value = (key: keyof SessionSettingsDefaults) =>
+    state.values?.[key] ?? String(defaults[key] ?? "");
   const error = (key: string) => state.fieldErrors?.[key]?.[0];
 
   return (
-    <form action={action} onSubmitCapture={preserveValues} noValidate className="space-y-9">
+    <form
+      action={action}
+      onSubmitCapture={preserveValues}
+      noValidate
+      className="space-y-9"
+    >
       <input type="hidden" name="sessionId" value={defaults.id} />
       <input type="hidden" name="version" value={defaults.version} />
       {state.error ? (
-        <div role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger">
+        <div
+          role="alert"
+          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
+        >
           {state.error}
         </div>
       ) : null}
@@ -85,7 +109,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
           <h2 id="settings-plan" className="text-lg font-bold">
             Plan
           </h2>
-          <p className="mt-1 text-sm text-muted">Changes appear on the invite and notify signed-in players.</p>
+          <p className="mt-1 text-sm text-muted">
+            Changes appear on the invite and notify signed-in players.
+          </p>
         </div>
         <div className="space-y-6">
           <div>
@@ -137,7 +163,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                 label="Starts"
                 defaultValue={value("start")}
                 error={error("start")}
-                describedBy={error("start") ? "settings-start-error" : undefined}
+                describedBy={
+                  error("start") ? "settings-start-error" : undefined
+                }
               />
               <ErrorText id="settings-start-error" message={error("start")} />
             </div>
@@ -185,7 +213,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
               className={field}
               placeholder="2, 3, Center"
             />
-            <p className="mt-1.5 text-sm text-muted">Optional labels, separated by commas.</p>
+            <p className="mt-1.5 text-sm text-muted">
+              Optional labels, separated by commas.
+            </p>
           </div>
         </div>
       </section>
@@ -200,7 +230,8 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
             Appearance, sharing, and cost
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Customize the cover and keep the shared plan accurate before players arrive.
+            Customize the cover and keep the shared plan accurate before players
+            arrive.
           </p>
         </div>
         <SessionAccentPicker defaultValue={value("accentColor")} />
@@ -223,7 +254,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
               {[
                 ["free", "Free"],
                 ["estimated", "Estimated per player"],
-                ...(visibility === "public" ? [] : [["unspecified", "Not provided"]]),
+                ...(visibility === "public"
+                  ? []
+                  : [["unspecified", "Not provided"]]),
               ].map(([kind, text]) => (
                 <label
                   key={kind}
@@ -246,7 +279,10 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                 Choose Free or Estimated before saving a public game.
               </p>
             ) : null}
-            <ErrorText id="settings-cost-kind-error" message={error("costKind")} />
+            <ErrorText
+              id="settings-cost-kind-error"
+              message={error("costKind")}
+            />
           </fieldset>
         </div>
         {costKind === "estimated" ? (
@@ -273,7 +309,11 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
             <ErrorText id="settings-cost-error" message={error("cost")} />
           </div>
         ) : (
-          <input type="hidden" name="cost" value={costKind === "free" ? "0" : ""} />
+          <input
+            type="hidden"
+            name="cost"
+            value={costKind === "free" ? "0" : ""}
+          />
         )}
         <div className="mt-6">
           <label htmlFor="settings-notes" className={label}>
@@ -293,19 +333,29 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
           <input
             type="checkbox"
             name="requiresApproval"
-            defaultChecked={state.values ? state.values.requiresApproval === "on" : defaults.requiresApproval}
+            defaultChecked={
+              state.values
+                ? state.values.requiresApproval === "on"
+                : defaults.requiresApproval
+            }
             className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
           />
           <span>
-            <strong className="block text-sm">Approve new players before they join</strong>
+            <strong className="block text-sm">
+              Approve new players before they join
+            </strong>
             <span className="mt-0.5 block text-sm text-muted">
-              Join requests stay pending until a host approves them. You can still remove players later.
+              Join requests stay pending until a host approves them. You can
+              still remove players later.
             </span>
           </span>
         </label>
       </section>
 
-      <section aria-labelledby="settings-booking" className="border-t border-line pt-8">
+      <section
+        aria-labelledby="settings-booking"
+        className="border-t border-line pt-8"
+      >
         <div className="mb-5">
           <h2 id="settings-booking" className="text-lg font-bold">
             Court booking
@@ -324,7 +374,9 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
           />
           <span>
             <strong className="block text-sm">Court is booked</strong>
-            <span className="mt-0.5 block text-sm text-muted">Show a confirmed booking status to players.</span>
+            <span className="mt-0.5 block text-sm text-muted">
+              Show a confirmed booking status to players.
+            </span>
           </span>
         </label>
         {booked ? (
@@ -342,14 +394,19 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                   className={field}
                   placeholder="Optional"
                 />
-                <ErrorText id="settings-reference-error" message={error("bookingReference")} />
+                <ErrorText
+                  id="settings-reference-error"
+                  message={error("bookingReference")}
+                />
               </div>
               <div>
                 <label htmlFor="settings-booking-total" className={label}>
                   Booking total
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-[14px] text-muted">₱</span>
+                  <span className="absolute left-3.5 top-[14px] text-muted">
+                    ₱
+                  </span>
                   <input
                     id="settings-booking-total"
                     name="bookingTotal"
@@ -363,7 +420,10 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                     placeholder="2400"
                   />
                 </div>
-                <ErrorText id="settings-booking-total-error" message={error("bookingTotal")} />
+                <ErrorText
+                  id="settings-booking-total-error"
+                  message={error("bookingTotal")}
+                />
               </div>
             </div>
             <div>
@@ -378,7 +438,10 @@ export function SessionSettingsForm({ defaults }: { defaults: SessionSettingsDef
                 className={`${field} min-h-24 resize-y py-3`}
                 placeholder="Court access, reservation name, or arrival instructions…"
               />
-              <ErrorText id="settings-booking-notes-error" message={error("bookingNotes")} />
+              <ErrorText
+                id="settings-booking-notes-error"
+                message={error("bookingNotes")}
+              />
             </div>
           </div>
         ) : null}

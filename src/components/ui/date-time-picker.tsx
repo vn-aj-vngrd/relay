@@ -1,6 +1,13 @@
 "use client";
 
-import { CalendarBlank, CaretDown, CaretLeft, CaretRight, Check, Clock } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  CaretDown,
+  CaretLeft,
+  CaretRight,
+  Check,
+  Clock,
+} from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 
 const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -10,14 +17,20 @@ const dateFormatter = new Intl.DateTimeFormat("en-PH", {
   day: "numeric",
   year: "numeric",
 });
-const monthFormatter = new Intl.DateTimeFormat("en-PH", { month: "long", year: "numeric" });
+const monthFormatter = new Intl.DateTimeFormat("en-PH", {
+  month: "long",
+  year: "numeric",
+});
 const fullDateFormatter = new Intl.DateTimeFormat("en-PH", {
   weekday: "long",
   month: "long",
   day: "numeric",
   year: "numeric",
 });
-const timeFormatter = new Intl.DateTimeFormat("en-PH", { hour: "numeric", minute: "2-digit" });
+const timeFormatter = new Intl.DateTimeFormat("en-PH", {
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 function parseDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
@@ -35,7 +48,11 @@ function timeLabel(value: string) {
     : "Choose a time";
 }
 
-function useDismiss(open: boolean, close: () => void, root: React.RefObject<HTMLDivElement | null>) {
+function useDismiss(
+  open: boolean,
+  close: () => void,
+  root: React.RefObject<HTMLDivElement | null>
+) {
   useEffect(() => {
     if (!open) return;
     const pointer = (event: PointerEvent) => {
@@ -94,7 +111,13 @@ export function DatePickerField({
   const first = new Date(view.getFullYear(), view.getMonth(), 1);
   const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
   const cells = Array.from({ length: first.getDay() + days }, (_, index) =>
-    index < first.getDay() ? null : new Date(view.getFullYear(), view.getMonth(), index - first.getDay() + 1),
+    index < first.getDay()
+      ? null
+      : new Date(
+          view.getFullYear(),
+          view.getMonth(),
+          index - first.getDay() + 1
+        )
   );
   const today = todayValue ?? dateValue(new Date());
 
@@ -129,7 +152,9 @@ export function DatePickerField({
             <button
               type="button"
               aria-label="Previous month"
-              onClick={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}
+              onClick={() =>
+                setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))
+              }
               className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
             >
               <CaretLeft aria-hidden size={16} />
@@ -138,7 +163,9 @@ export function DatePickerField({
             <button
               type="button"
               aria-label="Next month"
-              onClick={() => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1))}
+              onClick={() =>
+                setView(new Date(view.getFullYear(), view.getMonth() + 1, 1))
+              }
               className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
             >
               <CaretRight aria-hidden size={16} />
@@ -168,12 +195,15 @@ export function DatePickerField({
                 >
                   {day.getDate()}
                   {dateValue(day) === today && dateValue(day) !== value ? (
-                    <span aria-hidden className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
+                    <span
+                      aria-hidden
+                      className="absolute bottom-1 h-1 w-1 rounded-full bg-primary"
+                    />
                   ) : null}
                 </button>
               ) : (
                 <span key={`blank-${index}`} />
-              ),
+              )
             )}
           </div>
           <div className="mt-2 border-t border-line pt-2">
@@ -199,7 +229,8 @@ export function DatePickerField({
 
 const timeOptions = Array.from(
   { length: 96 },
-  (_, index) => `${String(Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 15).padStart(2, "0")}`,
+  (_, index) =>
+    `${String(Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 15).padStart(2, "0")}`
 );
 
 export function TimePickerField({
@@ -239,7 +270,7 @@ export function TimePickerField({
     (option) =>
       (!minValue || option >= minValue) &&
       (!afterValue || option > afterValue) &&
-      (!beforeValue || option < beforeValue),
+      (!beforeValue || option < beforeValue)
   );
   const [open, setOpen] = useState(false);
   useDismiss(open, () => setOpen(false), root);
@@ -259,7 +290,9 @@ export function TimePickerField({
         className={`${triggerClass} score ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`}
       >
         <Clock aria-hidden size={17} className="shrink-0 text-muted" />
-        <span className={`flex-1 ${value ? "" : "font-sans text-muted"}`}>{timeLabel(value)}</span>
+        <span className={`flex-1 ${value ? "" : "font-sans text-muted"}`}>
+          {timeLabel(value)}
+        </span>
         <CaretDown aria-hidden size={14} className="text-muted" />
       </button>
       {open ? (
@@ -287,7 +320,8 @@ export function TimePickerField({
             ))
           ) : (
             <p role="status" className="px-3 py-4 text-sm leading-5 text-muted">
-              No times are available. Choose another date or adjust the other time.
+              No times are available. Choose another date or adjust the other
+              time.
             </p>
           )}
         </div>

@@ -13,7 +13,12 @@ export function IconTooltip({
   align?: "start" | "center" | "end";
   side?: "responsive" | "top" | "bottom";
 }) {
-  const alignment = align === "center" ? "left-1/2 -translate-x-1/2" : align === "start" ? "left-0" : "right-0";
+  const alignment =
+    align === "center"
+      ? "left-1/2 -translate-x-1/2"
+      : align === "start"
+        ? "left-0"
+        : "right-0";
   const placement =
     side === "top"
       ? "bottom-full mb-2"

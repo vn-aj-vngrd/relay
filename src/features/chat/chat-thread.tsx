@@ -2,13 +2,24 @@
 
 import { type ReactNode, useEffect, useRef } from "react";
 
-export function ChatThread({ children, messageCount }: { children: ReactNode; messageCount: number }) {
+export function ChatThread({
+  children,
+  messageCount,
+}: {
+  children: ReactNode;
+  messageCount: number;
+}) {
   const threadRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const thread = threadRef.current;
     if (!thread) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    thread.scrollTo({ top: thread.scrollHeight, behavior: messageCount > 1 && !reduceMotion ? "smooth" : "auto" });
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+    thread.scrollTo({
+      top: thread.scrollHeight,
+      behavior: messageCount > 1 && !reduceMotion ? "smooth" : "auto",
+    });
   }, [messageCount]);
   return (
     <div

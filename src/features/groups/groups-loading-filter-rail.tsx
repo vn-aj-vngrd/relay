@@ -14,5 +14,13 @@ type GroupFilter = (typeof items)[number]["value"];
 
 export function GroupsLoadingFilterRail() {
   const [filter, setFilter] = useState<GroupFilter>("all");
-  return <TabChipRail label="Filter groups" items={items} value={filter} onChange={setFilter} className="min-w-0" />;
+  return (
+    <TabChipRail
+      label="Filter groups"
+      items={items}
+      value={filter}
+      onChange={setFilter}
+      className="min-w-0"
+    />
+  );
 }

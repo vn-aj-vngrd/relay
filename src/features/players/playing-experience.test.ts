@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { playingExperienceLabel, playingExperienceWeight } from "./playing-experience";
+import {
+  playingExperienceLabel,
+  playingExperienceWeight,
+} from "./playing-experience";
 
 describe("playing experience", () => {
   it("maps recreational labels to deterministic balancing weights", () => {

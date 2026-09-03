@@ -14,60 +14,92 @@ import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDate, formatSessionTime, peso, sessionDateKey } from "@/features/sessions/format";
+import {
+  formatSessionDate,
+  formatSessionTime,
+  peso,
+  sessionDateKey,
+} from "@/features/sessions/format";
 import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
 import { HomeInvitations } from "@/features/sessions/home-invitations";
-import { homeHeading, homeParticipationLabel, homePendingRequestLabel } from "@/features/sessions/home-presentation";
+import {
+  homeHeading,
+  homeParticipationLabel,
+  homePendingRequestLabel,
+} from "@/features/sessions/home-presentation";
 import { getHomeSessions } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 
 export default async function HomePage() {
   const user = await requireUser();
-  const [profile, data] = await Promise.all([ensureProfile(user), getHomeSessions(user.id)]);
+  const [profile, data] = await Promise.all([
+    ensureProfile(user),
+    getHomeSessions(user.id),
+  ]);
   const next = data.primary;
   const nextHref = next ? `/games/${next.session.id}` : "";
   const nextIsLive = next?.session.status === "live";
-  const upcoming = data.upcoming.filter(({ session }) => session.id !== next?.session.id);
+  const upcoming = data.upcoming.filter(
+    ({ session }) => session.id !== next?.session.id
+  );
   const hasTentative = !next && upcoming.length > 0;
   const nextReadiness =
     next && next.session.hostId === user.id
       ? sessionReadiness({
           goingCount: next.playerCount,
           booked: Boolean(next.session.bookedAt),
-          expectsCollection: Boolean(next.session.estimatedCostCents || next.session.bookingTotalCents),
+          expectsCollection: Boolean(
+            next.session.estimatedCostCents || next.session.bookingTotalCents
+          ),
           collectionCreated: next.hasExpense,
         })
       : null;
-  const invitations: GameCollectionItem[] = data.invitations.map(({ session, player, playerCount, hostName }) => ({
-    id: session.id,
-    href: `/games/${session.id}`,
-    title: session.title,
-    date: formatSessionDate(session.startsAt, session.timezone),
-    dateKey: sessionDateKey(session.startsAt, session.timezone),
-    endsAt: session.endsAt.toISOString(),
-    time: formatSessionTime(session.startsAt, session.endsAt, session.timezone),
-    venue: session.venueName,
-    playerCount,
-    capacity: session.capacity,
-    status: session.status,
-    accentColor: session.accentColor,
-    viewerRsvp: player.rsvp,
-    invitedAt: player.invitedAt.toISOString(),
-    hostName,
-    estimatedCostCents: session.estimatedCostCents,
-    requiresApproval: session.requiresApproval,
-    spotsRemaining: Math.max(0, session.capacity - playerCount),
-    canReplay: false,
-  }));
+  const invitations: GameCollectionItem[] = data.invitations.map(
+    ({ session, player, playerCount, hostName }) => ({
+      id: session.id,
+      href: `/games/${session.id}`,
+      title: session.title,
+      date: formatSessionDate(session.startsAt, session.timezone),
+      dateKey: sessionDateKey(session.startsAt, session.timezone),
+      endsAt: session.endsAt.toISOString(),
+      time: formatSessionTime(
+        session.startsAt,
+        session.endsAt,
+        session.timezone
+      ),
+      venue: session.venueName,
+      playerCount,
+      capacity: session.capacity,
+      status: session.status,
+      accentColor: session.accentColor,
+      viewerRsvp: player.rsvp,
+      invitedAt: player.invitedAt.toISOString(),
+      hostName,
+      estimatedCostCents: session.estimatedCostCents,
+      requiresApproval: session.requiresApproval,
+      spotsRemaining: Math.max(0, session.capacity - playerCount),
+      canReplay: false,
+    })
+  );
 
   return (
     <div className="space-y-8 sm:space-y-16">
       <section className="flex items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-sm text-muted">Good to see you, {profile.name.split(" ")[0]}</p>
-          <h1 className="app-title">{homeHeading({ live: nextIsLive, hasPrimary: Boolean(next), hasTentative })}</h1>
+          <p className="mb-1 text-sm text-muted">
+            Good to see you, {profile.name.split(" ")[0]}
+          </p>
+          <h1 className="app-title">
+            {homeHeading({
+              live: nextIsLive,
+              hasPrimary: Boolean(next),
+              hasTentative,
+            })}
+          </h1>
           {hasTentative ? (
-            <p className="mt-2 text-sm text-muted">Your upcoming responses are still pending or tentative.</p>
+            <p className="mt-2 text-sm text-muted">
+              Your upcoming responses are still pending or tentative.
+            </p>
           ) : null}
         </div>
       </section>
@@ -75,15 +107,23 @@ export default async function HomePage() {
       <HomeInvitations initialItems={invitations} />
 
       {next ? (
-        <section aria-labelledby="next-game-heading" style={sessionAccentStyle(next.session.accentColor)}>
-          <h2 id="next-game-heading" className="mb-3 text-sm font-semibold text-muted">
+        <section
+          aria-labelledby="next-game-heading"
+          style={sessionAccentStyle(next.session.accentColor)}
+        >
+          <h2
+            id="next-game-heading"
+            className="mb-3 text-sm font-semibold text-muted"
+          >
             {nextIsLive ? "Live now" : "Next game"}
           </h2>
           <article className="overflow-hidden rounded-xl bg-[var(--session-cover)] text-white ring-1 ring-black/5">
             <div className="grid md:grid-cols-[1fr_260px]">
               <div className="p-5 sm:p-7">
                 <div className="mb-7 flex items-center justify-between">
-                  <span className="sport-label text-white/65">{formatSessionDate(next.session.startsAt)}</span>
+                  <span className="sport-label text-white/65">
+                    {formatSessionDate(next.session.startsAt)}
+                  </span>
                   <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
                     <span
                       className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
@@ -106,7 +146,11 @@ export default async function HomePage() {
                   {next.session.title}
                 </h3>
                 <p className="mt-2 text-base text-white/70">
-                  {next.session.venueName} · {formatSessionTime(next.session.startsAt, next.session.endsAt)}
+                  {next.session.venueName} ·{" "}
+                  {formatSessionTime(
+                    next.session.startsAt,
+                    next.session.endsAt
+                  )}
                 </p>
                 <div className="court-rule mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t pt-5">
                   <span className="inline-flex items-center gap-2 text-sm text-white/75">
@@ -127,9 +171,13 @@ export default async function HomePage() {
               >
                 <span>
                   <span className="block text-sm text-white/75">
-                    {nextIsLive ? "Courts, queue, and scores" : "Players, courts, and payments"}
+                    {nextIsLive
+                      ? "Courts, queue, and scores"
+                      : "Players, courts, and payments"}
                   </span>
-                  <span className="mt-1 block text-lg">{nextIsLive ? "Open Play" : "View game"}</span>
+                  <span className="mt-1 block text-lg">
+                    {nextIsLive ? "Open Play" : "View game"}
+                  </span>
                 </span>
                 <ArrowRight className="transition-transform group-hover:translate-x-1" />
               </Link>
@@ -161,7 +209,9 @@ export default async function HomePage() {
               <CurrencyCircleDollar size={18} className="text-muted" />
               <span>
                 <span className="block text-sm font-medium">Payments</span>
-                <span className="mt-0.5 block text-xs text-muted">View the split</span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  View the split
+                </span>
               </span>
             </Link>
             <Link
@@ -172,7 +222,9 @@ export default async function HomePage() {
               <SquaresFour size={18} className="text-muted" />
               <span>
                 <span className="block text-sm font-medium">Play</span>
-                <span className="mt-0.5 block text-xs text-muted">Courts, queue, and scores</span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  Courts, queue, and scores
+                </span>
               </span>
             </Link>
           </div>
@@ -190,11 +242,15 @@ export default async function HomePage() {
               One clear plan for the whole game.
             </h2>
             <p className="mt-4 max-w-md leading-7 text-muted">
-              Create it once, send the link, and let friends see what they need without signing in.
+              Create it once, send the link, and let friends see what they need
+              without signing in.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-4">
               <ButtonLink href="/games/new">
-                {data.recent.length ? "Create another game" : "Create your first game"} <ArrowRight size={17} />
+                {data.recent.length
+                  ? "Create another game"
+                  : "Create your first game"}{" "}
+                <ArrowRight size={17} />
               </ButtonLink>
               <Link
                 href="/home?tour=1"
@@ -205,23 +261,33 @@ export default async function HomePage() {
             </div>
           </div>
           <div className="py-3 lg:py-5 lg:pl-12">
-            <p className="mb-2 text-sm font-semibold text-muted">Everything the link carries</p>
+            <p className="mb-2 text-sm font-semibold text-muted">
+              Everything the link carries
+            </p>
             <dl className="divide-y divide-line">
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">Plan</dt>
-                <dd className="text-sm font-medium">Time, court, court count, and cost</dd>
+                <dd className="text-sm font-medium">
+                  Time, court, court count, and cost
+                </dd>
               </div>
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">Roster</dt>
-                <dd className="text-sm font-medium">Going, maybe, and waitlist</dd>
+                <dd className="text-sm font-medium">
+                  Going, maybe, and waitlist
+                </dd>
               </div>
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">Courtside</dt>
-                <dd className="text-sm font-medium">Paddle stack, teams, and score</dd>
+                <dd className="text-sm font-medium">
+                  Paddle stack, teams, and score
+                </dd>
               </div>
               <div className="grid grid-cols-[88px_1fr] gap-4 py-3.5">
                 <dt className="text-sm text-muted">After</dt>
-                <dd className="text-sm font-medium">Payment status, results, and photos</dd>
+                <dd className="text-sm font-medium">
+                  Payment status, results, and photos
+                </dd>
               </div>
             </dl>
           </div>
@@ -234,51 +300,68 @@ export default async function HomePage() {
             <h2 id="upcoming-heading" className="text-lg font-bold">
               Upcoming games
             </h2>
-            <Link href="/games" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+            <Link
+              href="/games"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-primary"
+            >
               View all
             </Link>
           </div>
           <div className="divide-y divide-line border-y border-line">
-            {upcoming.slice(0, 3).map(({ session, player, playerCount, pendingCount }) => {
-              const participation = homeParticipationLabel(player.rsvp, player.role);
-              const requestLabel = pendingCount ? homePendingRequestLabel(pendingCount) : null;
-              return (
-                <Link
-                  href={`/games/${session.id}`}
-                  prefetch={false}
-                  key={session.id}
-                  style={sessionAccentStyle(session.accentColor)}
-                  className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
-                >
-                  <CalendarBlank aria-hidden className="shrink-0 text-primary" size={20} />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-semibold">{session.title}</h3>
-                    <p className="mt-1 truncate text-sm text-muted">
-                      <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
-                      {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
-                      <span className="sm:hidden">
-                        {participation ? ` · ${participation}` : ""}
+            {upcoming
+              .slice(0, 3)
+              .map(({ session, player, playerCount, pendingCount }) => {
+                const participation = homeParticipationLabel(
+                  player.rsvp,
+                  player.role
+                );
+                const requestLabel = pendingCount
+                  ? homePendingRequestLabel(pendingCount)
+                  : null;
+                return (
+                  <Link
+                    href={`/games/${session.id}`}
+                    prefetch={false}
+                    key={session.id}
+                    style={sessionAccentStyle(session.accentColor)}
+                    className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
+                  >
+                    <CalendarBlank
+                      aria-hidden
+                      className="shrink-0 text-primary"
+                      size={20}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-semibold">
+                        {session.title}
+                      </h3>
+                      <p className="mt-1 truncate text-sm text-muted">
+                        <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
+                        {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
+                        {session.venueName}
+                        <span className="sm:hidden">
+                          {participation ? ` · ${participation}` : ""}
+                          {requestLabel ? ` · ${requestLabel}` : ""}
+                        </span>
+                      </p>
+                    </div>
+                    <span className="hidden shrink-0 text-right sm:block">
+                      <span className="block text-sm font-[650] text-primary">
+                        {participation}
                         {requestLabel ? ` · ${requestLabel}` : ""}
                       </span>
-                    </p>
-                  </div>
-                  <span className="hidden shrink-0 text-right sm:block">
-                    <span className="block text-sm font-[650] text-primary">
-                      {participation}
-                      {requestLabel ? ` · ${requestLabel}` : ""}
+                      <span className="score mt-1 block text-xs text-muted">
+                        {playerCount} / {session.capacity} players
+                      </span>
                     </span>
-                    <span className="score mt-1 block text-xs text-muted">
-                      {playerCount} / {session.capacity} players
-                    </span>
-                  </span>
-                  <CaretRight
-                    aria-hidden
-                    className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
-                    size={16}
-                  />
-                </Link>
-              );
-            })}
+                    <CaretRight
+                      aria-hidden
+                      className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+                      size={16}
+                    />
+                  </Link>
+                );
+              })}
           </div>
         </section>
       ) : null}
@@ -290,7 +373,10 @@ export default async function HomePage() {
               Recent games
             </h2>
             {data.recent.length > 4 ? (
-              <Link href="/games" className="inline-flex min-h-9 items-center text-[13px] font-semibold text-primary">
+              <Link
+                href="/games"
+                className="inline-flex min-h-9 items-center text-[13px] font-semibold text-primary"
+              >
                 See all
               </Link>
             ) : null}
@@ -310,7 +396,8 @@ export default async function HomePage() {
                     {session.title}
                   </h3>
                   <p className="mt-1 text-sm text-muted">
-                    {formatSessionDate(session.startsAt)} · {session.venueName} · {playerCount} players
+                    {formatSessionDate(session.startsAt)} · {session.venueName}{" "}
+                    · {playerCount} players
                   </p>
                 </div>
                 <CaretRight className="text-muted" size={16} />

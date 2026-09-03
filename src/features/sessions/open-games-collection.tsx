@@ -1,6 +1,11 @@
 "use client";
 
-import { CalendarBlank, CaretRight, MapPin, UsersThree } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  CaretRight,
+  MapPin,
+  UsersThree,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
@@ -8,7 +13,11 @@ import { z } from "zod";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 
 import { sessionAccentStyle } from "./accent";
-import type { OpenGameItem, OpenGamesFilters, OpenGamesPage } from "./open-games";
+import type {
+  OpenGameItem,
+  OpenGamesFilters,
+  OpenGamesPage,
+} from "./open-games";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -27,9 +36,14 @@ const itemSchema = z.object({
   requiresApproval: z.boolean(),
   status: z.enum(["published", "live"]),
   accentColor: z.string(),
-  viewerRsvp: z.enum(["invited", "pending", "going", "maybe", "waitlisted", "declined"]).nullable(),
+  viewerRsvp: z
+    .enum(["invited", "pending", "going", "maybe", "waitlisted", "declined"])
+    .nullable(),
 });
-const pageSchema = z.object({ items: z.array(itemSchema), nextCursor: z.string().nullable() });
+const pageSchema = z.object({
+  items: z.array(itemSchema),
+  nextCursor: z.string().nullable(),
+});
 
 function peso(cents: number) {
   if (cents === 0) return "Free";
@@ -52,17 +66,26 @@ function OpenGameRow({ game }: { game: OpenGameItem }) {
       href={`/games/${game.id}?source=open-games`}
       prefetch={false}
       onClick={() =>
-        void trackDiscoveryEvent({ event: "public_game_opened", sessionId: game.id, source: "open-games" })
+        void trackDiscoveryEvent({
+          event: "public_game_opened",
+          sessionId: game.id,
+          source: "open-games",
+        })
       }
       style={sessionAccentStyle(game.accentColor)}
       className="collection-row pressable group block px-2 py-4 hover:bg-surface-strong sm:grid sm:min-h-24 sm:grid-cols-[minmax(0,1.4fr)_minmax(9rem,1fr)_auto] sm:items-center sm:gap-6 sm:px-3"
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span aria-hidden className="h-7 w-1 shrink-0 rounded-full bg-primary" />
+          <span
+            aria-hidden
+            className="h-7 w-1 shrink-0 rounded-full bg-primary"
+          />
           <div className="min-w-0">
             <h2 className="truncate font-[680]">{game.title}</h2>
-            <p className="mt-1 truncate text-sm text-muted">Hosted by {game.hostName}</p>
+            <p className="mt-1 truncate text-sm text-muted">
+              Hosted by {game.hostName}
+            </p>
           </div>
         </div>
       </div>
@@ -70,7 +93,8 @@ function OpenGameRow({ game }: { game: OpenGameItem }) {
         <p className="flex min-w-0 items-center gap-2">
           <CalendarBlank aria-hidden size={15} className="shrink-0" />
           <span className="truncate">
-            <span className="score font-semibold text-ink">{game.date}</span> · {game.time}
+            <span className="score font-semibold text-ink">{game.date}</span> ·{" "}
+            {game.time}
           </span>
         </p>
         <p className="flex min-w-0 items-center gap-2">
@@ -80,9 +104,12 @@ function OpenGameRow({ game }: { game: OpenGameItem }) {
       </div>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
         <div className="text-left sm:text-right">
-          <p className="score text-sm font-bold text-ink">{peso(game.estimatedCostCents)}</p>
+          <p className="score text-sm font-bold text-ink">
+            {peso(game.estimatedCostCents)}
+          </p>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-muted sm:justify-end">
-            <UsersThree aria-hidden size={14} /> {game.playerCount}/{game.capacity} · {rosterState(game)}
+            <UsersThree aria-hidden size={14} /> {game.playerCount}/
+            {game.capacity} · {rosterState(game)}
           </p>
           {game.requiresApproval && !game.viewerRsvp ? (
             <p className="mt-1 text-xs text-muted">Host approval required</p>
@@ -112,7 +139,10 @@ export function OpenGamesCollection({
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void trackDiscoveryEvent({ event: "open_games_viewed", source: "open-games" });
+    void trackDiscoveryEvent({
+      event: "open_games_viewed",
+      source: "open-games",
+    });
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -126,7 +156,9 @@ export function OpenGamesCollection({
         location: filters.location,
         available: filters.available ? "1" : "",
       });
-      const response = await fetch(`/api/games/open?${params}`, { headers: { Accept: "application/json" } });
+      const response = await fetch(`/api/games/open?${params}`, {
+        headers: { Accept: "application/json" },
+      });
       if (!response.ok) throw new Error("OPEN_GAMES_FAILED");
       const parsed = pageSchema.safeParse(await response.json());
       if (!parsed.success) throw new Error("INVALID_OPEN_GAMES");
@@ -141,12 +173,16 @@ export function OpenGamesCollection({
 
   useEffect(() => {
     const target = sentinelRef.current;
-    if (!target || !nextCursor || typeof IntersectionObserver === "undefined") return;
+    if (!target || !nextCursor || typeof IntersectionObserver === "undefined")
+      return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void loadMore();
       },
-      { root: target.closest<HTMLElement>(".app-scroll-surface"), rootMargin: "480px 0px" },
+      {
+        root: target.closest<HTMLElement>(".app-scroll-surface"),
+        rootMargin: "480px 0px",
+      }
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -157,8 +193,9 @@ export function OpenGamesCollection({
       <section className="py-9">
         <h2 className="text-lg font-bold">No open games match these filters</h2>
         <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-          Try a wider date range, remove the location, or include games whose roster is full. New public games will
-          appear here when hosts publish them.
+          Try a wider date range, remove the location, or include games whose
+          roster is full. New public games will appear here when hosts publish
+          them.
         </p>
         <Link
           href="/games/open"
@@ -176,14 +213,20 @@ export function OpenGamesCollection({
           <OpenGameRow key={game.id} game={game} />
         ))}
       </div>
-      <div ref={sentinelRef} className="flex min-h-16 items-center justify-center">
+      <div
+        ref={sentinelRef}
+        className="flex min-h-16 items-center justify-center"
+      >
         {loading ? (
           <p role="status" className="text-sm text-muted">
             Loading more open games…
           </p>
         ) : null}
         {error ? (
-          <div role="alert" className="flex items-center gap-3 text-sm text-muted">
+          <div
+            role="alert"
+            className="flex items-center gap-3 text-sm text-muted"
+          >
             <span>{error}</span>
             <button
               type="button"

@@ -5,7 +5,11 @@ import { useState } from "react";
 
 import { type SessionAccent, sessionAccents } from "./accent";
 
-export function SessionAccentPicker({ defaultValue = "violet" }: { defaultValue?: string }) {
+export function SessionAccentPicker({
+  defaultValue = "violet",
+}: {
+  defaultValue?: string;
+}) {
   const fallback = sessionAccents.some((accent) => accent.id === defaultValue)
     ? (defaultValue as SessionAccent)
     : "violet";
@@ -14,7 +18,8 @@ export function SessionAccentPicker({ defaultValue = "violet" }: { defaultValue?
     <fieldset>
       <legend className="text-sm font-[650]">Game color</legend>
       <p className="mt-1 text-sm text-muted">
-        Sets the cover, active tabs, and actions for this game and its shared link.
+        Sets the cover, active tabs, and actions for this game and its shared
+        link.
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {sessionAccents.map((accent) => (
@@ -33,9 +38,18 @@ export function SessionAccentPicker({ defaultValue = "violet" }: { defaultValue?
               onChange={() => setSelected(accent.id)}
               className="sr-only"
             />
-            <span aria-hidden className="h-6 w-6 rounded-full" style={{ backgroundColor: accent.solid }} />
+            <span
+              aria-hidden
+              className="h-6 w-6 rounded-full"
+              style={{ backgroundColor: accent.solid }}
+            />
             {selected === accent.id ? (
-              <Check aria-hidden size={13} weight="bold" className="absolute text-white" />
+              <Check
+                aria-hidden
+                size={13}
+                weight="bold"
+                className="absolute text-white"
+              />
             ) : null}
           </label>
         ))}

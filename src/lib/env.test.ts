@@ -7,7 +7,10 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://project.supabase.co");
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "sb_publishable_test");
   vi.stubEnv("NEXT_PUBLIC_GOOGLE_AUTH_ENABLED", "true");
-  vi.stubEnv("DATABASE_URL", "postgresql://relay:password@localhost:5432/relay");
+  vi.stubEnv(
+    "DATABASE_URL",
+    "postgresql://relay:password@localhost:5432/relay"
+  );
   vi.stubEnv("SUPABASE_SECRET_KEY", "sb_secret_test");
   vi.stubEnv("GEOAPIFY_API_KEY", "geoapify-test-key-long-enough");
 });

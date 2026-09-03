@@ -38,7 +38,15 @@ export function TabChipRail<T extends string>({
     const maxScroll = Math.max(0, rail.scrollWidth - rail.clientWidth);
     const hasLeft = rail.scrollLeft > 1;
     const hasRight = rail.scrollLeft < maxScroll - 1;
-    setFade(hasLeft && hasRight ? "both" : hasLeft ? "left" : hasRight ? "right" : "none");
+    setFade(
+      hasLeft && hasRight
+        ? "both"
+        : hasLeft
+          ? "left"
+          : hasRight
+            ? "right"
+            : "none"
+    );
   }, []);
 
   useLayoutEffect(() => {
@@ -50,7 +58,10 @@ export function TabChipRail<T extends string>({
       rail.scrollTo?.({ left: Math.max(0, left), behavior: "auto" });
     }
     updateFade();
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(updateFade);
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateFade);
     observer?.observe(rail);
     window.addEventListener("resize", updateFade);
     return () => {
@@ -67,10 +78,17 @@ export function TabChipRail<T extends string>({
       onScroll={updateFade}
       className={`public-session-scroll -mx-1.5 overflow-x-auto px-1.5 ${variant === "underline" ? "" : "-my-1.5 py-1.5"} ${fadeClass} ${className}`}
     >
-      <div role="group" aria-label={label} className={`flex min-w-max ${variant === "underline" ? "" : "gap-2"}`}>
+      <div
+        role="group"
+        aria-label={label}
+        className={`flex min-w-max ${variant === "underline" ? "" : "gap-2"}`}
+      >
         {items.map((item) => {
           const selected = item.value === value;
-          const ariaLabel = item.count === undefined ? item.label : `${item.label}, ${item.count}`;
+          const ariaLabel =
+            item.count === undefined
+              ? item.label
+              : `${item.label}, ${item.count}`;
           const classes =
             variant === "underline"
               ? `compact-control tab-chip pressable relative inline-flex min-h-11 items-center px-3 text-sm font-semibold ${itemClassName} ${

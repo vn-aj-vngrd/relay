@@ -1,4 +1,9 @@
-import { CheckCircle, Clock, CurrencyCircleDollar, Play } from "@phosphor-icons/react/dist/ssr";
+import {
+  CheckCircle,
+  Clock,
+  CurrencyCircleDollar,
+  Play,
+} from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
@@ -16,7 +21,10 @@ import { sessionReadiness } from "@/features/sessions/readiness";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionReadinessPanel } from "@/features/sessions/session-readiness";
-import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
+import {
+  SessionHero,
+  SessionPlanDetails,
+} from "@/features/sessions/session-summary";
 
 import { RecapTemplatePreview } from "./recap-template-preview";
 
@@ -41,7 +49,12 @@ const heroReadiness = sessionReadiness({
 });
 const heroOverview: SessionOverview = {
   messageCount: 12,
-  play: { activeMatchCount: 0, completedMatchCount: 0, waitingCount: 0, featuredMatch: null },
+  play: {
+    activeMatchCount: 0,
+    completedMatchCount: 0,
+    waitingCount: 0,
+    featuredMatch: null,
+  },
   payment: { view: "host", proofCount: 1, unpaidCount: 4 },
 };
 
@@ -76,15 +89,26 @@ function ProductComponentFrame({
 function HeroOverviewPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Overview" description="The plan, roster, setup progress, and next action for this game." />
+      <GamePageIntro
+        title="Overview"
+        description="The plan, roster, setup progress, and next action for this game."
+      />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
-          <SessionHero session={heroSession} hostLabel="Hosted by you" headingLevel="h2" />
+          <SessionHero
+            session={heroSession}
+            hostLabel="Hosted by you"
+            headingLevel="h2"
+          />
           <div className="px-5 py-6 sm:px-8 sm:py-8">
             <div className="hidden sm:block">
               <SessionPlanDetails session={heroSession} />
             </div>
-            <SessionAtAGlance overview={heroOverview} hrefBase="#" status="published" />
+            <SessionAtAGlance
+              overview={heroOverview}
+              hrefBase="#"
+              status="published"
+            />
           </div>
         </article>
         <aside className="hidden space-y-6 lg:block">
@@ -92,9 +116,14 @@ function HeroOverviewPanel() {
             <p className="text-sm font-semibold text-primary">Host access</p>
             <h2 className="mt-1 text-lg font-bold">You manage this game</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Editing, roster controls, payments, Play, and scoring appear only for hosts.
+              Editing, roster controls, payments, Play, and scoring appear only
+              for hosts.
             </p>
-            <SessionReadinessPanel readiness={heroReadiness} sessionId="preview" hrefBase="#" />
+            <SessionReadinessPanel
+              readiness={heroReadiness}
+              sessionId="preview"
+              hrefBase="#"
+            />
             <ButtonLink href="#/play" className="mt-5 w-full">
               <Play aria-hidden weight="fill" size={15} /> Set up Play
             </ButtonLink>
@@ -116,13 +145,24 @@ function HeroOverviewPanel() {
 }
 
 function HeroPlayerRows({ limit = 5 }: { limit?: number }) {
-  const players = ["Van", "AJ", "Mika", "Bea", "John", "Kara", "Luis", "Sam"].slice(0, limit);
+  const players = [
+    "Van",
+    "AJ",
+    "Mika",
+    "Bea",
+    "John",
+    "Kara",
+    "Luis",
+    "Sam",
+  ].slice(0, limit);
   return (
     <ul className="divide-y divide-line border-y border-line">
       {players.map((name, index) => (
         <li className="flex min-h-14 items-center gap-3 py-2" key={name}>
           <Avatar name={name} index={index} size="sm" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {name}
+          </span>
           <span className="text-xs text-muted">{index ? "Going" : "Host"}</span>
         </li>
       ))}
@@ -133,7 +173,10 @@ function HeroPlayerRows({ limit = 5 }: { limit?: number }) {
 function HeroPlayersPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Players" description="See who’s going, who is waiting, and who has arrived." />
+      <GamePageIntro
+        title="Players"
+        description="See who’s going, who is waiting, and who has arrived."
+      />
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section>
           <div className="mb-3 flex items-end justify-between gap-4">
@@ -151,7 +194,9 @@ function HeroPlayersPanel() {
               <h2 className="font-bold">Who’s here</h2>
               <span className="score text-sm text-muted">6 / 8</span>
             </div>
-            <p className="mt-2 text-sm leading-6 text-muted">Checked-in players enter the first court rotation.</p>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Checked-in players enter the first court rotation.
+            </p>
             <div className="mt-4 flex -space-x-2">
               {heroPlayers.slice(0, 4).map((name, index) => (
                 <Avatar key={name} name={name} index={index} size="sm" />
@@ -160,7 +205,9 @@ function HeroPlayersPanel() {
           </section>
           <section className="border-y border-line py-4">
             <p className="text-sm font-semibold">Waitlist</p>
-            <p className="mt-1 text-sm text-muted">Nico is first in line when a spot opens.</p>
+            <p className="mt-1 text-sm text-muted">
+              Nico is first in line when a spot opens.
+            </p>
           </section>
         </aside>
       </div>
@@ -171,7 +218,10 @@ function HeroPlayersPanel() {
 function HeroPlayPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Play" description="Run the courts, scores, and next rotation from one phone." />
+      <GamePageIntro
+        title="Play"
+        description="Run the courts, scores, and next rotation from one phone."
+      />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <LiveCourt
           sessionId="00000000-0000-4000-8000-000000000001"
@@ -192,8 +242,13 @@ function HeroPlayPanel() {
           <h2 className="mt-5 text-lg font-bold">Up next</h2>
           <ol className="mt-3 divide-y divide-line border-y border-line">
             {["Kara + Luis", "John + Sam", "Nico + Aya"].map((team, index) => (
-              <li key={team} className="flex min-h-12 items-center gap-3 text-sm">
-                <span className="score w-5 text-muted">{String(index + 1).padStart(2, "0")}</span>
+              <li
+                key={team}
+                className="flex min-h-12 items-center gap-3 text-sm"
+              >
+                <span className="score w-5 text-muted">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 <span className="font-medium">{team}</span>
               </li>
             ))}
@@ -207,7 +262,10 @@ function HeroPlayPanel() {
 function HeroChatPanel() {
   return (
     <div className="flex h-full flex-col px-4 pt-5 sm:px-6 sm:pt-6">
-      <GamePageIntro title="Chat" description="Keep arrival updates, court notes, and photos with the game." />
+      <GamePageIntro
+        title="Chat"
+        description="Keep arrival updates, court notes, and photos with the game."
+      />
       <ChatThread messageCount={4}>
         <div className="space-y-5">
           <p className="text-center text-xs text-muted">AJ joined the game</p>
@@ -222,7 +280,9 @@ function HeroChatPanel() {
               Perfect. I’ll bring the extra balls.
             </div>
           </div>
-          <p className="text-center text-xs text-muted">Court 1 match started</p>
+          <p className="text-center text-xs text-muted">
+            Court 1 match started
+          </p>
         </div>
       </ChatThread>
       <ChatComposer sessionId="00000000-0000-4000-8000-000000000001" />
@@ -239,12 +299,17 @@ function HeroPaymentsPanel() {
   ];
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Payments" description="Track repayment to the host without moving money through Relay." />
+      <GamePageIntro
+        title="Payments"
+        description="Track repayment to the host without moving money through Relay."
+      />
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section>
           <div className="flex items-end justify-between gap-4 border-y border-line py-5">
             <div>
-              <p className="text-sm text-muted">Court rental · paid upfront by Van</p>
+              <p className="text-sm text-muted">
+                Court rental · paid upfront by Van
+              </p>
               <p className="score mt-2 text-4xl font-bold">₱2,400</p>
             </div>
             <p className="text-right text-sm text-muted">
@@ -257,17 +322,26 @@ function HeroPaymentsPanel() {
               <li key={name} className="flex min-h-14 items-center gap-3">
                 <Avatar name={name} index={index + 1} size="sm" />
                 <span className="flex-1 text-sm font-medium">{name}</span>
-                <span className={`text-xs ${status === "Confirmed" ? "text-success" : "text-muted"}`}>{status}</span>
+                <span
+                  className={`text-xs ${status === "Confirmed" ? "text-success" : "text-muted"}`}
+                >
+                  {status}
+                </span>
                 <span className="score w-14 text-right text-sm">{amount}</span>
               </li>
             ))}
           </ul>
         </section>
         <aside className="self-start rounded-xl border border-line p-5">
-          <CurrencyCircleDollar aria-hidden size={22} className="text-primary" />
+          <CurrencyCircleDollar
+            aria-hidden
+            size={22}
+            className="text-primary"
+          />
           <h2 className="mt-3 text-lg font-bold">1 proof to review</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Confirm AJ’s screenshot, then Relay updates the group’s payment status.
+            Confirm AJ’s screenshot, then Relay updates the group’s payment
+            status.
           </p>
           <div className="mt-5 flex items-center gap-2 border-t border-line pt-4 text-sm font-semibold text-success">
             <CheckCircle aria-hidden size={18} /> ₱900 confirmed
@@ -281,7 +355,10 @@ function HeroPaymentsPanel() {
 function HeroStoryPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Story" description="Turn the saved scores and photos into a shareable memory." />
+      <GamePageIntro
+        title="Story"
+        description="Turn the saved scores and photos into a shareable memory."
+      />
       <div className="mx-auto max-w-4xl">
         <RecapTemplatePreview cardsOnly />
       </div>
@@ -340,9 +417,15 @@ export function HeroProductShot() {
 
 export function CreateProductPreview() {
   return (
-    <ProductComponentFrame caption="The actual Create form" detail="Focused on the plan and schedule">
+    <ProductComponentFrame
+      caption="The actual Create form"
+      detail="Focused on the plan and schedule"
+    >
       <div className="bg-surface p-5 sm:p-8">
-        <GamePageIntro title="Create a game" description="Add the details, then share the game link." />
+        <GamePageIntro
+          title="Create a game"
+          description="Add the details, then share the game link."
+        />
         <CreateSessionForm
           defaults={{
             title: "Saturday Night Pickle",
@@ -362,14 +445,27 @@ export function CreateProductPreview() {
 
 export function InviteProductShot() {
   return (
-    <ProductComponentFrame caption="The actual shared-link components" detail="No-account RSVP included">
+    <ProductComponentFrame
+      caption="The actual shared-link components"
+      detail="No-account RSVP included"
+    >
       <div className="bg-surface">
-        <SessionHero session={heroSession} hostLabel="Hosted by Van · 8 of 10 going" headingLevel="h2" />
+        <SessionHero
+          session={heroSession}
+          hostLabel="Hosted by Van · 8 of 10 going"
+          headingLevel="h2"
+        />
         <div className="mx-auto max-w-md p-5 sm:p-8">
           <div className="rounded-xl border border-line bg-surface p-5">
-            <RsvpControl sessionId="00000000-0000-4000-8000-000000000001" slug="preview" instance="desktop" />
+            <RsvpControl
+              sessionId="00000000-0000-4000-8000-000000000001"
+              slug="preview"
+              instance="desktop"
+            />
           </div>
-          <p className="mt-4 text-center text-sm text-muted">Guests see the plan before they RSVP.</p>
+          <p className="mt-4 text-center text-sm text-muted">
+            Guests see the plan before they RSVP.
+          </p>
         </div>
       </div>
     </ProductComponentFrame>
@@ -383,23 +479,48 @@ export function PlaySetupProductPreview() {
       detail="Five formats, partner style, timer, and start action"
     >
       <div className="bg-surface p-5 sm:p-8">
-        <GamePageIntro title="Set up Play" description="Choose how players rotate through the courts." />
-        <PlaySetupForm sessionId="00000000-0000-4000-8000-000000000001" playerCount={8} courtCount={2} />
+        <GamePageIntro
+          title="Set up Play"
+          description="Choose how players rotate through the courts."
+        />
+        <PlaySetupForm
+          sessionId="00000000-0000-4000-8000-000000000001"
+          playerCount={8}
+          courtCount={2}
+        />
       </div>
     </ProductComponentFrame>
   );
 }
 
-export function LivePlayProductPreview({ expanded = false }: { expanded?: boolean }) {
+export function LivePlayProductPreview({
+  expanded = false,
+}: {
+  expanded?: boolean;
+}) {
   return (
     <ProductComponentFrame
-      caption={expanded ? "The actual scoreboard at courtside scale" : "The actual live court"}
-      detail={expanded ? "One court, maximum legibility" : "Realtime scores and touch controls"}
+      caption={
+        expanded
+          ? "The actual scoreboard at courtside scale"
+          : "The actual live court"
+      }
+      detail={
+        expanded
+          ? "One court, maximum legibility"
+          : "Realtime scores and touch controls"
+      }
     >
-      <div className={`bg-surface p-4 sm:p-7 ${expanded ? "mx-auto max-w-4xl" : ""}`}>
+      <div
+        className={`bg-surface p-4 sm:p-7 ${expanded ? "mx-auto max-w-4xl" : ""}`}
+      >
         <GamePageIntro
           title={expanded ? "Court 1" : "Active courts"}
-          description={expanded ? "Focused scoreboard" : "Balanced Mix · scores update for everyone"}
+          description={
+            expanded
+              ? "Focused scoreboard"
+              : "Balanced Mix · scores update for everyone"
+          }
         />
         <LiveCourt
           sessionId="00000000-0000-4000-8000-000000000001"
@@ -417,14 +538,24 @@ export function LivePlayProductPreview({ expanded = false }: { expanded?: boolea
 
 export function PaymentsProductPreview() {
   return (
-    <ProductComponentFrame caption="The actual proof submission components" detail="Repayment, not payment processing">
+    <ProductComponentFrame
+      caption="The actual proof submission components"
+      detail="Repayment, not payment processing"
+    >
       <div className="grid gap-7 bg-surface p-5 sm:p-8 lg:grid-cols-[1fr_340px]">
         <div>
-          <GamePageIntro title="Your payment" description="Pay the host directly, then attach one clear screenshot." />
+          <GamePageIntro
+            title="Your payment"
+            description="Pay the host directly, then attach one clear screenshot."
+          />
           <section className="border-y border-line py-5">
-            <p className="text-sm text-muted">Court rental · paid upfront by Van</p>
+            <p className="text-sm text-muted">
+              Court rental · paid upfront by Van
+            </p>
             <p className="score mt-2 text-4xl font-bold">₱300</p>
-            <p className="mt-2 text-sm text-muted">Your share of ₱2,400 across 7 paying players</p>
+            <p className="mt-2 text-sm text-muted">
+              Your share of ₱2,400 across 7 paying players
+            </p>
           </section>
           <PaymentProofForm paymentId="00000000-0000-4000-8000-000000000003" />
         </div>
@@ -433,7 +564,8 @@ export function PaymentsProductPreview() {
           <h2 className="mt-1 text-lg font-bold">Van · GCash</h2>
           <p className="score mt-4 text-2xl">0917 123 4567</p>
           <p className="mt-2 text-sm text-muted">
-            Relay tracks payment status. Your group uses its usual payment method.
+            Relay tracks payment status. Your group uses its usual payment
+            method.
           </p>
         </section>
       </div>
@@ -443,9 +575,15 @@ export function PaymentsProductPreview() {
 
 export function ChatProductPreview() {
   return (
-    <ProductComponentFrame caption="The actual session chat components" detail="Messages and photos for this game">
+    <ProductComponentFrame
+      caption="The actual session chat components"
+      detail="Messages and photos for this game"
+    >
       <div className="flex h-[620px] flex-col bg-surface px-5 pt-5 sm:px-8 sm:pt-7">
-        <GamePageIntro title="Chat" description="Share arrival updates, court notes, and photos." />
+        <GamePageIntro
+          title="Chat"
+          description="Share arrival updates, court notes, and photos."
+        />
         <ChatThread messageCount={3}>
           <div className="space-y-5">
             <p className="text-center text-xs text-muted">AJ joined the game</p>
@@ -460,7 +598,9 @@ export function ChatProductPreview() {
                 Perfect. I’ll bring the extra balls.
               </div>
             </div>
-            <p className="text-center text-xs text-muted">Court 1 match started</p>
+            <p className="text-center text-xs text-muted">
+              Court 1 match started
+            </p>
           </div>
         </ChatThread>
         <ChatComposer sessionId="00000000-0000-4000-8000-000000000001" />

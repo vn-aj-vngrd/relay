@@ -8,12 +8,23 @@ import { notifications } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { markAllNotificationsRead } from "@/features/notifications/actions";
 import { NotificationFeed } from "@/features/notifications/notification-feed";
-import { getNotificationPage, type NotificationFilter } from "@/features/notifications/queries";
+import {
+  getNotificationPage,
+  type NotificationFilter,
+} from "@/features/notifications/queries";
 
-export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
   const user = await requireUser();
-  const filter: NotificationFilter = (await searchParams).filter === "unread" ? "unread" : "all";
-  const unreadWhere = and(eq(notifications.userId, user.id), isNull(notifications.readAt));
+  const filter: NotificationFilter =
+    (await searchParams).filter === "unread" ? "unread" : "all";
+  const unreadWhere = and(
+    eq(notifications.userId, user.id),
+    isNull(notifications.readAt)
+  );
   const [unreadCount, initialPage] = await Promise.all([
     db.$count(notifications, unreadWhere),
     getNotificationPage(user.id, filter),
@@ -25,7 +36,9 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         <div>
           <h1 className="app-title">Notifications</h1>
           <p className="mt-2 text-sm text-muted">
-            {unreadCount ? `${unreadCount} unread ${unreadCount === 1 ? "update" : "updates"}` : "You’re caught up"}
+            {unreadCount
+              ? `${unreadCount} unread ${unreadCount === 1 ? "update" : "updates"}`
+              : "You’re caught up"}
           </p>
         </div>
         {unreadCount ? (
@@ -38,7 +51,10 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         ) : null}
       </header>
 
-      <nav aria-label="Notification filters" className="flex border-b border-line">
+      <nav
+        aria-label="Notification filters"
+        className="flex border-b border-line"
+      >
         <Link
           href="/notifications"
           aria-current={filter === "all" ? "page" : undefined}
@@ -53,12 +69,18 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         >
           Unread
           {unreadCount ? (
-            <span className="score text-xs text-primary">{unreadCount > 99 ? "99+" : unreadCount}</span>
+            <span className="score text-xs text-primary">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
           ) : null}
         </Link>
       </nav>
 
-      <NotificationFeed key={filter} initialPage={initialPage} filter={filter} />
+      <NotificationFeed
+        key={filter}
+        initialPage={initialPage}
+        filter={filter}
+      />
     </div>
   );
 }

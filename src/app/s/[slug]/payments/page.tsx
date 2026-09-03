@@ -1,4 +1,8 @@
-import { CheckCircle, CircleDashed, CurrencyCircleDollar } from "@phosphor-icons/react/dist/ssr";
+import {
+  CheckCircle,
+  CircleDashed,
+  CurrencyCircleDollar,
+} from "@phosphor-icons/react/dist/ssr";
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,7 +17,11 @@ import { getPublicSession } from "@/features/sessions/queries";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-export default async function PublicPaymentsPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicPaymentsPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const slug = (await params).slug;
   const data = await getPublicSession(slug);
   if (!data) notFound();
@@ -27,12 +35,20 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
         style={sessionAccentStyle(data.session.accentColor)}
       >
         <div className="public-session-content mx-auto w-full max-w-xl bg-surface px-4 py-4 text-center sm:px-6 sm:py-14">
-          <CurrencyCircleDollar aria-hidden size={26} className="mx-auto text-primary" />
+          <CurrencyCircleDollar
+            aria-hidden
+            size={26}
+            className="mx-auto text-primary"
+          />
           <h1 className="mt-4 text-2xl font-bold">Payments are for players</h1>
           <p className="mt-2 leading-7 text-muted">
-            Join the game first to see the host’s payment details and your assigned share.
+            Join the game first to see the host’s payment details and your
+            assigned share.
           </p>
-          <Link href={`/s/${slug}`} className="mt-6 inline-flex min-h-11 items-center font-semibold text-primary">
+          <Link
+            href={`/s/${slug}`}
+            className="mt-6 inline-flex min-h-11 items-center font-semibold text-primary"
+          >
             Join on the plan
           </Link>
         </div>
@@ -40,25 +56,40 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
     );
 
   const rows = await db
-    .select({ expense: expenses, account: paymentAccounts, payment: playerPayments })
+    .select({
+      expense: expenses,
+      account: paymentAccounts,
+      payment: playerPayments,
+    })
     .from(expenses)
-    .leftJoin(paymentAccounts, eq(expenses.paymentAccountId, paymentAccounts.id))
+    .leftJoin(
+      paymentAccounts,
+      eq(expenses.paymentAccountId, paymentAccounts.id)
+    )
     .leftJoin(playerPayments, eq(playerPayments.expenseId, expenses.id))
     .where(eq(expenses.sessionId, data.session.id));
-  const ownRows = rows.filter(({ payment }) => payment?.sessionPlayerId === viewer!.player.id);
+  const ownRows = rows.filter(
+    ({ payment }) => payment?.sessionPlayerId === viewer!.player.id
+  );
   const supabase = createSupabaseAdminClient();
   const items = await Promise.all(
     ownRows.map(async (row) => ({
       ...row,
       qrUrl: row.account?.qrStoragePath
-        ? ((await supabase.storage.from("payment-qrs").createSignedUrl(row.account.qrStoragePath, 3600)).data
-            ?.signedUrl ?? null)
+        ? ((
+            await supabase.storage
+              .from("payment-qrs")
+              .createSignedUrl(row.account.qrStoragePath, 3600)
+          ).data?.signedUrl ?? null)
         : null,
       receiptUrl: row.expense.receiptStoragePath
-        ? ((await supabase.storage.from("booking-screenshots").createSignedUrl(row.expense.receiptStoragePath, 3600))
-            .data?.signedUrl ?? null)
+        ? ((
+            await supabase.storage
+              .from("booking-screenshots")
+              .createSignedUrl(row.expense.receiptStoragePath, 3600)
+          ).data?.signedUrl ?? null)
         : null,
-    })),
+    }))
   );
   return (
     <main
@@ -69,8 +100,8 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
         <h1 className="public-tab-title app-title">Your payment</h1>
         <p className="public-tab-description mt-2 max-w-xl text-sm leading-6 text-muted">
-          The host paid upfront. Repay your share through their listed app or bank, then upload one screenshot. Relay
-          never moves the money.
+          The host paid upfront. Repay your share through their listed app or
+          bank, then upload one screenshot. Relay never moves the money.
         </p>
         {items.length ? (
           <div className="space-y-10 sm:mt-8">
@@ -81,13 +112,22 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
                   className="public-session-section grid min-w-0 gap-6 border-y border-line sm:grid-cols-[minmax(0,1fr)_220px]"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm capitalize text-muted">{expense.kind.replaceAll("_", " ")}</p>
-                    <p className="score mt-1 text-3xl font-bold">{peso(payment.amountCents)}</p>
-                    <p className="mt-1 text-sm text-muted">Your share of the {peso(expense.totalCents)} total</p>
+                    <p className="text-sm capitalize text-muted">
+                      {expense.kind.replaceAll("_", " ")}
+                    </p>
+                    <p className="score mt-1 text-3xl font-bold">
+                      {peso(payment.amountCents)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      Your share of the {peso(expense.totalCents)} total
+                    </p>
                     <div className="mt-5 border-t border-line pt-4">
-                      <p className="text-sm font-semibold">{account?.method ?? "Payment method"}</p>
+                      <p className="text-sm font-semibold">
+                        {account?.method ?? "Payment method"}
+                      </p>
                       <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted">
-                        {account?.details ?? "Ask the host for payment details."}
+                        {account?.details ??
+                          "Ask the host for payment details."}
                       </p>
                       {receiptUrl ? (
                         <a
@@ -112,9 +152,15 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
                           Proof sent—waiting for host
                         </p>
                       ) : payment.status === "excluded" ? (
-                        <p className="text-sm font-semibold text-muted">You are not included in this split.</p>
+                        <p className="text-sm font-semibold text-muted">
+                          You are not included in this split.
+                        </p>
                       ) : (
-                        <PaymentProofForm paymentId={payment.id} reviewNote={payment.reviewNote} slug={slug} />
+                        <PaymentProofForm
+                          paymentId={payment.id}
+                          reviewNote={payment.reviewNote}
+                          slug={slug}
+                        />
                       )}
                     </div>
                   </div>
@@ -127,19 +173,26 @@ export default async function PublicPaymentsPage({ params }: { params: Promise<{
                         height={220}
                         className="aspect-square w-full rounded-lg bg-white object-contain"
                       />
-                      <p className="mt-2 text-center text-xs text-muted">Scan to pay</p>
+                      <p className="mt-2 text-center text-xs text-muted">
+                        Scan to pay
+                      </p>
                     </div>
                   ) : null}
                 </section>
-              ) : null,
+              ) : null
             )}
           </div>
         ) : (
           <section className="border-y border-line py-4 text-center sm:mt-10 sm:py-12">
-            <CircleDashed aria-hidden className="mx-auto text-primary" size={24} />
+            <CircleDashed
+              aria-hidden
+              className="mx-auto text-primary"
+              size={24}
+            />
             <h2 className="mt-4 text-xl font-bold">No payment request yet</h2>
             <p className="mt-2 text-sm text-muted">
-              The host hasn’t created the split. Check again after the roster is settled.
+              The host hasn’t created the split. Check again after the roster is
+              settled.
             </p>
           </section>
         )}

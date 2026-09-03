@@ -10,7 +10,10 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { parseAdminEmails } from "./validation";
 
 export function isAdminEmail(email: string | null | undefined) {
-  return Boolean(email && parseAdminEmails(getServerEnv().ADMIN_EMAILS).has(email.toLowerCase()));
+  return Boolean(
+    email &&
+      parseAdminEmails(getServerEnv().ADMIN_EMAILS).has(email.toLowerCase())
+  );
 }
 
 export async function getAuthorizedAdmin(): Promise<User | null> {
@@ -23,7 +26,8 @@ export async function requireAdmin(): Promise<User> {
   if (!isAdminEmail(user.email)) redirect("/admin-access-denied");
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data, error } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (error || data.currentLevel !== "aal2") redirect("/admin-security");
 
   return user;

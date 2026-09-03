@@ -17,7 +17,8 @@ export function PublicSessionHeader({
   accentColor?: string | null;
   gameTitle?: string;
 }) {
-  const destination = gameHref ?? (signedIn ? "/home" : `/login?next=/s/${slug}`);
+  const destination =
+    gameHref ?? (signedIn ? "/home" : `/login?next=/s/${slug}`);
   const label = gameHref ? "Open game" : signedIn ? "Open Relay" : "Sign in";
 
   const accentStyle = sessionAccentStyle(accentColor);
@@ -29,7 +30,10 @@ export function PublicSessionHeader({
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Brand showLabel={false} />
             {gameTitle ? (
-              <p title={gameTitle} className="min-w-0 truncate text-sm font-semibold text-primary">
+              <p
+                title={gameTitle}
+                className="min-w-0 truncate text-sm font-semibold text-primary"
+              >
                 {gameTitle}
               </p>
             ) : null}

@@ -8,16 +8,33 @@ import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
-import { createExpenseState, requestNewPaymentProofState, updatePlayerPaymentAmountState } from "./actions";
+import {
+  createExpenseState,
+  requestNewPaymentProofState,
+  updatePlayerPaymentAmountState,
+} from "./actions";
 
 const input =
   "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
-export function PaymentAmountForm({ paymentId, name, amount }: { paymentId: string; name: string; amount: number }) {
+export function PaymentAmountForm({
+  paymentId,
+  name,
+  amount,
+}: {
+  paymentId: string;
+  name: string;
+  amount: number;
+}) {
   const [state, action] = useActionState(updatePlayerPaymentAmountState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="flex flex-wrap items-start gap-2">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="flex flex-wrap items-start gap-2"
+    >
       <input type="hidden" name="paymentId" value={paymentId} />
       <label className="sr-only" htmlFor={`amount-${paymentId}`}>
         Amount for {name}
@@ -32,11 +49,17 @@ export function PaymentAmountForm({ paymentId, name, amount }: { paymentId: stri
           step="0.01"
           defaultValue={amount}
           aria-invalid={Boolean(state.error)}
-          aria-describedby={state.error ? `amount-${paymentId}-error` : undefined}
+          aria-describedby={
+            state.error ? `amount-${paymentId}-error` : undefined
+          }
           className="score h-9 w-28 rounded-md border border-line bg-surface pl-6 pr-2 text-sm"
         />
       </div>
-      <SubmitButton pendingLabel="Saving…" variant="secondary" className="min-h-9">
+      <SubmitButton
+        pendingLabel="Saving…"
+        variant="secondary"
+        className="min-h-9"
+      >
         Save
       </SubmitButton>
       {state.error ? (
@@ -95,14 +118,25 @@ export function CreateExpenseForm({
   const [state, action] = useActionState(createExpenseState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="mt-7 space-y-4">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="mt-7 space-y-4"
+    >
       {state.error ? <Alert>{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <div>
         <label className="text-sm font-semibold" htmlFor="label">
           Expense
         </label>
-        <input className={input} id="label" name="label" defaultValue="Court" required />
+        <input
+          className={input}
+          id="label"
+          name="label"
+          defaultValue="Court"
+          required
+        />
       </div>
       <div>
         <label className="text-sm font-semibold" htmlFor="total">
@@ -118,11 +152,15 @@ export function CreateExpenseForm({
           required
           inputMode="decimal"
           autoComplete="off"
-          defaultValue={bookingTotalCents == null ? undefined : bookingTotalCents / 100}
+          defaultValue={
+            bookingTotalCents == null ? undefined : bookingTotalCents / 100
+          }
           placeholder="2400"
         />
         {bookingTotalCents != null ? (
-          <p className="mt-1.5 text-sm text-muted">Prefilled from the court booking. Confirm or change it here.</p>
+          <p className="mt-1.5 text-sm text-muted">
+            Prefilled from the court booking. Confirm or change it here.
+          </p>
         ) : null}
       </div>
       <SelectField

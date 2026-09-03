@@ -20,7 +20,10 @@ export function EditGroupForm({
   group: { id: string; slug: string; name: string; description: string | null };
   imageUrl?: string;
 }) {
-  const [state, action] = useActionState<GroupActionState, FormData>(updateGroupAction, {});
+  const [state, action] = useActionState<GroupActionState, FormData>(
+    updateGroupAction,
+    {}
+  );
   const [preview, setPreview] = useState<string>();
   const [removeImage, setRemoveImage] = useState(false);
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -30,7 +33,7 @@ export function EditGroupForm({
     () => () => {
       if (preview) URL.revokeObjectURL(preview);
     },
-    [preview],
+    [preview]
   );
 
   function previewFile(file?: File) {
@@ -46,12 +49,24 @@ export function EditGroupForm({
   }
 
   return (
-    <form action={action} onSubmitCapture={preserveValues} noValidate className="mt-8 space-y-6">
+    <form
+      action={action}
+      onSubmitCapture={preserveValues}
+      noValidate
+      className="mt-8 space-y-6"
+    >
       <input type="hidden" name="groupId" value={group.id} />
-      <input type="hidden" name="removeImage" value={removeImage ? "true" : "false"} />
+      <input
+        type="hidden"
+        name="removeImage"
+        value={removeImage ? "true" : "false"}
+      />
 
       {state.error ? (
-        <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger">
+        <p
+          role="alert"
+          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
+        >
           {state.error}
         </p>
       ) : null}
@@ -60,7 +75,9 @@ export function EditGroupForm({
         <h2 id="group-photo-title" className="text-sm font-semibold">
           Group photo
         </h2>
-        <p className="mt-1 text-sm leading-5 text-muted">JPG, PNG, or WebP up to 5 MB.</p>
+        <p className="mt-1 text-sm leading-5 text-muted">
+          JPG, PNG, or WebP up to 5 MB.
+        </p>
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <div className="relative grid h-24 w-24 shrink-0 place-items-center overflow-hidden rounded-full border border-line bg-surface-strong text-muted">
             {shownImage ? (
@@ -115,7 +132,9 @@ export function EditGroupForm({
           className={field}
         />
         {state.fieldErrors?.name?.[0] ? (
-          <p className="mt-1.5 text-sm font-medium text-danger">{state.fieldErrors.name[0]}</p>
+          <p className="mt-1.5 text-sm font-medium text-danger">
+            {state.fieldErrors.name[0]}
+          </p>
         ) : null}
       </div>
 
@@ -131,7 +150,9 @@ export function EditGroupForm({
           className={`${field} min-h-24 resize-y py-3`}
         />
         {state.fieldErrors?.description?.[0] ? (
-          <p className="mt-1.5 text-sm font-medium text-danger">{state.fieldErrors.description[0]}</p>
+          <p className="mt-1.5 text-sm font-medium text-danger">
+            {state.fieldErrors.description[0]}
+          </p>
         ) : null}
       </div>
 

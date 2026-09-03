@@ -17,25 +17,33 @@ const developmentCleanupKey = "relay-development-sw-cleanup";
 
 export async function clearDevelopmentPwa(
   serviceWorker: ServiceWorkerContainer,
-  cacheStorage: CacheStorage | undefined,
+  cacheStorage: CacheStorage | undefined
 ) {
   const registrations = await serviceWorker.getRegistrations();
   const cacheNames = cacheStorage ? await cacheStorage.keys() : [];
-  const relayCaches = cacheNames.filter((name) => name.startsWith("relay-pwa-"));
+  const relayCaches = cacheNames.filter((name) =>
+    name.startsWith("relay-pwa-")
+  );
   await Promise.all([
     ...registrations.map((registration) => registration.unregister()),
     ...relayCaches.map((name) => cacheStorage?.delete(name)),
   ]);
-  return Boolean(serviceWorker.controller || registrations.length || relayCaches.length);
+  return Boolean(
+    serviceWorker.controller || registrations.length || relayCaches.length
+  );
 }
 
 export function PwaManager({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     if (!enabled) {
-      void clearDevelopmentPwa(navigator.serviceWorker, "caches" in window ? window.caches : undefined)
+      void clearDevelopmentPwa(
+        navigator.serviceWorker,
+        "caches" in window ? window.caches : undefined
+      )
         .then((cleaned) => {
-          const alreadyReloaded = sessionStorage.getItem(developmentCleanupKey) === "1";
+          const alreadyReloaded =
+            sessionStorage.getItem(developmentCleanupKey) === "1";
           if (cleaned && !alreadyReloaded) {
             sessionStorage.setItem(developmentCleanupKey, "1");
             window.location.reload();

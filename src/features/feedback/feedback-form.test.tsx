@@ -13,15 +13,23 @@ describe("FeedbackForm", () => {
           sessionId: "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75",
           pagePath: "/games/8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75/play",
         }}
-      />,
+      />
     );
 
-    expect(screen.getByText("Feedback from your completed game")).toBeInTheDocument();
+    expect(
+      screen.getByText("Feedback from your completed game")
+    ).toBeInTheDocument();
     expect(screen.getByLabelText("Related Relay page (optional)")).toHaveValue(
-      "/games/8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75/play",
+      "/games/8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75/play"
     );
-    expect(screen.getByLabelText("Related Relay page (optional)")).toHaveAttribute("readonly");
-    expect(container.querySelector('input[name="sessionId"]')).toHaveValue("8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75");
-    expect(container.querySelector('input[name="experience"]')).toHaveValue("issues");
+    expect(
+      screen.getByLabelText("Related Relay page (optional)")
+    ).toHaveAttribute("readonly");
+    expect(container.querySelector('input[name="sessionId"]')).toHaveValue(
+      "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75"
+    );
+    expect(container.querySelector('input[name="experience"]')).toHaveValue(
+      "issues"
+    );
   });
 });

@@ -12,16 +12,22 @@ import { encodeGroupCursor, type GroupCursor } from "./pagination";
 
 const GROUP_PAGE_SIZE = 24;
 
-export type GroupCollectionPage = { items: GroupCollectionItem[]; nextCursor: string | null };
+export type GroupCollectionPage = {
+  items: GroupCollectionItem[];
+  nextCursor: string | null;
+};
 
 export async function getGroupCollectionPage(
   userId: string,
-  cursor: GroupCursor | null = null,
+  cursor: GroupCursor | null = null
 ): Promise<GroupCollectionPage> {
   const cursorCondition = cursor
     ? or(
         gt(groupMembers.joinedAt, cursor.at),
-        and(eq(groupMembers.joinedAt, cursor.at), gt(groupMembers.groupId, cursor.id)),
+        and(
+          eq(groupMembers.joinedAt, cursor.at),
+          gt(groupMembers.groupId, cursor.id)
+        )
       )
     : undefined;
   const memberships = await db
@@ -51,16 +57,23 @@ export async function getGroupCollectionPage(
               inArray(sessions.groupId, groupIds),
               or(
                 eq(sessions.status, "live"),
-                and(eq(sessions.status, "published"), gte(sessions.startsAt, new Date())),
-              ),
-            ),
+                and(
+                  eq(sessions.status, "published"),
+                  gte(sessions.startsAt, new Date())
+                )
+              )
+            )
           )
           .orderBy(sessions.groupId, asc(sessions.startsAt), asc(sessions.id))
       : [],
   ]);
-  const counts = new Map(memberCounts.map(({ groupId, total }) => [groupId, Number(total)]));
+  const counts = new Map(
+    memberCounts.map(({ groupId, total }) => [groupId, Number(total)])
+  );
   const nextByGroup = new Map(
-    upcoming.flatMap((session) => (session.groupId ? [[session.groupId, session] as const] : [])),
+    upcoming.flatMap((session) =>
+      session.groupId ? [[session.groupId, session] as const] : []
+    )
   );
   const last = pageRows.at(-1)?.member;
 
@@ -79,6 +92,9 @@ export async function getGroupCollectionPage(
         accentColor: next?.accentColor,
       };
     }),
-    nextCursor: hasMore && last ? encodeGroupCursor({ at: last.joinedAt, id: last.groupId }) : null,
+    nextCursor:
+      hasMore && last
+        ? encodeGroupCursor({ at: last.joinedAt, id: last.groupId })
+        : null,
   };
 }

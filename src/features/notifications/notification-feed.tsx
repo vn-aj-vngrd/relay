@@ -15,12 +15,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { markNotificationRead, openNotification } from "./actions";
 import {
   type NotificationGroup,
+  type NotificationTone,
   notificationGroup,
   notificationPresentation,
   notificationTime,
-  type NotificationTone,
 } from "./domain";
-import type { NotificationFeedItem, NotificationFilter, NotificationPage } from "./queries";
+import type {
+  NotificationFeedItem,
+  NotificationFilter,
+  NotificationPage,
+} from "./queries";
 import { reconcileNotificationHead } from "./reconciliation";
 
 const groupOrder: NotificationGroup[] = ["Today", "This week", "Earlier"];
@@ -46,7 +50,9 @@ export function NotificationFeed({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
   const loadedHistoryRef = useRef(false);
-  const headIdsRef = useRef<ReadonlySet<string>>(new Set(initialPage.items.map((item) => item.id)));
+  const headIdsRef = useRef<ReadonlySet<string>>(
+    new Set(initialPage.items.map((item) => item.id))
+  );
 
   useEffect(() => {
     setItems((current) =>
@@ -55,7 +61,7 @@ export function NotificationFeed({
         previousHeadIds: headIdsRef.current,
         refreshed: initialPage.items,
         filter,
-      }),
+      })
     );
     headIdsRef.current = new Set(initialPage.items.map((item) => item.id));
     if (!loadedHistoryRef.current) setNextCursor(initialPage.nextCursor);
@@ -68,7 +74,9 @@ export function NotificationFeed({
     setError("");
     try {
       const params = new URLSearchParams({ filter, cursor: nextCursor });
-      const response = await fetch(`/api/notifications?${params}`, { cache: "no-store" });
+      const response = await fetch(`/api/notifications?${params}`, {
+        cache: "no-store",
+      });
       if (!response.ok) throw new Error("request failed");
       const page = (await response.json()) as NotificationPage;
       setItems((current) => {
@@ -87,12 +95,13 @@ export function NotificationFeed({
 
   useEffect(() => {
     const target = sentinelRef.current;
-    if (!target || !nextCursor || typeof IntersectionObserver === "undefined") return;
+    if (!target || !nextCursor || typeof IntersectionObserver === "undefined")
+      return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) void loadMore();
       },
-      { rootMargin: "320px" },
+      { rootMargin: "320px" }
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -108,8 +117,10 @@ export function NotificationFeed({
       filter === "unread"
         ? current.filter((candidate) => candidate.id !== id)
         : current.map((candidate) =>
-            candidate.id === id ? { ...candidate, readAt: new Date().toISOString() } : candidate,
-          ),
+            candidate.id === id
+              ? { ...candidate, readAt: new Date().toISOString() }
+              : candidate
+          )
     );
 
     try {
@@ -117,11 +128,15 @@ export function NotificationFeed({
     } catch {
       setItems((current) => {
         if (filter === "all") {
-          return current.map((candidate) => (candidate.id === id ? item : candidate));
+          return current.map((candidate) =>
+            candidate.id === id ? item : candidate
+          );
         }
         if (current.some((candidate) => candidate.id === id)) return current;
         return [...current, item].toSorted(
-          (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+          (left, right) =>
+            new Date(right.createdAt).getTime() -
+            new Date(left.createdAt).getTime()
         );
       });
       setError("That notification couldn’t be marked as read. Try again.");
@@ -147,7 +162,10 @@ export function NotificationFeed({
         const headingId = `notifications-${group.replaceAll(" ", "-").toLowerCase()}`;
         return (
           <section key={group} aria-labelledby={headingId} className="pt-7">
-            <h2 id={headingId} className="px-1 text-xs font-semibold uppercase tracking-[0.04em] text-muted">
+            <h2
+              id={headingId}
+              className="px-1 text-xs font-semibold uppercase tracking-[0.04em] text-muted"
+            >
               {group}
             </h2>
             <div className="mt-2 divide-y divide-line border-y border-line">
@@ -167,8 +185,16 @@ export function NotificationFeed({
                     key={item.id}
                     className="group flex items-stretch hover:bg-surface-strong/45 [content-visibility:auto] [contain-intrinsic-size:auto_80px]"
                   >
-                    <form noValidate action={openNotification} className="min-w-0 flex-1">
-                      <input type="hidden" name="notificationId" value={item.id} />
+                    <form
+                      noValidate
+                      action={openNotification}
+                      className="min-w-0 flex-1"
+                    >
+                      <input
+                        type="hidden"
+                        name="notificationId"
+                        value={item.id}
+                      />
                       <button
                         type="submit"
                         className="pressable flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
@@ -176,11 +202,17 @@ export function NotificationFeed({
                         <span
                           className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
                         >
-                          <Icon aria-hidden size={17} weight={unread ? "fill" : "regular"} />
+                          <Icon
+                            aria-hidden
+                            size={17}
+                            weight={unread ? "fill" : "regular"}
+                          />
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-start gap-2">
-                            <strong className="text-sm font-semibold leading-5 text-ink">{presentation.title}</strong>
+                            <strong className="text-sm font-semibold leading-5 text-ink">
+                              {presentation.title}
+                            </strong>
                             {unread ? (
                               <span
                                 role="img"
@@ -189,10 +221,15 @@ export function NotificationFeed({
                               />
                             ) : null}
                           </span>
-                          <span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">{presentation.body}</span>
+                          <span className="mt-1 block max-w-2xl text-sm leading-5 text-muted">
+                            {presentation.body}
+                          </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-2 pt-0.5">
-                          <time dateTime={item.createdAt} className="score text-[11px] text-muted">
+                          <time
+                            dateTime={item.createdAt}
+                            className="score text-[11px] text-muted"
+                          >
                             {notificationTime(createdAt, group)}
                           </time>
                           <CaretRight
@@ -204,8 +241,16 @@ export function NotificationFeed({
                       </button>
                     </form>
                     {unread ? (
-                      <form noValidate action={markReadAction} className="flex shrink-0 items-center pr-1 sm:pr-3">
-                        <input type="hidden" name="notificationId" value={item.id} />
+                      <form
+                        noValidate
+                        action={markReadAction}
+                        className="flex shrink-0 items-center pr-1 sm:pr-3"
+                      >
+                        <input
+                          type="hidden"
+                          name="notificationId"
+                          value={item.id}
+                        />
                         <button
                           type="submit"
                           className="pressable grid min-h-11 min-w-11 place-items-center rounded-lg text-muted hover:bg-primary-soft hover:text-primary"
@@ -223,7 +268,11 @@ export function NotificationFeed({
           </section>
         );
       })}
-      <div ref={sentinelRef} className="flex min-h-20 items-center justify-center" aria-live="polite">
+      <div
+        ref={sentinelRef}
+        className="flex min-h-20 items-center justify-center"
+        aria-live="polite"
+      >
         {nextCursor ? (
           <button
             type="button"
@@ -238,7 +287,10 @@ export function NotificationFeed({
         )}
       </div>
       {error ? (
-        <p role="alert" className="pb-4 text-center text-sm font-medium text-danger">
+        <p
+          role="alert"
+          className="pb-4 text-center text-sm font-medium text-danger"
+        >
           {error}
         </p>
       ) : null}
@@ -252,14 +304,19 @@ function NotificationEmpty({ filter }: { filter: NotificationFilter }) {
       <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-surface-strong text-muted">
         <Bell aria-hidden size={19} />
       </span>
-      <h2 className="mt-4 text-lg font-bold">{filter === "unread" ? "No unread updates" : "Nothing here yet"}</h2>
+      <h2 className="mt-4 text-lg font-bold">
+        {filter === "unread" ? "No unread updates" : "Nothing here yet"}
+      </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
         {filter === "unread"
           ? "New invites, roster changes, payment updates, and court assignments will appear here."
           : "Game invites, roster changes, payments, and court assignments will appear here."}
       </p>
       {filter === "unread" ? (
-        <Link href="/notifications" className="mt-5 inline-flex min-h-10 items-center font-semibold text-primary">
+        <Link
+          href="/notifications"
+          className="mt-5 inline-flex min-h-10 items-center font-semibold text-primary"
+        >
           View all notifications
         </Link>
       ) : null}

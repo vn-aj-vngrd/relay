@@ -19,13 +19,26 @@ export function CreateGroupForm({
   defaultName?: string;
   savedPlayerCount?: number;
 }) {
-  const [state, action] = useActionState<GroupActionState, FormData>(createGroupAction, {});
+  const [state, action] = useActionState<GroupActionState, FormData>(
+    createGroupAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form action={action} onSubmitCapture={preserveValues} noValidate className="mt-8 space-y-6">
-      {sourceSessionId ? <input type="hidden" name="sourceSessionId" value={sourceSessionId} /> : null}
+    <form
+      action={action}
+      onSubmitCapture={preserveValues}
+      noValidate
+      className="mt-8 space-y-6"
+    >
+      {sourceSessionId ? (
+        <input type="hidden" name="sourceSessionId" value={sourceSessionId} />
+      ) : null}
       {state.error ? (
-        <p role="alert" className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger">
+        <p
+          role="alert"
+          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
+        >
           {state.error}
         </p>
       ) : null}
@@ -33,8 +46,10 @@ export function CreateGroupForm({
         <div className="border-y border-line py-4">
           <p className="text-sm font-semibold">Saving this crew</p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            {savedPlayerCount} signed-in {savedPlayerCount === 1 ? "player" : "players"} will become members. Guests
-            remain attached to the original session and can join the next shared link.
+            {savedPlayerCount} signed-in{" "}
+            {savedPlayerCount === 1 ? "player" : "players"} will become members.
+            Guests remain attached to the original session and can join the next
+            shared link.
           </p>
         </div>
       ) : null}
@@ -53,7 +68,9 @@ export function CreateGroupForm({
           className={field}
         />
         {state.fieldErrors?.name?.[0] ? (
-          <p className="mt-1.5 text-sm font-medium text-danger">{state.fieldErrors.name[0]}</p>
+          <p className="mt-1.5 text-sm font-medium text-danger">
+            {state.fieldErrors.name[0]}
+          </p>
         ) : null}
       </div>
       <div>

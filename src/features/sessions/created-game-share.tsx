@@ -30,7 +30,11 @@ export function CreatedGameShare({
     const url = new URL(window.location.href);
     if (!url.searchParams.has("created")) return;
     url.searchParams.delete("created");
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}${url.search}${url.hash}`
+    );
   }, []);
 
   function complete(message: string) {
@@ -49,7 +53,12 @@ export function CreatedGameShare({
           aria-labelledby="created-game-title"
         >
           <div className="flex items-start gap-3">
-            <CheckCircle aria-hidden size={21} weight="fill" className="mt-0.5 shrink-0 text-success" />
+            <CheckCircle
+              aria-hidden
+              size={21}
+              weight="fill"
+              className="mt-0.5 shrink-0 text-success"
+            />
             <div className="min-w-0 flex-1">
               <h2 id="created-game-title" className="text-lg font-[680]">
                 Game created
@@ -76,14 +85,22 @@ export function CreatedGameShare({
                       title={title}
                       details={details}
                       sessionId={sessionId}
-                      onShared={(method) => complete(method === "copy" ? "Game link copied" : "QR code downloaded")}
+                      onShared={(method) =>
+                        complete(
+                          method === "copy"
+                            ? "Game link copied"
+                            : "QR code downloaded"
+                        )
+                      }
                     />
                     <ButtonLink href={shareUrl} variant="quiet">
                       Preview shared link
                     </ButtonLink>
                   </>
                 ) : (
-                  <ButtonLink href={`/games/${sessionId}/players`}>Invite players</ButtonLink>
+                  <ButtonLink href={`/games/${sessionId}/players`}>
+                    Invite players
+                  </ButtonLink>
                 )}
               </div>
             </div>

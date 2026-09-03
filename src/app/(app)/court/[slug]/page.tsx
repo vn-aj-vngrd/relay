@@ -5,7 +5,11 @@ import { getCurrentUser } from "@/features/auth/session";
 import { CourtDetails } from "@/features/venues/court-details";
 import { getCourtListingBySlug } from "@/features/venues/directory";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const court = await getCourtListingBySlug((await params).slug);
   if (!court) return { title: "Court not found" };
   return {
@@ -14,9 +18,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function CourtPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CourtPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const slug = (await params).slug;
-  const [court, user] = await Promise.all([getCourtListingBySlug(slug), getCurrentUser()]);
+  const [court, user] = await Promise.all([
+    getCourtListingBySlug(slug),
+    getCurrentUser(),
+  ]);
   if (!court) notFound();
   return <CourtDetails court={court} isAuthenticated={Boolean(user)} />;
 }

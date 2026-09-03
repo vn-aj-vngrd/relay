@@ -53,25 +53,24 @@ Supabase runs in Singapore (`ap-southeast-1`). Public and private storage bounda
 
 ## Quality and testing
 
-| Tool                | Version / purpose                                    |
-| ------------------- | ---------------------------------------------------- |
-| Vitest              | 4.1.10, unit and component tests in jsdom            |
-| Testing Library     | React 16.3.2 and jest-dom 7.0.1                      |
-| Playwright          | 1.62.1, mobile and desktop Chromium end-to-end tests |
-| axe-core Playwright | 4.13.0, browser accessibility checks                 |
-| ESLint              | 9.39.5 with Next.js rules and simple import sorting  |
-| Prettier            | 3.9.6                                                |
-| TypeScript compiler | Strict static checking with `tsc --noEmit`           |
+| Tool                | Version / purpose                                             |
+| ------------------- | ------------------------------------------------------------- |
+| Ultracite           | 7.10.7, authoritative Biome quality policy                    |
+| Biome               | 2.5.9, formatting, linting, and import organization           |
+| Lefthook            | 2.1.12, staged-file and Conventional Commit validation        |
+| Vitest              | 4.1.10, Node logic tests and jsdom component tests            |
+| Testing Library     | React 16.3.2 and jest-dom 7.0.1                               |
+| Playwright          | 1.62.1, mobile and desktop Chromium end-to-end tests          |
+| axe-core Playwright | 4.13.0, browser accessibility checks                          |
+| TypeScript compiler | Strict static checking with `tsc --noEmit`                    |
 
 The production quality gate is documented in [`docs/CODE_QUALITY.md`](docs/CODE_QUALITY.md). The standard commands are:
 
 ```bash
-pnpm format:check
-pnpm lint
+pnpm check:fast
 pnpm typecheck
-pnpm test
+pnpm check:full
 pnpm test:e2e
-pnpm build
 ```
 
 ## Repository structure

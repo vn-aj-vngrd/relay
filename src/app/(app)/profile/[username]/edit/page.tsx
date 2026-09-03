@@ -11,10 +11,16 @@ import { profileAvatarUrl } from "@/features/players/avatar";
 import { ProfileAvatarEditor } from "@/features/players/profile-avatar-editor";
 import { ProfileDetailsForm } from "@/features/players/profile-details-form";
 
-export default async function EditProfilePage({ params }: { params: Promise<{ username: string }> }) {
+export default async function EditProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
   const { username } = await params;
   const user = await requireUser(`/profile/${username}/edit`);
-  const profile = await db.query.profiles.findFirst({ where: eq(profiles.username, username) });
+  const profile = await db.query.profiles.findFirst({
+    where: eq(profiles.username, username),
+  });
   if (!profile || profile.userId !== user.id) notFound();
 
   return (
@@ -31,24 +37,40 @@ export default async function EditProfilePage({ params }: { params: Promise<{ us
       </header>
 
       <div className="pt-6">
-        <section aria-labelledby="profile-photo-title" className="flex items-center gap-4 pb-6">
-          <ProfileAvatarEditor name={profile.name} imageUrl={profileAvatarUrl(profile.avatarPath)} />
+        <section
+          aria-labelledby="profile-photo-title"
+          className="flex items-center gap-4 pb-6"
+        >
+          <ProfileAvatarEditor
+            name={profile.name}
+            imageUrl={profileAvatarUrl(profile.avatarPath)}
+          />
           <div>
             <h2 id="profile-photo-title" className="text-sm font-semibold">
               Profile photo
             </h2>
-            <p className="mt-1 text-sm text-muted">Choose the photo friends will recognize.</p>
+            <p className="mt-1 text-sm text-muted">
+              Choose the photo friends will recognize.
+            </p>
           </div>
         </section>
         <ProfileDetailsForm profile={profile} />
-        <section aria-labelledby="profile-security-title" className="border-b border-line py-6">
+        <section
+          aria-labelledby="profile-security-title"
+          className="border-b border-line py-6"
+        >
           <h2 id="profile-security-title" className="text-sm font-semibold">
             Account security
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-            Change your password or send yourself a recovery link if you no longer know it.
+            Change your password or send yourself a recovery link if you no
+            longer know it.
           </p>
-          <ButtonLink href="/preferences/password" variant="secondary" className="mt-4">
+          <ButtonLink
+            href="/preferences/password"
+            variant="secondary"
+            className="mt-4"
+          >
             Change password
           </ButtonLink>
         </section>

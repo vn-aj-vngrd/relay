@@ -8,6 +8,8 @@ import {
   Clock,
   Copy,
   Crosshair,
+  CurrencyCircleDollar,
+  Key,
   List,
   MagnifyingGlass,
   MapPin,
@@ -40,16 +42,19 @@ import {
 import type { CourtListing } from "./directory";
 import { distanceInKilometers, formatDistance } from "./distance";
 
-const CourtMap = dynamic(() => import("./court-map").then((module) => module.CourtMap), {
-  ssr: false,
-  loading: () => (
-    <div
-      className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
-      role="status"
-      aria-label="Loading map"
-    />
-  ),
-});
+const CourtMap = dynamic(
+  () => import("./court-map").then((module) => module.CourtMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
+        role="status"
+        aria-label="Loading map"
+      />
+    ),
+  }
+);
 
 type UserLocation = { latitude: number; longitude: number };
 type LocationStatus = "idle" | "loading" | "ready" | "error";
@@ -69,7 +74,9 @@ const courtViewOptions = [
 
 function createHref(venue: CourtListing, isAuthenticated: boolean) {
   const gamePath = `/games/new?${new URLSearchParams({ venueId: venue.id }).toString()}`;
-  return isAuthenticated ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
+  return isAuthenticated
+    ? gamePath
+    : `/signup?next=${encodeURIComponent(gamePath)}`;
 }
 
 function directionsHref(venue: CourtListing) {
@@ -91,7 +98,9 @@ function venueMeta(venue: CourtListing) {
   return [
     venue.accessType === "unknown" ? null : formatCourtAccess(venue.accessType),
     environmentLabel(venue.environment),
-    venue.courtCount ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}` : null,
+    venue.courtCount
+      ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}`
+      : null,
     venue.priceLabel,
     venue.parkingStatus === "available"
       ? "Parking available"
@@ -122,7 +131,9 @@ function SelectedCourtOverlay({
   const facts = [
     hours ? { label: "Hours", value: hours, icon: Clock } : null,
     { label: "Parking", value: venue.parkingLabel ?? "Not listed", icon: Car },
-    venue.paddleRental ? { label: "Paddles", value: "Rental available", icon: Racquet } : null,
+    venue.paddleRental
+      ? { label: "Paddles", value: "Rental available", icon: Racquet }
+      : null,
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
 
   return (
@@ -135,11 +146,16 @@ function SelectedCourtOverlay({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-muted">
             <span className="inline-flex items-center gap-1 text-primary">
-              <CheckCircle aria-hidden size={15} weight="fill" /> Verified by Relay
+              <CheckCircle aria-hidden size={15} weight="fill" /> Verified by
+              Relay
             </span>
-            {distance != null ? <span>{formatDistance(distance)} away</span> : null}
+            {distance != null ? (
+              <span>{formatDistance(distance)} away</span>
+            ) : null}
           </div>
-          <h2 className="mt-1.5 text-base font-[680] tracking-[-0.02em] sm:text-lg">{venue.name}</h2>
+          <h2 className="mt-1.5 text-base font-[680] tracking-[-0.02em] sm:text-lg">
+            {venue.name}
+          </h2>
           <p className="mt-1 text-sm leading-5 text-muted">{venue.address}</p>
         </div>
         <button
@@ -153,17 +169,28 @@ function SelectedCourtOverlay({
       </div>
 
       {venueMeta(venue).length ? (
-        <p className="mt-3 text-sm font-medium text-ink">{venueMeta(venue).join(" · ")}</p>
+        <p className="mt-3 text-sm font-medium text-ink">
+          {venueMeta(venue).join(" · ")}
+        </p>
       ) : null}
 
       {facts.length ? (
         <dl className="mt-4 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {facts.slice(0, 2).map(({ label, value, icon: Icon }, index) => (
-            <div key={label} className={`flex gap-2.5 py-3 ${index ? "sm:pl-4" : "sm:pr-4"}`}>
-              <Icon aria-hidden className="mt-0.5 shrink-0 text-primary" size={17} />
+            <div
+              key={label}
+              className={`flex gap-2.5 py-3 ${index ? "sm:pl-4" : "sm:pr-4"}`}
+            >
+              <Icon
+                aria-hidden
+                className="mt-0.5 shrink-0 text-primary"
+                size={17}
+              />
               <div className="min-w-0">
                 <dt className="text-xs font-medium text-muted">{label}</dt>
-                <dd className="mt-0.5 text-xs font-semibold leading-5 text-ink">{value}</dd>
+                <dd className="mt-0.5 text-xs font-semibold leading-5 text-ink">
+                  {value}
+                </dd>
               </div>
             </div>
           ))}
@@ -255,7 +282,8 @@ function CourtResults({
     const rowTop = row.offsetTop;
     const rowBottom = rowTop + row.offsetHeight;
     if (rowTop < list.scrollTop) list.scrollTo({ top: rowTop });
-    else if (rowBottom > list.scrollTop + list.clientHeight) list.scrollTo({ top: rowBottom - list.clientHeight });
+    else if (rowBottom > list.scrollTop + list.clientHeight)
+      list.scrollTo({ top: rowBottom - list.clientHeight });
   }, [selectedId]);
 
   return (
@@ -266,12 +294,19 @@ function CourtResults({
       <header
         className={`${compactHeader ? "hidden xl:flex" : "flex"} shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3`}
       >
-        <h2 id="philippines-court-list" className="min-w-0 truncate text-[15px] font-[680]">
+        <h2
+          id="philippines-court-list"
+          className="min-w-0 truncate text-[15px] font-[680]"
+        >
           {locationReady ? "Nearest courts" : "Courts"}
         </h2>
         <div className="flex items-center gap-3">
           {!results.length ? (
-            <button type="button" onClick={onClear} className="min-h-9 text-xs font-semibold text-primary">
+            <button
+              type="button"
+              onClick={onClear}
+              className="min-h-9 text-xs font-semibold text-primary"
+            >
               Clear filters
             </button>
           ) : null}
@@ -283,11 +318,17 @@ function CourtResults({
       </header>
 
       {results.length ? (
-        <ul ref={listRef} className="min-h-0 flex-1 divide-y divide-line overflow-y-auto overscroll-contain">
+        <ul
+          ref={listRef}
+          className="min-h-0 flex-1 divide-y divide-line overflow-y-auto overscroll-contain"
+        >
           {results.map(({ venue, distance }) => {
             const active = venue.id === selectedId;
             return (
-              <li key={venue.id} className="[content-visibility:auto] [contain-intrinsic-size:auto_76px]">
+              <li
+                key={venue.id}
+                className="[content-visibility:auto] [contain-intrinsic-size:auto_76px]"
+              >
                 <Link
                   ref={(element) => {
                     if (element) rowRefs.current.set(venue.id, element);
@@ -295,7 +336,14 @@ function CourtResults({
                   }}
                   href={`${detailBasePath}/${venue.slug}`}
                   onClick={(event) => {
-                    if (event.button || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    if (
+                      event.button ||
+                      event.metaKey ||
+                      event.ctrlKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    )
+                      return;
                     event.preventDefault();
                     onSelect(venue.id);
                   }}
@@ -303,10 +351,14 @@ function CourtResults({
                   className={`pressable relative block w-full px-4 py-3.5 text-left ${active ? "bg-primary-soft/55 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:bg-primary" : "hover:bg-surface-strong/60"}`}
                 >
                   <span className="flex items-start justify-between gap-3">
-                    <strong className="text-sm font-[650] leading-5 text-ink">{venue.name}</strong>
+                    <strong className="text-sm font-[650] leading-5 text-ink">
+                      {venue.name}
+                    </strong>
                     <span className="shrink-0 text-right">
                       {distance != null ? (
-                        <span className="block text-xs font-semibold text-primary">{formatDistance(distance)}</span>
+                        <span className="block text-xs font-semibold text-primary">
+                          {formatDistance(distance)}
+                        </span>
                       ) : null}
                       <CheckCircle
                         aria-label="Verified by Relay"
@@ -316,7 +368,9 @@ function CourtResults({
                       />
                     </span>
                   </span>
-                  <span className="mt-1 block text-xs leading-[18px] text-muted">{venue.address}</span>
+                  <span className="mt-1 block text-xs leading-[18px] text-muted">
+                    {venue.address}
+                  </span>
                   {venueMeta(venue).length ? (
                     <span className="mt-2 block text-xs font-medium leading-[18px] text-ink">
                       {venueMeta(venue).join(" · ")}
@@ -332,7 +386,8 @@ function CourtResults({
                 href={suggestHref}
                 className="pressable flex min-h-14 items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-muted hover:bg-surface-strong hover:text-ink"
               >
-                Can’t find your court? <span className="text-primary">Suggest it</span>
+                Can’t find your court?{" "}
+                <span className="text-primary">Suggest it</span>
               </Link>
             </li>
           ) : null}
@@ -342,7 +397,9 @@ function CourtResults({
           <div>
             <Buildings aria-hidden size={22} className="mx-auto text-primary" />
             <h3 className="mt-3 font-[680]">No courts match</h3>
-            <p className="mt-2 text-sm text-muted">Try another neighborhood or clear the active filters.</p>
+            <p className="mt-2 text-sm text-muted">
+              Try another neighborhood or clear the active filters.
+            </p>
             {suggestHref ? (
               <Link
                 href={suggestHref}
@@ -397,7 +454,7 @@ export function CourtFinder({
         searchText:
           `${venue.name} ${venue.address} ${venue.environment ?? ""} ${formatCourtAccess(venue.accessType)} ${venue.priceLabel ?? ""} ${venue.parkingStatus === "available" ? "parking available" : venue.parkingStatus === "unavailable" ? "no parking parking not available" : ""} ${formatCourtOperatingHours(venue.operatingHours) ?? ""} ${venue.amenities.join(" ")}`.toLowerCase(),
       })),
-    [venues],
+    [venues]
   );
 
   const results = useMemo(() => {
@@ -405,45 +462,80 @@ export function CourtFinder({
     const matching = searchableVenues
       .filter(({ venue }) => venue.listingStatus === "verified")
       .filter(({ venue, searchText }) => {
-        const indoor = ["indoor", "covered", "semi-indoor", "mixed"].includes(venue.environment ?? "");
+        const indoor = ["indoor", "covered", "semi-indoor", "mixed"].includes(
+          venue.environment ?? ""
+        );
         const outdoor = ["outdoor", "mixed"].includes(venue.environment ?? "");
-        const settingMatches = setting === "all" || (setting === "indoor" ? indoor : outdoor);
+        const settingMatches =
+          setting === "all" || (setting === "indoor" ? indoor : outdoor);
         const queryMatches = !term || searchText.includes(term);
-        const restricted = ["members", "residents", "school_or_community", "invitation"].includes(venue.accessType);
+        const restricted = [
+          "members",
+          "residents",
+          "school_or_community",
+          "invitation",
+        ].includes(venue.accessType);
         const accessMatches =
-          access === "all" || venue.accessType === access || (access === "restricted" && restricted);
-        const parkingMatches = parking === "all" || venue.parkingStatus === parking;
+          access === "all" ||
+          venue.accessType === access ||
+          (access === "restricted" && restricted);
+        const parkingMatches =
+          parking === "all" || venue.parkingStatus === parking;
         const amount = venue.priceAmountCents;
         const priceMatches =
           price === "all" ||
           (price === "free" && venue.priceStatus === "free") ||
-          (price === "under-500" && venue.priceStatus === "paid" && amount != null && amount <= 50000) ||
+          (price === "under-500" &&
+            venue.priceStatus === "paid" &&
+            amount != null &&
+            amount <= 50000) ||
           (price === "500-1000" &&
             venue.priceStatus === "paid" &&
             amount != null &&
             amount > 50000 &&
             amount <= 100000) ||
-          (price === "over-1000" && venue.priceStatus === "paid" && amount != null && amount > 100000);
+          (price === "over-1000" &&
+            venue.priceStatus === "paid" &&
+            amount != null &&
+            amount > 100000);
         const hoursMatch =
           availability === "all" ||
-          (availability === "open" && isCourtOpenAt(venue.operatingHours) === true) ||
-          (availability === "24-hours" && isCourtOpen24Hours(venue.operatingHours)) ||
+          (availability === "open" &&
+            isCourtOpenAt(venue.operatingHours) === true) ||
+          (availability === "24-hours" &&
+            isCourtOpen24Hours(venue.operatingHours)) ||
           (availability === "during" &&
             (bookingDay === "today"
-              ? isCourtOpenDuring(venue.operatingHours, bookingStartTime, bookingEndTime) === true
+              ? isCourtOpenDuring(
+                  venue.operatingHours,
+                  bookingStartTime,
+                  bookingEndTime
+                ) === true
               : isCourtOpenDuringOnDay(
                   venue.operatingHours,
                   bookingStartTime,
                   bookingEndTime,
-                  Number(bookingDay) as CourtDay,
+                  Number(bookingDay) as CourtDay
                 ) === true));
-        return settingMatches && accessMatches && queryMatches && parkingMatches && priceMatches && hoursMatch;
+        return (
+          settingMatches &&
+          accessMatches &&
+          queryMatches &&
+          parkingMatches &&
+          priceMatches &&
+          hoursMatch
+        );
       })
       .map(({ venue }) => ({
         venue,
-        distance: userLocation ? distanceInKilometers(userLocation, venue) : null,
+        distance: userLocation
+          ? distanceInKilometers(userLocation, venue)
+          : null,
       }));
-    if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
+    if (userLocation)
+      matching.sort(
+        (left, right) => (left.distance ?? 0) - (right.distance ?? 0)
+      );
     return matching;
   }, [
     access,
@@ -459,26 +551,37 @@ export function CourtFinder({
     userLocation,
   ]);
 
-  const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
+  const mappedVenues = useMemo(
+    () => results.map(({ venue }) => venue),
+    [results]
+  );
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
   const filtersActive = Boolean(
     query.trim() ||
-    setting !== "all" ||
-    access !== "all" ||
-    parking !== "all" ||
-    price !== "all" ||
-    availability !== "all",
+      setting !== "all" ||
+      access !== "all" ||
+      parking !== "all" ||
+      price !== "all" ||
+      availability !== "all"
   );
 
   function selectCourt(id: string, revealMap = false) {
-    selectionTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    selectionTriggerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     setSelectedId(id);
     setCopied(false);
     if (revealMap && window.innerWidth < 1280) {
       setMobileView("map");
-      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+      const reducedMotion =
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ??
+        false;
       requestAnimationFrame(() =>
-        mapSectionRef.current?.scrollIntoView?.({ block: "start", behavior: reducedMotion ? "auto" : "smooth" }),
+        mapSectionRef.current?.scrollIntoView?.({
+          block: "start",
+          behavior: reducedMotion ? "auto" : "smooth",
+        })
       );
     }
   }
@@ -509,22 +612,31 @@ export function CourtFinder({
     }
     if (!navigator.geolocation) {
       setLocationStatus("error");
-      setLocationMessage("Location isn’t available here. Search by neighborhood instead.");
+      setLocationMessage(
+        "Location isn’t available here. Search by neighborhood instead."
+      );
       return;
     }
     setLocationStatus("loading");
     setLocationMessage("");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
-        setUserLocation({ latitude: coords.latitude, longitude: coords.longitude });
+        setUserLocation({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        });
         setLocationStatus("ready");
-        setLocationMessage("Courts are now sorted by distance. Your location stays on this device.");
+        setLocationMessage(
+          "Courts are now sorted by distance. Your location stays on this device."
+        );
       },
       () => {
         setLocationStatus("error");
-        setLocationMessage("Location access is off. Search by court or neighborhood instead.");
+        setLocationMessage(
+          "Location access is off. Search by court or neighborhood instead."
+        );
       },
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
     );
   }
 
@@ -542,7 +654,10 @@ export function CourtFinder({
       >
         <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
           <div>
-            <label htmlFor="court-search" className="sr-only lg:not-sr-only lg:block lg:text-sm lg:font-[650]">
+            <label
+              htmlFor="court-search"
+              className="sr-only lg:not-sr-only lg:block lg:text-sm lg:font-[650]"
+            >
               Search courts
             </label>
             <div className="relative max-w-2xl lg:mt-1.5">
@@ -594,13 +709,20 @@ export function CourtFinder({
           >
             <Crosshair aria-hidden size={17} />
             <span className="hidden lg:inline">
-              {locationStatus === "loading" ? "Finding you…" : userLocation ? "Nearest first" : "Use my location"}
+              {locationStatus === "loading"
+                ? "Finding you…"
+                : userLocation
+                  ? "Nearest first"
+                  : "Use my location"}
             </span>
           </Button>
         </div>
 
         <div className="public-session-scroll -mx-1 mt-3 overflow-x-auto px-1 pb-1 sm:overflow-visible">
-          <div className="flex min-w-max gap-1.5 sm:gap-2" aria-label="Court filters">
+          <div
+            className="flex min-w-max gap-1.5 sm:gap-2"
+            aria-label="Court filters"
+          >
             <div>
               <SelectField
                 id="court-setting-filter"
@@ -608,6 +730,7 @@ export function CourtFinder({
                 label="Setting"
                 hideLabel
                 density="compact"
+                leadingIcon={<Buildings aria-hidden size={14} />}
                 value={setting}
                 onValueChange={(value) => {
                   setSetting(value as SettingFilter);
@@ -628,6 +751,7 @@ export function CourtFinder({
                 label="Access"
                 hideLabel
                 density="compact"
+                leadingIcon={<Key aria-hidden size={14} />}
                 value={access}
                 onValueChange={(value) => {
                   setAccess(value as AccessFilter);
@@ -649,6 +773,7 @@ export function CourtFinder({
                 label="Parking"
                 hideLabel
                 density="compact"
+                leadingIcon={<Car aria-hidden size={14} />}
                 value={parking}
                 onValueChange={(value) => {
                   setParking(value as ParkingFilter);
@@ -669,6 +794,7 @@ export function CourtFinder({
                 label="Starting price"
                 hideLabel
                 density="compact"
+                leadingIcon={<CurrencyCircleDollar aria-hidden size={14} />}
                 value={price}
                 onValueChange={(value) => {
                   setPrice(value as PriceFilter);
@@ -691,6 +817,7 @@ export function CourtFinder({
                 label="Availability"
                 hideLabel
                 density="compact"
+                leadingIcon={<Clock aria-hidden size={14} />}
                 value={availability}
                 onValueChange={(value) => {
                   setAvailability(value as AvailabilityFilter);
@@ -761,7 +888,10 @@ export function CourtFinder({
           </fieldset>
         ) : null}
         {locationMessage ? (
-          <p role="status" className={`mt-3 text-xs ${locationStatus === "error" ? "text-warning" : "text-muted"}`}>
+          <p
+            role="status"
+            className={`mt-3 text-xs ${locationStatus === "error" ? "text-warning" : "text-muted"}`}
+          >
             {locationMessage}
           </p>
         ) : null}
@@ -770,7 +900,9 @@ export function CourtFinder({
       {!compactPreview ? (
         <div className="flex items-center justify-between gap-3 py-1.5 sm:py-2 xl:hidden">
           <div aria-live="polite" className="min-w-0">
-            <p className="truncate text-sm font-[680]">{userLocation ? "Nearest courts" : "Courts"}</p>
+            <p className="truncate text-sm font-[680]">
+              {userLocation ? "Nearest courts" : "Courts"}
+            </p>
             <p className="mt-0.5 text-xs text-muted">
               {results.length} {results.length === 1 ? "place" : "places"}
             </p>
@@ -816,8 +948,8 @@ export function CourtFinder({
             </CourtMap>
           </div>
           <p className="mt-2 hidden shrink-0 text-xs leading-5 text-muted sm:block">
-            Drag to explore. Select a pin for details. Map data © Geoapify, OpenMapTiles, and OpenStreetMap
-            contributors.
+            Drag to explore. Select a pin for details. Map data © Geoapify,
+            OpenMapTiles, and OpenStreetMap contributors.
           </p>
         </section>
 
@@ -834,7 +966,9 @@ export function CourtFinder({
             compactPreview={compactPreview}
             mobileEdgeToEdge={!compactPreview}
             compactHeader={!compactPreview}
-            suggestHref={isAuthenticated && !compactPreview ? "/court/suggest" : null}
+            suggestHref={
+              isAuthenticated && !compactPreview ? "/court/suggest" : null
+            }
             detailBasePath={detailBasePath}
           />
         </div>

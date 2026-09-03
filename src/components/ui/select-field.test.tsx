@@ -11,12 +11,21 @@ const options = [
 describe("SelectField", () => {
   it("uses an accessible Relay listbox and submits the selected value", () => {
     const { container } = render(
-      <SelectField id="visibility" label="Visibility" options={options} defaultValue="link" />,
+      <SelectField
+        id="visibility"
+        label="Visibility"
+        options={options}
+        defaultValue="link"
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: "Visibility" }));
     fireEvent.click(screen.getByRole("option", { name: "Private" }));
-    expect(container.querySelector('input[name="visibility"]')).toHaveValue("private");
-    expect(screen.getByRole("button", { name: "Visibility" })).toHaveTextContent("Private");
+    expect(container.querySelector('input[name="visibility"]')).toHaveValue(
+      "private"
+    );
+    expect(
+      screen.getByRole("button", { name: "Visibility" })
+    ).toHaveTextContent("Private");
   });
 
   it("provides one shared compact density for filter chips", () => {
@@ -28,7 +37,7 @@ describe("SelectField", () => {
         defaultValue="link"
         density="compact"
         className="!w-auto !rounded-full"
-      />,
+      />
     );
 
     expect(screen.getByRole("button", { name: "Setting" })).toHaveClass(
@@ -36,8 +45,10 @@ describe("SelectField", () => {
       "h-9",
       "min-h-9",
       "text-[13px]",
-      "!rounded-full",
+      "!rounded-full"
     );
-    expect(screen.getByRole("button", { name: "Setting" })).not.toHaveClass("h-11");
+    expect(screen.getByRole("button", { name: "Setting" })).not.toHaveClass(
+      "h-11"
+    );
   });
 });

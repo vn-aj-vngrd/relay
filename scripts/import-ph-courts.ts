@@ -13,13 +13,34 @@ const courtSchema = z.object({
   environment: z.enum(["indoor", "outdoor", "covered"]).nullable(),
   courtCount: z.number().int().positive().nullable(),
   accessType: z
-    .enum(["unknown", "public", "commercial", "members", "residents", "school_or_community", "invitation"])
+    .enum([
+      "unknown",
+      "public",
+      "commercial",
+      "members",
+      "residents",
+      "school_or_community",
+      "invitation",
+    ])
     .default("unknown"),
   reservationPolicy: z
-    .enum(["unknown", "walk_in", "reservation_required", "walk_in_or_reserve", "contact"])
+    .enum([
+      "unknown",
+      "walk_in",
+      "reservation_required",
+      "walk_in_or_reserve",
+      "contact",
+    ])
     .default("unknown"),
   operationalStatus: z
-    .enum(["unknown", "operating", "temporarily_closed", "seasonal", "opening_soon", "permanently_closed"])
+    .enum([
+      "unknown",
+      "operating",
+      "temporarily_closed",
+      "seasonal",
+      "opening_soon",
+      "permanently_closed",
+    ])
     .default("unknown"),
   operatingHours: z.array(
     z.object({
@@ -27,12 +48,29 @@ const courtSchema = z.object({
       sequence: z.number().int().nonnegative(),
       opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
       closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-    }),
+    })
   ),
-  priceStatus: z.enum(["unknown", "free", "paid", "contact", "donation", "members", "invitation"]),
+  priceStatus: z.enum([
+    "unknown",
+    "free",
+    "paid",
+    "contact",
+    "donation",
+    "members",
+    "invitation",
+  ]),
   priceAmountCents: z.number().int().nonnegative().nullable(),
   priceMaxCents: z.number().int().nonnegative().nullable(),
-  priceUnit: z.enum(["hour", "player", "court", "session", "court_hour", "player_session"]).nullable(),
+  priceUnit: z
+    .enum([
+      "hour",
+      "player",
+      "court",
+      "session",
+      "court_hour",
+      "player_session",
+    ])
+    .nullable(),
   parkingStatus: z.enum(["available", "unavailable"]).nullable(),
   amenities: z.array(z.string()),
   paddleRental: z.boolean(),
@@ -79,7 +117,10 @@ function normalize(value: string) {
     .trim();
 }
 
-function isLikelyDuplicate(left: Pick<ExistingCourt, "name">, right: CourtRecord) {
+function isLikelyDuplicate(
+  left: Pick<ExistingCourt, "name">,
+  right: CourtRecord
+) {
   return normalize(left.name) === normalize(right.name);
 }
 
@@ -105,16 +146,22 @@ for (const source of sources) {
   const externalIds = new Set<string>();
   const slugs = new Set<string>();
   for (const record of source.records) {
-    if (externalIds.has(record.sourceExternalId)) throw new Error(`Duplicate source ID: ${record.sourceExternalId}`);
-    if (slugs.has(record.slug)) throw new Error(`Duplicate source slug: ${record.slug}`);
+    if (externalIds.has(record.sourceExternalId))
+      throw new Error(`Duplicate source ID: ${record.sourceExternalId}`);
+    if (slugs.has(record.slug))
+      throw new Error(`Duplicate source slug: ${record.slug}`);
     if ((record.latitude == null) !== (record.longitude == null)) {
       throw new Error(`Incomplete coordinate pair: ${record.name}`);
     }
     if (record.listingStatus === "verified" && record.latitude == null) {
-      throw new Error(`Verified court has no reviewed coordinate: ${record.name}`);
+      throw new Error(
+        `Verified court has no reviewed coordinate: ${record.name}`
+      );
     }
     const paidPricingComplete =
-      record.priceStatus === "paid" && record.priceAmountCents != null && record.priceUnit != null;
+      record.priceStatus === "paid" &&
+      record.priceAmountCents != null &&
+      record.priceUnit != null;
     const freePricingComplete =
       record.priceStatus === "free" &&
       record.priceAmountCents === 0 &&
@@ -125,17 +172,23 @@ for (const source of sources) {
       record.priceAmountCents == null &&
       record.priceMaxCents == null &&
       record.priceUnit == null;
-    if (!paidPricingComplete && !freePricingComplete && !nonAmountPricingComplete)
+    if (
+      !paidPricingComplete &&
+      !freePricingComplete &&
+      !nonAmountPricingComplete
+    )
       throw new Error(`Invalid structured pricing: ${record.name}`);
     if (
       record.priceMaxCents != null &&
-      (record.priceAmountCents == null || record.priceMaxCents < record.priceAmountCents)
+      (record.priceAmountCents == null ||
+        record.priceMaxCents < record.priceAmountCents)
     )
       throw new Error(`Invalid maximum price: ${record.name}`);
     const operatingPeriodKeys = new Set<string>();
     for (const period of record.operatingHours) {
       const key = `${period.dayOfWeek}:${period.sequence}`;
-      if (operatingPeriodKeys.has(key)) throw new Error(`Duplicate operating period: ${record.name} (${key})`);
+      if (operatingPeriodKeys.has(key))
+        throw new Error(`Duplicate operating period: ${record.name} (${key})`);
       operatingPeriodKeys.add(key);
     }
     externalIds.add(record.sourceExternalId);
@@ -149,24 +202,38 @@ try {
     SELECT source, source_external_id, slug, name, address
     FROM venues
   `;
-  const planned: Array<{ source: CourtSource; record: CourtRecord; slug: string }> = [];
-  const skipped: Array<{ source: string; name: string; duplicate: string }> = [];
+  const planned: Array<{
+    source: CourtSource;
+    record: CourtRecord;
+    slug: string;
+  }> = [];
+  const skipped: Array<{ source: string; name: string; duplicate: string }> =
+    [];
   const known = [...existing];
   const reservedSlugs = new Set(existing.map((court) => court.slug));
 
   for (const source of sources) {
     for (const record of source.records) {
       const sameSource = known.find(
-        (court) => court.source === source.source && court.source_external_id === record.sourceExternalId,
+        (court) =>
+          court.source === source.source &&
+          court.source_external_id === record.sourceExternalId
       );
-      const duplicate = sameSource ? null : known.find((court) => isLikelyDuplicate(court, record));
+      const duplicate = sameSource
+        ? null
+        : known.find((court) => isLikelyDuplicate(court, record));
       if (duplicate) {
-        skipped.push({ source: source.source, name: record.name, duplicate: duplicate.name });
+        skipped.push({
+          source: source.source,
+          name: record.name,
+          duplicate: duplicate.name,
+        });
         continue;
       }
 
       let slug = sameSource?.slug ?? record.slug;
-      if (!sameSource && reservedSlugs.has(slug)) slug = `${slug}-${record.sourceExternalId.slice(-6)}`;
+      if (!sameSource && reservedSlugs.has(slug))
+        slug = `${slug}-${record.sourceExternalId.slice(-6)}`;
       reservedSlugs.add(slug);
       planned.push({ source, record, slug });
       known.push({
@@ -179,7 +246,9 @@ try {
     }
   }
 
-  const verified = planned.filter(({ record }) => record.listingStatus === "verified").length;
+  const verified = planned.filter(
+    ({ record }) => record.listingStatus === "verified"
+  ).length;
   const unverified = planned.length - verified;
   console.log(
     JSON.stringify(
@@ -192,8 +261,8 @@ try {
         skipped,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 
   if (!apply) {
@@ -202,7 +271,9 @@ try {
   } else {
     await sql.begin(async (transaction) => {
       for (const source of sources) {
-        const activeIds = source.records.map((record) => record.sourceExternalId);
+        const activeIds = source.records.map(
+          (record) => record.sourceExternalId
+        );
         await transaction`
           UPDATE venues
           SET listing_status = 'archived', updated_at = now()
@@ -213,7 +284,10 @@ try {
       }
 
       for (const { source, record, slug } of planned) {
-        const verifiedAt = record.listingStatus === "verified" ? new Date("2026-09-01T00:00:00+08:00") : null;
+        const verifiedAt =
+          record.listingStatus === "verified"
+            ? new Date("2026-09-01T00:00:00+08:00")
+            : null;
         const saved = await transaction<{ id: string }[]>`
           INSERT INTO venues (
             slug, name, address, latitude, longitude, environment, court_count,
@@ -262,7 +336,8 @@ try {
           RETURNING id
         `;
         const venueId = saved[0]?.id;
-        if (!venueId) throw new Error(`Failed to save operating hours for ${record.name}.`);
+        if (!venueId)
+          throw new Error(`Failed to save operating hours for ${record.name}.`);
         await transaction`DELETE FROM venue_operating_periods WHERE venue_id = ${venueId}`;
         for (const period of record.operatingHours)
           await transaction`
@@ -272,7 +347,7 @@ try {
       }
     });
     console.log(
-      `Imported ${planned.length} nationwide court records (${verified} verified, ${unverified} pending review).`,
+      `Imported ${planned.length} nationwide court records (${verified} verified, ${unverified} pending review).`
     );
   }
 } finally {

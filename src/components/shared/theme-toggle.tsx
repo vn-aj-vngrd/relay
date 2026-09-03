@@ -3,12 +3,16 @@
 import { Moon, Sun } from "@phosphor-icons/react";
 import { useSyncExternalStore } from "react";
 
-const themeColors = { light: "oklch(0.965 0.002 75)", dark: "oklch(0.145 0.006 275)" } as const;
+const themeColors = {
+  light: "oklch(0.965 0.002 75)",
+  dark: "oklch(0.145 0.006 275)",
+} as const;
 export type Theme = keyof typeof themeColors;
 export type ThemePreference = Theme | "system";
 
 function systemTheme(): Theme {
-  return typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches
+  return typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }
@@ -16,12 +20,16 @@ function systemTheme(): Theme {
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
   document.documentElement.style.colorScheme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColors[theme]);
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", themeColors[theme]);
 }
 
 export function getThemePreference(): ThemePreference {
   const saved = localStorage.getItem("relay-theme");
-  return saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
+  return saved === "light" || saved === "dark" || saved === "system"
+    ? saved
+    : "system";
 }
 
 export function setThemePreference(preference: ThemePreference) {
@@ -31,9 +39,13 @@ export function setThemePreference(preference: ThemePreference) {
 }
 
 function subscribe(callback: () => void) {
-  const media = typeof window.matchMedia === "function" ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  const media =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-color-scheme: dark)")
+      : null;
   const handleSystemChange = () => {
-    if (localStorage.getItem("relay-theme") === "system") applyTheme(systemTheme());
+    if (localStorage.getItem("relay-theme") === "system")
+      applyTheme(systemTheme());
     callback();
   };
   window.addEventListener("relay-theme-change", callback);
@@ -48,7 +60,13 @@ function getTheme(): Theme {
   return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
-export function ThemeToggle({ inverse = false, showLabel = false }: { inverse?: boolean; showLabel?: boolean }) {
+export function ThemeToggle({
+  inverse = false,
+  showLabel = false,
+}: {
+  inverse?: boolean;
+  showLabel?: boolean;
+}) {
   const theme = useSyncExternalStore(subscribe, getTheme, () => "light");
   const next = theme === "light" ? "dark" : "light";
   const Icon = theme === "light" ? Moon : Sun;
@@ -62,7 +80,9 @@ export function ThemeToggle({ inverse = false, showLabel = false }: { inverse?: 
     >
       <Icon aria-hidden size={18} weight="regular" />
       {showLabel ? (
-        <span className="text-[13px] font-medium">{theme === "light" ? "Dark mode" : "Light mode"}</span>
+        <span className="text-[13px] font-medium">
+          {theme === "light" ? "Dark mode" : "Light mode"}
+        </span>
       ) : null}
     </button>
   );

@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { parsePlaySetup, planMatchFinish, planRotation, rotationDescription } from "./rotation";
+import {
+  parsePlaySetup,
+  planMatchFinish,
+  planRotation,
+  rotationDescription,
+} from "./rotation";
 
 const courts = [
   { id: "court-1", label: "Court 1", position: 1 },
   { id: "court-2", label: "Court 2", position: 2 },
 ];
-const waiting = (ids: string[]) => ids.map((id, index) => ({ id, position: index + 1 }));
+const waiting = (ids: string[]) =>
+  ids.map((id, index) => ({ id, position: index + 1 }));
 
 describe("play rotation", () => {
   it("validates the host setup and keeps queue rules scoped to Paddle Stack", () => {
@@ -16,13 +22,23 @@ describe("play rotation", () => {
       partnerPolicy: "mix",
       pairs: [],
     });
-    expect(parsePlaySetup({ mode: "random", queueRule: "winner_stays" })).toEqual({ mode: "random" });
+    expect(
+      parsePlaySetup({ mode: "random", queueRule: "winner_stays" })
+    ).toEqual({ mode: "random" });
     expect(parsePlaySetup({ mode: "balanced" })).toEqual({ mode: "balanced" });
     const pairs: [string, string][] = [
-      ["00000000-0000-4000-8000-000000000001", "00000000-0000-4000-8000-000000000002"],
-      ["00000000-0000-4000-8000-000000000003", "00000000-0000-4000-8000-000000000004"],
+      [
+        "00000000-0000-4000-8000-000000000001",
+        "00000000-0000-4000-8000-000000000002",
+      ],
+      [
+        "00000000-0000-4000-8000-000000000003",
+        "00000000-0000-4000-8000-000000000004",
+      ],
     ];
-    expect(parsePlaySetup({ mode: "queue", partnerPolicy: "fixed", pairs })).toEqual({
+    expect(
+      parsePlaySetup({ mode: "queue", partnerPolicy: "fixed", pairs })
+    ).toEqual({
       mode: "queue",
       queueRule: "adaptive",
       partnerPolicy: "fixed",
@@ -32,14 +48,31 @@ describe("play rotation", () => {
   });
 
   it("starts one continuous Paddle Stack match from queue order", () => {
-    expect(planRotation({ mode: "queue", courts, waiting: waiting(["a", "b", "c", "d", "e"]), history: [] })).toEqual([
-      { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] },
+    expect(
+      planRotation({
+        mode: "queue",
+        courts,
+        waiting: waiting(["a", "b", "c", "d", "e"]),
+        history: [],
+      })
+    ).toEqual([
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+      },
     ]);
   });
 
   it("fills every open court when enough paddles are waiting", () => {
     expect(
-      planRotation({ mode: "queue", courts, waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]), history: [] }),
+      planRotation({
+        mode: "queue",
+        courts,
+        waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]),
+        history: [],
+      })
     ).toHaveLength(2);
   });
 
@@ -55,8 +88,15 @@ describe("play rotation", () => {
           ["c", "d"],
           ["e", "f"],
         ],
-      }),
-    ).toEqual([{ courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] }]);
+      })
+    ).toEqual([
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+      },
+    ]);
   });
 
   it("keeps an incomplete late pair out until both players arrive", () => {
@@ -73,8 +113,15 @@ describe("play rotation", () => {
         waiting: waiting(["a", "b", "c", "d", "e"]),
         history: [],
         fixedPairs,
-      }),
-    ).toEqual([{ courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["c", "d"] }]);
+      })
+    ).toEqual([
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "b"],
+        teamB: ["c", "d"],
+      },
+    ]);
   });
 
   it("schedules every fixed pair once per Team Round Robin round without repeats", () => {
@@ -92,8 +139,18 @@ describe("play rotation", () => {
       fixedPairs,
     });
     expect(first).toEqual([
-      { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["g", "h"] },
-      { courtId: "court-2", courtLabel: "Court 2", teamA: ["c", "d"], teamB: ["e", "f"] },
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "b"],
+        teamB: ["g", "h"],
+      },
+      {
+        courtId: "court-2",
+        courtLabel: "Court 2",
+        teamA: ["c", "d"],
+        teamB: ["e", "f"],
+      },
     ]);
     const history = first.map((match, index) => ({
       courtId: match.courtId,
@@ -111,8 +168,18 @@ describe("play rotation", () => {
       fixedPairs,
     });
     expect(second).toEqual([
-      { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "b"], teamB: ["e", "f"] },
-      { courtId: "court-2", courtLabel: "Court 2", teamA: ["g", "h"], teamB: ["c", "d"] },
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "b"],
+        teamB: ["e", "f"],
+      },
+      {
+        courtId: "court-2",
+        courtLabel: "Court 2",
+        teamA: ["g", "h"],
+        teamB: ["c", "d"],
+      },
     ]);
   });
 
@@ -149,8 +216,22 @@ describe("play rotation", () => {
         finishedAt: round + 1,
       });
     }
-    expect(new Set(history.map((match) => [match.teamA.join(""), match.teamB.join("")].sort().join("-"))).size).toBe(3);
-    expect(planRotation({ mode: "round_robin", courts, waiting: allWaiting, history, fixedPairs })).toEqual([]);
+    expect(
+      new Set(
+        history.map((match) =>
+          [match.teamA.join(""), match.teamB.join("")].sort().join("-")
+        )
+      ).size
+    ).toBe(3);
+    expect(
+      planRotation({
+        mode: "round_robin",
+        courts,
+        waiting: allWaiting,
+        history,
+        fixedPairs,
+      })
+    ).toEqual([]);
   });
 
   it("rejects duplicate players in fixed partner setup", () => {
@@ -161,7 +242,7 @@ describe("play rotation", () => {
           ["a", "b"],
           ["a", "c"],
         ],
-      }),
+      })
     ).toThrow();
   });
 
@@ -171,7 +252,14 @@ describe("play rotation", () => {
       courts,
       waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h", "i"]),
       history: [
-        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 },
+        {
+          courtId: "court-1",
+          courtPosition: 1,
+          teamA: ["a", "b"],
+          teamB: ["c", "d"],
+          winner: "A",
+          finishedAt: 1,
+        },
       ],
     });
     const selected = plans.flatMap((match) => [...match.teamA, ...match.teamB]);
@@ -186,13 +274,31 @@ describe("play rotation", () => {
       courts,
       waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]),
       history: [
-        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 },
-        { courtId: "court-2", courtPosition: 2, teamA: ["e", "f"], teamB: ["g", "h"], winner: "A", finishedAt: 1 },
+        {
+          courtId: "court-1",
+          courtPosition: 1,
+          teamA: ["a", "b"],
+          teamB: ["c", "d"],
+          winner: "A",
+          finishedAt: 1,
+        },
+        {
+          courtId: "court-2",
+          courtPosition: 2,
+          teamA: ["e", "f"],
+          teamB: ["g", "h"],
+          winner: "A",
+          finishedAt: 1,
+        },
       ],
     });
     const firstCourt = new Set([...plans[0].teamA, ...plans[0].teamB]);
-    expect([...firstCourt].some((id) => ["a", "b", "c", "d"].includes(id))).toBe(true);
-    expect([...firstCourt].some((id) => ["e", "f", "g", "h"].includes(id))).toBe(true);
+    expect(
+      [...firstCourt].some((id) => ["a", "b", "c", "d"].includes(id))
+    ).toBe(true);
+    expect(
+      [...firstCourt].some((id) => ["e", "f", "g", "h"].includes(id))
+    ).toBe(true);
     expect(firstCourt).not.toEqual(new Set(["a", "b", "c", "d"]));
   });
 
@@ -202,7 +308,14 @@ describe("play rotation", () => {
       courts: courts.slice(0, 1),
       waiting: waiting(["a", "b", "c", "d"]),
       history: [
-        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 1 },
+        {
+          courtId: "court-1",
+          courtPosition: 1,
+          teamA: ["a", "b"],
+          teamB: ["c", "d"],
+          winner: "A",
+          finishedAt: 1,
+        },
       ],
     });
     expect([plan.teamA, plan.teamB]).not.toContainEqual(["a", "b"]);
@@ -228,7 +341,8 @@ describe("play rotation", () => {
       ["c", 1],
       ["d", 1],
     ]);
-    const total = (team: string[]) => team.reduce((sum, id) => sum + (experience.get(id) ?? 0), 0);
+    const total = (team: string[]) =>
+      team.reduce((sum, id) => sum + (experience.get(id) ?? 0), 0);
     expect(Math.abs(total(plan.teamA) - total(plan.teamB))).toBe(0);
     expect([...plan.teamA, ...plan.teamB]).not.toContain("later");
   });
@@ -239,13 +353,37 @@ describe("play rotation", () => {
       courts,
       waiting: waiting(["a", "b", "c", "d", "e", "f", "g", "h"]),
       history: [
-        { courtId: "court-1", courtPosition: 1, teamA: ["a", "b"], teamB: ["c", "d"], winner: "A", finishedAt: 2 },
-        { courtId: "court-2", courtPosition: 2, teamA: ["e", "f"], teamB: ["g", "h"], winner: "B", finishedAt: 3 },
+        {
+          courtId: "court-1",
+          courtPosition: 1,
+          teamA: ["a", "b"],
+          teamB: ["c", "d"],
+          winner: "A",
+          finishedAt: 2,
+        },
+        {
+          courtId: "court-2",
+          courtPosition: 2,
+          teamA: ["e", "f"],
+          teamB: ["g", "h"],
+          winner: "B",
+          finishedAt: 3,
+        },
       ],
     });
     expect(plans).toEqual([
-      { courtId: "court-1", courtLabel: "Court 1", teamA: ["a", "g"], teamB: ["b", "h"] },
-      { courtId: "court-2", courtLabel: "Court 2", teamA: ["c", "e"], teamB: ["d", "f"] },
+      {
+        courtId: "court-1",
+        courtLabel: "Court 1",
+        teamA: ["a", "g"],
+        teamB: ["b", "h"],
+      },
+      {
+        courtId: "court-2",
+        courtLabel: "Court 2",
+        teamA: ["c", "e"],
+        teamB: ["d", "f"],
+      },
     ]);
   });
 
@@ -259,7 +397,7 @@ describe("play rotation", () => {
         teamB: ["c", "d"],
         winner: "A",
         previousCourtPlayerIds: [],
-      }),
+      })
     ).toEqual({
       winnersStay: false,
       returnedPlayerIds: ["a", "b", "c", "d"],
@@ -277,8 +415,11 @@ describe("play rotation", () => {
         teamB: ["c", "d"],
         winner: "A",
         previousCourtPlayerIds: [],
-      }),
-    ).toMatchObject({ winnersStay: true, orderedPlayerIds: ["a", "b", "e", "f", "c", "d"] });
+      })
+    ).toMatchObject({
+      winnersStay: true,
+      orderedPlayerIds: ["a", "b", "e", "f", "c", "d"],
+    });
   });
 
   it("rotates winners off after they have already stayed", () => {
@@ -291,7 +432,7 @@ describe("play rotation", () => {
         teamB: ["c", "d"],
         winner: "A",
         previousCourtPlayerIds: ["a", "b", "x", "y"],
-      }).winnersStay,
+      }).winnersStay
     ).toBe(false);
   });
 
@@ -305,15 +446,19 @@ describe("play rotation", () => {
         teamB: ["c", "d"],
         winner: "A",
         previousCourtPlayerIds: null,
-      }).winnersStay,
+      }).winnersStay
     ).toBe(false);
   });
 
   it("explains the active setup in player language", () => {
-    expect(rotationDescription("queue", { queueRule: "adaptive" })).toContain("queue gets busy");
+    expect(rotationDescription("queue", { queueRule: "adaptive" })).toContain(
+      "queue gets busy"
+    );
     expect(rotationDescription("random", {})).toContain("new partners");
     expect(rotationDescription("balanced", {})).toContain("playing experience");
     expect(rotationDescription("king_of_court", {})).toContain("Court 1");
-    expect(rotationDescription("round_robin", {})).toContain("every other pair");
+    expect(rotationDescription("round_robin", {})).toContain(
+      "every other pair"
+    );
   });
 });

@@ -9,7 +9,11 @@ describe("games calendar dates", () => {
     expect(days).toHaveLength(42);
     expect(days[0]).toEqual({ dateKey: "2026-07-26", day: 26, inMonth: false });
     expect(days[6]).toEqual({ dateKey: "2026-08-01", day: 1, inMonth: true });
-    expect(days.at(-1)).toEqual({ dateKey: "2026-09-05", day: 5, inMonth: false });
+    expect(days.at(-1)).toEqual({
+      dateKey: "2026-09-05",
+      day: 5,
+      inMonth: false,
+    });
   });
 
   it("honors Monday-first preferences", () => {

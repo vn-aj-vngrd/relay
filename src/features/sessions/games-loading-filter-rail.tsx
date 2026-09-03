@@ -14,7 +14,9 @@ export function GamesLoadingFilterRail() {
       label="Filter games"
       items={items}
       value="upcoming"
-      hrefFor={(item) => (item.value === "upcoming" ? "/games" : `/games?filter=${item.value}`)}
+      hrefFor={(item) =>
+        item.value === "upcoming" ? "/games" : `/games?filter=${item.value}`
+      }
     />
   );
 }

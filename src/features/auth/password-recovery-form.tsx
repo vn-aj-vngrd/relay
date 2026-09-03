@@ -18,8 +18,10 @@ export function PasswordRecoveryForm() {
   const turnstileRef = useRef<TurnstileInstance>(undefined);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const emailError = editedAfterError ? undefined : state.fieldErrors?.email;
-  const visibleError = state.error && !editedAfterError ? state.error : undefined;
-  const captchaNeedsRefresh = state.refreshCaptcha && submittedCaptcha === captchaToken;
+  const visibleError =
+    state.error && !editedAfterError ? state.error : undefined;
+  const captchaNeedsRefresh =
+    state.refreshCaptcha && submittedCaptcha === captchaToken;
 
   useEffect(() => {
     if (!state.refreshCaptcha) return;
@@ -30,7 +32,8 @@ export function PasswordRecoveryForm() {
     <>
       {!turnstileSiteKey ? (
         <Alert className="mt-8">
-          Password recovery is temporarily unavailable while the security check is being configured.
+          Password recovery is temporarily unavailable while the security check
+          is being configured.
         </Alert>
       ) : null}
       {visibleError ? <Alert className="mt-8">{visibleError}</Alert> : null}
@@ -66,13 +69,21 @@ export function PasswordRecoveryForm() {
             placeholder="you@example.com"
           />
           {emailError?.[0] ? (
-            <p id="recovery-email-error" role="alert" className="mt-1.5 text-sm font-medium text-danger">
+            <p
+              id="recovery-email-error"
+              role="alert"
+              className="mt-1.5 text-sm font-medium text-danger"
+            >
               {emailError[0]}
             </p>
           ) : null}
         </div>
         {turnstileSiteKey ? (
-          <div role="group" className="min-h-[65px] overflow-hidden" aria-label="Password reset security check">
+          <div
+            role="group"
+            className="min-h-[65px] overflow-hidden"
+            aria-label="Password reset security check"
+          >
             <Turnstile
               ref={turnstileRef}
               siteKey={turnstileSiteKey}
@@ -100,7 +111,10 @@ export function PasswordRecoveryForm() {
         </SubmitButton>
         <p className="text-center text-sm text-muted">
           Remembered it?{" "}
-          <Link href="/login" className="font-semibold text-ink underline-offset-2 hover:underline">
+          <Link
+            href="/login"
+            className="font-semibold text-ink underline-offset-2 hover:underline"
+          >
             Return to login
           </Link>
         </p>

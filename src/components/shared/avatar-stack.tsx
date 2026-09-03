@@ -27,7 +27,8 @@ export function Avatar({
         : size === "sm"
           ? "h-8 w-8 text-xs"
           : "h-10 w-10 text-sm";
-  const pixels = size === "xl" ? 80 : size === "lg" ? 48 : size === "sm" ? 32 : 40;
+  const pixels =
+    size === "xl" ? 80 : size === "lg" ? 48 : size === "sm" ? 32 : 40;
   return (
     <span
       role="img"
@@ -67,7 +68,11 @@ export function AvatarStack({
   total?: number;
 }) {
   return (
-    <div role="group" className="flex items-center" aria-label={`${total ?? names.length} players`}>
+    <div
+      role="group"
+      className="flex items-center"
+      aria-label={`${total ?? names.length} players`}
+    >
       {names.slice(0, 5).map((name, index) => (
         <span className="-ml-2 first:ml-0" key={`${name}-${index}`}>
           <Avatar name={name} imageUrl={imageUrls[index]} index={index} />

@@ -10,14 +10,22 @@ import { PostGameFeedback } from "./post-game-feedback";
 
 describe("PostGameFeedback", () => {
   it("offers one lightweight response, contextual issue reporting, and dismissal", () => {
-    render(<PostGameFeedback sessionId="session-1" issueHref="/feedback?session=session-1" />);
-
-    expect(screen.getByRole("heading", { name: "How did this game go?" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Smooth/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Had some issues/ })).toHaveAttribute(
-      "href",
-      "/feedback?session=session-1",
+    render(
+      <PostGameFeedback
+        sessionId="session-1"
+        issueHref="/feedback?session=session-1"
+      />
     );
-    expect(screen.getByRole("button", { name: "Dismiss game feedback" })).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("heading", { name: "How did this game go?" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Smooth/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /Had some issues/ })
+    ).toHaveAttribute("href", "/feedback?session=session-1");
+    expect(
+      screen.getByRole("button", { name: "Dismiss game feedback" })
+    ).toBeInTheDocument();
   });
 });

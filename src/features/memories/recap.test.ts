@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { buildSessionRecap, type RecapMatch } from "./recap";
 
-const at = (minute: number) => new Date(`2026-08-19T10:${String(minute).padStart(2, "0")}:00Z`);
+const at = (minute: number) =>
+  new Date(`2026-08-19T10:${String(minute).padStart(2, "0")}:00Z`);
 
 const matches: RecapMatch[] = [
   {

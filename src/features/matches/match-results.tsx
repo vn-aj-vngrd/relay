@@ -17,7 +17,13 @@ export type CompletedMatchResult = {
   version: number;
 };
 
-function ScoreCorrectionControl({ sessionId, result }: { sessionId: string; result: CompletedMatchResult }) {
+function ScoreCorrectionControl({
+  sessionId,
+  result,
+}: {
+  sessionId: string;
+  result: CompletedMatchResult;
+}) {
   const [state, action] = useActionState(correctCompletedScore, {});
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -44,7 +50,11 @@ function ScoreCorrectionControl({ sessionId, result }: { sessionId: string; resu
           {state.success}
         </span>
       ) : null}
-      <Dialog ref={dialogRef} aria-labelledby={titleId} aria-describedby={descriptionId}>
+      <Dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
         <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="matchId" value={result.id} />
@@ -53,10 +63,14 @@ function ScoreCorrectionControl({ sessionId, result }: { sessionId: string; resu
             Correct {result.courtLabel} score
           </h2>
           <p id={descriptionId} className="mt-2 text-sm leading-6 text-muted">
-            This updates the result, standings, and recap. Later court assignments stay as played.
+            This updates the result, standings, and recap. Later court
+            assignments stay as played.
           </p>
           <div className="mt-6 grid grid-cols-[1fr_5.5rem] items-center gap-x-4 gap-y-4">
-            <label htmlFor={`${titleId}-a`} className="min-w-0 text-sm font-semibold">
+            <label
+              htmlFor={`${titleId}-a`}
+              className="min-w-0 text-sm font-semibold"
+            >
               <span className="line-clamp-2">{result.teams[0]}</span>
             </label>
             <input
@@ -70,7 +84,10 @@ function ScoreCorrectionControl({ sessionId, result }: { sessionId: string; resu
               defaultValue={result.scores[0]}
               className="field score text-center text-lg"
             />
-            <label htmlFor={`${titleId}-b`} className="min-w-0 text-sm font-semibold">
+            <label
+              htmlFor={`${titleId}-b`}
+              className="min-w-0 text-sm font-semibold"
+            >
               <span className="line-clamp-2">{result.teams[1]}</span>
             </label>
             <input
@@ -91,10 +108,16 @@ function ScoreCorrectionControl({ sessionId, result }: { sessionId: string; resu
             </p>
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
               Cancel
             </Button>
-            <SubmitButton pendingLabel="Saving correction…">Save correction</SubmitButton>
+            <SubmitButton pendingLabel="Saving correction…">
+              Save correction
+            </SubmitButton>
           </div>
         </form>
       </Dialog>
@@ -122,14 +145,20 @@ export function MatchResults({
           {heading}
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Final scores from this game{canCorrect ? " · corrections are recorded in Chat" : ""}.
+          Final scores from this game
+          {canCorrect ? " · corrections are recorded in Chat" : ""}.
         </p>
       </div>
       <ol className="mt-4 divide-y divide-line border-y border-line">
         {results.map((result) => (
-          <li key={result.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4">
+          <li
+            key={result.id}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+          >
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-muted">{result.courtLabel}</p>
+              <p className="text-xs font-semibold text-muted">
+                {result.courtLabel}
+              </p>
               <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
                 <span className="truncate font-medium">{result.teams[0]}</span>
                 <strong className="score text-base">{result.scores[0]}</strong>
@@ -138,7 +167,11 @@ export function MatchResults({
               </div>
             </div>
             {canCorrect ? (
-              <ScoreCorrectionControl key={`${result.id}:${result.version}`} sessionId={sessionId} result={result} />
+              <ScoreCorrectionControl
+                key={`${result.id}:${result.version}`}
+                sessionId={sessionId}
+                result={result}
+              />
             ) : null}
           </li>
         ))}

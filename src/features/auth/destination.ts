@@ -7,7 +7,11 @@ import { db } from "@/db/client";
 import { notifications, profiles, sessionPlayers, sessions } from "@/db/schema";
 import { trackProductEvent } from "@/features/analytics/events";
 
-import { onboardingDestination, safeNextPath, sharedSessionSlug } from "./destination-path";
+import {
+  onboardingDestination,
+  safeNextPath,
+  sharedSessionSlug,
+} from "./destination-path";
 
 async function tokenHash(value: string) {
   return crypto.subtle
@@ -16,7 +20,10 @@ async function tokenHash(value: string) {
 }
 
 /** Claims a guest RSVP when possible and opens the account version of that same game. */
-export async function resolvePostAuthDestination(next: unknown, userId: string) {
+export async function resolvePostAuthDestination(
+  next: unknown,
+  userId: string
+) {
   const path = safeNextPath(next);
   const profilePromise = db.query.profiles.findFirst({
     columns: { onboardingCompletedAt: true },
@@ -33,7 +40,10 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
     if (session) {
       const membership = await db.query.sessionPlayers.findFirst({
         columns: { id: true, rsvp: true },
-        where: and(eq(sessionPlayers.sessionId, session.id), eq(sessionPlayers.userId, userId)),
+        where: and(
+          eq(sessionPlayers.sessionId, session.id),
+          eq(sessionPlayers.userId, userId)
+        ),
       });
       if (membership) destination = `/games/${session.id}`;
 
@@ -43,7 +53,10 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
         const guestTokenHash = await tokenHash(guestToken);
         const guest = await db.query.sessionPlayers.findFirst({
           columns: { id: true },
-          where: and(eq(sessionPlayers.sessionId, session.id), eq(sessionPlayers.guestTokenHash, guestTokenHash)),
+          where: and(
+            eq(sessionPlayers.sessionId, session.id),
+            eq(sessionPlayers.guestTokenHash, guestTokenHash)
+          ),
         });
         if (guest) {
           try {
@@ -56,11 +69,14 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
                       eq(sessionPlayers.id, membership.id),
                       eq(sessionPlayers.sessionId, session.id),
                       eq(sessionPlayers.userId, userId),
-                      eq(sessionPlayers.rsvp, "invited"),
-                    ),
+                      eq(sessionPlayers.rsvp, "invited")
+                    )
                   )
                   .returning({ id: sessionPlayers.id });
-                if (!removedInvite.length) throw new Error("Account invitation changed before guest claim");
+                if (!removedInvite.length)
+                  throw new Error(
+                    "Account invitation changed before guest claim"
+                  );
               }
               const claimed = await tx
                 .update(sessionPlayers)
@@ -69,11 +85,12 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
                   and(
                     eq(sessionPlayers.id, guest.id),
                     eq(sessionPlayers.sessionId, session.id),
-                    eq(sessionPlayers.guestTokenHash, guestTokenHash),
-                  ),
+                    eq(sessionPlayers.guestTokenHash, guestTokenHash)
+                  )
                 )
                 .returning({ id: sessionPlayers.id });
-              if (!claimed.length) throw new Error("Guest response changed before account claim");
+              if (!claimed.length)
+                throw new Error("Guest response changed before account claim");
               await tx
                 .update(notifications)
                 .set({ readAt: new Date() })
@@ -81,8 +98,8 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
                   and(
                     eq(notifications.userId, userId),
                     eq(notifications.sessionId, session.id),
-                    eq(notifications.type, "session_invite"),
-                  ),
+                    eq(notifications.type, "session_invite")
+                  )
                 );
               return claimed[0].id;
             });
@@ -96,7 +113,10 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
               dedupeKey: `guest-rsvp-claimed:${claimedGuestId}`,
             });
           } catch (error) {
-            console.error("Guest RSVP claim failed", error instanceof Error ? error.name : "UnknownError");
+            console.error(
+              "Guest RSVP claim failed",
+              error instanceof Error ? error.name : "UnknownError"
+            );
           }
         }
       }
@@ -104,5 +124,8 @@ export async function resolvePostAuthDestination(next: unknown, userId: string) 
   }
 
   const profile = await profilePromise;
-  return onboardingDestination(destination, Boolean(profile?.onboardingCompletedAt));
+  return onboardingDestination(
+    destination,
+    Boolean(profile?.onboardingCompletedAt)
+  );
 }

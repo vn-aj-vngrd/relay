@@ -25,9 +25,18 @@ function ResetButton() {
   );
 }
 
-export function OnboardingResetControl({ targetId, queued }: { targetId: string; queued: boolean }) {
+export function OnboardingResetControl({
+  targetId,
+  queued,
+}: {
+  targetId: string;
+  queued: boolean;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [state, action] = useActionState<AdminActionState, FormData>(resetUserOnboardingAction, {});
+  const [state, action] = useActionState<AdminActionState, FormData>(
+    resetUserOnboardingAction,
+    {}
+  );
 
   useEffect(() => {
     if (state.success) dialogRef.current?.close();
@@ -35,7 +44,12 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
 
   return (
     <div>
-      <Button type="button" variant="secondary" disabled={queued} onClick={() => dialogRef.current?.showModal()}>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={queued}
+        onClick={() => dialogRef.current?.showModal()}
+      >
         <ArrowCounterClockwise aria-hidden size={16} />
         {queued ? "Onboarding queued" : "Onboard again"}
       </Button>
@@ -49,8 +63,9 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
             <div>
               <h2 className="text-lg font-[680]">Onboard this user again?</h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Relay will show profile setup and the product tour the next time they open the app. Their profile,
-                games, and existing answers stay intact.
+                Relay will show profile setup and the product tour the next time
+                they open the app. Their profile, games, and existing answers
+                stay intact.
               </p>
             </div>
           </div>
@@ -60,7 +75,11 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
             </p>
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
               Keep completed
             </Button>
             <ResetButton />

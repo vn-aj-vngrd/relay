@@ -1,6 +1,12 @@
 "use client";
 
-import { CaretUpDown, ShieldCheck, SignOut, SlidersHorizontal, UserCircle } from "@phosphor-icons/react";
+import {
+  CaretUpDown,
+  ShieldCheck,
+  SignOut,
+  SlidersHorizontal,
+  UserCircle,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -65,8 +71,14 @@ export function SidebarAccount({
         className="sidebar-account-trigger pressable group relative flex h-10 w-full items-center gap-2 rounded-md px-1.5 text-left hover:bg-surface-strong"
       >
         <Avatar name={name} imageUrl={avatarUrl} size="sm" />
-        <span className="sidebar-account-copy min-w-0 flex-1 truncate text-[13px] font-medium">{name}</span>
-        <CaretUpDown aria-hidden size={14} className="sidebar-account-caret text-muted" />
+        <span className="sidebar-account-copy min-w-0 flex-1 truncate text-[13px] font-medium">
+          {name}
+        </span>
+        <CaretUpDown
+          aria-hidden
+          size={14}
+          className="sidebar-account-caret text-muted"
+        />
         <span role="tooltip" className="sidebar-item-tooltip">
           {name}
         </span>
@@ -109,7 +121,11 @@ export function SidebarAccount({
               Admin console
             </Link>
           ) : null}
-          <form noValidate action={signOut} className="mt-1 border-t border-line pt-1">
+          <form
+            noValidate
+            action={signOut}
+            className="mt-1 border-t border-line pt-1"
+          >
             <SignOutButton />
           </form>
         </div>

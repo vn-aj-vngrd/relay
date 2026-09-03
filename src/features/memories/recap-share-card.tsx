@@ -1,6 +1,13 @@
 "use client";
 
-import { CaretLeft, CaretRight, Check, DownloadSimple, ImageSquare, ShareNetwork } from "@phosphor-icons/react";
+import {
+  CaretLeft,
+  CaretRight,
+  Check,
+  DownloadSimple,
+  ImageSquare,
+  ShareNetwork,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,8 +16,16 @@ import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
 import type { SessionRecap } from "./recap";
-import { type RecapShareTemplateId, recapShareTemplates, viewerStanding } from "./recap-share";
-import { type RecapBackground, RecapStoryCard, type RecapStoryLayout } from "./recap-story-card";
+import {
+  type RecapShareTemplateId,
+  recapShareTemplates,
+  viewerStanding,
+} from "./recap-share";
+import {
+  type RecapBackground,
+  RecapStoryCard,
+  type RecapStoryLayout,
+} from "./recap-story-card";
 
 type RecapPhoto = { id: string; url: string; alt: string };
 
@@ -23,18 +38,33 @@ const baseBackgrounds: RecapBackground[] = [
   { id: "optic", label: "Optic", color: "#b7d62e", light: true },
 ];
 
-const storyLayouts: Array<{ id: RecapStoryLayout; label: string; description: string }> = [
+const storyLayouts: Array<{
+  id: RecapStoryLayout;
+  label: string;
+  description: string;
+}> = [
   { id: "courtside", label: "Courtside", description: "Low and bold" },
   { id: "center", label: "Center court", description: "Balanced focus" },
   { id: "poster", label: "Poster", description: "Headline first" },
   { id: "snapshot", label: "Snapshot", description: "Framed over a photo" },
 ];
 
-function setFont(context: CanvasRenderingContext2D, size: number, weight = 700, mono = false) {
+function setFont(
+  context: CanvasRenderingContext2D,
+  size: number,
+  weight = 700,
+  mono = false
+) {
   context.font = `${weight} ${size}px ${mono ? "ui-monospace, SFMono-Regular, monospace" : "Inter, Arial, sans-serif"}`;
 }
 
-function fitText(context: CanvasRenderingContext2D, text: string, maxWidth: number, startSize: number, minimum = 38) {
+function fitText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  startSize: number,
+  minimum = 38
+) {
   let size = startSize;
   while (size > minimum) {
     setFont(context, size);
@@ -49,7 +79,7 @@ async function drawPhoto(
   url: string,
   width: number,
   height: number,
-  photoPosition: number,
+  photoPosition: number
 ) {
   const response = await fetch(url);
   const bitmap = await createImageBitmap(await response.blob());
@@ -57,7 +87,13 @@ async function drawPhoto(
   const drawWidth = bitmap.width * scale;
   const drawHeight = bitmap.height * scale;
   const overflow = Math.max(0, drawHeight - height);
-  context.drawImage(bitmap, (width - drawWidth) / 2, -overflow * (photoPosition / 100), drawWidth, drawHeight);
+  context.drawImage(
+    bitmap,
+    (width - drawWidth) / 2,
+    -overflow * (photoPosition / 100),
+    drawWidth,
+    drawHeight
+  );
 }
 
 function signed(value: number) {
@@ -92,17 +128,27 @@ export function RecapShareCard({
   photos: RecapPhoto[];
   viewerPlayerId?: string | null;
 }) {
-  const templates = useMemo(() => recapShareTemplates(recap, viewerPlayerId), [recap, viewerPlayerId]);
-  const [customBackground, setCustomBackground] = useState<RecapBackground | null>(null);
+  const templates = useMemo(
+    () => recapShareTemplates(recap, viewerPlayerId),
+    [recap, viewerPlayerId]
+  );
+  const [customBackground, setCustomBackground] =
+    useState<RecapBackground | null>(null);
   const backgrounds = useMemo<RecapBackground[]>(
     () => [
       ...baseBackgrounds,
-      ...photos.map((photo) => ({ id: `photo:${photo.id}`, label: photo.alt, imageUrl: photo.url })),
+      ...photos.map((photo) => ({
+        id: `photo:${photo.id}`,
+        label: photo.alt,
+        imageUrl: photo.url,
+      })),
       ...(customBackground ? [customBackground] : []),
     ],
-    [customBackground, photos],
+    [customBackground, photos]
   );
-  const [template, setTemplate] = useState<RecapShareTemplateId>(templates[0].id);
+  const [template, setTemplate] = useState<RecapShareTemplateId>(
+    templates[0].id
+  );
   const [layout, setLayout] = useState<RecapStoryLayout>("courtside");
   const [backgroundId, setBackgroundId] = useState("court");
   const [overlay, setOverlay] = useState(55);
@@ -113,15 +159,17 @@ export function RecapShareCard({
   const [message, setMessage] = useState("");
   const touchStart = useRef<number | null>(null);
   const customPhotoInput = useRef<HTMLInputElement>(null);
-  const background = backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
+  const background =
+    backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
   const templateIndex = templates.findIndex((item) => item.id === template);
   const activeTemplate = templates[templateIndex] ?? templates[0];
 
   useEffect(
     () => () => {
-      if (customBackground?.imageUrl?.startsWith("blob:")) URL.revokeObjectURL(customBackground.imageUrl);
+      if (customBackground?.imageUrl?.startsWith("blob:"))
+        URL.revokeObjectURL(customBackground.imageUrl);
     },
-    [customBackground],
+    [customBackground]
   );
 
   async function chooseCustomPhoto(file: File | undefined) {
@@ -148,7 +196,8 @@ export function RecapShareCard({
   }
 
   function moveTemplate(direction: -1 | 1) {
-    const next = (templateIndex + direction + templates.length) % templates.length;
+    const next =
+      (templateIndex + direction + templates.length) % templates.length;
     chooseTemplate(templates[next].id);
   }
 
@@ -163,7 +212,13 @@ export function RecapShareCard({
     context.fillRect(0, 0, canvas.width, canvas.height);
     if (background.imageUrl) {
       try {
-        await drawPhoto(context, background.imageUrl, canvas.width, canvas.height, photoPosition);
+        await drawPhoto(
+          context,
+          background.imageUrl,
+          canvas.width,
+          canvas.height,
+          photoPosition
+        );
       } catch {
         // Keep the card shareable if a signed image expires while the page is open.
       }
@@ -184,7 +239,8 @@ export function RecapShareCard({
     setFont(context, 30);
     context.fillText("RELAY · NIGHT MEMORY", 112, 94);
 
-    const contentOffset = layout === "poster" ? -500 : layout === "center" ? -250 : 0;
+    const contentOffset =
+      layout === "poster" ? -500 : layout === "center" ? -250 : 0;
     if (layout === "snapshot") {
       context.fillStyle = light ? "rgba(255,255,255,.82)" : "rgba(8,10,16,.62)";
       context.fillRect(48, 900, 984, 720);
@@ -264,7 +320,7 @@ export function RecapShareCard({
       context.fillText(
         `${recap.topPair.wins === 1 ? "win" : "wins"} together · ${recap.topPair.played} played`,
         72,
-        1480,
+        1480
       );
     }
 
@@ -276,13 +332,17 @@ export function RecapShareCard({
       setFont(context, fitText(context, recap.standout.name, 936, 82));
       context.fillText(recap.standout.name, 72, 1190, 936);
       setFont(context, 160, 700, true);
-      context.fillText(`${recap.standout.wins}–${recap.standout.losses}`, 72, 1400);
+      context.fillText(
+        `${recap.standout.wins}–${recap.standout.losses}`,
+        72,
+        1400
+      );
       context.fillStyle = secondary;
       setFont(context, 31, 500);
       context.fillText(
         `${signed(recap.standout.differential)} point difference · ${Math.round(recap.standout.winPercentage * 100)}% wins`,
         72,
-        1470,
+        1470
       );
     }
 
@@ -301,7 +361,11 @@ export function RecapShareCard({
         context.fillText(row.name, 135, y, 540);
         context.textAlign = "right";
         setFont(context, 34, 700, true);
-        context.fillText(`${row.wins}–${row.losses} · ${signed(row.differential)}`, 1008, y);
+        context.fillText(
+          `${row.wins}–${row.losses} · ${signed(row.differential)}`,
+          1008,
+          y
+        );
         context.textAlign = "left";
       });
     }
@@ -318,7 +382,11 @@ export function RecapShareCard({
       context.fillText(teams, 72, 1380, 936);
       context.fillStyle = secondary;
       setFont(context, 30, 500);
-      context.fillText(`${recap.closestMatch.courtLabel} · ${recap.closestMatch.margin}-point margin`, 72, 1450);
+      context.fillText(
+        `${recap.closestMatch.courtLabel} · ${recap.closestMatch.margin}-point margin`,
+        72,
+        1450
+      );
     }
 
     if (template === "court" && recap.busiestCourt) {
@@ -332,7 +400,13 @@ export function RecapShareCard({
       context.fillText(String(recap.busiestCourt.matches), 72, 1430);
       context.fillStyle = secondary;
       setFont(context, 31, 500);
-      context.fillText(recap.busiestCourt.matches === 1 ? "match played here" : "matches played here", 72, 1490);
+      context.fillText(
+        recap.busiestCourt.matches === 1
+          ? "match played here"
+          : "matches played here",
+        72,
+        1490
+      );
     }
 
     if (template === "points") {
@@ -344,7 +418,11 @@ export function RecapShareCard({
       context.fillText(String(recap.totalPoints), 72, 1330);
       context.fillStyle = secondary;
       setFont(context, 31, 500);
-      context.fillText(`across ${recap.matchCount} ${recap.matchCount === 1 ? "match" : "matches"}`, 72, 1400);
+      context.fillText(
+        `across ${recap.matchCount} ${recap.matchCount === 1 ? "match" : "matches"}`,
+        72,
+        1400
+      );
     }
 
     if (template === "court-time") {
@@ -369,7 +447,11 @@ export function RecapShareCard({
       context.fillText(names, 72, 1190, 936);
       context.fillStyle = secondary;
       setFont(context, 31, 500);
-      context.fillText(`${recap.standings.length} players · one game`, 72, 1390);
+      context.fillText(
+        `${recap.standings.length} players · one game`,
+        72,
+        1390
+      );
     }
 
     if (template === "custom") {
@@ -394,16 +476,29 @@ export function RecapShareCard({
 
     context.fillStyle = secondary;
     setFont(context, 26, 500);
-    context.fillText("Pickleball with friends, kept together in Relay.", 72, 1810, 936);
+    context.fillText(
+      "Pickleball with friends, kept together in Relay.",
+      72,
+      1810,
+      936
+    );
     return new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Image unavailable"))), "image/png"),
+      canvas.toBlob(
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("Image unavailable")),
+        "image/png"
+      )
     );
   }
 
   function storyFile(blob: Blob) {
-    return new File([blob], `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-relay-memory.png`, {
-      type: "image/png",
-    });
+    return new File(
+      [blob],
+      `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-relay-memory.png`,
+      {
+        type: "image/png",
+      }
+    );
   }
 
   function saveFile(file: File) {
@@ -423,7 +518,9 @@ export function RecapShareCard({
       saveFile(file);
       setMessage("Story downloaded at 1080 × 1920.");
     } catch {
-      setMessage("The story image couldn’t be created. Try another photo or background.");
+      setMessage(
+        "The story image couldn’t be created. Try another photo or background."
+      );
     } finally {
       setPending(false);
     }
@@ -434,17 +531,29 @@ export function RecapShareCard({
     setMessage("");
     try {
       const file = storyFile(await createCard());
-      if (navigator.share && navigator.maxTouchPoints > 0 && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ title: `${title} · Relay memory`, files: [file] });
+      if (
+        navigator.share &&
+        navigator.maxTouchPoints > 0 &&
+        navigator.canShare?.({ files: [file] })
+      ) {
+        await navigator.share({
+          title: `${title} · Relay memory`,
+          files: [file],
+        });
         setMessage("Story ready to share.");
       } else {
         saveFile(file);
-        setMessage("Sharing isn’t available here, so the story was downloaded.");
+        setMessage(
+          "Sharing isn’t available here, so the story was downloaded."
+        );
       }
-      if (sessionId) await trackSharedSessionEvent({ sessionId, event: "recap_shared" });
+      if (sessionId)
+        await trackSharedSessionEvent({ sessionId, event: "recap_shared" });
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
-        setMessage("The story image couldn’t be created. Try another photo or background.");
+        setMessage(
+          "The story image couldn’t be created. Try another photo or background."
+        );
     } finally {
       setPending(false);
     }
@@ -468,13 +577,20 @@ export function RecapShareCard({
         }}
         onTouchEnd={(event) => {
           if (touchStart.current === null) return;
-          const distance = (event.changedTouches[0]?.clientX ?? touchStart.current) - touchStart.current;
+          const distance =
+            (event.changedTouches[0]?.clientX ?? touchStart.current) -
+            touchStart.current;
           touchStart.current = null;
           if (Math.abs(distance) > 44) moveTemplate(distance > 0 ? -1 : 1);
         }}
         className="mx-auto w-full max-w-[280px] rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25 md:sticky md:top-4 md:max-w-none"
       >
-        <div className="mb-3 grid gap-1" style={{ gridTemplateColumns: `repeat(${templates.length}, minmax(0, 1fr))` }}>
+        <div
+          className="mb-3 grid gap-1"
+          style={{
+            gridTemplateColumns: `repeat(${templates.length}, minmax(0, 1fr))`,
+          }}
+        >
           {templates.map((item) => (
             <span
               key={item.id}
@@ -525,7 +641,8 @@ export function RecapShareCard({
         <fieldset>
           <legend className="font-bold">Choose a story</legend>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Start with a true session highlight, or use Your story for a photo-first post.
+            Start with a true session highlight, or use Your story for a
+            photo-first post.
           </p>
           <div className="mt-3 grid border-y border-line sm:grid-cols-2 sm:gap-x-5">
             {templates.map((item) => (
@@ -539,11 +656,17 @@ export function RecapShareCard({
                 <span
                   className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${template === item.id ? "border-primary bg-primary text-white" : "border-line"}`}
                 >
-                  {template === item.id ? <Check aria-hidden size={12} weight="bold" /> : null}
+                  {template === item.id ? (
+                    <Check aria-hidden size={12} weight="bold" />
+                  ) : null}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold">{item.label}</span>
-                  <span className="block text-xs leading-5 text-muted">{item.description}</span>
+                  <span className="block text-sm font-semibold">
+                    {item.label}
+                  </span>
+                  <span className="block text-xs leading-5 text-muted">
+                    {item.description}
+                  </span>
                 </span>
               </button>
             ))}
@@ -552,7 +675,9 @@ export function RecapShareCard({
 
         <fieldset className="mt-7">
           <legend className="font-bold">Choose a layout</legend>
-          <p className="mt-1 text-sm leading-6 text-muted">Move the same story without changing what happened.</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Move the same story without changing what happened.
+          </p>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {storyLayouts.map((item) => (
               <button
@@ -562,8 +687,12 @@ export function RecapShareCard({
                 onClick={() => setLayout(item.id)}
                 className={`min-h-14 rounded-lg border px-3 py-2 text-left ${layout === item.id ? "border-primary bg-primary-soft" : "border-line bg-surface hover:bg-surface-strong"}`}
               >
-                <span className="block text-sm font-semibold">{item.label}</span>
-                <span className="mt-0.5 block text-xs text-muted">{item.description}</span>
+                <span className="block text-sm font-semibold">
+                  {item.label}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  {item.description}
+                </span>
               </button>
             ))}
           </div>
@@ -572,15 +701,22 @@ export function RecapShareCard({
         <fieldset className="mt-7">
           <legend className="font-bold">Choose a background</legend>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Pick a Relay color, a session photo, or a private photo from this device.
+            Pick a Relay color, a session photo, or a private photo from this
+            device.
           </p>
-          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Story background">
+          <div
+            className="mt-3 flex flex-wrap gap-2"
+            role="radiogroup"
+            aria-label="Story background"
+          >
             {backgrounds.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 role="radio"
-                aria-label={item.imageUrl ? item.label : `${item.label} background`}
+                aria-label={
+                  item.imageUrl ? item.label : `${item.label} background`
+                }
                 aria-checked={backgroundId === item.id}
                 onClick={() => setBackgroundId(item.id)}
                 className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
@@ -617,11 +753,14 @@ export function RecapShareCard({
               aria-label="Choose background photo file"
               accept="image/jpeg,image/png,image/webp"
               className="sr-only"
-              onChange={(event) => void chooseCustomPhoto(event.target.files?.[0])}
+              onChange={(event) =>
+                void chooseCustomPhoto(event.target.files?.[0])
+              }
             />
           </div>
           <p className="mt-2 text-xs leading-5 text-muted">
-            Device photos stay local unless you separately add them to the session below.
+            Device photos stay local unless you separately add them to the
+            session below.
           </p>
         </fieldset>
 
@@ -635,10 +774,14 @@ export function RecapShareCard({
                 min="0"
                 max="100"
                 value={photoPosition}
-                onChange={(event) => setPhotoPosition(Number(event.target.value))}
+                onChange={(event) =>
+                  setPhotoPosition(Number(event.target.value))
+                }
                 className="mt-3 w-full accent-primary"
               />
-              <span className="mt-1 block text-xs font-normal text-muted">Move the crop from top to bottom.</span>
+              <span className="mt-1 block text-xs font-normal text-muted">
+                Move the crop from top to bottom.
+              </span>
             </label>
             <label className="text-sm font-semibold">
               Text contrast
@@ -651,14 +794,18 @@ export function RecapShareCard({
                 onChange={(event) => setOverlay(Number(event.target.value))}
                 className="mt-3 w-full accent-primary"
               />
-              <span className="mt-1 block text-xs font-normal text-muted">Darken the photo behind the story.</span>
+              <span className="mt-1 block text-xs font-normal text-muted">
+                Darken the photo behind the story.
+              </span>
             </label>
           </div>
         ) : null}
 
         <fieldset className="mt-7">
           <legend className="font-bold">Add your words</legend>
-          <p className="mt-1 text-sm leading-6 text-muted">Keep it short enough to read before the story advances.</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Keep it short enough to read before the story advances.
+          </p>
           {template === "custom" ? (
             <label className="mt-3 block text-sm font-semibold">
               Headline
@@ -672,7 +819,8 @@ export function RecapShareCard({
             </label>
           ) : null}
           <label className="mt-3 block text-sm font-semibold">
-            Personal line <span className="font-normal text-muted">(optional)</span>
+            Personal line{" "}
+            <span className="font-normal text-muted">(optional)</span>
             <input
               value={customNote}
               onChange={(event) => setCustomNote(event.target.value)}
@@ -684,16 +832,33 @@ export function RecapShareCard({
         </fieldset>
 
         <div className="mt-7 flex flex-col gap-2 sm:flex-row">
-          <Button type="button" onClick={share} disabled={pending} className="w-full sm:w-auto">
-            {pending ? <ButtonSpinner /> : <ShareNetwork aria-hidden size={16} />}
+          <Button
+            type="button"
+            onClick={share}
+            disabled={pending}
+            className="w-full sm:w-auto"
+          >
+            {pending ? (
+              <ButtonSpinner />
+            ) : (
+              <ShareNetwork aria-hidden size={16} />
+            )}
             {pending ? "Creating story…" : "Share story"}
           </Button>
-          <Button type="button" variant="secondary" onClick={download} disabled={pending} className="w-full sm:w-auto">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={download}
+            disabled={pending}
+            className="w-full sm:w-auto"
+          >
             <DownloadSimple aria-hidden size={16} />
             Download PNG
           </Button>
         </div>
-        <p className="mt-2 text-xs text-muted">Exports a 1080 × 1920 image for Instagram, Facebook, and chat apps.</p>
+        <p className="mt-2 text-xs text-muted">
+          Exports a 1080 × 1920 image for Instagram, Facebook, and chat apps.
+        </p>
         {message ? (
           <p role="status" className="mt-2 text-sm font-medium text-muted">
             {message}

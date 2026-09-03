@@ -10,7 +10,11 @@ import { requireAdmin } from "@/features/admin/auth";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   await connection();
   const admin = await requireAdmin();
 
@@ -19,7 +23,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
         <div className="flex items-center justify-between px-1 pb-3">
           <Brand href="/admin" />
-          <span className="rounded-md bg-primary-soft px-2 py-1 text-[11px] font-bold text-primary">Admin</span>
+          <span className="rounded-md bg-primary-soft px-2 py-1 text-[11px] font-bold text-primary">
+            Admin
+          </span>
         </div>
         <div className="border-t border-line pt-3">
           <AdminNav mode="sidebar" />
@@ -40,7 +46,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex h-[56px] items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
             <Brand href="/admin" />
-            <span className="rounded-md bg-primary-soft px-2 py-1 text-[11px] font-bold text-primary">Admin</span>
+            <span className="rounded-md bg-primary-soft px-2 py-1 text-[11px] font-bold text-primary">
+              Admin
+            </span>
           </div>
           <Link
             href="/home"

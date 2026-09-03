@@ -5,7 +5,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { type NotificationCategoryPreferences, notificationPreferences, pushSubscriptions } from "@/db/schema";
+import {
+  type NotificationCategoryPreferences,
+  notificationPreferences,
+  pushSubscriptions,
+} from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { assertRateLimit } from "@/lib/rate-limit";
 
@@ -33,13 +37,13 @@ function validTimeZone(value: string) {
 
 export async function saveNotificationSettings(
   _: NotificationSettingsState,
-  formData: FormData,
+  formData: FormData
 ): Promise<NotificationSettingsState> {
   const user = await requireUser("/preferences");
   await assertRateLimit(
     { scope: "notification-preferences", limit: 20, windowSeconds: 60 },
     `user:${user.id}`,
-    "Notification preferences are changing too quickly. Wait a moment and try again.",
+    "Notification preferences are changing too quickly. Wait a moment and try again."
   );
   const quietStart = time.safeParse(formData.get("quietHoursStart") || null);
   const quietEnd = time.safeParse(formData.get("quietHoursEnd") || null);
@@ -48,10 +52,16 @@ export async function saveNotificationSettings(
     return { error: "Choose valid quiet hours and time zone." };
 
   const emailCategories = Object.fromEntries(
-    notificationCategories.map((category) => [category, checked(formData, `email-${category}`)]),
+    notificationCategories.map((category) => [
+      category,
+      checked(formData, `email-${category}`),
+    ])
   ) as NotificationCategoryPreferences;
   const pushCategories = Object.fromEntries(
-    notificationCategories.map((category) => [category, checked(formData, `push-${category}`)]),
+    notificationCategories.map((category) => [
+      category,
+      checked(formData, `push-${category}`),
+    ])
   ) as NotificationCategoryPreferences;
   const values = {
     emailEnabled: checked(formData, "emailEnabled"),
@@ -68,7 +78,10 @@ export async function saveNotificationSettings(
   await db
     .insert(notificationPreferences)
     .values({ userId: user.id, ...values })
-    .onConflictDoUpdate({ target: notificationPreferences.userId, set: values });
+    .onConflictDoUpdate({
+      target: notificationPreferences.userId,
+      set: values,
+    });
   revalidatePath("/preferences");
   return { success: "Notification preferences saved." };
 }
@@ -78,11 +91,16 @@ export async function removePushDevice(formData: FormData) {
   await assertRateLimit(
     { scope: "push-device-remove", limit: 20, windowSeconds: 60 },
     `user:${user.id}`,
-    "Device changes are happening too quickly. Wait a moment and try again.",
+    "Device changes are happening too quickly. Wait a moment and try again."
   );
   const deviceId = z.uuid().parse(formData.get("deviceId"));
   await db
     .delete(pushSubscriptions)
-    .where(and(eq(pushSubscriptions.id, deviceId), eq(pushSubscriptions.userId, user.id)));
+    .where(
+      and(
+        eq(pushSubscriptions.id, deviceId),
+        eq(pushSubscriptions.userId, user.id)
+      )
+    );
   revalidatePath("/preferences");
 }

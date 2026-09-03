@@ -18,7 +18,11 @@ function sectionAtScrollPosition(marker: number) {
   let current: SectionId | null = null;
   for (const section of sections) {
     const element = document.getElementById(section.id);
-    if (element && element.getBoundingClientRect().top + window.scrollY <= marker) current = section.id;
+    if (
+      element &&
+      element.getBoundingClientRect().top + window.scrollY <= marker
+    )
+      current = section.id;
   }
   return current;
 }
@@ -32,14 +36,23 @@ export function MarketingSectionNav() {
   useEffect(() => {
     function update() {
       frame.current = null;
-      const next = sectionAtScrollPosition(window.scrollY + 64 + window.innerHeight * 0.28);
+      const next = sectionAtScrollPosition(
+        window.scrollY + 64 + window.innerHeight * 0.28
+      );
       setActive(next);
       const nav = navRef.current;
-      const link = next ? nav?.querySelector<HTMLElement>(`[data-section="${next}"]`) : null;
-      setIndicator(link ? { left: link.offsetLeft, width: link.offsetWidth } : { left: 0, width: 0 });
+      const link = next
+        ? nav?.querySelector<HTMLElement>(`[data-section="${next}"]`)
+        : null;
+      setIndicator(
+        link
+          ? { left: link.offsetLeft, width: link.offsetWidth }
+          : { left: 0, width: 0 }
+      );
     }
     function scheduleUpdate() {
-      if (frame.current === null) frame.current = window.requestAnimationFrame(update);
+      if (frame.current === null)
+        frame.current = window.requestAnimationFrame(update);
     }
     update();
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
@@ -52,7 +65,11 @@ export function MarketingSectionNav() {
   }, []);
 
   return (
-    <nav ref={navRef} aria-label="Marketing navigation" className="relative hidden items-center gap-6 md:flex">
+    <nav
+      ref={navRef}
+      aria-label="Marketing navigation"
+      className="relative hidden items-center gap-6 md:flex"
+    >
       {sections.map((section) => (
         <a
           key={section.id}
@@ -61,7 +78,10 @@ export function MarketingSectionNav() {
           aria-current={active === section.id ? "location" : undefined}
           onClick={(event) => {
             setActive(section.id);
-            setIndicator({ left: event.currentTarget.offsetLeft, width: event.currentTarget.offsetWidth });
+            setIndicator({
+              left: event.currentTarget.offsetLeft,
+              width: event.currentTarget.offsetWidth,
+            });
           }}
           className={`inline-flex min-h-11 items-center text-[13px] font-medium transition-colors duration-150 ${
             active === section.id ? "text-ink" : "text-muted hover:text-ink"

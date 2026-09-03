@@ -12,10 +12,14 @@ export const sessionAccents = [
 export type SessionAccent = (typeof sessionAccents)[number]["id"];
 
 export function sessionAccent(value: string | null | undefined) {
-  return sessionAccents.find((accent) => accent.id === value) ?? sessionAccents[0];
+  return (
+    sessionAccents.find((accent) => accent.id === value) ?? sessionAccents[0]
+  );
 }
 
-export function sessionAccentStyle(value: string | null | undefined): CSSProperties {
+export function sessionAccentStyle(
+  value: string | null | undefined
+): CSSProperties {
   const accent = sessionAccent(value);
   return {
     "--session-accent": accent.solid,

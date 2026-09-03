@@ -21,11 +21,21 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   ) : null;
 }
 
-function AuthSubmit({ mode, blocked = false }: { mode: Mode; blocked?: boolean }) {
+function AuthSubmit({
+  mode,
+  blocked = false,
+}: {
+  mode: Mode;
+  blocked?: boolean;
+}) {
   const { pending } = useFormStatus();
   const creating = mode === "create";
   return (
-    <Button className="h-12 w-full text-[15px]" disabled={pending || blocked} aria-disabled={pending || blocked}>
+    <Button
+      className="h-12 w-full text-[15px]"
+      disabled={pending || blocked}
+      aria-disabled={pending || blocked}
+    >
       {pending ? (
         <>
           <ButtonSpinner />
@@ -52,33 +62,53 @@ export function AuthForm({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [captchaToken, setCaptchaToken] = useState("");
   const [submittedCaptcha, setSubmittedCaptcha] = useState("");
-  const [editedAfterError, setEditedAfterError] = useState<Record<string, boolean>>({});
+  const [editedAfterError, setEditedAfterError] = useState<
+    Record<string, boolean>
+  >({});
   const [signInEmail, setSignInEmail] = useState("");
   const [createEmail, setCreateEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [signInState, signInAction] = useActionState(signInWithPasswordState, {});
-  const [createState, createAction] = useActionState(createPasswordAccountState, {});
+  const [signInState, signInAction] = useActionState(
+    signInWithPasswordState,
+    {}
+  );
+  const [createState, createAction] = useActionState(
+    createPasswordAccountState,
+    {}
+  );
   const turnstileRef = useRef<TurnstileInstance>(undefined);
   const creating = mode === "create";
   const activeState = creating ? createState : signInState;
   const stateKey = creating ? "create" : "signin";
   const fieldError = (field: string) =>
-    editedAfterError[`${stateKey}:${field}`] ? undefined : activeState.fieldErrors?.[field];
+    editedAfterError[`${stateKey}:${field}`]
+      ? undefined
+      : activeState.fieldErrors?.[field];
   const hasVisibleFieldErrors = Object.keys(activeState.fieldErrors ?? {}).some(
-    (field) => !editedAfterError[`${stateKey}:${field}`],
+    (field) => !editedAfterError[`${stateKey}:${field}`]
   );
   const visibleFormError =
-    activeState.error && (activeState.fieldErrors ? hasVisibleFieldErrors : !editedAfterError[`${stateKey}:form`])
+    activeState.error &&
+    (activeState.fieldErrors
+      ? hasVisibleFieldErrors
+      : !editedAfterError[`${stateKey}:form`])
       ? activeState.error
       : undefined;
-  const captchaNeedsRefresh = activeState.refreshCaptcha && submittedCaptcha === captchaToken;
+  const captchaNeedsRefresh =
+    activeState.refreshCaptcha && submittedCaptcha === captchaToken;
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const modeHref = (path: "/login" | "/signup") =>
-    next && next !== "/home" ? `${path}?next=${encodeURIComponent(next)}` : path;
+    next && next !== "/home"
+      ? `${path}?next=${encodeURIComponent(next)}`
+      : path;
   const markEdited = (field: string) =>
-    setEditedAfterError((current) => ({ ...current, [`${stateKey}:${field}`]: true, [`${stateKey}:form`]: true }));
+    setEditedAfterError((current) => ({
+      ...current,
+      [`${stateKey}:${field}`]: true,
+      [`${stateKey}:form`]: true,
+    }));
 
   useEffect(() => {
     if (!activeState.refreshCaptcha) return;
@@ -121,18 +151,22 @@ export function AuthForm({
           {creating ? "Create your account" : "Log in to Relay"}
         </h1>
         <p className="mt-2 max-w-sm text-[15px] leading-6 text-muted">
-          {creating ? "Plan games, invite players, and keep your scores." : "See your games, groups, and court plans."}
+          {creating
+            ? "Plan games, invite players, and keep your scores."
+            : "See your games, groups, and court plans."}
         </p>
       </div>
 
       {!turnstileSiteKey ? (
         <Alert className="mb-5">
-          {creating ? "Account creation" : "Sign in"} is temporarily unavailable while the security check is being
-          configured.
+          {creating ? "Account creation" : "Sign in"} is temporarily unavailable
+          while the security check is being configured.
         </Alert>
       ) : null}
 
-      {visibleFormError ? <Alert className="mb-5">{visibleFormError}</Alert> : null}
+      {visibleFormError ? (
+        <Alert className="mb-5">{visibleFormError}</Alert>
+      ) : null}
 
       <form
         noValidate
@@ -163,7 +197,9 @@ export function AuthForm({
             }}
             required
             aria-invalid={Boolean(fieldError("email"))}
-            aria-describedby={fieldError("email") ? "password-email-error" : undefined}
+            aria-describedby={
+              fieldError("email") ? "password-email-error" : undefined
+            }
             className="field"
             placeholder="you@example.com"
           />
@@ -183,14 +219,21 @@ export function AuthForm({
           }}
           required
           aria-invalid={Boolean(fieldError("password"))}
-          aria-describedby={fieldError("password") ? "password-error" : undefined}
+          aria-describedby={
+            fieldError("password") ? "password-error" : undefined
+          }
           labelClassName="font-[650]"
           hint={
             creating ? (
-              <p className="mt-2 text-xs leading-5 text-muted">8 or more characters, including a letter and number.</p>
+              <p className="mt-2 text-xs leading-5 text-muted">
+                8 or more characters, including a letter and number.
+              </p>
             ) : (
               <p className="mt-2 text-right text-sm">
-                <Link href="/forgot-password" className="font-semibold text-primary underline-offset-2 hover:underline">
+                <Link
+                  href="/forgot-password"
+                  className="font-semibold text-primary underline-offset-2 hover:underline"
+                >
                   Forgot password?
                 </Link>
               </p>
@@ -212,16 +255,27 @@ export function AuthForm({
             }}
             required
             aria-invalid={Boolean(fieldError("confirmation"))}
-            aria-describedby={fieldError("confirmation") ? "password-confirmation-error" : undefined}
+            aria-describedby={
+              fieldError("confirmation")
+                ? "password-confirmation-error"
+                : undefined
+            }
             labelClassName="font-[650]"
-            hint={<FieldError id="password-confirmation-error" errors={fieldError("confirmation")} />}
+            hint={
+              <FieldError
+                id="password-confirmation-error"
+                errors={fieldError("confirmation")}
+              />
+            }
           />
         ) : null}
         {turnstileSiteKey ? (
           <div
             role="group"
             className="min-h-[65px] overflow-hidden"
-            aria-label={creating ? "Signup security check" : "Sign-in security check"}
+            aria-label={
+              creating ? "Signup security check" : "Sign-in security check"
+            }
           >
             <Turnstile
               ref={turnstileRef}
@@ -240,7 +294,10 @@ export function AuthForm({
             />
           </div>
         ) : null}
-        <AuthSubmit mode={mode} blocked={!turnstileSiteKey || !captchaToken || captchaNeedsRefresh} />
+        <AuthSubmit
+          mode={mode}
+          blocked={!turnstileSiteKey || !captchaToken || captchaNeedsRefresh}
+        />
       </form>
     </div>
   );

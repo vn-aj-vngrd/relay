@@ -3,7 +3,11 @@ import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import type { OpenGamesFilters as OpenGamesFilterValues } from "@/features/sessions/open-games";
 import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
 
-const defaultFilters: OpenGamesFilterValues = { date: "any", location: "", available: false };
+const defaultFilters: OpenGamesFilterValues = {
+  date: "any",
+  location: "",
+  available: false,
+};
 
 function OpenGameRowSkeleton() {
   return (
@@ -36,7 +40,12 @@ export default function OpenGamesLoading() {
       <h1 className="app-title">Games</h1>
       <GamesSectionNav current="open" />
       <OpenGamesFilters filters={defaultFilters} />
-      <div role="status" aria-label="Loading open games" aria-busy="true" className="mt-6">
+      <div
+        role="status"
+        aria-label="Loading open games"
+        aria-busy="true"
+        className="mt-6"
+      >
         <div className="divide-y divide-line border-t border-line">
           {Array.from({ length: 4 }, (_, index) => (
             <OpenGameRowSkeleton key={index} />

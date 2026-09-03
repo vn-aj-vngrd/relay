@@ -1,6 +1,19 @@
-type HighlightVisualName = "find" | "plan" | "invite" | "organize" | "play" | "repay" | "sync" | "remember";
+type HighlightVisualName =
+  | "find"
+  | "plan"
+  | "invite"
+  | "organize"
+  | "play"
+  | "repay"
+  | "sync"
+  | "remember";
 
-const avatarColors = ["bg-[#635bde]", "bg-[#1f7898]", "bg-[#b14a42]", "bg-[#39764e]"];
+const avatarColors = [
+  "bg-[#635bde]",
+  "bg-[#1f7898]",
+  "bg-[#b14a42]",
+  "bg-[#39764e]",
+];
 
 function MiniAvatar({ name, index = 0 }: { name: string; index?: number }) {
   return (
@@ -34,14 +47,53 @@ function FindVisual() {
   return (
     <div className="grid h-full grid-cols-[1.35fr_.85fr] bg-canvas text-ink">
       <div className="relative overflow-hidden border-r border-line bg-surface-strong">
-        <svg aria-hidden viewBox="0 0 220 260" className="absolute inset-0 h-full w-full text-muted">
-          <path d="M-15 48 C45 28 62 82 122 54 S198 26 238 52" fill="none" stroke="currentColor" strokeWidth="4" />
-          <path d="M18 -10 C26 46 78 73 61 128 S74 207 42 278" fill="none" stroke="white" strokeWidth="8" />
-          <path d="M18 -10 C26 46 78 73 61 128 S74 207 42 278" fill="none" stroke="#d7d2c8" strokeWidth="2" />
-          <path d="M112 -14 C91 58 146 85 122 142 S144 216 116 276" fill="none" stroke="white" strokeWidth="7" />
-          <path d="M112 -14 C91 58 146 85 122 142 S144 216 116 276" fill="none" stroke="#d7d2c8" strokeWidth="2" />
-          <path d="M-10 188 C48 160 92 198 132 176 S202 151 236 170" fill="none" stroke="white" strokeWidth="8" />
-          <path d="M-10 188 C48 160 92 198 132 176 S202 151 236 170" fill="none" stroke="#d7d2c8" strokeWidth="2" />
+        <svg
+          aria-hidden
+          viewBox="0 0 220 260"
+          className="absolute inset-0 h-full w-full text-muted"
+        >
+          <path
+            d="M-15 48 C45 28 62 82 122 54 S198 26 238 52"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+          />
+          <path
+            d="M18 -10 C26 46 78 73 61 128 S74 207 42 278"
+            fill="none"
+            stroke="white"
+            strokeWidth="8"
+          />
+          <path
+            d="M18 -10 C26 46 78 73 61 128 S74 207 42 278"
+            fill="none"
+            stroke="#d7d2c8"
+            strokeWidth="2"
+          />
+          <path
+            d="M112 -14 C91 58 146 85 122 142 S144 216 116 276"
+            fill="none"
+            stroke="white"
+            strokeWidth="7"
+          />
+          <path
+            d="M112 -14 C91 58 146 85 122 142 S144 216 116 276"
+            fill="none"
+            stroke="#d7d2c8"
+            strokeWidth="2"
+          />
+          <path
+            d="M-10 188 C48 160 92 198 132 176 S202 151 236 170"
+            fill="none"
+            stroke="white"
+            strokeWidth="8"
+          />
+          <path
+            d="M-10 188 C48 160 92 198 132 176 S202 151 236 170"
+            fill="none"
+            stroke="#d7d2c8"
+            strokeWidth="2"
+          />
         </svg>
         {[
           ["22%", "68%"],
@@ -60,8 +112,12 @@ function FindVisual() {
           <p className="text-[7px] font-semibold text-muted">SELECTED COURT</p>
           <p className="mt-1 text-[10px] font-bold">All Day Dink</p>
           <div className="mt-2 flex gap-1.5 text-[7px] font-semibold">
-            <span className="rounded bg-primary px-2 py-1 text-white">Create game</span>
-            <span className="rounded border border-line px-2 py-1">Directions</span>
+            <span className="rounded bg-primary px-2 py-1 text-white">
+              Create game
+            </span>
+            <span className="rounded border border-line px-2 py-1">
+              Directions
+            </span>
           </div>
         </div>
       </div>
@@ -72,10 +128,15 @@ function FindVisual() {
         </div>
         <ul className="divide-y divide-line">
           {courts.map(([name, area], index) => (
-            <li key={name} className={`p-2.5 ${index === 0 ? "border-l-2 border-primary bg-primary-soft" : ""}`}>
+            <li
+              key={name}
+              className={`p-2.5 ${index === 0 ? "border-l-2 border-primary bg-primary-soft" : ""}`}
+            >
               <p className="text-[8px] font-bold leading-tight">{name}</p>
               <p className="mt-1 text-[7px] text-muted">{area}</p>
-              <p className="mt-1 text-[7px] font-medium">{index === 1 ? "Indoor · 2 courts" : "Outdoor · 2 courts"}</p>
+              <p className="mt-1 text-[7px] font-medium">
+                {index === 1 ? "Indoor · 2 courts" : "Outdoor · 2 courts"}
+              </p>
             </li>
           ))}
         </ul>
@@ -88,7 +149,9 @@ function PlanVisual() {
   return (
     <div className="h-full bg-canvas p-4 text-ink">
       <h4 className="text-sm font-bold">Create a game</h4>
-      <p className="mt-1 text-[9px] text-muted">Set the plan. Share the link.</p>
+      <p className="mt-1 text-[9px] text-muted">
+        Set the plan. Share the link.
+      </p>
       <div className="mt-3 space-y-2.5">
         <MiniField label="GAME NAME" value="Saturday Night Pickle" />
         <MiniField label="VENUE" value="All Day Dink · Consolacion" />
@@ -106,9 +169,15 @@ function InviteVisual() {
   return (
     <div className="h-full bg-surface p-3.5 text-ink">
       <div className="rounded-lg bg-[#1c2944] p-3 text-white">
-        <p className="text-[8px] font-semibold text-white/60">SATURDAY, AUGUST 22</p>
-        <h4 className="mt-2 text-base font-bold leading-tight">Saturday Night Pickle</h4>
-        <p className="mt-1 text-[9px] text-white/65">Central Pickle · 7:00–10:00 PM</p>
+        <p className="text-[8px] font-semibold text-white/60">
+          SATURDAY, AUGUST 22
+        </p>
+        <h4 className="mt-2 text-base font-bold leading-tight">
+          Saturday Night Pickle
+        </h4>
+        <p className="mt-1 text-[9px] text-white/65">
+          Central Pickle · 7:00–10:00 PM
+        </p>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 text-[9px]">
         <div className="border-r border-line pr-2">
@@ -126,7 +195,9 @@ function InviteVisual() {
           Your name
         </div>
         <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-[9px] font-semibold">
-          <span className="rounded-md border border-primary bg-primary-soft py-1.5 text-primary-hover">Going</span>
+          <span className="rounded-md border border-primary bg-primary-soft py-1.5 text-primary-hover">
+            Going
+          </span>
           <span className="rounded-md border border-line py-1.5">Maybe</span>
           <span className="rounded-md border border-line py-1.5">Can’t go</span>
         </div>
@@ -165,7 +236,9 @@ function OrganizeVisual() {
               <strong className="block text-[10px]">{name}</strong>
               <span className="block text-[8px] text-muted">{detail}</span>
             </span>
-            <span className="text-[8px] font-semibold text-success">{status}</span>
+            <span className="text-[8px] font-semibold text-success">
+              {status}
+            </span>
           </li>
         ))}
       </ul>
@@ -192,12 +265,16 @@ function PlayVisual() {
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3.5 text-center">
         <div>
           <p className="text-[10px] font-semibold">Van + AJ</p>
-          <strong className="mt-2 block font-mono text-5xl leading-none">8</strong>
+          <strong className="mt-2 block font-mono text-5xl leading-none">
+            8
+          </strong>
         </div>
         <span className="text-[9px] text-white/60">VS</span>
         <div>
           <p className="text-[10px] font-semibold">Mika + Bea</p>
-          <strong className="mt-2 block font-mono text-5xl leading-none">6</strong>
+          <strong className="mt-2 block font-mono text-5xl leading-none">
+            6
+          </strong>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 border-t border-white/15 pt-3 text-center font-mono text-sm">
@@ -220,9 +297,13 @@ function RepayVisual() {
       <div className="mt-2 flex items-end justify-between">
         <div>
           <strong className="font-mono text-2xl">₱2,400</strong>
-          <p className="mt-1 text-[9px] text-muted">7 paying players · ₱300 each</p>
+          <p className="mt-1 text-[9px] text-muted">
+            7 paying players · ₱300 each
+          </p>
         </div>
-        <span className="text-[9px] font-semibold text-success">2 confirmed</span>
+        <span className="text-[9px] font-semibold text-success">
+          2 confirmed
+        </span>
       </div>
       <ul className="mt-3 divide-y divide-line border-y border-line">
         {payments.map(([name, status, amount], index) => (
@@ -267,10 +348,13 @@ function SyncVisual() {
             Perfect. I’ll bring the extra balls.
           </p>
         </div>
-        <p className="text-center text-[8px] text-muted">Court 1 match started</p>
+        <p className="text-center text-[8px] text-muted">
+          Court 1 match started
+        </p>
       </div>
       <div className="flex h-9 items-center justify-between rounded-lg border border-line px-3 text-[9px] text-muted">
-        Message the group <span className="font-semibold text-primary">Send</span>
+        Message the group{" "}
+        <span className="font-semibold text-primary">Send</span>
       </div>
     </div>
   );
@@ -291,7 +375,9 @@ function RememberVisual() {
           <p className="text-[6px] text-muted">MY GAME</p>
           <strong className="mt-8 block font-mono text-base">3–1</strong>
           <p className="mt-1 text-[7px] font-bold">Van</p>
-          <p className="mt-4 border-t border-black/10 pt-2 text-[6px]">#2 · +12</p>
+          <p className="mt-4 border-t border-black/10 pt-2 text-[6px]">
+            #2 · +12
+          </p>
         </div>
         <div className="aspect-[9/16] rounded-md bg-[#18233b] p-2 text-white shadow-sm">
           <p className="text-[6px] text-white/60">WINNING TEAM</p>
@@ -321,7 +407,11 @@ function RememberVisual() {
   );
 }
 
-export function MarketingHighlightVisual({ name }: { name: HighlightVisualName }) {
+export function MarketingHighlightVisual({
+  name,
+}: {
+  name: HighlightVisualName;
+}) {
   if (name === "find") return <FindVisual />;
   if (name === "plan") return <PlanVisual />;
   if (name === "invite") return <InviteVisual />;

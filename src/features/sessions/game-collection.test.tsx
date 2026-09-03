@@ -1,4 +1,11 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
@@ -8,7 +15,11 @@ vi.mock("./actions", () => ({
   })),
 }));
 
-import { GameCollection, type GameCollectionItem, GameViewMenu } from "./game-collection";
+import {
+  GameCollection,
+  type GameCollectionItem,
+  GameViewMenu,
+} from "./game-collection";
 
 const game: GameCollectionItem = {
   id: "game-1",
@@ -30,7 +41,13 @@ const game: GameCollectionItem = {
   requiresApproval: false,
   spotsRemaining: 2,
   canReplay: false,
-  readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
+  readiness: {
+    ready: false,
+    percent: 67,
+    completed: 2,
+    total: 3,
+    missing: ["booking"],
+  },
 };
 
 const liveGame: GameCollectionItem = {
@@ -63,7 +80,13 @@ const pastGame: GameCollectionItem = {
   endsAt: "2026-08-15T13:00:00.000Z",
   status: "completed",
   canReplay: true,
-  readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
+  readiness: {
+    ready: false,
+    percent: 67,
+    completed: 2,
+    total: 3,
+    missing: ["booking"],
+  },
 };
 
 function page(items: GameCollectionItem[], nextCursor: string | null = null) {
@@ -88,7 +111,7 @@ beforeEach(() => {
       root = null;
       rootMargin = "0px";
       thresholds = [];
-    },
+    }
   );
 });
 
@@ -103,28 +126,46 @@ afterEach(() => {
 describe("GameCollection", () => {
   it("persists the chosen grid or list presentation", () => {
     const { unmount } = render(
-      <GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />,
+      <GameCollection
+        upcomingPage={page([game])}
+        pastPage={page([])}
+        todayKey="2026-08-15"
+      />
     );
     expect(screen.getByTestId("games-list")).toBeVisible();
     expect(
-      screen.getByRole("link", { name: /Saturday Night Pickle/ }).parentElement?.style.getPropertyValue("--primary"),
+      screen
+        .getByRole("link", { name: /Saturday Night Pickle/ })
+        .parentElement?.style.getPropertyValue("--primary")
     ).toContain("#bd4545");
     expect(screen.getByText("67% ready")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute("href", "/games/new");
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
+      "href",
+      "/games/new"
+    );
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
-    expect(screen.getByTestId("games-grid").querySelector(".grid")).toHaveClass("min-[380px]:grid-cols-2");
-    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).closest("article")).toHaveClass(
-      "p-3.5",
-      "sm:p-5",
+    expect(screen.getByTestId("games-grid").querySelector(".grid")).toHaveClass(
+      "min-[380px]:grid-cols-2"
     );
+    expect(
+      screen
+        .getByRole("link", { name: /Saturday Night Pickle/ })
+        .closest("article")
+    ).toHaveClass("p-3.5", "sm:p-5");
     expect(screen.getByText("Game setup")).toBeVisible();
     expect(localStorage.getItem("relay-games-view")).toBe("grid");
 
     unmount();
-    render(<GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />);
+    render(
+      <GameCollection
+        upcomingPage={page([game])}
+        pastPage={page([])}
+        todayKey="2026-08-15"
+      />
+    );
     expect(screen.getByTestId("games-grid")).toBeVisible();
   });
 
@@ -132,18 +173,26 @@ describe("GameCollection", () => {
     render(
       <>
         <GameViewMenu />
-        <GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />
-      </>,
+        <GameCollection
+          upcomingPage={page([game])}
+          pastPage={page([])}
+          todayKey="2026-08-15"
+        />
+      </>
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Change game view, currently List" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Change game view, currently List" })
+    );
     const gridOption = screen.getByRole("menuitemradio", { name: "Grid" });
     expect(gridOption).toHaveAttribute("aria-checked", "false");
 
     fireEvent.click(gridOption);
     expect(screen.getByTestId("games-grid")).toBeVisible();
     expect(localStorage.getItem("relay-games-view")).toBe("grid");
-    expect(screen.queryByRole("menu", { name: "Game view" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menu", { name: "Game view" })
+    ).not.toBeInTheDocument();
   });
 
   it("defaults to upcoming while keeping invites and past easy to find", () => {
@@ -153,10 +202,13 @@ describe("GameCollection", () => {
         invitationPage={{ items: [invitation], total: 1 }}
         pastPage={page([pastGame])}
         todayKey="2026-08-15"
-      />,
+      />
     );
 
-    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
     expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
     expect(screen.getByText("Sunday Open Play")).toBeVisible();
     expect(screen.queryByText("Friday Crew")).not.toBeInTheDocument();
@@ -169,19 +221,17 @@ describe("GameCollection", () => {
     expect(screen.queryByText("Sunday Open Play")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
     expect(screen.getByText("Ended")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
-      "href",
-      "/games/new?from=game-2",
-    );
+    expect(
+      screen.getByRole("link", { name: "Play Friday Crew again" })
+    ).toHaveAttribute("href", "/games/new?from=game-2");
     expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByText("8 played")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
-      "href",
-      "/games/new?from=game-2",
-    );
+    expect(
+      screen.getByRole("link", { name: "Play Friday Crew again" })
+    ).toHaveAttribute("href", "/games/new?from=game-2");
     expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
   });
 
@@ -192,10 +242,12 @@ describe("GameCollection", () => {
         pastPage={page([{ ...pastGame, canReplay: false }])}
         todayKey="2026-08-15"
         initialFilter="past"
-      />,
+      />
     );
 
-    expect(screen.queryByRole("link", { name: "Play Friday Crew again" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Play Friday Crew again" })
+    ).not.toBeInTheDocument();
   });
 
   it("lets a player respond to an invite without opening the game", async () => {
@@ -206,24 +258,36 @@ describe("GameCollection", () => {
         pastPage={page([])}
         todayKey="2026-08-15"
         initialFilter="invites"
-      />,
+      />
     );
 
     expect(screen.getByText("Hosted by Mika Reyes")).toBeVisible();
     expect(screen.getByText("₱300 estimated")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Going" }));
 
-    await waitFor(() => expect(screen.getByText("No invites waiting")).toBeVisible());
-    expect(screen.getByRole("button", { name: "Invites" })).toHaveAttribute("aria-pressed", "true");
+    await waitFor(() =>
+      expect(screen.getByText("No invites waiting")).toBeVisible()
+    );
+    expect(screen.getByRole("button", { name: "Invites" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
   });
 
   it("pins live games above scheduled games and never shows them in past", () => {
-    render(<GameCollection upcomingPage={page([game, liveGame])} pastPage={page([pastGame])} todayKey="2026-08-15" />);
+    render(
+      <GameCollection
+        upcomingPage={page([game, liveGame])}
+        pastPage={page([pastGame])}
+        todayKey="2026-08-15"
+      />
+    );
 
-    expect(screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent)).toEqual([
-      "Live now",
-      "Upcoming",
-    ]);
+    expect(
+      screen
+        .getAllByRole("heading", { level: 2 })
+        .map((heading) => heading.textContent)
+    ).toEqual(["Live now", "Upcoming"]);
     expect(screen.getByText("Wednesday Night Live")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Past" }));
@@ -237,17 +301,28 @@ describe("GameCollection", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ items: [game, pastGame], nextCursor: null }),
-      }),
+      })
     );
-    render(<GameCollection upcomingPage={page([game], "next-page")} pastPage={page([])} todayKey="2026-08-15" />);
+    render(
+      <GameCollection
+        upcomingPage={page([game], "next-page")}
+        pastPage={page([])}
+        todayKey="2026-08-15"
+      />
+    );
 
     await act(async () => {
-      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+      observerCallback(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver
+      );
     });
 
     await waitFor(() => expect(screen.getByText("Friday Crew")).toBeVisible());
     expect(screen.getAllByText("Saturday Night Pickle")).toHaveLength(1);
-    expect(screen.queryByRole("button", { name: "Load more upcoming games" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more upcoming games" })
+    ).not.toBeInTheDocument();
   });
 
   it("offers Play again from a completed host game in the calendar agenda", async () => {
@@ -257,17 +332,21 @@ describe("GameCollection", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ upcoming: [], past: [pastGame] }),
-      }),
+      })
     );
 
     render(
-      <GameCollection upcomingPage={page([])} pastPage={page([pastGame])} todayKey="2026-08-15" initialFilter="past" />,
+      <GameCollection
+        upcomingPage={page([])}
+        pastPage={page([pastGame])}
+        todayKey="2026-08-15"
+        initialFilter="past"
+      />
     );
 
-    expect(await screen.findByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
-      "href",
-      "/games/new?from=game-2",
-    );
+    expect(
+      await screen.findByRole("link", { name: "Play Friday Crew again" })
+    ).toHaveAttribute("href", "/games/new?from=game-2");
   });
 
   it("loads only the selected calendar month", async () => {
@@ -276,27 +355,45 @@ describe("GameCollection", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ upcoming: [game], past: [] }),
-      }),
+      })
     );
-    render(<GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />);
+    render(
+      <GameCollection
+        upcomingPage={page([game])}
+        pastPage={page([])}
+        todayKey="2026-08-15"
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Calendar view" }));
 
-    await waitFor(() => expect(screen.getByRole("heading", { name: "August 2026" })).toBeVisible());
-    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ })).toBeVisible();
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "August 2026" })).toBeVisible()
+    );
+    expect(
+      screen.getByRole("link", { name: /Saturday Night Pickle/ })
+    ).toBeVisible();
     expect(screen.getAllByRole("gridcell")).toHaveLength(42);
-    expect(screen.getAllByRole("button", { name: /Saturday, August 22, 2026, 1 game/ })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", {
+        name: /Saturday, August 22, 2026, 1 game/,
+      })
+    ).toHaveLength(2);
     expect(fetch).toHaveBeenCalledWith(
       "/api/games?month=2026-08",
-      expect.objectContaining({ credentials: "same-origin" }),
+      expect.objectContaining({ credentials: "same-origin" })
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Next month" }));
-    await waitFor(() => expect(screen.getByRole("heading", { name: "September 2026" })).toBeVisible());
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: "September 2026" })
+      ).toBeVisible()
+    );
     expect(window.location.search).toContain("month=2026-09");
     expect(window.location.search).toContain("date=2026-09-01");
     expect(fetch).toHaveBeenCalledWith(
       "/api/games?month=2026-09",
-      expect.objectContaining({ credentials: "same-origin" }),
+      expect.objectContaining({ credentials: "same-origin" })
     );
     expect(localStorage.getItem("relay-games-view")).toBe("calendar");
   });

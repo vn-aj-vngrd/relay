@@ -14,7 +14,11 @@ describe("robots", () => {
     expect(result.host).toBe("https://relay.example");
     expect(result.sitemap).toBe("https://relay.example/sitemap.xml");
     expect(rules?.allow).toBe("/");
-    expect(rules?.disallow).toEqual(expect.arrayContaining(["/admin/", "/games/", "/groups/", "/s/"]));
-    expect(rules?.disallow).not.toEqual(expect.arrayContaining(["/courts", "/play"]));
+    expect(rules?.disallow).toEqual(
+      expect.arrayContaining(["/admin/", "/games/", "/groups/", "/s/"])
+    );
+    expect(rules?.disallow).not.toEqual(
+      expect.arrayContaining(["/courts", "/play"])
+    );
   });
 });

@@ -6,12 +6,18 @@ import { playingExperienceLabel } from "@/features/players/playing-experience";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 
-export default async function PublicPlayersPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicPlayersPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const slug = (await params).slug;
   const data = await getPublicSession(slug);
   if (!data) notFound();
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
-  const waitlist = data.roster.filter(({ player }) => player.rsvp === "waitlisted");
+  const waitlist = data.roster.filter(
+    ({ player }) => player.rsvp === "waitlisted"
+  );
   return (
     <main
       id="main-content"
@@ -34,13 +40,25 @@ export default async function PublicPlayersPage({ params }: { params: Promise<{ 
           {going.map(({ player, profile }, index) => {
             const name = profile?.name ?? player.guestName ?? "Guest";
             return (
-              <li key={player.id} className="public-session-row flex min-h-16 items-center gap-3 py-2">
-                <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" />
+              <li
+                key={player.id}
+                className="public-session-row flex min-h-16 items-center gap-3 py-2"
+              >
+                <Avatar
+                  name={name}
+                  imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                  index={index}
+                  size="sm"
+                />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{name}</span>
-                  <span className="mt-0.5 block text-xs text-muted">{playingExperienceLabel(player.skillLevel)}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {playingExperienceLabel(player.skillLevel)}
+                  </span>
                 </span>
-                <span className="text-xs text-muted">{player.role === "host" ? "Host" : "Going"}</span>
+                <span className="text-xs text-muted">
+                  {player.role === "host" ? "Host" : "Going"}
+                </span>
               </li>
             );
           })}
@@ -50,9 +68,16 @@ export default async function PublicPlayersPage({ params }: { params: Promise<{ 
           {waitlist.length ? (
             <ol className="mt-3 divide-y divide-line border-y border-line">
               {waitlist.map(({ player, profile }, index) => (
-                <li key={player.id} className="public-session-row flex min-h-14 items-center gap-3">
-                  <span className="score w-5 text-sm text-muted">{index + 1}</span>
-                  <span className="font-medium">{profile?.name ?? player.guestName ?? "Guest"}</span>
+                <li
+                  key={player.id}
+                  className="public-session-row flex min-h-14 items-center gap-3"
+                >
+                  <span className="score w-5 text-sm text-muted">
+                    {index + 1}
+                  </span>
+                  <span className="font-medium">
+                    {profile?.name ?? player.guestName ?? "Guest"}
+                  </span>
                 </li>
               ))}
             </ol>

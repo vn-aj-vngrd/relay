@@ -63,7 +63,11 @@ export function ConfirmSubmitButton({
           children
         )}
       </Button>
-      <Dialog ref={dialogRef} aria-labelledby={titleId} aria-describedby={descriptionId}>
+      <Dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
@@ -73,7 +77,10 @@ export function ConfirmSubmitButton({
               <h2 id={titleId} className="text-lg font-[680]">
                 {confirmTitle}
               </h2>
-              <p id={descriptionId} className="mt-2 text-sm leading-6 text-muted">
+              <p
+                id={descriptionId}
+                className="mt-2 text-sm leading-6 text-muted"
+              >
                 {confirmText}
               </p>
             </div>

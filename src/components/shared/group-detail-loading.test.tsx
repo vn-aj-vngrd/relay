@@ -11,9 +11,15 @@ describe("group detail loading state", () => {
     expect(screen.getByTestId("group-detail-skeleton-header")).toHaveClass(
       "flex-col",
       "sm:flex-row",
-      "sm:justify-between",
+      "sm:justify-between"
     );
-    expect(screen.getByTestId("group-detail-skeleton-memories").querySelectorAll("[class*='aspect-']")).toHaveLength(2);
-    expect(screen.getByRole("region", { name: "Loading group members" })).toBeVisible();
+    expect(
+      screen
+        .getByTestId("group-detail-skeleton-memories")
+        .querySelectorAll("[class*='aspect-']")
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("region", { name: "Loading group members" })
+    ).toBeVisible();
   });
 });

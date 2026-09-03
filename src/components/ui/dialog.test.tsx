@@ -10,7 +10,7 @@ describe("Dialog", () => {
     render(
       <Dialog ref={ref} aria-label="Example dialog" className="custom-dialog">
         Dialog content
-      </Dialog>,
+      </Dialog>
     );
 
     const dialog = screen.getByRole("dialog", { hidden: true });

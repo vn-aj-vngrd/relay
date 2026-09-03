@@ -11,7 +11,9 @@ function JoinPanelSkeleton({ mobile = false }: { mobile?: boolean }) {
           : "public-session-panel public-session-overview-card rounded-xl border border-line bg-surface p-5"
       }
     >
-      <div className={`flex items-start justify-between gap-4 ${mobile ? "mb-5" : "mb-5 border-b border-line pb-5"}`}>
+      <div
+        className={`flex items-start justify-between gap-4 ${mobile ? "mb-5" : "mb-5 border-b border-line pb-5"}`}
+      >
         <div className="space-y-2">
           <Skeleton className="h-5 w-28" />
           <Skeleton className="h-3.5 w-32" />
@@ -34,7 +36,11 @@ function JoinPanelSkeleton({ mobile = false }: { mobile?: boolean }) {
 
 function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
   return (
-    <section className={mobile ? "public-session-section border-b border-line lg:hidden" : ""}>
+    <section
+      className={
+        mobile ? "public-session-section border-b border-line lg:hidden" : ""
+      }
+    >
       <div className="mb-3 flex items-end justify-between gap-3">
         <div className="space-y-2">
           <Skeleton className="h-5 w-32" />
@@ -62,7 +68,10 @@ function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
 
 export default function PublicPlanLoading() {
   return (
-    <main id="main-content" className="public-session-page min-h-screen bg-surface">
+    <main
+      id="main-content"
+      className="public-session-page min-h-screen bg-surface"
+    >
       <div
         role="status"
         aria-label="Loading game plan"

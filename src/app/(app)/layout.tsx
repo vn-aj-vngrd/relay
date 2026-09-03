@@ -25,11 +25,18 @@ import { getInvitationCount } from "@/features/sessions/queries";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const user = await requireUser();
   const [profile, unreadCount, invitationCount] = await Promise.all([
     ensureProfile(user),
-    db.$count(notifications, and(eq(notifications.userId, user.id), isNull(notifications.readAt))),
+    db.$count(
+      notifications,
+      and(eq(notifications.userId, user.id), isNull(notifications.readAt))
+    ),
     getInvitationCount(user.id),
   ]);
   if (!profile.onboardingCompletedAt) redirect("/onboarding");
@@ -80,7 +87,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               href="/notifications"
               data-tour="notifications"
               prefetch={false}
-              aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : "Notifications"}
+              aria-label={
+                unreadCount
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
               className="pressable relative grid h-11 w-11 place-items-center text-muted hover:text-ink"
             >
               <Bell aria-hidden size={20} />
@@ -98,7 +109,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 aria-label={`Open ${profile.name}'s profile`}
                 className="pressable grid h-11 w-11 place-items-center rounded-full"
               >
-                <Avatar name={profile.name} imageUrl={profileAvatarUrl(profile.avatarPath)} size="sm" />
+                <Avatar
+                  name={profile.name}
+                  imageUrl={profileAvatarUrl(profile.avatarPath)}
+                  size="sm"
+                />
               </Link>
             </span>
           </div>

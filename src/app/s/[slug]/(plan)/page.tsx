@@ -9,12 +9,19 @@ import { getCurrentUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDateLong, formatSessionTime, spotsRemainingLabel } from "@/features/sessions/format";
+import {
+  formatSessionDateLong,
+  formatSessionTime,
+  spotsRemainingLabel,
+} from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
 import { getPublicSession } from "@/features/sessions/queries";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
-import { SessionHero, SessionPlanDetails } from "@/features/sessions/session-summary";
+import {
+  SessionHero,
+  SessionPlanDetails,
+} from "@/features/sessions/session-summary";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getPublicEnv } from "@/lib/env";
 
@@ -48,36 +55,68 @@ function RosterPreview({
           <p className="mt-1 text-sm text-muted">
             {names.length} of {capacity} going ·{" "}
             <strong className="text-primary">
-              {spots ? spotsRemainingLabel(spots) : waitlistCount ? `${waitlistCount} waitlisted` : "Waitlist open"}
+              {spots
+                ? spotsRemainingLabel(spots)
+                : waitlistCount
+                  ? `${waitlistCount} waitlisted`
+                  : "Waitlist open"}
             </strong>
           </p>
         </div>
-        <AvatarStack names={names.slice(0, 3)} imageUrls={imageUrls.slice(0, 3)} total={names.length} />
+        <AvatarStack
+          names={names.slice(0, 3)}
+          imageUrls={imageUrls.slice(0, 3)}
+          total={names.length}
+        />
       </div>
       {names.length ? (
         <ul className="divide-y divide-line border-y border-line">
           {names.slice(0, 5).map((name, index) => (
-            <li key={`${name}-${index}`} className="flex min-h-14 items-center gap-3 py-2">
-              <Avatar name={name} imageUrl={imageUrls[index]} index={index} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">{name}</span>
-              <span className="text-xs text-muted">{roles[index] === "host" ? "Host" : "Going"}</span>
+            <li
+              key={`${name}-${index}`}
+              className="flex min-h-14 items-center gap-3 py-2"
+            >
+              <Avatar
+                name={name}
+                imageUrl={imageUrls[index]}
+                index={index}
+                size="sm"
+              />
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                {name}
+              </span>
+              <span className="text-xs text-muted">
+                {roles[index] === "host" ? "Host" : "Going"}
+              </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="border-y border-line py-6 text-sm text-muted">Be the first to join.</p>
+        <p className="border-y border-line py-6 text-sm text-muted">
+          Be the first to join.
+        </p>
       )}
-      <ButtonLink href={`/s/${slug}/players`} variant="quiet" className="mt-2 w-full">
+      <ButtonLink
+        href={`/s/${slug}/players`}
+        variant="quiet"
+        className="mt-2 w-full"
+      >
         View all players <CaretRight aria-hidden size={14} />
       </ButtonLink>
     </section>
   );
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const data = await getPublicSession((await params).slug);
   if (!data) return { title: "Game not found" };
-  const going = data.roster.filter(({ player }) => player.rsvp === "going").length;
+  const going = data.roster.filter(
+    ({ player }) => player.rsvp === "going"
+  ).length;
   const spots = Math.max(0, data.session.capacity - going);
   const availability =
     data.session.status === "completed"
@@ -124,8 +163,14 @@ export default async function PublicSessionPage({
   searchParams: Promise<{ source?: string }>;
 }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
-  const discoverySource = query.source === "open-games" || query.source === "search" ? query.source : undefined;
-  const [data, user] = await Promise.all([getPublicSession(slug), getCurrentUser()]);
+  const discoverySource =
+    query.source === "open-games" || query.source === "search"
+      ? query.source
+      : undefined;
+  const [data, user] = await Promise.all([
+    getPublicSession(slug),
+    getCurrentUser(),
+  ]);
   if (!data) notFound();
   const [viewer, accountProfile] = await Promise.all([
     getSessionViewer(data.session.id, slug),
@@ -133,17 +178,29 @@ export default async function PublicSessionPage({
   ]);
   const { session, roster, hostProfile } = data;
   const going = roster.filter(({ player }) => player.rsvp === "going");
-  const waitlisted = roster.filter(({ player }) => player.rsvp === "waitlisted");
-  const names = going.map(({ player, profile }) => profile?.name ?? player.guestName ?? "Guest");
-  const playerAvatarUrls = going.map(({ profile }) => profileAvatarUrl(profile?.avatarPath));
+  const waitlisted = roster.filter(
+    ({ player }) => player.rsvp === "waitlisted"
+  );
+  const names = going.map(
+    ({ player, profile }) => profile?.name ?? player.guestName ?? "Guest"
+  );
+  const playerAvatarUrls = going.map(({ profile }) =>
+    profileAvatarUrl(profile?.avatarPath)
+  );
   const playerRoles = going.map(({ player }) => player.role);
   const spots = Math.max(0, session.capacity - going.length);
   const accountName =
-    typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : user?.email?.split("@")[0];
+    typeof user?.user_metadata?.full_name === "string"
+      ? user.user_metadata.full_name
+      : user?.email?.split("@")[0];
   const guestName = viewer?.isGuest ? viewer.player.guestName : null;
   const currentRsvp = viewer?.player.rsvp;
-  const currentSkillLevel = user ? accountProfile?.skillLevel : viewer?.player.skillLevel;
-  const canManage = Boolean(user && (user.id === session.hostId || viewer?.player.role === "cohost"));
+  const currentSkillLevel = user
+    ? accountProfile?.skillLevel
+    : viewer?.player.skillLevel;
+  const canManage = Boolean(
+    user && (user.id === session.hostId || viewer?.player.role === "cohost")
+  );
   const publicUrl = `${getPublicEnv().NEXT_PUBLIC_APP_URL}/s/${session.slug}`;
   const eventJsonLd = {
     "@context": "https://schema.org",
@@ -165,7 +222,9 @@ export default async function PublicSessionPage({
   };
   const overview = await getSessionOverview(
     session.id,
-    viewer && canParticipate(viewer.player.rsvp) ? { sessionPlayerId: viewer.player.id, canManage } : undefined,
+    viewer && canParticipate(viewer.player.rsvp)
+      ? { sessionPlayerId: viewer.player.id, canManage }
+      : undefined
   );
   const availabilityLabel = session.rosterLocked
     ? "Roster closed"
@@ -196,7 +255,9 @@ export default async function PublicSessionPage({
     >
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd).replaceAll("<", "\\u003c") }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(eventJsonLd).replaceAll("<", "\\u003c"),
+        }}
       />
       <div className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8">
         <div className="px-4 sm:px-0">
@@ -205,7 +266,9 @@ export default async function PublicSessionPage({
             description="The plan, roster, availability, and what you need before the game."
           />
         </div>
-        <div className={`grid gap-6 ${session.status === "completed" ? "" : "lg:grid-cols-[1fr_350px]"}`}>
+        <div
+          className={`grid gap-6 ${session.status === "completed" ? "" : "lg:grid-cols-[1fr_350px]"}`}
+        >
           <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
             <SessionHero
               session={session}
@@ -215,13 +278,21 @@ export default async function PublicSessionPage({
             {session.status !== "completed" ? (
               <div className="border-b border-line px-4 py-3 lg:hidden">
                 <ButtonLink href="#public-rsvp-title" className="w-full">
-                  {currentRsvp ? "Update response" : spots ? "Join game" : "Join waitlist"}
+                  {currentRsvp
+                    ? "Update response"
+                    : spots
+                      ? "Join game"
+                      : "Join waitlist"}
                 </ButtonLink>
               </div>
             ) : null}
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
-              <SessionAtAGlance overview={overview} hrefBase={`/s/${session.slug}`} status={session.status} />
+              <SessionAtAGlance
+                overview={overview}
+                hrefBase={`/s/${session.slug}`}
+                status={session.status}
+              />
               {session.status !== "completed" ? (
                 <section
                   aria-labelledby="public-rsvp-title"
@@ -234,7 +305,9 @@ export default async function PublicSessionPage({
                       </h2>
                       <p className="mt-1 text-sm text-muted">{joinHelp}</p>
                     </div>
-                    <strong className="score shrink-0 text-sm font-bold text-primary">{availabilityLabel}</strong>
+                    <strong className="score shrink-0 text-sm font-bold text-primary">
+                      {availabilityLabel}
+                    </strong>
                   </div>
                   <RsvpControl
                     sessionId={session.id}
@@ -263,11 +336,16 @@ export default async function PublicSessionPage({
                 className={`public-session-section border-b border-line ${session.status === "completed" ? "" : "lg:hidden"}`}
               />
               {session.notes ? (
-                <section aria-labelledby="notes-title" className="public-session-notes">
+                <section
+                  aria-labelledby="notes-title"
+                  className="public-session-notes"
+                >
                   <h2 id="notes-title" className="text-lg font-bold">
                     A note from {hostProfile?.name?.split(" ")[0] ?? "the host"}
                   </h2>
-                  <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">{session.notes}</p>
+                  <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">
+                    {session.notes}
+                  </p>
                 </section>
               ) : null}
             </div>
@@ -278,7 +356,9 @@ export default async function PublicSessionPage({
                 <div className="mb-5 border-b border-line pb-5">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="text-lg font-bold">{joinTitle}</h2>
-                    <strong className="score shrink-0 text-sm font-bold text-primary">{availabilityLabel}</strong>
+                    <strong className="score shrink-0 text-sm font-bold text-primary">
+                      {availabilityLabel}
+                    </strong>
                   </div>
                   <p className="mt-1 text-sm text-muted">{joinHelp}</p>
                 </div>

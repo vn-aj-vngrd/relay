@@ -17,7 +17,10 @@ export async function getSessionViewer(sessionId: string, slug: string) {
   const user = await getCurrentUser();
   if (user) {
     const player = await db.query.sessionPlayers.findFirst({
-      where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, user.id)),
+      where: and(
+        eq(sessionPlayers.sessionId, sessionId),
+        eq(sessionPlayers.userId, user.id)
+      ),
     });
     if (player) return { user, player, isGuest: false as const };
   }
@@ -25,7 +28,10 @@ export async function getSessionViewer(sessionId: string, slug: string) {
   if (!token) return null;
   const tokenHash = await hashToken(token);
   const player = await db.query.sessionPlayers.findFirst({
-    where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.guestTokenHash, tokenHash)),
+    where: and(
+      eq(sessionPlayers.sessionId, sessionId),
+      eq(sessionPlayers.guestTokenHash, tokenHash)
+    ),
   });
   if (!player) return null;
   return { user: null, player, isGuest: true as const, slug };

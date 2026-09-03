@@ -10,13 +10,22 @@ export async function GET(request: NextRequest) {
   if (!user)
     return Response.json(
       { error: "Authentication required" },
-      { status: 401, headers: { "Cache-Control": "private, no-store" } },
+      { status: 401, headers: { "Cache-Control": "private, no-store" } }
     );
-  const limit = await checkRateLimit({ scope: "global-search", limit: 120, windowSeconds: 60 }, `user:${user.id}`);
+  const limit = await checkRateLimit(
+    { scope: "global-search", limit: 120, windowSeconds: 60 },
+    `user:${user.id}`
+  );
   if (!limit.allowed)
     return Response.json(
       { error: "Search is temporarily limited. Try again shortly." },
-      { status: 429, headers: { ...rateLimitHeaders(limit), "Cache-Control": "private, no-store" } },
+      {
+        status: 429,
+        headers: {
+          ...rateLimitHeaders(limit),
+          "Cache-Control": "private, no-store",
+        },
+      }
     );
   const parsed = searchRequestSchema.safeParse({
     q: request.nextUrl.searchParams.get("q") ?? "",
@@ -26,11 +35,16 @@ export async function GET(request: NextRequest) {
   if (!parsed.success)
     return Response.json(
       { error: "Invalid search request" },
-      { status: 400, headers: { "Cache-Control": "private, no-store" } },
+      { status: 400, headers: { "Cache-Control": "private, no-store" } }
     );
   try {
     const startedAt = performance.now();
-    const result = await searchRelay(user.id, parsed.data.q, parsed.data.type, parsed.data.cursor);
+    const result = await searchRelay(
+      user.id,
+      parsed.data.q,
+      parsed.data.type,
+      parsed.data.cursor
+    );
     const duration = performance.now() - startedAt;
     return Response.json(result, {
       headers: {
@@ -43,7 +57,7 @@ export async function GET(request: NextRequest) {
     console.error("Global search failed", error);
     return Response.json(
       { error: "Search is temporarily unavailable" },
-      { status: 500, headers: { "Cache-Control": "private, no-store" } },
+      { status: 500, headers: { "Cache-Control": "private, no-store" } }
     );
   }
 }

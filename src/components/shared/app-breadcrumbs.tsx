@@ -45,25 +45,32 @@ function titleCase(value: string) {
 }
 
 function isGameId(segments: string[], index: number) {
-  return segments[index - 1] === "games" && !["new", "open"].includes(segments[index]);
+  return (
+    segments[index - 1] === "games" &&
+    !["new", "open"].includes(segments[index])
+  );
 }
 
 function isAdminRecord(segments: string[], index: number) {
   return (
     segments[0] === "admin" &&
-    ["courts", "feedback", "sessions", "users", "venues"].includes(segments[index - 1]) &&
+    ["courts", "feedback", "sessions", "users", "venues"].includes(
+      segments[index - 1]
+    ) &&
     segments[index] !== "new"
   );
 }
 
 function segmentLabel(segments: string[], index: number) {
   const segment = segments[index];
-  if (segments[0] === "admin" && (segment === "courts" || segment === "venues")) return "Courts";
+  if (segments[0] === "admin" && (segment === "courts" || segment === "venues"))
+    return "Courts";
   if (isGameId(segments, index)) return "Game";
   if (isAdminRecord(segments, index)) {
     if (segments[index - 1] === "users") return "User";
     if (segments[index - 1] === "feedback") return "Submission";
-    if (segments[index - 1] === "courts" || segments[index - 1] === "venues") return "Court";
+    if (segments[index - 1] === "courts" || segments[index - 1] === "venues")
+      return "Court";
     return "Game";
   }
   if (segments[index - 1] === "profile") return "Profile";
@@ -74,9 +81,15 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   if (!segments.length) return [];
   if (segments[0] === "home") return [{ label: "Home" }];
-  if (segments[0] === "games" && segments[1] && !["new", "open"].includes(segments[1])) return [];
+  if (
+    segments[0] === "games" &&
+    segments[1] &&
+    !["new", "open"].includes(segments[1])
+  )
+    return [];
 
-  const items: BreadcrumbItem[] = segments[0] === "admin" ? [] : [{ href: "/home", label: "Home" }];
+  const items: BreadcrumbItem[] =
+    segments[0] === "admin" ? [] : [{ href: "/home", label: "Home" }];
 
   segments.forEach((segment, index) => {
     if (segment === "profile" && index < segments.length - 1) return;
@@ -90,7 +103,11 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   return items;
 }
 
-export function AppBreadcrumbs({ items: providedItems }: { items?: BreadcrumbItem[] }) {
+export function AppBreadcrumbs({
+  items: providedItems,
+}: {
+  items?: BreadcrumbItem[];
+}) {
   const routeItems = buildBreadcrumbItems(usePathname());
   const items = providedItems ?? routeItems;
   if (!items.length) return null;
@@ -103,7 +120,13 @@ export function AppBreadcrumbs({ items: providedItems }: { items?: BreadcrumbIte
       <ol className="flex min-w-max items-center text-[13px] text-muted">
         {items.map((item, index) => (
           <li key={`${item.label}-${index}`} className="flex items-center">
-            {index ? <CaretRight aria-hidden size={12} className="mx-1 shrink-0 text-muted/65" /> : null}
+            {index ? (
+              <CaretRight
+                aria-hidden
+                size={12}
+                className="mx-1 shrink-0 text-muted/65"
+              />
+            ) : null}
             {item.href ? (
               <Link
                 href={item.href}
@@ -112,7 +135,10 @@ export function AppBreadcrumbs({ items: providedItems }: { items?: BreadcrumbIte
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className="inline-flex h-8 items-center px-1.5 font-medium text-ink">
+              <span
+                aria-current="page"
+                className="inline-flex h-8 items-center px-1.5 font-medium text-ink"
+              >
                 {item.label}
               </span>
             )}

@@ -4,22 +4,37 @@ import Link from "next/link";
 import { useCallback, useState } from "react";
 
 import type { GameCollectionItem } from "./game-collection-types";
-import { type ActiveInviteResponse, GameInvitationCard } from "./game-invitation-card";
+import {
+  type ActiveInviteResponse,
+  GameInvitationCard,
+} from "./game-invitation-card";
 
-function responseMessage(game: GameCollectionItem, response: ActiveInviteResponse) {
+function responseMessage(
+  game: GameCollectionItem,
+  response: ActiveInviteResponse
+) {
   if (response === "declined") return `You declined ${game.title}.`;
-  if (response === "pending") return `Your request to join ${game.title} was sent.`;
-  if (response === "waitlisted") return `You joined the waitlist for ${game.title}.`;
+  if (response === "pending")
+    return `Your request to join ${game.title} was sent.`;
+  if (response === "waitlisted")
+    return `You joined the waitlist for ${game.title}.`;
   return `Your response to ${game.title} was saved.`;
 }
 
-export function HomeInvitations({ initialItems }: { initialItems: GameCollectionItem[] }) {
+export function HomeInvitations({
+  initialItems,
+}: {
+  initialItems: GameCollectionItem[];
+}) {
   const [items, setItems] = useState(initialItems);
   const [announcement, setAnnouncement] = useState("");
-  const handleResponded = useCallback((game: GameCollectionItem, response: ActiveInviteResponse) => {
-    setItems((current) => current.filter((item) => item.id !== game.id));
-    setAnnouncement(responseMessage(game, response));
-  }, []);
+  const handleResponded = useCallback(
+    (game: GameCollectionItem, response: ActiveInviteResponse) => {
+      setItems((current) => current.filter((item) => item.id !== game.id));
+      setAnnouncement(responseMessage(game, response));
+    },
+    []
+  );
 
   return (
     <>
@@ -41,7 +56,12 @@ export function HomeInvitations({ initialItems }: { initialItems: GameCollection
           </div>
           <div className="grid gap-3 lg:grid-cols-2">
             {items.map((game) => (
-              <GameInvitationCard key={game.id} game={game} source="home" onResponded={handleResponded} />
+              <GameInvitationCard
+                key={game.id}
+                game={game}
+                source="home"
+                onResponded={handleResponded}
+              />
             ))}
           </div>
         </section>

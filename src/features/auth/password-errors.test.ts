@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 
-import { passwordResetRequestErrorMessage, recoveredPasswordErrorMessage } from "./password-errors";
+import {
+  passwordResetRequestErrorMessage,
+  recoveredPasswordErrorMessage,
+} from "./password-errors";
 
 describe("passwordResetRequestErrorMessage", () => {
   it("explains Supabase’s provider email limit", () => {
-    expect(passwordResetRequestErrorMessage({ code: "over_email_send_rate_limit", status: 429 })).toBe(
-      "Too many authentication emails were sent recently. Wait a few minutes and request a new link.",
+    expect(
+      passwordResetRequestErrorMessage({
+        code: "over_email_send_rate_limit",
+        status: 429,
+      })
+    ).toBe(
+      "Too many authentication emails were sent recently. Wait a few minutes and request a new link."
     );
   });
 });
@@ -26,8 +34,10 @@ describe("recoveredPasswordErrorMessage", () => {
   });
 
   it("keeps unknown failures safe", () => {
-    expect(recoveredPasswordErrorMessage({ code: "unexpected_failure", status: 500 })).toBe(
-      "Your password could not be updated. Request a new reset link and try again.",
+    expect(
+      recoveredPasswordErrorMessage({ code: "unexpected_failure", status: 500 })
+    ).toBe(
+      "Your password could not be updated. Request a new reset link and try again."
     );
   });
 });

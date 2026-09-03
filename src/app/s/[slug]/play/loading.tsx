@@ -3,7 +3,10 @@ import { LiveCourtSkeleton } from "@/features/matches/live-court-skeleton";
 
 export default function PublicPlayLoading() {
   return (
-    <main id="main-content" className="public-session-page min-h-full bg-surface pb-6 sm:pb-8">
+    <main
+      id="main-content"
+      className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
+    >
       <div
         role="status"
         aria-label="Loading play and scores"
@@ -25,7 +28,10 @@ export default function PublicPlayLoading() {
             <Skeleton className="mt-2 h-3.5 w-44" />
             <div className="mt-3 divide-y divide-line border-y border-line">
               {Array.from({ length: 4 }, (_, index) => (
-                <div key={index} className="public-session-row flex min-h-14 items-center gap-3">
+                <div
+                  key={index}
+                  className="public-session-row flex min-h-14 items-center gap-3"
+                >
                   <Skeleton className="h-3 w-5" />
                   <Skeleton className="h-8 w-8 rounded-full" />
                   <Skeleton className="h-4 w-28 max-w-[45%]" />

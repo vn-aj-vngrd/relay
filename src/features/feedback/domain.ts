@@ -1,7 +1,13 @@
 export const feedbackTypes = ["bug", "feature", "general"] as const;
 export type FeedbackType = (typeof feedbackTypes)[number];
 
-export const feedbackStatuses = ["new", "reviewing", "planned", "resolved", "closed"] as const;
+export const feedbackStatuses = [
+  "new",
+  "reviewing",
+  "planned",
+  "resolved",
+  "closed",
+] as const;
 export type FeedbackStatus = (typeof feedbackStatuses)[number];
 
 export const feedbackAreas = [

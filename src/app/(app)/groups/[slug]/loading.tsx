@@ -2,7 +2,12 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function GroupLoading() {
   return (
-    <div role="status" className="mx-auto max-w-6xl" aria-label="Loading group" aria-busy="true">
+    <div
+      role="status"
+      className="mx-auto max-w-6xl"
+      aria-label="Loading group"
+      aria-busy="true"
+    >
       <header
         data-testid="group-detail-skeleton-header"
         className="flex flex-col gap-5 border-b border-line pb-7 sm:flex-row sm:items-end sm:justify-between"
@@ -28,7 +33,10 @@ export default function GroupLoading() {
             <Skeleton className="mt-2 h-3.5 w-48" />
             <div className="mt-3 divide-y divide-line border-y border-line">
               {Array.from({ length: 2 }, (_, index) => (
-                <div key={index} className="flex min-h-20 items-center gap-3 py-4 sm:px-2">
+                <div
+                  key={index}
+                  className="flex min-h-20 items-center gap-3 py-4 sm:px-2"
+                >
                   <Skeleton className="h-8 w-1 rounded-full" />
                   <div className="min-w-0 flex-1">
                     <Skeleton className="h-4 w-40 max-w-full" />
@@ -40,12 +48,18 @@ export default function GroupLoading() {
             </div>
           </section>
 
-          <section data-testid="group-detail-skeleton-memories" aria-label="Loading shared memories">
+          <section
+            data-testid="group-detail-skeleton-memories"
+            aria-label="Loading shared memories"
+          >
             <Skeleton className="h-5 w-36" />
             <Skeleton className="mt-2 h-3.5 w-64 max-w-full" />
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {Array.from({ length: 2 }, (_, index) => (
-                <div key={index} className="overflow-hidden rounded-xl border border-line bg-surface">
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-xl border border-line bg-surface"
+                >
                   <Skeleton className="aspect-[16/9] w-full rounded-none" />
                   <div className="p-4">
                     <Skeleton className="h-4 w-36 max-w-full" />
@@ -67,13 +81,19 @@ export default function GroupLoading() {
               </div>
               <div className="flex -space-x-2">
                 {Array.from({ length: 3 }, (_, index) => (
-                  <Skeleton key={index} className="h-8 w-8 rounded-full border-2 border-surface" />
+                  <Skeleton
+                    key={index}
+                    className="h-8 w-8 rounded-full border-2 border-surface"
+                  />
                 ))}
               </div>
             </div>
             <div className="mt-4 divide-y divide-line border-y border-line">
               {Array.from({ length: 4 }, (_, index) => (
-                <div key={index} className="flex min-h-14 items-center gap-3 py-2">
+                <div
+                  key={index}
+                  className="flex min-h-14 items-center gap-3 py-2"
+                >
                   <Skeleton className="h-8 w-8 rounded-full" />
                   <Skeleton className="h-4 min-w-0 flex-1" />
                   <Skeleton className="h-3 w-12" />

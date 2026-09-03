@@ -34,10 +34,18 @@ function CourtFinderPreview({ courts }: { courts: CourtListing[] }) {
   );
 }
 
-export function HelpProductPreview({ guideId, courts }: { guideId: string; courts: CourtListing[] }) {
+export function HelpProductPreview({
+  guideId,
+  courts,
+}: {
+  guideId: string;
+  courts: CourtListing[];
+}) {
   return (
     <div className="mt-7">
-      {guideId === "find-a-court" ? <CourtFinderPreview courts={courts} /> : null}
+      {guideId === "find-a-court" ? (
+        <CourtFinderPreview courts={courts} />
+      ) : null}
       {guideId === "create-a-game" ? <CreateProductPreview /> : null}
       {guideId === "payments" ? <PaymentsProductPreview /> : null}
       {guideId === "choose-a-play-mode" ? <PlaySetupProductPreview /> : null}

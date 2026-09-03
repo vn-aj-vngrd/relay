@@ -7,7 +7,10 @@ const scrollTo = vi.fn();
 
 beforeEach(() => {
   scrollTo.mockClear();
-  Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: scrollTo });
+  Object.defineProperty(HTMLElement.prototype, "scrollTo", {
+    configurable: true,
+    value: scrollTo,
+  });
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: vi.fn().mockReturnValue({ matches: false }),
@@ -19,17 +22,22 @@ describe("ChatThread", () => {
     const { rerender } = render(
       <ChatThread messageCount={1}>
         <p>First message</p>
-      </ChatThread>,
+      </ChatThread>
     );
     const log = screen.getByRole("log", { name: "Session messages" });
-    expect(log).toHaveClass("chat-thread-scroll", "overflow-y-auto", "flex-1", "min-h-0");
+    expect(log).toHaveClass(
+      "chat-thread-scroll",
+      "overflow-y-auto",
+      "flex-1",
+      "min-h-0"
+    );
     expect(log).toHaveAttribute("tabindex", "0");
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
 
     rerender(
       <ChatThread messageCount={2}>
         <p>Second message</p>
-      </ChatThread>,
+      </ChatThread>
     );
     expect(scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "smooth" });
   });

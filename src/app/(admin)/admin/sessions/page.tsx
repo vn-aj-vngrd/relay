@@ -23,7 +23,11 @@ export default async function AdminSessionsPage({
         title="Games"
         description="Review sessions across Relay, find a host’s game, and intervene only when production support requires it."
       />
-      <form noValidate role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
+      <form
+        noValidate
+        role="search"
+        className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center"
+      >
         <label className="relative flex-1">
           <span className="sr-only">Search games</span>
           <MagnifyingGlass
@@ -48,7 +52,9 @@ export default async function AdminSessionsPage({
           className="!mt-0 !h-10 min-w-40"
           options={statuses.map((value) => ({
             value,
-            label: value ? value[0].toUpperCase() + value.slice(1) : "All statuses",
+            label: value
+              ? value[0].toUpperCase() + value.slice(1)
+              : "All statuses",
           }))}
         />
         <button className="pressable h-10 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover">

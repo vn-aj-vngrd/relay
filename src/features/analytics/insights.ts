@@ -23,7 +23,7 @@ type RetentionWindow = {
 
 export function buildHostRetention(
   publications: HostPublication[],
-  now = new Date(),
+  now = new Date()
 ): { fourteenDay: RetentionWindow; thirtyDay: RetentionWindow } {
   const byHost = new Map<string, number[]>();
   for (const publication of publications) {
@@ -41,13 +41,20 @@ export function buildHostRetention(
       const first = times[0];
       if (first == null || now.getTime() - first < windowMs) continue;
       eligibleHosts += 1;
-      if (times.some((publishedAt, index) => index > 0 && publishedAt <= first + windowMs)) retainedHosts += 1;
+      if (
+        times.some(
+          (publishedAt, index) => index > 0 && publishedAt <= first + windowMs
+        )
+      )
+        retainedHosts += 1;
     }
     return {
       days,
       eligibleHosts,
       retainedHosts,
-      rate: eligibleHosts ? Math.round((retainedHosts / eligibleHosts) * 100) : 0,
+      rate: eligibleHosts
+        ? Math.round((retainedHosts / eligibleHosts) * 100)
+        : 0,
     };
   }
 

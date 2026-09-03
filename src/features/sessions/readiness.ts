@@ -19,10 +19,18 @@ export function sessionReadiness(input: {
     booking: input.booked,
     payment: !input.expectsCollection || input.collectionCreated,
   };
-  const missing = (Object.keys(complete) as ReadinessTask[]).filter((task) => !complete[task]);
+  const missing = (Object.keys(complete) as ReadinessTask[]).filter(
+    (task) => !complete[task]
+  );
   const total = 3;
   const completed = total - missing.length;
-  return { ready: missing.length === 0, percent: Math.round((completed / total) * 100), completed, total, missing };
+  return {
+    ready: missing.length === 0,
+    percent: Math.round((completed / total) * 100),
+    completed,
+    total,
+    missing,
+  };
 }
 
 export function readinessTaskLabel(task: ReadinessTask): string {

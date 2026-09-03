@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowsOutSimple, CaretLeft, CaretRight, Minus, Plus, X } from "@phosphor-icons/react";
+import {
+  ArrowsOutSimple,
+  CaretLeft,
+  CaretRight,
+  Minus,
+  Plus,
+  X,
+} from "@phosphor-icons/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Dialog } from "@/components/ui/dialog";
@@ -36,7 +43,10 @@ type CourtScoreboardProps = {
   onClose?: () => void;
 };
 
-type CourtScoreboardCourtProps = Omit<CourtScoreboardProps, "expanded" | "onExpand" | "onClose"> & {
+type CourtScoreboardCourtProps = Omit<
+  CourtScoreboardProps,
+  "expanded" | "onExpand" | "onClose"
+> & {
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
   keepExpandedContentMounted?: boolean;
@@ -46,7 +56,11 @@ function TeamName({ team }: { team: CourtScoreboardTeam }) {
   return (
     <p className="flex min-h-12 flex-col items-center justify-center text-center text-sm font-semibold leading-5 text-white/82 sm:text-base">
       {team.players.map((player, index) => (
-        <span key={`${player}-${index}`} className="block max-w-full truncate" title={player}>
+        <span
+          key={`${player}-${index}`}
+          className="block max-w-full truncate"
+          title={player}
+        >
           {index ? (
             <span aria-hidden className="mr-1 text-[var(--scoreboard-line)]">
               +
@@ -83,7 +97,9 @@ function CourtScoreboard({
         className={`flex shrink-0 items-center justify-between gap-3 border-b border-line ${expanded ? "min-h-16 px-5 sm:px-8" : "min-h-14 px-4"}`}
       >
         <div className="min-w-0">
-          <p className="sport-label truncate text-primary">{courtLabel.toUpperCase()}</p>
+          <p className="sport-label truncate text-primary">
+            {courtLabel.toUpperCase()}
+          </p>
           <p className="mt-0.5 text-xs text-muted">Match in progress</p>
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -194,7 +210,10 @@ function CourtScoreboard({
       </div>
 
       {error ? (
-        <p role="alert" className="shrink-0 border-t border-line px-4 py-3 text-sm text-danger">
+        <p
+          role="alert"
+          className="shrink-0 border-t border-line px-4 py-3 text-sm text-danger"
+        >
           {error}
         </p>
       ) : scorePending ? (
@@ -203,7 +222,11 @@ function CourtScoreboard({
         </p>
       ) : null}
       {finishControl ? (
-        <footer className={`shrink-0 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}>{finishControl}</footer>
+        <footer
+          className={`shrink-0 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}
+        >
+          {finishControl}
+        </footer>
       ) : null}
     </article>
   );
@@ -230,7 +253,11 @@ export function CourtScoreboardCourt({
 
   return (
     <>
-      <CourtScoreboard {...scoreboard} navigation={navigation} onExpand={() => setExpanded(true)} />
+      <CourtScoreboard
+        {...scoreboard}
+        navigation={navigation}
+        onExpand={() => setExpanded(true)}
+      />
       <Dialog
         ref={dialogRef}
         onCancel={() => setExpanded(false)}
@@ -246,7 +273,12 @@ export function CourtScoreboardCourt({
         variant="fullscreen"
       >
         {isExpanded || keepExpandedContentMounted ? (
-          <CourtScoreboard {...scoreboard} expanded navigation={navigation} onClose={() => setExpanded(false)} />
+          <CourtScoreboard
+            {...scoreboard}
+            expanded
+            navigation={navigation}
+            onClose={() => setExpanded(false)}
+          />
         ) : null}
       </Dialog>
     </>

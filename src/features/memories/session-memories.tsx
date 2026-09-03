@@ -8,7 +8,12 @@ import type { SessionRecap as SessionRecapData } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
 
 export type SessionMemoryData = {
-  media: Array<{ id: string; url: string | null; altText: string | null; caption: string | null }>;
+  media: Array<{
+    id: string;
+    url: string | null;
+    altText: string | null;
+    caption: string | null;
+  }>;
 } | null;
 
 export function SessionMemories({
@@ -32,7 +37,15 @@ export function SessionMemories({
   viewerPlayerId?: string | null;
 }) {
   const photos = (memory?.media ?? []).flatMap((item) =>
-    item.url ? [{ id: item.id, url: item.url, alt: item.altText ?? `Photo from ${session.title}` }] : [],
+    item.url
+      ? [
+          {
+            id: item.id,
+            url: item.url,
+            alt: item.altText ?? `Photo from ${session.title}`,
+          },
+        ]
+      : []
   );
   const date = formatSessionDateLong(session.startsAt);
   const accent = sessionAccent(session.accentColor);
@@ -52,7 +65,9 @@ export function SessionMemories({
             {date} · {session.venueName}
           </p>
           <h2 className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.035em] sm:text-5xl">
-            {inProgress ? "This game is still being played." : "Story unlocks when the game ends."}
+            {inProgress
+              ? "This game is still being played."
+              : "Story unlocks when the game ends."}
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-white/70 sm:text-base">
             {inProgress
@@ -69,11 +84,15 @@ export function SessionMemories({
       <section aria-labelledby="share-memory-title">
         <div>
           <p className="text-sm font-semibold text-primary">Story maker</p>
-          <h2 id="share-memory-title" className="mt-2 text-2xl font-bold tracking-[-0.025em]">
+          <h2
+            id="share-memory-title"
+            className="mt-2 text-2xl font-bold tracking-[-0.025em]"
+          >
             Share the game
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Choose one true highlight, pair it with a Relay color or crew photo, and make a portrait ready to share.
+            Choose one true highlight, pair it with a Relay color or crew photo,
+            and make a portrait ready to share.
           </p>
         </div>
         <div className="mt-6 border-y border-line py-7">
@@ -96,7 +115,8 @@ export function SessionMemories({
             Photos from the game
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
-            Keep the moments the scoreboard missed. Added photos also become available as story backgrounds.
+            Keep the moments the scoreboard missed. Added photos also become
+            available as story backgrounds.
           </p>
         </div>
         {photos.length ? (
@@ -111,9 +131,13 @@ export function SessionMemories({
                     height={640}
                     className="aspect-square w-full rounded-[10px] object-cover"
                   />
-                  {item.caption ? <figcaption className="mt-1 text-xs text-muted">{item.caption}</figcaption> : null}
+                  {item.caption ? (
+                    <figcaption className="mt-1 text-xs text-muted">
+                      {item.caption}
+                    </figcaption>
+                  ) : null}
                 </figure>
-              ) : null,
+              ) : null
             )}
           </div>
         ) : (

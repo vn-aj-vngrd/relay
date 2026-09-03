@@ -17,7 +17,9 @@ export function RealtimeRefresh({
 }) {
   const router = useRouter();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [status, setStatus] = useState<"connecting" | "connected" | "error">("connecting");
+  const [status, setStatus] = useState<"connecting" | "connected" | "error">(
+    "connecting"
+  );
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     let channel: RealtimeChannel | null = null;
@@ -29,13 +31,20 @@ export function RealtimeRefresh({
 
     void (async () => {
       if (cancelled) return;
-      const nextChannel = supabase.channel(`session:${sessionId}`).on("broadcast", { event: "changed" }, refresh);
+      const nextChannel = supabase
+        .channel(`session:${sessionId}`)
+        .on("broadcast", { event: "changed" }, refresh);
       channel = nextChannel;
       nextChannel.subscribe((next: string) => {
         if (next === "SUBSCRIBED") {
           setStatus("connected");
           refresh();
-        } else setStatus(next === "CHANNEL_ERROR" || next === "TIMED_OUT" ? "error" : "connecting");
+        } else
+          setStatus(
+            next === "CHANNEL_ERROR" || next === "TIMED_OUT"
+              ? "error"
+              : "connecting"
+          );
       });
     })();
 
@@ -68,10 +77,16 @@ export function RealtimeRefresh({
   return (
     <span
       aria-live="polite"
-      title={compact && status === "error" ? "Live updates paused—refresh to retry" : undefined}
+      title={
+        compact && status === "error"
+          ? "Live updates paused—refresh to retry"
+          : undefined
+      }
       className={`inline-flex min-h-9 items-center gap-2 text-[13px] font-medium ${status === "error" ? "text-danger" : "text-muted"}`}
     >
-      <span className={`h-2 w-2 rounded-full ${status === "error" ? "bg-danger" : "bg-warning"}`} />
+      <span
+        className={`h-2 w-2 rounded-full ${status === "error" ? "bg-danger" : "bg-warning"}`}
+      />
       {text}
     </span>
   );

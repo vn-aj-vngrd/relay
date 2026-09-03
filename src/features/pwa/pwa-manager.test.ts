@@ -11,11 +11,15 @@ describe("clearDevelopmentPwa", () => {
       getRegistrations: vi.fn().mockResolvedValue([{ unregister }]),
     } as unknown as ServiceWorkerContainer;
     const cacheStorage = {
-      keys: vi.fn().mockResolvedValue(["relay-pwa-v1-static", "other-app-cache"]),
+      keys: vi
+        .fn()
+        .mockResolvedValue(["relay-pwa-v1-static", "other-app-cache"]),
       delete: removeCache,
     } as unknown as CacheStorage;
 
-    await expect(clearDevelopmentPwa(serviceWorker, cacheStorage)).resolves.toBe(true);
+    await expect(
+      clearDevelopmentPwa(serviceWorker, cacheStorage)
+    ).resolves.toBe(true);
     expect(unregister).toHaveBeenCalledOnce();
     expect(removeCache).toHaveBeenCalledOnce();
     expect(removeCache).toHaveBeenCalledWith("relay-pwa-v1-static");

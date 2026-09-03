@@ -6,21 +6,42 @@ import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { expenses, notifications, paymentAccounts, playerPayments, sessionPlayers, sessions } from "@/db/schema";
-import { can, type SessionAction, sessionActor } from "@/features/auth/permissions";
+import {
+  expenses,
+  notifications,
+  paymentAccounts,
+  playerPayments,
+  sessionPlayers,
+  sessions,
+} from "@/db/schema";
+import {
+  can,
+  type SessionAction,
+  sessionActor,
+} from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature } from "@/lib/image-file";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-import { collectFromPlayers, splitExpense, validatePaymentProof } from "./domain";
+import {
+  collectFromPlayers,
+  splitExpense,
+  validatePaymentProof,
+} from "./domain";
 
 export type PaymentActionState = { error?: string; success?: boolean };
 
-function paymentActionError(error: unknown, fallback: string): PaymentActionState {
+function paymentActionError(
+  error: unknown,
+  fallback: string
+): PaymentActionState {
   return {
-    error: error instanceof Error && !(error instanceof z.ZodError) && error.message ? error.message : fallback,
+    error:
+      error instanceof Error && !(error instanceof z.ZodError) && error.message
+        ? error.message
+        : fallback,
   };
 }
 
@@ -28,25 +49,34 @@ async function guardPaymentManagement(userId: string) {
   await assertRateLimit(
     { scope: "payment-management", limit: 60, windowSeconds: 60 },
     `user:${userId}`,
-    "Payment changes are happening too quickly. Wait a moment and try again.",
+    "Payment changes are happening too quickly. Wait a moment and try again."
   );
 }
 
 async function hasPaymentCapability(
   session: { id: string; hostId: string },
   userId: string,
-  action: Extract<SessionAction, "confirm_payment" | "create_expense">,
+  action: Extract<SessionAction, "confirm_payment" | "create_expense">
 ) {
   const membership =
     session.hostId === userId
       ? null
       : await db.query.sessionPlayers.findFirst({
-          where: and(eq(sessionPlayers.sessionId, session.id), eq(sessionPlayers.userId, userId)),
+          where: and(
+            eq(sessionPlayers.sessionId, session.id),
+            eq(sessionPlayers.userId, userId)
+          ),
         });
-  return can(sessionActor({ userId, hostId: session.hostId, membership }), action);
+  return can(
+    sessionActor({ userId, hostId: session.hostId, membership }),
+    action
+  );
 }
 
-export async function createExpenseState(_: PaymentActionState, formData: FormData): Promise<PaymentActionState> {
+export async function createExpenseState(
+  _: PaymentActionState,
+  formData: FormData
+): Promise<PaymentActionState> {
   const parsed = z
     .object({
       label: z.string().trim().min(2).max(80),
@@ -60,13 +90,20 @@ export async function createExpenseState(_: PaymentActionState, formData: FormDa
       method: formData.get("method"),
       details: formData.get("details"),
     });
-  if (!parsed.success) return { error: "Complete the expense, amount, payment method, and payment details." };
+  if (!parsed.success)
+    return {
+      error:
+        "Complete the expense, amount, payment method, and payment details.",
+    };
   try {
     await createExpense(formData);
     return { success: true };
   } catch (error) {
     unstable_rethrow(error);
-    return paymentActionError(error, "The payment collection could not be created. Try again.");
+    return paymentActionError(
+      error,
+      "The payment collection could not be created. Try again."
+    );
   }
 }
 
@@ -74,24 +111,51 @@ async function createExpense(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
-  if (!session || !(await hasPaymentCapability(session, user.id, "create_expense")))
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+  });
+  if (
+    !session ||
+    !(await hasPaymentCapability(session, user.id, "create_expense"))
+  )
     throw new Error("Only the host can request payment");
-  const limit = await checkRateLimit({ scope: "expense-create", limit: 5, windowSeconds: 86400 }, `user:${user.id}`);
-  if (!limit.allowed) throw new Error("Payment requests are temporarily limited. Try again tomorrow.");
-  const totalCents = Math.round(z.coerce.number().positive().parse(formData.get("total")) * 100);
+  const limit = await checkRateLimit(
+    { scope: "expense-create", limit: 5, windowSeconds: 86400 },
+    `user:${user.id}`
+  );
+  if (!limit.allowed)
+    throw new Error(
+      "Payment requests are temporarily limited. Try again tomorrow."
+    );
+  const totalCents = Math.round(
+    z.coerce.number().positive().parse(formData.get("total")) * 100
+  );
   const method = z.string().trim().min(2).max(40).parse(formData.get("method"));
-  const details = z.string().trim().min(2).max(300).parse(formData.get("details"));
+  const details = z
+    .string()
+    .trim()
+    .min(2)
+    .max(300)
+    .parse(formData.get("details"));
   const label = z.string().trim().min(2).max(80).parse(formData.get("label"));
   const qr = formData.get("qr");
   const receipt = formData.get("receipt");
   let qrStoragePath: string | null = null;
   let receiptStoragePath: string | null = null;
   if (qr instanceof File && qr.size > 0) {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(qr.type) || qr.size > 5 * 1024 * 1024)
+    if (
+      !["image/jpeg", "image/png", "image/webp"].includes(qr.type) ||
+      qr.size > 5 * 1024 * 1024
+    )
       throw new Error("Use a JPG, PNG, or WebP QR image under 5 MB");
-    if (!(await hasValidImageSignature(qr))) throw new Error("That QR file doesn’t appear to be a valid image.");
-    const extension = qr.type === "image/png" ? "png" : qr.type === "image/webp" ? "webp" : "jpg";
+    if (!(await hasValidImageSignature(qr)))
+      throw new Error("That QR file doesn’t appear to be a valid image.");
+    const extension =
+      qr.type === "image/png"
+        ? "png"
+        : qr.type === "image/webp"
+          ? "webp"
+          : "jpg";
     qrStoragePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.storage
@@ -102,20 +166,39 @@ async function createExpense(formData: FormData) {
   if (receipt instanceof File && receipt.size > 0) {
     const receiptError = validatePaymentProof(receipt);
     if (receiptError)
-      throw new Error(receiptError.replace("payment proof", "receipt").replace("Payment proof", "Receipt"));
-    if (!(await hasValidImageSignature(receipt))) throw new Error("That receipt doesn’t appear to be a valid image.");
-    const extension = receipt.type === "image/png" ? "png" : receipt.type === "image/webp" ? "webp" : "jpg";
+      throw new Error(
+        receiptError
+          .replace("payment proof", "receipt")
+          .replace("Payment proof", "Receipt")
+      );
+    if (!(await hasValidImageSignature(receipt)))
+      throw new Error("That receipt doesn’t appear to be a valid image.");
+    const extension =
+      receipt.type === "image/png"
+        ? "png"
+        : receipt.type === "image/webp"
+          ? "webp"
+          : "jpg";
     receiptStoragePath = `${sessionId}/expense-${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.storage
       .from("booking-screenshots")
-      .upload(receiptStoragePath, receipt, { contentType: receipt.type, upsert: false });
+      .upload(receiptStoragePath, receipt, {
+        contentType: receipt.type,
+        upsert: false,
+      });
     if (error) throw new Error("The receipt could not be uploaded");
   }
   await db.transaction(async (tx) => {
     const [account] = await tx
       .insert(paymentAccounts)
-      .values({ ownerId: user.id, method, label: method, details, qrStoragePath })
+      .values({
+        ownerId: user.id,
+        method,
+        label: method,
+        details,
+        qrStoragePath,
+      })
       .returning();
     const [expense] = await tx
       .insert(expenses)
@@ -132,7 +215,12 @@ async function createExpense(formData: FormData) {
     const players = await tx
       .select()
       .from(sessionPlayers)
-      .where(and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.rsvp, "going")));
+      .where(
+        and(
+          eq(sessionPlayers.sessionId, sessionId),
+          eq(sessionPlayers.rsvp, "going")
+        )
+      );
     const payingIds = collectFromPlayers(players, user.id);
     const shares = splitExpense(totalCents, payingIds);
     if (payingIds.length)
@@ -141,52 +229,81 @@ async function createExpense(formData: FormData) {
           expenseId: expense.id,
           sessionPlayerId,
           amountCents: shares[sessionPlayerId],
-        })),
+        }))
       );
     const recipients = players
       .filter((player) => payingIds.includes(player.id) && player.userId)
       .map((player) => player.userId!);
     if (recipients.length)
-      await tx
-        .insert(notifications)
-        .values(recipients.map((userId) => ({ userId, sessionId, type: "payment_requested", payload: {} })));
+      await tx.insert(notifications).values(
+        recipients.map((userId) => ({
+          userId,
+          sessionId,
+          type: "payment_requested",
+          payload: {},
+        }))
+      );
   });
   revalidatePath(`/games/${sessionId}/payments`);
 }
 
-export async function markPaymentSent(_: PaymentActionState, formData: FormData): Promise<PaymentActionState> {
+export async function markPaymentSent(
+  _: PaymentActionState,
+  formData: FormData
+): Promise<PaymentActionState> {
   const paymentId = z.uuid().safeParse(formData.get("paymentId"));
   if (!paymentId.success) return { error: "This payment could not be found." };
   const rows = await db
-    .select({ payment: playerPayments, player: sessionPlayers, expense: expenses, session: sessions })
+    .select({
+      payment: playerPayments,
+      player: sessionPlayers,
+      expense: expenses,
+      session: sessions,
+    })
     .from(playerPayments)
-    .innerJoin(sessionPlayers, eq(playerPayments.sessionPlayerId, sessionPlayers.id))
+    .innerJoin(
+      sessionPlayers,
+      eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+    )
     .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
     .innerJoin(sessions, eq(expenses.sessionId, sessions.id))
     .where(eq(playerPayments.id, paymentId.data))
     .limit(1);
   const row = rows[0];
   if (!row) return { error: "This payment could not be found." };
-  const viewer = await getSessionViewer(row.expense.sessionId, String(formData.get("slug") ?? ""));
+  const viewer = await getSessionViewer(
+    row.expense.sessionId,
+    String(formData.get("slug") ?? "")
+  );
   if (!viewer || viewer.player.id !== row.player.id)
     return { error: "You can only submit proof for your own payment." };
   const proof = formData.get("proof");
-  if (!(proof instanceof File)) return { error: "Add one payment screenshot before submitting." };
+  if (!(proof instanceof File))
+    return { error: "Add one payment screenshot before submitting." };
   const proofError = validatePaymentProof(proof);
   if (proofError) return { error: proofError };
-  if (!(await hasValidImageSignature(proof))) return { error: "That file doesn’t appear to be a valid image." };
+  if (!(await hasValidImageSignature(proof)))
+    return { error: "That file doesn’t appear to be a valid image." };
   const limit = await checkRateLimit(
     { scope: "payment-proof", limit: 20, windowSeconds: 86400 },
-    `player:${viewer.player.id}`,
+    `player:${viewer.player.id}`
   );
-  if (!limit.allowed) return { error: "Payment proof uploads are temporarily limited. Try again tomorrow." };
+  if (!limit.allowed)
+    return {
+      error:
+        "Payment proof uploads are temporarily limited. Try again tomorrow.",
+    };
 
   const path = `${row.expense.sessionId}/${row.payment.id}`;
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.storage
     .from("payment-proofs")
     .upload(path, proof, { contentType: proof.type, upsert: true });
-  if (error) return { error: "The proof could not be uploaded. Check your connection and try again." };
+  if (error)
+    return {
+      error:
+        "The proof could not be uploaded. Check your connection and try again.",
+    };
 
   await db.transaction(async (tx) => {
     await tx
@@ -200,9 +317,12 @@ export async function markPaymentSent(_: PaymentActionState, formData: FormData)
         confirmedById: null,
       })
       .where(eq(playerPayments.id, row.payment.id));
-    await tx
-      .insert(notifications)
-      .values({ userId: row.session.hostId, sessionId: row.expense.sessionId, type: "payment_sent", payload: {} });
+    await tx.insert(notifications).values({
+      userId: row.session.hostId,
+      sessionId: row.expense.sessionId,
+      type: "payment_sent",
+      payload: {},
+    });
   });
   revalidatePath(`/games/${row.expense.sessionId}/payments`);
   const slug = formData.get("slug");
@@ -215,41 +335,65 @@ export async function confirmPayment(formData: FormData) {
   await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const rows = await db
-    .select({ payment: playerPayments, player: sessionPlayers, session: sessions })
+    .select({
+      payment: playerPayments,
+      player: sessionPlayers,
+      session: sessions,
+    })
     .from(playerPayments)
-    .innerJoin(sessionPlayers, eq(playerPayments.sessionPlayerId, sessionPlayers.id))
+    .innerJoin(
+      sessionPlayers,
+      eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+    )
     .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
     .innerJoin(sessions, eq(expenses.sessionId, sessions.id))
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+  if (
+    !row ||
+    !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
+  )
     throw new Error("Only a host or co-host can confirm payments");
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
-      .set({ status: "confirmed", reviewNote: null, confirmedAt: new Date(), confirmedById: user.id })
+      .set({
+        status: "confirmed",
+        reviewNote: null,
+        confirmedAt: new Date(),
+        confirmedById: user.id,
+      })
       .where(eq(playerPayments.id, paymentId));
     if (row.player.userId)
-      await tx
-        .insert(notifications)
-        .values({ userId: row.player.userId, sessionId: row.session.id, type: "payment_confirmed", payload: {} });
+      await tx.insert(notifications).values({
+        userId: row.player.userId,
+        sessionId: row.session.id,
+        type: "payment_confirmed",
+        payload: {},
+      });
   });
   revalidatePath(`/games/${row.session.id}/payments`);
 }
 
 export async function updatePlayerPaymentAmountState(
   _: PaymentActionState,
-  formData: FormData,
+  formData: FormData
 ): Promise<PaymentActionState> {
-  const amount = z.coerce.number().nonnegative().safeParse(formData.get("amount"));
+  const amount = z.coerce
+    .number()
+    .nonnegative()
+    .safeParse(formData.get("amount"));
   if (!amount.success) return { error: "Enter an amount of zero or more." };
   try {
     await updatePlayerPaymentAmount(formData);
     return { success: true };
   } catch (error) {
     unstable_rethrow(error);
-    return paymentActionError(error, "The player share could not be saved. Try again.");
+    return paymentActionError(
+      error,
+      "The player share could not be saved. Try again."
+    );
   }
 }
 
@@ -257,24 +401,38 @@ async function updatePlayerPaymentAmount(formData: FormData) {
   const user = await requireUser();
   await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
-  const amountCents = Math.round(z.coerce.number().nonnegative().parse(formData.get("amount")) * 100);
+  const amountCents = Math.round(
+    z.coerce.number().nonnegative().parse(formData.get("amount")) * 100
+  );
   const rows = await db
     .select({ player: sessionPlayers, session: sessions })
     .from(playerPayments)
-    .innerJoin(sessionPlayers, eq(playerPayments.sessionPlayerId, sessionPlayers.id))
+    .innerJoin(
+      sessionPlayers,
+      eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+    )
     .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
     .innerJoin(sessions, eq(expenses.sessionId, sessions.id))
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+  if (
+    !row ||
+    !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
+  )
     throw new Error("Only a host or co-host can change payment amounts");
   await db.transaction(async (tx) => {
-    await tx.update(playerPayments).set({ amountCents, updatedAt: new Date() }).where(eq(playerPayments.id, paymentId));
+    await tx
+      .update(playerPayments)
+      .set({ amountCents, updatedAt: new Date() })
+      .where(eq(playerPayments.id, paymentId));
     if (row.player.userId)
-      await tx
-        .insert(notifications)
-        .values({ userId: row.player.userId, sessionId: row.session.id, type: "payment_updated", payload: {} });
+      await tx.insert(notifications).values({
+        userId: row.player.userId,
+        sessionId: row.session.id,
+        type: "payment_updated",
+        payload: {},
+      });
   });
   revalidatePath(`/games/${row.session.id}/payments`);
 }
@@ -291,38 +449,56 @@ export async function togglePaymentExcluded(formData: FormData) {
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+  if (
+    !row ||
+    !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
+  )
     throw new Error("Only a host or co-host can exclude players from a split");
   if (row.payment.status === "sent" || row.payment.status === "confirmed")
     throw new Error("Reviewed payments cannot be excluded");
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
-      .set({ status: row.payment.status === "excluded" ? "unpaid" : "excluded", updatedAt: new Date() })
+      .set({
+        status: row.payment.status === "excluded" ? "unpaid" : "excluded",
+        updatedAt: new Date(),
+      })
       .where(eq(playerPayments.id, paymentId));
     const player = await tx.query.sessionPlayers.findFirst({
       where: eq(sessionPlayers.id, row.payment.sessionPlayerId),
     });
     if (player?.userId)
-      await tx
-        .insert(notifications)
-        .values({ userId: player.userId, sessionId: row.session.id, type: "payment_updated", payload: {} });
+      await tx.insert(notifications).values({
+        userId: player.userId,
+        sessionId: row.session.id,
+        type: "payment_updated",
+        payload: {},
+      });
   });
   revalidatePath(`/games/${row.session.id}/payments`);
 }
 
 export async function requestNewPaymentProofState(
   _: PaymentActionState,
-  formData: FormData,
+  formData: FormData
 ): Promise<PaymentActionState> {
-  const note = z.string().trim().min(2).max(240).safeParse(formData.get("note"));
-  if (!note.success) return { error: "Add a short note explaining what needs to be clearer." };
+  const note = z
+    .string()
+    .trim()
+    .min(2)
+    .max(240)
+    .safeParse(formData.get("note"));
+  if (!note.success)
+    return { error: "Add a short note explaining what needs to be clearer." };
   try {
     await requestNewPaymentProof(formData);
     return { success: true };
   } catch (error) {
     unstable_rethrow(error);
-    return paymentActionError(error, "The proof request could not be sent. Try again.");
+    return paymentActionError(
+      error,
+      "The proof request could not be sent. Try again."
+    );
   }
 }
 
@@ -334,18 +510,29 @@ async function requestNewPaymentProof(formData: FormData) {
   const rows = await db
     .select({ player: sessionPlayers, session: sessions })
     .from(playerPayments)
-    .innerJoin(sessionPlayers, eq(playerPayments.sessionPlayerId, sessionPlayers.id))
+    .innerJoin(
+      sessionPlayers,
+      eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+    )
     .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
     .innerJoin(sessions, eq(expenses.sessionId, sessions.id))
     .where(eq(playerPayments.id, paymentId))
     .limit(1);
   const row = rows[0];
-  if (!row || !(await hasPaymentCapability(row.session, user.id, "confirm_payment")))
+  if (
+    !row ||
+    !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
+  )
     throw new Error("Only a host or co-host can review payment proof");
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
-      .set({ status: "unpaid", reviewNote: note, confirmedAt: null, confirmedById: null })
+      .set({
+        status: "unpaid",
+        reviewNote: note,
+        confirmedAt: null,
+        confirmedById: null,
+      })
       .where(eq(playerPayments.id, paymentId));
     if (row.player.userId)
       await tx.insert(notifications).values({

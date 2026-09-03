@@ -23,8 +23,12 @@ vi.mock("@/features/auth/permissions", () => ({
   can: mocks.can,
   sessionActor: vi.fn(() => ({ role: "host" })),
 }));
-vi.mock("@/features/analytics/events", () => ({ trackSessionMilestone: mocks.trackSessionMilestone }));
-vi.mock("@/features/payments/sync", () => ({ reconcileUnpaidExpenseShares: mocks.reconcile }));
+vi.mock("@/features/analytics/events", () => ({
+  trackSessionMilestone: mocks.trackSessionMilestone,
+}));
+vi.mock("@/features/payments/sync", () => ({
+  reconcileUnpaidExpenseShares: mocks.reconcile,
+}));
 vi.mock("@/lib/rate-limit", () => ({ assertRateLimit: mocks.assertRateLimit }));
 vi.mock("@/db/client", () => ({
   db: {
@@ -51,19 +55,24 @@ const session = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.findSession.mockResolvedValue(session);
-  mocks.findMembership.mockResolvedValue({ role: "host", rsvp: "going", leftAt: null });
+  mocks.findMembership.mockResolvedValue({
+    role: "host",
+    rsvp: "going",
+    leftAt: null,
+  });
   mocks.can.mockReturnValue(true);
   mocks.selectWhere.mockResolvedValue([]);
   mocks.returning.mockResolvedValue([{ id: "player-1" }]);
   mocks.insertValues.mockImplementation(() => ({ returning: mocks.returning }));
   mocks.updateSet.mockImplementation(() => ({ where: mocks.updateWhere }));
-  mocks.transaction.mockImplementation(async (work: (tx: unknown) => Promise<unknown>) =>
-    work({
-      execute: mocks.execute,
-      select: () => ({ from: () => ({ where: mocks.selectWhere }) }),
-      insert: () => ({ values: mocks.insertValues }),
-      update: () => ({ set: mocks.updateSet }),
-    }),
+  mocks.transaction.mockImplementation(
+    async (work: (tx: unknown) => Promise<unknown>) =>
+      work({
+        execute: mocks.execute,
+        select: () => ({ from: () => ({ where: mocks.selectWhere }) }),
+        insert: () => ({ values: mocks.insertValues }),
+        update: () => ({ set: mocks.updateSet }),
+      })
   );
 });
 
@@ -77,7 +86,7 @@ describe("manageRoster", () => {
         actorUserId: "player-1",
         sessionId: session.id,
         playerEntry: "Guest Player",
-      }),
+      })
     ).resolves.toEqual({ error: "Only a host or co-host can add players." });
     expect(mocks.transaction).not.toHaveBeenCalled();
 
@@ -89,8 +98,10 @@ describe("manageRoster", () => {
         actorUserId: "host-1",
         sessionId: session.id,
         playerEntry: "Guest Player",
-      }),
-    ).resolves.toEqual({ error: "Unlock the roster before adding another player." });
+      })
+    ).resolves.toEqual({
+      error: "Unlock the roster before adding another player.",
+    });
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
@@ -102,12 +113,16 @@ describe("manageRoster", () => {
         sessionId: session.id,
         playerEntry: "Guest Player",
         skillLevel: "casual",
-      }),
+      })
     ).resolves.toEqual({ success: true, playerOutcome: "added" });
 
     expect(mocks.transaction).toHaveBeenCalledOnce();
     expect(mocks.insertValues).toHaveBeenCalledWith(
-      expect.objectContaining({ sessionId: session.id, guestName: "Guest Player", skillLevel: "casual" }),
+      expect.objectContaining({
+        sessionId: session.id,
+        guestName: "Guest Player",
+        skillLevel: "casual",
+      })
     );
     expect(mocks.reconcile).toHaveBeenCalledWith(session.id);
     expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual([
@@ -121,7 +136,11 @@ describe("manageRoster", () => {
   });
 
   it("marks a host join-request notification read after approval", async () => {
-    mocks.findMembership.mockResolvedValue({ role: "cohost", rsvp: "going", leftAt: null });
+    mocks.findMembership.mockResolvedValue({
+      role: "cohost",
+      rsvp: "going",
+      leftAt: null,
+    });
     mocks.selectWhere.mockResolvedValue([
       {
         id: "pending-1",
@@ -139,7 +158,7 @@ describe("manageRoster", () => {
         actorUserId: "cohost-1",
         sessionId: session.id,
         sessionPlayerId: "pending-1",
-      }),
+      })
     ).resolves.toEqual({ success: true, rsvp: "going" });
 
     expect(mocks.updateSet).toHaveBeenCalledWith({ readAt: expect.any(Date) });
@@ -165,7 +184,7 @@ describe("manageRoster", () => {
         actorUserId: "host-1",
         sessionId: session.id,
         sessionPlayerId: "pending-1",
-      }),
+      })
     ).resolves.toEqual({ success: true });
 
     expect(mocks.updateSet).toHaveBeenCalledWith({ readAt: expect.any(Date) });
@@ -178,7 +197,7 @@ describe("manageRoster", () => {
         guestName: null,
         rsvp: "going",
         waitlistPosition: null,
-      })),
+      }))
     );
 
     await manageRoster({

@@ -18,6 +18,8 @@ describe("ThemeToggle", () => {
 
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("relay-theme")).toBe("dark");
-    expect(screen.getByRole("button", { name: "Use light mode" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Use light mode" })
+    ).toBeVisible();
   });
 });

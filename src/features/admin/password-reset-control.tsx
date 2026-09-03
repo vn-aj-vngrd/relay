@@ -27,9 +27,18 @@ function ResetButton() {
   );
 }
 
-export function PasswordResetControl({ targetId, email }: { targetId: string; email: string }) {
+export function PasswordResetControl({
+  targetId,
+  email,
+}: {
+  targetId: string;
+  email: string;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [state, action] = useActionState<AdminActionState, FormData>(resetUserPasswordAction, {});
+  const [state, action] = useActionState<AdminActionState, FormData>(
+    resetUserPasswordAction,
+    {}
+  );
   const [copied, setCopied] = useState(false);
   const preserveValues = usePreserveFormValuesOnError(state);
 
@@ -39,17 +48,23 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
       <div>
         <Alert variant="success">{state.success}</Alert>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Share this privately. It is shown once. The player signs in with it, verifies their existing authenticator,
-          then chooses a new password.
+          Share this privately. It is shown once. The player signs in with it,
+          verifies their existing authenticator, then chooses a new password.
         </p>
         <dl className="mt-4 divide-y divide-line rounded-lg bg-surface-strong px-4">
           <div className="py-3">
             <dt className="text-xs font-semibold text-muted">Account</dt>
-            <dd className="mt-1 break-all text-sm font-medium">{state.accountEmail}</dd>
+            <dd className="mt-1 break-all text-sm font-medium">
+              {state.accountEmail}
+            </dd>
           </div>
           <div className="py-3">
-            <dt className="text-xs font-semibold text-muted">Temporary password</dt>
-            <dd className="score mt-1 break-all text-sm font-bold">{state.temporaryPassword}</dd>
+            <dt className="text-xs font-semibold text-muted">
+              Temporary password
+            </dt>
+            <dd className="score mt-1 break-all text-sm font-bold">
+              {state.temporaryPassword}
+            </dd>
           </div>
         </dl>
         <Button
@@ -61,7 +76,11 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
             setCopied(true);
           }}
         >
-          {copied ? <Check aria-hidden size={17} /> : <Copy aria-hidden size={17} />}
+          {copied ? (
+            <Check aria-hidden size={17} />
+          ) : (
+            <Copy aria-hidden size={17} />
+          )}
           {copied ? "Copied" : "Copy credentials"}
         </Button>
       </div>
@@ -70,12 +89,21 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
 
   return (
     <div>
-      <Button type="button" variant="secondary" onClick={() => dialogRef.current?.showModal()}>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => dialogRef.current?.showModal()}
+      >
         <Key aria-hidden size={17} />
         Reset password
       </Button>
       <Dialog ref={dialogRef}>
-        <form noValidate action={action} onSubmitCapture={preserveValues} className="p-5 sm:p-6">
+        <form
+          noValidate
+          action={action}
+          onSubmitCapture={preserveValues}
+          className="p-5 sm:p-6"
+        >
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">
@@ -84,14 +112,18 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
             <div>
               <h2 className="text-lg font-[680]">Reset this password?</h2>
               <p className="mt-2 text-sm leading-6 text-muted">
-                Relay will replace the password for {email} and show a one-time temporary password. Existing
-                authenticator factors stay connected and are still required.
+                Relay will replace the password for {email} and show a one-time
+                temporary password. Existing authenticator factors stay
+                connected and are still required.
               </p>
             </div>
           </div>
           {state.error ? <Alert className="mt-5">{state.error}</Alert> : null}
           <div className="mt-5">
-            <label htmlFor="password-reset-reason" className="text-sm font-semibold">
+            <label
+              htmlFor="password-reset-reason"
+              className="text-sm font-semibold"
+            >
               Reason
             </label>
             <textarea
@@ -106,7 +138,11 @@ export function PasswordResetControl({ targetId, email }: { targetId: string; em
             />
           </div>
           <div className="mt-7 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
               Keep unchanged
             </Button>
             <ResetButton />

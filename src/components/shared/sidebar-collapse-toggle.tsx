@@ -24,7 +24,8 @@ export function SidebarCollapseToggle() {
 
   const toggle = () => {
     const next = compact ? "expanded" : "compact";
-    if (next === "compact") document.documentElement.dataset.sidebar = "compact";
+    if (next === "compact")
+      document.documentElement.dataset.sidebar = "compact";
     else delete document.documentElement.dataset.sidebar;
     localStorage.setItem(storageKey, next);
     window.dispatchEvent(new Event(changeEvent));

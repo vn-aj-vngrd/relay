@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("qrcode", () => ({ toCanvas: mocks.toCanvas }));
-vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: mocks.track }));
+vi.mock("@/features/analytics/actions", () => ({
+  trackSharedSessionEvent: mocks.track,
+}));
 
 import { GameQrShare } from "./game-qr-share";
 
@@ -22,11 +24,23 @@ beforeEach(() => {
   };
   Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
     configurable: true,
-    value: vi.fn((callback: BlobCallback) => callback(new Blob(["qr"], { type: "image/png" }))),
+    value: vi.fn((callback: BlobCallback) =>
+      callback(new Blob(["qr"], { type: "image/png" }))
+    ),
   });
-  vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:qr"), revokeObjectURL: vi.fn() }));
-  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
-  Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } });
+  vi.stubGlobal(
+    "URL",
+    Object.assign(URL, {
+      createObjectURL: vi.fn(() => "blob:qr"),
+      revokeObjectURL: vi.fn(),
+    })
+  );
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+    () => undefined
+  );
+  Object.assign(navigator, {
+    clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
 });
 
 afterEach(() => {
@@ -54,12 +68,18 @@ describe("GameQrShare", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
 
-    expect(await screen.findByRole("dialog", { name: "Scan to join Friends Night" })).toBeVisible();
+    expect(
+      await screen.findByRole("dialog", { name: "Scan to join Friends Night" })
+    ).toBeVisible();
     await waitFor(() => expect(mocks.toCanvas).toHaveBeenCalledOnce());
     expect(mocks.toCanvas).toHaveBeenCalledWith(
       expect.any(HTMLCanvasElement),
       "http://localhost:3000/s/friends-night",
-      expect.objectContaining({ width: 1024, margin: 4, errorCorrectionLevel: "M" }),
+      expect.objectContaining({
+        width: 1024,
+        margin: 4,
+        errorCorrectionLevel: "M",
+      })
     );
     const qr = screen.getByRole("img", { name: "QR code for Friends Night" });
     expect(qr).toBeVisible();
@@ -72,16 +92,25 @@ describe("GameQrShare", () => {
     render(<GameQrShare {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
     await screen.findByRole("button", { name: "Download PNG" });
-    await waitFor(() => expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled()
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
     await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith("http://localhost:3000/s/friends-night"),
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "http://localhost:3000/s/friends-night"
+      )
     );
-    expect(mocks.track).toHaveBeenCalledWith({ sessionId: props.sessionId, event: "invite_shared" });
+    expect(mocks.track).toHaveBeenCalledWith({
+      sessionId: props.sessionId,
+      event: "invite_shared",
+    });
 
     fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
-    await waitFor(() => expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled()
+    );
     expect(mocks.track).toHaveBeenCalledTimes(2);
   });
 

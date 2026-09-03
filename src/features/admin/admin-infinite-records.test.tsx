@@ -10,7 +10,10 @@ beforeEach(() => {
   vi.stubGlobal(
     "IntersectionObserver",
     class {
-      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+      constructor(
+        callback: IntersectionObserverCallback,
+        options?: IntersectionObserverInit
+      ) {
         observerCallback = callback;
         observerOptions = options;
       }
@@ -23,7 +26,7 @@ beforeEach(() => {
       root = null;
       rootMargin = "0px";
       thresholds = [];
-    },
+    }
   );
 });
 
@@ -57,7 +60,7 @@ describe("AdminInfiniteRecords", () => {
         resource="users"
         initialPage={{ items: [first], nextCursor: null }}
         emptyMessage="No users"
-      />,
+      />
     );
 
     expect(screen.getByText("One Player")).toBeVisible();
@@ -71,7 +74,7 @@ describe("AdminInfiniteRecords", () => {
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ items: [first, second], nextCursor: null }),
-      }),
+      })
     );
     render(
       <div data-admin-scroll data-testid="admin-scroll-root">
@@ -80,19 +83,26 @@ describe("AdminInfiniteRecords", () => {
           initialPage={{ items: [first], nextCursor: "next-page" }}
           emptyMessage="No users"
         />
-      </div>,
+      </div>
     );
 
     expect(observerOptions?.root).toBe(screen.getByTestId("admin-scroll-root"));
-    expect(screen.getByRole("button", { name: "Load more records" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Load more records" })
+    ).toBeVisible();
 
     await act(async () => {
-      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+      observerCallback(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver
+      );
     });
 
     await waitFor(() => expect(screen.getByText("Two Player")).toBeVisible());
     expect(screen.getAllByText("One Player")).toHaveLength(1);
     expect(screen.getByText("All 2 matching records loaded.")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Load more records" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more records" })
+    ).not.toBeInTheDocument();
   });
 });

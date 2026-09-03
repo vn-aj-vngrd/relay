@@ -20,12 +20,16 @@ describe("InstallAppControl", () => {
     fireEvent.click(screen.getByRole("button", { name: "Install Relay" }));
 
     await waitFor(() => expect(prompt).toHaveBeenCalledOnce());
-    expect(await screen.findByText("Relay was added to this device.")).toBeVisible();
+    expect(
+      await screen.findByText("Relay was added to this device.")
+    ).toBeVisible();
   });
 
   it("shows platform-neutral manual guidance when no prompt is available", () => {
     render(<InstallAppControl />);
     expect(screen.getByText(/Use your browser menu/)).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Install Relay" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Install Relay" })
+    ).not.toBeInTheDocument();
   });
 });

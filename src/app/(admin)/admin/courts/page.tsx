@@ -6,7 +6,14 @@ import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminVenues } from "@/features/admin/queries";
 
-const statuses = ["", "pending", "unverified", "verified", "rejected", "archived"];
+const statuses = [
+  "",
+  "pending",
+  "unverified",
+  "verified",
+  "rejected",
+  "archived",
+];
 
 export default async function AdminCourtsPage({
   searchParams,
@@ -32,7 +39,11 @@ export default async function AdminCourtsPage({
           </Link>
         }
       />
-      <form noValidate role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
+      <form
+        noValidate
+        role="search"
+        className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center"
+      >
         <label className="relative flex-1">
           <span className="sr-only">Search courts</span>
           <MagnifyingGlass
@@ -57,7 +68,9 @@ export default async function AdminCourtsPage({
           className="!mt-0 !h-10 min-w-40"
           options={statuses.map((value) => ({
             value,
-            label: value ? value[0].toUpperCase() + value.slice(1) : "All statuses",
+            label: value
+              ? value[0].toUpperCase() + value.slice(1)
+              : "All statuses",
           }))}
         />
         <button className="pressable h-10 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover">

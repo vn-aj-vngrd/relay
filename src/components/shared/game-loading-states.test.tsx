@@ -26,12 +26,19 @@ describe("authenticated game loading states", () => {
     ["Story", "Loading session story", StoryLoading],
   ] as const;
 
-  it.each(states)("keeps the %s title readable while only content is busy", (title, loadingLabel, Loading) => {
-    render(<Loading />);
-    expect(screen.getByRole("heading", { name: title })).toBeVisible();
-    expect(screen.getByRole("status", { name: loadingLabel })).toHaveAttribute("aria-busy", "true");
-    expect(screen.queryByRole("navigation", { name: "Game navigation" })).not.toBeInTheDocument();
-  });
+  it.each(states)(
+    "keeps the %s title readable while only content is busy",
+    (title, loadingLabel, Loading) => {
+      render(<Loading />);
+      expect(screen.getByRole("heading", { name: title })).toBeVisible();
+      expect(
+        screen.getByRole("status", { name: loadingLabel })
+      ).toHaveAttribute("aria-busy", "true");
+      expect(
+        screen.queryByRole("navigation", { name: "Game navigation" })
+      ).not.toBeInTheDocument();
+    }
+  );
 });
 
 describe("public game loading states", () => {
@@ -44,9 +51,14 @@ describe("public game loading states", () => {
     ["Story", "Loading session story", PublicStoryLoading],
   ] as const;
 
-  it.each(states)("keeps the public %s shell and marks only its content busy", (_tab, loadingLabel, Loading) => {
-    render(<Loading />);
-    expect(screen.getByRole("main")).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: loadingLabel })).toHaveAttribute("aria-busy", "true");
-  });
+  it.each(states)(
+    "keeps the public %s shell and marks only its content busy",
+    (_tab, loadingLabel, Loading) => {
+      render(<Loading />);
+      expect(screen.getByRole("main")).toBeInTheDocument();
+      expect(
+        screen.getByRole("status", { name: loadingLabel })
+      ).toHaveAttribute("aria-busy", "true");
+    }
+  );
 });

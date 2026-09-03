@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminVenueChangeRequest } from "@/features/admin/queries";
-import { applyVenueChangeRequestAction, resolveVenueChangeRequestAction } from "@/features/venues/actions";
+import {
+  applyVenueChangeRequestAction,
+  resolveVenueChangeRequestAction,
+} from "@/features/venues/actions";
 import { venueProposedChangesSchema } from "@/features/venues/change-requests";
 
 function valueLabel(value: unknown) {
@@ -14,7 +17,9 @@ function valueLabel(value: unknown) {
     if (!value.length) return "None listed";
     return value
       .map((item) =>
-        typeof item === "object" && item ? Object.values(item as Record<string, unknown>).join(" · ") : String(item),
+        typeof item === "object" && item
+          ? Object.values(item as Record<string, unknown>).join(" · ")
+          : String(item)
       )
       .join("; ");
   }
@@ -22,20 +27,35 @@ function valueLabel(value: unknown) {
 }
 
 function fieldLabel(value: string) {
-  return value.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+  return value
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (letter) => letter.toUpperCase());
 }
 
-export default async function AdminCourtRequestPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminCourtRequestPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const request = await getAdminVenueChangeRequest((await params).id);
   if (!request) notFound();
-  const proposal = venueProposedChangesSchema.safeParse(request.proposedChanges);
-  if (!proposal.success) throw new Error("This stored court request is invalid.");
-  const resolved = ["approved", "rejected", "duplicate", "withdrawn"].includes(request.status);
+  const proposal = venueProposedChangesSchema.safeParse(
+    request.proposedChanges
+  );
+  if (!proposal.success)
+    throw new Error("This stored court request is invalid.");
+  const resolved = ["approved", "rejected", "duplicate", "withdrawn"].includes(
+    request.status
+  );
 
   return (
     <div>
       <AdminPageHeading
-        title={request.requestType === "create" ? "Missing court request" : "Court update request"}
+        title={
+          request.requestType === "create"
+            ? "Missing court request"
+            : "Court update request"
+        }
         description={`${request.status.replaceAll("_", " ")} · submitted by ${request.submitter?.name ?? "Unknown player"}`}
         action={
           request.venue ? (
@@ -54,16 +74,25 @@ export default async function AdminCourtRequestPage({ params }: { params: Promis
           <h2 className="text-lg font-[680]">Proposed information</h2>
           <dl className="mt-4 divide-y divide-line border-y border-line">
             {Object.entries(proposal.data).map(([field, value]) => (
-              <div key={field} className="grid gap-1 py-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
-                <dt className="text-sm font-semibold text-muted">{fieldLabel(field)}</dt>
-                <dd className="break-words text-sm font-medium text-ink">{valueLabel(value)}</dd>
+              <div
+                key={field}
+                className="grid gap-1 py-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4"
+              >
+                <dt className="text-sm font-semibold text-muted">
+                  {fieldLabel(field)}
+                </dt>
+                <dd className="break-words text-sm font-medium text-ink">
+                  {valueLabel(value)}
+                </dd>
               </div>
             ))}
           </dl>
           {request.note ? (
             <div className="mt-6">
               <h2 className="text-sm font-[680]">Contributor note</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">{request.note}</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">
+                {request.note}
+              </p>
             </div>
           ) : null}
         </section>
@@ -109,14 +138,21 @@ export default async function AdminCourtRequestPage({ params }: { params: Promis
                 </button>
                 {request.requestType === "create" ? (
                   <p className="mt-2 text-xs leading-5 text-muted">
-                    Creates a private draft. Add an exact pin and finish verification in the court editor before
-                    publishing.
+                    Creates a private draft. Add an exact pin and finish
+                    verification in the court editor before publishing.
                   </p>
                 ) : null}
               </form>
-              <form action={resolveVenueChangeRequestAction} className="space-y-3 border-t border-line pt-5" noValidate>
+              <form
+                action={resolveVenueChangeRequestAction}
+                className="space-y-3 border-t border-line pt-5"
+                noValidate
+              >
                 <input type="hidden" name="requestId" value={request.id} />
-                <label htmlFor="resolutionNote" className="text-sm font-semibold">
+                <label
+                  htmlFor="resolutionNote"
+                  className="text-sm font-semibold"
+                >
                   Resolution note
                 </label>
                 <textarea
@@ -149,8 +185,14 @@ export default async function AdminCourtRequestPage({ params }: { params: Promis
             </>
           ) : (
             <div className="border-y border-line py-5 text-sm">
-              <p className="font-[680] capitalize">{request.status.replaceAll("_", " ")}</p>
-              {request.resolutionNote ? <p className="mt-2 leading-5 text-muted">{request.resolutionNote}</p> : null}
+              <p className="font-[680] capitalize">
+                {request.status.replaceAll("_", " ")}
+              </p>
+              {request.resolutionNote ? (
+                <p className="mt-2 leading-5 text-muted">
+                  {request.resolutionNote}
+                </p>
+              ) : null}
             </div>
           )}
         </aside>

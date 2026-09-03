@@ -1,15 +1,27 @@
-import { ArrowSquareOut, EnvelopeSimple, UserCircle } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowSquareOut,
+  EnvelopeSimple,
+  UserCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { AdminDate } from "@/features/admin/presentation";
 import { AdminFeedbackReviewForm } from "@/features/feedback/admin-feedback-review-form";
-import { type FeedbackArea, feedbackAreaLabels, feedbackTypeLabels } from "@/features/feedback/domain";
+import {
+  type FeedbackArea,
+  feedbackAreaLabels,
+  feedbackTypeLabels,
+} from "@/features/feedback/domain";
 import { FeedbackStatusBadge } from "@/features/feedback/feedback-status";
 import { getAdminFeedbackDetail } from "@/features/feedback/queries";
 
-export default async function AdminFeedbackDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminFeedbackDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const record = await getAdminFeedbackDetail(id);
   if (!record) notFound();
@@ -27,11 +39,16 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
         <main>
           <section aria-labelledby="submission-details">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-              <span className="font-semibold text-primary">{feedbackTypeLabels[feedback.type]}</span>
-              <span className="text-muted">{feedbackAreaLabels[feedback.area as FeedbackArea]}</span>
+              <span className="font-semibold text-primary">
+                {feedbackTypeLabels[feedback.type]}
+              </span>
+              <span className="text-muted">
+                {feedbackAreaLabels[feedback.area as FeedbackArea]}
+              </span>
               {feedback.experience ? (
                 <span className="text-muted">
-                  Game felt {feedback.experience === "smooth" ? "smooth" : "difficult"}
+                  Game felt{" "}
+                  {feedback.experience === "smooth" ? "smooth" : "difficult"}
                 </span>
               ) : null}
               <AdminDate value={feedback.createdAt} includeTime />
@@ -46,7 +63,9 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
               <div className="mt-4 flex items-center justify-between gap-4 border-b border-line pb-4 text-sm">
                 <div className="min-w-0">
                   <p className="font-semibold">Related Relay page</p>
-                  <p className="mt-1 truncate text-muted">{feedback.pagePath}</p>
+                  <p className="mt-1 truncate text-muted">
+                    {feedback.pagePath}
+                  </p>
                 </div>
                 <Link
                   href={feedback.pagePath}
@@ -63,7 +82,9 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
             <h2 id="review-feedback" className="text-lg font-bold">
               Review
             </h2>
-            <p className="mt-1 text-sm text-muted">Players see the status, but never the internal note.</p>
+            <p className="mt-1 text-sm text-muted">
+              Players see the status, but never the internal note.
+            </p>
             <div className="mt-4">
               <AdminFeedbackReviewForm
                 feedbackId={feedback.id}
@@ -74,15 +95,24 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
           </section>
         </main>
 
-        <aside aria-labelledby="submitted-by" className="lg:border-l lg:border-line lg:pl-7">
+        <aside
+          aria-labelledby="submitted-by"
+          className="lg:border-l lg:border-line lg:pl-7"
+        >
           <h2 id="submitted-by" className="text-sm font-bold">
             Submitted by
           </h2>
           <div className="mt-3 border-y border-line py-4">
             <div className="flex items-start gap-3">
-              <UserCircle aria-hidden size={20} className="mt-0.5 shrink-0 text-muted" />
+              <UserCircle
+                aria-hidden
+                size={20}
+                className="mt-0.5 shrink-0 text-muted"
+              />
               <div className="min-w-0">
-                <p className="font-semibold">{record.submitterName ?? "Profile not finished"}</p>
+                <p className="font-semibold">
+                  {record.submitterName ?? "Profile not finished"}
+                </p>
                 {record.submitterUsername ? (
                   <Link
                     href={`/profile/${record.submitterUsername}`}
@@ -94,11 +124,17 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
               </div>
             </div>
             <div className="mt-4 flex items-start gap-3 border-t border-line pt-4">
-              <EnvelopeSimple aria-hidden size={19} className="mt-0.5 shrink-0 text-muted" />
+              <EnvelopeSimple
+                aria-hidden
+                size={19}
+                className="mt-0.5 shrink-0 text-muted"
+              />
               <div className="min-w-0">
                 <p className="break-all text-sm">{record.submitterEmail}</p>
                 <p className="mt-1 text-xs text-muted">
-                  {feedback.contactAllowed ? "Follow-up allowed" : "No follow-up requested"}
+                  {feedback.contactAllowed
+                    ? "Follow-up allowed"
+                    : "No follow-up requested"}
                 </p>
               </div>
             </div>

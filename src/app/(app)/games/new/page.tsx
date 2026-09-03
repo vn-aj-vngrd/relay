@@ -6,7 +6,10 @@ import { notFound } from "next/navigation";
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
-import { type CreateSessionDefaults, CreateSessionForm } from "@/features/sessions/create-session-form";
+import {
+  type CreateSessionDefaults,
+  CreateSessionForm,
+} from "@/features/sessions/create-session-form";
 import { getCourtSuggestions } from "@/features/venues/directory";
 
 export default async function NewGamePage({
@@ -15,26 +18,43 @@ export default async function NewGamePage({
   searchParams: Promise<{ from?: string; group?: string; venueId?: string }>;
 }) {
   const user = await requireUser();
-  const [params, courts] = await Promise.all([searchParams, getCourtSuggestions()]);
-  const selectedCourt = params.venueId ? courts.find((court) => court.id === params.venueId) : undefined;
+  const [params, courts] = await Promise.all([
+    searchParams,
+    getCourtSuggestions(),
+  ]);
+  const selectedCourt = params.venueId
+    ? courts.find((court) => court.id === params.venueId)
+    : undefined;
   const source = params.from
     ? await db.query.sessions.findFirst({
-        where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id), eq(sessions.status, "completed")),
+        where: and(
+          eq(sessions.id, params.from),
+          eq(sessions.hostId, user.id),
+          eq(sessions.status, "completed")
+        ),
       })
     : null;
   if (params.from && !source) notFound();
   const requestedGroupId = params.group ?? source?.groupId ?? undefined;
   const groupMembership = requestedGroupId
     ? await db.query.groupMembers.findFirst({
-        where: and(eq(groupMembers.groupId, requestedGroupId), eq(groupMembers.userId, user.id)),
+        where: and(
+          eq(groupMembers.groupId, requestedGroupId),
+          eq(groupMembers.userId, user.id)
+        ),
       })
     : null;
   const group = groupMembership
-    ? await db.query.groups.findFirst({ where: eq(groups.id, groupMembership.groupId) })
+    ? await db.query.groups.findFirst({
+        where: eq(groups.id, groupMembership.groupId),
+      })
     : null;
   const groupTemplate =
     group && !source
-      ? await db.query.sessions.findFirst({ where: eq(sessions.groupId, group.id), orderBy: [desc(sessions.startsAt)] })
+      ? await db.query.sessions.findFirst({
+          where: eq(sessions.groupId, group.id),
+          orderBy: [desc(sessions.startsAt)],
+        })
       : null;
   const template = source ?? groupTemplate;
   const time = (value: Date) =>
@@ -45,7 +65,10 @@ export default async function NewGamePage({
       timeZone: template?.timezone ?? "Asia/Manila",
     }).format(value);
   const inviteeCount = group
-    ? Math.max(0, (await db.$count(groupMembers, eq(groupMembers.groupId, group.id))) - 1)
+    ? Math.max(
+        0,
+        (await db.$count(groupMembers, eq(groupMembers.groupId, group.id))) - 1
+      )
     : source
       ? Math.max(
           0,
@@ -54,9 +77,9 @@ export default async function NewGamePage({
             and(
               eq(sessionPlayers.sessionId, source.id),
               eq(sessionPlayers.rsvp, "going"),
-              isNotNull(sessionPlayers.userId),
-            ),
-          )) - 1,
+              isNotNull(sessionPlayers.userId)
+            )
+          )) - 1
         )
       : 0;
   const defaults: CreateSessionDefaults = template
@@ -69,7 +92,10 @@ export default async function NewGamePage({
         courts: template.courtCount,
         start: time(template.startsAt),
         end: time(template.endsAt),
-        cost: template.estimatedCostCents == null ? undefined : template.estimatedCostCents / 100,
+        cost:
+          template.estimatedCostCents == null
+            ? undefined
+            : template.estimatedCostCents / 100,
         accentColor: template.accentColor,
         visibility: template.visibility,
         requiresApproval: template.requiresApproval,
@@ -98,7 +124,11 @@ export default async function NewGamePage({
           <ArrowLeft aria-hidden size={18} />
         </Link>
         <p className="text-sm font-semibold text-ink">
-          {source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}
+          {source
+            ? "Play again"
+            : group
+              ? `Game for ${group.name}`
+              : "Create a game"}
         </p>
       </div>
       <Link
@@ -109,9 +139,19 @@ export default async function NewGamePage({
         Back to Home
       </Link>
       <header className="mb-10 hidden border-b border-line pb-7 lg:block">
-        <h1 className="app-title">{source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}</h1>
+        <h1 className="app-title">
+          {source
+            ? "Play again"
+            : group
+              ? `Game for ${group.name}`
+              : "Create a game"}
+        </h1>
       </header>
-      <CreateSessionForm defaults={defaults} now={new Date().toISOString()} courts={courts} />
+      <CreateSessionForm
+        defaults={defaults}
+        now={new Date().toISOString()}
+        courts={courts}
+      />
     </div>
   );
 }

@@ -1,4 +1,9 @@
-export function RelayMark({ className = "h-7 w-7" }: { inverse?: boolean; className?: string }) {
+export function RelayMark({
+  className = "h-7 w-7",
+}: {
+  inverse?: boolean;
+  className?: string;
+}) {
   return (
     <span
       aria-hidden="true"

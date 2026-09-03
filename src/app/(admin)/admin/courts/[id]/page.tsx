@@ -6,7 +6,11 @@ import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminVenue } from "@/features/admin/queries";
 import { AdminVenueForm } from "@/features/venues/admin-venue-form";
 
-export default async function AdminCourtPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function AdminCourtPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const venue = await getAdminVenue((await params).id);
   if (!venue) notFound();
 

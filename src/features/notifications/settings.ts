@@ -9,9 +9,16 @@ import { defaultCategoryPreferences } from "./preferences";
 
 export async function getNotificationSettings(userId: string) {
   const [preferences, devices] = await Promise.all([
-    db.query.notificationPreferences.findFirst({ where: eq(notificationPreferences.userId, userId) }),
+    db.query.notificationPreferences.findFirst({
+      where: eq(notificationPreferences.userId, userId),
+    }),
     db.query.pushSubscriptions.findMany({
-      columns: { id: true, deviceLabel: true, createdAt: true, lastUsedAt: true },
+      columns: {
+        id: true,
+        deviceLabel: true,
+        createdAt: true,
+        lastUsedAt: true,
+      },
       where: eq(pushSubscriptions.userId, userId),
       orderBy: desc(pushSubscriptions.lastUsedAt),
     }),

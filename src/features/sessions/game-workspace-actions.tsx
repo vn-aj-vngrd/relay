@@ -67,10 +67,23 @@ export function GameWorkspaceActions({
         </Link>
       ) : null}
       {mode === "mobile" ? (
-        <ShareButton url={shareUrl} title={title} sessionId={sessionId} menuItem onSelect={hide} />
+        <ShareButton
+          url={shareUrl}
+          title={title}
+          sessionId={sessionId}
+          menuItem
+          onSelect={hide}
+        />
       ) : null}
       {qrEnabled ? (
-        <GameQrShare url={shareUrl} title={title} details={qrDetails} sessionId={sessionId} menuItem onClose={hide} />
+        <GameQrShare
+          url={shareUrl}
+          title={title}
+          details={qrDetails}
+          sessionId={sessionId}
+          menuItem
+          onClose={hide}
+        />
       ) : null}
     </>
   );

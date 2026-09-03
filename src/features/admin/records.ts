@@ -1,5 +1,11 @@
 export const ADMIN_PAGE_SIZE = 30;
-export const adminResources = ["users", "sessions", "venues", "feedback", "audit"] as const;
+export const adminResources = [
+  "users",
+  "sessions",
+  "venues",
+  "feedback",
+  "audit",
+] as const;
 export type AdminResource = (typeof adminResources)[number];
 export type AdminDateValue = Date | string;
 
@@ -58,7 +64,11 @@ export type AdminAuditRecord = {
 };
 
 export type AdminRecord =
-  AdminUserRecord | AdminSessionRecord | AdminVenueRecord | AdminFeedbackRecord | AdminAuditRecord;
+  | AdminUserRecord
+  | AdminSessionRecord
+  | AdminVenueRecord
+  | AdminFeedbackRecord
+  | AdminAuditRecord;
 
 export type AdminRecordMap = {
   users: AdminUserRecord;

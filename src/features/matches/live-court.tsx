@@ -6,7 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 
 import { finishMatch, saveScore } from "./actions";
-import { CourtScoreboardCourt, type CourtScoreboardNavigation, type CourtScoreboardTeam } from "./court-scoreboard";
+import {
+  CourtScoreboardCourt,
+  type CourtScoreboardNavigation,
+  type CourtScoreboardTeam,
+} from "./court-scoreboard";
 
 export type LiveCourtProps = {
   sessionId: string;
@@ -64,7 +68,7 @@ function ManagedLiveCourt({
     () => () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     },
-    [],
+    []
   );
 
   async function flushScore() {
@@ -81,16 +85,22 @@ function ManagedLiveCourt({
       });
       versionRef.current = saved.version;
       if ("conflict" in saved) {
-        const latestScores: [number, number] = [saved.teamAScore, saved.teamBScore];
+        const latestScores: [number, number] = [
+          saved.teamAScore,
+          saved.teamBScore,
+        ];
         desiredRef.current = latestScores;
         dirtyRef.current = false;
         setLocalScores(latestScores);
         setScorePending(false);
         setError(
-          `Latest score is ${saved.teamAScore}–${saved.teamBScore}. Your ${savingScores[0]}–${savingScores[1]} change wasn’t saved; use the score controls to retry.`,
+          `Latest score is ${saved.teamAScore}–${saved.teamBScore}. Your ${savingScores[0]}–${savingScores[1]} change wasn’t saved; use the score controls to retry.`
         );
         router.refresh();
-      } else if (desiredRef.current[0] !== savingScores[0] || desiredRef.current[1] !== savingScores[1]) {
+      } else if (
+        desiredRef.current[0] !== savingScores[0] ||
+        desiredRef.current[1] !== savingScores[1]
+      ) {
         setError("");
         timerRef.current = setTimeout(() => void flushScore(), 120);
       } else {
@@ -102,7 +112,9 @@ function ManagedLiveCourt({
     } catch {
       dirtyRef.current = false;
       setScorePending(false);
-      setError("This score couldn’t be saved. Relay is loading the latest score; use the controls to retry.");
+      setError(
+        "This score couldn’t be saved. Relay is loading the latest score; use the controls to retry."
+      );
       router.refresh();
     } finally {
       savingRef.current = false;
@@ -166,7 +178,9 @@ export function LiveCourt(props: LiveCourtProps) {
 
 export function LiveCourtDeck({ courts }: { courts: LiveCourtProps[] }) {
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
-  const selectedIndex = courts.findIndex((court) => court.matchId === selectedMatchId);
+  const selectedIndex = courts.findIndex(
+    (court) => court.matchId === selectedMatchId
+  );
 
   return (
     <div className="grid gap-5">
@@ -178,7 +192,9 @@ export function LiveCourtDeck({ courts }: { courts: LiveCourtProps[] }) {
             key={court.matchId}
             {...court}
             expanded={selectedIndex === index}
-            onExpandedChange={(nextExpanded) => setSelectedMatchId(nextExpanded ? court.matchId : null)}
+            onExpandedChange={(nextExpanded) =>
+              setSelectedMatchId(nextExpanded ? court.matchId : null)
+            }
             navigation={
               courts.length > 1
                 ? {

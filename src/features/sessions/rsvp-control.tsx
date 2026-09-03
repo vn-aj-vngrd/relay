@@ -1,6 +1,14 @@
 "use client";
 
-import { Bell, Check, CheckCircle, Question, ShareNetwork, UserCircle, X } from "@phosphor-icons/react";
+import {
+  Bell,
+  Check,
+  CheckCircle,
+  Question,
+  ShareNetwork,
+  UserCircle,
+  X,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
 
@@ -8,7 +16,10 @@ import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
-import { playingExperienceLabel, playingExperienceOptions } from "@/features/players/playing-experience";
+import {
+  playingExperienceLabel,
+  playingExperienceOptions,
+} from "@/features/players/playing-experience";
 
 import { rsvpAction, type SessionActionState } from "./actions";
 
@@ -46,15 +57,24 @@ function GuestAccountHandoff({
           : "Your spot is saved.";
 
   return (
-    <section className="mt-4 border-y border-line py-4" aria-labelledby={titleId}>
+    <section
+      className="mt-4 border-y border-line py-4"
+      aria-labelledby={titleId}
+    >
       <div className="flex items-start gap-3">
-        <CheckCircle aria-hidden size={20} weight="fill" className="mt-0.5 shrink-0 text-success" />
+        <CheckCircle
+          aria-hidden
+          size={20}
+          weight="fill"
+          className="mt-0.5 shrink-0 text-success"
+        />
         <div className="min-w-0 flex-1">
           <h3 id={titleId} className="font-[680]">
             {outcome}
           </h3>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Create an account to keep this game in your history and receive its updates in Relay.
+            Create an account to keep this game in your history and receive its
+            updates in Relay.
           </p>
         </div>
       </div>
@@ -63,7 +83,10 @@ function GuestAccountHandoff({
       </ButtonLink>
       <p className="mt-2 text-center text-xs text-muted">
         Already have an account?{" "}
-        <Link href={signInHref} className="font-semibold text-primary hover:underline">
+        <Link
+          href={signInHref}
+          className="font-semibold text-primary hover:underline"
+        >
           Sign in
         </Link>
       </p>
@@ -98,7 +121,9 @@ export function RsvpControl({
   instance?: "mobile" | "desktop" | "default";
   discoverySource?: "open-games" | "search";
 }) {
-  const [choice, setChoice] = useState<Choice>(() => initialChoice(currentRsvp));
+  const [choice, setChoice] = useState<Choice>(() =>
+    initialChoice(currentRsvp)
+  );
   const [state, action, pending] = useActionState(rsvpAction, {});
   const [shareMessage, setShareMessage] = useState("");
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -111,7 +136,11 @@ export function RsvpControl({
 
   async function share() {
     try {
-      if (navigator.share) await navigator.share({ title: document.title, url: window.location.href });
+      if (navigator.share)
+        await navigator.share({
+          title: document.title,
+          url: window.location.href,
+        });
       else {
         await navigator.clipboard.writeText(window.location.href);
         setShareMessage("Link copied");
@@ -138,19 +167,37 @@ export function RsvpControl({
         <div className="rounded-lg bg-surface-strong px-4 py-4">
           <p className="font-semibold">The roster is closed</p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            The host has paused new responses. You can still view the plan, players, and live scores.
+            The host has paused new responses. You can still view the plan,
+            players, and live scores.
           </p>
         </div>
       ) : (
         <>
-          <form noValidate action={action} onSubmitCapture={preserveValues} className="space-y-3">
+          <form
+            noValidate
+            action={action}
+            onSubmitCapture={preserveValues}
+            className="space-y-3"
+          >
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="choice" value={choice} />
-            {discoverySource ? <input type="hidden" name="discoverySource" value={discoverySource} /> : null}
-            {currentRsvp === "invited" ? <input type="hidden" name="inviteSource" value="game" /> : null}
+            {discoverySource ? (
+              <input
+                type="hidden"
+                name="discoverySource"
+                value={discoverySource}
+              />
+            ) : null}
+            {currentRsvp === "invited" ? (
+              <input type="hidden" name="inviteSource" value="game" />
+            ) : null}
             {isReturningGuest ? (
               <div className="flex min-h-14 items-center gap-3 rounded-lg bg-surface-strong px-3 py-2.5">
-                <UserCircle aria-hidden size={21} className="shrink-0 text-primary" />
+                <UserCircle
+                  aria-hidden
+                  size={21}
+                  className="shrink-0 text-primary"
+                />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold">{guestName}</p>
                   <p className="text-xs text-muted">Guest player</p>
@@ -158,9 +205,15 @@ export function RsvpControl({
               </div>
             ) : signedIn ? (
               <div className="flex min-h-14 items-center gap-3 rounded-lg bg-surface-strong px-3 py-2.5">
-                <UserCircle aria-hidden size={21} className="shrink-0 text-primary" />
+                <UserCircle
+                  aria-hidden
+                  size={21}
+                  className="shrink-0 text-primary"
+                />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{accountName || "Your Relay account"}</p>
+                  <p className="truncate text-sm font-semibold">
+                    {accountName || "Your Relay account"}
+                  </p>
                   <p className="text-xs text-muted">Signed in</p>
                 </div>
               </div>
@@ -180,8 +233,13 @@ export function RsvpControl({
                   className="mt-1.5 h-12 w-full rounded-[10px] border border-line bg-surface px-3.5 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
                 <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
-                  <p className="text-muted">Your name is only visible in this game.</p>
-                  <Link href={signInHref} className="font-semibold text-primary hover:underline">
+                  <p className="text-muted">
+                    Your name is only visible in this game.
+                  </p>
+                  <Link
+                    href={signInHref}
+                    className="font-semibold text-primary hover:underline"
+                  >
                     Already use Relay? Sign in
                   </Link>
                 </div>
@@ -191,11 +249,19 @@ export function RsvpControl({
               <div className="flex min-h-11 items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold">Playing experience</p>
-                  <p className="text-xs leading-5 text-ink">{playingExperienceLabel(currentSkillLevel)}</p>
-                  <p className="text-xs leading-5 text-muted">Uses your profile setting</p>
+                  <p className="text-xs leading-5 text-ink">
+                    {playingExperienceLabel(currentSkillLevel)}
+                  </p>
+                  <p className="text-xs leading-5 text-muted">
+                    Uses your profile setting
+                  </p>
                 </div>
                 {accountUsername ? (
-                  <ButtonLink href={`/profile/${accountUsername}/edit`} variant="quiet" className="-mr-3 shrink-0">
+                  <ButtonLink
+                    href={`/profile/${accountUsername}/edit`}
+                    variant="quiet"
+                    className="-mr-3 shrink-0"
+                  >
                     Edit profile
                   </ButtonLink>
                 ) : null}
@@ -209,11 +275,15 @@ export function RsvpControl({
                   defaultValue={currentSkillLevel ?? ""}
                   options={[
                     { value: "", label: "Prefer not to say" },
-                    ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+                    ...playingExperienceOptions.map(({ value, label }) => ({
+                      value,
+                      label,
+                    })),
                   ]}
                 />
                 <p className="-mt-1 text-xs leading-5 text-muted">
-                  Helps Relay make closer teams when the host chooses Balanced Mix.
+                  Helps Relay make closer teams when the host chooses Balanced
+                  Mix.
                 </p>
               </>
             )}
@@ -230,7 +300,9 @@ export function RsvpControl({
                     aria-hidden
                     className="shrink-0"
                     size={15}
-                    weight={value === "going" && choice === value ? "bold" : "regular"}
+                    weight={
+                      value === "going" && choice === value ? "bold" : "regular"
+                    }
                   />
                   <span>{label}</span>
                 </button>
@@ -264,7 +336,10 @@ export function RsvpControl({
               </p>
             ) : currentRsvp ? (
               <p className="text-xs text-muted">
-                Current response: <span className="font-medium capitalize text-ink">{currentRsvp}</span>
+                Current response:{" "}
+                <span className="font-medium capitalize text-ink">
+                  {currentRsvp}
+                </span>
               </p>
             ) : null}
           </form>
@@ -275,15 +350,26 @@ export function RsvpControl({
               signInHref={signInHref}
               titleId={`keep-game-title-${instance}-${sessionId}`}
             />
-          ) : state.success && signedIn && !currentRsvp && state.rsvp !== "declined" ? (
+          ) : state.success &&
+            signedIn &&
+            !currentRsvp &&
+            state.rsvp !== "declined" ? (
             <div className="mt-4 flex items-start gap-3 border-y border-line py-4">
-              <Bell aria-hidden size={18} className="mt-0.5 shrink-0 text-primary" />
+              <Bell
+                aria-hidden
+                size={18}
+                className="mt-0.5 shrink-0 text-primary"
+              />
               <div>
                 <p className="text-sm font-semibold">Keep up with this game</p>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   Choose email or push reminders after confirming your response.
                 </p>
-                <ButtonLink href="/preferences#notifications" variant="quiet" className="mt-2 -ml-2.5">
+                <ButtonLink
+                  href="/preferences#notifications"
+                  variant="quiet"
+                  className="mt-2 -ml-2.5"
+                >
                   Set game reminders
                 </ButtonLink>
               </div>
@@ -291,9 +377,16 @@ export function RsvpControl({
           ) : null}
         </>
       )}
-      <Button type="button" variant="secondary" onClick={share} className="mt-3 w-full">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={share}
+        className="mt-3 w-full"
+      >
         <ShareNetwork aria-hidden size={16} />
-        <span>{shareMessage === "Link copied" ? "Link copied" : "Share game"}</span>
+        <span>
+          {shareMessage === "Link copied" ? "Link copied" : "Share game"}
+        </span>
       </Button>
       {shareMessage && shareMessage !== "Link copied" ? (
         <p aria-live="polite" className="mt-2 text-center text-xs text-danger">

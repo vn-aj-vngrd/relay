@@ -18,10 +18,13 @@ export function MessageLikeButton({
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
-  const [optimistic, toggleOptimistic] = useOptimistic({ liked, count }, (current) => ({
-    liked: !current.liked,
-    count: Math.max(0, current.count + (current.liked ? -1 : 1)),
-  }));
+  const [optimistic, toggleOptimistic] = useOptimistic(
+    { liked, count },
+    (current) => ({
+      liked: !current.liked,
+      count: Math.max(0, current.count + (current.liked ? -1 : 1)),
+    })
+  );
 
   function toggle() {
     setError("");
@@ -48,7 +51,11 @@ export function MessageLikeButton({
         onClick={toggle}
         className={`pressable inline-flex min-h-7 items-center gap-1 rounded-md px-1.5 text-xs ${optimistic.liked ? "bg-primary-soft text-primary" : "text-muted hover:bg-surface-strong"}`}
       >
-        <ThumbsUp aria-hidden size={13} weight={optimistic.liked ? "fill" : "regular"} />
+        <ThumbsUp
+          aria-hidden
+          size={13}
+          weight={optimistic.liked ? "fill" : "regular"}
+        />
         {optimistic.count || null}
       </button>
       <span aria-live="polite" className="sr-only">

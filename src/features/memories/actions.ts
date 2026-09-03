@@ -13,18 +13,26 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 async function requireCompletedParticipant(sessionId: string) {
   const user = await requireUser();
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+  });
   const player = await db.query.sessionPlayers.findFirst({
     where: and(
       eq(sessionPlayers.sessionId, sessionId),
       eq(sessionPlayers.userId, user.id),
-      eq(sessionPlayers.rsvp, "going"),
+      eq(sessionPlayers.rsvp, "going")
     ),
   });
-  if (!session || session.status !== "completed" || (!player && session.hostId !== user.id))
+  if (
+    session?.status !== "completed" ||
+    (!player && session.hostId !== user.id)
+  )
     throw new Error("Only players can add to this memory");
-  let memory = await db.query.memories.findFirst({ where: eq(memories.sessionId, sessionId) });
-  if (!memory) [memory] = await db.insert(memories).values({ sessionId }).returning();
+  let memory = await db.query.memories.findFirst({
+    where: eq(memories.sessionId, sessionId),
+  });
+  if (!memory)
+    [memory] = await db.insert(memories).values({ sessionId }).returning();
   return { user, session, memory };
 }
 
@@ -32,7 +40,7 @@ export type MemoryPhotoActionState = { error?: string; success?: boolean };
 
 export async function uploadMemoryPhotoState(
   _: MemoryPhotoActionState,
-  formData: FormData,
+  formData: FormData
 ): Promise<MemoryPhotoActionState> {
   const photo = formData.get("photo");
   if (!(photo instanceof File) || photo.size === 0)
@@ -44,7 +52,9 @@ export async function uploadMemoryPhotoState(
     unstable_rethrow(error);
     return {
       error:
-        error instanceof Error && !(error instanceof z.ZodError) && error.message
+        error instanceof Error &&
+        !(error instanceof z.ZodError) &&
+        error.message
           ? error.message
           : "The photo could not be saved. Try again.",
     };
@@ -53,13 +63,26 @@ export async function uploadMemoryPhotoState(
 
 async function uploadMemoryPhoto(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const { user, session, memory } = await requireCompletedParticipant(sessionId);
+  const { user, session, memory } =
+    await requireCompletedParticipant(sessionId);
   const file = formData.get("photo");
-  if (!(file instanceof File) || !isSupportedImageType(file.type) || file.size === 0 || file.size > 10 * 1024 * 1024)
+  if (
+    !(file instanceof File) ||
+    !isSupportedImageType(file.type) ||
+    file.size === 0 ||
+    file.size > 10 * 1024 * 1024
+  )
     throw new Error("Choose a JPG, PNG, or WebP image under 10 MB");
-  if (!(await hasValidImageSignature(file))) throw new Error("That file doesn’t appear to be a valid image.");
-  const limit = await checkRateLimit({ scope: "memory-photo", limit: 20, windowSeconds: 86400 }, `user:${user.id}`);
-  if (!limit.allowed) throw new Error("Photo uploads are temporarily limited. Try again tomorrow.");
+  if (!(await hasValidImageSignature(file)))
+    throw new Error("That file doesn’t appear to be a valid image.");
+  const limit = await checkRateLimit(
+    { scope: "memory-photo", limit: 20, windowSeconds: 86400 },
+    `user:${user.id}`
+  );
+  if (!limit.allowed)
+    throw new Error(
+      "Photo uploads are temporarily limited. Try again tomorrow."
+    );
   const caption = z
     .string()
     .trim()
@@ -84,7 +107,9 @@ async function uploadMemoryPhoto(formData: FormData) {
   } catch (uploadRecordError) {
     await supabase.storage.from("session-memories").remove([path]);
     console.error("Memory photo record failed", uploadRecordError);
-    throw new Error("The photo could not be saved. Try again.");
+    throw new Error("The photo could not be saved. Try again.", {
+      cause: uploadRecordError,
+    });
   }
   revalidatePath(`/games/${session.id}/story`);
   revalidatePath(`/s/${session.slug}/story`);

@@ -58,7 +58,11 @@ export function RecapStoryCard({
   const foreground = light ? "text-[#17181d]" : "text-white";
   const secondary = light ? "text-[#17181d]/70" : "text-white/65";
   const contentPosition =
-    layout === "poster" ? "top-[20%]" : layout === "center" ? "top-1/2 -translate-y-1/2" : "bottom-0";
+    layout === "poster"
+      ? "top-[20%]"
+      : layout === "center"
+        ? "top-1/2 -translate-y-1/2"
+        : "bottom-0";
   const contentFrame =
     layout === "snapshot"
       ? `m-[5%] rounded-[10px] border p-[6%] ${light ? "border-black/15 bg-white/78" : "border-white/20 bg-black/48"}`
@@ -83,7 +87,11 @@ export function RecapStoryCard({
             className="-z-20 object-cover"
             style={{ objectPosition: `center ${photoPosition}%` }}
           />
-          <span className="absolute inset-0 -z-10 bg-black" style={{ opacity: overlay / 100 }} aria-hidden />
+          <span
+            className="absolute inset-0 -z-10 bg-black"
+            style={{ opacity: overlay / 100 }}
+            aria-hidden
+          />
         </>
       ) : null}
       <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-[7%] text-[clamp(8px,3.4cqw,12px)] font-bold tracking-[0.08em]">
@@ -104,16 +112,28 @@ export function RecapStoryCard({
                 className={`mt-[10%] grid grid-cols-3 border-y py-[7%] text-center ${light ? "border-black/15" : "border-white/20"}`}
               >
                 <p>
-                  <strong className="score block text-[clamp(18px,8cqw,38px)]">{recap.matchCount}</strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>matches</span>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {recap.matchCount}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    matches
+                  </span>
                 </p>
                 <p>
-                  <strong className="score block text-[clamp(18px,8cqw,38px)]">{recap.totalPoints}</strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>points</span>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {recap.totalPoints}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    points
+                  </span>
                 </p>
                 <p>
-                  <strong className="score block text-[clamp(18px,8cqw,38px)]">{recap.playMinutes || "—"}</strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>minutes</span>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {recap.playMinutes || "—"}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    minutes
+                  </span>
                 </p>
               </div>
             </>
@@ -121,29 +141,43 @@ export function RecapStoryCard({
 
           {template === "personal" && personal ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>MY GAME</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                MY GAME
+              </p>
               <p className="mt-2 text-[clamp(24px,11cqw,48px)] font-bold leading-none tracking-[-0.045em]">
                 {personal.wins}–{personal.losses}
               </p>
-              <p className="mt-3 text-[clamp(16px,7cqw,30px)] font-bold leading-tight">{personal.name}</p>
+              <p className="mt-3 text-[clamp(16px,7cqw,30px)] font-bold leading-tight">
+                {personal.name}
+              </p>
               <div
                 className={`mt-[10%] grid grid-cols-3 border-y py-[6%] text-center ${light ? "border-black/15" : "border-white/20"}`}
               >
                 <p>
-                  <strong className="score block text-[clamp(16px,7cqw,30px)]">#{personal.rank}</strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>standing</span>
+                  <strong className="score block text-[clamp(16px,7cqw,30px)]">
+                    #{personal.rank}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    standing
+                  </span>
                 </p>
                 <p>
                   <strong className="score block text-[clamp(16px,7cqw,30px)]">
                     <SignedDifference value={personal.differential} />
                   </strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>point diff</span>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    point diff
+                  </span>
                 </p>
                 <p>
                   <strong className="score block text-[clamp(16px,7cqw,30px)]">
                     {Math.round(personal.winPercentage * 100)}%
                   </strong>
-                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>wins</span>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    wins
+                  </span>
                 </p>
               </div>
             </>
@@ -151,7 +185,11 @@ export function RecapStoryCard({
 
           {template === "winning-team" && recap.topPair ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>WINNING TEAM</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                WINNING TEAM
+              </p>
               <p className="mt-3 text-[clamp(23px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
                 {recap.topPair.names.join(" + ")}
               </p>
@@ -159,14 +197,19 @@ export function RecapStoryCard({
                 {recap.topPair.wins}
               </p>
               <p className={`mt-1 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
-                {recap.topPair.wins === 1 ? "win" : "wins"} together · {recap.topPair.played} played
+                {recap.topPair.wins === 1 ? "win" : "wins"} together ·{" "}
+                {recap.topPair.played} played
               </p>
             </>
           ) : null}
 
           {template === "leader" && recap.standout ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>TOP OF THE TABLE</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                TOP OF THE TABLE
+              </p>
               <p className="mt-3 text-[clamp(24px,10cqw,46px)] font-bold leading-tight tracking-[-0.04em]">
                 {recap.standout.name}
               </p>
@@ -174,16 +217,21 @@ export function RecapStoryCard({
                 {recap.standout.wins}–{recap.standout.losses}
               </p>
               <p className={`mt-2 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
-                <SignedDifference value={recap.standout.differential} /> point difference ·{" "}
-                {Math.round(recap.standout.winPercentage * 100)}% wins
+                <SignedDifference value={recap.standout.differential} /> point
+                difference · {Math.round(recap.standout.winPercentage * 100)}%
+                wins
               </p>
             </>
           ) : null}
 
           {template === "standings" ? (
             <>
-              <p className="text-[clamp(20px,8cqw,38px)] font-bold tracking-[-0.035em]">Session Standings</p>
-              <ol className={`mt-[7%] divide-y ${light ? "divide-black/15" : "divide-white/20"}`}>
+              <p className="text-[clamp(20px,8cqw,38px)] font-bold tracking-[-0.035em]">
+                Session Standings
+              </p>
+              <ol
+                className={`mt-[7%] divide-y ${light ? "divide-black/15" : "divide-white/20"}`}
+              >
                 {recap.standings.slice(0, 5).map((row, index) => (
                   <li
                     key={row.playerId}
@@ -192,7 +240,8 @@ export function RecapStoryCard({
                     <span className={`score ${secondary}`}>{index + 1}</span>
                     <strong className="truncate">{row.name}</strong>
                     <span className="score font-bold">
-                      {row.wins}–{row.losses} · <SignedDifference value={row.differential} />
+                      {row.wins}–{row.losses} ·{" "}
+                      <SignedDifference value={row.differential} />
                     </span>
                   </li>
                 ))}
@@ -202,24 +251,37 @@ export function RecapStoryCard({
 
           {template === "closest" && recap.closestMatch ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>CLOSEST FINISH</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                CLOSEST FINISH
+              </p>
               <p className="score mt-[7%] text-[clamp(42px,19cqw,82px)] font-bold leading-none tracking-[-0.06em]">
                 {recap.closestMatch.score}
               </p>
               <div className="mt-[8%] grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-[clamp(10px,4cqw,16px)] font-bold leading-tight">
                 <p>{recap.closestMatch.teamA.join(" + ")}</p>
                 <span className={secondary}>vs</span>
-                <p className="text-right">{recap.closestMatch.teamB.join(" + ")}</p>
+                <p className="text-right">
+                  {recap.closestMatch.teamB.join(" + ")}
+                </p>
               </div>
-              <p className={`mt-[8%] text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
-                {recap.closestMatch.courtLabel} · {recap.closestMatch.margin}-point margin
+              <p
+                className={`mt-[8%] text-[clamp(9px,3.6cqw,14px)] ${secondary}`}
+              >
+                {recap.closestMatch.courtLabel} · {recap.closestMatch.margin}
+                -point margin
               </p>
             </>
           ) : null}
 
           {template === "court" && recap.busiestCourt ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>BUSIEST COURT</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                BUSIEST COURT
+              </p>
               <p className="mt-3 text-[clamp(25px,11cqw,48px)] font-bold leading-tight tracking-[-0.04em]">
                 {recap.busiestCourt.label}
               </p>
@@ -227,40 +289,58 @@ export function RecapStoryCard({
                 {recap.busiestCourt.matches}
               </p>
               <p className={`mt-2 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
-                {recap.busiestCourt.matches === 1 ? "match" : "matches"} played here
+                {recap.busiestCourt.matches === 1 ? "match" : "matches"} played
+                here
               </p>
             </>
           ) : null}
 
           {template === "points" ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>POINTS PLAYED</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                POINTS PLAYED
+              </p>
               <p className="score mt-[7%] text-[clamp(48px,22cqw,92px)] font-bold leading-none tracking-[-0.06em]">
                 {recap.totalPoints}
               </p>
               <p className={`mt-3 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
-                across {recap.matchCount} {recap.matchCount === 1 ? "match" : "matches"}
+                across {recap.matchCount}{" "}
+                {recap.matchCount === 1 ? "match" : "matches"}
               </p>
             </>
           ) : null}
 
           {template === "court-time" ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>COURT TIME</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                COURT TIME
+              </p>
               <p className="score mt-[7%] text-[clamp(48px,22cqw,92px)] font-bold leading-none tracking-[-0.06em]">
                 {recap.playMinutes}
               </p>
-              <p className={`mt-3 text-[clamp(10px,4cqw,15px)] ${secondary}`}>minutes of play together</p>
+              <p className={`mt-3 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
+                minutes of play together
+              </p>
             </>
           ) : null}
 
           {template === "crew" ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>THE CREW</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                THE CREW
+              </p>
               <p className="mt-3 text-[clamp(23px,9cqw,42px)] font-bold leading-[1.08] tracking-[-0.04em]">
                 {recap.standings.map((row) => row.name).join(" · ")}
               </p>
-              <p className={`mt-[8%] text-[clamp(10px,4cqw,15px)] ${secondary}`}>
+              <p
+                className={`mt-[8%] text-[clamp(10px,4cqw,15px)] ${secondary}`}
+              >
                 {recap.standings.length} players · one game
               </p>
             </>
@@ -268,7 +348,11 @@ export function RecapStoryCard({
 
           {template === "custom" ? (
             <>
-              <p className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}>OUR NIGHT</p>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                OUR NIGHT
+              </p>
               <p className="mt-3 text-[clamp(26px,11cqw,50px)] font-bold leading-[1.02] tracking-[-0.045em]">
                 {customHeadline || title}
               </p>

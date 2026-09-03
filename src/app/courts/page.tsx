@@ -11,21 +11,33 @@ export const metadata: Metadata = {
   alternates: { canonical: "/courts" },
   openGraph: {
     title: "Pickleball courts in the Philippines",
-    description: "Search verified Philippine pickleball courts with locations, prices, amenities, and booking links.",
+    description:
+      "Search verified Philippine pickleball courts with locations, prices, amenities, and booking links.",
     url: "/courts",
     type: "website",
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Relay Philippines court finder" }],
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Relay Philippines court finder",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Pickleball courts in the Philippines",
-    description: "Search verified courts by city, province, setting, price, parking, and operating hours.",
+    description:
+      "Search verified courts by city, province, setting, price, parking, and operating hours.",
     images: ["/opengraph-image"],
   },
 };
 
 export default async function CourtPage() {
-  const [courts, user] = await Promise.all([getCourtListings(), getCurrentUser()]);
+  const [courts, user] = await Promise.all([
+    getCourtListings(),
+    getCurrentUser(),
+  ]);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <h1 className="sr-only">Find a pickleball court in the Philippines</h1>

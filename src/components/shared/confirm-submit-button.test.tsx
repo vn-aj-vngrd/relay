@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ConfirmSubmitButton } from "./confirm-submit-button";
@@ -23,16 +29,23 @@ describe("ConfirmSubmitButton", () => {
     const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
     render(
       <form onSubmit={onSubmit}>
-        <ConfirmSubmitButton confirmTitle="End this session?" confirmText="The game will become a shared memory.">
+        <ConfirmSubmitButton
+          confirmTitle="End this session?"
+          confirmText="The game will become a shared memory."
+        >
           End session
         </ConfirmSubmitButton>
-      </form>,
+      </form>
     );
 
     fireEvent.click(screen.getByRole("button", { name: "End session" }));
 
-    expect(screen.getByRole("dialog", { name: "End this session?" })).toHaveAttribute("open");
-    expect(screen.getByText("The game will become a shared memory.")).toBeVisible();
+    expect(
+      screen.getByRole("dialog", { name: "End this session?" })
+    ).toHaveAttribute("open");
+    expect(
+      screen.getByText("The game will become a shared memory.")
+    ).toBeVisible();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -40,17 +53,22 @@ describe("ConfirmSubmitButton", () => {
     const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
     render(
       <form onSubmit={onSubmit}>
-        <ConfirmSubmitButton confirmTitle="End this session?" confirmText="The game will become a shared memory.">
+        <ConfirmSubmitButton
+          confirmTitle="End this session?"
+          confirmText="The game will become a shared memory."
+        >
           End session
         </ConfirmSubmitButton>
-      </form>,
+      </form>
     );
 
     fireEvent.click(screen.getByRole("button", { name: "End session" }));
     fireEvent.click(screen.getByRole("button", { name: "Keep playing" }));
 
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute("open");
+    expect(screen.getByRole("dialog", { hidden: true })).not.toHaveAttribute(
+      "open"
+    );
   });
 
   it("submits the parent form only after confirmation", () => {
@@ -64,12 +82,14 @@ describe("ConfirmSubmitButton", () => {
         >
           End session
         </ConfirmSubmitButton>
-      </form>,
+      </form>
     );
 
     fireEvent.click(screen.getByRole("button", { name: "End session" }));
     const dialog = screen.getByRole("dialog", { name: "End this session?" });
-    fireEvent.click(within(dialog).getByRole("button", { name: "End session" }));
+    fireEvent.click(
+      within(dialog).getByRole("button", { name: "End session" })
+    );
 
     expect(onSubmit).toHaveBeenCalledOnce();
   });

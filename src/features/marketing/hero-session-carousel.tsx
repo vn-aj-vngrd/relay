@@ -14,7 +14,11 @@ type HeroSessionSlide = {
   content: ReactNode;
 };
 
-export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSlide[] }) {
+export function HeroSessionCarousel({
+  slides,
+}: {
+  slides: readonly HeroSessionSlide[];
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [activityVersion, setActivityVersion] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -34,12 +38,14 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.target === carouselRef.current) visibility.carousel = entry.intersectionRatio >= 0.98;
-          if (entry.target === footerRef.current) visibility.footer = entry.isIntersecting;
+          if (entry.target === carouselRef.current)
+            visibility.carousel = entry.intersectionRatio >= 0.98;
+          if (entry.target === footerRef.current)
+            visibility.footer = entry.isIntersecting;
         }
         setIsInViewport(visibility.carousel || visibility.footer);
       },
-      { threshold: [0, 0.98] },
+      { threshold: [0, 0.98] }
     );
     if (carouselRef.current) observer.observe(carouselRef.current);
     if (footerRef.current) observer.observe(footerRef.current);
@@ -47,7 +53,8 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
   }, []);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const reducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
     if (reducedMotion || isPaused || !isInViewport || slides.length < 2) return;
 
     const timer = window.setTimeout(() => {
@@ -94,7 +101,11 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
           onPointerUp={handlePointerUp}
           className="marketing-hero-slide touch-pan-y bg-surface"
         >
-          <div key={activeSlide.id} inert className="marketing-hero-slide-content">
+          <div
+            key={activeSlide.id}
+            inert
+            className="marketing-hero-slide-content"
+          >
             {activeSlide.content}
           </div>
         </div>
@@ -103,7 +114,10 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
           ref={footerRef}
           className="flex min-h-16 items-center gap-3 border-t border-line bg-canvas px-3 sm:gap-4 sm:px-6"
         >
-          <div className="flex min-w-16 flex-1 gap-1.5" aria-label="Choose a game moment">
+          <div
+            className="flex min-w-16 flex-1 gap-1.5"
+            aria-label="Choose a game moment"
+          >
             {slides.map((slide, index) => (
               <button
                 key={slide.id}
@@ -113,7 +127,10 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
                 onClick={() => selectSlide(index)}
                 className="group flex min-h-9 flex-1 items-center"
               >
-                <span aria-hidden className="h-1 w-full overflow-hidden rounded-full bg-line">
+                <span
+                  aria-hidden
+                  className="h-1 w-full overflow-hidden rounded-full bg-line"
+                >
                   <span
                     key={`${activeIndex}-${activityVersion}-${isInViewport}-${isPaused}`}
                     className={`block h-full origin-left rounded-full bg-primary ${index === activeIndex ? "marketing-hero-progress" : index < activeIndex ? "scale-x-100" : "scale-x-0"}`}
@@ -121,7 +138,8 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
                       index === activeIndex
                         ? {
                             animationDuration: `${AUTOPLAY_DELAY_MS}ms`,
-                            animationPlayState: isPaused || !isInViewport ? "paused" : "running",
+                            animationPlayState:
+                              isPaused || !isInViewport ? "paused" : "running",
                           }
                         : undefined
                     }
@@ -132,12 +150,17 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
           </div>
 
           <span className="score hidden shrink-0 text-xs text-muted md:inline">
-            {String(activeIndex + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+            {String(activeIndex + 1).padStart(2, "0")} /{" "}
+            {String(slides.length).padStart(2, "0")}
           </span>
           <div className="flex shrink-0 gap-1.5">
             <button
               type="button"
-              aria-label={isPaused ? "Resume automatic preview" : "Pause automatic preview"}
+              aria-label={
+                isPaused
+                  ? "Resume automatic preview"
+                  : "Pause automatic preview"
+              }
               aria-pressed={isPaused}
               onClick={() => {
                 setIsPaused((paused) => !paused);
@@ -145,7 +168,11 @@ export function HeroSessionCarousel({ slides }: { slides: readonly HeroSessionSl
               }}
               className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-surface text-ink hover:bg-surface-strong"
             >
-              {isPaused ? <Play aria-hidden size={15} weight="fill" /> : <Pause aria-hidden size={15} weight="fill" />}
+              {isPaused ? (
+                <Play aria-hidden size={15} weight="fill" />
+              ) : (
+                <Pause aria-hidden size={15} weight="fill" />
+              )}
             </button>
             <button
               type="button"

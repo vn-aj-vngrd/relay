@@ -1,3 +1,6 @@
-export function sessionMilestoneDedupeKey(sessionId: string, eventName: string) {
+export function sessionMilestoneDedupeKey(
+  sessionId: string,
+  eventName: string
+) {
   return `session:${sessionId}:${eventName}`;
 }

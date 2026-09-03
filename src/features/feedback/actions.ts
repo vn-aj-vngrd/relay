@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { adminAuditLogs, feedbackSubmissions, productEvents, sessionPlayers, sessions } from "@/db/schema";
+import {
+  adminAuditLogs,
+  feedbackSubmissions,
+  productEvents,
+  sessionPlayers,
+  sessions,
+} from "@/db/schema";
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -23,7 +29,7 @@ async function canReviewCompletedSession(userId: string, sessionId: string) {
     columns: { hostId: true, status: true },
     where: eq(sessions.id, sessionId),
   });
-  if (!session || session.status !== "completed") return false;
+  if (session?.status !== "completed") return false;
   if (session.hostId === userId) return true;
   return Boolean(
     await db.query.sessionPlayers.findFirst({
@@ -31,16 +37,25 @@ async function canReviewCompletedSession(userId: string, sessionId: string) {
       where: and(
         eq(sessionPlayers.sessionId, sessionId),
         eq(sessionPlayers.userId, userId),
-        eq(sessionPlayers.rsvp, "going"),
+        eq(sessionPlayers.rsvp, "going")
       ),
-    }),
+    })
   );
 }
 
-export async function submitFeedbackAction(_: FeedbackActionState, formData: FormData): Promise<FeedbackActionState> {
+export async function submitFeedbackAction(
+  _: FeedbackActionState,
+  formData: FormData
+): Promise<FeedbackActionState> {
   const user = await requireUser("/feedback");
-  const limit = await checkRateLimit({ scope: "feedback-submit", limit: 5, windowSeconds: 3600 }, `user:${user.id}`);
-  if (!limit.allowed) return { error: "You’ve sent several submissions recently. Try again later." };
+  const limit = await checkRateLimit(
+    { scope: "feedback-submit", limit: 5, windowSeconds: 3600 },
+    `user:${user.id}`
+  );
+  if (!limit.allowed)
+    return {
+      error: "You’ve sent several submissions recently. Try again later.",
+    };
   const parsed = submitFeedbackSchema.safeParse({
     type: formData.get("type"),
     area: formData.get("area"),
@@ -58,7 +73,10 @@ export async function submitFeedbackAction(_: FeedbackActionState, formData: For
     };
   }
 
-  if (parsed.data.sessionId && !(await canReviewCompletedSession(user.id, parsed.data.sessionId)))
+  if (
+    parsed.data.sessionId &&
+    !(await canReviewCompletedSession(user.id, parsed.data.sessionId))
+  )
     return { error: "This completed game is not available for feedback." };
 
   const inserted = await db
@@ -76,7 +94,8 @@ export async function submitFeedbackAction(_: FeedbackActionState, formData: For
     })
     .onConflictDoNothing()
     .returning({ id: feedbackSubmissions.id });
-  if (!inserted.length) return { success: "You already shared feedback for this game." };
+  if (!inserted.length)
+    return { success: "You already shared feedback for this game." };
 
   revalidatePath("/feedback");
   revalidatePath("/admin/feedback");
@@ -89,13 +108,15 @@ export async function submitFeedbackAction(_: FeedbackActionState, formData: For
 
 export async function recordSmoothGameFeedback(
   _: FeedbackActionState,
-  formData: FormData,
+  formData: FormData
 ): Promise<FeedbackActionState> {
   const user = await requireUser("/games");
   const parsedSessionId = z.uuid().safeParse(formData.get("sessionId"));
-  if (!parsedSessionId.success) return { error: "This completed game is unavailable." };
+  if (!parsedSessionId.success)
+    return { error: "This completed game is unavailable." };
   const sessionId = parsedSessionId.data;
-  if (!(await canReviewCompletedSession(user.id, sessionId))) return { error: "This completed game is unavailable." };
+  if (!(await canReviewCompletedSession(user.id, sessionId)))
+    return { error: "This completed game is unavailable." };
   await db
     .insert(productEvents)
     .values({
@@ -132,7 +153,10 @@ export async function dismissPostGameFeedback(formData: FormData) {
   revalidatePath(`/games/${sessionId}/play`);
 }
 
-export async function updateFeedbackAction(_: FeedbackActionState, formData: FormData): Promise<FeedbackActionState> {
+export async function updateFeedbackAction(
+  _: FeedbackActionState,
+  formData: FormData
+): Promise<FeedbackActionState> {
   const admin = await requireAdmin();
   const parsed = updateFeedbackSchema.safeParse({
     feedbackId: formData.get("feedbackId"),
@@ -140,7 +164,9 @@ export async function updateFeedbackAction(_: FeedbackActionState, formData: For
     adminNote: formData.get("adminNote"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Check the review details." };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Check the review details.",
+    };
   }
 
   const current = await db.query.feedbackSubmissions.findFirst({
@@ -157,7 +183,10 @@ export async function updateFeedbackAction(_: FeedbackActionState, formData: For
         adminNote: parsed.data.adminNote || null,
         reviewedById: admin.id,
         reviewedAt: now,
-        resolvedAt: parsed.data.status === "resolved" ? (current.resolvedAt ?? now) : null,
+        resolvedAt:
+          parsed.data.status === "resolved"
+            ? (current.resolvedAt ?? now)
+            : null,
         updatedAt: now,
       })
       .where(eq(feedbackSubmissions.id, current.id));
@@ -166,7 +195,10 @@ export async function updateFeedbackAction(_: FeedbackActionState, formData: For
       action: "feedback.reviewed",
       targetType: "feedback",
       targetId: current.id,
-      metadata: { previousStatus: current.status, nextStatus: parsed.data.status },
+      metadata: {
+        previousStatus: current.status,
+        nextStatus: parsed.data.status,
+      },
     });
   });
 

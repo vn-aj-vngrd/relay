@@ -2,7 +2,13 @@
 
 import { ArrowLeft, ArrowRight, X } from "@phosphor-icons/react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
@@ -29,13 +35,15 @@ const steps = [
     key: "home",
     target: "home",
     title: "Check your next game",
-    description: "Home shows your next game, booking status, roster, payments, and next task.",
+    description:
+      "Home shows your next game, booking status, roster, payments, and next task.",
   },
   {
     key: "courts",
     target: "courts",
     title: "Find a court",
-    description: "Browse verified courts on the map, check the details, and use one in a new game.",
+    description:
+      "Browse verified courts on the map, check the details, and use one in a new game.",
   },
   {
     key: "profile",
@@ -46,24 +54,45 @@ const steps = [
   },
 ] as const;
 
-type TargetRect = { top: number; right: number; bottom: number; left: number; width: number; height: number };
+type TargetRect = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+  width: number;
+  height: number;
+};
 
 function visibleTarget(name: string) {
   return (
-    [...document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)].find((element) => {
-      const rect = element.getBoundingClientRect();
-      const style = window.getComputedStyle(element);
-      return rect.width > 0 && rect.height > 0 && style.display !== "none" && style.visibility !== "hidden";
-    }) ?? null
+    [...document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)].find(
+      (element) => {
+        const rect = element.getBoundingClientRect();
+        const style = window.getComputedStyle(element);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== "none" &&
+          style.visibility !== "hidden"
+        );
+      }
+    ) ?? null
   );
 }
 
 function popoverPosition(rect: TargetRect | null): CSSProperties {
   const gutter = 16;
   const viewportWidth = typeof window === "undefined" ? 390 : window.innerWidth;
-  const viewportHeight = typeof window === "undefined" ? 844 : window.innerHeight;
+  const viewportHeight =
+    typeof window === "undefined" ? 844 : window.innerHeight;
   const width = Math.min(340, viewportWidth - gutter * 2);
-  if (!rect) return { left: "50%", top: "50%", width, transform: "translate(-50%, -50%)" };
+  if (!rect)
+    return {
+      left: "50%",
+      top: "50%",
+      width,
+      transform: "translate(-50%, -50%)",
+    };
   if (viewportWidth >= 700 && rect.right < viewportWidth * 0.35)
     return {
       top: Math.min(Math.max(gutter, rect.top), viewportHeight - 280),
@@ -73,13 +102,19 @@ function popoverPosition(rect: TargetRect | null): CSSProperties {
   if (rect.bottom > viewportHeight * 0.68)
     return {
       bottom: Math.max(gutter, viewportHeight - rect.top + 12),
-      left: Math.min(Math.max(gutter, rect.left + rect.width / 2 - width / 2), viewportWidth - width - gutter),
+      left: Math.min(
+        Math.max(gutter, rect.left + rect.width / 2 - width / 2),
+        viewportWidth - width - gutter
+      ),
       width,
     };
   if (rect.top < 96 || viewportWidth < 700)
     return {
       top: Math.min(viewportHeight - 280, rect.bottom + 12),
-      left: Math.min(Math.max(gutter, rect.left + rect.width / 2 - width / 2), viewportWidth - width - gutter),
+      left: Math.min(
+        Math.max(gutter, rect.left + rect.width / 2 - width / 2),
+        viewportWidth - width - gutter
+      ),
       width,
     };
   return {
@@ -92,7 +127,8 @@ function popoverPosition(rect: TargetRect | null): CSSProperties {
 export function ApplicationTour({ required }: { required: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const open = (required && pathname === "/home") || searchParams.get("tour") === "1";
+  const open =
+    (required && pathname === "/home") || searchParams.get("tour") === "1";
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const dialog = useRef<HTMLElement>(null);
@@ -100,9 +136,15 @@ export function ApplicationTour({ required }: { required: boolean }) {
   const current = steps[step];
   const replay = !required;
   const requestedDestination = safeNextPath(searchParams.get("next"));
-  const createDestination = requestedDestination.startsWith("/games/new") ? requestedDestination : "/games/new";
-  const continuationDestination = requestedDestination.startsWith("/games/new") ? "/home" : requestedDestination;
-  const continuationLabel = continuationDestination.startsWith("/games/") ? "Open saved game" : "Explore Relay";
+  const createDestination = requestedDestination.startsWith("/games/new")
+    ? requestedDestination
+    : "/games/new";
+  const continuationDestination = requestedDestination.startsWith("/games/new")
+    ? "/home"
+    : requestedDestination;
+  const continuationLabel = continuationDestination.startsWith("/games/")
+    ? "Open saved game"
+    : "Explore Relay";
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -121,7 +163,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
               width: rect.width,
               height: rect.height,
             }
-          : null,
+          : null
       );
     };
     update();
@@ -145,7 +187,9 @@ export function ApplicationTour({ required }: { required: boolean }) {
       }
       if (event.key !== "Tab" || !panel) return;
       const focusable = [
-        ...panel.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not([type="hidden"])'),
+        ...panel.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), [href], input:not([type="hidden"])'
+        ),
       ];
       if (!focusable.length) return;
       const first = focusable[0];
@@ -201,20 +245,32 @@ export function ApplicationTour({ required }: { required: boolean }) {
             {step + 1} / {steps.length}
           </p>
           <form noValidate ref={closeForm} action={completeProductTour}>
-            <input type="hidden" name="destination" value={continuationDestination} />
+            <input
+              type="hidden"
+              name="destination"
+              value={continuationDestination}
+            />
             <button
               type="submit"
-              aria-label={replay ? "Close application tour" : "Skip application tour"}
+              aria-label={
+                replay ? "Close application tour" : "Skip application tour"
+              }
               className="pressable grid h-9 w-9 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
             >
               <X aria-hidden size={17} />
             </button>
           </form>
         </div>
-        <h2 id="application-tour-title" className="mt-3 text-xl font-bold tracking-[-0.025em]">
+        <h2
+          id="application-tour-title"
+          className="mt-3 text-xl font-bold tracking-[-0.025em]"
+        >
           {current.title}
         </h2>
-        <p id="application-tour-description" className="mt-2 text-sm leading-6 text-muted">
+        <p
+          id="application-tour-description"
+          className="mt-2 text-sm leading-6 text-muted"
+        >
           {current.description}
         </p>
         <div
@@ -234,7 +290,10 @@ export function ApplicationTour({ required }: { required: boolean }) {
         </div>
         <div className="mt-5 flex items-center justify-between gap-3">
           {step ? (
-            <Button variant="quiet" onClick={() => setStep((value) => value - 1)}>
+            <Button
+              variant="quiet"
+              onClick={() => setStep((value) => value - 1)}
+            >
               <ArrowLeft aria-hidden size={15} />
               Back
             </Button>
@@ -244,7 +303,11 @@ export function ApplicationTour({ required }: { required: boolean }) {
           {finalStep ? (
             <div className="flex items-center gap-2">
               <form noValidate action={completeProductTour}>
-                <input type="hidden" name="destination" value={continuationDestination} />
+                <input
+                  type="hidden"
+                  name="destination"
+                  value={continuationDestination}
+                />
                 <PendingSubmit
                   pendingLabel="Finishing…"
                   className="pressable inline-flex h-9 items-center rounded-lg px-2.5 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
@@ -253,7 +316,11 @@ export function ApplicationTour({ required }: { required: boolean }) {
                 </PendingSubmit>
               </form>
               <form noValidate action={completeProductTour}>
-                <input type="hidden" name="destination" value={createDestination} />
+                <input
+                  type="hidden"
+                  name="destination"
+                  value={createDestination}
+                />
                 <PendingSubmit
                   data-tour-primary
                   pendingLabel="Opening…"
@@ -265,7 +332,10 @@ export function ApplicationTour({ required }: { required: boolean }) {
               </form>
             </div>
           ) : (
-            <Button data-tour-primary onClick={() => setStep((value) => value + 1)}>
+            <Button
+              data-tour-primary
+              onClick={() => setStep((value) => value + 1)}
+            >
               Next
               <ArrowRight aria-hidden size={15} />
             </Button>

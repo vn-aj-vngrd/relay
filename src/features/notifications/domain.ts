@@ -1,4 +1,9 @@
-export type NotificationTone = "session" | "players" | "payment" | "play" | "system";
+export type NotificationTone =
+  | "session"
+  | "players"
+  | "payment"
+  | "play"
+  | "system";
 
 export type NotificationPresentation = {
   title: string;
@@ -15,9 +20,12 @@ type NotificationInput = {
 };
 
 function invitationBody(game: string, payload: Record<string, unknown>) {
-  const host = typeof payload.hostName === "string" ? payload.hostName : "The host";
-  const venue = typeof payload.venueName === "string" ? payload.venueName : null;
-  const startsAt = typeof payload.startsAt === "string" ? new Date(payload.startsAt) : null;
+  const host =
+    typeof payload.hostName === "string" ? payload.hostName : "The host";
+  const venue =
+    typeof payload.venueName === "string" ? payload.venueName : null;
+  const startsAt =
+    typeof payload.startsAt === "string" ? new Date(payload.startsAt) : null;
   const date =
     startsAt && Number.isFinite(startsAt.getTime())
       ? new Intl.DateTimeFormat("en-PH", {
@@ -32,9 +40,13 @@ function invitationBody(game: string, payload: Record<string, unknown>) {
 
 function changedFields(payload: Record<string, unknown>) {
   const fields = Array.isArray(payload.fields)
-    ? payload.fields.filter((field): field is string => typeof field === "string")
+    ? payload.fields.filter(
+        (field): field is string => typeof field === "string"
+      )
     : [];
-  return fields.length ? `Changed: ${fields.join(", ")}.` : "Open the game to review the updated plan.";
+  return fields.length
+    ? `Changed: ${fields.join(", ")}.`
+    : "Open the game to review the updated plan.";
 }
 
 export function notificationPresentation({
@@ -72,14 +84,17 @@ export function notificationPresentation({
     case "session_cost_changed":
       return {
         title: customTitle ?? `${game} cost updated`,
-        body: customBody ?? "Open the game to review the updated cost per player.",
+        body:
+          customBody ?? "Open the game to review the updated cost per player.",
         href: gameHref,
         tone: "payment",
       };
     case "session_cancelled":
       return {
         title: customTitle ?? `${game} was cancelled`,
-        body: customBody ?? "The game is no longer going ahead. Open Relay to review your games.",
+        body:
+          customBody ??
+          "The game is no longer going ahead. Open Relay to review your games.",
         href: "/games",
         tone: "session",
       };
@@ -91,7 +106,8 @@ export function notificationPresentation({
         tone: "session",
       };
     case "join_request": {
-      const guest = typeof payload.guestName === "string" ? payload.guestName : "A player";
+      const guest =
+        typeof payload.guestName === "string" ? payload.guestName : "A player";
       return {
         title: customTitle ?? "New join request",
         body: customBody ?? `${guest} wants to join ${game}.`,
@@ -100,7 +116,8 @@ export function notificationPresentation({
       };
     }
     case "player_joined": {
-      const player = typeof payload.guestName === "string" ? payload.guestName : "A player";
+      const player =
+        typeof payload.guestName === "string" ? payload.guestName : "A player";
       return {
         title: customTitle ?? "Player joined",
         body: customBody ?? `${player} joined ${game}.`,
@@ -109,7 +126,8 @@ export function notificationPresentation({
       };
     }
     case "player_left": {
-      const player = typeof payload.guestName === "string" ? payload.guestName : "A player";
+      const player =
+        typeof payload.guestName === "string" ? payload.guestName : "A player";
       return {
         title: customTitle ?? "Player left",
         body: customBody ?? `${player} left ${game}.`,
@@ -127,7 +145,9 @@ export function notificationPresentation({
     case "moved_to_waitlist":
       return {
         title: customTitle ?? "You’re on the waitlist",
-        body: customBody ?? `${game} is currently full. We’ll let you know when a spot opens.`,
+        body:
+          customBody ??
+          `${game} is currently full. We’ll let you know when a spot opens.`,
         href: `${gameHref}/players`,
         tone: "players",
       };
@@ -171,7 +191,9 @@ export function notificationPresentation({
         title: customTitle ?? "New payment proof needed",
         body:
           customBody ??
-          (typeof payload.note === "string" ? payload.note : `The host asked you to check your proof for ${game}.`),
+          (typeof payload.note === "string"
+            ? payload.note
+            : `The host asked you to check your proof for ${game}.`),
         href: `${gameHref}/payments`,
         tone: "payment",
       };
@@ -196,7 +218,9 @@ export function notificationPresentation({
     case "session_starting_soon":
       return {
         title: customTitle ?? "Game starting soon",
-        body: customBody ?? `${game} starts in about an hour. Check the venue and mark yourself here when you arrive.`,
+        body:
+          customBody ??
+          `${game} starts in about an hour. Check the venue and mark yourself here when you arrive.`,
         href: `${gameHref}/play`,
         tone: "play",
       };
@@ -204,14 +228,16 @@ export function notificationPresentation({
       return {
         title: customTitle ?? "Game tomorrow",
         body:
-          customBody ?? `${game} is coming up tomorrow. Check the time, venue, and anything you still need to settle.`,
+          customBody ??
+          `${game} is coming up tomorrow. Check the time, venue, and anything you still need to settle.`,
         href: gameHref,
         tone: "session",
       };
     case "session_completed":
       return {
         title: customTitle ?? "Game wrapped",
-        body: customBody ?? `${game} is now saved with its scores and standings.`,
+        body:
+          customBody ?? `${game} is now saved with its scores and standings.`,
         href: `${gameHref}/play`,
         tone: "play",
       };
@@ -222,7 +248,10 @@ export function notificationPresentation({
 
 export type NotificationGroup = "Today" | "This week" | "Earlier";
 
-export function notificationGroup(date: Date, now = new Date()): NotificationGroup {
+export function notificationGroup(
+  date: Date,
+  now = new Date()
+): NotificationGroup {
   const calendar = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Manila",
     year: "numeric",
@@ -230,16 +259,26 @@ export function notificationGroup(date: Date, now = new Date()): NotificationGro
     day: "2-digit",
   });
   if (calendar.format(date) === calendar.format(now)) return "Today";
-  if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) return "This week";
+  if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000)
+    return "This week";
   return "Earlier";
 }
 
 export function notificationTime(date: Date, group: NotificationGroup) {
   if (group === "Today")
-    return new Intl.DateTimeFormat("en-PH", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" }).format(
-      date,
-    );
+    return new Intl.DateTimeFormat("en-PH", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: "Asia/Manila",
+    }).format(date);
   if (group === "This week")
-    return new Intl.DateTimeFormat("en-PH", { weekday: "short", timeZone: "Asia/Manila" }).format(date);
-  return new Intl.DateTimeFormat("en-PH", { month: "short", day: "numeric", timeZone: "Asia/Manila" }).format(date);
+    return new Intl.DateTimeFormat("en-PH", {
+      weekday: "short",
+      timeZone: "Asia/Manila",
+    }).format(date);
+  return new Intl.DateTimeFormat("en-PH", {
+    month: "short",
+    day: "numeric",
+    timeZone: "Asia/Manila",
+  }).format(date);
 }

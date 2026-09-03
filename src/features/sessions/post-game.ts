@@ -10,10 +10,16 @@ export type PostGameContinuation = {
   saveCrewHref?: string;
 };
 
-export function postGameContinuation(session: PostGameSession, viewerUserId: string): PostGameContinuation | undefined {
-  if (session.status !== "completed" || session.hostId !== viewerUserId) return undefined;
+export function postGameContinuation(
+  session: PostGameSession,
+  viewerUserId: string
+): PostGameContinuation | undefined {
+  if (session.status !== "completed" || session.hostId !== viewerUserId)
+    return undefined;
   return {
     replayHref: `/games/new?from=${session.id}`,
-    ...(!session.groupId ? { saveCrewHref: `/groups/new?from=${session.id}` } : {}),
+    ...(!session.groupId
+      ? { saveCrewHref: `/groups/new?from=${session.id}` }
+      : {}),
   };
 }

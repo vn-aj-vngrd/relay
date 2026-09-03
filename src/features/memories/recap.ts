@@ -1,4 +1,7 @@
-import { calculateStandings, type MatchResult } from "@/features/matches/domain";
+import {
+  calculateStandings,
+  type MatchResult,
+} from "@/features/matches/domain";
 
 export type RecapMatch = MatchResult & {
   id: string;
@@ -10,17 +13,28 @@ export type RecapMatch = MatchResult & {
 
 export type RecapPlayer = { id: string; name: string };
 
-export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[]) {
-  const completed = matches.filter((match) => match.status === "completed" && match.scoreA !== match.scoreB);
+export function buildSessionRecap(
+  matches: RecapMatch[],
+  players: RecapPlayer[]
+) {
+  const completed = matches.filter(
+    (match) => match.status === "completed" && match.scoreA !== match.scoreB
+  );
   const nameById = new Map(players.map((player) => [player.id, player.name]));
   const standings = calculateStandings(completed).map((row) => ({
     ...row,
     name: nameById.get(row.playerId) ?? "Guest",
   }));
-  const pairRows = new Map<string, { ids: string[]; played: number; wins: number; differential: number }>();
+  const pairRows = new Map<
+    string,
+    { ids: string[]; played: number; wins: number; differential: number }
+  >();
   const courtCounts = new Map<string, number>();
   for (const match of completed) {
-    courtCounts.set(match.courtLabel, (courtCounts.get(match.courtLabel) ?? 0) + 1);
+    courtCounts.set(
+      match.courtLabel,
+      (courtCounts.get(match.courtLabel) ?? 0) + 1
+    );
     const aWon = match.scoreA > match.scoreB;
     for (const [team, won, differential] of [
       [match.teamA, aWon, match.scoreA - match.scoreB],
@@ -28,7 +42,12 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
     ] as const) {
       const ids = [...team].sort();
       const key = ids.join(":");
-      const row = pairRows.get(key) ?? { ids, played: 0, wins: 0, differential: 0 };
+      const row = pairRows.get(key) ?? {
+        ids,
+        played: 0,
+        wins: 0,
+        differential: 0,
+      };
       row.played += 1;
       row.wins += won ? 1 : 0;
       row.differential += differential;
@@ -37,11 +56,16 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
   }
   const topPair = [...pairRows.values()]
     .filter((pair) => pair.ids.length === 2)
-    .sort((a, b) => b.wins - a.wins || b.differential - a.differential || b.played - a.played)[0];
+    .sort(
+      (a, b) =>
+        b.wins - a.wins ||
+        b.differential - a.differential ||
+        b.played - a.played
+    )[0];
   const closestMatch = completed.toSorted(
     (a, b) =>
       Math.abs(a.scoreA - a.scoreB) - Math.abs(b.scoreA - b.scoreB) ||
-      (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0),
+      (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0)
   )[0];
   const firstStart = completed
     .map((match) => match.startedAt?.getTime())
@@ -51,7 +75,9 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
     .map((match) => match.finishedAt?.getTime())
     .filter((value): value is number => Boolean(value))
     .sort((a, b) => b - a)[0];
-  const busiestCourt = [...courtCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  const busiestCourt = [...courtCounts.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+  )[0];
 
   return {
     matchCount: completed.length,
@@ -65,11 +91,22 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
       scores: [match.scoreA, match.scoreB] as [number, number],
       version: match.version ?? 1,
     })),
-    totalPoints: completed.reduce((total, match) => total + match.scoreA + match.scoreB, 0),
-    playMinutes: firstStart && lastFinish ? Math.max(1, Math.round((lastFinish - firstStart) / 60_000)) : 0,
+    totalPoints: completed.reduce(
+      (total, match) => total + match.scoreA + match.scoreB,
+      0
+    ),
+    playMinutes:
+      firstStart && lastFinish
+        ? Math.max(1, Math.round((lastFinish - firstStart) / 60_000))
+        : 0,
     standings,
     standout: standings[0] ?? null,
-    topPair: topPair ? { ...topPair, names: topPair.ids.map((id) => nameById.get(id) ?? "Guest") } : null,
+    topPair: topPair
+      ? {
+          ...topPair,
+          names: topPair.ids.map((id) => nameById.get(id) ?? "Guest"),
+        }
+      : null,
     closestMatch: closestMatch
       ? {
           courtLabel: closestMatch.courtLabel,
@@ -81,7 +118,9 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
           margin: Math.abs(closestMatch.scoreA - closestMatch.scoreB),
         }
       : null,
-    busiestCourt: busiestCourt ? { label: busiestCourt[0], matches: busiestCourt[1] } : null,
+    busiestCourt: busiestCourt
+      ? { label: busiestCourt[0], matches: busiestCourt[1] }
+      : null,
   };
 }
 

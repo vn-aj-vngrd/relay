@@ -15,15 +15,22 @@ import {
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canManageSessionWorkspace } from "@/features/sessions/session-access";
 
-export default async function PlayersPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlayersPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await requireUser();
   const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const pending = data.roster.filter(({ player }) => player.rsvp === "pending");
-  const waitlist = data.roster.filter(({ player }) => player.rsvp === "waitlisted");
+  const waitlist = data.roster.filter(
+    ({ player }) => player.rsvp === "waitlisted"
+  );
   const otherResponses = data.roster.filter(
-    ({ player }) => !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp),
+    ({ player }) =>
+      !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp)
   );
   const isHost = canManageSessionWorkspace(data.access);
 
@@ -39,23 +46,34 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
       />
       <div className="mx-auto w-full max-w-6xl">
         {isHost ? (
-          <section className="mb-9 border-b border-line py-5" aria-labelledby="add-player-title">
+          <section
+            className="mb-9 border-b border-line py-5"
+            aria-labelledby="add-player-title"
+          >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex gap-3">
-                <UsersThree aria-hidden size={20} className="mt-0.5 text-primary" />
+                <UsersThree
+                  aria-hidden
+                  size={20}
+                  className="mt-0.5 text-primary"
+                />
                 <div>
                   <h2 id="add-player-title" className="font-bold">
                     Build the roster your way
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-muted">
-                    Add guests by name, invite Relay players with @username, or share the game link.{" "}
+                    Add guests by name, invite Relay players with @username, or
+                    share the game link.{" "}
                     {data.session.requiresApproval
                       ? "New join requests need approval."
                       : "New players join automatically while spots are open."}
                   </p>
                 </div>
               </div>
-              <RosterLockButton sessionId={data.session.id} locked={data.session.rosterLocked} />
+              <RosterLockButton
+                sessionId={data.session.id}
+                locked={data.session.rosterLocked}
+              />
             </div>
             {data.session.rosterLocked ? (
               <p className="mt-4 text-sm font-medium text-warning">
@@ -80,13 +98,26 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
               {pending.map(({ player, profile }, index) => {
                 const name = profile?.name ?? player.guestName ?? "Guest";
                 return (
-                  <li key={player.id} className="flex min-h-16 flex-wrap items-center gap-3 py-2">
-                    <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" />
+                  <li
+                    key={player.id}
+                    className="flex min-h-16 flex-wrap items-center gap-3 py-2"
+                  >
+                    <Avatar
+                      name={name}
+                      imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                      index={index}
+                      size="sm"
+                    />
                     <div className="min-w-32 flex-1">
                       <p className="font-medium">{name}</p>
-                      <p className="mt-0.5 text-xs text-muted">Requested a spot</p>
+                      <p className="mt-0.5 text-xs text-muted">
+                        Requested a spot
+                      </p>
                     </div>
-                    <PendingPlayerActions sessionId={data.session.id} playerId={player.id} />
+                    <PendingPlayerActions
+                      sessionId={data.session.id}
+                      playerId={player.id}
+                    />
                   </li>
                 );
               })}
@@ -112,21 +143,39 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
             {going.map(({ player, profile }, index) => {
               const name = profile?.name ?? player.guestName ?? "Guest";
               return (
-                <li key={player.id} className="flex min-h-16 items-center gap-3 py-2">
-                  <Avatar name={name} imageUrl={profileAvatarUrl(profile?.avatarPath)} index={index} size="sm" />
+                <li
+                  key={player.id}
+                  className="flex min-h-16 items-center gap-3 py-2"
+                >
+                  <Avatar
+                    name={name}
+                    imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                    index={index}
+                    size="sm"
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium">
                       {name}
                       {player.role === "host" ? (
-                        <span className="ml-2 text-xs font-normal text-muted">Host</span>
+                        <span className="ml-2 text-xs font-normal text-muted">
+                          Host
+                        </span>
                       ) : player.role === "cohost" ? (
-                        <span className="ml-2 text-xs font-normal text-muted">Co-host</span>
+                        <span className="ml-2 text-xs font-normal text-muted">
+                          Co-host
+                        </span>
                       ) : null}
                     </span>
-                    <span className="mt-0.5 block text-xs text-muted">{playingExperienceLabel(player.skillLevel)}</span>
+                    <span className="mt-0.5 block text-xs text-muted">
+                      {playingExperienceLabel(player.skillLevel)}
+                    </span>
                   </span>
                   {isHost && player.role !== "host" ? (
-                    <RemovePlayerButton sessionId={data.session.id} playerId={player.id} name={name} />
+                    <RemovePlayerButton
+                      sessionId={data.session.id}
+                      playerId={player.id}
+                      name={name}
+                    />
                   ) : null}
                 </li>
               );
@@ -143,11 +192,20 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
               {waitlist.map(({ player, profile }, index) => {
                 const name = profile?.name ?? player.guestName ?? "Guest";
                 return (
-                  <li key={player.id} className="flex min-h-14 items-center gap-3">
-                    <span className="score w-5 text-sm text-muted">{index + 1}</span>
+                  <li
+                    key={player.id}
+                    className="flex min-h-14 items-center gap-3"
+                  >
+                    <span className="score w-5 text-sm text-muted">
+                      {index + 1}
+                    </span>
                     <span className="flex-1 font-medium">{name}</span>
                     {isHost ? (
-                      <RemovePlayerButton sessionId={data.session.id} playerId={player.id} name={name} />
+                      <RemovePlayerButton
+                        sessionId={data.session.id}
+                        playerId={player.id}
+                        name={name}
+                      />
                     ) : null}
                   </li>
                 );
@@ -155,7 +213,8 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
             </ol>
           ) : (
             <p className="mt-2 text-sm text-muted">
-              No one is waiting. New players move here automatically when the game is full.
+              No one is waiting. New players move here automatically when the
+              game is full.
             </p>
           )}
         </section>
@@ -172,10 +231,19 @@ export default async function PlayersPage({ params }: { params: Promise<{ id: st
               {otherResponses.map(({ player, profile }) => {
                 const name = profile?.name ?? player.guestName ?? "Guest";
                 return (
-                  <li key={player.id} className="flex min-h-14 items-center gap-3">
+                  <li
+                    key={player.id}
+                    className="flex min-h-14 items-center gap-3"
+                  >
                     <span className="flex-1 font-medium">{name}</span>
-                    <span className="text-sm capitalize text-muted">{player.rsvp}</span>
-                    <RemovePlayerButton sessionId={data.session.id} playerId={player.id} name={name} />
+                    <span className="text-sm capitalize text-muted">
+                      {player.rsvp}
+                    </span>
+                    <RemovePlayerButton
+                      sessionId={data.session.id}
+                      playerId={player.id}
+                      name={name}
+                    />
                   </li>
                 );
               })}

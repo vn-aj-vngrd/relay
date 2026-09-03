@@ -19,11 +19,15 @@ describe("postGameContinuation", () => {
 
   it("does not offer host actions to participants or before completion", () => {
     expect(postGameContinuation(session, "player")).toBeUndefined();
-    expect(postGameContinuation({ ...session, status: "live" }, "host")).toBeUndefined();
+    expect(
+      postGameContinuation({ ...session, status: "live" }, "host")
+    ).toBeUndefined();
   });
 
   it("does not offer Save this crew when the game already belongs to a group", () => {
-    expect(postGameContinuation({ ...session, groupId: "group" }, "host")).toEqual({
+    expect(
+      postGameContinuation({ ...session, groupId: "group" }, "host")
+    ).toEqual({
       replayHref: `/games/new?from=${session.id}`,
     });
   });

@@ -7,32 +7,54 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 
 import { type AdminActionState, updateSignupCapacityAction } from "./actions";
 
-export function SignupCapacityControl({ accountCap, userCount }: { accountCap: number; userCount: number }) {
-  const [state, action] = useActionState<AdminActionState, FormData>(updateSignupCapacityAction, {});
+export function SignupCapacityControl({
+  accountCap,
+  userCount,
+}: {
+  accountCap: number;
+  userCount: number;
+}) {
+  const [state, action] = useActionState<AdminActionState, FormData>(
+    updateSignupCapacityAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   const remaining = Math.max(0, accountCap - userCount);
   const full = remaining === 0;
 
   return (
-    <section aria-labelledby="signup-capacity-title" className="border-y border-line py-6">
+    <section
+      aria-labelledby="signup-capacity-title"
+      className="border-y border-line py-6"
+    >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-end">
         <div>
           <h2 id="signup-capacity-title" className="text-lg font-bold">
             Signup capacity
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Relay rejects new account creation once registered accounts reach this limit. Existing accounts can still
-            sign in.
+            Relay rejects new account creation once registered accounts reach
+            this limit. Existing accounts can still sign in.
           </p>
-          <p className={`mt-3 text-sm font-semibold ${full ? "text-danger" : "text-ink"}`}>
-            {full ? "Signup is full" : `${remaining.toLocaleString()} places remaining`}
+          <p
+            className={`mt-3 text-sm font-semibold ${full ? "text-danger" : "text-ink"}`}
+          >
+            {full
+              ? "Signup is full"
+              : `${remaining.toLocaleString()} places remaining`}
           </p>
           <p className="mt-1 text-xs text-muted">
-            {userCount.toLocaleString()} registered of {accountCap.toLocaleString()} allowed
+            {userCount.toLocaleString()} registered of{" "}
+            {accountCap.toLocaleString()} allowed
           </p>
         </div>
 
-        <form noValidate action={action} onSubmitCapture={preserveValues} className="min-w-0">
+        <form
+          noValidate
+          action={action}
+          onSubmitCapture={preserveValues}
+          className="min-w-0"
+        >
           <label htmlFor="signup-account-cap" className="text-sm font-semibold">
             Maximum accounts
           </label>
@@ -58,9 +80,12 @@ export function SignupCapacityControl({ accountCap, userCount }: { accountCap: n
               Save account limit
             </PendingSubmit>
           </div>
-          <p id="signup-account-cap-hint" className="mt-2 text-xs leading-5 text-muted">
-            Lowering the limit below the current total closes signup immediately. The limit includes admin-created
-            accounts.
+          <p
+            id="signup-account-cap-hint"
+            className="mt-2 text-xs leading-5 text-muted"
+          >
+            Lowering the limit below the current total closes signup
+            immediately. The limit includes admin-created accounts.
           </p>
           {state.error ? (
             <p role="alert" className="mt-2 text-sm font-medium text-danger">

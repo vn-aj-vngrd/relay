@@ -23,14 +23,18 @@ export function SessionReadinessPanel({
   return (
     <div className="mt-5 border-t border-line pt-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-[650]">{readiness.ready ? "Ready to play" : "Game setup"}</p>
+        <p className="text-sm font-[650]">
+          {readiness.ready ? "Ready to play" : "Game setup"}
+        </p>
         {readiness.ready ? (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-success">
             <CheckCircle aria-hidden weight="fill" size={17} />
             Ready
           </span>
         ) : (
-          <span className="score text-sm font-semibold text-muted">{readiness.percent}%</span>
+          <span className="score text-sm font-semibold text-muted">
+            {readiness.percent}%
+          </span>
         )}
       </div>
       {!readiness.ready ? (
@@ -43,7 +47,10 @@ export function SessionReadinessPanel({
             aria-valuenow={readiness.percent}
             className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-strong"
           >
-            <span className="block h-full rounded-full bg-primary" style={{ width: `${readiness.percent}%` }} />
+            <span
+              className="block h-full rounded-full bg-primary"
+              style={{ width: `${readiness.percent}%` }}
+            />
           </div>
           <ul className="mt-3 space-y-1.5">
             {readiness.missing.slice(0, 2).map((task) => (
@@ -59,7 +66,9 @@ export function SessionReadinessPanel({
           </ul>
         </>
       ) : (
-        <p className="mt-2 text-xs leading-5 text-muted">Roster, booking, and shared costs are ready.</p>
+        <p className="mt-2 text-xs leading-5 text-muted">
+          Roster, booking, and shared costs are ready.
+        </p>
       )}
     </div>
   );

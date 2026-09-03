@@ -3,18 +3,28 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 
-import { openGameDateFilters, type OpenGamesFilters } from "./open-games";
+import { type OpenGamesFilters, openGameDateFilters } from "./open-games";
 
-const dateLabels = { any: "Any upcoming date", today: "Today", "7d": "Next 7 days", "30d": "Next 30 days" };
+const dateLabels = {
+  any: "Any upcoming date",
+  today: "Today",
+  "7d": "Next 7 days",
+  "30d": "Next 30 days",
+};
 
 export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
-  const hasFilters = Boolean(filters.location || filters.date !== "any" || filters.available);
+  const hasFilters = Boolean(
+    filters.location || filters.date !== "any" || filters.available
+  );
 
   return (
     <form noValidate action="/games/open" method="get" className="mt-6">
       <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,.65fr)] lg:grid-cols-[minmax(0,1fr)_14rem_auto] lg:items-end">
         <div>
-          <label htmlFor="open-location" className="block text-sm font-semibold">
+          <label
+            htmlFor="open-location"
+            className="block text-sm font-semibold"
+          >
             Court or location
           </label>
           <input
@@ -31,7 +41,10 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
           name="date"
           label="Date"
           defaultValue={filters.date}
-          options={openGameDateFilters.map((value) => ({ value, label: dateLabels[value] }))}
+          options={openGameDateFilters.map((value) => ({
+            value,
+            label: dateLabels[value],
+          }))}
         />
         <Button type="submit" className="min-h-11 w-full lg:min-h-9 lg:w-auto">
           Apply filters
@@ -49,7 +62,10 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
           Games with spots available
         </label>
         {hasFilters ? (
-          <Link href="/games/open" className="inline-flex min-h-9 items-center text-sm font-semibold text-primary">
+          <Link
+            href="/games/open"
+            className="inline-flex min-h-9 items-center text-sm font-semibold text-primary"
+          >
             Clear filters
           </Link>
         ) : null}

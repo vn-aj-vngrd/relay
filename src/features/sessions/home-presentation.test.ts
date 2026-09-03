@@ -9,10 +9,18 @@ import {
 
 describe("home presentation", () => {
   it("describes live, confirmed, tentative, and empty schedules truthfully", () => {
-    expect(homeHeading({ live: true, hasPrimary: true, hasTentative: true })).toBe("Your game is live.");
-    expect(homeHeading({ live: false, hasPrimary: true, hasTentative: true })).toBe("Your next game is set.");
-    expect(homeHeading({ live: false, hasPrimary: false, hasTentative: true })).toBe("Your plans are taking shape.");
-    expect(homeHeading({ live: false, hasPrimary: false, hasTentative: false })).toBe("Ready for your next game?");
+    expect(
+      homeHeading({ live: true, hasPrimary: true, hasTentative: true })
+    ).toBe("Your game is live.");
+    expect(
+      homeHeading({ live: false, hasPrimary: true, hasTentative: true })
+    ).toBe("Your next game is set.");
+    expect(
+      homeHeading({ live: false, hasPrimary: false, hasTentative: true })
+    ).toBe("Your plans are taking shape.");
+    expect(
+      homeHeading({ live: false, hasPrimary: false, hasTentative: false })
+    ).toBe("Ready for your next game?");
   });
 
   it("makes tentative, host, and co-host participation explicit", () => {
@@ -20,7 +28,9 @@ describe("home presentation", () => {
     expect(homeParticipationLabel("going", "cohost")).toBe("Co-hosting");
     expect(homeParticipationLabel("going", "player")).toBe("Going");
     expect(homeParticipationLabel("maybe", "player")).toBe("Maybe");
-    expect(homeParticipationLabel("pending", "player")).toBe("Awaiting approval");
+    expect(homeParticipationLabel("pending", "player")).toBe(
+      "Awaiting approval"
+    );
     expect(homeParticipationLabel("waitlisted", "player")).toBe("Waitlisted");
   });
 

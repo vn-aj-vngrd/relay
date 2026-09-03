@@ -6,11 +6,25 @@ import { ShareButton } from "./share-button";
 describe("ShareButton", () => {
   it("uses the standard secondary action treatment and consistent label", () => {
     render(<ShareButton url="/s/friends-night" title="Friends Night" />);
-    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("min-h-9", "text-[13px]", "bg-surface");
+    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass(
+      "min-h-9",
+      "text-[13px]",
+      "bg-surface"
+    );
   });
 
   it("uses a 44px icon target in compact mobile game chrome", () => {
-    render(<ShareButton url="/s/friends-night" title="Friends Night" compactOnMobile />);
-    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass("h-11", "w-11", "px-0");
+    render(
+      <ShareButton
+        url="/s/friends-night"
+        title="Friends Night"
+        compactOnMobile
+      />
+    );
+    expect(screen.getByRole("button", { name: "Share game" })).toHaveClass(
+      "h-11",
+      "w-11",
+      "px-0"
+    );
   });
 });

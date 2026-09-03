@@ -7,7 +7,11 @@ import { Button, ButtonSpinner } from "@/components/ui/button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { sendMessage } from "./actions";
-import { DEFAULT_CHAT_IMAGE_MAX_BYTES, formatChatImageLimit, validateChatImageMetadata } from "./config";
+import {
+  DEFAULT_CHAT_IMAGE_MAX_BYTES,
+  formatChatImageLimit,
+  validateChatImageMetadata,
+} from "./config";
 
 export function ChatComposer({
   sessionId,
@@ -67,7 +71,9 @@ export function ChatComposer({
           className="pressable grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
           title={`Attach a photo up to ${formatChatImageLimit(maxImageBytes)}`}
         >
-          <span className="sr-only">Attach a photo, up to {formatChatImageLimit(maxImageBytes)}</span>
+          <span className="sr-only">
+            Attach a photo, up to {formatChatImageLimit(maxImageBytes)}
+          </span>
           <ImageSquare aria-hidden size={20} />
           <input
             ref={fileRef}
@@ -77,7 +83,9 @@ export function ChatComposer({
             className="sr-only"
             onChange={(event) => {
               const file = event.target.files?.[0];
-              const error = file ? validateChatImageMetadata(file, maxImageBytes) : null;
+              const error = file
+                ? validateChatImageMetadata(file, maxImageBytes)
+                : null;
               if (error) {
                 event.target.value = "";
                 setFileName("");
@@ -105,17 +113,32 @@ export function ChatComposer({
             const textarea = event.currentTarget;
             textarea.style.height = "auto";
             textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
-            textarea.style.overflowY = textarea.scrollHeight > 128 ? "auto" : "hidden";
+            textarea.style.overflowY =
+              textarea.scrollHeight > 128 ? "auto" : "hidden";
           }}
           onKeyDown={(event) => {
-            if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+            if (
+              event.key !== "Enter" ||
+              event.shiftKey ||
+              event.nativeEvent.isComposing
+            )
+              return;
             event.preventDefault();
             if (!pending) event.currentTarget.form?.requestSubmit();
           }}
           className="max-h-32 min-h-12 min-w-0 flex-1 resize-none overflow-y-hidden rounded-[14px] border border-line bg-canvas px-3.5 py-3 text-[15px] leading-6 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
-        <Button type="submit" aria-label="Send message" disabled={pending} className="h-11 min-h-11 w-11 shrink-0 px-0">
-          {pending ? <ButtonSpinner /> : <PaperPlaneRight aria-hidden size={18} weight="fill" />}
+        <Button
+          type="submit"
+          aria-label="Send message"
+          disabled={pending}
+          className="h-11 min-h-11 w-11 shrink-0 px-0"
+        >
+          {pending ? (
+            <ButtonSpinner />
+          ) : (
+            <PaperPlaneRight aria-hidden size={18} weight="fill" />
+          )}
         </Button>
       </div>
       {imageError || state.error ? (

@@ -8,7 +8,12 @@ export default function PlayersLoading() {
         title="Players"
         description="Manage who’s going, join requests, waitlist movement, and roster access."
       />
-      <div role="status" aria-label="Loading players" aria-busy="true" className="mx-auto w-full max-w-6xl">
+      <div
+        role="status"
+        aria-label="Loading players"
+        aria-busy="true"
+        className="mx-auto w-full max-w-6xl"
+      >
         <section className="mb-9 border-y border-line py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 gap-3">

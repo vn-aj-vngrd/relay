@@ -22,12 +22,13 @@ describe("submitFeedbackSchema", () => {
         type: "bug",
         area: "play",
         title: "Rotation skipped a player",
-        description: "The next rotation left one available player out of the queue.",
+        description:
+          "The next rotation left one available player out of the queue.",
         pagePath: "/games/8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75/play",
         contactAllowed: true,
         sessionId: "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75",
         experience: "issues",
-      }).success,
+      }).success
     ).toBe(true);
   });
 
@@ -36,7 +37,8 @@ describe("submitFeedbackSchema", () => {
       type: "bug",
       area: "play",
       title: "Rotation skipped a player",
-      description: "The next rotation left one available player out of the queue.",
+      description:
+        "The next rotation left one available player out of the queue.",
       pagePath: "/games/example/play",
       contactAllowed: true,
       experience: "issues",
@@ -71,14 +73,14 @@ describe("updateFeedbackSchema", () => {
         feedbackId: "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75",
         status: "planned",
         adminNote: "Useful once the core queue is stable.",
-      }).success,
+      }).success
     ).toBe(true);
     expect(
       updateFeedbackSchema.safeParse({
         feedbackId: "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75",
         status: "shipped-someday",
         adminNote: "",
-      }).success,
+      }).success
     ).toBe(false);
   });
 });

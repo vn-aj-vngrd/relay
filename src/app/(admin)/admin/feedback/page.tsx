@@ -3,7 +3,12 @@ import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import { SelectField } from "@/components/ui/select-field";
 import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
-import { feedbackStatuses, feedbackStatusLabels, feedbackTypeLabels, feedbackTypes } from "@/features/feedback/domain";
+import {
+  feedbackStatuses,
+  feedbackStatusLabels,
+  feedbackTypeLabels,
+  feedbackTypes,
+} from "@/features/feedback/domain";
 import { getAdminFeedback } from "@/features/feedback/queries";
 
 export default async function AdminFeedbackPage({
@@ -33,8 +38,12 @@ export default async function AdminFeedbackPage({
             key={value}
             className="flex items-center justify-between gap-3 border-t border-line py-3 first:border-t-0 sm:block sm:border-t-0 sm:px-4 sm:py-4 sm:first:pl-0"
           >
-            <p className="text-sm font-medium text-muted">{feedbackStatusLabels[value]}</p>
-            <p className="score text-xl font-bold sm:mt-2">{page.statusCounts[value] ?? 0}</p>
+            <p className="text-sm font-medium text-muted">
+              {feedbackStatusLabels[value]}
+            </p>
+            <p className="score text-xl font-bold sm:mt-2">
+              {page.statusCounts[value] ?? 0}
+            </p>
           </div>
         ))}
       </section>
@@ -68,7 +77,10 @@ export default async function AdminFeedbackPage({
           className="!mt-0 !h-10"
           options={[
             { value: "", label: "All types" },
-            ...feedbackTypes.map((value) => ({ value, label: feedbackTypeLabels[value] })),
+            ...feedbackTypes.map((value) => ({
+              value,
+              label: feedbackTypeLabels[value],
+            })),
           ]}
         />
         <SelectField
@@ -80,7 +92,10 @@ export default async function AdminFeedbackPage({
           className="!mt-0 !h-10"
           options={[
             { value: "", label: "All statuses" },
-            ...feedbackStatuses.map((value) => ({ value, label: feedbackStatusLabels[value] })),
+            ...feedbackStatuses.map((value) => ({
+              value,
+              label: feedbackStatusLabels[value],
+            })),
           ]}
         />
         <button className="pressable h-10 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover">

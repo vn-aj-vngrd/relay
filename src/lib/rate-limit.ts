@@ -28,11 +28,17 @@ function digest(value: string) {
 export async function requestIdentity(userId?: string | null) {
   if (userId) return `user:${userId}`;
   const requestHeaders = await headers();
-  const forwarded = requestHeaders.get("x-vercel-forwarded-for") ?? requestHeaders.get("x-forwarded-for") ?? "unknown";
+  const forwarded =
+    requestHeaders.get("x-vercel-forwarded-for") ??
+    requestHeaders.get("x-forwarded-for") ??
+    "unknown";
   return `ip:${forwarded.split(",")[0]?.trim() || "unknown"}`;
 }
 
-export async function checkRateLimit(rule: RateLimitRule, identity: string): Promise<RateLimitResult> {
+export async function checkRateLimit(
+  rule: RateLimitRule,
+  identity: string
+): Promise<RateLimitResult> {
   const now = Date.now();
   const windowMs = rule.windowSeconds * 1000;
   const bucket = Math.floor(now / windowMs);
@@ -49,7 +55,10 @@ export async function checkRateLimit(rule: RateLimitRule, identity: string): Pro
     .returning({ count: rateLimitBuckets.count });
 
   const count = record?.count ?? rule.limit + 1;
-  const retryAfterSeconds = Math.max(1, Math.ceil(((bucket + 1) * windowMs - now) / 1000));
+  const retryAfterSeconds = Math.max(
+    1,
+    Math.ceil(((bucket + 1) * windowMs - now) / 1000)
+  );
   return {
     allowed: count <= rule.limit,
     limit: rule.limit,
@@ -58,7 +67,11 @@ export async function checkRateLimit(rule: RateLimitRule, identity: string): Pro
   };
 }
 
-export async function assertRateLimit(rule: RateLimitRule, identity: string, message: string) {
+export async function assertRateLimit(
+  rule: RateLimitRule,
+  identity: string,
+  message: string
+) {
   const result = await checkRateLimit(rule, identity);
   if (!result.allowed) {
     const error = new Error(message);
@@ -72,6 +85,8 @@ export function rateLimitHeaders(result: RateLimitResult) {
   return {
     "RateLimit-Limit": String(result.limit),
     "RateLimit-Remaining": String(result.remaining),
-    ...(result.allowed ? {} : { "Retry-After": String(result.retryAfterSeconds) }),
+    ...(result.allowed
+      ? {}
+      : { "Retry-After": String(result.retryAfterSeconds) }),
   };
 }

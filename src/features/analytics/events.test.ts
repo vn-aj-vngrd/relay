@@ -7,13 +7,16 @@ describe("sessionMilestoneDedupeKey", () => {
     const sessionId = "2ff78d38-32bb-41a4-bbaf-aa7bbb324c44";
 
     expect(sessionMilestoneDedupeKey(sessionId, "play_started")).toBe(
-      sessionMilestoneDedupeKey(sessionId, "play_started"),
+      sessionMilestoneDedupeKey(sessionId, "play_started")
     );
     expect(sessionMilestoneDedupeKey(sessionId, "play_started")).not.toBe(
-      sessionMilestoneDedupeKey(sessionId, "session_completed"),
+      sessionMilestoneDedupeKey(sessionId, "session_completed")
     );
     expect(sessionMilestoneDedupeKey(sessionId, "play_started")).not.toBe(
-      sessionMilestoneDedupeKey("f056590e-af85-4ad7-86af-f830cf475228", "play_started"),
+      sessionMilestoneDedupeKey(
+        "f056590e-af85-4ad7-86af-f830cf475228",
+        "play_started"
+      )
     );
   });
 });

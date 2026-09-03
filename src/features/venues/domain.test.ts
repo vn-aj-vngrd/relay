@@ -91,7 +91,7 @@ describe("Philippines venue moderation", () => {
         contact: "court@example.com",
         websiteUrl: "https://example.com",
         note: "Two covered courts",
-      }).success,
+      }).success
     ).toBe(true);
   });
 

@@ -5,7 +5,11 @@ import { PreferenceControls } from "@/features/preferences/preference-controls";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 
-export default async function PublicMorePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicMorePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const data = await getPublicSession((await params).slug);
   if (!data) notFound();
 
@@ -25,23 +29,32 @@ export default async function PublicMorePage({ params }: { params: Promise<{ slu
         </div>
         <section aria-labelledby="device-preferences-title" className="mt-9">
           <div className="flex items-start gap-3">
-            <DeviceMobile aria-hidden className="mt-0.5 shrink-0 text-primary" size={19} />
+            <DeviceMobile
+              aria-hidden
+              className="mt-0.5 shrink-0 text-primary"
+              size={19}
+            />
             <div>
               <h2 id="device-preferences-title" className="font-semibold">
                 Saved on this device
               </h2>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Theme and layout preferences are stored in this browser. They apply across Relay without requiring an
-                account.
+                Theme and layout preferences are stored in this browser. They
+                apply across Relay without requiring an account.
               </p>
             </div>
           </div>
           <div className="mt-5 flex items-start gap-3">
-            <ShieldCheck aria-hidden className="mt-0.5 shrink-0 text-primary" size={19} />
+            <ShieldCheck
+              aria-hidden
+              className="mt-0.5 shrink-0 text-primary"
+              size={19}
+            />
             <div>
               <h2 className="font-semibold">A private session link</h2>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Only people with this link can view the game unless the host changes its visibility.
+                Only people with this link can view the game unless the host
+                changes its visibility.
               </p>
             </div>
           </div>

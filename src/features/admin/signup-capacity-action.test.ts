@@ -21,14 +21,19 @@ import { updateSignupCapacityAction } from "./actions";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.requireAdmin.mockResolvedValue({ id: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" });
+  mocks.requireAdmin.mockResolvedValue({
+    id: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
+  });
   mocks.updateReturning.mockResolvedValue([{ accountCap: 250 }]);
-  mocks.transaction.mockImplementation(async (work: (tx: unknown) => Promise<unknown>) =>
-    work({
-      execute: mocks.execute,
-      update: () => ({ set: () => ({ where: () => ({ returning: mocks.updateReturning }) }) }),
-      insert: () => ({ values: mocks.auditValues }),
-    }),
+  mocks.transaction.mockImplementation(
+    async (work: (tx: unknown) => Promise<unknown>) =>
+      work({
+        execute: mocks.execute,
+        update: () => ({
+          set: () => ({ where: () => ({ returning: mocks.updateReturning }) }),
+        }),
+        insert: () => ({ values: mocks.auditValues }),
+      })
   );
 });
 
@@ -50,7 +55,7 @@ describe("updateSignupCapacityAction", () => {
         targetType: "signup_settings",
         targetId: "global",
         metadata: { accountCap: 250 },
-      }),
+      })
     );
   });
 
@@ -58,7 +63,9 @@ describe("updateSignupCapacityAction", () => {
     const formData = new FormData();
     formData.set("accountCap", "0");
 
-    await expect(updateSignupCapacityAction({}, formData)).resolves.toEqual({ error: "Allow at least one account." });
+    await expect(updateSignupCapacityAction({}, formData)).resolves.toEqual({
+      error: "Allow at least one account.",
+    });
     expect(mocks.requireAdmin).toHaveBeenCalledOnce();
     expect(mocks.transaction).not.toHaveBeenCalled();
   });

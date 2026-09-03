@@ -13,7 +13,9 @@ describe("TabChipRail", () => {
     let scrollLeft = 0;
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(300);
     vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(500);
-    vi.spyOn(HTMLElement.prototype, "scrollLeft", "get").mockImplementation(() => scrollLeft);
+    vi.spyOn(HTMLElement.prototype, "scrollLeft", "get").mockImplementation(
+      () => scrollLeft
+    );
     Object.defineProperty(HTMLElement.prototype, "scrollTo", {
       configurable: true,
       value: vi.fn(({ left }: ScrollToOptions) => {
@@ -31,13 +33,24 @@ describe("TabChipRail", () => {
         ]}
         value="upcoming"
         onChange={() => undefined}
-      />,
+      />
     );
 
-    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveClass("compact-control", "tab-chip", "min-h-9");
+    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveClass(
+      "compact-control",
+      "tab-chip",
+      "min-h-9"
+    );
 
-    const rail = screen.getByRole("group", { name: "Game filters" }).parentElement!;
-    expect(rail).toHaveClass("tab-chip-fade-right", "px-1.5", "py-1.5", "-mx-1.5", "-my-1.5");
+    const rail = screen.getByRole("group", { name: "Game filters" })
+      .parentElement!;
+    expect(rail).toHaveClass(
+      "tab-chip-fade-right",
+      "px-1.5",
+      "py-1.5",
+      "-mx-1.5",
+      "-my-1.5"
+    );
 
     scrollLeft = 100;
     fireEvent.scroll(rail);

@@ -3,7 +3,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { messages, notifications, profiles, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
+import {
+  messages,
+  notifications,
+  profiles,
+  sessionPlayers,
+  sessionQueue,
+  sessions,
+} from "@/db/schema";
 import { trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
@@ -20,8 +27,18 @@ export type RosterManagementCommand =
       playerEntry: string;
       skillLevel?: PlayingExperience;
     }
-  | { type: "approve"; actorUserId: string; sessionId: string; sessionPlayerId: string }
-  | { type: "remove"; actorUserId: string; sessionId: string; sessionPlayerId: string };
+  | {
+      type: "approve";
+      actorUserId: string;
+      sessionId: string;
+      sessionPlayerId: string;
+    }
+  | {
+      type: "remove";
+      actorUserId: string;
+      sessionId: string;
+      sessionPlayerId: string;
+    };
 
 export type RosterManagementResult = {
   error?: string;
@@ -42,12 +59,17 @@ async function requireSessionManager(sessionId: string, userId: string) {
   await assertRateLimit(
     { scope: "session-management", limit: 120, windowSeconds: 60 },
     `user:${userId}`,
-    "Game changes are happening too quickly. Wait a moment and try again.",
+    "Game changes are happening too quickly. Wait a moment and try again."
   );
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) });
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+  });
   if (!session) return null;
   const membership = await db.query.sessionPlayers.findFirst({
-    where: and(eq(sessionPlayers.sessionId, sessionId), eq(sessionPlayers.userId, userId)),
+    where: and(
+      eq(sessionPlayers.sessionId, sessionId),
+      eq(sessionPlayers.userId, userId)
+    ),
   });
   const actor = sessionActor({ userId, hostId: session.hostId, membership });
   return can(actor, "manage_roster") ? session : null;
@@ -62,43 +84,71 @@ function invalidateRoster(session: { id: string; slug: string }) {
   revalidatePath(`/s/${session.slug}`);
 }
 
-function unresolvedJoinRequest(sessionId: string, hostId: string, sessionPlayerId: string) {
+function unresolvedJoinRequest(
+  sessionId: string,
+  hostId: string,
+  sessionPlayerId: string
+) {
   return and(
     eq(notifications.userId, hostId),
     eq(notifications.sessionId, sessionId),
     eq(notifications.type, "join_request"),
     isNull(notifications.readAt),
-    sql`${notifications.payload} ->> 'sessionPlayerId' = ${sessionPlayerId}`,
+    sql`${notifications.payload} ->> 'sessionPlayerId' = ${sessionPlayerId}`
   );
 }
 
-async function addPlayer(command: Extract<RosterManagementCommand, { type: "add" }>): Promise<RosterManagementResult> {
-  const session = await requireSessionManager(command.sessionId, command.actorUserId);
+async function addPlayer(
+  command: Extract<RosterManagementCommand, { type: "add" }>
+): Promise<RosterManagementResult> {
+  const session = await requireSessionManager(
+    command.sessionId,
+    command.actorUserId
+  );
   if (!session) return { error: "Only a host or co-host can add players." };
-  if (session.rosterLocked) return { error: "Unlock the roster before adding another player." };
+  if (session.rosterLocked)
+    return { error: "Unlock the roster before adding another player." };
 
   const isRelayInvite = command.playerEntry.startsWith("@");
-  const username = isRelayInvite ? relayUsernameInput.safeParse(command.playerEntry.slice(1)) : null;
-  if (username && !username.success) return { error: username.error.issues[0]?.message };
+  const username = isRelayInvite
+    ? relayUsernameInput.safeParse(command.playerEntry.slice(1))
+    : null;
+  if (username && !username.success)
+    return { error: username.error.issues[0]?.message };
   const invitee =
     username?.success === true
-      ? await db.query.profiles.findFirst({ where: eq(profiles.username, username.data) })
+      ? await db.query.profiles.findFirst({
+          where: eq(profiles.username, username.data),
+        })
       : null;
-  if (username?.success === true && !invitee) return { error: `No Relay player found for @${username.data}.` };
-  if (invitee?.userId === command.actorUserId) return { error: "You’re already the host of this game." };
+  if (username?.success === true && !invitee)
+    return { error: `No Relay player found for @${username.data}.` };
+  if (invitee?.userId === command.actorUserId)
+    return { error: "You’re already the host of this game." };
   const hostProfile = invitee
-    ? await db.query.profiles.findFirst({ columns: { name: true }, where: eq(profiles.userId, session.hostId) })
+    ? await db.query.profiles.findFirst({
+        columns: { name: true },
+        where: eq(profiles.userId, session.hostId),
+      })
     : null;
   let reachedFourthPlayer = false;
 
   try {
     await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${session.id} for update`
+      );
+      const roster = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, session.id));
 
       if (invitee) {
-        const existing = roster.find((player) => player.userId === invitee.userId);
-        if (existing && !existing.leftAt) throw new Error("ACCOUNT_ALREADY_ON_ROSTER");
+        const existing = roster.find(
+          (player) => player.userId === invitee.userId
+        );
+        if (existing && !existing.leftAt)
+          throw new Error("ACCOUNT_ALREADY_ON_ROSTER");
         if (existing) {
           await tx
             .update(sessionPlayers)
@@ -145,7 +195,10 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
       const guestName = command.playerEntry;
       const duplicate = roster.some(
         (player) =>
-          !player.leftAt && player.guestName?.localeCompare(guestName, undefined, { sensitivity: "accent" }) === 0,
+          !player.leftAt &&
+          player.guestName?.localeCompare(guestName, undefined, {
+            sensitivity: "accent",
+          }) === 0
       );
       if (duplicate) throw new Error("DUPLICATE_GUEST");
       const transition = planRosterTransition({
@@ -153,8 +206,12 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
         capacity: session.capacity,
         intent: { requested: "going" },
       });
-      const goingBefore = roster.filter((player) => player.rsvp === "going").length;
-      reachedFourthPlayer = goingBefore < 4 && goingBefore + Number(transition.target.rsvp === "going") >= 4;
+      const goingBefore = roster.filter(
+        (player) => player.rsvp === "going"
+      ).length;
+      reachedFourthPlayer =
+        goingBefore < 4 &&
+        goingBefore + Number(transition.target.rsvp === "going") >= 4;
       const [player] = await tx
         .insert(sessionPlayers)
         .values({
@@ -167,7 +224,10 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
         })
         .returning();
       if (session.status === "live" && transition.target.rsvp === "going") {
-        const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+        const queue = await tx
+          .select()
+          .from(sessionQueue)
+          .where(eq(sessionQueue.sessionId, session.id));
         await tx.insert(sessionQueue).values({
           sessionId: session.id,
           sessionPlayerId: player.id,
@@ -184,14 +244,23 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
     });
   } catch (error) {
     if (
-      (error instanceof Error && error.message === "ACCOUNT_ALREADY_ON_ROSTER") ||
-      (invitee && typeof error === "object" && error !== null && "code" in error && error.code === "23505")
+      (error instanceof Error &&
+        error.message === "ACCOUNT_ALREADY_ON_ROSTER") ||
+      (invitee &&
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "23505")
     )
-      return { error: `${invitee?.name ?? "That player"} is already on the roster.` };
+      return {
+        error: `${invitee?.name ?? "That player"} is already on the roster.`,
+      };
     if (error instanceof Error && error.message === "DUPLICATE_GUEST")
       return { error: "A guest with this name is already on the roster." };
     return {
-      error: isRelayInvite ? "The invitation couldn’t be sent. Try again." : "The player couldn’t be added. Try again.",
+      error: isRelayInvite
+        ? "The invitation couldn’t be sent. Try again."
+        : "The player couldn’t be added. Try again.",
     };
   }
 
@@ -214,29 +283,43 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
 }
 
 async function approvePlayer(
-  command: Extract<RosterManagementCommand, { type: "approve" }>,
+  command: Extract<RosterManagementCommand, { type: "approve" }>
 ): Promise<RosterManagementResult> {
-  const session = await requireSessionManager(command.sessionId, command.actorUserId);
+  const session = await requireSessionManager(
+    command.sessionId,
+    command.actorUserId
+  );
   if (!session) return { error: "Only a host or co-host can approve players." };
 
   let result: "going" | "waitlisted" = "going";
   let reachedFourthPlayer = false;
   try {
     await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
-      const player = roster.find((item) => item.id === command.sessionPlayerId && item.rsvp === "pending");
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${session.id} for update`
+      );
+      const roster = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, session.id));
+      const player = roster.find(
+        (item) => item.id === command.sessionPlayerId && item.rsvp === "pending"
+      );
       if (!player) throw new Error("REQUEST_GONE");
       const transition = planRosterTransition({
         roster,
         capacity: session.capacity,
         intent: { playerId: player.id, requested: "going" },
       });
-      if (transition.target.rsvp !== "going" && transition.target.rsvp !== "waitlisted")
+      if (
+        transition.target.rsvp !== "going" &&
+        transition.target.rsvp !== "waitlisted"
+      )
         throw new Error("REQUEST_GONE");
       result = transition.target.rsvp;
       const goingBefore = roster.filter((item) => item.rsvp === "going").length;
-      reachedFourthPlayer = goingBefore < 4 && goingBefore + Number(result === "going") >= 4;
+      reachedFourthPlayer =
+        goingBefore < 4 && goingBefore + Number(result === "going") >= 4;
       await tx
         .update(sessionPlayers)
         .set({ ...transition.target, respondedAt: new Date() })
@@ -246,7 +329,10 @@ async function approvePlayer(
         .set({ readAt: new Date() })
         .where(unresolvedJoinRequest(session.id, session.hostId, player.id));
       if (session.status === "live" && result === "going") {
-        const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+        const queue = await tx
+          .select()
+          .from(sessionQueue)
+          .where(eq(sessionQueue.sessionId, session.id));
         await tx
           .insert(sessionQueue)
           .values({
@@ -298,15 +384,23 @@ async function approvePlayer(
 }
 
 async function removePlayer(
-  command: Extract<RosterManagementCommand, { type: "remove" }>,
+  command: Extract<RosterManagementCommand, { type: "remove" }>
 ): Promise<RosterManagementResult> {
-  const session = await requireSessionManager(command.sessionId, command.actorUserId);
+  const session = await requireSessionManager(
+    command.sessionId,
+    command.actorUserId
+  );
   if (!session) return { error: "Only a host or co-host can remove players." };
 
   try {
     await db.transaction(async (tx) => {
-      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
-      const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${session.id} for update`
+      );
+      const roster = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, session.id));
       const player = roster.find((item) => item.id === command.sessionPlayerId);
       if (!player || player.role === "host") throw new Error("CANNOT_REMOVE");
       const pendingRequest = player.rsvp === "pending";
@@ -317,21 +411,44 @@ async function removePlayer(
       });
       await tx
         .update(sessionPlayers)
-        .set({ ...transition.target, role: "player", checkedInAt: null, leftAt: new Date() })
+        .set({
+          ...transition.target,
+          role: "player",
+          checkedInAt: null,
+          leftAt: new Date(),
+        })
         .where(eq(sessionPlayers.id, player.id));
       await tx
         .update(sessionQueue)
-        .set({ state: "unavailable", version: sql`${sessionQueue.version} + 1` })
-        .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, player.id)));
-      for (const update of transition.updates.filter((item) => item.id !== player.id))
+        .set({
+          state: "unavailable",
+          version: sql`${sessionQueue.version} + 1`,
+        })
+        .where(
+          and(
+            eq(sessionQueue.sessionId, session.id),
+            eq(sessionQueue.sessionPlayerId, player.id)
+          )
+        );
+      for (const update of transition.updates.filter(
+        (item) => item.id !== player.id
+      ))
         await tx
           .update(sessionPlayers)
-          .set({ rsvp: update.rsvp, waitlistPosition: update.waitlistPosition, playState: update.playState })
+          .set({
+            rsvp: update.rsvp,
+            waitlistPosition: update.waitlistPosition,
+            playState: update.playState,
+          })
           .where(eq(sessionPlayers.id, update.id));
       for (const promotedId of transition.promotedPlayerIds) {
         if (session.status === "live") {
-          const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
-          const position = Math.max(0, ...queue.map((item) => item.position)) + 1;
+          const queue = await tx
+            .select()
+            .from(sessionQueue)
+            .where(eq(sessionQueue.sessionId, session.id));
+          const position =
+            Math.max(0, ...queue.map((item) => item.position)) + 1;
           await tx
             .insert(sessionQueue)
             .values({
@@ -342,7 +459,12 @@ async function removePlayer(
             })
             .onConflictDoUpdate({
               target: [sessionQueue.sessionId, sessionQueue.sessionPlayerId],
-              set: { state: "waiting", position, enteredAt: new Date(), version: sql`${sessionQueue.version} + 1` },
+              set: {
+                state: "waiting",
+                position,
+                enteredAt: new Date(),
+                version: sql`${sessionQueue.version} + 1`,
+              },
             });
         }
         const promoted = roster.find((item) => item.id === promotedId);
@@ -382,7 +504,9 @@ async function removePlayer(
   return { success: true };
 }
 
-export async function manageRoster(command: RosterManagementCommand): Promise<RosterManagementResult> {
+export async function manageRoster(
+  command: RosterManagementCommand
+): Promise<RosterManagementResult> {
   if (command.type === "add") return addPlayer(command);
   if (command.type === "approve") return approvePlayer(command);
   return removePlayer(command);

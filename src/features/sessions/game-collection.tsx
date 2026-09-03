@@ -1,8 +1,20 @@
 "use client";
 
-import { ArrowClockwise, CalendarBlank, CalendarPlus, CaretRight, MapPin } from "@phosphor-icons/react";
+import {
+  ArrowClockwise,
+  CalendarBlank,
+  CalendarPlus,
+  CaretRight,
+  MapPin,
+} from "@phosphor-icons/react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { z } from "zod";
 
 import { ButtonLink } from "@/components/ui/button";
@@ -41,7 +53,14 @@ const gameItemSchema = z.object({
   capacity: z.number(),
   status: z.enum(["draft", "published", "live", "completed", "cancelled"]),
   accentColor: z.string(),
-  viewerRsvp: z.enum(["invited", "pending", "going", "maybe", "waitlisted", "declined"]),
+  viewerRsvp: z.enum([
+    "invited",
+    "pending",
+    "going",
+    "maybe",
+    "waitlisted",
+    "declined",
+  ]),
   invitedAt: z.string(),
   hostName: z.string(),
   estimatedCostCents: z.number().nullable(),
@@ -58,8 +77,14 @@ const gameItemSchema = z.object({
     })
     .optional(),
 });
-const gamePageSchema = z.object({ items: z.array(gameItemSchema), nextCursor: z.string().nullable() });
-const calendarPageSchema = z.object({ upcoming: z.array(gameItemSchema), past: z.array(gameItemSchema) });
+const gamePageSchema = z.object({
+  items: z.array(gameItemSchema),
+  nextCursor: z.string().nullable(),
+});
+const calendarPageSchema = z.object({
+  upcoming: z.array(gameItemSchema),
+  past: z.array(gameItemSchema),
+});
 type CalendarPage = z.infer<typeof calendarPageSchema>;
 
 function validMonth(value: string | null): value is string {
@@ -67,20 +92,27 @@ function validMonth(value: string | null): value is string {
 }
 
 function validDate(value: string | null): value is string {
-  if (!value || !/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(value)) return false;
+  if (!value || !/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(value))
+    return false;
   const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  return (
+    !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+  );
 }
 
 function updateGamesUrl(
   values: { filter?: GameFilter; month?: string; date?: string },
-  behavior: "push" | "replace" = "replace",
+  behavior: "push" | "replace" = "replace"
 ) {
   const url = new URL(window.location.href);
   if (values.filter) url.searchParams.set("filter", values.filter);
   if (values.month) url.searchParams.set("month", values.month);
   if (values.date) url.searchParams.set("date", values.date);
-  window.history[behavior === "push" ? "pushState" : "replaceState"](null, "", `${url.pathname}?${url.searchParams}`);
+  window.history[behavior === "push" ? "pushState" : "replaceState"](
+    null,
+    "",
+    `${url.pathname}?${url.searchParams}`
+  );
 }
 
 function getView(): ViewMode {
@@ -89,12 +121,15 @@ function getView(): ViewMode {
 }
 
 function getWeekStart(): "sunday" | "monday" {
-  return localStorage.getItem("relay-week-start") === "monday" ? "monday" : "sunday";
+  return localStorage.getItem("relay-week-start") === "monday"
+    ? "monday"
+    : "sunday";
 }
 
 function subscribe(callback: () => void) {
   const handleStorage = (event: StorageEvent) => {
-    if (event.key === preferenceKey || event.key === "relay-week-start") callback();
+    if (event.key === preferenceKey || event.key === "relay-week-start")
+      callback();
   };
   window.addEventListener("storage", handleStorage);
   window.addEventListener("relay-games-view-change", callback);
@@ -123,12 +158,16 @@ function GamePageSentinel({
 
   useEffect(() => {
     const target = sentinel.current;
-    if (!target || !nextCursor || typeof IntersectionObserver === "undefined") return;
+    if (!target || !nextCursor || typeof IntersectionObserver === "undefined")
+      return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) void onLoad(phase);
       },
-      { root: target.closest<HTMLElement>(".app-scroll-surface"), rootMargin: "480px 0px" },
+      {
+        root: target.closest<HTMLElement>(".app-scroll-surface"),
+        rootMargin: "480px 0px",
+      }
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -138,15 +177,25 @@ function GamePageSentinel({
   return (
     <div ref={sentinel} className="min-h-14">
       {loading ? (
-        <p role="status" className="flex items-center justify-center gap-2 py-5 text-sm text-muted">
+        <p
+          role="status"
+          className="flex items-center justify-center gap-2 py-5 text-sm text-muted"
+        >
           <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />
           Loading more {phase === "upcoming" ? "upcoming" : "past"} games…
         </p>
       ) : null}
       {error ? (
-        <div role="alert" className="flex items-center justify-center gap-3 py-4 text-sm text-muted">
+        <div
+          role="alert"
+          className="flex items-center justify-center gap-3 py-4 text-sm text-muted"
+        >
           <span>{error}</span>
-          <button type="button" onClick={() => void onLoad(phase)} className="font-semibold text-primary">
+          <button
+            type="button"
+            onClick={() => void onLoad(phase)}
+            className="font-semibold text-primary"
+          >
             Retry
           </button>
         </div>
@@ -169,7 +218,9 @@ function GamePageSentinel({
 function EmptyCollection({ past }: { past?: boolean }) {
   return (
     <div className="border-y border-line py-5 sm:py-8">
-      <p className="font-[650]">{past ? "No game memories yet" : "Nothing scheduled"}</p>
+      <p className="font-[650]">
+        {past ? "No game memories yet" : "Nothing scheduled"}
+      </p>
       <p className="mt-1 text-sm text-muted">
         {past
           ? "Completed games will stay here with scores and photos."
@@ -191,7 +242,9 @@ function EmptyInvitations() {
   return (
     <div className="border-y border-line py-5 sm:py-8">
       <p className="font-[650]">No invites waiting</p>
-      <p className="mt-1 text-sm text-muted">New game invites will appear here until you respond.</p>
+      <p className="mt-1 text-sm text-muted">
+        New game invites will appear here until you respond.
+      </p>
     </div>
   );
 }
@@ -209,7 +262,10 @@ function InvitationSection({
   onResponded,
 }: {
   items: GameCollectionItem[];
-  onResponded: (game: GameCollectionItem, response: ActiveInviteResponse) => void;
+  onResponded: (
+    game: GameCollectionItem,
+    response: ActiveInviteResponse
+  ) => void;
 }) {
   return (
     <section aria-labelledby="game-invites-heading">
@@ -217,12 +273,19 @@ function InvitationSection({
         <h2 id="game-invites-heading" className="text-lg font-[680]">
           Invites
         </h2>
-        {items.length ? <span className="score text-sm text-muted">{items.length}</span> : null}
+        {items.length ? (
+          <span className="score text-sm text-muted">{items.length}</span>
+        ) : null}
       </div>
       {items.length ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {items.map((game) => (
-            <GameInvitationCard key={game.id} game={game} source="games" onResponded={onResponded} />
+            <GameInvitationCard
+              key={game.id}
+              game={game}
+              source="games"
+              onResponded={onResponded}
+            />
           ))}
         </div>
       ) : (
@@ -232,21 +295,39 @@ function InvitationSection({
   );
 }
 
-function ReplayGameLink({ game, compact = false }: { game: GameCollectionItem; compact?: boolean }) {
+function ReplayGameLink({
+  game,
+  compact = false,
+}: {
+  game: GameCollectionItem;
+  compact?: boolean;
+}) {
   return (
     <ButtonLink
       href={`/games/new?from=${game.id}`}
       variant="quiet"
       aria-label={`Play ${game.title} again`}
-      className={compact ? "h-11 min-h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-3" : "w-full"}
+      className={
+        compact
+          ? "h-11 min-h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-3"
+          : "w-full"
+      }
     >
       <ArrowClockwise aria-hidden size={16} />
-      <span className={compact ? "sr-only sm:not-sr-only" : ""}>Play again</span>
+      <span className={compact ? "sr-only sm:not-sr-only" : ""}>
+        Play again
+      </span>
     </ButtonLink>
   );
 }
 
-function GameList({ items, past = false }: { items: GameCollectionItem[]; past?: boolean }) {
+function GameList({
+  items,
+  past = false,
+}: {
+  items: GameCollectionItem[];
+  past?: boolean;
+}) {
   return (
     <div className="divide-y divide-line border-y border-line">
       {items.map((game) => (
@@ -260,48 +341,73 @@ function GameList({ items, past = false }: { items: GameCollectionItem[]; past?:
             prefetch={false}
             className="pressable group flex min-w-0 flex-1 items-center gap-3 py-3.5 hover:bg-surface sm:gap-4 sm:px-2 sm:py-4"
           >
-            <time className="score hidden w-20 shrink-0 text-sm font-bold text-primary sm:block">{game.date}</time>
+            <time className="score hidden w-20 shrink-0 text-sm font-bold text-primary sm:block">
+              {game.date}
+            </time>
             <div className="min-w-0 flex-1">
               <h3 className="truncate font-[650]">{game.title}</h3>
               <p className="mt-1 truncate text-[13px] text-muted sm:text-sm">
-                <time className="score font-bold text-primary sm:hidden">{game.date}</time>
+                <time className="score font-bold text-primary sm:hidden">
+                  {game.date}
+                </time>
                 <span className="sm:hidden"> · </span>
                 {game.time} · {game.venue}
                 {past ? (
                   <span className="sm:hidden"> · Ended</span>
                 ) : rsvpLabel(game.viewerRsvp) ? (
-                  <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span>
+                  <span className="sm:hidden">
+                    {" "}
+                    · {rsvpLabel(game.viewerRsvp)}
+                  </span>
                 ) : null}
               </p>
             </div>
             {past ? (
-              <span className="hidden text-xs font-[650] text-muted sm:block">Ended</span>
+              <span className="hidden text-xs font-[650] text-muted sm:block">
+                Ended
+              </span>
             ) : game.readiness ? (
               <span
                 className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
               >
-                {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
+                {game.readiness.ready
+                  ? "Ready"
+                  : `${game.readiness.percent}% ready`}
               </span>
             ) : (
               <span className="hidden text-right sm:block">
                 {rsvpLabel(game.viewerRsvp) ? (
-                  <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
+                  <span className="block text-xs font-[650] text-primary">
+                    {rsvpLabel(game.viewerRsvp)}
+                  </span>
                 ) : null}
                 <span className="score mt-0.5 block text-sm text-muted">
                   {game.playerCount} / {game.capacity}
                 </span>
               </span>
             )}
-            <CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" />
+            <CaretRight
+              aria-hidden
+              size={16}
+              className="text-muted transition-transform group-hover:translate-x-0.5"
+            />
           </Link>
-          {past && game.canReplay ? <ReplayGameLink game={game} compact /> : null}
+          {past && game.canReplay ? (
+            <ReplayGameLink game={game} compact />
+          ) : null}
         </div>
       ))}
     </div>
   );
 }
 
-function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?: boolean }) {
+function GameGrid({
+  items,
+  past = false,
+}: {
+  items: GameCollectionItem[];
+  past?: boolean;
+}) {
   return (
     <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
       {items.map((game) => (
@@ -310,14 +416,24 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
           style={sessionAccentStyle(game.accentColor)}
           className="game-grid-item flex min-w-0 flex-col rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 sm:p-5"
         >
-          <Link href={game.href} prefetch={false} className="pressable group flex min-w-0 flex-1 flex-col">
+          <Link
+            href={game.href}
+            prefetch={false}
+            className="pressable group flex min-w-0 flex-1 flex-col"
+          >
             <div className="flex items-center justify-between gap-4">
-              <time className="score text-xs font-bold text-primary">{game.date}</time>
+              <time className="score text-xs font-bold text-primary">
+                {game.date}
+              </time>
               <span className="text-right">
                 {past ? (
-                  <span className="block text-xs font-[650] text-muted">Ended</span>
+                  <span className="block text-xs font-[650] text-muted">
+                    Ended
+                  </span>
                 ) : rsvpLabel(game.viewerRsvp) ? (
-                  <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
+                  <span className="block text-xs font-[650] text-primary">
+                    {rsvpLabel(game.viewerRsvp)}
+                  </span>
                 ) : null}
                 <span className="score mt-0.5 block text-xs text-muted">
                   {game.playerCount} {past ? "played" : `/ ${game.capacity}`}
@@ -342,9 +458,15 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted">Game setup</span>
                   <span
-                    className={game.readiness.ready ? "font-semibold text-success" : "score font-semibold text-muted"}
+                    className={
+                      game.readiness.ready
+                        ? "font-semibold text-success"
+                        : "score font-semibold text-muted"
+                    }
                   >
-                    {game.readiness.ready ? "Ready" : `${game.readiness.percent}%`}
+                    {game.readiness.ready
+                      ? "Ready"
+                      : `${game.readiness.percent}%`}
                   </span>
                 </div>
                 <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-strong">
@@ -357,7 +479,11 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
             ) : null}
             <span className="mt-6 hidden items-center gap-1 text-sm font-[650] text-primary sm:inline-flex">
               Open game{" "}
-              <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" />
+              <CaretRight
+                aria-hidden
+                size={14}
+                className="transition-transform group-hover:translate-x-0.5"
+              />
             </span>
           </Link>
           {past && game.canReplay ? (
@@ -388,8 +514,12 @@ function CollectionSection({
 }) {
   return (
     <section>
-      <h2 className={`mb-3 flex items-center gap-2 text-lg font-[680] ${live ? "text-live" : ""}`}>
-        {live ? <span aria-hidden className="h-2 w-2 rounded-full bg-live" /> : null}
+      <h2
+        className={`mb-3 flex items-center gap-2 text-lg font-[680] ${live ? "text-live" : ""}`}
+      >
+        {live ? (
+          <span aria-hidden className="h-2 w-2 rounded-full bg-live" />
+        ) : null}
         {title}
       </h2>
       {items.length ? (
@@ -424,7 +554,11 @@ export function GameCollection({
   initialDate?: string;
 }) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
-  const weekStart = useSyncExternalStore(subscribe, getWeekStart, (): "sunday" | "monday" => "sunday");
+  const weekStart = useSyncExternalStore(
+    subscribe,
+    getWeekStart,
+    (): "sunday" | "monday" => "sunday"
+  );
   const [filter, setFilter] = useState<GameFilter>(initialFilter);
   const [invitations, setInvitations] = useState(invitationPage.items);
   const [upcoming, setUpcoming] = useState(upcomingPage.items);
@@ -432,8 +566,12 @@ export function GameCollection({
   const [responseAnnouncement, setResponseAnnouncement] = useState("");
   const [upcomingCursor, setUpcomingCursor] = useState(upcomingPage.nextCursor);
   const [pastCursor, setPastCursor] = useState(pastPage.nextCursor);
-  const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(null);
-  const [pageErrors, setPageErrors] = useState<Partial<Record<GameCollectionPhase, string>>>({});
+  const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(
+    null
+  );
+  const [pageErrors, setPageErrors] = useState<
+    Partial<Record<GameCollectionPhase, string>>
+  >({});
   const loadingPhaseRef = useRef<GameCollectionPhase | null>(null);
   const [monthKey, setMonthKey] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -461,13 +599,17 @@ export function GameCollection({
           throw new Error(
             response.status === 429
               ? "Loading is temporarily limited. Try again shortly."
-              : "More games could not be loaded.",
+              : "More games could not be loaded."
           );
         const parsed = gamePageSchema.safeParse(await response.json());
-        if (!parsed.success) throw new Error("The server returned an invalid game page.");
+        if (!parsed.success)
+          throw new Error("The server returned an invalid game page.");
         const append = (current: GameCollectionItem[]) => {
           const ids = new Set(current.map((item) => item.id));
-          return [...current, ...parsed.data.items.filter((item) => !ids.has(item.id))];
+          return [
+            ...current,
+            ...parsed.data.items.filter((item) => !ids.has(item.id)),
+          ];
         };
         if (phase === "upcoming") {
           setUpcoming(append);
@@ -479,25 +621,38 @@ export function GameCollection({
       } catch (cause) {
         setPageErrors((current) => ({
           ...current,
-          [phase]: cause instanceof Error ? cause.message : "More games could not be loaded.",
+          [phase]:
+            cause instanceof Error
+              ? cause.message
+              : "More games could not be loaded.",
         }));
       } finally {
         loadingPhaseRef.current = null;
         setLoadingPhase(null);
       }
     },
-    [pastCursor, upcomingCursor],
+    [pastCursor, upcomingCursor]
   );
 
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const nextMonth = validMonth(params.get("month")) ? params.get("month")! : todayKey.slice(0, 7);
+      const nextMonth = validMonth(params.get("month"))
+        ? params.get("month")!
+        : todayKey.slice(0, 7);
       const requestedDate = params.get("date");
       const nextDate =
-        validDate(requestedDate) && requestedDate.startsWith(nextMonth) ? requestedDate : `${nextMonth}-01`;
+        validDate(requestedDate) && requestedDate.startsWith(nextMonth)
+          ? requestedDate
+          : `${nextMonth}-01`;
       const requestedFilter = params.get("filter");
-      setFilter(requestedFilter === "invites" ? "invites" : requestedFilter === "past" ? "past" : "upcoming");
+      setFilter(
+        requestedFilter === "invites"
+          ? "invites"
+          : requestedFilter === "past"
+            ? "past"
+            : "upcoming"
+      );
       setMonthKey(nextMonth);
       setSelectedDate(nextDate);
     };
@@ -520,13 +675,18 @@ export function GameCollection({
       .then(async (response) => {
         if (!response.ok) throw new Error("This month could not be loaded.");
         const parsed = calendarPageSchema.safeParse(await response.json());
-        if (!parsed.success) throw new Error("The server returned invalid calendar data.");
+        if (!parsed.success)
+          throw new Error("The server returned invalid calendar data.");
         calendarCache.current.set(monthKey, parsed.data);
         setCalendarData(parsed.data);
       })
       .catch((cause: unknown) => {
         if (controller.signal.aborted) return;
-        setCalendarError(cause instanceof Error ? cause.message : "This month could not be loaded.");
+        setCalendarError(
+          cause instanceof Error
+            ? cause.message
+            : "This month could not be loaded."
+        );
       })
       .finally(() => {
         if (!controller.signal.aborted) setCalendarLoading(false);
@@ -534,31 +694,41 @@ export function GameCollection({
     return () => controller.abort();
   }, [calendarEnabled, calendarRetry, mode, monthKey]);
 
-  const handleInviteResponse = useCallback((game: GameCollectionItem, response: ActiveInviteResponse) => {
-    setInvitations((current) => current.filter((item) => item.id !== game.id));
-    setResponseAnnouncement(
-      response === "declined"
-        ? `You declined ${game.title}.`
-        : response === "pending"
-          ? `Your request to join ${game.title} was sent.`
-          : response === "waitlisted"
-            ? `You joined the waitlist for ${game.title}.`
-            : `Your response to ${game.title} was saved.`,
-    );
-    if (response !== "declined")
-      setUpcoming((current) => {
-        if (current.some((item) => item.id === game.id)) return current;
-        return [...current, { ...game, viewerRsvp: response }].toSorted(
-          (left, right) => left.dateKey.localeCompare(right.dateKey) || left.title.localeCompare(right.title),
-        );
-      });
-  }, []);
+  const handleInviteResponse = useCallback(
+    (game: GameCollectionItem, response: ActiveInviteResponse) => {
+      setInvitations((current) =>
+        current.filter((item) => item.id !== game.id)
+      );
+      setResponseAnnouncement(
+        response === "declined"
+          ? `You declined ${game.title}.`
+          : response === "pending"
+            ? `Your request to join ${game.title} was sent.`
+            : response === "waitlisted"
+              ? `You joined the waitlist for ${game.title}.`
+              : `Your response to ${game.title} was saved.`
+      );
+      if (response !== "declined")
+        setUpcoming((current) => {
+          if (current.some((item) => item.id === game.id)) return current;
+          return [...current, { ...game, viewerRsvp: response }].toSorted(
+            (left, right) =>
+              left.dateKey.localeCompare(right.dateKey) ||
+              left.title.localeCompare(right.title)
+          );
+        });
+    },
+    []
+  );
 
   const liveGames = upcoming.filter((game) => game.status === "live");
   const scheduledGames = upcoming.filter((game) => game.status !== "live");
   const filterItems = [
     { value: "upcoming" as const, label: "Upcoming" },
-    { value: "invites" as const, label: invitations.length ? `Invites ${invitations.length}` : "Invites" },
+    {
+      value: "invites" as const,
+      label: invitations.length ? `Invites ${invitations.length}` : "Invites",
+    },
     { value: "past" as const, label: "Past" },
   ];
 
@@ -624,14 +794,20 @@ export function GameCollection({
         {responseAnnouncement}
       </p>
       <div className="space-y-10 sm:space-y-12">
-        {filter === "invites" || (filter === "upcoming" && invitations.length) ? (
-          <InvitationSection items={invitations} onResponded={handleInviteResponse} />
+        {filter === "invites" ||
+        (filter === "upcoming" && invitations.length) ? (
+          <InvitationSection
+            items={invitations}
+            onResponded={handleInviteResponse}
+          />
         ) : null}
         {filter !== "invites" ? (
           mode === "calendar" ? (
             <div data-testid="games-calendar">
               <GamesCalendar
-                upcoming={filter === "past" ? [] : (calendarData?.upcoming ?? [])}
+                upcoming={
+                  filter === "past" ? [] : (calendarData?.upcoming ?? [])
+                }
                 past={filter === "upcoming" ? [] : (calendarData?.past ?? [])}
                 todayKey={todayKey}
                 weekStart={weekStart}
@@ -645,15 +821,35 @@ export function GameCollection({
               />
             </div>
           ) : (
-            <div data-testid={mode === "grid" ? "games-grid" : "games-list"} className="space-y-10 sm:space-y-12">
+            <div
+              data-testid={mode === "grid" ? "games-grid" : "games-list"}
+              className="space-y-10 sm:space-y-12"
+            >
               {filter === "upcoming" && liveGames.length ? (
-                <CollectionSection title="Live now" items={liveGames} mode={mode} live />
+                <CollectionSection
+                  title="Live now"
+                  items={liveGames}
+                  mode={mode}
+                  live
+                />
               ) : null}
-              {filter === "upcoming" && (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
-                <CollectionSection title="Upcoming" items={scheduledGames} mode={mode} footer={upcomingFooter} />
+              {filter === "upcoming" &&
+              (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
+                <CollectionSection
+                  title="Upcoming"
+                  items={scheduledGames}
+                  mode={mode}
+                  footer={upcomingFooter}
+                />
               ) : null}
               {filter === "past" ? (
-                <CollectionSection title="Past games" items={past} mode={mode} past footer={pastFooter} />
+                <CollectionSection
+                  title="Past games"
+                  items={past}
+                  mode={mode}
+                  past
+                  footer={pastFooter}
+                />
               ) : null}
             </div>
           )

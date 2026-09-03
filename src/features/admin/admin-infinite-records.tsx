@@ -38,15 +38,26 @@ type Props = {
   emptyMessage: string;
 };
 
-function TableShell({ headers, children }: { headers: string[]; children: React.ReactNode }) {
+function TableShell({
+  headers,
+  children,
+}: {
+  headers: string[];
+  children: React.ReactNode;
+}) {
   return (
     <div className="overflow-x-auto border-y border-line">
       <table className="w-full min-w-[820px] border-collapse text-left">
         <thead>
           <tr className="border-b border-line text-xs font-semibold text-muted">
             {headers.map((header, index) => (
-              <th key={header || index} className={`px-3 py-3 ${header.startsWith("#") ? "text-right" : ""}`}>
-                {header.startsWith("#") ? header.slice(1) : header || <span className="sr-only">Open</span>}
+              <th
+                key={header || index}
+                className={`px-3 py-3 ${header.startsWith("#") ? "text-right" : ""}`}
+              >
+                {header.startsWith("#")
+                  ? header.slice(1)
+                  : header || <span className="sr-only">Open</span>}
               </th>
             ))}
           </tr>
@@ -61,7 +72,9 @@ function UserRows({ items }: { items: AdminUserRecord[] }) {
   return items.map((account) => (
     <tr key={account.id} className="hover:bg-surface-strong/60">
       <td className="px-3 py-3.5">
-        <p className="font-semibold">{account.name ?? "Profile not finished"}</p>
+        <p className="font-semibold">
+          {account.name ?? "Profile not finished"}
+        </p>
         <p className="mt-1 text-xs text-muted">
           {account.email}
           {account.username ? ` · @${account.username}` : ""}
@@ -70,7 +83,9 @@ function UserRows({ items }: { items: AdminUserRecord[] }) {
       <td className="px-3 py-3.5">
         <AdminStatus value={account.suspendedAt ? "suspended" : "active"} />
       </td>
-      <td className="score px-3 py-3.5 text-right text-sm">{account.sessionsHosted}</td>
+      <td className="score px-3 py-3.5 text-right text-sm">
+        {account.sessionsHosted}
+      </td>
       <td className="px-3 py-3.5">
         <AdminDate value={account.createdAt} />
       </td>
@@ -97,7 +112,9 @@ function SessionRows({ items }: { items: AdminSessionRecord[] }) {
         </p>
       </td>
       <td className="px-3 py-3.5">
-        <p className="text-sm font-medium">{game.hostName ?? "Profile not finished"}</p>
+        <p className="text-sm font-medium">
+          {game.hostName ?? "Profile not finished"}
+        </p>
         <p className="mt-1 text-xs text-muted">{game.hostEmail}</p>
       </td>
       <td className="px-3 py-3.5">
@@ -124,13 +141,17 @@ function VenueRows({ items }: { items: AdminVenueRecord[] }) {
     <tr key={venue.id} className="hover:bg-surface-strong/60">
       <td className="px-3 py-3.5">
         <p className="font-semibold">{venue.name}</p>
-        <p className="mt-1 max-w-md text-xs leading-5 text-muted">{venue.address}</p>
+        <p className="mt-1 max-w-md text-xs leading-5 text-muted">
+          {venue.address}
+        </p>
       </td>
       <td className="px-3 py-3.5 text-sm text-muted">{venue.source}</td>
       <td className="px-3 py-3.5">
         <AdminStatus value={venue.listingStatus} />
       </td>
-      <td className="score px-3 py-3.5 text-right text-sm">{venue.courtCount ?? "—"}</td>
+      <td className="score px-3 py-3.5 text-right text-sm">
+        {venue.courtCount ?? "—"}
+      </td>
       <td className="px-3 py-3.5 text-right">
         <Link
           href={`/admin/courts/${venue.id}`}
@@ -148,17 +169,25 @@ function AuditRows({ items }: { items: AdminAuditRecord[] }) {
   return items.map((entry) => (
     <tr key={entry.id} className="align-top">
       <td className="px-3 py-4">
-        <span className="rounded-md bg-surface-strong px-2 py-1 text-xs font-semibold">{entry.action}</span>
+        <span className="rounded-md bg-surface-strong px-2 py-1 text-xs font-semibold">
+          {entry.action}
+        </span>
       </td>
       <td className="px-3 py-4">
-        <p className="text-sm font-medium">{entry.actorName ?? entry.actorEmail}</p>
+        <p className="text-sm font-medium">
+          {entry.actorName ?? entry.actorEmail}
+        </p>
         <p className="mt-1 text-xs text-muted">{entry.actorEmail}</p>
       </td>
       <td className="px-3 py-4">
         <p className="text-sm font-medium capitalize">{entry.targetType}</p>
-        <p className="score mt-1 text-xs text-muted">{entry.targetId.slice(0, 12)}</p>
+        <p className="score mt-1 text-xs text-muted">
+          {entry.targetId.slice(0, 12)}
+        </p>
       </td>
-      <td className="max-w-sm px-3 py-4 text-sm leading-6 text-muted">{entry.reason ?? "—"}</td>
+      <td className="max-w-sm px-3 py-4 text-sm leading-6 text-muted">
+        {entry.reason ?? "—"}
+      </td>
       <td className="px-3 py-4">
         <AdminDate value={entry.createdAt} includeTime />
       </td>
@@ -179,7 +208,9 @@ function FeedbackRows({ items }: { items: AdminFeedbackRecord[] }) {
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-semibold">{item.title}</p>
                 <span className="text-xs font-semibold text-muted">
-                  {feedbackTypeLabels[item.type as keyof typeof feedbackTypeLabels] ?? item.type}
+                  {feedbackTypeLabels[
+                    item.type as keyof typeof feedbackTypeLabels
+                  ] ?? item.type}
                 </span>
               </div>
               <p className="mt-1 text-sm text-muted">
@@ -187,13 +218,17 @@ function FeedbackRows({ items }: { items: AdminFeedbackRecord[] }) {
                 {item.submitterName ?? item.submitterEmail}
               </p>
               <div className="mt-2 sm:hidden">
-                <FeedbackStatusBadge status={item.status as keyof typeof feedbackStatusLabels} />
+                <FeedbackStatusBadge
+                  status={item.status as keyof typeof feedbackStatusLabels}
+                />
               </div>
             </div>
             <div className="hidden text-right sm:block">
               <AdminDate value={item.createdAt} />
               <p className="mt-1 text-xs text-muted">
-                {feedbackStatusLabels[item.status as keyof typeof feedbackStatusLabels] ?? item.status}
+                {feedbackStatusLabels[
+                  item.status as keyof typeof feedbackStatusLabels
+                ] ?? item.status}
               </p>
             </div>
             <ArrowRight aria-hidden size={17} className="shrink-0 text-muted" />
@@ -235,10 +270,13 @@ export function AdminInfiniteRecords({
       });
       if (!response.ok)
         throw new Error(
-          response.status === 429 ? "Request limit reached. Try again shortly." : "More records could not be loaded.",
+          response.status === 429
+            ? "Request limit reached. Try again shortly."
+            : "More records could not be loaded."
         );
       const parsed = pageSchema.safeParse(await response.json());
-      if (!parsed.success) throw new Error("The server returned an invalid page.");
+      if (!parsed.success)
+        throw new Error("The server returned an invalid page.");
       const incoming = parsed.data.items as unknown as AdminRecord[];
       setItems((current) => {
         const ids = new Set(current.map((item) => item.id));
@@ -246,7 +284,11 @@ export function AdminInfiniteRecords({
       });
       setNextCursor(parsed.data.nextCursor);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "More records could not be loaded.");
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "More records could not be loaded."
+      );
     } finally {
       loadingRef.current = false;
       setLoading(false);
@@ -260,7 +302,10 @@ export function AdminInfiniteRecords({
       (entries) => {
         if (entries[0]?.isIntersecting) void loadMore();
       },
-      { root: target.closest<HTMLElement>("[data-admin-scroll]"), rootMargin: "320px 0px" },
+      {
+        root: target.closest<HTMLElement>("[data-admin-scroll]"),
+        rootMargin: "320px 0px",
+      }
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -280,7 +325,9 @@ export function AdminInfiniteRecords({
         <VenueRows items={items as AdminVenueRecord[]} />
       </TableShell>
     ) : resource === "audit" ? (
-      <TableShell headers={["Action", "Administrator", "Target", "Reason", "Time"]}>
+      <TableShell
+        headers={["Action", "Administrator", "Target", "Reason", "Time"]}
+      >
         <AuditRows items={items as AdminAuditRecord[]} />
       </TableShell>
     ) : (
@@ -299,15 +346,25 @@ export function AdminInfiniteRecords({
       {content}
       <div ref={sentinel} className="min-h-14">
         {loading ? (
-          <p role="status" className="flex items-center justify-center gap-2 py-5 text-sm text-muted">
+          <p
+            role="status"
+            className="flex items-center justify-center gap-2 py-5 text-sm text-muted"
+          >
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />
             Loading more records…
           </p>
         ) : null}
         {error ? (
-          <div role="alert" className="flex items-center justify-center gap-3 py-4 text-sm text-muted">
+          <div
+            role="alert"
+            className="flex items-center justify-center gap-3 py-4 text-sm text-muted"
+          >
             <span>{error}</span>
-            <button type="button" onClick={() => void loadMore()} className="font-semibold text-primary">
+            <button
+              type="button"
+              onClick={() => void loadMore()}
+              className="font-semibold text-primary"
+            >
               Retry
             </button>
           </div>

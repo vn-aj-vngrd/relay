@@ -1,8 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("./actions", () => ({ uploadMemoryPhotoState: vi.fn(async () => ({})) }));
-vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: vi.fn() }));
+vi.mock("./actions", () => ({
+  uploadMemoryPhotoState: vi.fn(async () => ({})),
+}));
+vi.mock("@/features/analytics/actions", () => ({
+  trackSharedSessionEvent: vi.fn(),
+}));
 
 import { buildSessionRecap, type RecapMatch } from "./recap";
 import { SessionMemories } from "./session-memories";
@@ -40,28 +44,38 @@ function renderMemories(status: "published" | "live" | "completed") {
       memory={null}
       canContribute={false}
       viewerPlayerId="a"
-    />,
+    />
   );
 }
 
 describe("SessionMemories", () => {
   it("describes a scheduled game without implying that play has started", () => {
     renderMemories("published");
-    expect(screen.getByRole("heading", { name: "Story unlocks when the game ends." })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Story unlocks when the game ends." })
+    ).toBeVisible();
     expect(screen.getByText(/Once play is complete/)).toBeVisible();
   });
 
   it("describes live play without assuming a time of day", () => {
     renderMemories("live");
     expect(screen.getByText("This game is still being played.")).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Share story" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows story creation and photos after completion", () => {
     renderMemories("completed");
-    expect(screen.getByRole("heading", { name: "Share the game" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Photos from the game" })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "From the crew" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Share the game" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Photos from the game" })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "From the crew" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
   });
 });

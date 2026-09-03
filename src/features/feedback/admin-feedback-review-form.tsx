@@ -7,7 +7,11 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type FeedbackActionState, updateFeedbackAction } from "./actions";
-import { type FeedbackStatus, feedbackStatuses, feedbackStatusLabels } from "./domain";
+import {
+  type FeedbackStatus,
+  feedbackStatuses,
+  feedbackStatusLabels,
+} from "./domain";
 
 export function AdminFeedbackReviewForm({
   feedbackId,
@@ -18,11 +22,19 @@ export function AdminFeedbackReviewForm({
   status: FeedbackStatus;
   adminNote: string | null;
 }) {
-  const [state, action] = useActionState<FeedbackActionState, FormData>(updateFeedbackAction, {});
+  const [state, action] = useActionState<FeedbackActionState, FormData>(
+    updateFeedbackAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
 
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-6">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="border-y border-line py-6"
+    >
       <input type="hidden" name="feedbackId" value={feedbackId} />
       <div className="grid gap-6 sm:grid-cols-[220px_1fr]">
         <SelectField
@@ -30,11 +42,18 @@ export function AdminFeedbackReviewForm({
           name="status"
           label="Status"
           defaultValue={status}
-          options={feedbackStatuses.map((value) => ({ value, label: feedbackStatusLabels[value] }))}
+          options={feedbackStatuses.map((value) => ({
+            value,
+            label: feedbackStatusLabels[value],
+          }))}
         />
         <div>
-          <label htmlFor="feedback-admin-note" className="block text-sm font-[650]">
-            Internal note <span className="font-normal text-muted">(optional)</span>
+          <label
+            htmlFor="feedback-admin-note"
+            className="block text-sm font-[650]"
+          >
+            Internal note{" "}
+            <span className="font-normal text-muted">(optional)</span>
           </label>
           <textarea
             id="feedback-admin-note"
@@ -45,7 +64,9 @@ export function AdminFeedbackReviewForm({
             placeholder="Decision, reproduction notes, or follow-up context…"
             className="field min-h-28 resize-y !p-3.5 leading-6"
           />
-          <p className="mt-1.5 text-xs text-muted">Visible only to Relay administrators.</p>
+          <p className="mt-1.5 text-xs text-muted">
+            Visible only to Relay administrators.
+          </p>
         </div>
       </div>
       {state.error ? (

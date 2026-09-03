@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 export const minimumSearchLength = 2;
-export const searchFilters = ["all", "games", "players", "groups", "courts"] as const;
+export const searchFilters = [
+  "all",
+  "games",
+  "players",
+  "groups",
+  "courts",
+] as const;
 export type SearchFilter = (typeof searchFilters)[number];
 
 export const searchRequestSchema = z.object({
@@ -25,19 +31,25 @@ export type SearchResponse = {
   nextCursor: number | null;
 };
 
-export type RecentSearch = { query: string; filter: SearchFilter; savedAt: number };
+export type RecentSearch = {
+  query: string;
+  filter: SearchFilter;
+  savedAt: number;
+};
 
 export function mergeRecentSearches(
   current: RecentSearch[],
   next: Omit<RecentSearch, "savedAt">,
-  now = Date.now(),
+  now = Date.now()
 ): RecentSearch[] {
   const normalized = next.query.trim();
   if (!normalized) return current;
   return [
     { query: normalized, filter: next.filter, savedAt: now },
     ...current.filter(
-      (item) => item.query.toLocaleLowerCase() !== normalized.toLocaleLowerCase() || item.filter !== next.filter,
+      (item) =>
+        item.query.toLocaleLowerCase() !== normalized.toLocaleLowerCase() ||
+        item.filter !== next.filter
     ),
   ].slice(0, 8);
 }

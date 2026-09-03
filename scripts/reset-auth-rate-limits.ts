@@ -36,7 +36,9 @@ function digest(value: string) {
 const args = process.argv.slice(2);
 if (args.includes("--help") || args.includes("-h")) usage();
 if (!args.includes("--confirm-production")) {
-  throw new Error("Refusing to change rate-limit buckets without --confirm-production.");
+  throw new Error(
+    "Refusing to change rate-limit buckets without --confirm-production."
+  );
 }
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is required.");
 
@@ -45,16 +47,22 @@ const email = valueAfter(args, "--email")?.trim().toLowerCase();
 const ip = valueAfter(args, "--ip")?.trim();
 if (!scope || !(scope in rules || scope === "all-auth")) usage();
 if (!email && !ip) usage();
-if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("--email must be a valid email address.");
-if (ip && !/^[0-9a-f:.]+$/i.test(ip)) throw new Error("--ip must be an IPv4 or IPv6 address.");
+if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  throw new Error("--email must be a valid email address.");
+if (ip && !/^[0-9a-f:.]+$/i.test(ip))
+  throw new Error("--ip must be an IPv4 or IPv6 address.");
 
-const selectedRules = scope === "all-auth" ? Object.values(rules) : [rules[scope]];
-const identities = [email ? `email:${email}` : null, ip ? `ip:${ip}` : null].filter((value): value is string =>
-  Boolean(value),
-);
+const selectedRules =
+  scope === "all-auth" ? Object.values(rules) : [rules[scope]];
+const identities = [
+  email ? `email:${email}` : null,
+  ip ? `ip:${ip}` : null,
+].filter((value): value is string => Boolean(value));
 const keys = selectedRules.flatMap((rule) => {
   const bucket = Math.floor(Date.now() / (rule.windowSeconds * 1000));
-  return identities.map((identity) => digest(`${rule.scope}:${identity}:${bucket}`));
+  return identities.map((identity) =>
+    digest(`${rule.scope}:${identity}:${bucket}`)
+  );
 });
 
 const sql = postgres(process.env.DATABASE_URL, { max: 1, prepare: false });
@@ -65,7 +73,10 @@ try {
     returning key
   `;
   console.log(`Reset ${deleted.length} matching auth rate-limit bucket(s).`);
-  if (deleted.length === 0) console.log("No matching current-window buckets existed; the identity is already clear.");
+  if (deleted.length === 0)
+    console.log(
+      "No matching current-window buckets existed; the identity is already clear."
+    );
 } finally {
   await sql.end();
 }

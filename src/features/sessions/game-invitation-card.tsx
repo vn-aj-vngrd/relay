@@ -1,6 +1,14 @@
 "use client";
 
-import { CalendarBlank, Check, Coins, MapPin, Question, Users, X } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  Check,
+  Coins,
+  MapPin,
+  Question,
+  Users,
+  X,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
@@ -10,7 +18,12 @@ import { rsvpAction } from "./actions";
 import { peso } from "./format";
 import type { GameCollectionItem } from "./game-collection-types";
 
-export type ActiveInviteResponse = "going" | "maybe" | "pending" | "waitlisted" | "declined";
+export type ActiveInviteResponse =
+  | "going"
+  | "maybe"
+  | "pending"
+  | "waitlisted"
+  | "declined";
 
 const choices = [
   { value: "going" as const, label: "Going", icon: Check },
@@ -33,7 +46,12 @@ function InviteResponseButtons() {
           disabled={pending}
           className={`pressable inline-flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-[13px] font-[650] disabled:cursor-wait disabled:opacity-65 ${value === "going" ? "border-primary bg-primary text-white hover:bg-primary-hover" : "border-line bg-surface hover:bg-surface-strong"}`}
         >
-          <Icon aria-hidden size={15} weight={value === "going" ? "bold" : "regular"} className="shrink-0" />
+          <Icon
+            aria-hidden
+            size={15}
+            weight={value === "going" ? "bold" : "regular"}
+            className="shrink-0"
+          />
           <span>{pending && pendingChoice === value ? "Saving…" : label}</span>
         </button>
       ))}
@@ -48,7 +66,10 @@ export function GameInvitationCard({
 }: {
   game: GameCollectionItem;
   source: "games" | "home";
-  onResponded: (game: GameCollectionItem, response: ActiveInviteResponse) => void;
+  onResponded: (
+    game: GameCollectionItem,
+    response: ActiveInviteResponse
+  ) => void;
 }) {
   const [state, action] = useActionState(rsvpAction, {});
 
@@ -62,7 +83,9 @@ export function GameInvitationCard({
       : game.estimatedCostCents
         ? `${peso(game.estimatedCostCents)} estimated`
         : "Cost not added";
-  const availability = game.spotsRemaining ? `${game.spotsRemaining} spots open` : "Waitlist available";
+  const availability = game.spotsRemaining
+    ? `${game.spotsRemaining} spots open`
+    : "Waitlist available";
 
   return (
     <article
@@ -81,7 +104,9 @@ export function GameInvitationCard({
             </Link>
             <p className="mt-1 text-sm text-muted">Hosted by {game.hostName}</p>
           </div>
-          <time className="score shrink-0 text-xs font-bold text-primary">{game.date}</time>
+          <time className="score shrink-0 text-xs font-bold text-primary">
+            {game.date}
+          </time>
         </div>
         <ul className="mt-4 grid gap-2 text-sm text-muted sm:grid-cols-2">
           <li className="flex min-w-0 items-center gap-2">
@@ -102,10 +127,16 @@ export function GameInvitationCard({
           </li>
         </ul>
         {game.requiresApproval ? (
-          <p className="mt-3 text-xs leading-5 text-muted">Going sends a request for the host to approve.</p>
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Going sends a request for the host to approve.
+          </p>
         ) : null}
       </div>
-      <form noValidate action={action} className="mt-4 border-t border-line pt-4">
+      <form
+        noValidate
+        action={action}
+        className="mt-4 border-t border-line pt-4"
+      >
         <input type="hidden" name="sessionId" value={game.id} />
         <input type="hidden" name="inviteSource" value={source} />
         <InviteResponseButtons />

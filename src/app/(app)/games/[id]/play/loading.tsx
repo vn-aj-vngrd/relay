@@ -5,7 +5,10 @@ import { LiveCourtSkeleton } from "@/features/matches/live-court-skeleton";
 export default function PlayLoading() {
   return (
     <>
-      <GamePageIntro title="Play" description="Court assignments, scores, partner rotations, and who plays next." />
+      <GamePageIntro
+        title="Play"
+        description="Court assignments, scores, partner rotations, and who plays next."
+      />
       <div
         role="status"
         aria-label="Loading Play"
@@ -24,7 +27,10 @@ export default function PlayLoading() {
           <Skeleton className="mt-2 h-3.5 w-48" />
           <div className="mt-3 divide-y divide-line border-y border-line">
             {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className="flex min-h-16 items-center gap-3 py-2">
+              <div
+                key={index}
+                className="flex min-h-16 items-center gap-3 py-2"
+              >
                 <Skeleton className="h-4 w-5" />
                 <Skeleton className="h-8 w-8 rounded-full" />
                 <Skeleton className="h-4 w-32 max-w-[55%]" />

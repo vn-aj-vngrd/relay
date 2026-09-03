@@ -1,6 +1,14 @@
 "use client";
 
-import { ChartBar, ChatText, ClockCounterClockwise, Gauge, MapPin, Users, Volleyball } from "@phosphor-icons/react";
+import {
+  ChartBar,
+  ChatText,
+  ClockCounterClockwise,
+  Gauge,
+  MapPin,
+  Users,
+  Volleyball,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,11 +24,15 @@ const items = [
 
 export function AdminNav({ mode }: { mode: "sidebar" | "mobile" }) {
   const pathname = usePathname();
-  const active = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
+  const active = (href: string) =>
+    href === "/admin" ? pathname === href : pathname.startsWith(href);
 
   if (mode === "mobile") {
     return (
-      <nav aria-label="Admin navigation" className="overflow-x-auto border-b border-line">
+      <nav
+        aria-label="Admin navigation"
+        className="overflow-x-auto border-b border-line"
+      >
         <ul className="flex min-w-max px-3">
           {items.map(({ href, label }) => (
             <li key={href}>

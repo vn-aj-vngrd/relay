@@ -1,4 +1,10 @@
-type HomeRsvp = "invited" | "pending" | "going" | "maybe" | "waitlisted" | "declined";
+type HomeRsvp =
+  | "invited"
+  | "pending"
+  | "going"
+  | "maybe"
+  | "waitlisted"
+  | "declined";
 
 export function homeHeading({
   live,
@@ -15,7 +21,10 @@ export function homeHeading({
   return "Ready for your next game?";
 }
 
-export function homeParticipationLabel(rsvp: HomeRsvp, role: "host" | "cohost" | "player") {
+export function homeParticipationLabel(
+  rsvp: HomeRsvp,
+  role: "host" | "cohost" | "player"
+) {
   if (role === "host") return "Hosting";
   if (role === "cohost") return "Co-hosting";
   if (rsvp === "pending") return "Awaiting approval";
@@ -25,7 +34,11 @@ export function homeParticipationLabel(rsvp: HomeRsvp, role: "host" | "cohost" |
   return null;
 }
 
-export function visibleHomePendingCount(count: number, role: "host" | "cohost" | "player", isHost: boolean) {
+export function visibleHomePendingCount(
+  count: number,
+  role: "host" | "cohost" | "player",
+  isHost: boolean
+) {
   return isHost || role === "cohost" ? count : 0;
 }
 

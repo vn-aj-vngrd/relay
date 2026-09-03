@@ -35,10 +35,12 @@ export function ShareButton({
         setCopied(true);
         window.setTimeout(() => setCopied(false), 2500);
       }
-      if (sessionId) await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
+      if (sessionId)
+        await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
       onShared?.();
     } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
+      if (!(error instanceof DOMException && error.name === "AbortError"))
+        throw error;
     }
   }
   return (
@@ -58,7 +60,11 @@ export function ShareButton({
       <ShareNetwork aria-hidden size={16} />
       <span
         aria-live="polite"
-        className={compactOnMobile && !menuItem ? "game-workspace-action-label sr-only sm:not-sr-only" : ""}
+        className={
+          compactOnMobile && !menuItem
+            ? "game-workspace-action-label sr-only sm:not-sr-only"
+            : ""
+        }
       >
         {copied ? "Link copied" : "Share game"}
       </span>

@@ -12,23 +12,31 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 
 import { submitVenueAction } from "./actions";
 import {
+  type CourtPriceStatus,
   courtAccessOptions,
   courtDays,
   courtOperationalStatusOptions,
   courtParkingOptions,
-  type CourtPriceStatus,
   courtPriceStatusOptions,
   courtPriceUnitOptions,
   courtReservationOptions,
   courtTimeOptions,
 } from "./details";
 import type { CourtListing } from "./directory";
-import { venueChangeGroups } from "./domain";
+import type { venueChangeGroups } from "./domain";
 
 const inputClass =
   "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
-const amenities = ["Restrooms", "Showers", "Seating", "Water station", "Changing rooms", "Lockers", "Pro shop"];
+const amenities = [
+  "Restrooms",
+  "Showers",
+  "Seating",
+  "Water station",
+  "Changing rooms",
+  "Lockers",
+  "Pro shop",
+];
 const changeOptions = [
   { value: "identity", label: "Name or location" },
   { value: "status", label: "Operating status" },
@@ -38,38 +46,63 @@ const changeOptions = [
   { value: "facilities", label: "Courts or facilities" },
   { value: "parking", label: "Parking" },
   { value: "booking", label: "Booking or contact" },
-] as const satisfies ReadonlyArray<{ value: (typeof venueChangeGroups)[number]; label: string }>;
+] as const satisfies ReadonlyArray<{
+  value: (typeof venueChangeGroups)[number];
+  label: string;
+}>;
 
 type CourtChoice = Pick<CourtListing, "id" | "slug" | "name" | "address">;
 
 function ErrorMessage({ messages }: { messages?: string[] }) {
-  return messages?.[0] ? <p className="mt-1.5 text-sm font-medium text-danger">{messages[0]}</p> : null;
+  return messages?.[0] ? (
+    <p className="mt-1.5 text-sm font-medium text-danger">{messages[0]}</p>
+  ) : null;
 }
 
 function Optional() {
   return <span className="font-normal text-muted">Optional</span>;
 }
 
-function fieldIsVisible(requestType: "create" | "update", changes: string[], group: string) {
+function fieldIsVisible(
+  requestType: "create" | "update",
+  changes: string[],
+  group: string
+) {
   return requestType === "create" || changes.includes(group);
 }
 
-export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtChoice[]; initialVenue?: CourtListing }) {
+export function VenueSubmissionForm({
+  courts,
+  initialVenue,
+}: {
+  courts: CourtChoice[];
+  initialVenue?: CourtListing;
+}) {
   const router = useRouter();
   const [state, action] = useActionState(submitVenueAction, {});
-  const [requestType, setRequestType] = useState<"create" | "update">(initialVenue ? "update" : "create");
+  const [requestType, setRequestType] = useState<"create" | "update">(
+    initialVenue ? "update" : "create"
+  );
   const [changedFields, setChangedFields] = useState<string[]>([]);
   const [courtToUpdate, setCourtToUpdate] = useState("");
-  const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>(initialVenue?.priceStatus ?? "unknown");
+  const [priceStatus, setPriceStatus] = useState<CourtPriceStatus>(
+    initialVenue?.priceStatus ?? "unknown"
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   const periodForDay = (dayOfWeek: number) =>
-    initialVenue?.operatingHours.find((period) => period.dayOfWeek === dayOfWeek);
+    initialVenue?.operatingHours.find(
+      (period) => period.dayOfWeek === dayOfWeek
+    );
 
   if (state.success)
     return (
       <section role="status" className="border-y border-line py-8">
-        <h2 className="text-lg font-[680]">Thanks for improving Court Finder</h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">{state.success}</p>
+        <h2 className="text-lg font-[680]">
+          Thanks for improving Court Finder
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
+          {state.success}
+        </p>
         <Link
           href={initialVenue ? `/court/${initialVenue.slug}` : "/court"}
           className="mt-5 inline-flex text-sm font-semibold text-primary"
@@ -80,13 +113,20 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
     );
 
   return (
-    <form action={action} onSubmitCapture={preserveValues} className="max-w-2xl space-y-9" noValidate>
+    <form
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="max-w-2xl space-y-9"
+      noValidate
+    >
       <input type="hidden" name="requestType" value={requestType} />
       <input type="hidden" name="venueId" value={initialVenue?.id ?? ""} />
       {state.error ? <Alert>{state.error}</Alert> : null}
 
       <fieldset>
-        <legend className="text-lg font-[680] text-ink">What would you like to do?</legend>
+        <legend className="text-lg font-[680] text-ink">
+          What would you like to do?
+        </legend>
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <label
             className={`cursor-pointer rounded-xl border p-4 ${requestType === "create" ? "border-primary bg-primary-soft/60" : "border-line bg-surface"}`}
@@ -102,7 +142,9 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
               }}
               className="sr-only"
             />
-            <span className="block text-sm font-[680]">Add a missing court</span>
+            <span className="block text-sm font-[680]">
+              Add a missing court
+            </span>
             <span className="mt-1 block text-sm leading-5 text-muted">
               Share a place that is not in Court Finder yet.
             </span>
@@ -118,7 +160,9 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
               onChange={() => setRequestType("update")}
               className="sr-only"
             />
-            <span className="block text-sm font-[680]">Update a listed court</span>
+            <span className="block text-sm font-[680]">
+              Update a listed court
+            </span>
             <span className="mt-1 block text-sm leading-5 text-muted">
               Correct a price, location, status, or other detail.
             </span>
@@ -130,8 +174,8 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
         <section className="border-t border-line pt-8">
           <h2 className="text-lg font-[680]">Choose the court</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Type a court name or location to narrow the list, or open Court Finder and choose Suggest an update from a
-            court page.
+            Type a court name or location to narrow the list, or open Court
+            Finder and choose Suggest an update from a court page.
           </p>
           <ComboboxField
             id="court-to-update"
@@ -143,7 +187,10 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
             onValueChange={(id) => {
               setCourtToUpdate(id);
               const court = courts.find((item) => item.id === id);
-              if (court) router.push(`/court/suggest?court=${encodeURIComponent(court.slug)}`);
+              if (court)
+                router.push(
+                  `/court/suggest?court=${encodeURIComponent(court.slug)}`
+                );
             }}
             options={courts.map((court) => ({
               value: court.id,
@@ -151,7 +198,10 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
               description: court.address,
             }))}
           />
-          <Link href="/court" className="mt-4 inline-flex text-sm font-semibold text-primary">
+          <Link
+            href="/court"
+            className="mt-4 inline-flex text-sm font-semibold text-primary"
+          >
             Browse Court Finder
           </Link>
         </section>
@@ -161,12 +211,15 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
         <fieldset className="border-t border-line pt-8">
           <legend className="text-lg font-[680]">What changed?</legend>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Choose only the details that need review. Current public information stays unchanged until Relay verifies
-            your source.
+            Choose only the details that need review. Current public information
+            stays unchanged until Relay verifies your source.
           </p>
           <div className="mt-4 grid gap-x-5 gap-y-2 sm:grid-cols-2">
             {changeOptions.map((option) => (
-              <label key={option.value} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+              <label
+                key={option.value}
+                className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"
+              >
                 <input
                   type="checkbox"
                   name="changedFields"
@@ -176,7 +229,7 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
                     setChangedFields((current) =>
                       event.target.checked
                         ? [...current, option.value]
-                        : current.filter((value) => value !== option.value),
+                        : current.filter((value) => value !== option.value)
                     )
                   }
                   className="size-4 rounded border-line accent-primary"
@@ -194,9 +247,12 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
           <fieldset
             className={`${fieldIsVisible(requestType, changedFields, "identity") ? "space-y-5" : "hidden"} border-t border-line pt-8`}
           >
-            <legend className="text-lg font-[680] text-ink">Location and source</legend>
+            <legend className="text-lg font-[680] text-ink">
+              Location and source
+            </legend>
             <p className="text-sm leading-6 text-muted">
-              Use the place’s public name and a precise address. Leave uncertain details blank instead of guessing.
+              Use the place’s public name and a precise address. Leave uncertain
+              details blank instead of guessing.
             </p>
             <div>
               <label htmlFor="name" className="text-sm font-[650]">
@@ -233,8 +289,17 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
                 <label htmlFor="city" className="text-sm font-[650]">
                   Philippine city or municipality
                 </label>
-                <input id="city" name="city" required maxLength={80} className={inputClass} placeholder="Quezon City" />
-                <p className="mt-1.5 text-sm text-muted">Court Finder accepts locations in the Philippines only.</p>
+                <input
+                  id="city"
+                  name="city"
+                  required
+                  maxLength={80}
+                  className={inputClass}
+                  placeholder="Quezon City"
+                />
+                <p className="mt-1.5 text-sm text-muted">
+                  Court Finder accepts locations in the Philippines only.
+                </p>
                 <ErrorMessage messages={state.fieldErrors?.city} />
               </div>
             ) : (
@@ -258,10 +323,12 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
           <fieldset
             className={`${fieldIsVisible(requestType, changedFields, "access") ? "space-y-5" : "hidden"} border-t border-line pt-8`}
           >
-            <legend className="text-lg font-[680]">Access and reservations</legend>
+            <legend className="text-lg font-[680]">
+              Access and reservations
+            </legend>
             <p className="text-sm leading-6 text-muted">
-              Price and access are separate. A free court may still be residents-only, and a paid club may require
-              membership.
+              Price and access are separate. A free court may still be
+              residents-only, and a paid club may require membership.
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <SelectField
@@ -284,7 +351,9 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
           <fieldset
             className={`${fieldIsVisible(requestType, changedFields, "facilities") ? "space-y-5" : "hidden"} border-t border-line pt-8`}
           >
-            <legend className="text-lg font-[680] text-ink">Courts and facilities</legend>
+            <legend className="text-lg font-[680] text-ink">
+              Courts and facilities
+            </legend>
             <div className="grid gap-5 sm:grid-cols-2">
               <SelectField
                 id="environment"
@@ -324,7 +393,10 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
               </span>
               <div className="mt-3 grid gap-x-5 gap-y-2 sm:grid-cols-2">
                 {amenities.map((amenity) => (
-                  <label key={amenity} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                  <label
+                    key={amenity}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"
+                  >
                     <input
                       type="checkbox"
                       name="amenities"
@@ -357,7 +429,9 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
               name="priceStatus"
               label="Price type"
               value={priceStatus}
-              onValueChange={(value) => setPriceStatus(value as CourtPriceStatus)}
+              onValueChange={(value) =>
+                setPriceStatus(value as CourtPriceStatus)
+              }
               options={courtPriceStatusOptions}
             />
             {priceStatus === "paid" ? (
@@ -381,7 +455,11 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
                       min="0.01"
                       max="1000000"
                       step="0.01"
-                      defaultValue={initialVenue?.priceAmountCents == null ? "" : initialVenue.priceAmountCents / 100}
+                      defaultValue={
+                        initialVenue?.priceAmountCents == null
+                          ? ""
+                          : initialVenue.priceAmountCents / 100
+                      }
                       className={`${inputClass} pl-8 font-mono tabular-nums`}
                       placeholder="500"
                     />
@@ -407,7 +485,11 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
                       min="0.01"
                       max="1000000"
                       step="0.01"
-                      defaultValue={initialVenue?.priceMaxCents == null ? "" : initialVenue.priceMaxCents / 100}
+                      defaultValue={
+                        initialVenue?.priceMaxCents == null
+                          ? ""
+                          : initialVenue.priceMaxCents / 100
+                      }
                       className={`${inputClass} pl-8 font-mono tabular-nums`}
                       placeholder="650"
                     />
@@ -448,7 +530,9 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
                     key={day.value}
                     className="grid grid-cols-[72px_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 py-2"
                   >
-                    <span className="text-sm font-semibold">{day.shortLabel}</span>
+                    <span className="text-sm font-semibold">
+                      {day.shortLabel}
+                    </span>
                     <SelectField
                       id={`${day.key}Open`}
                       name={`${day.key}Open`}
@@ -491,7 +575,8 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
           >
             <legend className="text-lg font-[680]">Booking and contact</legend>
             <p className="text-sm leading-6 text-muted">
-              Only add public business contact details—never a private person’s information.
+              Only add public business contact details—never a private person’s
+              information.
             </p>
             <div>
               <label htmlFor="contact" className="text-sm font-[650]">
@@ -583,10 +668,12 @@ export function VenueSubmissionForm({ courts, initialVenue }: { courts: CourtCho
           </section>
 
           <div className="border-t border-line pt-5">
-            <SubmitButton pendingLabel="Submitting…">Submit for review</SubmitButton>
+            <SubmitButton pendingLabel="Submitting…">
+              Submit for review
+            </SubmitButton>
             <p className="mt-3 text-xs leading-5 text-muted">
-              Your request stays private until Relay reviews the evidence. Public court information does not change
-              automatically.
+              Your request stays private until Relay reviews the evidence.
+              Public court information does not change automatically.
             </p>
           </div>
         </>

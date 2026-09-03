@@ -13,9 +13,14 @@ type DialogProps = ComponentPropsWithoutRef<"dialog"> & {
   variant?: keyof typeof dialogVariants;
 };
 
-export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(function Dialog(
-  { className = "", variant = "standard", ...props },
-  ref,
-) {
-  return <dialog ref={ref} className={`relay-dialog ${dialogVariants[variant]} ${className}`} {...props} />;
-});
+export const Dialog = forwardRef<HTMLDialogElement, DialogProps>(
+  function Dialog({ className = "", variant = "standard", ...props }, ref) {
+    return (
+      <dialog
+        ref={ref}
+        className={`relay-dialog ${dialogVariants[variant]} ${className}`}
+        {...props}
+      />
+    );
+  }
+);

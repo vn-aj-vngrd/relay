@@ -17,7 +17,10 @@ export type Standing = {
 };
 
 export function calculateStandings(matches: MatchResult[]): Standing[] {
-  const rows = new Map<string, Omit<Standing, "differential" | "winPercentage">>();
+  const rows = new Map<
+    string,
+    Omit<Standing, "differential" | "winPercentage">
+  >();
   for (const match of matches) {
     if (match.status !== "completed" || match.scoreA === match.scoreB) continue;
     const aWon = match.scoreA > match.scoreB;
@@ -26,7 +29,14 @@ export function calculateStandings(matches: MatchResult[]): Standing[] {
       [match.teamB, !aWon, match.scoreB, match.scoreA],
     ] as const) {
       for (const playerId of players) {
-        const row = rows.get(playerId) ?? { playerId, played: 0, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 };
+        const row = rows.get(playerId) ?? {
+          playerId,
+          played: 0,
+          wins: 0,
+          losses: 0,
+          pointsFor: 0,
+          pointsAgainst: 0,
+        };
         row.played += 1;
         row.wins += won ? 1 : 0;
         row.losses += won ? 0 : 1;

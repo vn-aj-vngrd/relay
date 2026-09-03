@@ -2,7 +2,10 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicPaymentsLoading() {
   return (
-    <main id="main-content" className="public-session-page min-h-screen bg-surface">
+    <main
+      id="main-content"
+      className="public-session-page min-h-screen bg-surface"
+    >
       <div
         role="status"
         aria-label="Loading payment details"

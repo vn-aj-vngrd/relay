@@ -5,7 +5,9 @@ const mocks = vi.hoisted(() => ({
   track: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("@/features/analytics/actions", () => ({ trackSharedSessionEvent: mocks.track }));
+vi.mock("@/features/analytics/actions", () => ({
+  trackSharedSessionEvent: mocks.track,
+}));
 
 import { CreatedGameShare } from "./created-game-share";
 
@@ -20,7 +22,11 @@ const props = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  window.history.replaceState(null, "", "/games/session-1?created=1&source=search");
+  window.history.replaceState(
+    null,
+    "",
+    "/games/session-1?created=1&source=search"
+  );
   Object.assign(navigator, { share: vi.fn().mockResolvedValue(undefined) });
 });
 
@@ -37,20 +43,27 @@ describe("CreatedGameShare", () => {
     expect(screen.getByText(/2 Relay players were invited/)).toBeVisible();
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "Preview shared link" })).toHaveAttribute("href", "/s/friends-night");
+    expect(
+      screen.getByRole("link", { name: "Preview shared link" })
+    ).toHaveAttribute("href", "/s/friends-night");
     await waitFor(() => expect(window.location.search).toBe("?source=search"));
   });
 
   it("does not encourage open sharing for a private game", () => {
     render(<CreatedGameShare {...props} qrEnabled={false} />);
 
-    expect(screen.getByText(/Only invited Relay players can open this private game/)).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Share game" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Show QR" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Invite players" })).toHaveAttribute(
-      "href",
-      `/games/${props.sessionId}/players`,
-    );
+    expect(
+      screen.getByText(/Only invited Relay players can open this private game/)
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Share game" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show QR" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Invite players" })
+    ).toHaveAttribute("href", `/games/${props.sessionId}/players`);
   });
 
   it("dismisses after a successful native share", async () => {
@@ -58,8 +71,15 @@ describe("CreatedGameShare", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Share game" }));
 
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "Game created" })).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Game created" })
+      ).not.toBeInTheDocument()
+    );
     expect(screen.getByText("Game shared")).toHaveClass("sr-only");
-    expect(mocks.track).toHaveBeenCalledWith({ sessionId: props.sessionId, event: "invite_shared" });
+    expect(mocks.track).toHaveBeenCalledWith({
+      sessionId: props.sessionId,
+      event: "invite_shared",
+    });
   });
 });

@@ -21,7 +21,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ delete: vi.fn(), get: mocks.cookieGet, set: mocks.cookieSet })),
+  cookies: vi.fn(async () => ({
+    delete: vi.fn(),
+    get: mocks.cookieGet,
+    set: mocks.cookieSet,
+  })),
 }));
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
 vi.mock("@/lib/env", () => ({
@@ -97,14 +101,18 @@ describe("signInWithGoogle", () => {
 
     expect(mocks.signInWithOAuth).toHaveBeenCalledWith({
       provider: "google",
-      options: { redirectTo: "https://relay.vanajvanguardia.tech/auth/callback" },
+      options: {
+        redirectTo: "https://relay.vanajvanguardia.tech/auth/callback",
+      },
     });
     expect(mocks.cookieSet).toHaveBeenCalledWith(
       "relay_auth_next",
       "/home",
-      expect.objectContaining({ httpOnly: true, maxAge: 600, sameSite: "lax" }),
+      expect.objectContaining({ httpOnly: true, maxAge: 600, sameSite: "lax" })
     );
-    expect(mocks.redirect).toHaveBeenLastCalledWith("https://accounts.google.com/o/oauth2/v2/auth");
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "https://accounts.google.com/o/oauth2/v2/auth"
+    );
   });
 
   it("fails closed when Google authentication is not enabled", async () => {
@@ -114,14 +122,17 @@ describe("signInWithGoogle", () => {
 
     expect(mocks.signInWithOAuth).not.toHaveBeenCalled();
     expect(mocks.redirect).toHaveBeenCalledWith(
-      "/login?error=Google+sign-in+is+not+available+yet.+Sign+in+with+your+email+and+password.",
+      "/login?error=Google+sign-in+is+not+available+yet.+Sign+in+with+your+email+and+password."
     );
   });
 });
 
 describe("signInWithPassword", () => {
   it("forwards the completed Turnstile token to Supabase password login", async () => {
-    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    mocks.signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials" },
+    });
     const formData = new FormData();
     formData.set("email", "player@example.com");
     formData.set("password", "RelayPass123");
@@ -137,7 +148,10 @@ describe("signInWithPassword", () => {
   });
 
   it("passes short existing passwords to the provider instead of applying signup rules", async () => {
-    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    mocks.signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials" },
+    });
     const formData = new FormData();
     formData.set("email", "player@example.com");
     formData.set("password", "legacy");
@@ -156,7 +170,10 @@ describe("signInWithPassword", () => {
   });
 
   it("returns invalid credentials to the mounted form without redirecting it", async () => {
-    mocks.signInWithPassword.mockResolvedValue({ data: { user: null }, error: { code: "invalid_credentials" } });
+    mocks.signInWithPassword.mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials" },
+    });
     const formData = new FormData();
     formData.set("email", "player@example.com");
     formData.set("password", "RelayPass123");
@@ -193,14 +210,22 @@ describe("requestPasswordReset", () => {
 
     await expect(requestPasswordReset(formData)).rejects.toThrow("redirect");
 
-    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith("player@example.com", {
-      captchaToken: "verified-turnstile-token",
-      redirectTo: "https://relay.vanajvanguardia.tech/auth/callback?recovery=1",
-    });
+    expect(mocks.resetPasswordForEmail).toHaveBeenCalledWith(
+      "player@example.com",
+      {
+        captchaToken: "verified-turnstile-token",
+        redirectTo:
+          "https://relay.vanajvanguardia.tech/auth/callback?recovery=1",
+      }
+    );
     expect(mocks.cookieSet).toHaveBeenCalledWith(
       "relay_recovery_email",
       "player@example.com",
-      expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/forgot-password" }),
+      expect.objectContaining({
+        httpOnly: true,
+        maxAge: 600,
+        path: "/forgot-password",
+      })
     );
   });
 });
@@ -208,7 +233,10 @@ describe("requestPasswordReset", () => {
 describe("verifyRecoveryMfa", () => {
   it("upgrades an email recovery session with its verified authenticator before password entry", async () => {
     mocks.cookieGet.mockReturnValue({ value: "1" });
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "recovery-user" } }, error: null });
+    mocks.getUser.mockResolvedValue({
+      data: { user: { id: "recovery-user" } },
+      error: null,
+    });
     mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
       data: { currentLevel: "aal1", nextLevel: "aal2" },
       error: null,
@@ -223,7 +251,10 @@ describe("verifyRecoveryMfa", () => {
 
     await expect(verifyRecoveryMfa(formData)).rejects.toThrow("redirect");
 
-    expect(mocks.challengeAndVerify).toHaveBeenCalledWith({ factorId: "verified-factor", code: "123456" });
+    expect(mocks.challengeAndVerify).toHaveBeenCalledWith({
+      factorId: "verified-factor",
+      code: "123456",
+    });
     expect(mocks.redirect).toHaveBeenLastCalledWith("/update-password");
   });
 });
@@ -231,7 +262,10 @@ describe("verifyRecoveryMfa", () => {
 describe("updateRecoveredPassword", () => {
   it("refuses the password mutation until an MFA account reaches AAL2", async () => {
     mocks.cookieGet.mockReturnValue({ value: "1" });
-    mocks.getUser.mockResolvedValue({ data: { user: { id: "recovery-user" } }, error: null });
+    mocks.getUser.mockResolvedValue({
+      data: { user: { id: "recovery-user" } },
+      error: null,
+    });
     mocks.getAuthenticatorAssuranceLevel.mockResolvedValue({
       data: { currentLevel: "aal1", nextLevel: "aal2" },
       error: null,
@@ -244,7 +278,7 @@ describe("updateRecoveredPassword", () => {
 
     expect(mocks.updateUser).not.toHaveBeenCalled();
     expect(mocks.redirect).toHaveBeenLastCalledWith(
-      "/update-password?error=Verify+your+authenticator+before+choosing+a+new+password.",
+      "/update-password?error=Verify+your+authenticator+before+choosing+a+new+password."
     );
   });
 });
@@ -294,11 +328,16 @@ describe("createPasswordAccount", () => {
     await expect(createPasswordAccount(formData)).rejects.toThrow("redirect");
 
     expect(mocks.signUp).not.toHaveBeenCalled();
-    expect(mocks.redirect).toHaveBeenLastCalledWith("/signup?error=Passwords+do+not+match.");
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/signup?error=Passwords+do+not+match."
+    );
   });
 
   it("forwards the completed Turnstile token to Supabase for one authoritative verification", async () => {
-    mocks.signUp.mockResolvedValue({ data: { session: null, user: {} }, error: null });
+    mocks.signUp.mockResolvedValue({
+      data: { session: null, user: {} },
+      error: null,
+    });
     const formData = new FormData();
     formData.set("email", "player@example.com");
     formData.set("password", "RelayPass123");
@@ -310,7 +349,7 @@ describe("createPasswordAccount", () => {
 
     expect(mocks.checkRateLimit).toHaveBeenCalledWith(
       { scope: "password-sign-up:account", limit: 10, windowSeconds: 3600 },
-      "email:player@example.com",
+      "email:player@example.com"
     );
     expect(mocks.signUp).toHaveBeenCalledWith({
       email: "player@example.com",
@@ -323,12 +362,12 @@ describe("createPasswordAccount", () => {
     expect(mocks.cookieSet).toHaveBeenCalledWith(
       "relay_auth_next",
       "/s/friends-night",
-      expect.objectContaining({ httpOnly: true, maxAge: 86_400, path: "/" }),
+      expect.objectContaining({ httpOnly: true, maxAge: 86_400, path: "/" })
     );
     expect(mocks.cookieSet).toHaveBeenCalledWith(
       "relay_confirmation_email",
       "player@example.com",
-      expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/signup" }),
+      expect.objectContaining({ httpOnly: true, maxAge: 600, path: "/signup" })
     );
   });
 });

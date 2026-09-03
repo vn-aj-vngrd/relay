@@ -19,7 +19,10 @@ const { refresh, removeChannel, createChannel, channel } = vi.hoisted(() => {
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 vi.mock("@/lib/supabase/client", () => ({
-  createSupabaseBrowserClient: () => ({ channel: createChannel, removeChannel }),
+  createSupabaseBrowserClient: () => ({
+    channel: createChannel,
+    removeChannel,
+  }),
 }));
 
 beforeEach(() => {
@@ -36,7 +39,11 @@ describe("RealtimeRefresh", () => {
     await act(async () => Promise.resolve());
 
     expect(createChannel).toHaveBeenCalledWith("session:session-1");
-    expect(channel.on).toHaveBeenCalledWith("broadcast", { event: "changed" }, expect.any(Function));
+    expect(channel.on).toHaveBeenCalledWith(
+      "broadcast",
+      { event: "changed" },
+      expect.any(Function)
+    );
     expect(screen.getByText("Live updates connected")).toHaveClass("sr-only");
     await act(async () => vi.advanceTimersByTime(121));
     expect(refresh).toHaveBeenCalledTimes(1);

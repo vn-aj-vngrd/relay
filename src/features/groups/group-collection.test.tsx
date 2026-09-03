@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { GroupCollection, type GroupCollectionItem, GroupViewMenu } from "./group-collection";
+import {
+  GroupCollection,
+  type GroupCollectionItem,
+  GroupViewMenu,
+} from "./group-collection";
 
 const items: GroupCollectionItem[] = [
   {
@@ -9,7 +13,8 @@ const items: GroupCollectionItem[] = [
     href: "/groups/tuesday-dink-club",
     name: "Tuesday Dink Club",
     initials: "TU",
-    imageUrl: "https://relay.supabase.co/storage/v1/object/public/avatars/owner/group.webp",
+    imageUrl:
+      "https://relay.supabase.co/storage/v1/object/public/avatars/owner/group.webp",
     memberCount: 8,
     role: "owner",
     nextGameDate: "Sat, Aug 22",
@@ -24,17 +29,24 @@ describe("GroupCollection", () => {
     render(<GroupCollection items={items} />);
 
     expect(screen.getByTestId("groups-list")).toBeVisible();
-    expect(screen.getByRole("link", { name: /Tuesday Dink Club/ })).toHaveAttribute(
+    expect(
+      screen.getByRole("link", { name: /Tuesday Dink Club/ })
+    ).toHaveAttribute("href", "/groups/tuesday-dink-club");
+    expect(screen.getByRole("link", { name: "Create group" })).toHaveAttribute(
       "href",
-      "/groups/tuesday-dink-club",
+      "/groups/new"
     );
-    expect(screen.getByRole("link", { name: "Create group" })).toHaveAttribute("href", "/groups/new");
     expect(screen.queryByText("1 group")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("groups-grid")).toBeVisible();
-    expect(screen.getByTestId("groups-grid").querySelector(".grid")).toHaveClass("min-[380px]:grid-cols-2");
-    expect(screen.getByRole("link", { name: /Tuesday Dink Club/ })).toHaveClass("p-3.5", "sm:p-5");
+    expect(
+      screen.getByTestId("groups-grid").querySelector(".grid")
+    ).toHaveClass("min-[380px]:grid-cols-2");
+    expect(screen.getByRole("link", { name: /Tuesday Dink Club/ })).toHaveClass(
+      "p-3.5",
+      "sm:p-5"
+    );
     expect(localStorage.getItem("relay-groups-view")).toBe("grid");
   });
 
@@ -66,10 +78,12 @@ describe("GroupCollection", () => {
       <>
         <GroupViewMenu />
         <GroupCollection items={items} />
-      </>,
+      </>
     );
 
-    const viewTrigger = screen.getByRole("button", { name: "Change group view, currently List" });
+    const viewTrigger = screen.getByRole("button", {
+      name: "Change group view, currently List",
+    });
     expect(viewTrigger).toHaveClass("h-9", "w-9", "border-transparent");
     expect(viewTrigger).not.toHaveClass("border-line");
     fireEvent.click(viewTrigger);
@@ -78,12 +92,16 @@ describe("GroupCollection", () => {
 
     fireEvent.click(gridOption);
     expect(screen.getByTestId("groups-grid")).toBeVisible();
-    expect(screen.queryByRole("menu", { name: "Group view" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menu", { name: "Group view" })
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the empty state useful", () => {
     render(<GroupCollection items={[]} />);
     expect(screen.getByText("Keep the regular crew together.")).toBeVisible();
-    expect(screen.getByRole("link", { name: "Create a group" })).toHaveAttribute("href", "/groups/new");
+    expect(
+      screen.getByRole("link", { name: "Create a group" })
+    ).toHaveAttribute("href", "/groups/new");
   });
 });

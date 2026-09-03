@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { onboardingDestination, postSetupDestination, safeNextPath, sharedSessionSlug } from "./destination-path";
+import {
+  onboardingDestination,
+  postSetupDestination,
+  safeNextPath,
+  sharedSessionSlug,
+} from "./destination-path";
 
 describe("post-auth destination", () => {
   it("accepts local destinations and rejects protocol-relative redirects", () => {
@@ -10,22 +15,26 @@ describe("post-auth destination", () => {
   });
 
   it("takes a new player to game creation while preserving a selected court", () => {
-    expect(onboardingDestination("/home", false)).toBe("/onboarding?next=%2Fgames%2Fnew");
+    expect(onboardingDestination("/home", false)).toBe(
+      "/onboarding?next=%2Fgames%2Fnew"
+    );
     const game = "/games/new?venue=Central+Pickle&address=Cebu+City";
     expect(onboardingDestination(game, false)).toBe(
-      "/onboarding?next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle%26address%3DCebu%2BCity",
+      "/onboarding?next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle%26address%3DCebu%2BCity"
     );
     expect(onboardingDestination(game, true)).toBe(game);
   });
 
   it("opens the tour and preserves the task that brought the player into Relay", () => {
-    expect(postSetupDestination("/games/new")).toBe("/home?tour=1&next=%2Fgames%2Fnew");
+    expect(postSetupDestination("/games/new")).toBe(
+      "/home?tour=1&next=%2Fgames%2Fnew"
+    );
     expect(postSetupDestination("/games/new?venue=Central+Pickle")).toBe(
-      "/home?tour=1&next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle",
+      "/home?tour=1&next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle"
     );
-    expect(postSetupDestination("/games/59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7")).toBe(
-      "/home?tour=1&next=%2Fgames%2F59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
-    );
+    expect(
+      postSetupDestination("/games/59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7")
+    ).toBe("/home?tour=1&next=%2Fgames%2F59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7");
   });
 
   it("recognizes only a shared game root", () => {

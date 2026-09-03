@@ -15,8 +15,13 @@ describe("health route", () => {
   });
 
   it("keeps deep readiness checks private", async () => {
-    vi.stubEnv("HEALTHCHECK_SECRET", "a-secure-healthcheck-secret-at-least-32-chars");
-    const response = await GET(new Request("https://relay.test/api/health?deep=1"));
+    vi.stubEnv(
+      "HEALTHCHECK_SECRET",
+      "a-secure-healthcheck-secret-at-least-32-chars"
+    );
+    const response = await GET(
+      new Request("https://relay.test/api/health?deep=1")
+    );
     expect(response.status).toBe(401);
     expect(db.execute).not.toHaveBeenCalled();
     vi.unstubAllEnvs();

@@ -1,5 +1,8 @@
 import { requireUser } from "@/features/auth/session";
-import { GroupCollection, GroupViewMenu } from "@/features/groups/group-collection";
+import {
+  GroupCollection,
+  GroupViewMenu,
+} from "@/features/groups/group-collection";
 import { getGroupCollectionPage } from "@/features/groups/queries";
 
 export default async function GroupsPage() {

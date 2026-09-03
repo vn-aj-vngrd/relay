@@ -6,11 +6,16 @@ import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
-import { type ProfileDetailsActionState, updateOwnProfileAction } from "./actions";
+import {
+  type ProfileDetailsActionState,
+  updateOwnProfileAction,
+} from "./actions";
 import { playingExperienceOptions } from "./playing-experience";
 
 function ErrorText({ errors }: { errors?: string[] }) {
-  return errors?.[0] ? <p className="mt-1.5 text-sm font-medium text-danger">{errors[0]}</p> : null;
+  return errors?.[0] ? (
+    <p className="mt-1.5 text-sm font-medium text-danger">{errors[0]}</p>
+  ) : null;
 }
 
 export function ProfileDetailsForm({
@@ -24,10 +29,18 @@ export function ProfileDetailsForm({
     dominantHand: string | null;
   };
 }) {
-  const [state, action] = useActionState<ProfileDetailsActionState, FormData>(updateOwnProfileAction, {});
+  const [state, action] = useActionState<ProfileDetailsActionState, FormData>(
+    updateOwnProfileAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="border-y border-line py-5">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="border-y border-line py-5"
+    >
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="profile-name" className="text-sm font-semibold">
@@ -65,7 +78,10 @@ export function ProfileDetailsForm({
           defaultValue={profile.skillLevel ?? ""}
           options={[
             { value: "", label: "Not set" },
-            ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+            ...playingExperienceOptions.map(({ value, label }) => ({
+              value,
+              label,
+            })),
           ]}
         />
         <SelectField
@@ -108,7 +124,8 @@ export function ProfileDetailsForm({
       ) : null}
       <div className="mt-5 flex items-center justify-between gap-4 border-t border-line pt-5">
         <p className="text-xs leading-5 text-muted">
-          Experience helps Balanced Mix make closer teams. It is never a public rating.
+          Experience helps Balanced Mix make closer teams. It is never a public
+          rating.
         </p>
         <SubmitButton pendingLabel="Saving…" className="shrink-0">
           Save details

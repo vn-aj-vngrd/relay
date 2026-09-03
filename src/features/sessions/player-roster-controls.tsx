@@ -1,6 +1,13 @@
 "use client";
 
-import { Check, LockKey, LockKeyOpen, UserMinus, UserPlus, X } from "@phosphor-icons/react";
+import {
+  Check,
+  LockKey,
+  LockKeyOpen,
+  UserMinus,
+  UserPlus,
+  X,
+} from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
@@ -22,18 +29,27 @@ import {
 } from "./actions";
 
 export function AddPlayerForm({ sessionId }: { sessionId: string }) {
-  const [state, action] = useActionState<SessionActionState, FormData>(addPlayerAction, {});
+  const [state, action] = useActionState<SessionActionState, FormData>(
+    addPlayerAction,
+    {}
+  );
   const [playerEntry, setPlayerEntry] = useState("");
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
-  const [selectedPlayer, setSelectedPlayer] = useState<SearchResult | null>(null);
-  const [searchStatus, setSearchStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [selectedPlayer, setSelectedPlayer] = useState<SearchResult | null>(
+    null
+  );
+  const [searchStatus, setSearchStatus] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const formRef = useRef<HTMLFormElement>(null);
   const comboboxRef = useRef<HTMLDivElement>(null);
   const listboxId = useId();
   const isRelayInvite = playerEntry.trimStart().startsWith("@");
-  const relayQuery = isRelayInvite ? playerEntry.trimStart().slice(1).trim() : "";
+  const relayQuery = isRelayInvite
+    ? playerEntry.trimStart().slice(1).trim()
+    : "";
 
   useEffect(() => {
     if (state.success) formRef.current?.reset();
@@ -44,14 +60,19 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setSearchStatus("loading");
-      void fetch(`/api/search?q=${encodeURIComponent(relayQuery)}&type=players&cursor=0`, {
-        signal: controller.signal,
-        headers: { Accept: "application/json" },
-      })
+      void fetch(
+        `/api/search?q=${encodeURIComponent(relayQuery)}&type=players&cursor=0`,
+        {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        }
+      )
         .then(async (response) => {
           if (!response.ok) throw new Error("PLAYER_SEARCH_FAILED");
           const data = (await response.json()) as SearchResponse;
-          const players = data.items.filter((item) => item.type === "players").slice(0, 6);
+          const players = data.items
+            .filter((item) => item.type === "players")
+            .slice(0, 6);
           setSuggestions(players);
           setActiveIndex(players.length ? 0 : -1);
           setSearchStatus("ready");
@@ -80,7 +101,9 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
   }
 
   function selectPlayer(player: SearchResult) {
-    const username = decodeURIComponent(player.href.replace(/^\/profile\//, ""));
+    const username = decodeURIComponent(
+      player.href.replace(/^\/profile\//, "")
+    );
     setPlayerEntry(`@${username}`);
     setSelectedPlayer(player);
     setSuggestionsOpen(false);
@@ -106,7 +129,9 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
       setActiveIndex((index) => (index + 1) % suggestions.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((index) => (index <= 0 ? suggestions.length - 1 : index - 1));
+      setActiveIndex((index) =>
+        index <= 0 ? suggestions.length - 1 : index - 1
+      );
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       selectPlayer(suggestions[activeIndex]);
@@ -123,7 +148,13 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
           : "Finding Relay players…";
 
   return (
-    <form noValidate ref={formRef} action={action} onReset={resetPlayerEntry} className="mt-4">
+    <form
+      noValidate
+      ref={formRef}
+      action={action}
+      onReset={resetPlayerEntry}
+      className="mt-4"
+    >
       <input type="hidden" name="sessionId" value={sessionId} />
       <div
         className={`grid gap-2 sm:items-end ${isRelayInvite ? "sm:grid-cols-[minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_260px_auto]"}`}
@@ -132,7 +163,9 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
           ref={comboboxRef}
           className="relative min-w-0"
           onBlurCapture={(event) => {
-            if (!comboboxRef.current?.contains(event.relatedTarget as Node | null)) {
+            if (
+              !comboboxRef.current?.contains(event.relatedTarget as Node | null)
+            ) {
               setSuggestionsOpen(false);
               setActiveIndex(-1);
             }
@@ -166,11 +199,17 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             onKeyDown={handleComboboxKeyDown}
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={isRelayInvite && suggestionsOpen && suggestions.length > 0}
-            aria-controls={isRelayInvite && suggestions.length > 0 ? listboxId : undefined}
+            aria-expanded={
+              isRelayInvite && suggestionsOpen && suggestions.length > 0
+            }
+            aria-controls={
+              isRelayInvite && suggestions.length > 0 ? listboxId : undefined
+            }
             aria-busy={searchStatus === "loading"}
             aria-activedescendant={
-              suggestionsOpen && activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
+              suggestionsOpen && activeIndex >= 0
+                ? `${listboxId}-option-${activeIndex}`
+                : undefined
             }
             aria-describedby="player-entry-hint"
             placeholder="Guest name or @username"
@@ -180,7 +219,9 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             <div
               id={suggestions.length ? listboxId : undefined}
               role={suggestions.length ? "listbox" : "status"}
-              aria-label={suggestions.length ? "Relay player suggestions" : undefined}
+              aria-label={
+                suggestions.length ? "Relay player suggestions" : undefined
+              }
               className="absolute inset-x-0 top-[48px] z-40 max-h-72 overflow-y-auto rounded-lg border border-line bg-surface p-1 shadow-[0_6px_8px_oklch(0.1_0.01_275/.12)]"
             >
               {suggestions.length ? (
@@ -195,15 +236,26 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
                     onClick={() => selectPlayer(player)}
                     className={`pressable flex min-h-14 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left ${activeIndex === index ? "bg-surface-strong" : "hover:bg-surface-strong/70"}`}
                   >
-                    <Avatar name={player.title} imageUrl={player.imageUrl ?? undefined} index={index} size="sm" />
+                    <Avatar
+                      name={player.title}
+                      imageUrl={player.imageUrl ?? undefined}
+                      index={index}
+                      size="sm"
+                    />
                     <span className="min-w-0 flex-1">
-                      <strong className="block truncate text-sm font-semibold text-ink">{player.title}</strong>
-                      <span className="mt-0.5 block truncate text-xs text-muted">{player.subtitle}</span>
+                      <strong className="block truncate text-sm font-semibold text-ink">
+                        {player.title}
+                      </strong>
+                      <span className="mt-0.5 block truncate text-xs text-muted">
+                        {player.subtitle}
+                      </span>
                     </span>
                   </div>
                 ))
               ) : (
-                <p className="px-3 py-3 text-sm text-muted">{suggestionMessage}</p>
+                <p className="px-3 py-3 text-sm text-muted">
+                  {suggestionMessage}
+                </p>
               )}
             </div>
           ) : null}
@@ -218,7 +270,10 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             className="!mt-0"
             options={[
               { value: "", label: "Guest experience (optional)" },
-              ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+              ...playingExperienceOptions.map(({ value, label }) => ({
+                value,
+                label,
+              })),
             ]}
           />
         ) : null}
@@ -243,16 +298,30 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
         </p>
       ) : state.success ? (
         <p role="status" className="mt-2 text-sm font-medium text-success">
-          {state.playerOutcome === "invited" ? "Invitation sent." : "Guest added."}
+          {state.playerOutcome === "invited"
+            ? "Invitation sent."
+            : "Guest added."}
         </p>
       ) : null}
     </form>
   );
 }
 
-export function PendingPlayerActions({ sessionId, playerId }: { sessionId: string; playerId: string }) {
-  const [approveState, approveAction] = useActionState<SessionActionState, FormData>(approvePlayerAction, {});
-  const [removeState, removeAction] = useActionState<SessionActionState, FormData>(removePlayerAction, {});
+export function PendingPlayerActions({
+  sessionId,
+  playerId,
+}: {
+  sessionId: string;
+  playerId: string;
+}) {
+  const [approveState, approveAction] = useActionState<
+    SessionActionState,
+    FormData
+  >(approvePlayerAction, {});
+  const [removeState, removeAction] = useActionState<
+    SessionActionState,
+    FormData
+  >(removePlayerAction, {});
   return (
     <div>
       <div className="flex gap-2">
@@ -267,7 +336,11 @@ export function PendingPlayerActions({ sessionId, playerId }: { sessionId: strin
         <form noValidate action={removeAction}>
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="sessionPlayerId" value={playerId} />
-          <SubmitButton pendingLabel="Rejecting…" variant="quiet" className="min-h-9 px-3 text-danger">
+          <SubmitButton
+            pendingLabel="Rejecting…"
+            variant="quiet"
+            className="min-h-9 px-3 text-danger"
+          >
             <X aria-hidden size={16} />
             Reject
           </SubmitButton>
@@ -291,7 +364,10 @@ export function RemovePlayerButton({
   playerId: string;
   name: string;
 }) {
-  const [state, action] = useActionState<SessionActionState, FormData>(removePlayerAction, {});
+  const [state, action] = useActionState<SessionActionState, FormData>(
+    removePlayerAction,
+    {}
+  );
   const dialogRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (state.success) dialogRef.current?.close();
@@ -321,11 +397,18 @@ export function RemovePlayerButton({
               <UserMinus aria-hidden size={18} />
             </span>
             <div>
-              <h2 id={`remove-${playerId}-title`} className="text-lg font-[680]">
+              <h2
+                id={`remove-${playerId}-title`}
+                className="text-lg font-[680]"
+              >
                 Remove {name}?
               </h2>
-              <p id={`remove-${playerId}-description`} className="mt-2 text-sm leading-6 text-muted">
-                They’ll lose their spot and payment assignment. If there is a waitlist, the next player may be promoted.
+              <p
+                id={`remove-${playerId}-description`}
+                className="mt-2 text-sm leading-6 text-muted"
+              >
+                They’ll lose their spot and payment assignment. If there is a
+                waitlist, the next player may be promoted.
               </p>
             </div>
           </div>
@@ -335,7 +418,11 @@ export function RemovePlayerButton({
             </p>
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => dialogRef.current?.close()}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
               Cancel
             </Button>
             <SubmitButton pendingLabel="Removing…" variant="danger">
@@ -348,12 +435,25 @@ export function RemovePlayerButton({
   );
 }
 
-export function RosterLockButton({ sessionId, locked }: { sessionId: string; locked: boolean }) {
+export function RosterLockButton({
+  sessionId,
+  locked,
+}: {
+  sessionId: string;
+  locked: boolean;
+}) {
   return (
     <form noValidate action={toggleRosterLockAction}>
       <input type="hidden" name="sessionId" value={sessionId} />
-      <SubmitButton pendingLabel={locked ? "Unlocking…" : "Locking…"} variant="secondary">
-        {locked ? <LockKeyOpen aria-hidden size={17} /> : <LockKey aria-hidden size={17} />}
+      <SubmitButton
+        pendingLabel={locked ? "Unlocking…" : "Locking…"}
+        variant="secondary"
+      >
+        {locked ? (
+          <LockKeyOpen aria-hidden size={17} />
+        ) : (
+          <LockKey aria-hidden size={17} />
+        )}
         {locked ? "Unlock roster" : "Lock roster"}
       </SubmitButton>
     </form>

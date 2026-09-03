@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const notificationActions = vi.hoisted(() => ({
@@ -31,7 +37,7 @@ beforeEach(() => {
       root = null;
       rootMargin = "0px";
       thresholds = [];
-    },
+    }
   );
 });
 
@@ -58,41 +64,80 @@ const second: NotificationFeedItem = {
 
 describe("NotificationFeed", () => {
   it("marks one notification as read without opening it", async () => {
-    render(<NotificationFeed filter="all" initialPage={{ items: [first, second], nextCursor: null }} />);
+    render(
+      <NotificationFeed
+        filter="all"
+        initialPage={{ items: [first, second], nextCursor: null }}
+      />
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark Friday Pickle as read" })
+    );
 
-    await waitFor(() => expect(notificationActions.markNotificationRead).toHaveBeenCalledOnce());
-    expect(screen.queryByRole("button", { name: "Mark Friday Pickle as read" })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(notificationActions.markNotificationRead).toHaveBeenCalledOnce()
+    );
+    expect(
+      screen.queryByRole("button", { name: "Mark Friday Pickle as read" })
+    ).not.toBeInTheDocument();
     expect(screen.queryAllByRole("img", { name: "Unread" })).toHaveLength(0);
   });
 
   it("removes a marked notification from the unread filter", async () => {
-    render(<NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />);
+    render(
+      <NotificationFeed
+        filter="unread"
+        initialPage={{ items: [first], nextCursor: null }}
+      />
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark Friday Pickle as read" })
+    );
 
-    await waitFor(() => expect(screen.getByText("No unread updates")).toBeVisible());
+    await waitFor(() =>
+      expect(screen.getByText("No unread updates")).toBeVisible()
+    );
   });
 
   it("restores a notification when marking it as read fails", async () => {
-    notificationActions.markNotificationRead.mockRejectedValueOnce(new Error("offline"));
-    render(<NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />);
+    notificationActions.markNotificationRead.mockRejectedValueOnce(
+      new Error("offline")
+    );
+    render(
+      <NotificationFeed
+        filter="unread"
+        initialPage={{ items: [first], nextCursor: null }}
+      />
+    );
 
-    fireEvent.click(screen.getByRole("button", { name: "Mark Friday Pickle as read" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark Friday Pickle as read" })
+    );
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "That notification couldn’t be marked as read. Try again.",
+      "That notification couldn’t be marked as read. Try again."
     );
-    expect(screen.getByRole("button", { name: "Mark Friday Pickle as read" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Mark Friday Pickle as read" })
+    ).toBeVisible();
   });
 
   it("reconciles authoritative refreshes into the unread feed", async () => {
     const { rerender } = render(
-      <NotificationFeed filter="unread" initialPage={{ items: [first], nextCursor: null }} />,
+      <NotificationFeed
+        filter="unread"
+        initialPage={{ items: [first], nextCursor: null }}
+      />
     );
 
-    rerender(<NotificationFeed filter="unread" initialPage={{ items: [], nextCursor: null }} />);
+    rerender(
+      <NotificationFeed
+        filter="unread"
+        initialPage={{ items: [], nextCursor: null }}
+      />
+    );
 
     expect(await screen.findByText("No unread updates")).toBeVisible();
     expect(screen.queryByText("You’re invited")).not.toBeInTheDocument();
@@ -101,16 +146,31 @@ describe("NotificationFeed", () => {
   it("loads and deduplicates the next cursor page", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [first, second], nextCursor: null }) }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ items: [first, second], nextCursor: null }),
+      })
     );
-    render(<NotificationFeed filter="all" initialPage={{ items: [first], nextCursor: "next-page" }} />);
+    render(
+      <NotificationFeed
+        filter="all"
+        initialPage={{ items: [first], nextCursor: "next-page" }}
+      />
+    );
 
-    expect(screen.getByRole("button", { name: "Load older updates" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Load older updates" })
+    ).toBeVisible();
     await act(async () => {
-      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+      observerCallback(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver
+      );
     });
 
-    await waitFor(() => expect(screen.getByText("Payment confirmed")).toBeVisible());
+    await waitFor(() =>
+      expect(screen.getByText("Payment confirmed")).toBeVisible()
+    );
     expect(screen.getAllByText("You’re invited")).toHaveLength(1);
     expect(screen.getByText("You’ve reached the first update.")).toBeVisible();
   });
@@ -118,15 +178,26 @@ describe("NotificationFeed", () => {
   it("adds refreshed notifications without discarding loaded history", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ items: [second], nextCursor: null }) }),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ items: [second], nextCursor: null }),
+      })
     );
     const { rerender } = render(
-      <NotificationFeed filter="all" initialPage={{ items: [first], nextCursor: "next-page" }} />,
+      <NotificationFeed
+        filter="all"
+        initialPage={{ items: [first], nextCursor: "next-page" }}
+      />
     );
     await act(async () => {
-      observerCallback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+      observerCallback(
+        [{ isIntersecting: true } as IntersectionObserverEntry],
+        {} as IntersectionObserver
+      );
     });
-    await waitFor(() => expect(screen.getByText("Payment confirmed")).toBeVisible());
+    await waitFor(() =>
+      expect(screen.getByText("Payment confirmed")).toBeVisible()
+    );
 
     const newest = {
       ...first,
@@ -135,7 +206,12 @@ describe("NotificationFeed", () => {
       sessionTitle: "Sunday Pickle",
       createdAt: new Date(Date.now() + 1_000).toISOString(),
     };
-    rerender(<NotificationFeed filter="all" initialPage={{ items: [newest, first], nextCursor: null }} />);
+    rerender(
+      <NotificationFeed
+        filter="all"
+        initialPage={{ items: [newest, first], nextCursor: null }}
+      />
+    );
 
     expect(await screen.findByText("Game wrapped")).toBeVisible();
     expect(screen.getByText("Payment confirmed")).toBeVisible();

@@ -17,11 +17,19 @@ const players = [
 describe("PlaySetupForm", () => {
   it("starts with the flexible Paddle Stack setup and reveals its queue rule", () => {
     const { container } = render(
-      <PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={10} courtCount={2} />,
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={10}
+        courtCount={2}
+      />
     );
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeChecked();
-    expect(container.querySelector('input[name="queueRule"]')).toHaveValue("adaptive");
-    expect(screen.queryByRole("button", { name: "Round timer" })).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="queueRule"]')).toHaveValue(
+      "adaptive"
+    );
+    expect(
+      screen.queryByRole("button", { name: "Round timer" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Start Play" })).toBeVisible();
   });
 
@@ -32,18 +40,36 @@ describe("PlaySetupForm", () => {
         playerCount={4}
         courtCount={1}
         players={players}
-      />,
+      />
     );
-    fireEvent.click(screen.getByRole("radio", { name: /^Keep pairs together/ }));
-    expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
-    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(players[0].id);
-    expect(container.querySelector('input[name="pair-0-b"]')).toHaveValue(players[1].id);
-    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(players[2].id);
-    expect(container.querySelector('input[name="pair-1-b"]')).toHaveValue(players[3].id);
-    fireEvent.click(screen.getByRole("button", { name: "Pair 1, first player" }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /^Keep pairs together/ })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Set the pairs" })
+    ).toBeVisible();
+    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(
+      players[0].id
+    );
+    expect(container.querySelector('input[name="pair-0-b"]')).toHaveValue(
+      players[1].id
+    );
+    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(
+      players[2].id
+    );
+    expect(container.querySelector('input[name="pair-1-b"]')).toHaveValue(
+      players[3].id
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Pair 1, first player" })
+    );
     fireEvent.click(screen.getByRole("option", { name: "Mika" }));
-    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(players[2].id);
-    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(players[0].id);
+    expect(container.querySelector('input[name="pair-0-a"]')).toHaveValue(
+      players[2].id
+    );
+    expect(container.querySelector('input[name="pair-1-a"]')).toHaveValue(
+      players[0].id
+    );
   });
 
   it("offers Team Round Robin for an even roster and explains odd-roster byes", () => {
@@ -53,21 +79,30 @@ describe("PlaySetupForm", () => {
         playerCount={4}
         courtCount={1}
         players={players}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /Team Round Robin/ }));
     expect(screen.getByText(/every other pair once/i)).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Set the pairs" })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Set the pairs" })
+    ).toBeVisible();
     rerender(
       <PlaySetupForm
         sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
         playerCount={5}
         courtCount={1}
-        players={[...players, { id: "00000000-0000-4000-8000-000000000005", name: "Chris" }]}
-      />,
+        players={[
+          ...players,
+          { id: "00000000-0000-4000-8000-000000000005", name: "Chris" },
+        ]}
+      />
     );
-    expect(screen.getByRole("radio", { name: /Team Round Robin/ })).toBeDisabled();
-    expect(screen.getByText("Needs an even going roster of at least 4 players.")).toBeVisible();
+    expect(
+      screen.getByRole("radio", { name: /Team Round Robin/ })
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Needs an even going roster of at least 4 players.")
+    ).toBeVisible();
   });
 
   it("pairs the full going roster while late players stay out of the opening rotation", () => {
@@ -82,17 +117,25 @@ describe("PlaySetupForm", () => {
         courtCount={1}
         players={[...players, ...latePlayers]}
         activePlayerIds={players.map((player) => player.id)}
-      />,
+      />
     );
 
-    fireEvent.click(screen.getByRole("radio", { name: /^Keep pairs together/ }));
+    fireEvent.click(
+      screen.getByRole("radio", { name: /^Keep pairs together/ })
+    );
 
     expect(screen.getByText("4 here · 6 going · 1 court")).toBeVisible();
     expect(screen.getByText("Pair 3")).toBeVisible();
   });
 
   it("explains and selects Mix It Up without showing Paddle Stack rules", () => {
-    render(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={8} courtCount={2} />);
+    render(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={8}
+        courtCount={2}
+      />
+    );
     fireEvent.click(screen.getByRole("radio", { name: /Mix It Up/ }));
     expect(screen.queryByLabelText("Queue rule")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Round timer" })).toBeVisible();
@@ -105,8 +148,13 @@ describe("PlaySetupForm", () => {
         sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
         playerCount={4}
         courtCount={1}
-        players={[...players.slice(0, 3).map((player) => ({ ...player, skillLevel: "regular" })), players[3]]}
-      />,
+        players={[
+          ...players
+            .slice(0, 3)
+            .map((player) => ({ ...player, skillLevel: "regular" })),
+          players[3],
+        ]}
+      />
     );
     fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
     expect(screen.getByText(/1 player has no experience set/)).toBeVisible();
@@ -115,11 +163,23 @@ describe("PlaySetupForm", () => {
 
   it("only enables Court Climb when every court has exactly four players", () => {
     const { rerender } = render(
-      <PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={7} courtCount={2} />,
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={7}
+        courtCount={2}
+      />
     );
     expect(screen.getByRole("radio", { name: /Court Climb/ })).toBeDisabled();
-    expect(screen.getByText("Needs exactly 8 active players for 2 courts.")).toBeVisible();
-    rerender(<PlaySetupForm sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" playerCount={8} courtCount={2} />);
+    expect(
+      screen.getByText("Needs exactly 8 active players for 2 courts.")
+    ).toBeVisible();
+    rerender(
+      <PlaySetupForm
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        playerCount={8}
+        courtCount={2}
+      />
+    );
     expect(screen.getByRole("radio", { name: /Court Climb/ })).toBeEnabled();
   });
 });

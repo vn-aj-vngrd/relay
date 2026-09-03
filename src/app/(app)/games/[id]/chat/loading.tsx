@@ -4,7 +4,10 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function ChatLoading() {
   return (
     <div className="authenticated-chat-page flex h-full min-h-0 flex-col overflow-hidden">
-      <GamePageIntro title="Chat" description="Plans, updates, and photos from the group." />
+      <GamePageIntro
+        title="Chat"
+        description="Plans, updates, and photos from the group."
+      />
       <div
         role="status"
         aria-label="Loading chat"

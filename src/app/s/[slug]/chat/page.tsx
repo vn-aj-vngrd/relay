@@ -5,7 +5,11 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 
-export default async function PublicChatPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicChatPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const slug = (await params).slug;
   const data = await getPublicSession(slug);
   if (!data) notFound();
@@ -29,7 +33,11 @@ export default async function PublicChatPage({ params }: { params: Promise<{ slu
             sessionId={data.session.id}
             timezone={data.session.timezone}
             slug={slug}
-            viewer={{ userId: viewer?.user?.id ?? null, playerId: viewer?.player.id ?? "", canWrite }}
+            viewer={{
+              userId: viewer?.user?.id ?? null,
+              playerId: viewer?.player.id ?? "",
+              canWrite,
+            }}
             readOnlyMessage="Join the game to send messages and photos."
             className="h-full border-t-0"
           />

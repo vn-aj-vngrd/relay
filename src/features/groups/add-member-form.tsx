@@ -8,10 +8,18 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 import { addGroupMemberAction, type GroupActionState } from "./actions";
 
 export function AddGroupMemberForm({ groupId }: { groupId: string }) {
-  const [state, action] = useActionState<GroupActionState, FormData>(addGroupMemberAction, {});
+  const [state, action] = useActionState<GroupActionState, FormData>(
+    addGroupMemberAction,
+    {}
+  );
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
-    <form noValidate action={action} onSubmitCapture={preserveValues} className="mt-4 flex flex-col gap-2 sm:flex-row">
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="mt-4 flex flex-col gap-2 sm:flex-row"
+    >
       <input type="hidden" name="groupId" value={groupId} />
       <div className="min-w-0 flex-1">
         <label htmlFor="member-username" className="sr-only">
@@ -36,7 +44,11 @@ export function AddGroupMemberForm({ groupId }: { groupId: string }) {
           </p>
         ) : null}
       </div>
-      <SubmitButton pendingLabel="Adding…" variant="secondary" className="self-start">
+      <SubmitButton
+        pendingLabel="Adding…"
+        variant="secondary"
+        className="self-start"
+      >
         Add player
       </SubmitButton>
     </form>

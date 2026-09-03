@@ -13,7 +13,8 @@ type NavigatorWithStandalone = Navigator & { standalone?: boolean };
 
 function installState(): InstallState {
   if (
-    (typeof window.matchMedia === "function" && window.matchMedia("(display-mode: standalone)").matches) ||
+    (typeof window.matchMedia === "function" &&
+      window.matchMedia("(display-mode: standalone)").matches) ||
     (navigator as NavigatorWithStandalone).standalone
   )
     return "installed";
@@ -23,7 +24,10 @@ function installState(): InstallState {
 }
 
 function subscribe(callback: () => void) {
-  const media = typeof window.matchMedia === "function" ? window.matchMedia("(display-mode: standalone)") : null;
+  const media =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(display-mode: standalone)")
+      : null;
   window.addEventListener("relay-install-available", callback);
   window.addEventListener("appinstalled", callback);
   media?.addEventListener("change", callback);
@@ -40,7 +44,9 @@ export function InstallAppControl() {
   const [message, setMessage] = useState("");
 
   async function install() {
-    const prompt = window.__relayInstallPrompt as RelayInstallPrompt | undefined;
+    const prompt = window.__relayInstallPrompt as
+      | RelayInstallPrompt
+      | undefined;
     if (!prompt) return;
     setInstalling(true);
     setMessage("");
@@ -49,7 +55,11 @@ export function InstallAppControl() {
       const choice = await prompt.userChoice;
       window.__relayInstallPrompt = undefined;
       window.dispatchEvent(new Event("relay-install-available"));
-      setMessage(choice.outcome === "accepted" ? "Relay was added to this device." : "Installation was cancelled.");
+      setMessage(
+        choice.outcome === "accepted"
+          ? "Relay was added to this device."
+          : "Installation was cancelled."
+      );
     } catch {
       setMessage("Installation couldn’t start. Use your browser menu instead.");
     } finally {
@@ -81,8 +91,16 @@ export function InstallAppControl() {
           ) : null}
         </div>
         {state === "available" ? (
-          <Button type="button" onClick={() => void install()} disabled={installing}>
-            {installing ? <ButtonSpinner /> : <DownloadSimple aria-hidden size={16} />}
+          <Button
+            type="button"
+            onClick={() => void install()}
+            disabled={installing}
+          >
+            {installing ? (
+              <ButtonSpinner />
+            ) : (
+              <DownloadSimple aria-hidden size={16} />
+            )}
             {installing ? "Installing…" : "Install Relay"}
           </Button>
         ) : state === "installed" ? (

@@ -2,7 +2,12 @@ import { Skeleton } from "@/components/shared/skeleton";
 
 export function MemoriesSkeleton() {
   return (
-    <div role="status" aria-label="Loading session story" aria-busy="true" className="space-y-12">
+    <div
+      role="status"
+      aria-label="Loading session story"
+      aria-busy="true"
+      className="space-y-12"
+    >
       <section>
         <Skeleton className="h-4 w-24" />
         <Skeleton className="mt-3 h-8 w-52" />
@@ -30,7 +35,10 @@ export function MemoriesSkeleton() {
         <Skeleton className="mt-3 h-4 w-full max-w-xl" />
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="aspect-square w-full rounded-[10px]" />
+            <Skeleton
+              key={index}
+              className="aspect-square w-full rounded-[10px]"
+            />
           ))}
         </div>
       </section>

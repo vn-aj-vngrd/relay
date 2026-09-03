@@ -6,7 +6,11 @@ export const alt = "Verified pickleball court in the Philippines";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function CourtOpenGraphImage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CourtOpenGraphImage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const court = await getCourtListingBySlug((await params).slug);
 
   return new ImageResponse(
@@ -33,8 +37,26 @@ export default async function CourtOpenGraphImage({ params }: { params: Promise<
           background: "#171d38",
         }}
       >
-        <div style={{ position: "absolute", top: 0, bottom: 0, left: 194, width: 2, background: "#d7edf44d" }} />
-        <div style={{ position: "absolute", top: 315, left: 194, right: 0, height: 2, background: "#d7edf44d" }} />
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 194,
+            width: 2,
+            background: "#d7edf44d",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 315,
+            left: 194,
+            right: 0,
+            height: 2,
+            background: "#d7edf44d",
+          }}
+        />
       </div>
       <div
         style={{
@@ -46,13 +68,35 @@ export default async function CourtOpenGraphImage({ params }: { params: Promise<
         }}
       >
         <div
-          style={{ display: "flex", alignItems: "center", gap: 13, color: "#5964d9", fontSize: 24, fontWeight: 750 }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 13,
+            color: "#5964d9",
+            fontSize: 24,
+            fontWeight: 750,
+          }}
         >
-          <span style={{ width: 26, height: 26, borderRadius: 999, background: "#b7d62e", display: "flex" }} />
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 999,
+              background: "#b7d62e",
+              display: "flex",
+            }}
+          />
           Relay Court Finder
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", color: "#5964d9", fontSize: 20, fontWeight: 750 }}>
+          <div
+            style={{
+              display: "flex",
+              color: "#5964d9",
+              fontSize: 20,
+              fontWeight: 750,
+            }}
+          >
             VERIFIED PHILIPPINES COURT
           </div>
           <div
@@ -67,7 +111,15 @@ export default async function CourtOpenGraphImage({ params }: { params: Promise<
           >
             {court?.name ?? "Pickleball court"}
           </div>
-          <div style={{ display: "flex", marginTop: 22, color: "#62646d", fontSize: 23, lineHeight: 1.35 }}>
+          <div
+            style={{
+              display: "flex",
+              marginTop: 22,
+              color: "#62646d",
+              fontSize: 23,
+              lineHeight: 1.35,
+            }}
+          >
             {court?.address ?? "Find pickleball courts across the Philippines."}
           </div>
         </div>
@@ -76,6 +128,6 @@ export default async function CourtOpenGraphImage({ params }: { params: Promise<
         </div>
       </div>
     </div>,
-    size,
+    size
   );
 }

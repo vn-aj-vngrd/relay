@@ -62,7 +62,10 @@ export const helpGuides = [
           "Publish game creates the shared link. Friends can read the plan and RSVP from that link, even without an account.",
       },
     ],
-    notes: ["You can edit the plan later.", "A full game sends new Going responses to the waitlist automatically."],
+    notes: [
+      "You can edit the plan later.",
+      "A full game sends new Going responses to the waitlist automatically.",
+    ],
   },
   {
     id: "payments",
@@ -96,7 +99,8 @@ export const helpGuides = [
   {
     id: "choose-a-play-mode",
     title: "Check in and choose a play mode",
-    summary: "Tell Relay who is physically present, then pick the rotation that matches the crew and number of courts.",
+    summary:
+      "Tell Relay who is physically present, then pick the rotation that matches the crew and number of courts.",
     time: "About 2 minutes",
     action: { href: "/games", label: "Open one of your games" },
     steps: [
@@ -124,7 +128,8 @@ export const helpGuides = [
   {
     id: "run-live-play",
     title: "Run courts and record scores",
-    summary: "Keep assignments visible, update the score from courtside, finish the match, and move the queue forward.",
+    summary:
+      "Keep assignments visible, update the score from courtside, finish the match, and move the queue forward.",
     time: "During play",
     action: { href: "/games", label: "Go to your games" },
     steps: [
@@ -156,7 +161,8 @@ export const playModes = [
   {
     mode: "Paddle Stack",
     bestFor: "Drop-ins and changing attendance",
-    howItMoves: "Waiting players enter in queue order; choose adaptive, four-off, or winners-stay rules.",
+    howItMoves:
+      "Waiting players enter in queue order; choose adaptive, four-off, or winners-stay rules.",
     needs: "4+ players",
   },
   {
@@ -168,19 +174,22 @@ export const playModes = [
   {
     mode: "Balanced Mix",
     bestFor: "Closer games across mixed experience",
-    howItMoves: "Relay uses self-described experience to make balanced teams, then rotates rounds.",
+    howItMoves:
+      "Relay uses self-described experience to make balanced teams, then rotates rounds.",
     needs: "4+ players",
   },
   {
     mode: "Court Climb",
     bestFor: "A full crew on multiple courts",
-    howItMoves: "Winners move toward Court 1 and partners split for the next round.",
+    howItMoves:
+      "Winners move toward Court 1 and partners split for the next round.",
     needs: "Exactly 4 players per court and at least 2 courts",
   },
   {
     mode: "Team Round Robin",
     bestFor: "Fixed-pair nights",
-    howItMoves: "Every pair plays every other pair once; an odd number of teams creates byes.",
+    howItMoves:
+      "Every pair plays every other pair once; an odd number of teams creates byes.",
     needs: "At least 2 complete pairs",
   },
 ] as const;
@@ -260,7 +269,10 @@ export const faqSections = [
         "Can the host share the original receipt?",
         "Yes. The host may attach one receipt to the expense so players can see what was paid upfront.",
       ],
-      ["Can player amounts be different?", "Yes. Hosts can adjust or exclude individual shares."],
+      [
+        "Can player amounts be different?",
+        "Yes. Hosts can adjust or exclude individual shares.",
+      ],
     ],
   },
   {

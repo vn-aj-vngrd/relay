@@ -28,7 +28,9 @@ import {
 } from "./preferences";
 
 function unsubscribeSignature(userId: string, secret: string) {
-  return createHmac("sha256", secret).update(`notification-email:${userId}`).digest("base64url");
+  return createHmac("sha256", secret)
+    .update(`notification-email:${userId}`)
+    .digest("base64url");
 }
 
 export function emailUnsubscribeToken(userId: string) {
@@ -39,14 +41,23 @@ export function emailUnsubscribeToken(userId: string) {
 export function verifyEmailUnsubscribeToken(token: string) {
   const [userId, supplied] = token.split(".");
   if (!userId || !supplied || !/^[0-9a-f-]{36}$/.test(userId)) return null;
-  const expected = unsubscribeSignature(userId, getNotificationEnv().dispatchSecret);
+  const expected = unsubscribeSignature(
+    userId,
+    getNotificationEnv().dispatchSecret
+  );
   const left = Buffer.from(supplied);
   const right = Buffer.from(expected);
-  return left.length === right.length && timingSafeEqual(left, right) ? userId : null;
+  return left.length === right.length && timingSafeEqual(left, right)
+    ? userId
+    : null;
 }
 
 function escapeHtml(value: string) {
-  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 async function sendEmail(input: {
@@ -58,12 +69,13 @@ async function sendEmail(input: {
   deliveryId: string;
 }) {
   const env = getNotificationEnv();
-  if (!env.resendApiKey || !env.fromEmail) throw new Error("EMAIL_NOT_CONFIGURED");
+  if (!env.resendApiKey || !env.fromEmail)
+    throw new Error("EMAIL_NOT_CONFIGURED");
   const appUrl = getPublicEnv().NEXT_PUBLIC_APP_URL;
   const gameUrl = new URL(input.href, appUrl).toString();
   const unsubscribeUrl = new URL(
     `/api/notifications/unsubscribe?token=${encodeURIComponent(emailUnsubscribeToken(input.userId))}`,
-    appUrl,
+    appUrl
   ).toString();
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -95,17 +107,32 @@ async function sendPush(input: {
   href: string;
 }) {
   const env = getNotificationEnv();
-  if (!env.vapidPublicKey || !env.vapidPrivateKey) throw new Error("PUSH_NOT_CONFIGURED");
-  webPush.setVapidDetails(env.vapidSubject, env.vapidPublicKey, env.vapidPrivateKey);
+  if (!env.vapidPublicKey || !env.vapidPrivateKey)
+    throw new Error("PUSH_NOT_CONFIGURED");
+  webPush.setVapidDetails(
+    env.vapidSubject,
+    env.vapidPublicKey,
+    env.vapidPrivateKey
+  );
   await webPush.sendNotification(
-    { endpoint: input.endpoint, keys: { p256dh: input.p256dh, auth: input.auth } },
-    JSON.stringify({ title: input.title, body: input.body, href: input.href, tag: `relay:${input.href}` }),
-    { TTL: 60 * 60 * 24, urgency: "normal" },
+    {
+      endpoint: input.endpoint,
+      keys: { p256dh: input.p256dh, auth: input.auth },
+    },
+    JSON.stringify({
+      title: input.title,
+      body: input.body,
+      href: input.href,
+      tag: `relay:${input.href}`,
+    }),
+    { TTL: 60 * 60 * 24, urgency: "normal" }
   );
 }
 
 function retryAt(attempts: number) {
-  return new Date(Date.now() + Math.min(6 * 60 * 60_000, 2 ** attempts * 60_000));
+  return new Date(
+    Date.now() + Math.min(6 * 60 * 60_000, 2 ** attempts * 60_000)
+  );
 }
 
 export async function dispatchNotificationDeliveries(limit = 50) {
@@ -120,12 +147,15 @@ export async function dispatchNotificationDeliveries(limit = 50) {
           inArray(notificationDeliveries.status, ["pending", "failed"]),
           and(
             eq(notificationDeliveries.status, "sending"),
-            lt(notificationDeliveries.updatedAt, new Date(Date.now() - 5 * 60_000)),
-          ),
+            lt(
+              notificationDeliveries.updatedAt,
+              new Date(Date.now() - 5 * 60_000)
+            )
+          )
         ),
         lte(notificationDeliveries.nextAttemptAt, new Date()),
-        lte(notificationDeliveries.attempts, 4),
-      ),
+        lte(notificationDeliveries.attempts, 4)
+      )
     )
     .orderBy(asc(notificationDeliveries.nextAttemptAt))
     .limit(Math.min(100, Math.max(1, limit)));
@@ -145,10 +175,13 @@ export async function dispatchNotificationDeliveries(limit = 50) {
             eq(notificationDeliveries.status, "failed"),
             and(
               eq(notificationDeliveries.status, "sending"),
-              lt(notificationDeliveries.updatedAt, new Date(Date.now() - 5 * 60_000)),
-            ),
-          ),
-        ),
+              lt(
+                notificationDeliveries.updatedAt,
+                new Date(Date.now() - 5 * 60_000)
+              )
+            )
+          )
+        )
       )
       .returning();
     if (!claimed) continue;
@@ -162,26 +195,43 @@ export async function dispatchNotificationDeliveries(limit = 50) {
         subscription: pushSubscriptions,
       })
       .from(notificationDeliveries)
-      .innerJoin(notifications, eq(notificationDeliveries.notificationId, notifications.id))
+      .innerJoin(
+        notifications,
+        eq(notificationDeliveries.notificationId, notifications.id)
+      )
       .innerJoin(users, eq(notifications.userId, users.id))
-      .leftJoin(notificationPreferences, eq(notificationPreferences.userId, users.id))
+      .leftJoin(
+        notificationPreferences,
+        eq(notificationPreferences.userId, users.id)
+      )
       .leftJoin(sessions, eq(notifications.sessionId, sessions.id))
-      .leftJoin(pushSubscriptions, eq(notificationDeliveries.pushSubscriptionId, pushSubscriptions.id))
+      .leftJoin(
+        pushSubscriptions,
+        eq(notificationDeliveries.pushSubscriptionId, pushSubscriptions.id)
+      )
       .where(eq(notificationDeliveries.id, claimed.id))
       .then((rows) => rows[0]);
     if (!row) continue;
 
     const channel = row.delivery.channel as DeliveryChannel;
     const category = notificationCategory(row.notification.type);
-    const categories = channel === "email" ? row.preference?.emailCategories : row.preference?.pushCategories;
-    const enabled = channel === "email" ? row.preference?.emailEnabled : row.preference?.pushEnabled;
+    const categories =
+      channel === "email"
+        ? row.preference?.emailCategories
+        : row.preference?.pushCategories;
+    const enabled =
+      channel === "email"
+        ? row.preference?.emailEnabled
+        : row.preference?.pushEnabled;
     const reminderEnabled = reminderTimingEnabled(
       row.notification.type,
       row.preference?.dayBeforeReminder ?? true,
-      row.preference?.hourBeforeReminder ?? true,
+      row.preference?.hourBeforeReminder ?? true
     );
     const sessionStillRelevant =
-      !["session_tomorrow", "session_starting_soon"].includes(row.notification.type) ||
+      !["session_tomorrow", "session_starting_soon"].includes(
+        row.notification.type
+      ) ||
       (row.session &&
         ["published", "live"].includes(row.session.status) &&
         Boolean(
@@ -190,26 +240,30 @@ export async function dispatchNotificationDeliveries(limit = 50) {
             where: and(
               eq(sessionPlayers.sessionId, row.session.id),
               eq(sessionPlayers.userId, row.user.id),
-              eq(sessionPlayers.rsvp, "going"),
+              eq(sessionPlayers.rsvp, "going")
             ),
-          }),
+          })
         ));
     const allowed = Boolean(
       row.preference &&
-      enabled &&
-      category &&
-      categories &&
-      categoryEnabled(categories, category) &&
-      channelAllowsNotification(channel, row.notification.type) &&
-      reminderEnabled &&
-      sessionStillRelevant &&
-      (channel !== "push" || row.subscription),
+        enabled &&
+        category &&
+        categories &&
+        categoryEnabled(categories, category) &&
+        channelAllowsNotification(channel, row.notification.type) &&
+        reminderEnabled &&
+        sessionStillRelevant &&
+        (channel !== "push" || row.subscription)
     );
     if (!allowed) {
       suppressed += 1;
       await db
         .update(notificationDeliveries)
-        .set({ status: "suppressed", errorCode: "preference_or_policy", updatedAt: new Date() })
+        .set({
+          status: "suppressed",
+          errorCode: "preference_or_policy",
+          updatedAt: new Date(),
+        })
         .where(eq(notificationDeliveries.id, claimed.id));
       continue;
     }
@@ -218,19 +272,27 @@ export async function dispatchNotificationDeliveries(limit = 50) {
       new Date(),
       row.preference!.timeZone,
       row.preference!.quietHoursStart,
-      row.preference!.quietHoursEnd,
+      row.preference!.quietHoursEnd
     );
     if (quiet) {
       if (channel === "email" && category === "reminders") {
         suppressed += 1;
         await db
           .update(notificationDeliveries)
-          .set({ status: "suppressed", errorCode: "quiet_hours", updatedAt: new Date() })
+          .set({
+            status: "suppressed",
+            errorCode: "quiet_hours",
+            updatedAt: new Date(),
+          })
           .where(eq(notificationDeliveries.id, claimed.id));
       } else {
         await db
           .update(notificationDeliveries)
-          .set({ status: "pending", nextAttemptAt: new Date(Date.now() + 30 * 60_000), updatedAt: new Date() })
+          .set({
+            status: "pending",
+            nextAttemptAt: new Date(Date.now() + 30 * 60_000),
+            updatedAt: new Date(),
+          })
           .where(eq(notificationDeliveries.id, claimed.id));
       }
       continue;
@@ -273,8 +335,15 @@ export async function dispatchNotificationDeliveries(limit = 50) {
         })
         .where(eq(notificationDeliveries.id, claimed.id));
     } catch (error) {
-      const statusCode = typeof error === "object" && error && "statusCode" in error ? Number(error.statusCode) : null;
-      if (channel === "push" && (statusCode === 404 || statusCode === 410) && row.subscription) {
+      const statusCode =
+        typeof error === "object" && error && "statusCode" in error
+          ? Number(error.statusCode)
+          : null;
+      if (
+        channel === "push" &&
+        (statusCode === 404 || statusCode === 410) &&
+        row.subscription
+      ) {
         await db.transaction(async (tx) => {
           await tx
             .update(notificationDeliveries)
@@ -285,7 +354,9 @@ export async function dispatchNotificationDeliveries(limit = 50) {
               updatedAt: new Date(),
             })
             .where(eq(notificationDeliveries.id, claimed.id));
-          await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.id, row.subscription!.id));
+          await tx
+            .delete(pushSubscriptions)
+            .where(eq(pushSubscriptions.id, row.subscription!.id));
         });
         suppressed += 1;
       } else {
@@ -297,7 +368,8 @@ export async function dispatchNotificationDeliveries(limit = 50) {
             status: "failed",
             attempts,
             nextAttemptAt: retryAt(attempts),
-            errorCode: error instanceof Error ? error.message.slice(0, 80) : "unknown",
+            errorCode:
+              error instanceof Error ? error.message.slice(0, 80) : "unknown",
             updatedAt: new Date(),
           })
           .where(eq(notificationDeliveries.id, claimed.id));

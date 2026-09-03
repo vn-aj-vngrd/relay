@@ -15,7 +15,9 @@ const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 const MAP_STYLESHEET_ID = "relay-maplibre-styles";
 
 function ensureMapStylesheet() {
-  const existing = document.getElementById(MAP_STYLESHEET_ID) as HTMLLinkElement | null;
+  const existing = document.getElementById(
+    MAP_STYLESHEET_ID
+  ) as HTMLLinkElement | null;
   if (existing?.sheet) return Promise.resolve();
   return new Promise<void>((resolve, reject) => {
     const link = existing ?? document.createElement("link");
@@ -73,13 +75,18 @@ function mapStyle(dark: boolean): StyleSpecification {
   };
 }
 
-function fitVenues(map: MapLibreMap, venues: CourtListing[], immediate = false) {
+function fitVenues(
+  map: MapLibreMap,
+  venues: CourtListing[],
+  immediate = false
+) {
   if (!venues.length) return;
   if (venues.length === 1) {
     map.easeTo({
       center: [venues[0].longitude, venues[0].latitude],
       zoom: Math.max(map.getZoom(), 14),
-      duration: immediate || window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
+      duration:
+        immediate || window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
     });
     return;
   }
@@ -102,8 +109,9 @@ function fitVenues(map: MapLibreMap, venues: CourtListing[], immediate = false) 
     {
       padding: { top: 64, right: 64, bottom: 64, left: 64 },
       maxZoom: 13,
-      duration: immediate || window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
-    },
+      duration:
+        immediate || window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 450,
+    }
   );
 }
 
@@ -114,7 +122,10 @@ export type CourtMapGroup = {
   venues: CourtListing[];
 };
 
-export function clusterCourtListings(venues: CourtListing[], zoom: number): CourtMapGroup[] {
+export function clusterCourtListings(
+  venues: CourtListing[],
+  zoom: number
+): CourtMapGroup[] {
   const cellSize = zoom < 7 ? 2 : zoom < 9 ? 0.6 : zoom < 11 ? 0.18 : 0;
   if (!cellSize)
     return venues.map((venue) => ({
@@ -131,8 +142,10 @@ export function clusterCourtListings(venues: CourtListing[], zoom: number): Cour
   }
   return [...cells.entries()].map(([key, grouped]) => ({
     id: `cluster:${key}`,
-    latitude: grouped.reduce((sum, venue) => sum + venue.latitude, 0) / grouped.length,
-    longitude: grouped.reduce((sum, venue) => sum + venue.longitude, 0) / grouped.length,
+    latitude:
+      grouped.reduce((sum, venue) => sum + venue.latitude, 0) / grouped.length,
+    longitude:
+      grouped.reduce((sum, venue) => sum + venue.longitude, 0) / grouped.length,
     venues: grouped,
   }));
 }
@@ -143,15 +156,20 @@ function setMarkerState(element: HTMLButtonElement, active: boolean) {
 }
 
 export function collapseAttributionControl(container: HTMLElement) {
-  const attribution = container.querySelector<HTMLDetailsElement>(".maplibregl-ctrl-attrib");
+  const attribution = container.querySelector<HTMLDetailsElement>(
+    ".maplibregl-ctrl-attrib"
+  );
   if (!attribution) return;
   attribution.open = false;
   attribution.classList.remove("maplibregl-compact-show");
 }
 
 export function createMobileSafeFullscreenControl(
-  FullscreenControl: new (options?: { pseudo?: boolean; container?: HTMLElement }) => MapLibreFullscreenControl,
-  container: HTMLElement,
+  FullscreenControl: new (options?: {
+    pseudo?: boolean;
+    container?: HTMLElement;
+  }) => MapLibreFullscreenControl,
+  container: HTMLElement
 ) {
   return new FullscreenControl({ pseudo: true, container });
 }
@@ -169,7 +187,14 @@ export function CourtMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef(
-    new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement; venueId: string | null }>(),
+    new Map<
+      string,
+      {
+        marker: MapLibreMarker;
+        element: HTMLButtonElement;
+        venueId: string | null;
+      }
+    >()
   );
   const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
@@ -213,9 +238,18 @@ export function CourtMap({
         });
         map.dragRotate.disable();
         map.touchZoomRotate.disableRotation();
-        map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
-        map.addControl(createMobileSafeFullscreenControl(maplibre.FullscreenControl, shell), "top-right");
-        map.addControl(new maplibre.AttributionControl({ compact: true }), "bottom-right");
+        map.addControl(
+          new maplibre.NavigationControl({ showCompass: false }),
+          "top-right"
+        );
+        map.addControl(
+          createMobileSafeFullscreenControl(maplibre.FullscreenControl, shell),
+          "top-right"
+        );
+        map.addControl(
+          new maplibre.AttributionControl({ compact: true }),
+          "bottom-right"
+        );
         let initialLoad = true;
         map.on("style.load", () => {
           if (disposed) return;
@@ -227,9 +261,13 @@ export function CourtMap({
             setReady(true);
           }
         });
-        const updateTheme = () => map.setStyle(mapStyle(document.documentElement.dataset.theme === "dark"));
+        const updateTheme = () =>
+          map.setStyle(
+            mapStyle(document.documentElement.dataset.theme === "dark")
+          );
         window.addEventListener("relay-theme-change", updateTheme);
-        removeThemeListener = () => window.removeEventListener("relay-theme-change", updateTheme);
+        removeThemeListener = () =>
+          window.removeEventListener("relay-theme-change", updateTheme);
         resizeObserver = new ResizeObserver(() => map.resize());
         resizeObserver.observe(container);
       })
@@ -249,7 +287,6 @@ export function CourtMap({
       mapRef.current = null;
     };
     // The map instance mounts once; later venue changes are synchronized below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -267,13 +304,20 @@ export function CourtMap({
         element.tabIndex = -1;
         element.className = `relay-map-marker${group.venues.length > 1 ? " relay-map-marker-cluster" : ""}`;
         const label =
-          group.venues.length > 1 ? `${group.venues.length} courts in this area` : `Select ${group.venues[0].name}`;
+          group.venues.length > 1
+            ? `${group.venues.length} courts in this area`
+            : `Select ${group.venues[0].name}`;
         element.setAttribute("aria-label", label);
         element.title = label;
-        setMarkerState(element, group.venues.length === 1 && group.venues[0].id === selectedRef.current);
+        setMarkerState(
+          element,
+          group.venues.length === 1 &&
+            group.venues[0].id === selectedRef.current
+        );
         const dot = document.createElement("span");
         dot.setAttribute("aria-hidden", "true");
-        if (group.venues.length > 1) dot.textContent = String(group.venues.length);
+        if (group.venues.length > 1)
+          dot.textContent = String(group.venues.length);
         element.append(dot);
         element.addEventListener("click", () => {
           if (group.venues.length === 1) selectRef.current(group.venues[0].id);
@@ -281,7 +325,9 @@ export function CourtMap({
             map.easeTo({
               center: [group.longitude, group.latitude],
               zoom: Math.min(map.getZoom() + 2, 14),
-              duration: window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 350,
+              duration: window.matchMedia(REDUCED_MOTION_QUERY).matches
+                ? 0
+                : 350,
             });
         });
         const marker = new Marker({ element, anchor: "center" })
@@ -304,7 +350,8 @@ export function CourtMap({
   }, [ready, venues]);
 
   useEffect(() => {
-    for (const { element, venueId } of markersRef.current.values()) setMarkerState(element, venueId === selectedId);
+    for (const { element, venueId } of markersRef.current.values())
+      setMarkerState(element, venueId === selectedId);
   }, [selectedId]);
 
   useEffect(() => {
@@ -319,7 +366,10 @@ export function CourtMap({
       const marker = document.createElement("span");
       marker.className = "relay-user-location-marker";
       marker.setAttribute("aria-label", "Your approximate location");
-      locationMarkerRef.current = new Marker({ element: marker, anchor: "center" })
+      locationMarkerRef.current = new Marker({
+        element: marker,
+        anchor: "center",
+      })
         .setLngLat([userLocation.longitude, userLocation.latitude])
         .addTo(map);
       map.easeTo({
@@ -345,18 +395,28 @@ export function CourtMap({
         className="relay-interactive-map"
       />
       {!ready && !failed ? (
-        <div className="absolute inset-0 grid place-items-center bg-surface-raised" role="status">
+        <div
+          className="absolute inset-0 grid place-items-center bg-surface-raised"
+          role="status"
+        >
           <div className="text-center">
             <span className="mx-auto block h-5 w-5 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />
-            <p className="mt-3 text-sm font-medium text-muted">Loading interactive map…</p>
+            <p className="mt-3 text-sm font-medium text-muted">
+              Loading interactive map…
+            </p>
           </div>
         </div>
       ) : null}
       {failed ? (
-        <div className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center" role="status">
+        <div
+          className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center"
+          role="status"
+        >
           <div>
             <p className="font-[650] text-ink">Map unavailable</p>
-            <p className="mt-1 text-sm leading-5 text-muted">Use the court list below while the map reconnects.</p>
+            <p className="mt-1 text-sm leading-5 text-muted">
+              Use the court list below while the map reconnects.
+            </p>
           </div>
         </div>
       ) : null}

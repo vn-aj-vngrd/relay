@@ -6,7 +6,13 @@ import { PasswordField } from "./password-field";
 describe("PasswordField", () => {
   it("lets the user reveal and hide a password without clearing it", () => {
     render(
-      <PasswordField id="new-password" name="password" label="New password" autoComplete="new-password" required />,
+      <PasswordField
+        id="new-password"
+        name="password"
+        label="New password"
+        autoComplete="new-password"
+        required
+      />
     );
     const input = screen.getByLabelText("New password");
     fireEvent.change(input, { target: { value: "RelayPass123" } });

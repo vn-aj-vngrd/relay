@@ -13,22 +13,42 @@ import {
   sessionPlayers,
   sessionQueue,
 } from "@/db/schema";
-import { getPublicSession, getSessionForParticipant, getSessionForWorkspace } from "@/features/sessions/queries";
+import {
+  getPublicSession,
+  getSessionForParticipant,
+  getSessionForWorkspace,
+} from "@/features/sessions/queries";
 
 import { calculateStandings } from "./domain";
 import { deriveLiveState } from "./live-state";
 
 async function getLiveDetails(sessionId: string, rotationMode: string) {
   const [sessionCourts, sessionMatches, queue, pairRows] = await Promise.all([
-    db.select().from(courts).where(eq(courts.sessionId, sessionId)).orderBy(asc(courts.position)),
+    db
+      .select()
+      .from(courts)
+      .where(eq(courts.sessionId, sessionId))
+      .orderBy(asc(courts.position)),
     db
       .select()
       .from(matches)
-      .where(and(eq(matches.sessionId, sessionId), inArray(matches.status, ["active", "completed"]))),
+      .where(
+        and(
+          eq(matches.sessionId, sessionId),
+          inArray(matches.status, ["active", "completed"])
+        )
+      ),
     db
-      .select({ queue: sessionQueue, player: sessionPlayers, profile: profiles })
+      .select({
+        queue: sessionQueue,
+        player: sessionPlayers,
+        profile: profiles,
+      })
       .from(sessionQueue)
-      .innerJoin(sessionPlayers, eq(sessionQueue.sessionPlayerId, sessionPlayers.id))
+      .innerJoin(
+        sessionPlayers,
+        eq(sessionQueue.sessionPlayerId, sessionPlayers.id)
+      )
       .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
       .where(eq(sessionQueue.sessionId, sessionId))
       .orderBy(asc(sessionQueue.position)),
@@ -40,21 +60,35 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
         memberPosition: sessionPairMembers.position,
       })
       .from(sessionPairs)
-      .innerJoin(sessionPairMembers, eq(sessionPairMembers.pairId, sessionPairs.id))
+      .innerJoin(
+        sessionPairMembers,
+        eq(sessionPairMembers.pairId, sessionPairs.id)
+      )
       .where(eq(sessionPairs.sessionId, sessionId))
       .orderBy(asc(sessionPairs.position), asc(sessionPairMembers.position)),
   ]);
-  const activeMatches = sessionMatches.filter((match) => match.status === "active");
+  const activeMatches = sessionMatches.filter(
+    (match) => match.status === "active"
+  );
   const completedMatches = sessionMatches
     .filter((match) => match.status === "completed")
-    .toSorted((a, b) => (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0));
+    .toSorted(
+      (a, b) => (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0)
+    );
   const completedMatchCount = completedMatches.length;
   const matchIds = sessionMatches.map((match) => match.id);
   const players = matchIds.length
     ? await db
-        .select({ matchPlayer: matchPlayers, player: sessionPlayers, profile: profiles })
+        .select({
+          matchPlayer: matchPlayers,
+          player: sessionPlayers,
+          profile: profiles,
+        })
         .from(matchPlayers)
-        .innerJoin(sessionPlayers, eq(matchPlayers.sessionPlayerId, sessionPlayers.id))
+        .innerJoin(
+          sessionPlayers,
+          eq(matchPlayers.sessionPlayerId, sessionPlayers.id)
+        )
         .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
         .where(inArray(matchPlayers.matchId, matchIds))
     : [];
@@ -62,24 +96,35 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
     sessionMatches
       .filter((match) => match.status === "completed")
       .map((match) => {
-        const members = players.filter((item) => item.matchPlayer.matchId === match.id);
+        const members = players.filter(
+          (item) => item.matchPlayer.matchId === match.id
+        );
         return {
-          teamA: members.filter((item) => item.matchPlayer.team === "A").map((item) => item.player.id),
-          teamB: members.filter((item) => item.matchPlayer.team === "B").map((item) => item.player.id),
+          teamA: members
+            .filter((item) => item.matchPlayer.team === "A")
+            .map((item) => item.player.id),
+          teamB: members
+            .filter((item) => item.matchPlayer.team === "B")
+            .map((item) => item.player.id),
           scoreA: match.teamAScore,
           scoreB: match.teamBScore,
           status: "completed" as const,
         };
-      }),
+      })
   ).map((row) => {
     const member = players.find((item) => item.player.id === row.playerId);
-    return { ...row, name: member?.profile?.name ?? member?.player.guestName ?? "Guest" };
+    return {
+      ...row,
+      name: member?.profile?.name ?? member?.player.guestName ?? "Guest",
+    };
   });
   const pairIds = [...new Set(pairRows.map((row) => row.id))];
   const pairs = pairIds.map((id) => ({
     id,
     position: pairRows.find((row) => row.id === id)?.position ?? 0,
-    members: pairRows.filter((row) => row.id === id).map((row) => row.sessionPlayerId),
+    members: pairRows
+      .filter((row) => row.id === id)
+      .map((row) => row.sessionPlayerId),
   }));
   const liveDetails = {
     courts: sessionCourts,
@@ -89,7 +134,9 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
     })),
     completedMatchCount,
     completedMatches: completedMatches.map((match) => {
-      const matchMembers = players.filter((item) => item.matchPlayer.matchId === match.id);
+      const matchMembers = players.filter(
+        (item) => item.matchPlayer.matchId === match.id
+      );
       const names = (team: string) =>
         matchMembers
           .filter((item) => item.matchPlayer.team === team)
@@ -124,17 +171,29 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
 export async function getLiveSession(sessionId: string, userId: string) {
   const base = await getSessionForParticipant(sessionId, userId);
   if (!base) return null;
-  return { ...base, ...(await getLiveDetails(sessionId, base.session.rotationMode)) };
+  return {
+    ...base,
+    ...(await getLiveDetails(sessionId, base.session.rotationMode)),
+  };
 }
 
-export async function getWorkspaceLiveSession(sessionId: string, userId: string) {
+export async function getWorkspaceLiveSession(
+  sessionId: string,
+  userId: string
+) {
   const base = await getSessionForWorkspace(sessionId, userId);
   if (!base) return null;
-  return { ...base, ...(await getLiveDetails(sessionId, base.session.rotationMode)) };
+  return {
+    ...base,
+    ...(await getLiveDetails(sessionId, base.session.rotationMode)),
+  };
 }
 
 export async function getPublicLiveSession(slug: string) {
   const base = await getPublicSession(slug);
   if (!base) return null;
-  return { ...base, ...(await getLiveDetails(base.session.id, base.session.rotationMode)) };
+  return {
+    ...base,
+    ...(await getLiveDetails(base.session.id, base.session.rotationMode)),
+  };
 }

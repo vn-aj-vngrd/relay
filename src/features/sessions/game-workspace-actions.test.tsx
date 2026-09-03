@@ -20,12 +20,17 @@ describe("GameWorkspaceActions", () => {
 
     const trigger = screen.getByRole("button", { name: "Game actions" });
     expect(trigger).toHaveClass("h-11", "w-11");
-    expect(screen.queryByRole("link", { name: "Edit game" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Edit game" })
+    ).not.toBeInTheDocument();
 
     fireEvent.click(trigger);
 
     expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: "Edit game" })).toHaveAttribute("href", "/games/session-1/settings");
+    expect(screen.getByRole("link", { name: "Edit game" })).toHaveAttribute(
+      "href",
+      "/games/session-1/settings"
+    );
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
@@ -34,7 +39,9 @@ describe("GameWorkspaceActions", () => {
     render(<GameWorkspaceActions {...props} canManage={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Game actions" }));
 
-    expect(screen.queryByRole("link", { name: "Edit game" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Edit game" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
@@ -43,7 +50,9 @@ describe("GameWorkspaceActions", () => {
     render(<GameWorkspaceActions {...props} qrEnabled={false} />);
     fireEvent.click(screen.getByRole("button", { name: "Game actions" }));
 
-    expect(screen.queryByRole("button", { name: "Show QR" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show QR" })
+    ).not.toBeInTheDocument();
   });
 
   it("keeps sharing direct and groups secondary desktop actions", () => {

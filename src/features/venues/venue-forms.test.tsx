@@ -17,17 +17,38 @@ describe("venue forms", () => {
   it("collects only the useful details for a Philippines court suggestion", () => {
     render(<VenueSubmissionForm courts={[]} />);
     expect(screen.getByLabelText("Court name")).toBeRequired();
-    expect(screen.getByLabelText("Philippine city or municipality")).toBeRequired();
-    expect(screen.getByLabelText("Official source or Google Maps link")).toBeRequired();
-    expect(screen.getByRole("button", { name: "Setting" })).toHaveTextContent("I don’t know");
-    expect(screen.getByLabelText(/Number of playable courts/)).toHaveAttribute("type", "number");
-    expect(screen.getByRole("button", { name: "Price type" })).toHaveTextContent("Not listed");
+    expect(
+      screen.getByLabelText("Philippine city or municipality")
+    ).toBeRequired();
+    expect(
+      screen.getByLabelText("Official source or Google Maps link")
+    ).toBeRequired();
+    expect(screen.getByRole("button", { name: "Setting" })).toHaveTextContent(
+      "I don’t know"
+    );
+    expect(screen.getByLabelText(/Number of playable courts/)).toHaveAttribute(
+      "type",
+      "number"
+    );
+    expect(
+      screen.getByRole("button", { name: "Price type" })
+    ).toHaveTextContent("Not listed");
     expect(screen.queryByLabelText("Starting price")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Parking availability" })).toHaveTextContent("Not listed");
-    expect(screen.getByRole("button", { name: "Monday opening time" })).toHaveTextContent("Not listed");
-    expect(screen.getByRole("button", { name: "Sunday closing time" })).toHaveTextContent("Not listed");
-    expect(screen.getByLabelText("Paddle rental available")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Submit for review" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Parking availability" })
+    ).toHaveTextContent("Not listed");
+    expect(
+      screen.getByRole("button", { name: "Monday opening time" })
+    ).toHaveTextContent("Not listed");
+    expect(
+      screen.getByRole("button", { name: "Sunday closing time" })
+    ).toHaveTextContent("Not listed");
+    expect(
+      screen.getByLabelText("Paddle rental available")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Submit for review" })
+    ).toBeInTheDocument();
   });
 
   it("lets an admin complete coordinates and verification before publishing", () => {
@@ -60,20 +81,34 @@ describe("venue forms", () => {
           listingStatus: "pending",
           verificationNote: null,
         }}
-      />,
+      />
     );
     expect(screen.getByLabelText("Latitude")).not.toBeRequired();
     expect(screen.getByLabelText("Longitude")).not.toBeRequired();
-    expect(screen.getByRole("button", { name: "Pricing" })).toHaveTextContent("Paid");
+    expect(screen.getByRole("button", { name: "Pricing" })).toHaveTextContent(
+      "Paid"
+    );
     expect(screen.getByLabelText("Starting price")).toHaveValue(500);
     expect(screen.getByLabelText("Maximum price")).toHaveValue(650);
-    expect(screen.getByRole("button", { name: "Pricing mode" })).toHaveTextContent("Per court per hour");
-    expect(screen.getByRole("button", { name: "Parking" })).toHaveTextContent("Not available");
-    expect(screen.getByRole("button", { name: "Monday opening time" })).toHaveTextContent("Not listed");
-    expect(screen.getByLabelText("Verification source")).toHaveValue("https://maps.google.com/example");
+    expect(
+      screen.getByRole("button", { name: "Pricing mode" })
+    ).toHaveTextContent("Per court per hour");
+    expect(screen.getByRole("button", { name: "Parking" })).toHaveTextContent(
+      "Not available"
+    );
+    expect(
+      screen.getByRole("button", { name: "Monday opening time" })
+    ).toHaveTextContent("Not listed");
+    expect(screen.getByLabelText("Verification source")).toHaveValue(
+      "https://maps.google.com/example"
+    );
     expect(screen.getByLabelText("Restrooms")).toBeChecked();
     expect(screen.getByLabelText("Paddle rental available")).toBeChecked();
-    expect(screen.getByRole("button", { name: "Listing status" })).toHaveTextContent("Pending");
-    expect(screen.getByRole("button", { name: "Save court" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Listing status" })
+    ).toHaveTextContent("Pending");
+    expect(
+      screen.getByRole("button", { name: "Save court" })
+    ).toBeInTheDocument();
   });
 });

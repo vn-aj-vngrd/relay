@@ -1,4 +1,10 @@
-export type SessionWorkspaceAccess = "host" | "cohost" | "participant" | "invited" | "pending" | "discoverer";
+export type SessionWorkspaceAccess =
+  | "host"
+  | "cohost"
+  | "participant"
+  | "invited"
+  | "pending"
+  | "discoverer";
 
 type WorkspaceAccessInput = {
   userId: string;
@@ -25,8 +31,14 @@ export function resolveSessionWorkspaceAccess({
   if (membership?.role === "cohost") return "cohost";
   if (membership?.rsvp === "invited") return "invited";
   if (membership?.rsvp === "pending") return "pending";
-  if (membership && ["going", "maybe", "waitlisted"].includes(membership.rsvp)) return "participant";
-  if (visibility === "public" && ["published", "live"].includes(status) && endsAt > now && estimatedCostCents !== null)
+  if (membership && ["going", "maybe", "waitlisted"].includes(membership.rsvp))
+    return "participant";
+  if (
+    visibility === "public" &&
+    ["published", "live"].includes(status) &&
+    endsAt > now &&
+    estimatedCostCents !== null
+  )
     return "discoverer";
   return null;
 }

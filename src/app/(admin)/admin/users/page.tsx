@@ -5,7 +5,11 @@ import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminUsers } from "@/features/admin/queries";
 
-export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const query = (await searchParams).q?.slice(0, 100) ?? "";
   const page = await getAdminUsers({ query });
 
@@ -21,7 +25,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           </ButtonLink>
         }
       />
-      <form noValidate role="search" className="mb-5 flex max-w-xl items-center gap-2">
+      <form
+        noValidate
+        role="search"
+        className="mb-5 flex max-w-xl items-center gap-2"
+      >
         <label className="relative flex-1">
           <span className="sr-only">Search users</span>
           <MagnifyingGlass
@@ -46,7 +54,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         resource="users"
         initialPage={page}
         query={query}
-        emptyMessage={query ? "No accounts match this search." : "No users have registered yet."}
+        emptyMessage={
+          query
+            ? "No accounts match this search."
+            : "No users have registered yet."
+        }
       />
     </div>
   );

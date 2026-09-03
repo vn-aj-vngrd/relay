@@ -4,7 +4,10 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function PaymentsLoading() {
   return (
     <>
-      <GamePageIntro title="Payments" description="Collect player shares and review proof. Relay tracks status only." />
+      <GamePageIntro
+        title="Payments"
+        description="Collect player shares and review proof. Relay tracks status only."
+      />
       <div
         role="status"
         aria-label="Loading payments"
@@ -21,7 +24,10 @@ export default function PaymentsLoading() {
           </div>
           <div className="divide-y divide-line">
             {Array.from({ length: 5 }, (_, index) => (
-              <div key={index} className="flex min-h-16 flex-wrap items-center gap-3 py-3">
+              <div
+                key={index}
+                className="flex min-h-16 flex-wrap items-center gap-3 py-3"
+              >
                 <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
                 <div className="min-w-28 flex-1">
                   <Skeleton className="h-4 w-32 max-w-full" />

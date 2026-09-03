@@ -12,7 +12,9 @@ export async function GET(request: NextRequest) {
   if (providerError) {
     const next = safeNextPath(cookieStore.get("relay_auth_next")?.value);
     cookieStore.delete("relay_auth_next");
-    const loginParams = new URLSearchParams({ error: googleOAuthErrorMessage(request.nextUrl.searchParams) });
+    const loginParams = new URLSearchParams({
+      error: googleOAuthErrorMessage(request.nextUrl.searchParams),
+    });
     if (next !== "/home") loginParams.set("next", next);
     return NextResponse.redirect(new URL(`/login?${loginParams}`, request.url));
   }
@@ -32,13 +34,18 @@ export async function GET(request: NextRequest) {
   if (error) {
     cookieStore.delete("relay_auth_next");
     return NextResponse.redirect(
-      new URL("/login?error=Authentication+could+not+be+completed.+Try+again.", request.url),
+      new URL(
+        "/login?error=Authentication+could+not+be+completed.+Try+again.",
+        request.url
+      )
     );
   }
   const { data } = await supabase.auth.getUser();
   if (!data.user) {
     cookieStore.delete("relay_auth_next");
-    return NextResponse.redirect(new URL("/login?error=Authentication+did+not+finish.", request.url));
+    return NextResponse.redirect(
+      new URL("/login?error=Authentication+did+not+finish.", request.url)
+    );
   }
   if (request.nextUrl.searchParams.get("recovery") === "1") {
     cookieStore.set("relay_password_recovery", "1", {

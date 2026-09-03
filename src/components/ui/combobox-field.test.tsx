@@ -5,12 +5,28 @@ import { describe, expect, it, vi } from "vitest";
 import { ComboboxField } from "./combobox-field";
 
 const options = [
-  { value: "cebu", label: "Court District Cebu", description: "Mandaue City, Cebu" },
-  { value: "iloilo", label: "PicklePoint Iloilo", description: "Mandurriao, Iloilo City" },
-  { value: "manila", label: "Manila Pickle Club", description: "Makati, Metro Manila" },
+  {
+    value: "cebu",
+    label: "Court District Cebu",
+    description: "Mandaue City, Cebu",
+  },
+  {
+    value: "iloilo",
+    label: "PicklePoint Iloilo",
+    description: "Mandurriao, Iloilo City",
+  },
+  {
+    value: "manila",
+    label: "Manila Pickle Club",
+    description: "Makati, Metro Manila",
+  },
 ];
 
-function ControlledCombobox({ onChange = vi.fn() }: { onChange?: (value: string) => void }) {
+function ControlledCombobox({
+  onChange = vi.fn(),
+}: {
+  onChange?: (value: string) => void;
+}) {
   const [value, setValue] = useState("");
   return (
     <ComboboxField
@@ -36,8 +52,12 @@ describe("ComboboxField", () => {
     fireEvent.change(input, { target: { value: "iloilo" } });
 
     const listbox = screen.getByRole("listbox", { name: "Court options" });
-    expect(within(listbox).getByRole("option", { name: /PicklePoint Iloilo/ })).toBeInTheDocument();
-    expect(within(listbox).queryByRole("option", { name: /Manila Pickle Club/ })).not.toBeInTheDocument();
+    expect(
+      within(listbox).getByRole("option", { name: /PicklePoint Iloilo/ })
+    ).toBeInTheDocument();
+    expect(
+      within(listbox).queryByRole("option", { name: /Manila Pickle Club/ })
+    ).not.toBeInTheDocument();
 
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onChange).toHaveBeenLastCalledWith("iloilo");
@@ -59,7 +79,9 @@ describe("ComboboxField", () => {
 
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Cebu" } });
-    fireEvent.click(screen.getByRole("option", { name: /Court District Cebu/ }));
+    fireEvent.click(
+      screen.getByRole("option", { name: /Court District Cebu/ })
+    );
     expect(onChange).toHaveBeenLastCalledWith("cebu");
   });
 

@@ -17,13 +17,19 @@ export default function AccountSuspendedPage() {
         <span className="grid h-11 w-11 place-items-center rounded-full bg-warning/12 text-warning">
           <WarningCircle aria-hidden size={24} weight="fill" />
         </span>
-        <h1 className="mt-5 text-2xl font-[700] tracking-[-0.025em]">This account is unavailable</h1>
+        <h1 className="mt-5 text-2xl font-[700] tracking-[-0.025em]">
+          This account is unavailable
+        </h1>
         <p className="mt-3 max-w-md leading-7 text-muted">
-          Relay has temporarily paused access to this account. If you think this is a mistake, contact the person who
-          manages your Relay community.
+          Relay has temporarily paused access to this account. If you think this
+          is a mistake, contact the person who manages your Relay community.
         </p>
         <form noValidate action={signOut} className="mt-7">
-          <SubmitButton type="submit" variant="secondary" pendingLabel="Signing out…">
+          <SubmitButton
+            type="submit"
+            variant="secondary"
+            pendingLabel="Signing out…"
+          >
             Sign out
           </SubmitButton>
         </form>

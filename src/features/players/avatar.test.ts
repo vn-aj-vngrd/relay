@@ -10,11 +10,11 @@ afterEach(() => {
 describe("profileAvatarUrl", () => {
   it("keeps provider avatars and resolves uploaded avatar paths", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://relay.supabase.co";
-    expect(profileAvatarUrl("https://lh3.googleusercontent.com/avatar.jpg")).toBe(
-      "https://lh3.googleusercontent.com/avatar.jpg",
-    );
+    expect(
+      profileAvatarUrl("https://lh3.googleusercontent.com/avatar.jpg")
+    ).toBe("https://lh3.googleusercontent.com/avatar.jpg");
     expect(profileAvatarUrl("user-id/profile photo.jpg")).toBe(
-      "https://relay.supabase.co/storage/v1/object/public/avatars/user-id/profile%20photo.jpg",
+      "https://relay.supabase.co/storage/v1/object/public/avatars/user-id/profile%20photo.jpg"
     );
   });
 

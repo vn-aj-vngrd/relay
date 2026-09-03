@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 import { calculateStandings } from "./domain";
-import { planMatchFinish, planRotation, type PlayMode, type QueueRule, type RotationHistory } from "./rotation";
+import {
+  type PlayMode,
+  planMatchFinish,
+  planRotation,
+  type QueueRule,
+  type RotationHistory,
+} from "./rotation";
 
 export type QuickPlayPlayer = {
   id: string;
@@ -52,7 +58,10 @@ const quickPlayMatchSchema = z.object({
   courtLabel: z.string().min(1),
   teamA: z.array(z.string().min(1)).length(2),
   teamB: z.array(z.string().min(1)).length(2),
-  scores: z.tuple([z.number().int().min(0).max(99), z.number().int().min(0).max(99)]),
+  scores: z.tuple([
+    z.number().int().min(0).max(99),
+    z.number().int().min(0).max(99),
+  ]),
   status: z.enum(["active", "completed"]),
   winner: z.enum(["A", "B"]).nullable(),
   finishedAt: z.number().nullable(),
@@ -70,7 +79,10 @@ const quickPlaySessionSchema = z.object({
   nextMatchNumber: z.number().int().min(1),
 });
 
-const storedQuickPlaySchema = z.object({ version: z.literal(1), session: quickPlaySessionSchema });
+const storedQuickPlaySchema = z.object({
+  version: z.literal(1),
+  session: quickPlaySessionSchema,
+});
 
 function courts(count: number) {
   return Array.from({ length: count }, (_, index) => ({
@@ -93,60 +105,94 @@ function rotationHistory(session: QuickPlaySession): RotationHistory[] {
 
 function nextPlans(session: QuickPlaySession) {
   if (session.mode !== "queue" && session.activeMatches.length) return [];
-  const occupiedCourts = new Set(session.activeMatches.map((match) => match.courtId));
+  const occupiedCourts = new Set(
+    session.activeMatches.map((match) => match.courtId)
+  );
   const availableCourts =
     session.mode === "queue"
-      ? courts(session.courtCount).filter((court) => !occupiedCourts.has(court.id))
+      ? courts(session.courtCount).filter(
+          (court) => !occupiedCourts.has(court.id)
+        )
       : courts(session.courtCount);
-  const experience = new Map(session.players.map((player) => [player.id, player.experience]));
+  const experience = new Map(
+    session.players.map((player) => [player.id, player.experience])
+  );
   return planRotation({
     mode: session.mode,
     courts: availableCourts,
-    waiting: session.waitingPlayerIds.map((id, index) => ({ id, position: index + 1, experience: experience.get(id) })),
+    waiting: session.waitingPlayerIds.map((id, index) => ({
+      id,
+      position: index + 1,
+      experience: experience.get(id),
+    })),
     history: rotationHistory(session),
     fixedPairs: session.fixedPairs,
   });
 }
 
 function validateConfiguration(configuration: QuickPlayConfiguration) {
-  if (configuration.players.length < 4) throw new Error("Add at least four players.");
+  if (configuration.players.length < 4)
+    throw new Error("Add at least four players.");
   if (configuration.players.length > maxQuickPlayPlayers) {
-    throw new Error(`Quick Play supports up to ${maxQuickPlayPlayers} players.`);
+    throw new Error(
+      `Quick Play supports up to ${maxQuickPlayPlayers} players.`
+    );
   }
-  const names = configuration.players.map((player) => player.name.trim().toLocaleLowerCase());
-  if (names.some((name) => !name)) throw new Error("Add a name for every player.");
-  if (new Set(names).size !== names.length) throw new Error("Use a different name for each player.");
+  const names = configuration.players.map((player) =>
+    player.name.trim().toLocaleLowerCase()
+  );
+  if (names.some((name) => !name))
+    throw new Error("Add a name for every player.");
+  if (new Set(names).size !== names.length)
+    throw new Error("Use a different name for each player.");
   if (
     !Number.isInteger(configuration.courtCount) ||
     configuration.courtCount < 1 ||
     configuration.courtCount > maxQuickPlayCourts
   ) {
-    throw new Error(`Choose between 1 and ${maxQuickPlayCourts} active courts.`);
-  }
-  const missingPlayers = configuration.courtCount * 4 - configuration.players.length;
-  if (missingPlayers > 0) {
     throw new Error(
-      `Add ${missingPlayers} more ${missingPlayers === 1 ? "player" : "players"} for ${configuration.courtCount} ${configuration.courtCount === 1 ? "court" : "courts"}.`,
+      `Choose between 1 and ${maxQuickPlayCourts} active courts.`
     );
   }
-  if (configuration.mode === "king_of_court" && configuration.players.length !== configuration.courtCount * 4) {
+  const missingPlayers =
+    configuration.courtCount * 4 - configuration.players.length;
+  if (missingPlayers > 0) {
+    throw new Error(
+      `Add ${missingPlayers} more ${missingPlayers === 1 ? "player" : "players"} for ${configuration.courtCount} ${configuration.courtCount === 1 ? "court" : "courts"}.`
+    );
+  }
+  if (
+    configuration.mode === "king_of_court" &&
+    configuration.players.length !== configuration.courtCount * 4
+  ) {
     throw new Error("Court Climb needs exactly four players per court.");
   }
-  if ((configuration.mode === "round_robin" || configuration.fixedPairs.length) && configuration.players.length % 2) {
+  if (
+    (configuration.mode === "round_robin" || configuration.fixedPairs.length) &&
+    configuration.players.length % 2
+  ) {
     throw new Error("Fixed pairs need an even number of players.");
   }
-  if (configuration.mode === "round_robin" && configuration.fixedPairs.length < 2) {
+  if (
+    configuration.mode === "round_robin" &&
+    configuration.fixedPairs.length < 2
+  ) {
     throw new Error("Team Round Robin needs at least two pairs.");
   }
   if (configuration.fixedPairs.length) {
     const assigned = configuration.fixedPairs.flat();
-    if (assigned.length !== configuration.players.length || new Set(assigned).size !== assigned.length) {
+    if (
+      assigned.length !== configuration.players.length ||
+      new Set(assigned).size !== assigned.length
+    ) {
       throw new Error("Assign every player to one pair.");
     }
   }
 }
 
-export function restoreQuickPlaySession(value: string | null): QuickPlaySession | null {
+export function restoreQuickPlaySession(
+  value: string | null
+): QuickPlaySession | null {
   if (!value) return null;
   try {
     const stored = storedQuickPlaySchema.safeParse(JSON.parse(value));
@@ -162,11 +208,16 @@ export function serializeQuickPlaySession(session: QuickPlaySession) {
   return JSON.stringify({ version: 1, session });
 }
 
-export function startQuickPlay(configuration: QuickPlayConfiguration): QuickPlaySession {
+export function startQuickPlay(
+  configuration: QuickPlayConfiguration
+): QuickPlaySession {
   validateConfiguration(configuration);
   return startNextQuickPlayMatches({
     ...configuration,
-    players: configuration.players.map((player) => ({ ...player, name: player.name.trim() })),
+    players: configuration.players.map((player) => ({
+      ...player,
+      name: player.name.trim(),
+    })),
     waitingPlayerIds: configuration.players.map((player) => player.id),
     activeMatches: [],
     completedMatches: [],
@@ -174,10 +225,14 @@ export function startQuickPlay(configuration: QuickPlayConfiguration): QuickPlay
   });
 }
 
-export function startNextQuickPlayMatches(session: QuickPlaySession): QuickPlaySession {
+export function startNextQuickPlayMatches(
+  session: QuickPlaySession
+): QuickPlaySession {
   const plans = nextPlans(session);
   if (!plans.length) return session;
-  const playing = new Set(plans.flatMap((plan) => [...plan.teamA, ...plan.teamB]));
+  const playing = new Set(
+    plans.flatMap((plan) => [...plan.teamA, ...plan.teamB])
+  );
   const activeMatches = plans.map<QuickPlayMatch>((plan, index) => ({
     id: `quick-match-${session.nextMatchNumber + index}`,
     courtId: plan.courtId,
@@ -201,7 +256,12 @@ export function canStartNextQuickPlayMatches(session: QuickPlaySession) {
   return nextPlans(session).length > 0;
 }
 
-export function scoreQuickPlayMatch(session: QuickPlaySession, matchId: string, side: 0 | 1, amount: -1 | 1) {
+export function scoreQuickPlayMatch(
+  session: QuickPlaySession,
+  matchId: string,
+  side: 0 | 1,
+  amount: -1 | 1
+) {
   return {
     ...session,
     activeMatches: session.activeMatches.map((match) => {
@@ -213,23 +273,37 @@ export function scoreQuickPlayMatch(session: QuickPlaySession, matchId: string, 
   };
 }
 
-export function swapQuickPlayMatchSides(session: QuickPlaySession, matchId: string): QuickPlaySession {
+export function swapQuickPlayMatchSides(
+  session: QuickPlaySession,
+  matchId: string
+): QuickPlaySession {
   return {
     ...session,
     activeMatches: session.activeMatches.map((match) =>
       match.id === matchId
-        ? { ...match, teamA: match.teamB, teamB: match.teamA, scores: [match.scores[1], match.scores[0]] }
-        : match,
+        ? {
+            ...match,
+            teamA: match.teamB,
+            teamB: match.teamA,
+            scores: [match.scores[1], match.scores[0]],
+          }
+        : match
     ),
   };
 }
 
-export function finishQuickPlayMatch(session: QuickPlaySession, matchId: string): QuickPlaySession {
+export function finishQuickPlayMatch(
+  session: QuickPlaySession,
+  matchId: string
+): QuickPlaySession {
   const match = session.activeMatches.find((item) => item.id === matchId);
   if (!match) return session;
-  if (match.scores[0] === match.scores[1]) throw new Error("Enter a winner before finishing the match.");
+  if (match.scores[0] === match.scores[1])
+    throw new Error("Enter a winner before finishing the match.");
   const winner = match.scores[0] > match.scores[1] ? "A" : "B";
-  const previous = session.completedMatches.findLast((item) => item.courtId === match.courtId);
+  const previous = session.completedMatches.findLast(
+    (item) => item.courtId === match.courtId
+  );
   const finishPlan = planMatchFinish({
     mode: session.mode,
     queueRule: session.queueRule,
@@ -237,9 +311,13 @@ export function finishQuickPlayMatch(session: QuickPlaySession, matchId: string)
     teamA: match.teamA,
     teamB: match.teamB,
     winner,
-    previousCourtPlayerIds: previous ? [...previous.teamA, ...previous.teamB] : null,
+    previousCourtPlayerIds: previous
+      ? [...previous.teamA, ...previous.teamB]
+      : null,
   });
-  const remaining = session.waitingPlayerIds.filter((id) => !finishPlan.orderedPlayerIds.includes(id));
+  const remaining = session.waitingPlayerIds.filter(
+    (id) => !finishPlan.orderedPlayerIds.includes(id)
+  );
   const completed: QuickPlayMatch = {
     ...match,
     status: "completed",
@@ -255,7 +333,9 @@ export function finishQuickPlayMatch(session: QuickPlaySession, matchId: string)
 }
 
 export function quickPlayStandings(session: QuickPlaySession) {
-  const names = new Map(session.players.map((player) => [player.id, player.name]));
+  const names = new Map(
+    session.players.map((player) => [player.id, player.name])
+  );
   return calculateStandings(
     session.completedMatches.map((match) => ({
       teamA: match.teamA,
@@ -263,6 +343,9 @@ export function quickPlayStandings(session: QuickPlaySession) {
       scoreA: match.scores[0],
       scoreB: match.scores[1],
       status: "completed" as const,
-    })),
-  ).map((standing) => ({ ...standing, name: names.get(standing.playerId) ?? "Player" }));
+    }))
+  ).map((standing) => ({
+    ...standing,
+    name: names.get(standing.playerId) ?? "Player",
+  }));
 }

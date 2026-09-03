@@ -51,7 +51,13 @@ type ProfileData = Awaited<ReturnType<typeof loadProfile>>;
 async function loadPlayingHistory(profilePromise: Promise<ProfileData>) {
   const { profile } = await profilePromise;
   const [sessionCount, [matchSummary]] = await Promise.all([
-    db.$count(sessionPlayers, and(eq(sessionPlayers.userId, profile.userId), eq(sessionPlayers.rsvp, "going"))),
+    db.$count(
+      sessionPlayers,
+      and(
+        eq(sessionPlayers.userId, profile.userId),
+        eq(sessionPlayers.rsvp, "going")
+      )
+    ),
     db
       .select({
         total: count(),
@@ -59,8 +65,16 @@ async function loadPlayingHistory(profilePromise: Promise<ProfileData>) {
       })
       .from(matchPlayers)
       .innerJoin(matches, eq(matchPlayers.matchId, matches.id))
-      .innerJoin(sessionPlayers, eq(matchPlayers.sessionPlayerId, sessionPlayers.id))
-      .where(and(eq(sessionPlayers.userId, profile.userId), eq(matches.status, "completed"))),
+      .innerJoin(
+        sessionPlayers,
+        eq(matchPlayers.sessionPlayerId, sessionPlayers.id)
+      )
+      .where(
+        and(
+          eq(sessionPlayers.userId, profile.userId),
+          eq(matches.status, "completed")
+        )
+      ),
   ]);
 
   return {
@@ -70,7 +84,11 @@ async function loadPlayingHistory(profilePromise: Promise<ProfileData>) {
   };
 }
 
-async function ProfileHeader({ profilePromise }: { profilePromise: Promise<ProfileData> }) {
+async function ProfileHeader({
+  profilePromise,
+}: {
+  profilePromise: Promise<ProfileData>;
+}) {
   const { profile, ownProfile } = await profilePromise;
   const imageUrl = profileAvatarUrl(profile.avatarPath);
 
@@ -79,7 +97,9 @@ async function ProfileHeader({ profilePromise }: { profilePromise: Promise<Profi
       <Avatar name={profile.name} imageUrl={imageUrl} size="xl" />
       <div className="min-w-0 flex-1 pt-1">
         <div className="flex items-center gap-2.5">
-          <h1 className="min-w-0 flex-1 truncate text-[1.75rem] font-[680] tracking-[-0.025em]">{profile.name}</h1>
+          <h1 className="min-w-0 flex-1 truncate text-[1.75rem] font-[680] tracking-[-0.025em]">
+            {profile.name}
+          </h1>
           {ownProfile ? (
             <ButtonLink
               href={`/profile/${profile.username}/edit`}
@@ -117,7 +137,11 @@ async function ProfileHeader({ profilePromise }: { profilePromise: Promise<Profi
             ) : null}
           </div>
         ) : null}
-        {profile.bio ? <p className="mt-3 max-w-xl text-sm leading-6 text-ink/75">{profile.bio}</p> : null}
+        {profile.bio ? (
+          <p className="mt-3 max-w-xl text-sm leading-6 text-ink/75">
+            {profile.bio}
+          </p>
+        ) : null}
       </div>
     </header>
   );
@@ -134,7 +158,11 @@ async function ProfileStat({
   return <strong className="score block text-2xl">{history[stat]}</strong>;
 }
 
-async function AccountSection({ profilePromise }: { profilePromise: Promise<ProfileData> }) {
+async function AccountSection({
+  profilePromise,
+}: {
+  profilePromise: Promise<ProfileData>;
+}) {
   const { ownProfile, viewer } = await profilePromise;
   if (!ownProfile) return null;
 
@@ -144,30 +172,45 @@ async function AccountSection({ profilePromise }: { profilePromise: Promise<Prof
         Account
       </h2>
       <div className="divide-y divide-line border-y border-line">
-        <Link href="/preferences" className="flex min-h-12 items-center gap-3 py-2 text-sm">
+        <Link
+          href="/preferences"
+          className="flex min-h-12 items-center gap-3 py-2 text-sm"
+        >
           <SlidersHorizontal size={18} className="text-muted" />
           <span className="flex-1">Preferences</span>
           <CaretRight size={15} className="text-muted" />
         </Link>
-        <Link href="/help" className="flex min-h-12 items-center gap-3 py-2 text-sm">
+        <Link
+          href="/help"
+          className="flex min-h-12 items-center gap-3 py-2 text-sm"
+        >
           <Lifebuoy size={18} className="text-muted" />
           <span className="flex-1">Help Center</span>
           <CaretRight size={15} className="text-muted" />
         </Link>
-        <Link href="/feedback" className="flex min-h-12 items-center gap-3 py-2 text-sm">
+        <Link
+          href="/feedback"
+          className="flex min-h-12 items-center gap-3 py-2 text-sm"
+        >
           <ChatText size={18} className="text-muted" />
           <span className="flex-1">Send feedback</span>
           <CaretRight size={15} className="text-muted" />
         </Link>
         {isAdminEmail(viewer?.email) ? (
-          <Link href="/admin" className="flex min-h-12 items-center gap-3 py-2 text-sm">
+          <Link
+            href="/admin"
+            className="flex min-h-12 items-center gap-3 py-2 text-sm"
+          >
             <ShieldCheck size={18} className="text-muted" />
             <span className="flex-1">Admin console</span>
             <CaretRight size={15} className="text-muted" />
           </Link>
         ) : null}
         <form noValidate action={signOut}>
-          <PendingSubmit pendingLabel="Signing out…" className="flex min-h-12 w-full items-center gap-3 py-2 text-sm">
+          <PendingSubmit
+            pendingLabel="Signing out…"
+            className="flex min-h-12 w-full items-center gap-3 py-2 text-sm"
+          >
             <SignOut size={18} className="text-muted" />
             Sign out
           </PendingSubmit>
@@ -187,27 +230,38 @@ export default function ProfilePage({ params }: { params: ProfileParams }) {
         <ProfileHeader profilePromise={profilePromise} />
       </Suspense>
 
-      <section aria-label="Playing history" className="grid grid-cols-3 border-y border-line py-5 text-center">
+      <section
+        aria-label="Playing history"
+        className="grid grid-cols-3 border-y border-line py-5 text-center"
+      >
         <div>
           <Suspense fallback={<ProfileStatSkeleton />}>
             <ProfileStat historyPromise={historyPromise} stat="sessions" />
           </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">Sessions</span>
+          <span className="text-xs font-medium text-muted sm:text-sm">
+            Sessions
+          </span>
         </div>
         <div className="border-x border-line">
           <Suspense fallback={<ProfileStatSkeleton />}>
             <ProfileStat historyPromise={historyPromise} stat="matches" />
           </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">Matches</span>
+          <span className="text-xs font-medium text-muted sm:text-sm">
+            Matches
+          </span>
         </div>
         <div>
           <Suspense fallback={<ProfileStatSkeleton />}>
             <ProfileStat historyPromise={historyPromise} stat="wins" />
           </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">Wins</span>
+          <span className="text-xs font-medium text-muted sm:text-sm">
+            Wins
+          </span>
         </div>
       </section>
-      <p className="pt-3 text-center text-xs leading-5 text-muted">For fun, not a competitive rating.</p>
+      <p className="pt-3 text-center text-xs leading-5 text-muted">
+        For fun, not a competitive rating.
+      </p>
 
       <Suspense fallback={null}>
         <AccountSection profilePromise={profilePromise} />

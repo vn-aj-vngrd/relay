@@ -1,7 +1,10 @@
 import { ButtonLink } from "@/components/ui/button";
 export default function NotFound() {
   return (
-    <main id="main-content" className="mx-auto flex min-h-screen max-w-md flex-col items-start justify-center px-5">
+    <main
+      id="main-content"
+      className="mx-auto flex min-h-screen max-w-md flex-col items-start justify-center px-5"
+    >
       <p className="score text-sm font-bold text-primary">404</p>
       <h1 className="mt-2 text-2xl font-bold">This game isn’t here.</h1>
       <p className="mt-3 leading-6 text-muted">

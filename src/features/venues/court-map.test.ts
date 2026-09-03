@@ -33,7 +33,9 @@ describe("collapseAttributionControl", () => {
 
     collapseAttributionControl(container);
 
-    const attribution = container.querySelector<HTMLDetailsElement>(".maplibregl-ctrl-attrib");
+    const attribution = container.querySelector<HTMLDetailsElement>(
+      ".maplibregl-ctrl-attrib"
+    );
     expect(attribution).not.toHaveAttribute("open");
     expect(attribution).not.toHaveClass("maplibregl-compact-show");
     expect(attribution).toHaveTextContent("Geoapify · OpenStreetMap");

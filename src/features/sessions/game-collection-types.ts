@@ -11,7 +11,13 @@ export type GameCollectionItem = {
   capacity: number;
   status: "draft" | "published" | "live" | "completed" | "cancelled";
   accentColor: string;
-  viewerRsvp: "invited" | "pending" | "going" | "maybe" | "waitlisted" | "declined";
+  viewerRsvp:
+    | "invited"
+    | "pending"
+    | "going"
+    | "maybe"
+    | "waitlisted"
+    | "declined";
   invitedAt: string;
   hostName: string;
   estimatedCostCents: number | null;

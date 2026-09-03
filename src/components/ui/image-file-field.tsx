@@ -28,7 +28,7 @@ export function ImageFileField({
     () => () => {
       if (previewRef.current) URL.revokeObjectURL(previewRef.current);
     },
-    [],
+    []
   );
 
   function select(nextFile: File | null) {
@@ -75,7 +75,9 @@ export function ImageFileField({
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{file.name}</p>
-            <p className="mt-0.5 text-xs text-muted">{Math.max(1, Math.round(file.size / 1024))} KB</p>
+            <p className="mt-0.5 text-xs text-muted">
+              {Math.max(1, Math.round(file.size / 1024))} KB
+            </p>
           </div>
           <button
             type="button"
@@ -99,9 +101,15 @@ export function ImageFileField({
           </span>
           <span className="min-w-0 flex-1">
             <strong className="block text-sm font-[650]">{buttonLabel}</strong>
-            <span className="mt-0.5 block text-xs text-muted">JPG, PNG, or WebP</span>
+            <span className="mt-0.5 block text-xs text-muted">
+              JPG, PNG, or WebP
+            </span>
           </span>
-          <UploadSimple aria-hidden className="shrink-0 text-primary" size={17} />
+          <UploadSimple
+            aria-hidden
+            className="shrink-0 text-primary"
+            size={17}
+          />
         </label>
       )}
     </div>

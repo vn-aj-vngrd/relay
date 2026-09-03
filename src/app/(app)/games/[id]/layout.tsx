@@ -2,11 +2,17 @@ import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { AppBreadcrumbs } from "@/components/shared/app-breadcrumbs";
-import { AuthenticatedSessionNav, MobileAuthenticatedSessionNav } from "@/components/shared/authenticated-session-nav";
+import {
+  AuthenticatedSessionNav,
+  MobileAuthenticatedSessionNav,
+} from "@/components/shared/authenticated-session-nav";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { formatSessionDate, formatSessionTime } from "@/features/sessions/format";
+import {
+  formatSessionDate,
+  formatSessionTime,
+} from "@/features/sessions/format";
 import { GameWorkspaceActions } from "@/features/sessions/game-workspace-actions";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
@@ -34,7 +40,11 @@ export default async function GameWorkspaceLayout({
       <RealtimeRefresh sessionId={id} silent />
       <div className="hidden shrink-0 lg:block [&>nav]:mb-0">
         <AppBreadcrumbs
-          items={[{ href: "/home", label: "Home" }, { href: "/games", label: "Games" }, { label: data.session.title }]}
+          items={[
+            { href: "/home", label: "Home" },
+            { href: "/games", label: "Games" },
+            { label: data.session.title },
+          ]}
         />
       </div>
       <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0">
@@ -48,7 +58,10 @@ export default async function GameWorkspaceLayout({
             >
               <CaretLeft aria-hidden size={18} />
             </ButtonLink>
-            <p title={data.session.title} className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
+            <p
+              title={data.session.title}
+              className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
+            >
               {data.session.title}
             </p>
             <GameWorkspaceActions
@@ -78,7 +91,9 @@ export default async function GameWorkspaceLayout({
           />
         </div>
       </div>
-      <div className="game-workspace-content min-h-0 flex-1 pt-3 sm:pt-4">{children}</div>
+      <div className="game-workspace-content min-h-0 flex-1 pt-3 sm:pt-4">
+        {children}
+      </div>
     </div>
   );
 }

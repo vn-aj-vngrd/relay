@@ -6,15 +6,26 @@ import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { shouldShowPostGameFeedback } from "@/features/feedback/queries";
 import { getWorkspaceLiveSession } from "@/features/matches/queries";
-import { SessionPlay, type SessionPlayViewer } from "@/features/matches/session-play";
+import {
+  SessionPlay,
+  type SessionPlayViewer,
+} from "@/features/matches/session-play";
 import { postGameContinuation } from "@/features/sessions/post-game";
 
-export default async function PlayPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlayPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await requireUser();
   const data = await getWorkspaceLiveSession((await params).id, user.id);
   if (!data) notFound();
 
-  const actor = sessionActor({ userId: user.id, hostId: data.session.hostId, membership: data.membership });
+  const actor = sessionActor({
+    userId: user.id,
+    hostId: data.session.hostId,
+    membership: data.membership,
+  });
   const viewer: SessionPlayViewer = {
     playerId: data.membership?.id,
     rsvp: data.membership?.rsvp,
@@ -27,9 +38,12 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   };
   const completed = data.session.status === "completed";
   const continuation = postGameContinuation(data.session, user.id);
-  const canReviewGame = data.session.hostId === user.id || data.membership?.rsvp === "going";
+  const canReviewGame =
+    data.session.hostId === user.id || data.membership?.rsvp === "going";
   const showPostGameFeedback =
-    completed && canReviewGame ? await shouldShowPostGameFeedback(user.id, data.session.id) : false;
+    completed && canReviewGame
+      ? await shouldShowPostGameFeedback(user.id, data.session.id)
+      : false;
 
   return (
     <>
@@ -49,7 +63,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           ) : undefined
         }
       />
-      <div className={completed ? "mx-auto w-full max-w-6xl sm:pt-6" : undefined}>
+      <div
+        className={completed ? "mx-auto w-full max-w-6xl sm:pt-6" : undefined}
+      >
         <SessionPlay
           data={data}
           viewer={viewer}

@@ -1,9 +1,20 @@
 "use client";
 
-import { CalendarBlank, Desktop, Moon, Rows, SquaresFour, Sun } from "@phosphor-icons/react";
+import {
+  CalendarBlank,
+  Desktop,
+  Moon,
+  Rows,
+  SquaresFour,
+  Sun,
+} from "@phosphor-icons/react";
 import { type ComponentType, useSyncExternalStore } from "react";
 
-import { getThemePreference, setThemePreference, type ThemePreference } from "@/components/shared/theme-toggle";
+import {
+  getThemePreference,
+  setThemePreference,
+  type ThemePreference,
+} from "@/components/shared/theme-toggle";
 
 type Density = "comfortable" | "compact";
 type GameView = "list" | "grid" | "calendar";
@@ -16,12 +27,20 @@ function Segmented<T extends string>({
   label,
 }: {
   value: T;
-  options: { value: T; label: string; icon?: ComponentType<{ size?: number }> }[];
+  options: {
+    value: T;
+    label: string;
+    icon?: ComponentType<{ size?: number }>;
+  }[];
   onChange: (value: T) => void;
   label: string;
 }) {
   return (
-    <div role="group" aria-label={label} className="inline-flex rounded-lg bg-surface-strong p-0.5 sm:p-1">
+    <div
+      role="group"
+      aria-label={label}
+      className="inline-flex rounded-lg bg-surface-strong p-0.5 sm:p-1"
+    >
       {options.map((option) => {
         const Icon = option.icon;
         return (
@@ -42,10 +61,15 @@ function Segmented<T extends string>({
 }
 
 function getPreferences() {
-  const density: Density = localStorage.getItem("relay-density") === "compact" ? "compact" : "comfortable";
+  const density: Density =
+    localStorage.getItem("relay-density") === "compact"
+      ? "compact"
+      : "comfortable";
   const savedView = localStorage.getItem("relay-games-view");
-  const gameView: GameView = savedView === "grid" || savedView === "calendar" ? savedView : "list";
-  const weekStart: WeekStart = localStorage.getItem("relay-week-start") === "monday" ? "monday" : "sunday";
+  const gameView: GameView =
+    savedView === "grid" || savedView === "calendar" ? savedView : "list";
+  const weekStart: WeekStart =
+    localStorage.getItem("relay-week-start") === "monday" ? "monday" : "sunday";
   return `${density}|${gameView}|${weekStart}`;
 }
 
@@ -69,14 +93,23 @@ function subscribeTheme(callback: () => void) {
   };
 }
 
-export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?: boolean }) {
-  const theme = useSyncExternalStore(subscribeTheme, getThemePreference, (): ThemePreference => "system");
+export function PreferenceControls({
+  appearanceOnly = false,
+}: {
+  appearanceOnly?: boolean;
+}) {
+  const theme = useSyncExternalStore(
+    subscribeTheme,
+    getThemePreference,
+    (): ThemePreference => "system"
+  );
   const [density, gameView, weekStart] = useSyncExternalStore(
     subscribe,
     getPreferences,
-    () => "comfortable|list|sunday",
+    () => "comfortable|list|sunday"
   ).split("|") as [Density, GameView, WeekStart];
-  const notify = () => window.dispatchEvent(new Event("relay-preferences-change"));
+  const notify = () =>
+    window.dispatchEvent(new Event("relay-preferences-change"));
   const setDensity = (value: Density) => {
     document.documentElement.dataset.density = value;
     localStorage.setItem("relay-density", value);
@@ -101,7 +134,9 @@ export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?
           <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-2">
             <div>
               <p className="text-sm font-medium">Color theme</p>
-              <p className="mt-0.5 text-xs text-muted">Use light, dark, or your device setting.</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Use light, dark, or your device setting.
+              </p>
             </div>
             <Segmented
               label="Color theme"
@@ -117,7 +152,9 @@ export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?
           <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
             <div>
               <p className="text-sm font-medium">Layout density</p>
-              <p className="mt-0.5 text-xs text-muted">Tighten repeated rows and supporting sections.</p>
+              <p className="mt-0.5 text-xs text-muted">
+                Tighten repeated rows and supporting sections.
+              </p>
             </div>
             <Segmented
               label="Layout density"
@@ -141,7 +178,9 @@ export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?
             <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
               <div>
                 <p className="text-sm font-medium">Default games view</p>
-                <p className="mt-0.5 text-xs text-muted">Used when you open Games.</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Used when you open Games.
+                </p>
               </div>
               <Segmented
                 label="Default games view"
@@ -157,7 +196,9 @@ export function PreferenceControls({ appearanceOnly = false }: { appearanceOnly?
             <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
               <div>
                 <p className="text-sm font-medium">Week starts on</p>
-                <p className="mt-0.5 text-xs text-muted">Applied to the game calendar.</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Applied to the game calendar.
+                </p>
               </div>
               <Segmented
                 label="First day of week"

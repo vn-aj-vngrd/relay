@@ -6,14 +6,23 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 
-import { prepareAdminMfaAction, verifyAdminMfaAction } from "./admin-mfa-actions";
+import {
+  prepareAdminMfaAction,
+  verifyAdminMfaAction,
+} from "./admin-mfa-actions";
 
-type Setup = { factorId: string; qrCode?: string; secret?: string; enrolled: boolean };
+type Setup = {
+  factorId: string;
+  qrCode?: string;
+  secret?: string;
+  enrolled: boolean;
+};
 
 export function normalizeMfaQrCode(qrCode: string) {
   const trimmed = qrCode.trim();
   const separator = trimmed.indexOf(",");
-  if (!trimmed.startsWith("data:image/svg+xml") || separator === -1) return trimmed;
+  if (!trimmed.startsWith("data:image/svg+xml") || separator === -1)
+    return trimmed;
   const svg = trimmed.slice(separator + 1);
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
@@ -33,7 +42,9 @@ export function AdminMfaSetup() {
     void prepareAdminMfaAction()
       .then((result) => {
         if (!result.ok) {
-          if (result.message === "Administrator security is already verified.") {
+          if (
+            result.message === "Administrator security is already verified."
+          ) {
             window.location.replace("/admin");
             return;
           }
@@ -45,12 +56,14 @@ export function AdminMfaSetup() {
         setMessage(
           result.enrolled
             ? "Enter the current code from your authenticator app."
-            : "Scan the QR code, then enter the six-digit code to secure admin access.",
+            : "Scan the QR code, then enter the six-digit code to secure admin access."
         );
         setBusy(false);
       })
       .catch(() => {
-        setError("Administrator security could not be prepared. Sign out, sign in, and try again.");
+        setError(
+          "Administrator security could not be prepared. Sign out, sign in, and try again."
+        );
         setBusy(false);
       });
   }, []);
@@ -63,7 +76,10 @@ export function AdminMfaSetup() {
     }
     setBusy(true);
     setError("");
-    const result = await verifyAdminMfaAction({ factorId: setup.factorId, code });
+    const result = await verifyAdminMfaAction({
+      factorId: setup.factorId,
+      code,
+    });
     if (!result.ok) {
       setError(result.message);
       setBusy(false);
@@ -79,13 +95,19 @@ export function AdminMfaSetup() {
       aria-labelledby="mfa-title"
     >
       <ShieldCheck aria-hidden className="text-primary" size={30} />
-      <h1 id="mfa-title" className="mt-4 text-[1.75rem] font-[680] leading-tight tracking-[-0.025em]">
+      <h1
+        id="mfa-title"
+        className="mt-4 text-[1.75rem] font-[680] leading-tight tracking-[-0.025em]"
+      >
         Secure admin access
       </h1>
       <p className="mt-3 text-[15px] leading-6 text-muted">{message}</p>
 
       {busy && !setup ? (
-        <div className="mt-6 flex items-center gap-2 text-sm text-muted" role="status">
+        <div
+          className="mt-6 flex items-center gap-2 text-sm text-muted"
+          role="status"
+        >
           <ButtonSpinner /> Preparing authenticator setup…
         </div>
       ) : null}
@@ -102,7 +124,9 @@ export function AdminMfaSetup() {
           />
           <p className="mt-4 text-center text-xs leading-5 text-muted">
             Can’t scan? Enter this setup key manually:
-            <code className="mt-1 block break-all font-mono text-[13px] font-semibold text-ink">{setup.secret!}</code>
+            <code className="mt-1 block break-all font-mono text-[13px] font-semibold text-ink">
+              {setup.secret!}
+            </code>
           </p>
         </div>
       ) : null}
@@ -116,7 +140,9 @@ export function AdminMfaSetup() {
             <input
               id="admin-mfa-code"
               value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(event) =>
+                setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               name="code"
               inputMode="numeric"
               autoComplete="one-time-code"

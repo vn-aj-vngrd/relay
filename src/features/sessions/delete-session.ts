@@ -30,25 +30,38 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export type DeleteSessionState = { error?: string };
 
-const inputSchema = z.object({ sessionId: z.uuid(), confirmation: z.string().max(120) });
+const inputSchema = z.object({
+  sessionId: z.uuid(),
+  confirmation: z.string().max(120),
+});
 
-export async function deleteSessionAction(_: DeleteSessionState, formData: FormData): Promise<DeleteSessionState> {
+export async function deleteSessionAction(
+  _: DeleteSessionState,
+  formData: FormData
+): Promise<DeleteSessionState> {
   const user = await requireUser();
   await assertRateLimit(
     { scope: "session-delete", limit: 5, windowSeconds: 3600 },
     `user:${user.id}`,
-    "Game deletions are temporarily limited. Wait before trying again.",
+    "Game deletions are temporarily limited. Wait before trying again."
   );
   const parsed = inputSchema.safeParse({
     sessionId: formData.get("sessionId"),
     confirmation: formData.get("confirmation"),
   });
-  if (!parsed.success) return { error: "Enter the game title exactly as shown." };
+  if (!parsed.success)
+    return { error: "Enter the game title exactly as shown." };
 
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
-  if (!session || !can(sessionActor({ userId: user.id, hostId: session.hostId }), "delete"))
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, parsed.data.sessionId),
+  });
+  if (
+    !session ||
+    !can(sessionActor({ userId: user.id, hostId: session.hostId }), "delete")
+  )
     return { error: "Only the host can delete this game." };
-  if (parsed.data.confirmation.trim() !== session.title) return { error: `Type “${session.title}” to confirm.` };
+  if (parsed.data.confirmation.trim() !== session.title)
+    return { error: `Type “${session.title}” to confirm.` };
 
   let paymentProofPaths: string[] = [];
   let expenseReceiptPaths: string[] = [];
@@ -60,11 +73,19 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
           .select({ id: expenses.id, receiptPath: expenses.receiptStoragePath })
           .from(expenses)
           .where(eq(expenses.sessionId, session.id)),
-        tx.select({ id: matches.id }).from(matches).where(eq(matches.sessionId, session.id)),
-        tx.select({ id: memories.id }).from(memories).where(eq(memories.sessionId, session.id)),
+        tx
+          .select({ id: matches.id })
+          .from(matches)
+          .where(eq(matches.sessionId, session.id)),
+        tx
+          .select({ id: memories.id })
+          .from(memories)
+          .where(eq(memories.sessionId, session.id)),
       ]);
       const expenseIds = expenseRows.map((row) => row.id);
-      expenseReceiptPaths = expenseRows.flatMap((row) => (row.receiptPath ? [row.receiptPath] : []));
+      expenseReceiptPaths = expenseRows.flatMap((row) =>
+        row.receiptPath ? [row.receiptPath] : []
+      );
       const matchIds = matchRows.map((row) => row.id);
       const memoryIds = memoryRows.map((row) => row.id);
       if (expenseIds.length) {
@@ -72,12 +93,20 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
           .select({ path: playerPayments.proofStoragePath })
           .from(playerPayments)
           .where(inArray(playerPayments.expenseId, expenseIds));
-        paymentProofPaths = proofs.flatMap((row) => (row.path ? [row.path] : []));
-        await tx.delete(playerPayments).where(inArray(playerPayments.expenseId, expenseIds));
+        paymentProofPaths = proofs.flatMap((row) =>
+          row.path ? [row.path] : []
+        );
+        await tx
+          .delete(playerPayments)
+          .where(inArray(playerPayments.expenseId, expenseIds));
       }
       if (matchIds.length) {
-        await tx.delete(matchScores).where(inArray(matchScores.matchId, matchIds));
-        await tx.delete(matchPlayers).where(inArray(matchPlayers.matchId, matchIds));
+        await tx
+          .delete(matchScores)
+          .where(inArray(matchScores.matchId, matchIds));
+        await tx
+          .delete(matchPlayers)
+          .where(inArray(matchPlayers.matchId, matchIds));
       }
       if (memoryIds.length) {
         const media = await tx
@@ -87,16 +116,26 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
         memoryPaths = media.map((row) => row.path);
       }
 
-      await tx.delete(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
+      await tx
+        .delete(sessionQueue)
+        .where(eq(sessionQueue.sessionId, session.id));
       await tx.delete(messages).where(eq(messages.sessionId, session.id));
       await tx.delete(memories).where(eq(memories.sessionId, session.id));
       await tx.delete(matches).where(eq(matches.sessionId, session.id));
       await tx.delete(expenses).where(eq(expenses.sessionId, session.id));
-      await tx.delete(sessionInvites).where(eq(sessionInvites.sessionId, session.id));
+      await tx
+        .delete(sessionInvites)
+        .where(eq(sessionInvites.sessionId, session.id));
       await tx.delete(courts).where(eq(courts.sessionId, session.id));
-      await tx.delete(sessionPairs).where(eq(sessionPairs.sessionId, session.id));
-      await tx.delete(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
-      await tx.delete(notifications).where(eq(notifications.sessionId, session.id));
+      await tx
+        .delete(sessionPairs)
+        .where(eq(sessionPairs.sessionId, session.id));
+      await tx
+        .delete(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, session.id));
+      await tx
+        .delete(notifications)
+        .where(eq(notifications.sessionId, session.id));
       await tx.delete(sessions).where(eq(sessions.id, session.id));
     });
   } catch (error) {
@@ -106,12 +145,18 @@ export async function deleteSessionAction(_: DeleteSessionState, formData: FormD
 
   const supabase = createSupabaseAdminClient();
   await Promise.all([
-    paymentProofPaths.length ? supabase.storage.from("payment-proofs").remove(paymentProofPaths) : Promise.resolve(),
+    paymentProofPaths.length
+      ? supabase.storage.from("payment-proofs").remove(paymentProofPaths)
+      : Promise.resolve(),
     expenseReceiptPaths.length
       ? supabase.storage.from("booking-screenshots").remove(expenseReceiptPaths)
       : Promise.resolve(),
-    memoryPaths.length ? supabase.storage.from("session-memories").remove(memoryPaths) : Promise.resolve(),
-  ]).catch((error) => console.error("Deleted session storage cleanup failed", error));
+    memoryPaths.length
+      ? supabase.storage.from("session-memories").remove(memoryPaths)
+      : Promise.resolve(),
+  ]).catch((error) =>
+    console.error("Deleted session storage cleanup failed", error)
+  );
 
   revalidatePath("/home");
   revalidatePath("/games");

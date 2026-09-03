@@ -6,7 +6,15 @@ import { useRef } from "react";
 
 import { Dialog } from "@/components/ui/dialog";
 
-export function ChatPhotoViewer({ src, alt, sender }: { src: string; alt: string; sender: string }) {
+export function ChatPhotoViewer({
+  src,
+  alt,
+  sender,
+}: {
+  src: string;
+  alt: string;
+  sender: string;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   return (

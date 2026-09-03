@@ -1,6 +1,9 @@
 import postgres from "postgres";
 
-import { structureImportedOperatingHours, structureImportedPrice } from "./court-import-details";
+import {
+  structureImportedOperatingHours,
+  structureImportedPrice,
+} from "./court-import-details";
 
 const sourceName = "cebupickleballcourts.com";
 const sourceEndpoint =
@@ -56,15 +59,21 @@ function decodeText(value: string) {
 
 function field(html: string, label: string) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = html.match(new RegExp(`<strong>${escaped}:<\\/strong>([\\s\\S]*?)<\\/li>`, "i"));
+  const match = html.match(
+    new RegExp(`<strong>${escaped}:<\\/strong>([\\s\\S]*?)<\\/li>`, "i")
+  );
   return match ? decodeText(match[1]) : null;
 }
 
 function linkField(html: string, label: string) {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const section = html.match(new RegExp(`<strong>${escaped}:<\\/strong>([\\s\\S]*?)<\\/li>`, "i"))?.[1];
+  const section = html.match(
+    new RegExp(`<strong>${escaped}:<\\/strong>([\\s\\S]*?)<\\/li>`, "i")
+  )?.[1];
   if (!section) return null;
-  const value = section.match(/href="([^"]+)"/i)?.[1]?.replaceAll("&amp;", "&") ?? decodeText(section);
+  const value =
+    section.match(/href="([^"]+)"/i)?.[1]?.replaceAll("&amp;", "&") ??
+    decodeText(section);
   return /^https?:\/\//i.test(value) ? value : null;
 }
 
@@ -81,7 +90,13 @@ function parsePost(post: SourcePost): VenueImport | null {
 
   const longitude = Number(coordinate[1]);
   const latitude = Number(coordinate[2]);
-  if (latitude < 9.3 || latitude > 11.3 || longitude < 123.2 || longitude > 124.4) return null;
+  if (
+    latitude < 9.3 ||
+    latitude > 11.3 ||
+    longitude < 123.2 ||
+    longitude > 124.4
+  )
+    return null;
 
   const courtCountText = field(html, "Number of Courts");
   const courtCount = courtCountText?.match(/\d+/)?.[0];
@@ -93,7 +108,10 @@ function parsePost(post: SourcePost): VenueImport | null {
   const websiteUrl = linkField(html, "Website");
   const socialUrl = linkField(html, "Facebook");
   const bookingUrl =
-    websiteUrl && /(book|playserve|sports360|insta-courts|spot-locker)/i.test(websiteUrl) ? websiteUrl : null;
+    websiteUrl &&
+    /(book|playserve|sports360|insta-courts|spot-locker)/i.test(websiteUrl)
+      ? websiteUrl
+      : null;
   const amenities = [
     yes(field(html, "Open Play Availability")) ? "Open play" : null,
     yes(field(html, "Comfort Rooms (CR)")) ? "Comfort room" : null,
@@ -110,7 +128,11 @@ function parsePost(post: SourcePost): VenueImport | null {
     courtCount: courtCount ? Number(courtCount) : null,
     operatingHoursText: schedule,
     priceText: price,
-    parkingStatus: parking ? (yes(parking) ? "available" : "unavailable") : null,
+    parkingStatus: parking
+      ? yes(parking)
+        ? "available"
+        : "unavailable"
+      : null,
     amenities,
     paddleRental: yes(field(html, "Paddle for Rent Availability")),
     contact: phone,
@@ -125,7 +147,9 @@ function parsePost(post: SourcePost): VenueImport | null {
 
 async function fetchSource(attempt = 1): Promise<SourcePost[]> {
   try {
-    const response = await fetch(sourceEndpoint, { signal: AbortSignal.timeout(30_000) });
+    const response = await fetch(sourceEndpoint, {
+      signal: AbortSignal.timeout(30_000),
+    });
     if (!response.ok) throw new Error(`Source returned ${response.status}`);
     return (await response.json()) as SourcePost[];
   } catch (error) {
@@ -135,7 +159,9 @@ async function fetchSource(attempt = 1): Promise<SourcePost[]> {
   }
 }
 
-const parsedRecords = (await fetchSource()).map(parsePost).filter((record): record is VenueImport => Boolean(record));
+const parsedRecords = (await fetchSource())
+  .map(parsePost)
+  .filter((record): record is VenueImport => Boolean(record));
 const deduplicated = new Map<string, VenueImport>();
 for (const record of parsedRecords) {
   const fingerprint = `${record.name} ${record.address}`
@@ -149,7 +175,8 @@ const officialCandidates: VenueImport[] = [
     source: "smsupermalls.com",
     slug: "sm-seaside-city-cebu-pickleball-court",
     name: "SM Seaside City Cebu Pickleball Court",
-    address: "Upper Ground Level, Tower Garden, Cube Wing, SM Seaside City Cebu, Cebu City",
+    address:
+      "Upper Ground Level, Tower Garden, Cube Wing, SM Seaside City Cebu, Cebu City",
     latitude: 10.28127,
     longitude: 123.8795782,
     environment: "outdoor",
@@ -179,7 +206,9 @@ for (const record of officialCandidates) {
 }
 const records = [...deduplicated.values()];
 if (!records.length)
-  throw new Error("No Cebu venue records were parsed; import stopped without changing the database.");
+  throw new Error(
+    "No Cebu venue records were parsed; import stopped without changing the database."
+  );
 
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 1 });
 try {
@@ -195,7 +224,9 @@ try {
         AND NOT (source_external_id = ANY(${transaction.array(activeSourceIds)}))
     `;
     for (const venue of records) {
-      const operatingHours = structureImportedOperatingHours(venue.operatingHoursText);
+      const operatingHours = structureImportedOperatingHours(
+        venue.operatingHoursText
+      );
       const pricing = structureImportedPrice(venue.priceText);
       const saved = await transaction<{ id: string }[]>`
         INSERT INTO venues (
@@ -235,7 +266,8 @@ try {
         RETURNING id
       `;
       const venueId = saved[0]?.id;
-      if (!venueId) throw new Error(`Failed to save operating hours for ${venue.name}.`);
+      if (!venueId)
+        throw new Error(`Failed to save operating hours for ${venue.name}.`);
       await transaction`DELETE FROM venue_operating_periods WHERE venue_id = ${venueId}`;
       for (const period of operatingHours)
         await transaction`
@@ -244,7 +276,9 @@ try {
         `;
     }
   });
-  console.log(`Imported ${records.length} sourced Cebu court listings as unverified candidates.`);
+  console.log(
+    `Imported ${records.length} sourced Cebu court listings as unverified candidates.`
+  );
 } finally {
   await sql.end();
 }

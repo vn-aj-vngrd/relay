@@ -5,9 +5,27 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/games/new", label: "Create", icon: PlusCircle, tour: "create", includeSubpaths: false },
-  { href: "/search", label: "Search", icon: MagnifyingGlass, tour: "search", includeSubpaths: false },
-  { href: "/court", label: "Court", icon: MapPin, tour: "courts", includeSubpaths: true },
+  {
+    href: "/games/new",
+    label: "Create",
+    icon: PlusCircle,
+    tour: "create",
+    includeSubpaths: false,
+  },
+  {
+    href: "/search",
+    label: "Search",
+    icon: MagnifyingGlass,
+    tour: "search",
+    includeSubpaths: false,
+  },
+  {
+    href: "/court",
+    label: "Court",
+    icon: MapPin,
+    tour: "courts",
+    includeSubpaths: true,
+  },
 ];
 
 export function SidebarUtilityNav() {
@@ -17,7 +35,8 @@ export function SidebarUtilityNav() {
       <ul className="space-y-0.5">
         {items.map(({ href, label, icon: Icon, tour, includeSubpaths }) => {
           const active = includeSubpaths
-            ? pathname.startsWith(href) && !pathname.startsWith(`${href}/suggest`)
+            ? pathname.startsWith(href) &&
+              !pathname.startsWith(`${href}/suggest`)
             : pathname === href;
           return (
             <li key={href}>

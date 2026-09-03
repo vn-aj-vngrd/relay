@@ -1,4 +1,9 @@
-import { ArrowSquareOut, CheckCircle, MapPin, PencilSimple } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowSquareOut,
+  CheckCircle,
+  MapPin,
+  PencilSimple,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/button";
@@ -22,10 +27,20 @@ function reviewedLabel(court: CourtListing) {
   return `Reviewed ${new Intl.DateTimeFormat("en-PH", { dateStyle: "medium", timeZone: "Asia/Manila" }).format(checkedAt)}`;
 }
 
-export function CourtDetails({ court, isAuthenticated }: { court: CourtListing; isAuthenticated: boolean }) {
+export function CourtDetails({
+  court,
+  isAuthenticated,
+}: {
+  court: CourtListing;
+  isAuthenticated: boolean;
+}) {
   const gamePath = `/games/new?${new URLSearchParams({ venueId: court.id }).toString()}`;
-  const createHref = isAuthenticated ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
-  const operationalLabel = formatCourtOperationalStatus(court.operationalStatus);
+  const createHref = isAuthenticated
+    ? gamePath
+    : `/signup?next=${encodeURIComponent(gamePath)}`;
+  const operationalLabel = formatCourtOperationalStatus(
+    court.operationalStatus
+  );
   const isOperating = court.operationalStatus === "operating";
 
   return (
@@ -45,7 +60,9 @@ export function CourtDetails({ court, isAuthenticated }: { court: CourtListing; 
       {!isOperating && court.operationalStatus !== "unknown" ? (
         <div className="mt-6 border-y border-line bg-surface-raised px-4 py-3 text-sm">
           <strong>{operationalLabel}.</strong>{" "}
-          <span className="text-muted">Confirm with the court before making plans.</span>
+          <span className="text-muted">
+            Confirm with the court before making plans.
+          </span>
         </div>
       ) : null}
 
@@ -58,18 +75,31 @@ export function CourtDetails({ court, isAuthenticated }: { court: CourtListing; 
             ["Access", formatCourtAccess(court.accessType)],
             ["Reservations", formatCourtReservation(court.reservationPolicy)],
             ["Courts", court.courtCount ?? "Ask the court"],
-            ["Setting", court.environment ? court.environment.replace("semi-indoor", "Semi-indoor") : "Not listed"],
+            [
+              "Setting",
+              court.environment
+                ? court.environment.replace("semi-indoor", "Semi-indoor")
+                : "Not listed",
+            ],
             ["Price", court.priceLabel ?? "Ask the court"],
             ["Parking", court.parkingLabel ?? "Not listed"],
             ["Paddle rental", court.paddleRental ? "Available" : "Not listed"],
-            ["Operating hours", formatCourtOperatingHours(court.operatingHours) ?? "Ask the court"],
+            [
+              "Operating hours",
+              formatCourtOperatingHours(court.operatingHours) ??
+                "Ask the court",
+            ],
           ].map(([label, value]) => (
             <div
               key={label}
               className="border-b border-line py-4 last:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0"
             >
               <dt className="text-sm text-muted">{label}</dt>
-              <dd className={`mt-1 font-semibold ${label === "Price" ? "font-mono tabular-nums" : ""}`}>{value}</dd>
+              <dd
+                className={`mt-1 font-semibold ${label === "Price" ? "font-mono tabular-nums" : ""}`}
+              >
+                {value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -78,18 +108,28 @@ export function CourtDetails({ court, isAuthenticated }: { court: CourtListing; 
       {court.amenities.length ? (
         <section className="mt-8">
           <h2 className="text-lg font-[680]">Amenities</h2>
-          <p className="mt-2 leading-6 text-muted">{court.amenities.join(" · ")}</p>
+          <p className="mt-2 leading-6 text-muted">
+            {court.amenities.join(" · ")}
+          </p>
         </section>
       ) : null}
 
       <div className="mt-9 flex flex-wrap gap-3">
         <ButtonLink href={createHref}>Plan a game here</ButtonLink>
         {court.bookingUrl ? (
-          <ButtonLink href={court.bookingUrl} target="_blank" variant="secondary">
+          <ButtonLink
+            href={court.bookingUrl}
+            target="_blank"
+            variant="secondary"
+          >
             Open external booking <ArrowSquareOut aria-hidden size={16} />
           </ButtonLink>
         ) : court.websiteUrl ? (
-          <ButtonLink href={court.websiteUrl} target="_blank" variant="secondary">
+          <ButtonLink
+            href={court.websiteUrl}
+            target="_blank"
+            variant="secondary"
+          >
             Court website <ArrowSquareOut aria-hidden size={16} />
           </ButtonLink>
         ) : null}
@@ -104,8 +144,9 @@ export function CourtDetails({ court, isAuthenticated }: { court: CourtListing; 
 
       <div className="mt-8 flex flex-col items-start gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-2xl text-xs leading-5 text-muted">
-          Relay does not manage bookings or live court availability. Confirm current rates, hours, access rules, and
-          availability with the court before you go.
+          Relay does not manage bookings or live court availability. Confirm
+          current rates, hours, access rules, and availability with the court
+          before you go.
           {court.sourceUrl ? (
             <>
               {" "}

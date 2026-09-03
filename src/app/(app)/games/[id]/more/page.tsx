@@ -1,4 +1,9 @@
-import { ArrowSquareOut, CaretRight, PencilSimple, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowSquareOut,
+  CaretRight,
+  PencilSimple,
+  ShieldCheck,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,38 +13,58 @@ import { rotationName } from "@/features/matches/rotation";
 import { DeleteSessionControl } from "@/features/sessions/delete-session-control";
 import { getSessionForParticipant } from "@/features/sessions/queries";
 
-export default async function MorePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MorePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const user = await requireUser();
   const sessionId = (await params).id;
   const data = await getSessionForParticipant(sessionId, user.id);
   if (!data) notFound();
-  const isHost = data.session.hostId === user.id || data.membership?.role === "cohost";
+  const isHost =
+    data.session.hostId === user.id || data.membership?.role === "cohost";
   return (
     <>
-      <GamePageIntro title="More" description="Session access, public link, current setup, and account controls." />
+      <GamePageIntro
+        title="More"
+        description="Session access, public link, current setup, and account controls."
+      />
       <div className="mx-auto w-full max-w-6xl">
         <section className="divide-y divide-line border-y border-line">
           {isHost ? (
-            <Link href={`/games/${sessionId}/settings`} className="flex min-h-16 items-center gap-3 py-3">
+            <Link
+              href={`/games/${sessionId}/settings`}
+              className="flex min-h-16 items-center gap-3 py-3"
+            >
               <PencilSimple aria-hidden className="text-primary" size={18} />
               <div className="flex-1">
                 <p className="font-semibold">Game settings</p>
-                <p className="mt-1 text-sm text-muted">Edit the plan, court, player limit, court count, and booking.</p>
+                <p className="mt-1 text-sm text-muted">
+                  Edit the plan, court, player limit, court count, and booking.
+                </p>
               </div>
               <CaretRight aria-hidden className="text-muted" size={17} />
             </Link>
           ) : null}
-          <Link href={`/s/${data.session.slug}`} className="flex min-h-16 items-center justify-between py-3">
+          <Link
+            href={`/s/${data.session.slug}`}
+            className="flex min-h-16 items-center justify-between py-3"
+          >
             <div>
               <p className="font-semibold">Public game page</p>
-              <p className="mt-1 text-sm text-muted">Preview the link your friends receive.</p>
+              <p className="mt-1 text-sm text-muted">
+                Preview the link your friends receive.
+              </p>
             </div>
             <ArrowSquareOut className="text-muted" size={17} />
           </Link>
           <div className="flex min-h-16 items-center gap-3 py-3">
             <ShieldCheck className="text-primary" />
             <div>
-              <p className="font-semibold">{isHost ? "You manage this game" : "Participant access"}</p>
+              <p className="font-semibold">
+                {isHost ? "You manage this game" : "Participant access"}
+              </p>
               <p className="mt-1 text-sm text-muted">
                 {isHost
                   ? "Roster, Play, scoring, and payment controls are available to you."
@@ -53,25 +78,37 @@ export default async function MorePage({ params }: { params: Promise<{ id: strin
           <dl className="mt-3 divide-y divide-line border-y border-line text-sm">
             <div className="flex justify-between py-4">
               <dt className="text-muted">Visibility</dt>
-              <dd className="font-medium capitalize">{data.session.visibility}</dd>
+              <dd className="font-medium capitalize">
+                {data.session.visibility}
+              </dd>
             </div>
             <div className="flex justify-between py-4">
               <dt className="text-muted">Rotation</dt>
-              <dd className="font-medium capitalize">{rotationName(data.session.rotationMode)}</dd>
+              <dd className="font-medium capitalize">
+                {rotationName(data.session.rotationMode)}
+              </dd>
             </div>
             <div className="flex justify-between py-4">
               <dt className="text-muted">Roster</dt>
-              <dd className="font-medium">{data.session.rosterLocked ? "Locked" : "Open"}</dd>
+              <dd className="font-medium">
+                {data.session.rosterLocked ? "Locked" : "Open"}
+              </dd>
             </div>
           </dl>
         </section>
         {data.session.hostId === user.id ? (
           <section className="mt-10" aria-labelledby="danger-zone-title">
-            <h2 id="danger-zone-title" className="text-sm font-semibold text-danger">
+            <h2
+              id="danger-zone-title"
+              className="text-sm font-semibold text-danger"
+            >
               Danger zone
             </h2>
             <div className="mt-2 border-y border-line">
-              <DeleteSessionControl sessionId={sessionId} title={data.session.title} />
+              <DeleteSessionControl
+                sessionId={sessionId}
+                title={data.session.title}
+              />
             </div>
           </section>
         ) : null}

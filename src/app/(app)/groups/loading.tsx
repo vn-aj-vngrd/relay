@@ -2,7 +2,10 @@ import { Plus } from "@phosphor-icons/react/dist/ssr";
 
 import { Skeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
-import { GroupDesktopViewControls, GroupViewMenu } from "@/features/groups/group-collection";
+import {
+  GroupDesktopViewControls,
+  GroupViewMenu,
+} from "@/features/groups/group-collection";
 import { GroupsLoadingFilterRail } from "@/features/groups/groups-loading-filter-rail";
 
 export default function GroupsLoading() {

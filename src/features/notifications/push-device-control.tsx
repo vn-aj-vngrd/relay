@@ -18,7 +18,10 @@ export function PushDeviceControl({ compact = false }: { compact?: boolean }) {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const available = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+    const available =
+      "serviceWorker" in navigator &&
+      "PushManager" in window &&
+      "Notification" in window;
     void Promise.resolve().then(() => setSupported(available));
     if (available)
       void navigator.serviceWorker.ready
@@ -31,11 +34,18 @@ export function PushDeviceControl({ compact = false }: { compact?: boolean }) {
     setPending(true);
     setMessage("");
     try {
-      const configResponse = await fetch("/api/notifications/subscriptions", { cache: "no-store" });
-      const config = (await configResponse.json()) as { enabled?: boolean; publicKey?: string };
-      if (!config.enabled || !config.publicKey) throw new Error("Push delivery is not configured yet.");
+      const configResponse = await fetch("/api/notifications/subscriptions", {
+        cache: "no-store",
+      });
+      const config = (await configResponse.json()) as {
+        enabled?: boolean;
+        publicKey?: string;
+      };
+      if (!config.enabled || !config.publicKey)
+        throw new Error("Push delivery is not configured yet.");
       const permission = await Notification.requestPermission();
-      if (permission !== "granted") throw new Error("Notifications remain off for this browser.");
+      if (permission !== "granted")
+        throw new Error("Notifications remain off for this browser.");
       const registration = await navigator.serviceWorker.ready;
       const subscription =
         (await registration.pushManager.getSubscription()) ??
@@ -50,9 +60,15 @@ export function PushDeviceControl({ compact = false }: { compact?: boolean }) {
       });
       if (!response.ok) throw new Error("This device could not be registered.");
       setSubscribed(true);
-      setMessage("Push notifications are ready on this device. You can fine-tune categories above.");
+      setMessage(
+        "Push notifications are ready on this device. You can fine-tune categories above."
+      );
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Push notifications could not be enabled.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Push notifications could not be enabled."
+      );
     } finally {
       setPending(false);
     }
@@ -82,12 +98,21 @@ export function PushDeviceControl({ compact = false }: { compact?: boolean }) {
   }
 
   if (supported === false)
-    return <p className="text-sm text-muted">Push notifications aren’t supported in this browser.</p>;
+    return (
+      <p className="text-sm text-muted">
+        Push notifications aren’t supported in this browser.
+      </p>
+    );
   if (supported === null) return null;
 
   return (
     <div className={compact ? "" : "border-y border-line py-4"}>
-      <Button type="button" variant="secondary" disabled={pending} onClick={subscribed ? disable : enable}>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={pending}
+        onClick={subscribed ? disable : enable}
+      >
         {pending ? (
           <ButtonSpinner />
         ) : subscribed ? (
@@ -95,7 +120,11 @@ export function PushDeviceControl({ compact = false }: { compact?: boolean }) {
         ) : (
           <Bell aria-hidden size={16} />
         )}
-        {pending ? "Updating…" : subscribed ? "Disable on this device" : "Enable on this device"}
+        {pending
+          ? "Updating…"
+          : subscribed
+            ? "Disable on this device"
+            : "Enable on this device"}
       </Button>
       {message ? (
         <p role="status" className="mt-2 text-xs leading-5 text-muted">

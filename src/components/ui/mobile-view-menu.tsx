@@ -24,7 +24,8 @@ export function MobileViewMenu<T extends string>({
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const current = options.find((option) => option.value === value) ?? options[0]!;
+  const current =
+    options.find((option) => option.value === value) ?? options[0]!;
   const CurrentIcon = current.icon;
 
   useEffect(() => {

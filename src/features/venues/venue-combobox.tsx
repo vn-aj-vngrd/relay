@@ -34,7 +34,9 @@ export function VenueCombobox({
     return courts
       .filter(
         (court) =>
-          !term || court.name.toLocaleLowerCase().includes(term) || court.address.toLocaleLowerCase().includes(term),
+          !term ||
+          court.name.toLocaleLowerCase().includes(term) ||
+          court.address.toLocaleLowerCase().includes(term)
       )
       .slice(0, 6);
   }, [address, courts, query]);
@@ -62,7 +64,9 @@ export function VenueCombobox({
       setActiveIndex((index) => (index + 1) % suggestions.length);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex((index) => (index <= 0 ? suggestions.length - 1 : index - 1));
+      setActiveIndex((index) =>
+        index <= 0 ? suggestions.length - 1 : index - 1
+      );
     } else if (event.key === "Enter" && activeIndex >= 0) {
       event.preventDefault();
       selectSuggestion(suggestions[activeIndex]);
@@ -83,13 +87,18 @@ export function VenueCombobox({
       ref={containerRef}
       className="relative"
       onBlurCapture={(event) => {
-        if (!containerRef.current?.contains(event.relatedTarget as Node | null)) {
+        if (
+          !containerRef.current?.contains(event.relatedTarget as Node | null)
+        ) {
           setOpen(false);
           setActiveIndex(-1);
         }
       }}
     >
-      <MapPin className="pointer-events-none absolute left-3.5 top-[17px] z-10 text-muted" size={18} />
+      <MapPin
+        className="pointer-events-none absolute left-3.5 top-[17px] z-10 text-muted"
+        size={18}
+      />
       <input
         className={`mt-1.5 h-11 w-full rounded-lg border bg-surface px-3 pl-10 text-[15px] text-ink placeholder:text-muted focus:outline-none ${error ? "border-danger focus:border-danger focus:ring-2 focus:ring-danger/15" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`}
         id="venue"
@@ -116,7 +125,9 @@ export function VenueCombobox({
         aria-autocomplete="list"
         aria-expanded={open && suggestions.length > 0}
         aria-controls={listboxId}
-        aria-activedescendant={open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined}
+        aria-activedescendant={
+          open && activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
+        }
         aria-invalid={Boolean(error)}
         aria-describedby={`venue-hint${error ? " venue-error" : ""}`}
       />
@@ -140,16 +151,28 @@ export function VenueCombobox({
               onClick={() => selectSuggestion(suggestion)}
               className={`pressable flex min-h-14 w-full cursor-pointer items-start gap-3 rounded-md px-3 py-2.5 text-left ${activeIndex === index ? "bg-surface-strong" : "hover:bg-surface-strong/70"}`}
             >
-              <MapPin aria-hidden className="mt-0.5 shrink-0 text-primary" size={17} />
+              <MapPin
+                aria-hidden
+                className="mt-0.5 shrink-0 text-primary"
+                size={17}
+              />
               <span className="min-w-0">
-                <strong className="block truncate text-sm font-semibold text-ink">{suggestion.name}</strong>
-                <span className="mt-0.5 block truncate text-xs text-muted">{suggestion.address}</span>
+                <strong className="block truncate text-sm font-semibold text-ink">
+                  {suggestion.name}
+                </strong>
+                <span className="mt-0.5 block truncate text-xs text-muted">
+                  {suggestion.address}
+                </span>
               </span>
             </li>
           ))}
         </ul>
       ) : null}
-      <p id="venue-hint" aria-live="polite" className="mt-1.5 text-sm text-muted">
+      <p
+        id="venue-hint"
+        aria-live="polite"
+        className="mt-1.5 text-sm text-muted"
+      >
         {hint}
       </p>
     </div>

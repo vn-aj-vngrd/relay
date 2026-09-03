@@ -20,12 +20,17 @@ export default async function ChangePasswordPage({
     <div className="mx-auto w-full max-w-6xl">
       <header className="border-b border-line pb-6">
         <p className="mb-3 text-sm">
-          <Link href="/preferences" className="font-semibold text-primary hover:underline">
+          <Link
+            href="/preferences"
+            className="font-semibold text-primary hover:underline"
+          >
             Preferences
           </Link>
         </p>
         <h1 className="app-title">Change password</h1>
-        <p className="mt-2 text-sm text-muted">Confirm your current password, then choose a new one.</p>
+        <p className="mt-2 text-sm text-muted">
+          Confirm your current password, then choose a new one.
+        </p>
       </header>
       <div className="max-w-md py-8">
         {success ? (
@@ -50,7 +55,11 @@ export default async function ChangePasswordPage({
             autoComplete="new-password"
             required
             minLength={8}
-            hint={<p className="mt-2 text-xs text-muted">At least 8 characters, including a letter and number.</p>}
+            hint={
+              <p className="mt-2 text-xs text-muted">
+                At least 8 characters, including a letter and number.
+              </p>
+            }
           />
           <PasswordField
             id="confirm-password"
@@ -66,7 +75,10 @@ export default async function ChangePasswordPage({
         </form>
         <p className="mt-7 border-t border-line pt-5 text-sm leading-6 text-muted">
           Don’t know your current password?{" "}
-          <Link href="/forgot-password" className="font-semibold text-ink hover:underline">
+          <Link
+            href="/forgot-password"
+            className="font-semibold text-ink hover:underline"
+          >
             Send yourself a reset link.
           </Link>
         </p>

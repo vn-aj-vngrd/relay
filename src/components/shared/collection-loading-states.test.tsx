@@ -17,20 +17,30 @@ describe("collection loading boundaries", () => {
     ["Notifications", NotificationsLoading],
   ] as const)("keeps the %s title as real UI", (title, Loading) => {
     render(<Loading />);
-    expect(screen.getByRole("heading", { name: title, level: 1 })).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: title, level: 1 })
+    ).toBeVisible();
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
   });
 
   it("uses the create shell instead of the parent Games fallback", () => {
     render(<NewGameLoading />);
-    expect(screen.getByRole("heading", { name: "Create a game", level: 1 })).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "Games", level: 1 })).not.toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Create game progress" })).toHaveTextContent("Step 1 of 4");
+    expect(
+      screen.getByRole("heading", { name: "Create a game", level: 1 })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Games", level: 1 })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Create game progress" })
+    ).toHaveTextContent("Step 1 of 4");
   });
 
   it("keeps Games section tabs real while game rows load", () => {
     render(<OpenGamesLoading />);
-    const navigation = screen.getByRole("navigation", { name: "Games sections" });
+    const navigation = screen.getByRole("navigation", {
+      name: "Games sections",
+    });
     expect(navigation).toHaveTextContent("My games");
     expect(navigation).toHaveTextContent("Open games");
 
@@ -44,7 +54,9 @@ describe("collection loading boundaries", () => {
 
   it("keeps notification filters real while notifications load", () => {
     render(<NotificationsLoading />);
-    const navigation = screen.getByRole("navigation", { name: "Notification filters" });
+    const navigation = screen.getByRole("navigation", {
+      name: "Notification filters",
+    });
     expect(navigation).toHaveTextContent("All");
     expect(navigation).toHaveTextContent("Unread");
   });

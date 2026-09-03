@@ -20,29 +20,47 @@ describe("session validation", () => {
     capacity: 8,
     courtCount: 2,
   };
-  it("accepts the smallest complete session plan", () => expect(createSchema.safeParse(valid).success).toBe(true));
+  it("accepts the smallest complete session plan", () =>
+    expect(createSchema.safeParse(valid).success).toBe(true));
   it("defaults to violet and rejects colors outside the curated game palette", () => {
     expect(createSchema.parse(valid).accentColor).toBe("violet");
-    expect(createSchema.safeParse({ ...valid, accentColor: "hot-pink" }).success).toBe(false);
+    expect(
+      createSchema.safeParse({ ...valid, accentColor: "hot-pink" }).success
+    ).toBe(false);
   });
   it("rejects a start time that is not in the future", () => {
-    const result = createSchema.safeParse({ ...valid, startsAt: now, endsAt: new Date(now.getTime() + 3600000) });
-    expect(result.success ? [] : result.error.flatten().fieldErrors.startsAt).toContain(
-      "Start time must be in the future.",
-    );
+    const result = createSchema.safeParse({
+      ...valid,
+      startsAt: now,
+      endsAt: new Date(now.getTime() + 3600000),
+    });
+    expect(
+      result.success ? [] : result.error.flatten().fieldErrors.startsAt
+    ).toContain("Start time must be in the future.");
   });
   it("rejects an end time before the start", () =>
-    expect(createSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success).toBe(false));
+    expect(
+      createSchema.safeParse({ ...valid, endsAt: valid.startsAt }).success
+    ).toBe(false));
   it("accepts a larger court quantity without a four-court preset limit", () => {
-    expect(createSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(true);
+    expect(createSchema.safeParse({ ...valid, courtCount: 20 }).success).toBe(
+      true
+    );
   });
   it("requires a transparent cost expectation for public games", () => {
     const missing = createSchema.safeParse({ ...valid, visibility: "public" });
-    expect(missing.success ? [] : missing.error.flatten().fieldErrors.costKind).toContain(
-      "Public games must be marked free or include an estimated cost per player.",
+    expect(
+      missing.success ? [] : missing.error.flatten().fieldErrors.costKind
+    ).toContain(
+      "Public games must be marked free or include an estimated cost per player."
     );
     expect(
-      createSchema.safeParse({ ...valid, visibility: "public", costKind: "free", estimatedCostCents: 0 }).success,
+      createSchema.safeParse({
+        ...valid,
+        visibility: "public",
+        costKind: "free",
+        estimatedCostCents: 0,
+      }).success
     ).toBe(true);
     expect(
       createSchema.safeParse({
@@ -50,15 +68,24 @@ describe("session validation", () => {
         visibility: "public",
         costKind: "estimated",
         estimatedCostCents: 30_000,
-      }).success,
+      }).success
     ).toBe(true);
     expect(
-      createSchema.safeParse({ ...valid, visibility: "public", costKind: "estimated", estimatedCostCents: 0 }).success,
+      createSchema.safeParse({
+        ...valid,
+        visibility: "public",
+        costKind: "estimated",
+        estimatedCostCents: 0,
+      }).success
     ).toBe(false);
   });
   it("keeps cost optional for link-only and private games", () => {
-    expect(createSchema.safeParse({ ...valid, visibility: "link" }).success).toBe(true);
-    expect(createSchema.safeParse({ ...valid, visibility: "private" }).success).toBe(true);
+    expect(
+      createSchema.safeParse({ ...valid, visibility: "link" }).success
+    ).toBe(true);
+    expect(
+      createSchema.safeParse({ ...valid, visibility: "private" }).success
+    ).toBe(true);
   });
   it("validates editable sharing and booking fields", () => {
     const update = {
@@ -72,7 +99,10 @@ describe("session validation", () => {
       bookingTotalCents: 240000,
     };
     expect(updateSessionSchema.safeParse(update).success).toBe(true);
-    expect(updateSessionSchema.safeParse({ ...update, visibility: "friends" }).success).toBe(false);
+    expect(
+      updateSessionSchema.safeParse({ ...update, visibility: "friends" })
+        .success
+    ).toBe(false);
   });
   it("accepts booking details during creation only when the court is marked booked", () => {
     expect(
@@ -82,35 +112,59 @@ describe("session validation", () => {
         bookingReference: "CP-2048",
         bookingTotalCents: 240_000,
         bookingNotes: "Reserved under Alex",
-      }).success,
+      }).success
     ).toBe(true);
-    expect(createSchema.safeParse({ ...valid, bookingTotalCents: 240_000 }).success).toBe(false);
+    expect(
+      createSchema.safeParse({ ...valid, bookingTotalCents: 240_000 }).success
+    ).toBe(false);
   });
   it("returns clear boundaries for unsafe capacity and court quantities", () => {
-    expect(createSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(false);
+    expect(createSchema.safeParse({ ...valid, capacity: 1 }).success).toBe(
+      false
+    );
     const tooFew = createSchema.safeParse({ ...valid, courtCount: 0 });
     const tooMany = createSchema.safeParse({ ...valid, courtCount: 21 });
-    expect(tooFew.success ? [] : tooFew.error.flatten().fieldErrors.courtCount).toContain("Choose at least 1 court.");
-    expect(tooMany.success ? [] : tooMany.error.flatten().fieldErrors.courtCount).toContain(
-      "Relay supports up to 20 courts per session.",
-    );
+    expect(
+      tooFew.success ? [] : tooFew.error.flatten().fieldErrors.courtCount
+    ).toContain("Choose at least 1 court.");
+    expect(
+      tooMany.success ? [] : tooMany.error.flatten().fieldErrors.courtCount
+    ).toContain("Relay supports up to 20 courts per session.");
   });
 });
 
 describe("session roster", () => {
   it("allows new responses by visibility without treating an obscure ID as authorization", () => {
-    const common = { hostId: "host", userId: "stranger", hasRosterIdentity: false };
+    const common = {
+      hostId: "host",
+      userId: "stranger",
+      hasRosterIdentity: false,
+    };
     expect(canRespondToSession({ ...common, visibility: "public" })).toBe(true);
     expect(canRespondToSession({ ...common, visibility: "link" })).toBe(true);
-    expect(canRespondToSession({ ...common, visibility: "private" })).toBe(false);
-    expect(canRespondToSession({ ...common, visibility: "private", userId: "host" })).toBe(true);
-    expect(canRespondToSession({ ...common, visibility: "private", hasRosterIdentity: true })).toBe(true);
+    expect(canRespondToSession({ ...common, visibility: "private" })).toBe(
+      false
+    );
+    expect(
+      canRespondToSession({ ...common, visibility: "private", userId: "host" })
+    ).toBe(true);
+    expect(
+      canRespondToSession({
+        ...common,
+        visibility: "private",
+        hasRosterIdentity: true,
+      })
+    ).toBe(true);
   });
 
   it("does not confuse a new guest with an authenticated player that has no guest token", () => {
     const roster = [{ id: "host", userId: "user-1", guestTokenHash: null }];
-    expect(findRosterIdentity(roster, { userId: null, guestTokenHash: null })).toBeUndefined();
-    expect(findRosterIdentity(roster, { guestTokenHash: "guest-hash" })).toBeUndefined();
+    expect(
+      findRosterIdentity(roster, { userId: null, guestTokenHash: null })
+    ).toBeUndefined();
+    expect(
+      findRosterIdentity(roster, { guestTokenHash: "guest-hash" })
+    ).toBeUndefined();
   });
 });
 
@@ -139,6 +193,8 @@ describe("session cloning", () => {
   });
 
   it("invites the reusable crew without duplicating the host or copying RSVP state", () => {
-    expect(sessionInviteeIds("host", ["host", "mika", "mika", null, "aj"])).toEqual(["mika", "aj"]);
+    expect(
+      sessionInviteeIds("host", ["host", "mika", "mika", null, "aj"])
+    ).toEqual(["mika", "aj"]);
   });
 });
