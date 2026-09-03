@@ -9,7 +9,7 @@ import { getLiveSession } from "@/features/matches/queries";
 import { getSessionRecapData } from "@/features/memories/queries";
 import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
+import { AttendanceToggle, PlayAvailabilityControl } from "@/features/sessions/attendance-toggle";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
@@ -23,6 +23,7 @@ export type SessionPlayViewer = {
   playerId?: string;
   rsvp?: string;
   checkedInAt?: Date | null;
+  playState?: string;
   canManagePlay: boolean;
   canCompleteSession: boolean;
   canScoreAll: boolean;
@@ -64,7 +65,11 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref, continua
   const { canStartRotation, rotationLabel, roundMode, roundRobinComplete, roundStartedAt, waiting, waitingPairs } =
     data.play;
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
-  const checkedIn = going.filter(({ player }) => player.checkedInAt);
+  const queueByPlayerId = new Map(data.queue.map(({ queue }) => [queue.sessionPlayerId, queue]));
+  const readyCount = going.filter(({ player }) => {
+    const state = queueByPlayerId.get(player.id)?.state;
+    return player.playState !== "resting" && (state === "playing" || state === "waiting");
+  }).length;
 
   if (data.session.status !== "live") {
     return (
@@ -186,32 +191,34 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref, continua
       </section>
 
       <aside>
-        <section aria-labelledby="live-arrivals-title">
-          <h2 id="live-arrivals-title" className="text-lg font-bold">
-            Arrivals
+        <section aria-labelledby="live-availability-title">
+          <h2 id="live-availability-title" className="text-lg font-bold">
+            Player availability
           </h2>
           <p className="mt-1 text-sm leading-5 text-muted">
-            {checkedIn.length} of {going.length} here · late arrivals join the end of the queue.
+            {readyCount} of {going.length} ready · late arrivals and returning players join the end of the queue.
           </p>
           {viewer.canManagePlay ? (
             <div className="mt-3 divide-y divide-line border-y border-line">
               {going.map(({ player, profile }) => (
-                <AttendanceToggle
+                <PlayAvailabilityControl
                   key={player.id}
                   sessionId={data.session.id}
                   sessionPlayerId={player.id}
                   name={playerName(player, profile)}
-                  present={Boolean(player.checkedInAt)}
+                  queueState={queueByPlayerId.get(player.id)?.state}
+                  playerState={player.playState}
                 />
               ))}
             </div>
           ) : viewer.rsvp === "going" && viewer.playerId ? (
             <div className="mt-3 border-y border-line py-3">
-              <AttendanceToggle
+              <PlayAvailabilityControl
                 sessionId={data.session.id}
                 sessionPlayerId={viewer.playerId}
                 name="yourself"
-                present={Boolean(viewer.checkedInAt)}
+                queueState={queueByPlayerId.get(viewer.playerId)?.state}
+                playerState={viewer.playState ?? "unavailable"}
                 compact
               />
             </div>

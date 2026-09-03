@@ -39,6 +39,7 @@ A shared route and its authenticated counterpart must expose the same session fa
 | Read plan, roster, Play, and scores               | Yes             | Yes              | Yes          | Yes                |
 | RSVP or update own response                       | Own response    | Own response     | Own response | Join by name first |
 | Chat, contribute memories, and upload proof       | Yes             | Yes              | Yes          | Join first         |
+| Update live availability                          | Any player      | Self             | Self         | No                 |
 | Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
 | Correct a completed match score                   | Yes             | No               | No           | No                 |
 | End or delete the session                         | Host only       | No               | No           | No                 |
@@ -64,6 +65,7 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - Reconnect language and concurrency errors must match across access paths.
 - Score controls update locally, debounce one absolute write, and reconcile against the server version. A conflict restores and names the authoritative score before inviting a retry. Hosts, co-hosts, and signed-in players assigned to that active match may score.
 - Match completion confirms the teams and final score. Completed results appear on both access paths; only hosts and co-hosts may correct them, and corrections update standings and recap without rewriting later court assignments.
+- Before Play, attendance uses **Here / Not here**. During Play, availability uses **On court**, **Waiting**, **Sitting out**, and **Sitting out after match**. Active players finish their match before sitting out; late and returning players rejoin at the queue’s end. These changes never alter RSVP or past results.
 
 ## Completion check
 

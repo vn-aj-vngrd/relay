@@ -4,9 +4,10 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./actions", () => ({
   setAllAttendanceAction: vi.fn(async () => ({ success: true })),
   setAttendanceAction: vi.fn(async () => ({ success: true })),
+  setPlayAvailabilityAction: vi.fn(async () => ({ success: true })),
 }));
 
-import { AttendanceBulkActions, AttendanceToggle } from "./attendance-toggle";
+import { AttendanceBulkActions, AttendanceToggle, PlayAvailabilityControl } from "./attendance-toggle";
 
 const props = {
   sessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
@@ -21,6 +22,28 @@ describe("AttendanceBulkActions", () => {
 
     rerender(<AttendanceBulkActions sessionId={props.sessionId} allPresent />);
     expect(screen.getByRole("button", { name: "Mark all not here" })).toBeVisible();
+  });
+});
+
+describe("PlayAvailabilityControl", () => {
+  it("uses live-play language for waiting, resting, and active players", () => {
+    const { rerender } = render(<PlayAvailabilityControl {...props} queueState="waiting" playerState="waiting" />);
+    expect(screen.getByText("Waiting")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Sit out for Mika" })).toBeVisible();
+
+    rerender(<PlayAvailabilityControl {...props} queueState="resting" playerState="resting" />);
+    expect(screen.getByText("Sitting out")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Rejoin queue for Mika" })).toBeVisible();
+
+    rerender(<PlayAvailabilityControl {...props} queueState="playing" playerState="playing" />);
+    expect(screen.getByText("On court")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Sit out after match for Mika" })).toBeVisible();
+  });
+
+  it("lets an active player cancel a deferred break", () => {
+    render(<PlayAvailabilityControl {...props} queueState="playing" playerState="resting" />);
+    expect(screen.getByText("Sitting out after match")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Stay in for Mika" })).toBeVisible();
   });
 });
 

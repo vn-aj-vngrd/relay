@@ -18,6 +18,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
     playerId: data.membership?.id,
     rsvp: data.membership?.rsvp,
     checkedInAt: data.membership?.checkedInAt,
+    playState: data.membership?.playState,
     canManagePlay: can(actor, "edit"),
     canCompleteSession: can(actor, "complete"),
     canScoreAll: can(actor, "score"),

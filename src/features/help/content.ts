@@ -136,7 +136,7 @@ export const helpGuides = [
       {
         title: "Record points or only the result",
         detail:
-          "Use the large minus and plus zones for live scoring, or enter the final result after the match. Assigned signed-in players may score their own court.",
+          "Use the large minus and plus zones for live scoring, or enter the final result after the match. Assigned signed-in players may score their own court. Waiting players can sit out immediately; active players can sit out after their match; anyone returning joins the queue’s end.",
       },
       {
         title: "Finish and advance",

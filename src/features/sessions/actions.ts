@@ -22,6 +22,7 @@ import {
 import { trackProductEvent, trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
+import { planPlayAvailability } from "@/features/matches/availability";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
@@ -671,31 +672,16 @@ export async function toggleRosterLockAction(formData: FormData) {
   revalidatePath(`/s/${session.slug}`);
 }
 
-const attendanceInput = z.object({
-  sessionId: z.uuid(),
-  sessionPlayerId: z.uuid(),
-  present: z.enum(["true", "false"]).transform((value) => value === "true"),
-});
-
-export type AttendanceActionState = { error?: string; success?: boolean };
-
-export async function setAttendanceAction(
-  _: AttendanceActionState,
-  formData: FormData,
-): Promise<AttendanceActionState> {
-  const parsed = attendanceInput.safeParse({
-    sessionId: formData.get("sessionId"),
-    sessionPlayerId: formData.get("sessionPlayerId"),
-    present: formData.get("present"),
-  });
-  if (!parsed.success) return { error: "This player could not be updated." };
-  const session = await db.query.sessions.findFirst({ where: eq(sessions.id, parsed.data.sessionId) });
+async function attendanceMutationContext(sessionId: string, sessionPlayerId: string) {
+  const [session, target] = await Promise.all([
+    db.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
+    db.query.sessionPlayers.findFirst({
+      where: and(eq(sessionPlayers.id, sessionPlayerId), eq(sessionPlayers.sessionId, sessionId)),
+    }),
+  ]);
   if (!session || !["draft", "published", "live"].includes(session.status))
-    return { error: "Check-in is closed for this game." };
-  const target = await db.query.sessionPlayers.findFirst({
-    where: and(eq(sessionPlayers.id, parsed.data.sessionPlayerId), eq(sessionPlayers.sessionId, parsed.data.sessionId)),
-  });
-  if (!target || target.rsvp !== "going") return { error: "Only going players can check in." };
+    return { error: "Player availability is closed for this game." } as const;
+  if (!target || target.rsvp !== "going") return { error: "Only going players can update availability." } as const;
 
   const user = await getCurrentUser();
   const manager = user ? await requireSessionManager(session.id, user.id) : null;
@@ -709,14 +695,38 @@ export async function setAttendanceAction(
       isSelf = guestHash === target.guestTokenHash;
     }
   }
-  if (!manager && !isSelf) return { error: "You can only update your own arrival." };
+  if (!manager && !isSelf) return { error: "You can only update your own availability." } as const;
   if (!manager) {
     const limit = await checkRateLimit(
       { scope: "attendance-self", limit: 30, windowSeconds: 60 },
       `player:${target.id}`,
     );
-    if (!limit.allowed) return { error: "Arrival is changing too quickly. Wait a moment and try again." };
+    if (!limit.allowed) return { error: "Availability is changing too quickly. Wait a moment and try again." } as const;
   }
+  return { session, target } as const;
+}
+
+const attendanceInput = z.object({
+  sessionId: z.uuid(),
+  sessionPlayerId: z.uuid(),
+  present: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
+
+export type AttendanceActionState = { error?: string; success?: boolean; message?: string };
+
+export async function setAttendanceAction(
+  _: AttendanceActionState,
+  formData: FormData,
+): Promise<AttendanceActionState> {
+  const parsed = attendanceInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    sessionPlayerId: formData.get("sessionPlayerId"),
+    present: formData.get("present"),
+  });
+  if (!parsed.success) return { error: "This player could not be updated." };
+  const context = await attendanceMutationContext(parsed.data.sessionId, parsed.data.sessionPlayerId);
+  if ("error" in context) return context;
+  const { session, target } = context;
 
   try {
     await db.transaction(async (tx) => {
@@ -769,6 +779,128 @@ export async function setAttendanceAction(
   revalidatePath(`/games/${session.id}/play/setup`);
   revalidatePath(`/s/${session.slug}/play`);
   return { success: true };
+}
+
+const playAvailabilityInput = z.object({
+  sessionId: z.uuid(),
+  sessionPlayerId: z.uuid(),
+  intent: z.enum(["ready", "sit_out"]),
+});
+
+export async function setPlayAvailabilityAction(
+  _: AttendanceActionState,
+  formData: FormData,
+): Promise<AttendanceActionState> {
+  const parsed = playAvailabilityInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    sessionPlayerId: formData.get("sessionPlayerId"),
+    intent: formData.get("intent"),
+  });
+  if (!parsed.success) return { error: "This player’s availability could not be updated." };
+  const context = await attendanceMutationContext(parsed.data.sessionId, parsed.data.sessionPlayerId);
+  if ("error" in context) return context;
+  const { session, target } = context;
+  if (session.status !== "live") return { error: "Play availability opens after Play starts." };
+
+  const profile = target.userId
+    ? await db.query.profiles.findFirst({ columns: { name: true }, where: eq(profiles.userId, target.userId) })
+    : null;
+  const name = profile?.name ?? target.guestName ?? "A player";
+  let outcome = "";
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
+      const currentSession = await tx.query.sessions.findFirst({
+        columns: { status: true },
+        where: eq(sessions.id, session.id),
+      });
+      const currentTarget = await tx.query.sessionPlayers.findFirst({
+        columns: { checkedInAt: true, playState: true, rsvp: true },
+        where: and(eq(sessionPlayers.id, target.id), eq(sessionPlayers.sessionId, session.id)),
+      });
+      const currentQueue = await tx.query.sessionQueue.findFirst({
+        where: and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, target.id)),
+      });
+      if (currentSession?.status !== "live") throw new Error("AVAILABILITY_CLOSED");
+      if (!currentTarget || currentTarget.rsvp !== "going") throw new Error("PLAYER_NOT_FOUND");
+      const queue = await tx
+        .select({ position: sessionQueue.position })
+        .from(sessionQueue)
+        .where(eq(sessionQueue.sessionId, session.id));
+      const plan = planPlayAvailability({
+        intent: parsed.data.intent,
+        queueState: currentQueue?.state ?? null,
+        maxQueuePosition: Math.max(0, ...queue.map((item) => item.position)),
+      });
+      const unchanged =
+        currentTarget.playState === plan.playerState &&
+        (plan.queueState === null || currentQueue?.state === plan.queueState);
+      if (unchanged) {
+        outcome = parsed.data.intent === "ready" ? "Already ready to play." : "Already sitting out.";
+        return;
+      }
+
+      await tx
+        .update(sessionPlayers)
+        .set({
+          checkedInAt:
+            parsed.data.intent === "ready" ? (currentTarget.checkedInAt ?? new Date()) : currentTarget.checkedInAt,
+          playState: plan.playerState,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessionPlayers.id, target.id));
+
+      if (!currentQueue && plan.queueState === "waiting")
+        await tx.insert(sessionQueue).values({
+          sessionId: session.id,
+          sessionPlayerId: target.id,
+          position: plan.queuePosition!,
+          state: "waiting",
+        });
+      else if (currentQueue && plan.queueState)
+        await tx
+          .update(sessionQueue)
+          .set({
+            state: plan.queueState,
+            ...(plan.queuePosition ? { position: plan.queuePosition } : {}),
+            ...(plan.queueState === "waiting" ? { enteredAt: new Date() } : {}),
+            version: sql`${sessionQueue.version} + 1`,
+          })
+          .where(and(eq(sessionQueue.sessionId, session.id), eq(sessionQueue.sessionPlayerId, target.id)));
+
+      outcome =
+        parsed.data.intent === "ready"
+          ? currentQueue?.state === "playing"
+            ? "Staying in the current match."
+            : "Rejoined at the end of the queue."
+          : plan.deferred
+            ? "Will sit out after the current match."
+            : "Sitting out until ready to rejoin.";
+      await tx.insert(messages).values({
+        sessionId: session.id,
+        kind: "system",
+        body:
+          parsed.data.intent === "ready"
+            ? currentQueue?.state === "playing"
+              ? `${name} will stay in rotation.`
+              : `${name} rejoined the queue.`
+            : plan.deferred
+              ? `${name} will sit out after the current match.`
+              : `${name} is sitting out.`,
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "AVAILABILITY_CLOSED")
+      return { error: "Play availability is closed for this game." };
+    if (error instanceof Error && error.message === "PLAYER_NOT_FOUND")
+      return { error: "This player is no longer available to update." };
+    console.error("Play availability update failed", error instanceof Error ? error.name : "UnknownError");
+    return { error: "Availability could not be saved. Try again." };
+  }
+
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return { success: true, message: outcome };
 }
 
 export async function setAllAttendanceAction(

@@ -16,6 +16,7 @@ export default async function PublicPlayPage({ params }: { params: Promise<{ slu
     playerId: sessionViewer?.player.id,
     rsvp: sessionViewer?.player.rsvp,
     checkedInAt: sessionViewer?.player.checkedInAt,
+    playState: sessionViewer?.player.playState,
     canManagePlay: false,
     canCompleteSession: false,
     canScoreAll: Boolean(

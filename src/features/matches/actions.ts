@@ -26,6 +26,7 @@ import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
 import { assertRateLimit } from "@/lib/rate-limit";
 
+import { splitFinishedPlayers } from "./availability";
 import {
   parsePlaySetup,
   planMatchFinish,
@@ -625,6 +626,11 @@ export async function finishMatch(formData: FormData) {
       winner: winningTeam,
       previousCourtPlayerIds: match.courtId ? previousPlayers.map((player) => player.sessionPlayerId) : null,
     });
+    const resting = await tx
+      .select({ id: sessionPlayers.id })
+      .from(sessionPlayers)
+      .where(and(inArray(sessionPlayers.id, finishPlan.returnedPlayerIds), eq(sessionPlayers.playState, "resting")));
+    const availability = splitFinishedPlayers(finishPlan.returnedPlayerIds, new Set(resting.map(({ id }) => id)));
 
     await tx
       .update(matches)
@@ -643,20 +649,23 @@ export async function finishMatch(formData: FormData) {
       .set({ position: sql`${sessionQueue.position} + 100000` })
       .where(eq(sessionQueue.sessionId, sessionId));
     for (const [index, id] of [...finishPlan.orderedPlayerIds, ...remaining].entries()) {
-      const isReturning = finishPlan.returnedPlayerIds.includes(id);
+      const isWaiting = availability.waitingPlayerIds.includes(id);
+      const isResting = availability.restingPlayerIds.includes(id);
       await tx
         .update(sessionQueue)
         .set({
           position: index + 1,
-          ...(isReturning ? { state: "waiting" as const, enteredAt: new Date() } : {}),
+          ...(isWaiting ? { state: "waiting" as const, enteredAt: new Date() } : {}),
+          ...(isResting ? { state: "resting" as const } : {}),
           version: sql`${sessionQueue.version} + 1`,
         })
         .where(and(eq(sessionQueue.sessionId, sessionId), eq(sessionQueue.sessionPlayerId, id)));
     }
-    await tx
-      .update(sessionPlayers)
-      .set({ playState: "waiting" })
-      .where(inArray(sessionPlayers.id, finishPlan.returnedPlayerIds));
+    if (availability.waitingPlayerIds.length)
+      await tx
+        .update(sessionPlayers)
+        .set({ playState: "waiting" })
+        .where(inArray(sessionPlayers.id, availability.waitingPlayerIds));
     await tx.insert(messages).values({
       sessionId,
       kind: "system",
