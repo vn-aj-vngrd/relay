@@ -67,7 +67,7 @@ describe("AuthForm", () => {
     expect(screen.getByLabelText("Password")).toHaveValue("legacy");
     expect(screen.getByRole("button", { name: "Complete security check" })).toHaveAttribute(
       "data-appearance",
-      "interaction-only",
+      "always",
     );
     await waitFor(() => expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled());
 

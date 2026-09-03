@@ -229,7 +229,7 @@ export function AuthForm({
               options={{
                 size: "flexible",
                 theme: "auto",
-                appearance: "interaction-only",
+                appearance: "always",
                 refreshExpired: "auto",
                 refreshTimeout: "auto",
               }}
