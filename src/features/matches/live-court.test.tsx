@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LiveCourt, LiveCourtDeck } from "./live-court";
@@ -48,6 +48,17 @@ describe("LiveCourt", () => {
     expect(screen.getByRole("button", { name: "Finish match" })).toBeEnabled();
   });
 
+  it("confirms the final teams and score before advancing the rotation", () => {
+    render(<LiveCourt {...props} canScore />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Finish match" }));
+
+    expect(screen.getByRole("dialog", { name: "Finish Court 2 at 8–6?" })).toHaveAttribute("open");
+    expect(
+      within(screen.getByRole("dialog", { name: "Finish Court 2 at 8–6?" })).getByText(/Van Rivera/),
+    ).toBeVisible();
+  });
+
   it("updates immediately and debounces rapid score changes into one durable write", async () => {
     vi.useFakeTimers();
     render(<LiveCourt {...props} canScore />);
@@ -61,6 +72,22 @@ describe("LiveCourt", () => {
     await act(async () => vi.advanceTimersByTime(421));
     expect(saveScore).toHaveBeenCalledTimes(1);
     expect(saveScore).toHaveBeenCalledWith(expect.objectContaining({ teamAScore: 10, teamBScore: 6, version: 1 }));
+    vi.useRealTimers();
+  });
+
+  it("shows the authoritative score and a retry path after a concurrent update", async () => {
+    vi.useFakeTimers();
+    saveScore.mockResolvedValueOnce({ teamAScore: 9, teamBScore: 7, version: 2, conflict: true } as never);
+    render(<LiveCourt {...props} canScore />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add a point to Van Rivera + Mika Reyes" }));
+    await act(async () => vi.advanceTimersByTime(421));
+
+    expect(screen.getAllByLabelText("Van Rivera + Mika Reyes score 9")[0]).toHaveTextContent("9");
+    expect(screen.getAllByRole("alert")[0]).toHaveTextContent(
+      "Latest score is 9–7. Your 9–6 change wasn’t saved; use the score controls to retry.",
+    );
+    expect(refresh).toHaveBeenCalledOnce();
     vi.useRealTimers();
   });
 

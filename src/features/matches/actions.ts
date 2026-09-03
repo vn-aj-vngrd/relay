@@ -394,43 +394,143 @@ const scoreInput = z.object({
   version: z.number().int().positive(),
 });
 
+const completedScoreInput = z.object({
+  sessionId: z.uuid(),
+  matchId: z.uuid(),
+  teamAScore: z.coerce.number().int().min(0).max(99),
+  teamBScore: z.coerce.number().int().min(0).max(99),
+  version: z.coerce.number().int().positive(),
+});
+
+export type CorrectCompletedScoreState = { success?: string; error?: string };
+
 export async function saveScore(input: z.input<typeof scoreInput>) {
   const parsed = scoreInput.parse(input);
   const { session, user } = await requireScorekeeper(parsed.sessionId, parsed.matchId);
-  const updated = await db.transaction(async (tx) => {
-    const [match] = await tx
-      .update(matches)
-      .set({
-        teamAScore: parsed.teamAScore,
-        teamBScore: parsed.teamBScore,
-        version: sql`${matches.version} + 1`,
-      })
-      .where(
-        and(
-          eq(matches.id, parsed.matchId),
-          eq(matches.sessionId, parsed.sessionId),
-          eq(matches.status, "active"),
-          eq(matches.version, parsed.version),
-        ),
-      )
-      .returning({
-        teamAScore: matches.teamAScore,
-        teamBScore: matches.teamBScore,
-        version: matches.version,
+  try {
+    return await db.transaction(async (tx) => {
+      const [match] = await tx
+        .update(matches)
+        .set({
+          teamAScore: parsed.teamAScore,
+          teamBScore: parsed.teamBScore,
+          version: sql`${matches.version} + 1`,
+        })
+        .where(
+          and(
+            eq(matches.id, parsed.matchId),
+            eq(matches.sessionId, parsed.sessionId),
+            eq(matches.status, "active"),
+            eq(matches.version, parsed.version),
+          ),
+        )
+        .returning({
+          teamAScore: matches.teamAScore,
+          teamBScore: matches.teamBScore,
+          version: matches.version,
+        });
+      if (!match) throw new Error("SCORE_CONFLICT");
+      await tx.insert(matchScores).values({
+        matchId: parsed.matchId,
+        teamAScore: match.teamAScore,
+        teamBScore: match.teamBScore,
+        recordedById: user.id,
+        sequence: match.version,
       });
-    if (!match) throw new Error("SCORE_CONFLICT");
-    await tx.insert(matchScores).values({
-      matchId: parsed.matchId,
-      teamAScore: match.teamAScore,
-      teamBScore: match.teamBScore,
-      recordedById: user.id,
-      sequence: match.version,
+      return match;
     });
-    return match;
+  } catch (error) {
+    if (!(error instanceof Error && error.message === "SCORE_CONFLICT")) throw error;
+    const latest = await db.query.matches.findFirst({
+      columns: { teamAScore: true, teamBScore: true, version: true },
+      where: and(eq(matches.id, parsed.matchId), eq(matches.sessionId, parsed.sessionId), eq(matches.status, "active")),
+    });
+    if (!latest) throw error;
+    return { ...latest, conflict: true as const };
+  } finally {
+    revalidatePath(`/games/${parsed.sessionId}/play`);
+    revalidatePath(`/s/${session.slug}/play`);
+  }
+}
+
+export async function correctCompletedScore(
+  _: CorrectCompletedScoreState,
+  formData: FormData,
+): Promise<CorrectCompletedScoreState> {
+  const parsed = completedScoreInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    matchId: formData.get("matchId"),
+    teamAScore: formData.get("teamAScore"),
+    teamBScore: formData.get("teamBScore"),
+    version: formData.get("version"),
   });
-  revalidatePath(`/games/${parsed.sessionId}/play`);
+  if (!parsed.success) return { error: "Enter a score from 0 to 99 for both teams." };
+  if (parsed.data.teamAScore === parsed.data.teamBScore) return { error: "A completed match needs a winner." };
+
+  const { session, user } = await requirePlayManager(parsed.data.sessionId);
+  try {
+    await db.transaction(async (tx) => {
+      const current = await tx.query.matches.findFirst({
+        columns: { courtLabel: true, teamAScore: true, teamBScore: true, version: true },
+        where: and(
+          eq(matches.id, parsed.data.matchId),
+          eq(matches.sessionId, parsed.data.sessionId),
+          eq(matches.status, "completed"),
+        ),
+      });
+      if (!current) throw new Error("MATCH_NOT_COMPLETED");
+      if (current.version !== parsed.data.version) throw new Error("SCORE_CONFLICT");
+      if (current.teamAScore === parsed.data.teamAScore && current.teamBScore === parsed.data.teamBScore)
+        throw new Error("SCORE_UNCHANGED");
+
+      const [updated] = await tx
+        .update(matches)
+        .set({
+          teamAScore: parsed.data.teamAScore,
+          teamBScore: parsed.data.teamBScore,
+          winningTeam: parsed.data.teamAScore > parsed.data.teamBScore ? "A" : "B",
+          version: sql`${matches.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(matches.id, parsed.data.matchId),
+            eq(matches.sessionId, parsed.data.sessionId),
+            eq(matches.status, "completed"),
+            eq(matches.version, parsed.data.version),
+          ),
+        )
+        .returning({ version: matches.version });
+      if (!updated) throw new Error("SCORE_CONFLICT");
+      await tx.insert(matchScores).values({
+        matchId: parsed.data.matchId,
+        teamAScore: parsed.data.teamAScore,
+        teamBScore: parsed.data.teamBScore,
+        recordedById: user.id,
+        sequence: updated.version,
+      });
+      await tx.insert(messages).values({
+        sessionId: parsed.data.sessionId,
+        kind: "system",
+        body: `${current.courtLabel} score corrected from ${current.teamAScore}–${current.teamBScore} to ${parsed.data.teamAScore}–${parsed.data.teamBScore}. Later court assignments stay unchanged.`,
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "SCORE_CONFLICT")
+      return { error: "This result changed on another device. Review the latest score and try again." };
+    if (error instanceof Error && error.message === "SCORE_UNCHANGED")
+      return { error: "Change at least one score before saving." };
+    if (error instanceof Error && error.message === "MATCH_NOT_COMPLETED")
+      return { error: "This match is no longer available for correction." };
+    console.error("Completed score correction failed", error instanceof Error ? error.name : "UnknownError");
+    return { error: "The corrected score couldn’t be saved. Try again." };
+  }
+
+  revalidatePath(`/games/${parsed.data.sessionId}/play`);
+  revalidatePath(`/games/${parsed.data.sessionId}/story`);
   revalidatePath(`/s/${session.slug}/play`);
-  return updated;
+  revalidatePath(`/s/${session.slug}/story`);
+  return { success: "Score corrected. Standings and recap are up to date." };
 }
 
 export async function completeSession(formData: FormData) {

@@ -141,12 +141,13 @@ export const helpGuides = [
       {
         title: "Finish and advance",
         detail:
-          "Choose Finish match when the result is correct. Relay moves the completed match into history and creates the next supported rotation.",
+          "Choose Finish match, review the teams and final score, then confirm. Relay moves the result into history and creates the next supported rotation.",
       },
     ],
     notes: [
       "Expand a scoreboard for a full-screen courtside view.",
-      "After reconnecting, confirm that important score changes were saved.",
+      "A score conflict restores the latest saved result and explains how to retry.",
+      "Hosts and co-hosts can correct a completed result. Standings and recap update, while later court assignments stay as played.",
     ],
   },
 ] as const satisfies readonly HelpGuide[];

@@ -43,6 +43,11 @@ describe("buildSessionRecap", () => {
     expect(recap.totalPoints).toBe(41);
     expect(recap.playMinutes).toBe(30);
     expect(recap.busiestCourt).toEqual({ label: "Court 1", matches: 2 });
+    expect(recap.results[0]).toMatchObject({
+      courtLabel: "Court 1",
+      teams: ["Van + AJ", "Mika + Bea"],
+      scores: [11, 8],
+    });
     expect(recap.closestMatch).toEqual({
       courtLabel: "Court 1",
       score: "10–12",

@@ -66,6 +66,7 @@ export async function getSessionRecapData(sessionId: string) {
       status: "completed" as const,
       startedAt: match.startedAt,
       finishedAt: match.finishedAt,
+      version: match.version,
     })),
     [...playerById.values()],
   );

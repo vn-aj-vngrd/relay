@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { SubmitButton } from "@/components/ui/submit-button";
+import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 
 import { finishMatch, saveScore } from "./actions";
 import { CourtScoreboardCourt, type CourtScoreboardNavigation, type CourtScoreboardTeam } from "./court-scoreboard";
@@ -80,18 +80,29 @@ function ManagedLiveCourt({
         version: versionRef.current,
       });
       versionRef.current = saved.version;
-      setError("");
-      if (desiredRef.current[0] !== savingScores[0] || desiredRef.current[1] !== savingScores[1]) {
+      if ("conflict" in saved) {
+        const latestScores: [number, number] = [saved.teamAScore, saved.teamBScore];
+        desiredRef.current = latestScores;
+        dirtyRef.current = false;
+        setLocalScores(latestScores);
+        setScorePending(false);
+        setError(
+          `Latest score is ${saved.teamAScore}–${saved.teamBScore}. Your ${savingScores[0]}–${savingScores[1]} change wasn’t saved; use the score controls to retry.`,
+        );
+        router.refresh();
+      } else if (desiredRef.current[0] !== savingScores[0] || desiredRef.current[1] !== savingScores[1]) {
+        setError("");
         timerRef.current = setTimeout(() => void flushScore(), 120);
       } else {
         dirtyRef.current = false;
         setLocalScores([saved.teamAScore, saved.teamBScore]);
         setScorePending(false);
+        setError("");
       }
     } catch {
       dirtyRef.current = false;
       setScorePending(false);
-      setError("This score changed on another device. Relay is loading the latest version.");
+      setError("This score couldn’t be saved. Relay is loading the latest score; use the controls to retry.");
       router.refresh();
     } finally {
       savingRef.current = false;
@@ -131,14 +142,17 @@ function ManagedLiveCourt({
           <form noValidate action={finishMatch}>
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="matchId" value={matchId} />
-            <SubmitButton
+            <ConfirmSubmitButton
               pendingLabel="Finishing match…"
               variant="secondary"
               className="w-full"
               disabled={localScores[0] === localScores[1] || scorePending}
+              confirmTitle={`Finish ${number} at ${localScores[0]}–${localScores[1]}?`}
+              confirmText={`${teams[0]} ${localScores[0]}, ${teams[1]} ${localScores[1]}. Confirming advances the court rotation.`}
+              confirmLabel="Finish match"
             >
               Finish match
-            </SubmitButton>
+            </ConfirmSubmitButton>
           </form>
         ) : undefined
       }

@@ -1,6 +1,7 @@
 import { ArrowClockwise, ArrowRight, ShareNetwork, UsersThree } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";
+import { MatchResults } from "@/features/matches/match-results";
 import { formatSessionDateLong } from "@/features/sessions/format";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
@@ -11,6 +12,7 @@ export function SessionRecap({
   recap,
   storyHref,
   continuation,
+  canCorrectScores = false,
 }: {
   session: {
     id: string;
@@ -22,6 +24,7 @@ export function SessionRecap({
   recap: SessionRecapData;
   storyHref: string;
   continuation?: PostGameContinuation;
+  canCorrectScores?: boolean;
 }) {
   const date = formatSessionDateLong(session.startsAt);
   const completed = session.status === "completed";
@@ -89,6 +92,13 @@ export function SessionRecap({
           </div>
         </section>
       ) : null}
+
+      <MatchResults
+        sessionId={session.id}
+        results={recap.results}
+        canCorrect={canCorrectScores}
+        heading={completed ? "Match results" : "Completed matches"}
+      />
 
       {recap.matchCount ? (
         <section aria-labelledby="recap-highlights-title">

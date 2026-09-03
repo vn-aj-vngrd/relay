@@ -13,6 +13,7 @@ import { AttendanceToggle } from "@/features/sessions/attendance-toggle";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
+import { MatchResults } from "./match-results";
 import { rotationDescription, rotationName } from "./rotation";
 import { RoundTimer } from "./round-timer";
 
@@ -49,7 +50,15 @@ function canScoreMatch(viewer: SessionPlayViewer, playerIds: string[]) {
 export async function SessionPlay({ data, viewer, setupHref, storyHref, continuation }: SessionPlayProps) {
   if (data.session.status === "completed") {
     const recap = await getSessionRecapData(data.session.id);
-    return <SessionRecap session={data.session} recap={recap} storyHref={storyHref} continuation={continuation} />;
+    return (
+      <SessionRecap
+        session={data.session}
+        recap={recap}
+        storyHref={storyHref}
+        continuation={continuation}
+        canCorrectScores={viewer.canManagePlay}
+      />
+    );
   }
 
   const { canStartRotation, rotationLabel, roundMode, roundRobinComplete, roundStartedAt, waiting, waitingPairs } =
@@ -165,6 +174,15 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref, continua
             ) : null}
           </div>
         )}
+        {data.completedMatches.length ? (
+          <div className="mt-9">
+            <MatchResults
+              sessionId={data.session.id}
+              results={data.completedMatches}
+              canCorrect={viewer.canManagePlay}
+            />
+          </div>
+        ) : null}
       </section>
 
       <aside>

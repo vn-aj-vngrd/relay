@@ -45,7 +45,10 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
       .orderBy(asc(sessionPairs.position), asc(sessionPairMembers.position)),
   ]);
   const activeMatches = sessionMatches.filter((match) => match.status === "active");
-  const completedMatchCount = sessionMatches.filter((match) => match.status === "completed").length;
+  const completedMatches = sessionMatches
+    .filter((match) => match.status === "completed")
+    .toSorted((a, b) => (b.finishedAt?.getTime() ?? 0) - (a.finishedAt?.getTime() ?? 0));
+  const completedMatchCount = completedMatches.length;
   const matchIds = sessionMatches.map((match) => match.id);
   const players = matchIds.length
     ? await db
@@ -85,6 +88,22 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
       players: players.filter((item) => item.matchPlayer.matchId === match.id),
     })),
     completedMatchCount,
+    completedMatches: completedMatches.map((match) => {
+      const matchMembers = players.filter((item) => item.matchPlayer.matchId === match.id);
+      const names = (team: string) =>
+        matchMembers
+          .filter((item) => item.matchPlayer.team === team)
+          .sort((a, b) => a.matchPlayer.position - b.matchPlayer.position)
+          .map((item) => item.profile?.name ?? item.player.guestName ?? "Guest")
+          .join(" + ");
+      return {
+        id: match.id,
+        courtLabel: match.courtLabel,
+        teams: [names("A"), names("B")] as [string, string],
+        scores: [match.teamAScore, match.teamBScore] as [number, number],
+        version: match.version,
+      };
+    }),
     queue,
     pairs,
     standings,

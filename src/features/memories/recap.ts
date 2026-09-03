@@ -5,6 +5,7 @@ export type RecapMatch = MatchResult & {
   courtLabel: string;
   startedAt: Date | null;
   finishedAt: Date | null;
+  version?: number;
 };
 
 export type RecapPlayer = { id: string; name: string };
@@ -54,6 +55,16 @@ export function buildSessionRecap(matches: RecapMatch[], players: RecapPlayer[])
 
   return {
     matchCount: completed.length,
+    results: completed.map((match) => ({
+      id: match.id,
+      courtLabel: match.courtLabel,
+      teams: [
+        match.teamA.map((id) => nameById.get(id) ?? "Guest").join(" + "),
+        match.teamB.map((id) => nameById.get(id) ?? "Guest").join(" + "),
+      ] as [string, string],
+      scores: [match.scoreA, match.scoreB] as [number, number],
+      version: match.version ?? 1,
+    })),
     totalPoints: completed.reduce((total, match) => total + match.scoreA + match.scoreB, 0),
     playMinutes: firstStart && lastFinish ? Math.max(1, Math.round((lastFinish - firstStart) / 60_000)) : 0,
     standings,

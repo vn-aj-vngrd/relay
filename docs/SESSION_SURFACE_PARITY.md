@@ -40,6 +40,7 @@ A shared route and its authenticated counterpart must expose the same session fa
 | RSVP or update own response                       | Own response    | Own response     | Own response | Join by name first |
 | Chat, contribute memories, and upload proof       | Yes             | Yes              | Yes          | Join first         |
 | Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
+| Correct a completed match score                   | Yes             | No               | No           | No                 |
 | End or delete the session                         | Host only       | No               | No           | No                 |
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |
@@ -61,7 +62,8 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - A route loading state must match that route’s final structure. Scoreboard skeletons preserve the header, two score sides, controls when applicable, and adjacent queue.
 - Subscribe once per mounted session to the session Broadcast invalidation topic. Roster, courts, matches, scores, queue, chat, payments, and memories refresh from authoritative server queries.
 - Reconnect language and concurrency errors must match across access paths.
-- Score controls update locally, debounce one absolute write, and reconcile against the server version. Hosts, co-hosts, and signed-in players assigned to that active match may score.
+- Score controls update locally, debounce one absolute write, and reconcile against the server version. A conflict restores and names the authoritative score before inviting a retry. Hosts, co-hosts, and signed-in players assigned to that active match may score.
+- Match completion confirms the teams and final score. Completed results appear on both access paths; only hosts and co-hosts may correct them, and corrections update standings and recap without rewriting later court assignments.
 
 ## Completion check
 
