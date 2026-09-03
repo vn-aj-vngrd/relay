@@ -1,6 +1,75 @@
 export const courtParkingStatuses = ["available", "unavailable"] as const;
 export type CourtParkingStatus = (typeof courtParkingStatuses)[number];
 
+export const courtAccessTypes = [
+  "unknown",
+  "public",
+  "commercial",
+  "members",
+  "residents",
+  "school_or_community",
+  "invitation",
+] as const;
+export type CourtAccessType = (typeof courtAccessTypes)[number];
+
+export const courtReservationPolicies = [
+  "unknown",
+  "walk_in",
+  "reservation_required",
+  "walk_in_or_reserve",
+  "contact",
+] as const;
+export type CourtReservationPolicy = (typeof courtReservationPolicies)[number];
+
+export const courtOperationalStatuses = [
+  "unknown",
+  "operating",
+  "temporarily_closed",
+  "seasonal",
+  "opening_soon",
+  "permanently_closed",
+] as const;
+export type CourtOperationalStatus = (typeof courtOperationalStatuses)[number];
+
+export const courtAccessOptions = [
+  { value: "unknown", label: "Not listed" },
+  { value: "public", label: "Public facility" },
+  { value: "commercial", label: "Commercial court" },
+  { value: "members", label: "Members only" },
+  { value: "residents", label: "Residents only" },
+  { value: "school_or_community", label: "School or community access" },
+  { value: "invitation", label: "Invitation only" },
+] as const;
+
+export const courtReservationOptions = [
+  { value: "unknown", label: "Not listed" },
+  { value: "walk_in", label: "Walk-ins" },
+  { value: "reservation_required", label: "Reservation required" },
+  { value: "walk_in_or_reserve", label: "Walk in or reserve" },
+  { value: "contact", label: "Ask the court" },
+] as const;
+
+export const courtOperationalStatusOptions = [
+  { value: "unknown", label: "Not confirmed" },
+  { value: "operating", label: "Operating" },
+  { value: "temporarily_closed", label: "Temporarily closed" },
+  { value: "seasonal", label: "Seasonal" },
+  { value: "opening_soon", label: "Opening soon" },
+  { value: "permanently_closed", label: "Permanently closed" },
+] as const;
+
+export function formatCourtAccess(value: CourtAccessType) {
+  return courtAccessOptions.find((option) => option.value === value)?.label ?? "Not listed";
+}
+
+export function formatCourtReservation(value: CourtReservationPolicy) {
+  return courtReservationOptions.find((option) => option.value === value)?.label ?? "Not listed";
+}
+
+export function formatCourtOperationalStatus(value: CourtOperationalStatus) {
+  return courtOperationalStatusOptions.find((option) => option.value === value)?.label ?? "Not confirmed";
+}
+
 export const courtPriceUnits = ["hour", "player", "court", "session", "court_hour", "player_session"] as const;
 export type CourtPriceUnit = (typeof courtPriceUnits)[number];
 
@@ -19,8 +88,6 @@ export const courtPriceStatusOptions = [
   { value: "paid", label: "Paid" },
   { value: "contact", label: "Ask the court" },
   { value: "donation", label: "Donation" },
-  { value: "members", label: "Members only" },
-  { value: "invitation", label: "Invitation only" },
 ] as const;
 
 export const courtPriceUnitOptions = [

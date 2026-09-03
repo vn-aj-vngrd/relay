@@ -12,10 +12,11 @@ import { getCourtSuggestions } from "@/features/venues/directory";
 export default async function NewGamePage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; group?: string; venue?: string; address?: string }>;
+  searchParams: Promise<{ from?: string; group?: string; venueId?: string }>;
 }) {
   const user = await requireUser();
   const [params, courts] = await Promise.all([searchParams, getCourtSuggestions()]);
+  const selectedCourt = params.venueId ? courts.find((court) => court.id === params.venueId) : undefined;
   const source = params.from
     ? await db.query.sessions.findFirst({
         where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id), eq(sessions.status, "completed")),
@@ -82,8 +83,9 @@ export default async function NewGamePage({
         groupName: group?.name,
         title: group ? `${group.name} Pickle` : undefined,
         inviteeCount,
-        venue: params.venue?.slice(0, 120),
-        venueAddress: params.address?.slice(0, 240),
+        venue: selectedCourt?.name,
+        venueId: selectedCourt?.id,
+        venueAddress: selectedCourt?.address,
       };
   return (
     <div className="create-game-page w-full">

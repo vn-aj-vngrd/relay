@@ -7,7 +7,7 @@ vi.mock("@/lib/env", () => ({
 }));
 
 vi.mock("@/features/venues/directory", () => ({
-  getCourtListings: vi.fn().mockResolvedValue([{ slug: "nice-serve" }, { slug: "makati-pickleball-club" }]),
+  getCourtSitemapEntries: vi.fn().mockResolvedValue([{ slug: "nice-serve" }, { slug: "makati-pickleball-club" }]),
 }));
 
 describe("sitemap", () => {

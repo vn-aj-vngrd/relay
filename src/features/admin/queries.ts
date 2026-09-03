@@ -16,6 +16,7 @@ import {
   sessions,
   signupSettings,
   users,
+  venueChangeRequests,
   venueOperatingPeriods,
   venues,
 } from "@/db/schema";
@@ -385,6 +386,35 @@ export async function getAdminVenues(
         ? encodeAdminCursor({ at: last.updatedAt, id: last.id, priority: last.priority })
         : null,
   };
+}
+
+export async function getAdminVenueChangeRequests() {
+  await connection();
+  return db
+    .select({
+      id: venueChangeRequests.id,
+      requestType: venueChangeRequests.requestType,
+      status: venueChangeRequests.status,
+      proposedChanges: venueChangeRequests.proposedChanges,
+      createdAt: venueChangeRequests.createdAt,
+      venueId: venueChangeRequests.venueId,
+      venueName: venues.name,
+    })
+    .from(venueChangeRequests)
+    .leftJoin(venues, eq(venues.id, venueChangeRequests.venueId))
+    .orderBy(desc(venueChangeRequests.createdAt), desc(venueChangeRequests.id))
+    .limit(30);
+}
+
+export async function getAdminVenueChangeRequest(requestId: string) {
+  await connection();
+  const request = await db.query.venueChangeRequests.findFirst({ where: eq(venueChangeRequests.id, requestId) });
+  if (!request) return null;
+  const [venue, submitter] = await Promise.all([
+    request.venueId ? db.query.venues.findFirst({ where: eq(venues.id, request.venueId) }) : null,
+    request.submittedById ? db.query.profiles.findFirst({ where: eq(profiles.userId, request.submittedById) }) : null,
+  ]);
+  return { ...request, venue: venue ?? null, submitter: submitter ?? null };
 }
 
 export async function getAdminVenue(venueId: string) {

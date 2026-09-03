@@ -1,7 +1,15 @@
 import { z } from "zod";
 
 import { courtDirectoryCoverage } from "./coverage";
-import { courtDays, courtParkingStatuses, courtPriceStatuses, courtPriceUnits } from "./details";
+import {
+  courtAccessTypes,
+  courtDays,
+  courtOperationalStatuses,
+  courtParkingStatuses,
+  courtPriceStatuses,
+  courtPriceUnits,
+  courtReservationPolicies,
+} from "./details";
 
 type OperatingHourField = `${(typeof courtDays)[number]["key"]}${"Open" | "Close"}`;
 
@@ -18,6 +26,9 @@ const optionalHttpUrl = z.union([
 const sharedVenueFields = {
   environment: z.enum(["indoor", "outdoor", "semi-indoor", "covered", "mixed", ""]),
   courtCount: z.union([z.coerce.number().int().min(1).max(50), z.literal("")]),
+  accessType: z.enum(courtAccessTypes),
+  reservationPolicy: z.enum(courtReservationPolicies),
+  operationalStatus: z.enum(courtOperationalStatuses),
   priceStatus: z.enum(courtPriceStatuses),
   priceAmount: optionalPrice,
   priceMax: optionalPrice,
@@ -89,18 +100,40 @@ function validateStructuredDetails(
   }
 }
 
+export const venueChangeGroups = [
+  "identity",
+  "status",
+  "access",
+  "hours",
+  "pricing",
+  "facilities",
+  "parking",
+  "booking",
+] as const;
+
 export const venueSubmissionSchema = z
   .object({
+    requestType: z.enum(["create", "update"]),
+    venueId: z.union([z.uuid(), z.literal("")]),
+    changedFields: z.array(z.enum(venueChangeGroups)).max(venueChangeGroups.length),
     name: z.string().trim().min(2, "Add the court name.").max(120, "Keep the name under 120 characters."),
     address: z.string().trim().min(5, "Add a useful street or neighborhood address.").max(240),
-    city: z.string().trim().min(2, "Add the Philippine city or municipality.").max(80),
+    city: z.string().trim().max(80),
     officialUrl: z
       .url("Add a complete source or Google Maps link beginning with https://.")
       .refine((value) => /^https?:\/\//i.test(value), "Use an http or https link."),
     ...sharedVenueFields,
     note: z.string().trim().max(600, "Keep the note under 600 characters."),
   })
-  .superRefine(validateStructuredDetails);
+  .superRefine((value, context) => {
+    validateStructuredDetails(value, context);
+    if (value.requestType === "create" && value.city.length < 2)
+      context.addIssue({ code: "custom", path: ["city"], message: "Add the Philippine city or municipality." });
+    if (value.requestType === "update" && value.venueId === "")
+      context.addIssue({ code: "custom", path: ["venueId"], message: "Choose the court you want to update." });
+    if (value.requestType === "update" && value.changedFields.length === 0)
+      context.addIssue({ code: "custom", path: ["changedFields"], message: "Choose at least one detail to update." });
+  });
 
 export const adminVenueSchema = z
   .object({

@@ -12,6 +12,15 @@ const courtSchema = z.object({
   longitude: z.number().min(116.8).max(126.7).nullable(),
   environment: z.enum(["indoor", "outdoor", "covered"]).nullable(),
   courtCount: z.number().int().positive().nullable(),
+  accessType: z
+    .enum(["unknown", "public", "commercial", "members", "residents", "school_or_community", "invitation"])
+    .default("unknown"),
+  reservationPolicy: z
+    .enum(["unknown", "walk_in", "reservation_required", "walk_in_or_reserve", "contact"])
+    .default("unknown"),
+  operationalStatus: z
+    .enum(["unknown", "operating", "temporarily_closed", "seasonal", "opening_soon", "permanently_closed"])
+    .default("unknown"),
   operatingHours: z.array(
     z.object({
       dayOfWeek: z.number().int().min(1).max(7),
@@ -56,6 +65,7 @@ type ExistingCourt = {
 const sourceFiles = [
   new URL("../data/courts/sm-active-hub-2026.json", import.meta.url),
   new URL("../data/courts/ppf-places-to-play-2025-09-01.json", import.meta.url),
+  new URL("../data/courts/picklepoint-iloilo-2026.json", import.meta.url),
 ];
 const apply = process.argv.includes("--apply");
 
@@ -76,6 +86,9 @@ function isLikelyDuplicate(left: Pick<ExistingCourt, "name">, right: CourtRecord
 function verificationNote(source: CourtSource, record: CourtRecord) {
   if (source.source === "smsupermalls.com") {
     return "Verified against the current first-party SM Active Hub court directory on 2026-09-01.";
+  }
+  if (source.source === "picklepointiloilo.com") {
+    return "Verified against the venue-owned website and its structured location, hours, court count, access, and pricing data on 2026-09-03.";
   }
   if (record.listingStatus === "verified") {
     return "Listed by the Philippine Pickleball Federation; the exact coordinate was separately reviewed on 2026-09-01.";
@@ -204,12 +217,14 @@ try {
         const saved = await transaction<{ id: string }[]>`
           INSERT INTO venues (
             slug, name, address, latitude, longitude, environment, court_count,
+            access_type, reservation_policy, operational_status,
             price_status, price_amount_cents, price_max_cents, price_unit, parking_status,
             amenities, paddle_rental, contact, website_url, social_url, booking_url,
             listing_status, source, source_external_id, source_url, verification_note, verified_at, last_seen_at
           ) VALUES (
             ${slug}, ${record.name}, ${record.address}, ${record.latitude}, ${record.longitude},
-            ${record.environment}, ${record.courtCount}, ${record.priceStatus}, ${record.priceAmountCents},
+            ${record.environment}, ${record.courtCount}, ${record.accessType}, ${record.reservationPolicy},
+            ${record.operationalStatus}, ${record.priceStatus}, ${record.priceAmountCents},
             ${record.priceMaxCents}, ${record.priceUnit}, ${record.parkingStatus}, ${record.amenities}, ${record.paddleRental},
             ${record.contact}, ${record.websiteUrl},
             ${record.socialUrl}, ${record.bookingUrl}, ${record.listingStatus}, ${source.source},
@@ -224,6 +239,9 @@ try {
             longitude = EXCLUDED.longitude,
             environment = EXCLUDED.environment,
             court_count = EXCLUDED.court_count,
+            access_type = EXCLUDED.access_type,
+            reservation_policy = EXCLUDED.reservation_policy,
+            operational_status = EXCLUDED.operational_status,
             price_status = EXCLUDED.price_status,
             price_amount_cents = EXCLUDED.price_amount_cents,
             price_max_cents = EXCLUDED.price_max_cents,

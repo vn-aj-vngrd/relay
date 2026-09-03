@@ -12,6 +12,7 @@ import {
   MagnifyingGlass,
   MapPin,
   MapTrifold,
+  PencilSimple,
   Plus,
   Racquet,
   X,
@@ -29,6 +30,7 @@ import {
   courtAvailabilityOptions,
   courtBookingDayOptions,
   courtBookingTimeOptions,
+  formatCourtAccess,
   formatCourtOperatingHours,
   isCourtOpen24Hours,
   isCourtOpenAt,
@@ -54,6 +56,7 @@ type LocationStatus = "idle" | "loading" | "ready" | "error";
 type CourtView = "map" | "list";
 type CourtResult = { venue: CourtListing; distance: number | null };
 type SettingFilter = "all" | "indoor" | "outdoor";
+type AccessFilter = "all" | "public" | "commercial" | "restricted";
 type ParkingFilter = "all" | "available" | "unavailable";
 type PriceFilter = "all" | "free" | "under-500" | "500-1000" | "over-1000";
 type AvailabilityFilter = "all" | "open" | "24-hours" | "during";
@@ -65,12 +68,17 @@ const courtViewOptions = [
 ];
 
 function createHref(venue: CourtListing, isAuthenticated: boolean) {
-  const gamePath = `/games/new?${new URLSearchParams({ venue: venue.name, address: venue.address }).toString()}`;
+  const gamePath = `/games/new?${new URLSearchParams({ venueId: venue.id }).toString()}`;
   return isAuthenticated ? gamePath : `/signup?next=${encodeURIComponent(gamePath)}`;
 }
 
 function directionsHref(venue: CourtListing) {
   return `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`;
+}
+
+function suggestUpdateHref(venue: CourtListing, isAuthenticated: boolean) {
+  const path = `/court/suggest?${new URLSearchParams({ court: venue.slug }).toString()}`;
+  return isAuthenticated ? path : `/signup?next=${encodeURIComponent(path)}`;
 }
 
 function environmentLabel(environment: string | null) {
@@ -81,6 +89,7 @@ function environmentLabel(environment: string | null) {
 
 function venueMeta(venue: CourtListing) {
   return [
+    venue.accessType === "unknown" ? null : formatCourtAccess(venue.accessType),
     environmentLabel(venue.environment),
     venue.courtCount ? `${venue.courtCount} ${venue.courtCount === 1 ? "court" : "courts"}` : null,
     venue.priceLabel,
@@ -202,6 +211,12 @@ function SelectedCourtOverlay({
         >
           <Copy aria-hidden size={15} /> {copied ? "Copied" : "Copy location"}
         </Button>
+        <Link
+          href={suggestUpdateHref(venue, isAuthenticated)}
+          className="court-compact-control pressable inline-flex min-h-11 items-center gap-1.5 rounded-md px-2 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink sm:text-[13px]"
+        >
+          <PencilSimple aria-hidden size={14} /> Suggest an update
+        </Link>
       </div>
     </aside>
   );
@@ -349,7 +364,6 @@ export function CourtFinder({
   detailBasePath = "/court",
   showFilterTopBorder = true,
   compactPreview = false,
-  autoLoadMap = false,
   className = "mt-7",
 }: {
   venues: CourtListing[];
@@ -357,18 +371,18 @@ export function CourtFinder({
   detailBasePath?: "/court" | "/courts";
   showFilterTopBorder?: boolean;
   compactPreview?: boolean;
-  autoLoadMap?: boolean;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
   const [setting, setSetting] = useState<SettingFilter>("all");
+  const [access, setAccess] = useState<AccessFilter>("all");
   const [parking, setParking] = useState<ParkingFilter>("all");
   const [price, setPrice] = useState<PriceFilter>("all");
   const [availability, setAvailability] = useState<AvailabilityFilter>("all");
   const [bookingDay, setBookingDay] = useState<BookingDayFilter>("today");
   const [bookingStartTime, setBookingStartTime] = useState("18:00");
   const [bookingEndTime, setBookingEndTime] = useState("20:00");
-  const [mobileView, setMobileView] = useState<CourtView>("map");
+  const [mobileView, setMobileView] = useState<CourtView>("list");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -381,7 +395,7 @@ export function CourtFinder({
       venues.map((venue) => ({
         venue,
         searchText:
-          `${venue.name} ${venue.address} ${venue.environment ?? ""} ${venue.priceLabel ?? ""} ${venue.parkingStatus === "available" ? "parking available" : venue.parkingStatus === "unavailable" ? "no parking parking not available" : ""} ${formatCourtOperatingHours(venue.operatingHours) ?? ""} ${venue.amenities.join(" ")}`.toLowerCase(),
+          `${venue.name} ${venue.address} ${venue.environment ?? ""} ${formatCourtAccess(venue.accessType)} ${venue.priceLabel ?? ""} ${venue.parkingStatus === "available" ? "parking available" : venue.parkingStatus === "unavailable" ? "no parking parking not available" : ""} ${formatCourtOperatingHours(venue.operatingHours) ?? ""} ${venue.amenities.join(" ")}`.toLowerCase(),
       })),
     [venues],
   );
@@ -395,6 +409,9 @@ export function CourtFinder({
         const outdoor = ["outdoor", "mixed"].includes(venue.environment ?? "");
         const settingMatches = setting === "all" || (setting === "indoor" ? indoor : outdoor);
         const queryMatches = !term || searchText.includes(term);
+        const restricted = ["members", "residents", "school_or_community", "invitation"].includes(venue.accessType);
+        const accessMatches =
+          access === "all" || venue.accessType === access || (access === "restricted" && restricted);
         const parkingMatches = parking === "all" || venue.parkingStatus === parking;
         const amount = venue.priceAmountCents;
         const priceMatches =
@@ -420,7 +437,7 @@ export function CourtFinder({
                   bookingEndTime,
                   Number(bookingDay) as CourtDay,
                 ) === true));
-        return settingMatches && queryMatches && parkingMatches && priceMatches && hoursMatch;
+        return settingMatches && accessMatches && queryMatches && parkingMatches && priceMatches && hoursMatch;
       })
       .map(({ venue }) => ({
         venue,
@@ -429,6 +446,7 @@ export function CourtFinder({
     if (userLocation) matching.sort((left, right) => (left.distance ?? 0) - (right.distance ?? 0));
     return matching;
   }, [
+    access,
     availability,
     bookingDay,
     bookingEndTime,
@@ -444,7 +462,12 @@ export function CourtFinder({
   const mappedVenues = useMemo(() => results.map(({ venue }) => venue), [results]);
   const selected = results.find(({ venue }) => venue.id === selectedId) ?? null;
   const filtersActive = Boolean(
-    query.trim() || setting !== "all" || parking !== "all" || price !== "all" || availability !== "all",
+    query.trim() ||
+    setting !== "all" ||
+    access !== "all" ||
+    parking !== "all" ||
+    price !== "all" ||
+    availability !== "all",
   );
 
   function selectCourt(id: string, revealMap = false) {
@@ -469,6 +492,7 @@ export function CourtFinder({
   function clearFilters() {
     setQuery("");
     setSetting("all");
+    setAccess("all");
     setParking("all");
     setPrice("all");
     setAvailability("all");
@@ -592,6 +616,26 @@ export function CourtFinder({
                   { value: "all", label: "Any setting" },
                   { value: "indoor", label: "Indoor" },
                   { value: "outdoor", label: "Outdoor" },
+                ]}
+                className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
+              />
+            </div>
+            <div>
+              <SelectField
+                id="court-access-filter"
+                name="courtAccessFilter"
+                label="Access"
+                hideLabel
+                value={access}
+                onValueChange={(value) => {
+                  setAccess(value as AccessFilter);
+                  setSelectedId(null);
+                }}
+                options={[
+                  { value: "all", label: "Any access" },
+                  { value: "public", label: "Public courts" },
+                  { value: "commercial", label: "Commercial courts" },
+                  { value: "restricted", label: "Restricted access" },
                 ]}
                 className="mt-0 !w-auto !rounded-full px-3 text-xs font-semibold sm:h-9 sm:text-[13px]"
               />
@@ -750,7 +794,6 @@ export function CourtFinder({
               onSelect={selectCourt}
               compactPreview={compactPreview}
               mobileEdgeToEdge={!compactPreview}
-              autoLoad={autoLoadMap}
             >
               {selected ? (
                 <SelectedCourtOverlay

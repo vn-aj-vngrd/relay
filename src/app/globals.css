@@ -94,32 +94,32 @@
   background: transparent;
 }
 .relay-map-marker > span {
-  width: 12px;
-  height: 12px;
+  display: grid;
+  width: 15px;
+  height: 15px;
+  place-items: center;
   border: 2px solid white;
   border-radius: 999px;
   background: var(--primary);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 28%);
-  transition:
-    width 160ms ease-out,
-    height 160ms ease-out,
-    background-color 160ms ease-out;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 32%);
+  transition: transform 150ms ease-out;
+}
+.relay-map-marker-cluster > span {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
 }
 .relay-map-marker:hover > span,
-.relay-map-marker:focus-visible > span {
-  background: var(--primary-hover);
-}
 .relay-map-marker[data-active="true"] > span {
-  width: 22px;
-  height: 22px;
-  border-width: 3px;
-  background: var(--primary);
-  box-shadow: 0 2px 5px rgb(0 0 0 / 30%);
+  transform: scale(1.25);
 }
-.relay-map-marker:focus-visible {
-  border-radius: 999px;
-  outline: 3px solid color-mix(in oklch, var(--primary) 45%, white);
-  outline-offset: -3px;
+@media (prefers-reduced-motion: reduce) {
+  .relay-map-marker > span {
+    transition: none;
+  }
 }
 .relay-user-location-marker {
   width: 16px;
@@ -186,12 +186,6 @@
 html[data-theme="dark"] {
   --map-control-filter: invert(1);
 }
-@media (prefers-reduced-motion: reduce) {
-  .relay-map-marker > span {
-    transition: none;
-  }
-}
-
 html {
   background: var(--canvas);
   color: var(--ink);
@@ -362,9 +356,7 @@ p:not(.truncate) {
   }
 }
 @media (max-width: 63.999rem) {
-  button:not(.relay-map-marker):not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control):not(
-      .preference-segment-control
-    ),
+  button:not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control):not(.preference-segment-control),
   a.pressable:not(.tab-chip),
   label:not(.court-compact-control):has(input),
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
@@ -372,7 +364,7 @@ p:not(.truncate) {
   textarea {
     min-height: 2.75rem;
   }
-  button[aria-label]:not(.relay-map-marker):not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control),
+  button[aria-label]:not(.tab-chip):not(.mobile-view-menu-trigger):not(.court-compact-control),
   a.pressable[aria-label]:not(.tab-chip) {
     min-width: 2.75rem;
   }

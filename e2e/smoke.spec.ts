@@ -65,7 +65,11 @@ test("the court map leaves its loading state when raster tiles stall", async ({ 
   await page.route("**/api/venues/tiles/**", () => {});
 
   await page.goto("/courts");
-  await expect(page.getByText("Loading interactive map…")).toBeVisible();
+  const listViewToggle = page.getByRole("button", { name: "Change court view, currently List" });
+  if (await listViewToggle.isVisible()) {
+    await listViewToggle.click();
+    await page.getByRole("menuitemradio", { name: "Map" }).click();
+  }
   await expect(page.getByText("Loading interactive map…")).toHaveCount(0, { timeout: 5_000 });
   await expect(page.getByRole("region", { name: "Interactive map of pickleball courts" })).toBeVisible();
 });

@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 vi.mock("./actions", () => ({
   submitVenueAction: vi.fn(async () => ({})),
   updateVenueAction: vi.fn(async () => ({})),
@@ -11,15 +15,15 @@ import { VenueSubmissionForm } from "./venue-submission-form";
 
 describe("venue forms", () => {
   it("collects only the useful details for a Philippines court suggestion", () => {
-    render(<VenueSubmissionForm />);
+    render(<VenueSubmissionForm courts={[]} />);
     expect(screen.getByLabelText("Court name")).toBeRequired();
     expect(screen.getByLabelText("Philippine city or municipality")).toBeRequired();
-    expect(screen.getByLabelText("Source or Google Maps link")).toBeRequired();
+    expect(screen.getByLabelText("Official source or Google Maps link")).toBeRequired();
     expect(screen.getByRole("button", { name: "Setting" })).toHaveTextContent("I don’t know");
     expect(screen.getByLabelText(/Number of playable courts/)).toHaveAttribute("type", "number");
-    expect(screen.getByRole("button", { name: "Pricing" })).toHaveTextContent("Not listed");
+    expect(screen.getByRole("button", { name: "Price type" })).toHaveTextContent("Not listed");
     expect(screen.queryByLabelText("Starting price")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Parking" })).toHaveTextContent("Not listed");
+    expect(screen.getByRole("button", { name: "Parking availability" })).toHaveTextContent("Not listed");
     expect(screen.getByRole("button", { name: "Monday opening time" })).toHaveTextContent("Not listed");
     expect(screen.getByRole("button", { name: "Sunday closing time" })).toHaveTextContent("Not listed");
     expect(screen.getByLabelText("Paddle rental available")).toBeInTheDocument();
@@ -37,6 +41,9 @@ describe("venue forms", () => {
           longitude: null,
           environment: null,
           courtCount: null,
+          accessType: "unknown",
+          reservationPolicy: "unknown",
+          operationalStatus: "unknown",
           priceStatus: "paid",
           priceAmountCents: 50000,
           priceMaxCents: 65000,

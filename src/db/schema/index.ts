@@ -50,6 +50,41 @@ export const venueListingStatus = pgEnum("venue_listing_status", [
   "archived",
 ]);
 export const venueParkingStatus = pgEnum("venue_parking_status", ["available", "unavailable"]);
+export const venueAccessType = pgEnum("venue_access_type", [
+  "unknown",
+  "public",
+  "commercial",
+  "members",
+  "residents",
+  "school_or_community",
+  "invitation",
+]);
+export const venueReservationPolicy = pgEnum("venue_reservation_policy", [
+  "unknown",
+  "walk_in",
+  "reservation_required",
+  "walk_in_or_reserve",
+  "contact",
+]);
+export const venueOperationalStatus = pgEnum("venue_operational_status", [
+  "unknown",
+  "operating",
+  "temporarily_closed",
+  "seasonal",
+  "opening_soon",
+  "permanently_closed",
+]);
+export const venueChangeRequestType = pgEnum("venue_change_request_type", ["create", "update"]);
+export const venueChangeRequestStatus = pgEnum("venue_change_request_status", [
+  "submitted",
+  "needs_info",
+  "in_review",
+  "approved",
+  "partially_approved",
+  "rejected",
+  "duplicate",
+  "withdrawn",
+]);
 export const venuePriceUnit = pgEnum("venue_price_unit", [
   "hour",
   "player",
@@ -110,6 +145,9 @@ export const venues = pgTable(
     longitude: numeric("longitude", { precision: 9, scale: 6 }),
     environment: text("environment"),
     courtCount: integer("court_count"),
+    accessType: venueAccessType("access_type").notNull().default("unknown"),
+    reservationPolicy: venueReservationPolicy("reservation_policy").notNull().default("unknown"),
+    operationalStatus: venueOperationalStatus("operational_status").notNull().default("unknown"),
     priceStatus: venuePriceStatus("price_status").notNull().default("unknown"),
     priceAmountCents: integer("price_amount_cents"),
     priceMaxCents: integer("price_max_cents"),
@@ -147,6 +185,32 @@ export const venues = pgTable(
       "venues_price_complete",
       sql`(${table.priceStatus} = 'paid' and ${table.priceAmountCents} is not null and ${table.priceUnit} is not null) or (${table.priceStatus} = 'free' and ${table.priceAmountCents} = 0 and ${table.priceUnit} is null and ${table.priceMaxCents} is null) or (${table.priceStatus} not in ('paid', 'free') and ${table.priceAmountCents} is null and ${table.priceUnit} is null and ${table.priceMaxCents} is null)`,
     ),
+  ],
+);
+
+export const venueChangeRequests = pgTable(
+  "venue_change_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    requestType: venueChangeRequestType("request_type").notNull(),
+    venueId: uuid("venue_id").references(() => venues.id, { onDelete: "set null" }),
+    proposedChanges: jsonb("proposed_changes").$type<Record<string, unknown>>().notNull(),
+    evidenceUrls: text("evidence_urls")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    note: text("note"),
+    status: venueChangeRequestStatus("status").notNull().default("submitted"),
+    submittedById: uuid("submitted_by_id").references(() => users.id, { onDelete: "set null" }),
+    reviewedById: uuid("reviewed_by_id").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    resolutionNote: text("resolution_note"),
+    ...timestamps,
+  },
+  (table) => [
+    index("venue_change_requests_status_created_idx").on(table.status, table.createdAt.desc(), table.id.desc()),
+    index("venue_change_requests_venue_created_idx").on(table.venueId, table.createdAt.desc()),
+    index("venue_change_requests_submitter_created_idx").on(table.submittedById, table.createdAt.desc()),
   ],
 );
 

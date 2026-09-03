@@ -51,7 +51,6 @@ type CourtMapProps = {
   children?: ReactNode;
   compactPreview?: boolean;
   mobileEdgeToEdge?: boolean;
-  autoLoad?: boolean;
 };
 
 function mapStyle(dark: boolean): StyleSpecification {
@@ -108,6 +107,36 @@ function fitVenues(map: MapLibreMap, venues: CourtListing[], immediate = false) 
   );
 }
 
+export type CourtMapGroup = {
+  id: string;
+  latitude: number;
+  longitude: number;
+  venues: CourtListing[];
+};
+
+export function clusterCourtListings(venues: CourtListing[], zoom: number): CourtMapGroup[] {
+  const cellSize = zoom < 7 ? 2 : zoom < 9 ? 0.6 : zoom < 11 ? 0.18 : 0;
+  if (!cellSize)
+    return venues.map((venue) => ({
+      id: venue.id,
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      venues: [venue],
+    }));
+
+  const cells = new Map<string, CourtListing[]>();
+  for (const venue of venues) {
+    const key = `${Math.floor(venue.latitude / cellSize)}:${Math.floor(venue.longitude / cellSize)}`;
+    cells.set(key, [...(cells.get(key) ?? []), venue]);
+  }
+  return [...cells.entries()].map(([key, grouped]) => ({
+    id: `cluster:${key}`,
+    latitude: grouped.reduce((sum, venue) => sum + venue.latitude, 0) / grouped.length,
+    longitude: grouped.reduce((sum, venue) => sum + venue.longitude, 0) / grouped.length,
+    venues: grouped,
+  }));
+}
+
 function setMarkerState(element: HTMLButtonElement, active: boolean) {
   element.dataset.active = active ? "true" : "false";
   element.setAttribute("aria-pressed", String(active));
@@ -135,16 +164,16 @@ export function CourtMap({
   children,
   compactPreview = false,
   mobileEdgeToEdge = false,
-  autoLoad = false,
 }: CourtMapProps) {
   const shellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const markersRef = useRef(new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement }>());
+  const markersRef = useRef(
+    new Map<string, { marker: MapLibreMarker; element: HTMLButtonElement; venueId: string | null }>(),
+  );
   const locationMarkerRef = useRef<MapLibreMarker | null>(null);
   const selectRef = useRef(onSelect);
   const selectedRef = useRef(selectedId);
-  const [activated, setActivated] = useState(autoLoad || !compactPreview);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -157,7 +186,6 @@ export function CourtMap({
   }, [selectedId]);
 
   useEffect(() => {
-    if (!activated) return;
     const shell = shellRef.current;
     const container = containerRef.current;
     if (!shell || !container) return;
@@ -188,12 +216,16 @@ export function CourtMap({
         map.addControl(new maplibre.NavigationControl({ showCompass: false }), "top-right");
         map.addControl(createMobileSafeFullscreenControl(maplibre.FullscreenControl, shell), "top-right");
         map.addControl(new maplibre.AttributionControl({ compact: true }), "bottom-right");
-        map.once("style.load", () => {
+        let initialLoad = true;
+        map.on("style.load", () => {
           if (disposed) return;
           mapRef.current = map;
-          fitVenues(map, venues, true);
-          collapseAttributionControl(container);
-          setReady(true);
+          if (initialLoad) {
+            initialLoad = false;
+            fitVenues(map, venues, true);
+            collapseAttributionControl(container);
+            setReady(true);
+          }
         });
         const updateTheme = () => map.setStyle(mapStyle(document.documentElement.dataset.theme === "dark"));
         window.addEventListener("relay-theme-change", updateTheme);
@@ -216,47 +248,63 @@ export function CourtMap({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-    // The map instance is mounted after intent; later venue changes are synchronized below.
+    // The map instance mounts once; later venue changes are synchronized below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activated]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
     let cancelled = false;
-
-    void import("maplibre-gl").then(({ Marker }) => {
+    const renderMarkers = async () => {
+      const { Marker } = await import("maplibre-gl");
       if (cancelled) return;
       markersRef.current.forEach(({ marker }) => marker.remove());
       markersRef.current.clear();
-
-      for (const venue of venues) {
+      for (const group of clusterCourtListings(venues, map.getZoom())) {
         const element = document.createElement("button");
         element.type = "button";
-        element.className = "relay-map-marker";
-        element.setAttribute("aria-label", `Select ${venue.name}`);
-        element.title = venue.name;
-        setMarkerState(element, venue.id === selectedRef.current);
+        element.tabIndex = -1;
+        element.className = `relay-map-marker${group.venues.length > 1 ? " relay-map-marker-cluster" : ""}`;
+        const label =
+          group.venues.length > 1 ? `${group.venues.length} courts in this area` : `Select ${group.venues[0].name}`;
+        element.setAttribute("aria-label", label);
+        element.title = label;
+        setMarkerState(element, group.venues.length === 1 && group.venues[0].id === selectedRef.current);
         const dot = document.createElement("span");
         dot.setAttribute("aria-hidden", "true");
+        if (group.venues.length > 1) dot.textContent = String(group.venues.length);
         element.append(dot);
-        element.addEventListener("click", () => selectRef.current(venue.id));
-
+        element.addEventListener("click", () => {
+          if (group.venues.length === 1) selectRef.current(group.venues[0].id);
+          else
+            map.easeTo({
+              center: [group.longitude, group.latitude],
+              zoom: Math.min(map.getZoom() + 2, 14),
+              duration: window.matchMedia(REDUCED_MOTION_QUERY).matches ? 0 : 350,
+            });
+        });
         const marker = new Marker({ element, anchor: "center" })
-          .setLngLat([venue.longitude, venue.latitude])
+          .setLngLat([group.longitude, group.latitude])
           .addTo(map);
-        markersRef.current.set(venue.id, { marker, element });
+        markersRef.current.set(group.id, {
+          marker,
+          element,
+          venueId: group.venues.length === 1 ? group.venues[0].id : null,
+        });
       }
-      fitVenues(map, venues);
-    });
-
+    };
+    void renderMarkers();
+    map.on("zoomend", renderMarkers);
+    fitVenues(map, venues);
     return () => {
       cancelled = true;
+      map.off("zoomend", renderMarkers);
     };
   }, [ready, venues]);
 
   useEffect(() => {
-    for (const [id, { element }] of markersRef.current) setMarkerState(element, id === selectedId);
+    for (const { element, venueId } of markersRef.current.values()) setMarkerState(element, venueId === selectedId);
   }, [selectedId]);
 
   useEffect(() => {
@@ -296,23 +344,7 @@ export function CourtMap({
         aria-label="Interactive map of pickleball courts"
         className="relay-interactive-map"
       />
-      {!activated ? (
-        <div className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center">
-          <div className="max-w-sm">
-            <p className="font-[650] text-ink">Explore the Philippines court map</p>
-            <p className="mt-1 text-sm leading-5 text-muted">
-              Load the interactive map when you want to pan, zoom, or inspect court locations.
-            </p>
-            <button
-              type="button"
-              onClick={() => setActivated(true)}
-              className="pressable mt-4 min-h-11 rounded-lg bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
-            >
-              Load interactive map
-            </button>
-          </div>
-        </div>
-      ) : !ready && !failed ? (
+      {!ready && !failed ? (
         <div className="absolute inset-0 grid place-items-center bg-surface-raised" role="status">
           <div className="text-center">
             <span className="mx-auto block h-5 w-5 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />

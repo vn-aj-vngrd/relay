@@ -1,4 +1,5 @@
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 
 import { SelectField } from "@/components/ui/select-field";
 import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
@@ -22,6 +23,14 @@ export default async function AdminCourtsPage({
       <AdminPageHeading
         title="Courts"
         description="Verify Philippines court listings, review community submissions, and keep booking and map information accurate."
+        action={
+          <Link
+            href="/admin/court-requests"
+            className="pressable inline-flex min-h-9 items-center rounded-lg border border-line bg-surface px-3 text-[13px] font-semibold hover:bg-surface-strong"
+          >
+            Change requests
+          </Link>
+        }
       />
       <form noValidate role="search" className="mb-5 flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-center">
         <label className="relative flex-1">

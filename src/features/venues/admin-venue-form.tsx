@@ -8,12 +8,18 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 
 import { updateVenueAction } from "./actions";
 import {
+  courtAccessOptions,
+  type CourtAccessType,
   courtDays,
+  type CourtOperationalStatus,
+  courtOperationalStatusOptions,
   courtParkingOptions,
   type CourtParkingStatus,
   type CourtPriceStatus,
   courtPriceStatusOptions,
   courtPriceUnitOptions,
+  courtReservationOptions,
+  type CourtReservationPolicy,
   courtTimeOptions,
 } from "./details";
 
@@ -29,6 +35,9 @@ export type AdminVenueDefaults = {
   longitude: string | null;
   environment: string | null;
   courtCount: number | null;
+  accessType: CourtAccessType;
+  reservationPolicy: CourtReservationPolicy;
+  operationalStatus: CourtOperationalStatus;
   priceStatus: CourtPriceStatus;
   priceAmountCents: number | null;
   priceMaxCents: number | null;
@@ -132,6 +141,27 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
             className={field}
           />
         </div>
+        <SelectField
+          id="accessType"
+          name="accessType"
+          label="Who can use this court"
+          defaultValue={venue.accessType}
+          options={courtAccessOptions}
+        />
+        <SelectField
+          id="reservationPolicy"
+          name="reservationPolicy"
+          label="How players get a court"
+          defaultValue={venue.reservationPolicy}
+          options={courtReservationOptions}
+        />
+        <SelectField
+          id="operationalStatus"
+          name="operationalStatus"
+          label="Operating status"
+          defaultValue={venue.operationalStatus}
+          options={courtOperationalStatusOptions}
+        />
         <SelectField
           id="priceStatus"
           name="priceStatus"

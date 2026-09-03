@@ -20,7 +20,13 @@ const optionalOperatingHours = {
 };
 
 const optionalSubmissionDetails = {
+  requestType: "create" as const,
+  venueId: "" as const,
+  changedFields: [] as string[],
   environment: "" as const,
+  accessType: "unknown" as const,
+  reservationPolicy: "unknown" as const,
+  operationalStatus: "unknown" as const,
   courtCount: "" as const,
   priceStatus: "unknown" as const,
   priceAmount: "" as const,
@@ -41,6 +47,9 @@ const optionalAdminDetails = {
   latitude: "" as const,
   longitude: "" as const,
   environment: "" as const,
+  accessType: "unknown" as const,
+  reservationPolicy: "unknown" as const,
+  operationalStatus: "unknown" as const,
   courtCount: "" as const,
   priceStatus: "unknown" as const,
   priceAmount: "" as const,

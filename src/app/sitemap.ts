@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 
-import { getCourtListings } from "@/features/venues/directory";
+import { getCourtSitemapEntries } from "@/features/venues/directory";
 import { getPublicEnv } from "@/lib/env";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = getPublicEnv().NEXT_PUBLIC_APP_URL;
-  const courts = await getCourtListings();
+  const courts = await getCourtSitemapEntries();
   return [
     { url: origin, changeFrequency: "weekly", priority: 1 },
     { url: `${origin}/courts`, changeFrequency: "weekly", priority: 0.9 },
