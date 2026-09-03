@@ -8,7 +8,7 @@ import { sessions } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
 import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
-import { trackProductEvent } from "./events";
+import { trackProductEvent, trackSessionMilestone } from "./events";
 
 const sharedEventInput = z.object({
   sessionId: z.uuid(),
@@ -57,7 +57,7 @@ export async function trackSharedSessionEvent(input: z.input<typeof sharedEventI
     user ? `user:${user.id}` : await requestIdentity(),
   );
   if (!limit.allowed) return;
-  await trackProductEvent({
+  await trackSessionMilestone({
     name: parsed.data.event,
     sessionId: session.id,
     userId: user?.id,

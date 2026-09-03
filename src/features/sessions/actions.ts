@@ -19,7 +19,7 @@ import {
   sessions,
   venues,
 } from "@/db/schema";
-import { trackProductEvent } from "@/features/analytics/events";
+import { trackProductEvent, trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
@@ -272,14 +272,18 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     );
     return session;
   });
-  if (intent === "published")
-    await trackProductEvent({
-      name: source ? "play_again_published" : "session_published",
+  if (intent === "published") {
+    const event = {
       userId: user.id,
       sessionId: created.id,
-      source: "authenticated",
+      source: "authenticated" as const,
       metadata: { courtCount: created.courtCount, capacity: created.capacity, fromGroup: Boolean(created.groupId) },
-    });
+    };
+    await Promise.all([
+      trackSessionMilestone({ ...event, name: "session_published" }),
+      ...(source ? [trackSessionMilestone({ ...event, name: "play_again_published" })] : []),
+    ]);
+  }
   revalidatePath("/home");
   revalidatePath("/games");
   revalidatePath("/groups");
@@ -903,10 +907,11 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
     : null;
   const selectedExperience = user ? (accountProfile?.skillLevel ?? null) : (parsed.data.skillLevel ?? null);
   let newGuestToken: string | null = null;
+  let reachedFourthPlayer = false;
   let resolvedRsvp: SessionActionState["rsvp"];
 
   try {
-    newGuestToken = await db.transaction(async (tx): Promise<string | null> => {
+    const result = await db.transaction(async (tx): Promise<{ guestToken: string | null; reachedFourth: boolean }> => {
       await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
       const current = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       let identity = findRosterIdentity(current, { userId: user?.id, guestTokenHash: guestHash });
@@ -930,6 +935,7 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             )
           : undefined;
       if (claimingGuest) identity = claimingGuest;
+      const goingBefore = current.filter((player) => player.rsvp === "going").length;
       const transition = planRosterTransition({
         roster: current,
         capacity: session.capacity,
@@ -1064,8 +1070,15 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
             .insert(notifications)
             .values({ userId: promoted.userId, sessionId: session.id, type: "moved_from_waitlist", payload: {} });
       }
-      return createdToken;
+      const rsvpByPlayer = new Map(transition.updates.map((update) => [update.id, update.rsvp]));
+      if (actorPlayerId) rsvpByPlayer.set(actorPlayerId, nextRsvp);
+      const goingAfter =
+        current.filter((player) => (rsvpByPlayer.get(player.id) ?? player.rsvp) === "going").length +
+        (!identity && nextRsvp === "going" ? 1 : 0);
+      return { guestToken: createdToken, reachedFourth: goingBefore < 4 && goingAfter >= 4 };
     });
+    newGuestToken = result.guestToken;
+    reachedFourthPlayer = result.reachedFourth;
   } catch (error) {
     if (error instanceof Error && error.message === "PRIVATE_SESSION")
       return { error: "This private game only accepts responses from invited players." };
@@ -1089,6 +1102,16 @@ export async function rsvpAction(_: SessionActionState, formData: FormData): Pro
       source: user ? "authenticated" : "guest",
       metadata: { response: resolvedRsvp ?? "unknown" },
     }),
+    ...(reachedFourthPlayer
+      ? [
+          trackSessionMilestone({
+            name: "fourth_player_joined" as const,
+            userId: user?.id,
+            sessionId: session.id,
+            source: user ? ("authenticated" as const) : ("guest" as const),
+          }),
+        ]
+      : []),
     ...(parsed.data.inviteSource
       ? [
           trackProductEvent({

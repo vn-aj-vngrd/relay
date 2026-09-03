@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   reconcile: vi.fn(),
   revalidatePath: vi.fn(),
   assertRateLimit: vi.fn(),
+  trackSessionMilestone: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
@@ -20,6 +21,7 @@ vi.mock("@/features/auth/permissions", () => ({
   can: mocks.can,
   sessionActor: vi.fn(() => ({ role: "host" })),
 }));
+vi.mock("@/features/analytics/events", () => ({ trackSessionMilestone: mocks.trackSessionMilestone }));
 vi.mock("@/features/payments/sync", () => ({ reconcileUnpaidExpenseShares: mocks.reconcile }));
 vi.mock("@/lib/rate-limit", () => ({ assertRateLimit: mocks.assertRateLimit }));
 vi.mock("@/db/client", () => ({
@@ -110,5 +112,30 @@ describe("manageRoster", () => {
       `/games/${session.id}`,
       `/s/${session.slug}`,
     ]);
+  });
+
+  it("records the four-player milestone when a host fills the first court", async () => {
+    mocks.selectWhere.mockResolvedValue(
+      ["host", "player-2", "player-3"].map((id) => ({
+        id,
+        guestName: null,
+        rsvp: "going",
+        waitlistPosition: null,
+      })),
+    );
+
+    await manageRoster({
+      type: "add",
+      actorUserId: "host-1",
+      sessionId: session.id,
+      playerEntry: "Fourth Player",
+    });
+
+    expect(mocks.trackSessionMilestone).toHaveBeenCalledWith({
+      name: "fourth_player_joined",
+      userId: "host-1",
+      sessionId: session.id,
+      source: "authenticated",
+    });
   });
 });

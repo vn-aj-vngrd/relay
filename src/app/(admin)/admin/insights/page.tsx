@@ -1,5 +1,6 @@
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminInsights } from "@/features/admin/queries";
+import { sessionFunnelStages } from "@/features/analytics/insights";
 import { discoverySourceLabel, discoverySourceValues } from "@/features/onboarding/discovery-source";
 
 function percentage(value: number, total: number) {
@@ -28,12 +29,9 @@ export default async function AdminInsightsPage() {
     })),
     { key: "unanswered", label: "Not answered", total: data.unansweredDiscovery },
   ];
-  const lifecycleRows = [
-    ["Games published", "session_published"],
-    ["RSVPs saved", "rsvp_saved"],
-    ["Play started", "play_started"],
-    ["Games completed", "session_completed"],
-    ["Recaps shared", "recap_shared"],
+  const retentionRows = [
+    ["Second game within 14 days", data.hostRetention.fourteenDay],
+    ["Second game within 30 days", data.hostRetention.thirtyDay],
   ] as const;
 
   return (
@@ -48,7 +46,8 @@ export default async function AdminInsightsPage() {
           {[
             ["Acquisition", "#acquisition"],
             ["Activation", "#activation"],
-            ["Core loop", "#core-loop"],
+            ["Game funnel", "#core-loop"],
+            ["Retention", "#retention"],
           ].map(([label, href]) => (
             <a key={href} href={href} className="min-h-10 py-2 text-sm font-semibold text-primary">
               {label}
@@ -112,14 +111,41 @@ export default async function AdminInsightsPage() {
 
       <section id="core-loop" aria-labelledby="core-loop-title" className="scroll-mt-6 border-t border-line py-9">
         <h2 id="core-loop-title" className="text-lg font-bold">
-          Core loop · 30 days
+          Game funnel · 30 days
         </h2>
-        <p className="mt-1 text-sm text-muted">Aggregate lifecycle events from planning through remembering.</p>
+        <p className="mt-1 text-sm text-muted">
+          Published games that reached each milestone. Every percentage uses published games as the cohort.
+        </p>
         <dl className="mt-4 divide-y divide-line border-y border-line">
-          {lifecycleRows.map(([label, event]) => (
-            <div key={event} className="flex items-center justify-between gap-4 py-4">
-              <dt className="text-sm font-medium">{label}</dt>
-              <dd className="score text-lg font-bold">{data.lifecycle.get(event) ?? 0}</dd>
+          {sessionFunnelStages.map((stage) => (
+            <div key={stage.key} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
+              <dt className="text-sm font-medium">{stage.label}</dt>
+              <dd className="flex items-center gap-4">
+                <span className="score text-sm text-muted">{data.funnel[stage.key]}</span>
+                <InsightBar value={data.funnel[stage.key]} total={data.funnel.published} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <section id="retention" aria-labelledby="retention-title" className="scroll-mt-6 border-t border-line py-9">
+        <h2 id="retention-title" className="text-lg font-bold">
+          Host retention
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Hosts who published another game after their first. Only hosts with a fully elapsed window are eligible.
+        </p>
+        <dl className="mt-4 divide-y divide-line border-y border-line">
+          {retentionRows.map(([label, retention]) => (
+            <div key={label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
+              <dt className="text-sm font-medium">
+                {label}
+                <span className="mt-1 block text-xs font-normal text-muted">
+                  {retention.retainedHosts} of {retention.eligibleHosts} eligible hosts
+                </span>
+              </dt>
+              <dd className="score text-lg font-bold">{retention.rate}%</dd>
             </div>
           ))}
         </dl>

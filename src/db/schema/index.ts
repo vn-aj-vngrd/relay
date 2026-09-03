@@ -608,6 +608,7 @@ export const productEvents = pgTable(
     sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
     source: text("source").notNull().default("server"),
     metadata: jsonb("metadata").$type<Record<string, string | number | boolean | null>>().notNull().default({}),
+    dedupeKey: text("dedupe_key").unique(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

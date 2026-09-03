@@ -20,7 +20,7 @@ import {
   sessionQueue,
   sessions,
 } from "@/db/schema";
-import { trackProductEvent } from "@/features/analytics/events";
+import { trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
@@ -223,7 +223,7 @@ export async function startPlay(_: StartPlayActionState, formData: FormData): Pr
       .insert(messages)
       .values({ sessionId, kind: "system", body: `Play started · ${rotationDescription(setup.mode, rotationConfig)}` });
   });
-  await trackProductEvent({
+  await trackSessionMilestone({
     name: "play_started",
     userId: user.id,
     sessionId,
@@ -457,7 +457,7 @@ export async function completeSession(formData: FormData) {
         .insert(notifications)
         .values(recipients.map((userId) => ({ userId, sessionId, type: "session_completed", payload: {} })));
   });
-  await trackProductEvent({
+  await trackSessionMilestone({
     name: "session_completed",
     userId: user.id,
     sessionId,
@@ -565,7 +565,7 @@ export async function finishMatch(formData: FormData) {
     return completedCount === 0;
   });
   if (wasFirstCompletedMatch)
-    await trackProductEvent({
+    await trackSessionMilestone({
       name: "first_match_completed",
       userId: user.id,
       sessionId,

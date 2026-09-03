@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessionPlayers, sessions } from "@/db/schema";
-import { trackProductEvent } from "@/features/analytics/events";
+import { trackSessionMilestone } from "@/features/analytics/events";
 import { requireUser } from "@/features/auth/session";
 import { validateAvatarFile } from "@/features/players/avatar-validation";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
@@ -84,7 +84,7 @@ export async function createGroupAction(_: GroupActionState, formData: FormData)
   });
 
   if (parsed.data.sourceSessionId)
-    await trackProductEvent({
+    await trackSessionMilestone({
       name: "group_saved",
       userId: user.id,
       sessionId: parsed.data.sourceSessionId,

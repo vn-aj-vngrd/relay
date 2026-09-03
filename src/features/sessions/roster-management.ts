@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { messages, notifications, profiles, sessionPlayers, sessionQueue, sessions } from "@/db/schema";
+import { trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import type { PlayingExperience } from "@/features/players/playing-experience";
@@ -76,6 +77,7 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
   const hostProfile = invitee
     ? await db.query.profiles.findFirst({ columns: { name: true }, where: eq(profiles.userId, session.hostId) })
     : null;
+  let reachedFourthPlayer = false;
 
   try {
     await db.transaction(async (tx) => {
@@ -139,6 +141,8 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
         capacity: session.capacity,
         intent: { requested: "going" },
       });
+      const goingBefore = roster.filter((player) => player.rsvp === "going").length;
+      reachedFourthPlayer = goingBefore < 4 && goingBefore + Number(transition.target.rsvp === "going") >= 4;
       const [player] = await tx
         .insert(sessionPlayers)
         .values({
@@ -179,7 +183,20 @@ async function addPlayer(command: Extract<RosterManagementCommand, { type: "add"
     };
   }
 
-  if (!isRelayInvite) await reconcileUnpaidExpenseShares(session.id);
+  if (!isRelayInvite)
+    await Promise.all([
+      reconcileUnpaidExpenseShares(session.id),
+      ...(reachedFourthPlayer
+        ? [
+            trackSessionMilestone({
+              name: "fourth_player_joined",
+              userId: command.actorUserId,
+              sessionId: session.id,
+              source: "authenticated",
+            }),
+          ]
+        : []),
+    ]);
   invalidateRoster(session);
   return { success: true, playerOutcome: isRelayInvite ? "invited" : "added" };
 }
@@ -191,6 +208,7 @@ async function approvePlayer(
   if (!session) return { error: "Only a host or co-host can approve players." };
 
   let result: "going" | "waitlisted" = "going";
+  let reachedFourthPlayer = false;
   try {
     await db.transaction(async (tx) => {
       await tx.execute(sql`select id from ${sessions} where id = ${session.id} for update`);
@@ -205,6 +223,8 @@ async function approvePlayer(
       if (transition.target.rsvp !== "going" && transition.target.rsvp !== "waitlisted")
         throw new Error("REQUEST_GONE");
       result = transition.target.rsvp;
+      const goingBefore = roster.filter((item) => item.rsvp === "going").length;
+      reachedFourthPlayer = goingBefore < 4 && goingBefore + Number(result === "going") >= 4;
       await tx
         .update(sessionPlayers)
         .set({ ...transition.target, respondedAt: new Date() })
@@ -244,7 +264,19 @@ async function approvePlayer(
     return { error: "The join request couldn’t be approved. Try again." };
   }
 
-  await reconcileUnpaidExpenseShares(session.id);
+  await Promise.all([
+    reconcileUnpaidExpenseShares(session.id),
+    ...(reachedFourthPlayer
+      ? [
+          trackSessionMilestone({
+            name: "fourth_player_joined",
+            userId: command.actorUserId,
+            sessionId: session.id,
+            source: "authenticated",
+          }),
+        ]
+      : []),
+  ]);
   invalidateRoster(session);
   return { success: true, rsvp: result };
 }

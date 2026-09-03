@@ -26,13 +26,21 @@ import {
   type AdminUserRecord,
   type AdminVenueRecord,
 } from "@/features/admin/records";
+import { buildHostRetention, type SessionFunnel } from "@/features/analytics/insights";
 
 import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
 export async function getAdminInsights() {
   await connection();
   const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const [profileCount, onboardingCount, tourCount, discoveryRows, lifecycleRows] = await Promise.all([
+  const fourPlayerGames = db
+    .select({ sessionId: sessionPlayers.sessionId })
+    .from(sessionPlayers)
+    .where(eq(sessionPlayers.rsvp, "going"))
+    .groupBy(sessionPlayers.sessionId)
+    .having(sql`count(*) >= 4`)
+    .as("four_player_games");
+  const [profileCount, onboardingCount, tourCount, discoveryRows, funnelRows, publicationRows] = await Promise.all([
     db.$count(profiles),
     db.$count(profiles, isNotNull(profiles.onboardingCompletedAt)),
     db.$count(profiles, isNotNull(profiles.productTourCompletedAt)),
@@ -42,20 +50,51 @@ export async function getAdminInsights() {
       .where(isNotNull(profiles.discoverySource))
       .groupBy(profiles.discoverySource),
     db
-      .select({ name: productEvents.name, total: count() })
-      .from(productEvents)
-      .where(gte(productEvents.createdAt, monthAgo))
-      .groupBy(productEvents.name),
+      .select({
+        published: sql<number>`count(distinct ${sessions.id})::int`,
+        inviteShared: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'invite_shared')::int`,
+        rsvpSaved: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'rsvp_saved')::int`,
+        fourPlayers: sql<number>`count(distinct ${sessions.id}) filter (
+          where ${productEvents.name} = 'fourth_player_joined' or ${fourPlayerGames.sessionId} is not null
+        )::int`,
+        playStarted: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'play_started')::int`,
+        firstMatchCompleted: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'first_match_completed')::int`,
+        sessionCompleted: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'session_completed')::int`,
+        recapShared: sql<number>`count(distinct ${sessions.id}) filter (where ${productEvents.name} = 'recap_shared')::int`,
+      })
+      .from(sessions)
+      .leftJoin(productEvents, eq(productEvents.sessionId, sessions.id))
+      .leftJoin(fourPlayerGames, eq(fourPlayerGames.sessionId, sessions.id))
+      .where(gte(sessions.publishedAt, monthAgo)),
+    db
+      .select({ hostId: sessions.hostId, publishedAt: sessions.publishedAt })
+      .from(sessions)
+      .where(isNotNull(sessions.publishedAt))
+      .orderBy(asc(sessions.publishedAt)),
   ]);
   const discovery = new Map(discoveryRows.map(({ source, total }) => [source, Number(total)]));
   const answeredDiscovery = [...discovery.values()].reduce((sum, total) => sum + total, 0);
+  const emptyFunnel: SessionFunnel = {
+    published: 0,
+    inviteShared: 0,
+    rsvpSaved: 0,
+    fourPlayers: 0,
+    playStarted: 0,
+    firstMatchCompleted: 0,
+    sessionCompleted: 0,
+    recapShared: 0,
+  };
+  const funnel = funnelRows[0] ?? emptyFunnel;
   return {
     profileCount,
     onboardingCount,
     tourCount,
     unansweredDiscovery: Math.max(0, profileCount - answeredDiscovery),
     discovery,
-    lifecycle: new Map(lifecycleRows.map(({ name, total }) => [name, Number(total)])),
+    funnel: Object.fromEntries(Object.entries(funnel).map(([key, total]) => [key, Number(total)])) as SessionFunnel,
+    hostRetention: buildHostRetention(
+      publicationRows.flatMap(({ hostId, publishedAt }) => (publishedAt ? [{ hostId, publishedAt }] : [])),
+    ),
   };
 }
 

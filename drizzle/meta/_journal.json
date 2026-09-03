@@ -225,6 +225,13 @@
       "when": 1788333684420,
       "tag": "0031_index_court_directory_filters",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788413632257,
+      "tag": "0032_product_event_dedupe",
+      "breakpoints": true
     }
   ]
 }
