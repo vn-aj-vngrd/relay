@@ -14,6 +14,7 @@ import type {
   GameInvitationPage,
 } from "./game-collection-types";
 import { encodeGameCursor, type GameCursor } from "./game-pagination";
+import { visibleHomePendingCount } from "./home-presentation";
 import { sessionReadiness } from "./readiness";
 import { resolveSessionWorkspaceAccess } from "./session-access";
 
@@ -108,9 +109,13 @@ export async function getHomeSessions(userId: string) {
   const [counts, expenseRows, hostProfiles] = rows.length
     ? await Promise.all([
         db
-          .select({ sessionId: sessionPlayers.sessionId, total: count() })
+          .select({
+            sessionId: sessionPlayers.sessionId,
+            goingTotal: sql<number>`count(*) filter (where ${sessionPlayers.rsvp} = 'going')`,
+            pendingTotal: sql<number>`count(*) filter (where ${sessionPlayers.rsvp} = 'pending')`,
+          })
           .from(sessionPlayers)
-          .where(and(inArray(sessionPlayers.sessionId, sessionIds), eq(sessionPlayers.rsvp, "going")))
+          .where(inArray(sessionPlayers.sessionId, sessionIds))
           .groupBy(sessionPlayers.sessionId),
         db.select({ sessionId: expenses.sessionId }).from(expenses).where(inArray(expenses.sessionId, sessionIds)),
         db
@@ -119,15 +124,20 @@ export async function getHomeSessions(userId: string) {
           .where(inArray(profiles.userId, hostIds)),
       ])
     : [[], [], []];
-  const playerCounts = new Map(counts.map(({ sessionId, total }) => [sessionId, Number(total)]));
+  const playerCounts = new Map(counts.map(({ sessionId, goingTotal }) => [sessionId, Number(goingTotal)]));
+  const pendingCounts = new Map(counts.map(({ sessionId, pendingTotal }) => [sessionId, Number(pendingTotal)]));
   const sessionsWithExpense = new Set(expenseRows.map(({ sessionId }) => sessionId));
   const hostNames = new Map(hostProfiles.map(({ userId, name }) => [userId, name]));
-  const enrich = (row: (typeof rows)[number]) => ({
-    ...row,
-    playerCount: playerCounts.get(row.session.id) ?? 0,
-    hasExpense: sessionsWithExpense.has(row.session.id),
-    hostName: hostNames.get(row.session.hostId) ?? "Relay host",
-  });
+  const enrich = (row: (typeof rows)[number]) => {
+    const pendingCount = pendingCounts.get(row.session.id) ?? 0;
+    return {
+      ...row,
+      playerCount: playerCounts.get(row.session.id) ?? 0,
+      pendingCount: visibleHomePendingCount(pendingCount, row.player.role, row.session.hostId === userId),
+      hasExpense: sessionsWithExpense.has(row.session.id),
+      hostName: hostNames.get(row.session.hostId) ?? "Relay host",
+    };
+  };
 
   return {
     invitations: invitations.map(enrich),

@@ -17,7 +17,7 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 import { formatSessionDate, formatSessionTime, peso, sessionDateKey } from "@/features/sessions/format";
 import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
 import { HomeInvitations } from "@/features/sessions/home-invitations";
-import { homeHeading, homeParticipationLabel } from "@/features/sessions/home-presentation";
+import { homeHeading, homeParticipationLabel, homePendingRequestLabel } from "@/features/sessions/home-presentation";
 import { getHomeSessions } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
 
@@ -143,8 +143,12 @@ export default async function HomePage() {
               <UsersThree size={18} className="text-muted" />
               <span>
                 <span className="block text-sm font-medium">Players</span>
-                <span className="mt-0.5 block text-xs text-muted">
-                  {next.playerCount} of {next.session.capacity} going
+                <span
+                  className={`mt-0.5 block text-xs ${next.pendingCount ? "font-semibold text-primary" : "text-muted"}`}
+                >
+                  {next.pendingCount
+                    ? homePendingRequestLabel(next.pendingCount)
+                    : `${next.playerCount} of ${next.session.capacity} going`}
                 </span>
               </span>
             </Link>
@@ -234,8 +238,9 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="divide-y divide-line border-y border-line">
-            {upcoming.slice(0, 3).map(({ session, player, playerCount }) => {
-              const participation = homeParticipationLabel(player.rsvp, session.hostId === user.id);
+            {upcoming.slice(0, 3).map(({ session, player, playerCount, pendingCount }) => {
+              const participation = homeParticipationLabel(player.rsvp, player.role);
+              const requestLabel = pendingCount ? homePendingRequestLabel(pendingCount) : null;
               return (
                 <Link
                   href={`/games/${session.id}`}
@@ -250,11 +255,17 @@ export default async function HomePage() {
                     <p className="mt-1 truncate text-sm text-muted">
                       <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
                       {formatSessionTime(session.startsAt, session.endsAt)} · {session.venueName}
-                      <span className="sm:hidden">{participation ? ` · ${participation}` : ""}</span>
+                      <span className="sm:hidden">
+                        {participation ? ` · ${participation}` : ""}
+                        {requestLabel ? ` · ${requestLabel}` : ""}
+                      </span>
                     </p>
                   </div>
                   <span className="hidden shrink-0 text-right sm:block">
-                    <span className="block text-sm font-[650] text-primary">{participation}</span>
+                    <span className="block text-sm font-[650] text-primary">
+                      {participation}
+                      {requestLabel ? ` · ${requestLabel}` : ""}
+                    </span>
                     <span className="score mt-1 block text-xs text-muted">
                       {playerCount} / {session.capacity} players
                     </span>

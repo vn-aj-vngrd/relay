@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -54,10 +54,22 @@ async function requireSessionManager(sessionId: string, userId: string) {
 }
 
 function invalidateRoster(session: { id: string; slug: string }) {
+  revalidatePath("/home");
+  revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}/players`);
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/s/${session.slug}`);
+}
+
+function unresolvedJoinRequest(sessionId: string, hostId: string, sessionPlayerId: string) {
+  return and(
+    eq(notifications.userId, hostId),
+    eq(notifications.sessionId, sessionId),
+    eq(notifications.type, "join_request"),
+    isNull(notifications.readAt),
+    sql`${notifications.payload} ->> 'sessionPlayerId' = ${sessionPlayerId}`,
+  );
 }
 
 async function addPlayer(command: Extract<RosterManagementCommand, { type: "add" }>): Promise<RosterManagementResult> {
@@ -229,6 +241,10 @@ async function approvePlayer(
         .update(sessionPlayers)
         .set({ ...transition.target, respondedAt: new Date() })
         .where(eq(sessionPlayers.id, player.id));
+      await tx
+        .update(notifications)
+        .set({ readAt: new Date() })
+        .where(unresolvedJoinRequest(session.id, session.hostId, player.id));
       if (session.status === "live" && result === "going") {
         const queue = await tx.select().from(sessionQueue).where(eq(sessionQueue.sessionId, session.id));
         await tx
@@ -293,6 +309,7 @@ async function removePlayer(
       const roster = await tx.select().from(sessionPlayers).where(eq(sessionPlayers.sessionId, session.id));
       const player = roster.find((item) => item.id === command.sessionPlayerId);
       if (!player || player.role === "host") throw new Error("CANNOT_REMOVE");
+      const pendingRequest = player.rsvp === "pending";
       const transition = planRosterTransition({
         roster,
         capacity: session.capacity,
@@ -350,6 +367,11 @@ async function removePlayer(
           type: "removed_from_session",
           payload: {},
         });
+      if (pendingRequest)
+        await tx
+          .update(notifications)
+          .set({ readAt: new Date() })
+          .where(unresolvedJoinRequest(session.id, session.hostId, player.id));
     });
   } catch {
     return { error: "This player can’t be removed from the roster." };

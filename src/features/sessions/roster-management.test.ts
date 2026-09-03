@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   selectWhere: vi.fn(),
   insertValues: vi.fn(),
   returning: vi.fn(),
+  updateSet: vi.fn(),
+  updateWhere: vi.fn(),
   reconcile: vi.fn(),
   revalidatePath: vi.fn(),
   assertRateLimit: vi.fn(),
@@ -54,11 +56,13 @@ beforeEach(() => {
   mocks.selectWhere.mockResolvedValue([]);
   mocks.returning.mockResolvedValue([{ id: "player-1" }]);
   mocks.insertValues.mockImplementation(() => ({ returning: mocks.returning }));
+  mocks.updateSet.mockImplementation(() => ({ where: mocks.updateWhere }));
   mocks.transaction.mockImplementation(async (work: (tx: unknown) => Promise<unknown>) =>
     work({
       execute: mocks.execute,
       select: () => ({ from: () => ({ where: mocks.selectWhere }) }),
       insert: () => ({ values: mocks.insertValues }),
+      update: () => ({ set: mocks.updateSet }),
     }),
   );
 });
@@ -107,11 +111,64 @@ describe("manageRoster", () => {
     );
     expect(mocks.reconcile).toHaveBeenCalledWith(session.id);
     expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual([
+      "/home",
+      "/notifications",
       `/games/${session.id}/players`,
       `/games/${session.id}/payments`,
       `/games/${session.id}`,
       `/s/${session.slug}`,
     ]);
+  });
+
+  it("marks a host join-request notification read after approval", async () => {
+    mocks.findMembership.mockResolvedValue({ role: "cohost", rsvp: "going", leftAt: null });
+    mocks.selectWhere.mockResolvedValue([
+      {
+        id: "pending-1",
+        userId: "player-1",
+        guestName: null,
+        role: "player",
+        rsvp: "pending",
+        waitlistPosition: null,
+      },
+    ]);
+
+    await expect(
+      manageRoster({
+        type: "approve",
+        actorUserId: "cohost-1",
+        sessionId: session.id,
+        sessionPlayerId: "pending-1",
+      }),
+    ).resolves.toEqual({ success: true, rsvp: "going" });
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({ readAt: expect.any(Date) });
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/home");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/notifications");
+  });
+
+  it("marks a host join-request notification read after rejection", async () => {
+    mocks.selectWhere.mockResolvedValue([
+      {
+        id: "pending-1",
+        userId: "player-1",
+        guestName: null,
+        role: "player",
+        rsvp: "pending",
+        waitlistPosition: null,
+      },
+    ]);
+
+    await expect(
+      manageRoster({
+        type: "remove",
+        actorUserId: "host-1",
+        sessionId: session.id,
+        sessionPlayerId: "pending-1",
+      }),
+    ).resolves.toEqual({ success: true });
+
+    expect(mocks.updateSet).toHaveBeenCalledWith({ readAt: expect.any(Date) });
   });
 
   it("records the four-player milestone when a host fills the first court", async () => {
