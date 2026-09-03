@@ -98,6 +98,22 @@ describe("ApplicationTour", () => {
     );
   });
 
+  it("opens a claimed guest game after the tour instead of losing the RSVP destination", () => {
+    const destination = "/games/59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7";
+    window.history.replaceState({}, "", `/home?tour=1&next=${encodeURIComponent(destination)}`);
+    render(<ApplicationTour required />);
+
+    for (let step = 0; step < 4; step += 1) fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    const openButton = screen.getByRole("button", { name: "Open saved game" });
+    expect(openButton.closest("form")?.querySelector<HTMLInputElement>('input[name="destination"]')).toHaveValue(
+      destination,
+    );
+    expect(
+      screen.getByRole("button", { name: "Skip application tour" }).closest("form")?.querySelector("input"),
+    ).toHaveValue(destination);
+  });
+
   it("can replay from the tour query without resetting onboarding", async () => {
     window.history.replaceState({}, "", "/home?tour=1");
     render(<ApplicationTour required={false} />);

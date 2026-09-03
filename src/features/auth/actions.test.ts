@@ -304,6 +304,7 @@ describe("createPasswordAccount", () => {
     formData.set("password", "RelayPass123");
     formData.set("confirmation", "RelayPass123");
     formData.set("cf-turnstile-response", "verified-turnstile-token");
+    formData.set("next", "/s/friends-night");
 
     await expect(createPasswordAccount(formData)).rejects.toThrow("redirect");
 
@@ -319,6 +320,11 @@ describe("createPasswordAccount", () => {
         emailRedirectTo: "https://relay.vanajvanguardia.tech/auth/callback",
       },
     });
+    expect(mocks.cookieSet).toHaveBeenCalledWith(
+      "relay_auth_next",
+      "/s/friends-night",
+      expect.objectContaining({ httpOnly: true, maxAge: 86_400, path: "/" }),
+    );
     expect(mocks.cookieSet).toHaveBeenCalledWith(
       "relay_confirmation_email",
       "player@example.com",

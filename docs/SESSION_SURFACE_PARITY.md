@@ -17,6 +17,7 @@ Both paths represent the same session and use the same vocabulary, information o
 - A signed-in nonparticipant may open `/games/[id]` only when the game is currently eligible for public discovery: public, published or live, not ended, and carrying a stated cost expectation. The workspace is read-only except for the viewer’s RSVP.
 - `/s/[slug]` remains the account-optional shared entry point and the host’s explicit shared-link preview. Signing in does not make a private or link-only game discoverable by identifier.
 - RSVP changes update capabilities in place. Hosts and co-hosts see management controls; participants see personal actions; invitees, pending players, and discoverers see only actions they can complete.
+- Guest RSVP never requires registration. A successful guest response may offer account creation afterward; authentication must claim the existing response, reconcile an unanswered account invitation without adding a second roster row, and return the player to that game. The guest token remains valid when signup is canceled or interrupted.
 
 ## Canonical navigation
 

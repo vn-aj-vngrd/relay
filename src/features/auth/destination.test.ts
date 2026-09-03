@@ -18,10 +18,13 @@ describe("post-auth destination", () => {
     expect(onboardingDestination(game, true)).toBe(game);
   });
 
-  it("opens the tour before creation and preserves prefilled game details", () => {
+  it("opens the tour and preserves the task that brought the player into Relay", () => {
     expect(postSetupDestination("/games/new")).toBe("/home?tour=1&next=%2Fgames%2Fnew");
     expect(postSetupDestination("/games/new?venue=Central+Pickle")).toBe(
       "/home?tour=1&next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle",
+    );
+    expect(postSetupDestination("/games/59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7")).toBe(
+      "/home?tour=1&next=%2Fgames%2F59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
     );
   });
 

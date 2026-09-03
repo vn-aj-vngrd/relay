@@ -11,7 +11,7 @@ export function onboardingDestination(path: string, onboardingComplete: boolean)
 export function postSetupDestination(next: unknown) {
   const destination = safeNextPath(next);
   const params = new URLSearchParams({ tour: "1" });
-  if (destination.startsWith("/games/new")) params.set("next", destination);
+  if (destination !== "/home") params.set("next", destination);
   return `/home?${params}`;
 }
 

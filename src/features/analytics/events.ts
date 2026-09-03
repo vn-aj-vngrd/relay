@@ -11,6 +11,7 @@ export const productEventNames = [
   "session_published",
   "invite_shared",
   "rsvp_saved",
+  "guest_rsvp_claimed",
   "fourth_player_joined",
   "play_started",
   "first_match_completed",

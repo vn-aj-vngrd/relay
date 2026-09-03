@@ -6,6 +6,7 @@ import { type CSSProperties, useEffect, useLayoutEffect, useRef, useState } from
 
 import { Button } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
+import { safeNextPath } from "@/features/auth/destination-path";
 
 import { completeProductTour } from "./actions";
 
@@ -98,8 +99,10 @@ export function ApplicationTour({ required }: { required: boolean }) {
   const closeForm = useRef<HTMLFormElement>(null);
   const current = steps[step];
   const replay = !required;
-  const requestedDestination = searchParams.get("next");
-  const createDestination = requestedDestination?.startsWith("/games/new") ? requestedDestination : "/games/new";
+  const requestedDestination = safeNextPath(searchParams.get("next"));
+  const createDestination = requestedDestination.startsWith("/games/new") ? requestedDestination : "/games/new";
+  const continuationDestination = requestedDestination.startsWith("/games/new") ? "/home" : requestedDestination;
+  const continuationLabel = continuationDestination.startsWith("/games/") ? "Open saved game" : "Explore Relay";
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -198,7 +201,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
             {step + 1} / {steps.length}
           </p>
           <form noValidate ref={closeForm} action={completeProductTour}>
-            <input type="hidden" name="destination" value="/home" />
+            <input type="hidden" name="destination" value={continuationDestination} />
             <button
               type="submit"
               aria-label={replay ? "Close application tour" : "Skip application tour"}
@@ -241,12 +244,12 @@ export function ApplicationTour({ required }: { required: boolean }) {
           {finalStep ? (
             <div className="flex items-center gap-2">
               <form noValidate action={completeProductTour}>
-                <input type="hidden" name="destination" value="/home" />
+                <input type="hidden" name="destination" value={continuationDestination} />
                 <PendingSubmit
                   pendingLabel="Finishing…"
                   className="pressable inline-flex h-9 items-center rounded-lg px-2.5 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
                 >
-                  Explore Relay
+                  {continuationLabel}
                 </PendingSubmit>
               </form>
               <form noValidate action={completeProductTour}>

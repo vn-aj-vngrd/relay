@@ -158,8 +158,7 @@ export async function completeProductTour(formData: FormData) {
   const user = await requireUser();
   await guardOnboardingMutation(user.id);
   await ensureProfile(user);
-  const requestedDestination = safeNextPath(formData.get("destination"));
-  const destination = requestedDestination.startsWith("/games/new") ? requestedDestination : "/home";
+  const destination = safeNextPath(formData.get("destination"));
   const now = new Date();
   await db
     .update(profiles)

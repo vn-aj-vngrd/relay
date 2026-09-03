@@ -189,6 +189,13 @@ async function attemptPasswordAccountCreation(formData: FormData): Promise<AuthF
     };
   if (data.session && data.user) redirect(await resolvePostAuthDestination(next, data.user.id));
   const cookieStore = await cookies();
+  cookieStore.set("relay_auth_next", next, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24,
+    path: "/",
+  });
   cookieStore.set("relay_confirmation_email", email.data, {
     httpOnly: true,
     sameSite: "lax",

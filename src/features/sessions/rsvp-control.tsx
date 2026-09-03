@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Question, ShareNetwork, UserCircle, X } from "@phosphor-icons/react";
+import { Check, CheckCircle, Question, ShareNetwork, UserCircle, X } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import { playingExperienceLabel, playingExperienceOptions } from "@/features/players/playing-experience";
 
-import { rsvpAction } from "./actions";
+import { rsvpAction, type SessionActionState } from "./actions";
 
 type Choice = "going" | "maybe" | "declined";
 type CurrentRsvp = Choice | "invited" | "pending" | "waitlisted";
@@ -22,6 +23,52 @@ const choices = [
 
 function initialChoice(rsvp?: CurrentRsvp): Choice {
   return rsvp === "maybe" || rsvp === "declined" ? rsvp : "going";
+}
+
+function GuestAccountHandoff({
+  rsvp,
+  signupHref,
+  signInHref,
+  titleId,
+}: {
+  rsvp: SessionActionState["rsvp"];
+  signupHref: string;
+  signInHref: string;
+  titleId: string;
+}) {
+  const outcome =
+    rsvp === "pending"
+      ? "Your request is with the host."
+      : rsvp === "waitlisted"
+        ? "Your place on the waitlist is saved."
+        : rsvp === "declined"
+          ? "Your response is saved."
+          : "Your spot is saved.";
+
+  return (
+    <section className="mt-4 border-y border-line py-4" aria-labelledby={titleId}>
+      <div className="flex items-start gap-3">
+        <CheckCircle aria-hidden size={20} weight="fill" className="mt-0.5 shrink-0 text-success" />
+        <div className="min-w-0 flex-1">
+          <h3 id={titleId} className="font-[680]">
+            {outcome}
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Create an account to keep this game in your history and receive its updates in Relay.
+          </p>
+        </div>
+      </div>
+      <ButtonLink href={signupHref} className="mt-4 w-full">
+        Keep this game in Relay
+      </ButtonLink>
+      <p className="mt-2 text-center text-xs text-muted">
+        Already have an account?{" "}
+        <Link href={signInHref} className="font-semibold text-primary hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </section>
+  );
 }
 
 export function RsvpControl({
@@ -57,7 +104,10 @@ export function RsvpControl({
   const preserveValues = usePreserveFormValuesOnError(state);
   const isReturningGuest = Boolean(guestName);
   const nameInputId = `guest-${instance}-${sessionId}`;
-  const signInHref = `/login?next=${encodeURIComponent(`/s/${slug}`)}`;
+  const sharedPath = `/s/${slug}`;
+  const signInHref = `/login?next=${encodeURIComponent(sharedPath)}`;
+  const signupHref = `/signup?next=${encodeURIComponent(sharedPath)}`;
+  const guestResponseSaved = state.success && !signedIn;
 
   async function share() {
     try {
@@ -129,7 +179,12 @@ export function RsvpControl({
                   placeholder="e.g. Mika Reyes…"
                   className="mt-1.5 h-12 w-full rounded-[10px] border border-line bg-surface px-3.5 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
-                <p className="mt-1.5 text-xs text-muted">Your name is only visible in this game.</p>
+                <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
+                  <p className="text-muted">Your name is only visible in this game.</p>
+                  <Link href={signInHref} className="font-semibold text-primary hover:underline">
+                    Already use Relay? Sign in
+                  </Link>
+                </div>
               </div>
             )}
             {signedIn ? (
@@ -203,7 +258,7 @@ export function RsvpControl({
               <p role="alert" className="text-sm font-medium text-danger">
                 {state.error}
               </p>
-            ) : responseMessage ? (
+            ) : responseMessage && !guestResponseSaved ? (
               <p role="status" className="text-sm font-medium text-primary">
                 {responseMessage}
               </p>
@@ -213,13 +268,13 @@ export function RsvpControl({
               </p>
             ) : null}
           </form>
-          {!signedIn && !isReturningGuest ? (
-            <div className="mt-4 border-t border-line pt-4 text-center">
-              <ButtonLink href={signInHref} variant="secondary" className="w-full">
-                Use a Relay account
-              </ButtonLink>
-              <p className="mt-1.5 text-xs text-muted">Keep this game and future sessions in your history.</p>
-            </div>
+          {guestResponseSaved ? (
+            <GuestAccountHandoff
+              rsvp={state.rsvp}
+              signupHref={signupHref}
+              signInHref={signInHref}
+              titleId={`keep-game-title-${instance}-${sessionId}`}
+            />
           ) : null}
         </>
       )}
