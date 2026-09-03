@@ -105,6 +105,29 @@ describe("CreateSessionForm", () => {
     expect(screen.getByText("7 group members will be invited when you publish.")).toBeVisible();
   });
 
+  it("explains replayed defaults and preserves access settings without copying game state", () => {
+    render(
+      <CreateSessionForm
+        defaults={{
+          ...completePlan,
+          date: undefined,
+          sourceSessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
+          inviteeCount: 3,
+          visibility: "public",
+          requiresApproval: true,
+        }}
+        now={now}
+      />,
+    );
+
+    expect(screen.getByText("Previous game ready")).toBeVisible();
+    expect(screen.getByText(/choose a new date/i)).toBeVisible();
+    expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent("Choose a date");
+
+    expect(document.querySelector('input[name="visibility"][value="public"]')).toBeChecked();
+    expect(document.querySelector('input[name="requiresApproval"]')).toBeChecked();
+  });
+
   it("keeps the player note readable as a multiline field on mobile", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToDetails();

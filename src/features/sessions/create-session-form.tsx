@@ -150,6 +150,8 @@ export type CreateSessionDefaults = {
   end?: string;
   cost?: number;
   accentColor?: string;
+  visibility?: "public" | "link" | "private";
+  requiresApproval?: boolean;
   groupId?: string;
   groupName?: string;
   sourceSessionId?: string;
@@ -201,7 +203,7 @@ export function CreateSessionForm({
   const [state, action] = useActionState(createSessionAction, {});
   const [step, setStep] = useState(1);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
-  const [visibility, setVisibility] = useState<"public" | "link" | "private">("link");
+  const [visibility, setVisibility] = useState<"public" | "link" | "private">(defaults.visibility ?? "link");
   const [costKind, setCostKind] = useState<"unspecified" | "free" | "estimated">(
     defaults.cost === 0 ? "free" : defaults.cost != null ? "estimated" : "unspecified",
   );
@@ -396,21 +398,23 @@ export function CreateSessionForm({
         </div>
       ) : null}
 
-      {defaults.groupName ? (
+      {defaults.sourceSessionId ? (
+        <section className="mb-6 border-y border-line py-4">
+          <p className="text-sm font-semibold">Previous game ready</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            {defaults.inviteeCount
+              ? `${defaults.inviteeCount} signed-in ${defaults.groupName ? (defaults.inviteeCount === 1 ? "group member" : "group members") : defaults.inviteeCount === 1 ? "player" : "players"} will receive a fresh invitation when you publish. `
+              : "No signed-in players can be invited automatically, but you can still share the new game. "}
+            The plan is copied; choose a new date. Previous responses, booking, payments, and scores stay behind.
+          </p>
+        </section>
+      ) : defaults.groupName ? (
         <section className="mb-6 border-y border-line py-4">
           <p className="text-sm font-semibold">For {defaults.groupName}</p>
           <p className="mt-1 text-sm text-muted">
             {defaults.inviteeCount
               ? `${defaults.inviteeCount} group ${defaults.inviteeCount === 1 ? "member" : "members"} will be invited when you publish.`
               : "No other members yet. Add players from the group page or share the game link."}
-          </p>
-        </section>
-      ) : defaults.sourceSessionId && defaults.inviteeCount ? (
-        <section className="mb-6 border-y border-line py-4">
-          <p className="text-sm font-semibold">Familiar crew ready</p>
-          <p className="mt-1 text-sm text-muted">
-            {defaults.inviteeCount} signed-in players from the last game will be invited again. Their previous RSVP is
-            not copied.
           </p>
         </section>
       ) : null}
@@ -670,7 +674,7 @@ export function CreateSessionForm({
           <input
             type="checkbox"
             name="requiresApproval"
-            defaultChecked={value("requiresApproval") === "on"}
+            defaultChecked={value("requiresApproval", defaults.requiresApproval ? "on" : "") === "on"}
             className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
           />
           <span>

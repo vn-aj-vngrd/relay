@@ -12,11 +12,15 @@ const base = {
 
 describe("SessionOverviewStatus", () => {
   it("replaces setup guidance with the saved recap after completion", () => {
-    render(<SessionOverviewStatus {...base} status="completed" isHost />);
+    render(<SessionOverviewStatus {...base} status="completed" isHost canReplay />);
 
     expect(screen.getByText("Game complete")).toBeVisible();
     expect(screen.getByRole("heading", { name: "Results are saved" })).toBeVisible();
     expect(screen.getByRole("link", { name: "View recap" })).toHaveAttribute("href", `/games/${base.sessionId}/play`);
+    expect(screen.getByRole("link", { name: "Play again" })).toHaveAttribute(
+      "href",
+      `/games/new?from=${base.sessionId}`,
+    );
     expect(screen.queryByText("Ready to play")).not.toBeInTheDocument();
     expect(screen.queryByText("You manage this game")).not.toBeInTheDocument();
   });

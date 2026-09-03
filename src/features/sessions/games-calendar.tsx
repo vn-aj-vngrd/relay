@@ -1,8 +1,10 @@
 "use client";
 
-import { CaretLeft, CaretRight, MapPin, Users } from "@phosphor-icons/react";
+import { ArrowClockwise, CaretLeft, CaretRight, MapPin, Users } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
+
+import { ButtonLink } from "@/components/ui/button";
 
 import { sessionAccentStyle } from "./accent";
 import type { GameCollectionItem } from "./game-collection-types";
@@ -102,37 +104,43 @@ function DayAgenda({ dateKey, games, loading }: { dateKey: string; games: Calend
       {games.length ? (
         <div className="divide-y divide-line" aria-label={`Games on ${title}`}>
           {games.map((game) => (
-            <Link
-              key={game.id}
-              href={game.href}
-              prefetch={false}
-              style={sessionAccentStyle(game.accentColor)}
-              className="pressable group block py-4"
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" />
-                <span className={`text-xs font-[680] ${game.phase === "live" ? "text-live" : "text-muted"}`}>
-                  {phaseLabel(game.phase)} · {shortTime(game.time)}
-                </span>
-              </div>
-              <p className="mt-1.5 line-clamp-2 font-[680] text-ink group-hover:text-primary">{game.title}</p>
-              <p className="mt-2 flex min-w-0 items-center gap-2 text-[13px] text-muted">
-                <MapPin aria-hidden size={15} className="shrink-0" />
-                <span className="truncate">{game.venue}</span>
-              </p>
-              <p className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
-                <Users aria-hidden size={15} className="shrink-0" />
-                <span className="score">
-                  {game.phase === "past" ? game.playerCount : `${game.playerCount} / ${game.capacity}`}
-                </span>
-                <span>{game.phase === "past" ? "played" : "going"}</span>
-                {game.readiness && game.phase !== "past" ? (
-                  <span className={game.readiness.ready ? "font-[650] text-success" : "text-muted"}>
-                    · {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
+            <article key={game.id} style={sessionAccentStyle(game.accentColor)} className="py-4">
+              <Link href={game.href} prefetch={false} className="pressable group block">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" />
+                  <span className={`text-xs font-[680] ${game.phase === "live" ? "text-live" : "text-muted"}`}>
+                    {phaseLabel(game.phase)} · {shortTime(game.time)}
                   </span>
-                ) : null}
-              </p>
-            </Link>
+                </div>
+                <p className="mt-1.5 line-clamp-2 font-[680] text-ink group-hover:text-primary">{game.title}</p>
+                <p className="mt-2 flex min-w-0 items-center gap-2 text-[13px] text-muted">
+                  <MapPin aria-hidden size={15} className="shrink-0" />
+                  <span className="truncate">{game.venue}</span>
+                </p>
+                <p className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
+                  <Users aria-hidden size={15} className="shrink-0" />
+                  <span className="score">
+                    {game.phase === "past" ? game.playerCount : `${game.playerCount} / ${game.capacity}`}
+                  </span>
+                  <span>{game.phase === "past" ? "played" : "going"}</span>
+                  {game.readiness && game.phase !== "past" ? (
+                    <span className={game.readiness.ready ? "font-[650] text-success" : "text-muted"}>
+                      · {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
+                    </span>
+                  ) : null}
+                </p>
+              </Link>
+              {game.phase === "past" && game.canReplay ? (
+                <ButtonLink
+                  href={`/games/new?from=${game.id}`}
+                  variant="quiet"
+                  aria-label={`Play ${game.title} again`}
+                  className="mt-2 -ml-3"
+                >
+                  <ArrowClockwise aria-hidden size={15} /> Play again
+                </ButtonLink>
+              ) : null}
+            </article>
           ))}
         </div>
       ) : loading ? (

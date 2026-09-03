@@ -17,6 +17,7 @@ export type GameCollectionItem = {
   estimatedCostCents: number | null;
   requiresApproval: boolean;
   spotsRemaining: number;
+  canReplay: boolean;
   readiness?: {
     ready: boolean;
     percent: number;

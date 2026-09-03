@@ -57,6 +57,7 @@ export default async function HomePage() {
     estimatedCostCents: session.estimatedCostCents,
     requiresApproval: session.requiresApproval,
     spotsRemaining: Math.max(0, session.capacity - playerCount),
+    canReplay: false,
   }));
 
   return (

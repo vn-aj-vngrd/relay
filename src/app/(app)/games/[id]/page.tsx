@@ -230,6 +230,7 @@ export default async function GameOverviewPage({
             sessionId={session.id}
             status={session.status}
             isHost={isHost}
+            canReplay={session.hostId === user.id}
             rsvp={membership?.rsvp}
             estimatedCostCents={session.estimatedCostCents}
             readiness={readiness}

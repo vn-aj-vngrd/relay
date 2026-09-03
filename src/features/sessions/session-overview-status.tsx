@@ -1,4 +1,4 @@
-import { CheckCircle, Play } from "@phosphor-icons/react/dist/ssr";
+import { ArrowClockwise, CheckCircle, Play } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";
 
@@ -16,6 +16,7 @@ export function SessionOverviewStatus({
   sessionId,
   status,
   isHost,
+  canReplay = false,
   rsvp,
   estimatedCostCents,
   readiness,
@@ -23,6 +24,7 @@ export function SessionOverviewStatus({
   sessionId: string;
   status: string;
   isHost: boolean;
+  canReplay?: boolean;
   rsvp?: string;
   estimatedCostCents: number | null;
   readiness: SessionReadiness;
@@ -44,9 +46,16 @@ export function SessionOverviewStatus({
             View payment · {peso(estimatedCostCents)}
           </ButtonLink>
         ) : (
-          <ButtonLink href={`/games/${sessionId}/play`} className="mt-5 w-full">
-            View recap
-          </ButtonLink>
+          <div className="mt-5 space-y-2">
+            <ButtonLink href={`/games/${sessionId}/play`} className="w-full">
+              View recap
+            </ButtonLink>
+            {canReplay ? (
+              <ButtonLink href={`/games/new?from=${sessionId}`} variant="secondary" className="w-full">
+                <ArrowClockwise aria-hidden size={16} /> Play again
+              </ButtonLink>
+            ) : null}
+          </div>
         )}
       </section>
     );

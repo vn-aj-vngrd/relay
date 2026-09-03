@@ -166,7 +166,9 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
     : null;
   if (requestedGroupId && !groupMembership) return { error: "This group is no longer available to you." };
   const source = sourceSessionId
-    ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, sourceSessionId), eq(sessions.hostId, user.id)) })
+    ? await db.query.sessions.findFirst({
+        where: and(eq(sessions.id, sourceSessionId), eq(sessions.hostId, user.id), eq(sessions.status, "completed")),
+      })
     : null;
   if (sourceSessionId && !source) return { error: "Only the original host can replay this game." };
   const invitedUserIds =

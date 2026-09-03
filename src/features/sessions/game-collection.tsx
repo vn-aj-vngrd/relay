@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank, CalendarPlus, CaretRight, MapPin } from "@phosphor-icons/react";
+import { ArrowClockwise, CalendarBlank, CalendarPlus, CaretRight, MapPin } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { z } from "zod";
@@ -47,6 +47,7 @@ const gameItemSchema = z.object({
   estimatedCostCents: z.number().nullable(),
   requiresApproval: z.boolean(),
   spotsRemaining: z.number(),
+  canReplay: z.boolean(),
   readiness: z
     .object({
       ready: z.boolean(),
@@ -231,51 +232,70 @@ function InvitationSection({
   );
 }
 
+function ReplayGameLink({ game, compact = false }: { game: GameCollectionItem; compact?: boolean }) {
+  return (
+    <ButtonLink
+      href={`/games/new?from=${game.id}`}
+      variant="quiet"
+      aria-label={`Play ${game.title} again`}
+      className={compact ? "h-11 min-h-11 w-11 shrink-0 px-0 sm:w-auto sm:px-3" : "w-full"}
+    >
+      <ArrowClockwise aria-hidden size={16} />
+      <span className={compact ? "sr-only sm:not-sr-only" : ""}>Play again</span>
+    </ButtonLink>
+  );
+}
+
 function GameList({ items, past = false }: { items: GameCollectionItem[]; past?: boolean }) {
   return (
     <div className="divide-y divide-line border-y border-line">
       {items.map((game) => (
-        <Link
-          href={game.href}
-          prefetch={false}
+        <div
           key={game.id}
           style={sessionAccentStyle(game.accentColor)}
-          className="collection-row game-list-item pressable group flex min-h-[4.5rem] items-center gap-3 py-3.5 hover:bg-surface sm:min-h-20 sm:gap-4 sm:px-3 sm:py-4"
+          className="collection-row game-list-item flex min-h-[4.5rem] items-center gap-1 sm:min-h-20 sm:gap-2 sm:px-1"
         >
-          <time className="score hidden w-20 shrink-0 text-sm font-bold text-primary sm:block">{game.date}</time>
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate font-[650]">{game.title}</h3>
-            <p className="mt-1 truncate text-[13px] text-muted sm:text-sm">
-              <time className="score font-bold text-primary sm:hidden">{game.date}</time>
-              <span className="sm:hidden"> · </span>
-              {game.time} · {game.venue}
-              {past ? (
-                <span className="sm:hidden"> · Ended</span>
-              ) : rsvpLabel(game.viewerRsvp) ? (
-                <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span>
-              ) : null}
-            </p>
-          </div>
-          {past ? (
-            <span className="hidden text-xs font-[650] text-muted sm:block">Ended</span>
-          ) : game.readiness ? (
-            <span
-              className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
-            >
-              {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
-            </span>
-          ) : (
-            <span className="hidden text-right sm:block">
-              {rsvpLabel(game.viewerRsvp) ? (
-                <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
-              ) : null}
-              <span className="score mt-0.5 block text-sm text-muted">
-                {game.playerCount} / {game.capacity}
+          <Link
+            href={game.href}
+            prefetch={false}
+            className="pressable group flex min-w-0 flex-1 items-center gap-3 py-3.5 hover:bg-surface sm:gap-4 sm:px-2 sm:py-4"
+          >
+            <time className="score hidden w-20 shrink-0 text-sm font-bold text-primary sm:block">{game.date}</time>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate font-[650]">{game.title}</h3>
+              <p className="mt-1 truncate text-[13px] text-muted sm:text-sm">
+                <time className="score font-bold text-primary sm:hidden">{game.date}</time>
+                <span className="sm:hidden"> · </span>
+                {game.time} · {game.venue}
+                {past ? (
+                  <span className="sm:hidden"> · Ended</span>
+                ) : rsvpLabel(game.viewerRsvp) ? (
+                  <span className="sm:hidden"> · {rsvpLabel(game.viewerRsvp)}</span>
+                ) : null}
+              </p>
+            </div>
+            {past ? (
+              <span className="hidden text-xs font-[650] text-muted sm:block">Ended</span>
+            ) : game.readiness ? (
+              <span
+                className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
+              >
+                {game.readiness.ready ? "Ready" : `${game.readiness.percent}% ready`}
               </span>
-            </span>
-          )}
-          <CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" />
-        </Link>
+            ) : (
+              <span className="hidden text-right sm:block">
+                {rsvpLabel(game.viewerRsvp) ? (
+                  <span className="block text-xs font-[650] text-primary">{rsvpLabel(game.viewerRsvp)}</span>
+                ) : null}
+                <span className="score mt-0.5 block text-sm text-muted">
+                  {game.playerCount} / {game.capacity}
+                </span>
+              </span>
+            )}
+            <CaretRight aria-hidden size={16} className="text-muted transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          {past && game.canReplay ? <ReplayGameLink game={game} compact /> : null}
+        </div>
       ))}
     </div>
   );
@@ -285,14 +305,12 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
   return (
     <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
       {items.map((game) => (
-        <Link
-          href={game.href}
-          prefetch={false}
+        <article
           key={game.id}
           style={sessionAccentStyle(game.accentColor)}
-          className="game-grid-item pressable group rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 hover:bg-surface-strong sm:p-5"
+          className="game-grid-item flex min-w-0 flex-col rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 sm:p-5"
         >
-          <article className="flex h-full min-w-0 flex-col">
+          <Link href={game.href} prefetch={false} className="pressable group flex min-w-0 flex-1 flex-col">
             <div className="flex items-center justify-between gap-4">
               <time className="score text-xs font-bold text-primary">{game.date}</time>
               <span className="text-right">
@@ -306,7 +324,7 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
                 </span>
               </span>
             </div>
-            <h3 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 sm:mt-5 sm:truncate sm:text-lg sm:leading-normal">
+            <h3 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 group-hover:text-primary sm:mt-5 sm:truncate sm:text-lg sm:leading-normal">
               {game.title}
             </h3>
             <div className="mt-2 space-y-1.5 text-[13px] text-muted sm:mt-3 sm:space-y-2 sm:text-sm">
@@ -341,8 +359,13 @@ function GameGrid({ items, past = false }: { items: GameCollectionItem[]; past?:
               Open game{" "}
               <CaretRight aria-hidden size={14} className="transition-transform group-hover:translate-x-0.5" />
             </span>
-          </article>
-        </Link>
+          </Link>
+          {past && game.canReplay ? (
+            <div className="mt-4 border-t border-line pt-3">
+              <ReplayGameLink game={game} />
+            </div>
+          ) : null}
+        </article>
       ))}
     </div>
   );

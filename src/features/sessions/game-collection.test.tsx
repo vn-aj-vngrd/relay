@@ -29,6 +29,7 @@ const game: GameCollectionItem = {
   estimatedCostCents: 30000,
   requiresApproval: false,
   spotsRemaining: 2,
+  canReplay: false,
   readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
@@ -61,6 +62,7 @@ const pastGame: GameCollectionItem = {
   dateKey: "2026-08-15",
   endsAt: "2026-08-15T13:00:00.000Z",
   status: "completed",
+  canReplay: true,
   readiness: { ready: false, percent: 67, completed: 2, total: 3, missing: ["booking"] },
 };
 
@@ -104,9 +106,9 @@ describe("GameCollection", () => {
       <GameCollection upcomingPage={page([game])} pastPage={page([])} todayKey="2026-08-15" />,
     );
     expect(screen.getByTestId("games-list")).toBeVisible();
-    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).style.getPropertyValue("--primary")).toContain(
-      "#bd4545",
-    );
+    expect(
+      screen.getByRole("link", { name: /Saturday Night Pickle/ }).parentElement?.style.getPropertyValue("--primary"),
+    ).toContain("#bd4545");
     expect(screen.getByText("67% ready")).toBeVisible();
     expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute("href", "/games/new");
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
@@ -114,7 +116,10 @@ describe("GameCollection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
     expect(screen.getByTestId("games-grid").querySelector(".grid")).toHaveClass("min-[380px]:grid-cols-2");
-    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ })).toHaveClass("p-3.5", "sm:p-5");
+    expect(screen.getByRole("link", { name: /Saturday Night Pickle/ }).closest("article")).toHaveClass(
+      "p-3.5",
+      "sm:p-5",
+    );
     expect(screen.getByText("Game setup")).toBeVisible();
     expect(localStorage.getItem("relay-games-view")).toBe("grid");
 
@@ -164,12 +169,33 @@ describe("GameCollection", () => {
     expect(screen.queryByText("Sunday Open Play")).not.toBeInTheDocument();
     expect(screen.getByText("Friday Crew")).toBeVisible();
     expect(screen.getByText("Ended")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
+      "href",
+      "/games/new?from=game-2",
+    );
     expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByText("8 played")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
+      "href",
+      "/games/new?from=game-2",
+    );
     expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
+  });
+
+  it("does not expose Play again for another player’s completed game", () => {
+    render(
+      <GameCollection
+        upcomingPage={page([])}
+        pastPage={page([{ ...pastGame, canReplay: false }])}
+        todayKey="2026-08-15"
+        initialFilter="past"
+      />,
+    );
+
+    expect(screen.queryByRole("link", { name: "Play Friday Crew again" })).not.toBeInTheDocument();
   });
 
   it("lets a player respond to an invite without opening the game", async () => {
@@ -222,6 +248,26 @@ describe("GameCollection", () => {
     await waitFor(() => expect(screen.getByText("Friday Crew")).toBeVisible());
     expect(screen.getAllByText("Saturday Night Pickle")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Load more upcoming games" })).not.toBeInTheDocument();
+  });
+
+  it("offers Play again from a completed host game in the calendar agenda", async () => {
+    localStorage.setItem("relay-games-view", "calendar");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ upcoming: [], past: [pastGame] }),
+      }),
+    );
+
+    render(
+      <GameCollection upcomingPage={page([])} pastPage={page([pastGame])} todayKey="2026-08-15" initialFilter="past" />,
+    );
+
+    expect(await screen.findByRole("link", { name: "Play Friday Crew again" })).toHaveAttribute(
+      "href",
+      "/games/new?from=game-2",
+    );
   });
 
   it("loads only the selected calendar month", async () => {

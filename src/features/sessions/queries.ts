@@ -190,6 +190,7 @@ async function toGameCollectionItems(userId: string, rows: UserSessionRow[]): Pr
       estimatedCostCents: session.estimatedCostCents,
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
+      canReplay: session.hostId === userId && session.status === "completed",
       ...(session.hostId === userId && session.endsAt > now && ["published", "live"].includes(session.status)
         ? {
             readiness: sessionReadiness({

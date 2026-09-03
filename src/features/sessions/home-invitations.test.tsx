@@ -38,6 +38,7 @@ const invitation: GameCollectionItem = {
   estimatedCostCents: 30000,
   requiresApproval: true,
   spotsRemaining: 2,
+  canReplay: false,
 };
 
 afterEach(() => {

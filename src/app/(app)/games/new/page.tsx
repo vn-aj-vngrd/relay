@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
@@ -16,8 +17,11 @@ export default async function NewGamePage({
   const user = await requireUser();
   const [params, courts] = await Promise.all([searchParams, getCourtSuggestions()]);
   const source = params.from
-    ? await db.query.sessions.findFirst({ where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id)) })
+    ? await db.query.sessions.findFirst({
+        where: and(eq(sessions.id, params.from), eq(sessions.hostId, user.id), eq(sessions.status, "completed")),
+      })
     : null;
+  if (params.from && !source) notFound();
   const requestedGroupId = params.group ?? source?.groupId ?? undefined;
   const groupMembership = requestedGroupId
     ? await db.query.groupMembers.findFirst({
@@ -66,6 +70,8 @@ export default async function NewGamePage({
         end: time(template.endsAt),
         cost: template.estimatedCostCents == null ? undefined : template.estimatedCostCents / 100,
         accentColor: template.accentColor,
+        visibility: template.visibility,
+        requiresApproval: template.requiresApproval,
         groupId: group?.id,
         groupName: group?.name,
         sourceSessionId: source?.id,
@@ -89,7 +95,9 @@ export default async function NewGamePage({
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>
-        <p className="text-sm font-semibold text-ink">Create a game</p>
+        <p className="text-sm font-semibold text-ink">
+          {source ? "Play again" : group ? `Game for ${group.name}` : "Create a game"}
+        </p>
       </div>
       <Link
         href="/home"
