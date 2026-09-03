@@ -27,6 +27,7 @@ import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
 import { assertRateLimit, checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
+import { createSessionDestination } from "./create-session-destination";
 import {
   canRespondToSession,
   createSessionSchema,
@@ -287,7 +288,7 @@ export async function createSessionAction(_: SessionActionState, formData: FormD
   revalidatePath("/home");
   revalidatePath("/games");
   revalidatePath("/groups");
-  redirect(`/games/${created.id}`);
+  redirect(createSessionDestination(created.id, intent === "published"));
 }
 
 function courtLabel(value: string | undefined, position: number) {

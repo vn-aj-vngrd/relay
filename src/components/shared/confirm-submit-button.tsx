@@ -5,6 +5,7 @@ import { type ComponentProps, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 
 type ConfirmSubmitButtonProps = ComponentProps<typeof Button> & {
   confirmTitle: string;
@@ -62,12 +63,7 @@ export function ConfirmSubmitButton({
           children
         )}
       </Button>
-      <dialog
-        ref={dialogRef}
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-        className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
-      >
+      <Dialog ref={dialogRef} aria-labelledby={titleId} aria-describedby={descriptionId}>
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
@@ -91,7 +87,7 @@ export function ConfirmSubmitButton({
             </Button>
           </div>
         </div>
-      </dialog>
+      </Dialog>
     </>
   );
 }

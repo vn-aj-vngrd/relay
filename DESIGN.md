@@ -189,6 +189,8 @@ Court is a concise desktop-sidebar destination and a contextual branch of Create
 
 Creation is one mobile-first form revealed through four meaningful stages: **Plan**, **Players and access**, **Details**, then **Review**. A labeled semantic progress indicator announces Step X of 4 and marks the current step. Continue validates only visible work; final publication repeats complete server validation and returns the host to the first invalid stage. Back and Edit preserve values, and step changes focus the stage heading. Visibility and cost stay together because public discovery requires an informed choice: Free or an estimated per-player amount. Link-only and private games may leave cost unspecified. Details is explicitly optional and states that everything there can be added later; it contains color, court labels, player notes, booking status, booking reference, booking total, and booking notes. Review is read-only and provides Edit actions back to each stage.
 
+After first publication, the authenticated host or co-host sees one concise **Game created** handoff with the database-derived invited count and the next activation actions: **Share game**, **Show QR**, and **Preview shared link**. The temporary creation marker is removed from the URL immediately; the handoff remains until a successful share, link copy, QR download, or explicit dismissal. Public and link-only games retain QR access in the authenticated game actions on mobile and desktop. QR codes are generated locally and lazily, encode only the canonical absolute shared-game URL, preserve a plain high-contrast scan field, and place Relay branding and game context outside that field. The dialog states the game, schedule, and court, supports link copy and print-ready PNG download, and remains keyboard and screen-reader operable. Private games never expose a QR or public-link prompt; their handoff directs the host to invite players instead.
+
 ### Host readiness
 
 Readiness appears in the authenticated host overview and compactly on hosted game collection objects. It measures only roster, booking, and repayment setup. The overview owns the actionable checklist; Home and Games show only the resulting percentage or Ready state so the signal is not duplicated.
@@ -217,7 +219,7 @@ Customization is broad but bounded: four structural layouts, Relay palettes, per
 
 ## Motion
 
-Product motion communicates state in 140–220ms using ease-out-quart. Marketing motion has a separate editorial pace: native touch scrolling, gently eased wheel input, and one 650–900ms reveal as each major chapter enters.
+Product motion communicates state in 140–220ms using ease-out-quart. Modal dialogs share one restrained reveal: the backdrop fades as the surface settles into focus, then both reverse more quickly on dismissal; reduced-motion removes the spatial movement while retaining brief state feedback. Marketing motion has a separate editorial pace: native touch scrolling, gently eased wheel input, and one 650–900ms reveal as each major chapter enters.
 
 - Product: score change, queue reorder, RSVP confirmation, payment confirmation, sheet transition, and match completion.
 - Marketing: small rise-and-mask, paired horizontal entrances, or short child sequences chosen to match the section’s composition. A section animates once; nearby elements move as one orchestrated moment.

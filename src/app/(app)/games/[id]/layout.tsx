@@ -6,6 +6,7 @@ import { AuthenticatedSessionNav, MobileAuthenticatedSessionNav } from "@/compon
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { formatSessionDate, formatSessionTime } from "@/features/sessions/format";
 import { GameWorkspaceActions } from "@/features/sessions/game-workspace-actions";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { RealtimeRefresh } from "@/features/sessions/realtime-refresh";
@@ -23,6 +24,7 @@ export default async function GameWorkspaceLayout({
   const data = await getSessionForWorkspace(id, user.id);
   if (!data) notFound();
   const canManage = canManageSessionWorkspace(data.access);
+  const qrDetails = `${formatSessionDate(data.session.startsAt, data.session.timezone)} · ${formatSessionTime(data.session.startsAt, data.session.endsAt, data.session.timezone)} · ${data.session.venueName}`;
 
   return (
     <div
@@ -56,6 +58,8 @@ export default async function GameWorkspaceLayout({
               shareUrl={`/s/${data.session.slug}`}
               title={data.session.title}
               sessionId={data.session.id}
+              qrEnabled={data.session.visibility !== "private"}
+              qrDetails={qrDetails}
             />
           </div>
           <MobileAuthenticatedSessionNav id={id} />
@@ -69,6 +73,8 @@ export default async function GameWorkspaceLayout({
             shareUrl={`/s/${data.session.slug}`}
             title={data.session.title}
             sessionId={data.session.id}
+            qrEnabled={data.session.visibility !== "private"}
+            qrDetails={qrDetails}
           />
         </div>
       </div>

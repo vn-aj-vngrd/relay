@@ -5,6 +5,7 @@ import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 
 import { deleteSessionAction, type DeleteSessionState } from "./delete-session";
 
@@ -51,11 +52,7 @@ export function DeleteSessionControl({ sessionId, title }: { sessionId: string; 
         <Trash aria-hidden size={18} />
         Delete game
       </button>
-      <dialog
-        ref={dialogRef}
-        onClose={() => setConfirmation("")}
-        className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
-      >
+      <Dialog ref={dialogRef} onClose={() => setConfirmation("")}>
         <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="sessionId" value={sessionId} />
           <div className="flex items-start gap-3">
@@ -97,7 +94,7 @@ export function DeleteSessionControl({ sessionId, title }: { sessionId: string; 
             <DeleteButton enabled={matches} />
           </div>
         </form>
-      </dialog>
+      </Dialog>
     </div>
   );
 }

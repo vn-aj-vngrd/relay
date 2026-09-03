@@ -6,6 +6,7 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -307,11 +308,10 @@ export function RemovePlayerButton({
           <UserMinus aria-hidden size={17} />
         </button>
       </IconTooltip>
-      <dialog
+      <Dialog
         ref={dialogRef}
         aria-labelledby={`remove-${playerId}-title`}
         aria-describedby={`remove-${playerId}-description`}
-        className="m-auto w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_24px_oklch(0.1_0.02_250/.16)] backdrop:bg-ink/35"
       >
         <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="sessionId" value={sessionId} />
@@ -343,7 +343,7 @@ export function RemovePlayerButton({
             </SubmitButton>
           </div>
         </form>
-      </dialog>
+      </Dialog>
     </>
   );
 }

@@ -9,6 +9,8 @@ import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { markSessionBookedAction } from "@/features/sessions/actions";
+import { CreatedGameShare } from "@/features/sessions/created-game-share";
+import { formatSessionDate, formatSessionTime } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { sessionReadiness } from "@/features/sessions/readiness";
@@ -28,7 +30,7 @@ export default async function GameOverviewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ source?: string }>;
+  searchParams: Promise<{ source?: string; created?: string }>;
 }) {
   const [user, query] = await Promise.all([requireUser(), searchParams]);
   const data = await getSessionForWorkspace((await params).id, user.id);
@@ -161,6 +163,8 @@ export default async function GameOverviewPage({
     expectsCollection: Boolean(session.estimatedCostCents || session.bookingTotalCents),
     collectionCreated: overview.payment.view === "host",
   });
+  const showCreated = query.created === "1" && isHost && session.status === "published";
+  const shareDetails = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)} · ${session.venueName}`;
   const bookingAction =
     isHost && session.status !== "completed" && !session.bookedAt ? (
       <form noValidate action={markSessionBookedAction}>
@@ -184,6 +188,16 @@ export default async function GameOverviewPage({
               : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`
         }
       />
+      {showCreated ? (
+        <CreatedGameShare
+          sessionId={session.id}
+          title={session.title}
+          shareUrl={`/s/${session.slug}`}
+          details={shareDetails}
+          inviteeCount={roster.filter(({ player }) => player.rsvp === "invited").length}
+          qrEnabled={session.visibility !== "private"}
+        />
+      ) : null}
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <SessionHero

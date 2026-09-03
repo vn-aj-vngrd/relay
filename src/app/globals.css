@@ -825,6 +825,60 @@ html.lenis.lenis-smooth iframe {
 .public-session-scroll::-webkit-scrollbar {
   display: none;
 }
+/* Shared dialog motion keeps every modal dialog's entrance, dismissal, and backdrop in sync. */
+.relay-dialog {
+  opacity: 0;
+  transform: translateY(0.5rem) scale(0.985);
+  transition:
+    opacity 140ms ease-in,
+    transform 140ms ease-in,
+    overlay 140ms allow-discrete,
+    display 140ms allow-discrete;
+}
+.relay-dialog[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.relay-dialog::backdrop {
+  opacity: 0;
+  transition:
+    opacity 140ms ease-in,
+    overlay 140ms allow-discrete,
+    display 140ms allow-discrete;
+}
+.relay-dialog[open]::backdrop {
+  opacity: 1;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+@starting-style {
+  .relay-dialog[open] {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+  .relay-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relay-dialog,
+  .relay-dialog[open] {
+    transform: none;
+    transition-duration: 80ms;
+  }
+  .relay-dialog::backdrop,
+  .relay-dialog[open]::backdrop {
+    transition-duration: 80ms;
+  }
+  @starting-style {
+    .relay-dialog[open] {
+      transform: none;
+    }
+  }
+}
+
 @keyframes menu-popover-enter {
   from {
     opacity: 0;

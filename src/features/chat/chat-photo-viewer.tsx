@@ -4,6 +4,8 @@ import { ArrowsOutSimple, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRef } from "react";
 
+import { Dialog } from "@/components/ui/dialog";
+
 export function ChatPhotoViewer({ src, alt, sender }: { src: string; alt: string; sender: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -30,13 +32,13 @@ export function ChatPhotoViewer({ src, alt, sender }: { src: string; alt: string
           <ArrowsOutSimple size={15} />
         </span>
       </button>
-      <dialog
+      <Dialog
         ref={dialogRef}
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) event.currentTarget.close();
         }}
         aria-label={`Photo from ${sender}`}
-        className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-6xl overflow-visible border-0 bg-transparent p-0 text-white backdrop:bg-black/75"
+        variant="media"
       >
         <div className="relative flex max-h-[calc(100dvh-2rem)] items-center justify-center">
           <Image
@@ -56,7 +58,7 @@ export function ChatPhotoViewer({ src, alt, sender }: { src: string; alt: string
             <X size={18} />
           </button>
         </div>
-      </dialog>
+      </Dialog>
     </>
   );
 }

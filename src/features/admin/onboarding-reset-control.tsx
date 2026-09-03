@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 
 import { type AdminActionState, resetUserOnboardingAction } from "./actions";
 
@@ -38,10 +39,7 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
         <ArrowCounterClockwise aria-hidden size={16} />
         {queued ? "Onboarding queued" : "Onboard again"}
       </Button>
-      <dialog
-        ref={dialogRef}
-        className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
-      >
+      <Dialog ref={dialogRef}>
         <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
@@ -68,7 +66,7 @@ export function OnboardingResetControl({ targetId, queued }: { targetId: string;
             <ResetButton />
           </div>
         </form>
-      </dialog>
+      </Dialog>
       {state.success ? (
         <p role="status" className="mt-2 text-sm font-medium text-success">
           {state.success}

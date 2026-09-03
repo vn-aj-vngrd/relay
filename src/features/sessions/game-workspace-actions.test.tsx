@@ -9,6 +9,8 @@ const props = {
   shareUrl: "/s/friends-night",
   title: "Friends Night",
   sessionId: "session-1",
+  qrEnabled: true,
+  qrDetails: "Aug 22 · 7:00–9:00 PM · Central Pickle",
   mode: "mobile" as const,
 };
 
@@ -25,6 +27,7 @@ describe("GameWorkspaceActions", () => {
     expect(screen.getByRole("menu", { name: "Game actions" })).toBeVisible();
     expect(screen.getByRole("menuitem", { name: "Edit game" })).toHaveAttribute("href", "/games/session-1/settings");
     expect(screen.getByRole("menuitem", { name: "Share game" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Show QR" })).toBeVisible();
   });
 
   it("does not offer edit access to players", () => {
@@ -33,6 +36,14 @@ describe("GameWorkspaceActions", () => {
 
     expect(screen.queryByRole("menuitem", { name: "Edit game" })).not.toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Share game" })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: "Show QR" })).toBeVisible();
+  });
+
+  it("hides QR sharing when private access would block onsite players", () => {
+    render(<GameWorkspaceActions {...props} qrEnabled={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Game actions" }));
+
+    expect(screen.queryByRole("menuitem", { name: "Show QR" })).not.toBeInTheDocument();
   });
 
   it("keeps direct labeled actions on larger screens", () => {
@@ -41,5 +52,6 @@ describe("GameWorkspaceActions", () => {
     expect(screen.queryByRole("button", { name: "Game actions" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Edit game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();
   });
 });

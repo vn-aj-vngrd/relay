@@ -32,8 +32,10 @@ describe("usePreserveFormValuesOnError", () => {
     fireEvent.change(screen.getByLabelText("Long answer"), { target: { value: "A detailed answer worth keeping" } });
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));
 
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Check the form."));
-    expect(screen.getByLabelText("Long answer")).toHaveValue("A detailed answer worth keeping");
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent("Check the form.");
+      expect(screen.getByLabelText("Long answer")).toHaveValue("A detailed answer worth keeping");
+    });
 
     fireEvent.input(screen.getByLabelText("Long answer"), { target: { value: "A corrected detailed answer" } });
     expect(screen.getByText("Add a longer answer.")).not.toBeVisible();

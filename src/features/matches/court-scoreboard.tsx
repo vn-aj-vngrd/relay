@@ -3,6 +3,8 @@
 import { ArrowsOutSimple, CaretLeft, CaretRight, Minus, Plus, X } from "@phosphor-icons/react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { Dialog } from "@/components/ui/dialog";
+
 export type CourtScoreboardTeam = {
   label: string;
   players: string[];
@@ -229,7 +231,7 @@ export function CourtScoreboardCourt({
   return (
     <>
       <CourtScoreboard {...scoreboard} navigation={navigation} onExpand={() => setExpanded(true)} />
-      <dialog
+      <Dialog
         ref={dialogRef}
         onCancel={() => setExpanded(false)}
         onKeyDown={(event) => {
@@ -241,12 +243,12 @@ export function CourtScoreboardCourt({
           if (event.target === event.currentTarget) setExpanded(false);
         }}
         aria-label={`${scoreboard.courtLabel} full-screen scoreboard`}
-        className="m-auto h-dvh max-h-none w-screen max-w-none overflow-hidden border-0 bg-surface p-0 text-ink backdrop:bg-black/70"
+        variant="fullscreen"
       >
         {isExpanded || keepExpandedContentMounted ? (
           <CourtScoreboard {...scoreboard} expanded navigation={navigation} onClose={() => setExpanded(false)} />
         ) : null}
-      </dialog>
+      </Dialog>
     </>
   );
 }

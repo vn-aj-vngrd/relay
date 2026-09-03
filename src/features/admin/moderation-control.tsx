@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AdminActionState, cancelSessionAction, restoreUserAction, suspendUserAction } from "./actions";
@@ -84,10 +85,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
         <Icon aria-hidden size={17} />
         {details.trigger}
       </Button>
-      <dialog
-        ref={dialogRef}
-        className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45"
-      >
+      <Dialog ref={dialogRef}>
         <form noValidate action={formAction} onSubmitCapture={preserveValues} className="p-5 sm:p-6">
           <input type="hidden" name={details.field} value={targetId} />
           <div className="flex items-start gap-3">
@@ -128,7 +126,7 @@ export function ModerationControl({ mode, targetId }: { mode: Mode; targetId: st
             <SubmitButton mode={mode} />
           </div>
         </form>
-      </dialog>
+      </Dialog>
       {state.success ? (
         <p role="status" className="mt-2 text-sm font-medium text-success">
           {state.success}

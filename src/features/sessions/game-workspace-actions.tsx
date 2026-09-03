@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { usePopoverTransition } from "@/components/ui/use-popover-transition";
 
+import { GameQrShare } from "./game-qr-share";
 import { ShareButton } from "./share-button";
 
 export function GameWorkspaceActions({
@@ -15,6 +16,8 @@ export function GameWorkspaceActions({
   shareUrl,
   title,
   sessionId,
+  qrEnabled,
+  qrDetails,
   mode,
 }: {
   canManage: boolean;
@@ -22,6 +25,8 @@ export function GameWorkspaceActions({
   shareUrl: string;
   title: string;
   sessionId: string;
+  qrEnabled: boolean;
+  qrDetails: string;
   mode: "mobile" | "desktop";
 }) {
   const { open, rendered, hide, toggle } = usePopoverTransition();
@@ -31,7 +36,9 @@ export function GameWorkspaceActions({
   useEffect(() => {
     if (!open) return;
     const closeOutside = (event: PointerEvent) => {
-      if (!root.current?.contains(event.target as Node)) hide();
+      const target = event.target as Element;
+      if (target.closest("[data-game-qr-dialog]")) return;
+      if (!root.current?.contains(target)) hide();
     };
     const closeWithEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
@@ -56,6 +63,7 @@ export function GameWorkspaceActions({
           </ButtonLink>
         ) : null}
         <ShareButton url={shareUrl} title={title} sessionId={sessionId} />
+        {qrEnabled ? <GameQrShare url={shareUrl} title={title} details={qrDetails} sessionId={sessionId} /> : null}
       </div>
     );
   }
@@ -92,6 +100,16 @@ export function GameWorkspaceActions({
             </Link>
           ) : null}
           <ShareButton url={shareUrl} title={title} sessionId={sessionId} menuItem onSelect={hide} />
+          {qrEnabled ? (
+            <GameQrShare
+              url={shareUrl}
+              title={title}
+              details={qrDetails}
+              sessionId={sessionId}
+              menuItem
+              onClose={hide}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

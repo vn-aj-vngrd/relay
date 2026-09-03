@@ -11,14 +11,18 @@ export function ShareButton({
   sessionId,
   compactOnMobile = false,
   menuItem = false,
+  primary = false,
   onSelect,
+  onShared,
 }: {
   url: string;
   title: string;
   sessionId?: string;
   compactOnMobile?: boolean;
   menuItem?: boolean;
+  primary?: boolean;
   onSelect?: () => void;
+  onShared?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   async function share() {
@@ -32,6 +36,7 @@ export function ShareButton({
         window.setTimeout(() => setCopied(false), 2500);
       }
       if (sessionId) await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
+      onShared?.();
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError")) throw error;
     }
@@ -39,7 +44,7 @@ export function ShareButton({
   return (
     <Button
       type="button"
-      variant={menuItem ? "quiet" : "secondary"}
+      variant={menuItem ? "quiet" : primary ? "primary" : "secondary"}
       role={menuItem ? "menuitem" : undefined}
       onClick={share}
       aria-label={copied ? "Game link copied" : "Share game"}
