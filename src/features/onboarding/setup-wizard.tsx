@@ -1,427 +1,430 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, LinkSimple, Moon, Rows, Sun, TennisBall, UserCircle } from "@phosphor-icons/react";
-import { type ComponentType, type ReactNode, useActionState, useRef, useState, useSyncExternalStore } from "react";
+import { ArrowLeft, ArrowRight, Check, UserCircle } from "@phosphor-icons/react";
+import Link from "next/link";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { setThemePreference, type Theme } from "@/components/shared/theme-toggle";
+import { Avatar } from "@/components/shared/avatar-stack";
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { ImageFileField } from "@/components/ui/image-file-field";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { SelectField } from "@/components/ui/select-field";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
+import { postSetupDestination } from "@/features/auth/destination-path";
+import { playingExperienceLabel, playingExperienceOptions } from "@/features/players/playing-experience";
 
 import { completeProfileSetup, type OnboardingActionState, skipProfileSetup } from "./actions";
-import { discoverySourceOptions } from "./discovery-source";
-
-const steps = [
-  {
-    title: "Welcome to Relay",
-    description: "A shared home for the plan, players, courts, scores, payments, and memories.",
-    icon: UserCircle,
-  },
-  {
-    title: "Make Relay yours",
-    description: "Choose a little playing context and how the app should feel on this device.",
-    icon: TennisBall,
-  },
-  {
-    title: "Ready for a quick tour",
-    description: "One optional question, then Relay will show you the core loop in the real app.",
-    icon: LinkSimple,
-  },
-] as const;
 
 const fieldClass =
   "mt-1.5 h-12 w-full rounded-lg border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
-type Density = "comfortable" | "compact";
+const phases = ["Identity", "Profile", "Confirm", "All set"] as const;
 
-function subscribeTheme(callback: () => void) {
-  window.addEventListener("relay-theme-change", callback);
-  return () => window.removeEventListener("relay-theme-change", callback);
-}
+type InitialProfile = {
+  name: string;
+  username: string;
+  imageUrl?: string;
+  city: string;
+  skillLevel: string;
+  dominantHand: string;
+  bio: string;
+};
 
-function currentTheme(): Theme {
-  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-}
+type Review = {
+  name: string;
+  username: string;
+  photo: string;
+  city: string;
+  experience: string;
+  hand: string;
+  bio: string;
+};
 
-function subscribeDensity(callback: () => void) {
-  window.addEventListener("relay-preferences-change", callback);
-  return () => window.removeEventListener("relay-preferences-change", callback);
-}
-
-function currentDensity(): Density {
-  return localStorage.getItem("relay-density") === "compact" ? "compact" : "comfortable";
-}
-
-function setDensityPreference(density: Density) {
-  document.documentElement.dataset.density = density;
-  localStorage.setItem("relay-density", density);
-  window.dispatchEvent(new Event("relay-preferences-change"));
-}
-
-function PreferenceChoice({
-  selected,
-  onClick,
-  icon: Icon,
-  children,
-}: {
-  selected: boolean;
-  onClick: () => void;
-  icon: ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onClick}
-      className={`pressable flex min-h-10 items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold ${selected ? "border-primary bg-primary-soft text-primary" : "border-line bg-surface text-muted hover:bg-surface-strong hover:text-ink"}`}
-    >
-      <Icon aria-hidden size={16} />
-      {children}
-    </button>
-  );
-}
-
-function SubmitButton() {
+function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="min-w-36" disabled={pending}>
+    <Button type="submit" className="w-full sm:w-auto sm:min-w-40" disabled={pending}>
       {pending ? (
         <>
-          <ButtonSpinner />
-          Saving…
+          <ButtonSpinner /> Saving profile…
         </>
       ) : (
         <>
-          Save and continue
-          <ArrowRight aria-hidden size={16} />
+          Confirm profile <ArrowRight aria-hidden size={16} />
         </>
       )}
     </Button>
   );
 }
 
-function Choice({
-  name,
-  value,
-  label,
-  description,
-  defaultChecked,
-}: {
-  name: string;
-  value: string;
-  label: string;
-  description?: string;
-  defaultChecked?: boolean;
-}) {
-  return (
-    <label className="pressable flex min-h-14 cursor-pointer items-start gap-3 rounded-lg border border-line px-3 py-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft/55">
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        defaultChecked={defaultChecked}
-        className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
-      />
-      <span>
-        <strong className="block text-sm font-semibold">{label}</strong>
-        {description ? <span className="mt-0.5 block text-xs leading-5 text-muted">{description}</span> : null}
-      </span>
-    </label>
-  );
+function FieldError({ id, message }: { id: string; message?: string }) {
+  return message ? (
+    <p id={id} role="alert" className="mt-1.5 text-sm font-medium text-danger">
+      {message}
+    </p>
+  ) : null;
 }
 
-export function SetupWizard({
-  initial,
-  next,
-}: {
-  initial: { name: string; username: string; city: string; skillLevel: string; dominantHand: string };
-  next: string;
-}) {
-  const [step, setStep] = useState(0);
-  const [localError, setLocalError] = useState("");
+export function SetupWizard({ initial, next }: { initial: InitialProfile; next: string }) {
+  const [step, setStep] = useState(1);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [review, setReview] = useState<Review | null>(null);
   const [state, action] = useActionState<OnboardingActionState, FormData>(completeProfileSetup, {});
   const formRef = useRef<HTMLFormElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const preserveValues = usePreserveFormValuesOnError(state);
-  const StepIcon = steps[step].icon;
-  const theme = useSyncExternalStore(subscribeTheme, currentTheme, (): Theme => "light");
-  const density = useSyncExternalStore(subscribeDensity, currentDensity, (): Density => "comfortable");
+  const tourHref = postSetupDestination(next);
+  const activeStep = state.success ? 4 : step;
 
-  function continueFromProfile() {
-    const data = new FormData(formRef.current ?? undefined);
+  useEffect(() => {
+    if (state.success) window.requestAnimationFrame(() => headingRef.current?.focus());
+  }, [state.success]);
+
+  function focusStep(nextStep: number) {
+    setStep(nextStep);
+    window.requestAnimationFrame(() => headingRef.current?.focus());
+  }
+
+  function formData() {
+    return new FormData(formRef.current ?? undefined);
+  }
+
+  function continueIdentity() {
+    const data = formData();
     const name = String(data.get("name") ?? "").trim();
     const username = String(data.get("username") ?? "").trim();
-    if (name.length < 2 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(username) || username.length < 3) {
-      setLocalError("Add your name and a valid username before continuing.");
+    const errors: Record<string, string> = {};
+    if (name.length < 2) errors.name = "Add the name your friends know you by.";
+    if (username.length < 3 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(username))
+      errors.username = "Use at least 3 lowercase letters, numbers, or single hyphens.";
+    setLocalErrors(errors);
+    const first = Object.keys(errors)[0];
+    if (first) {
+      document.getElementById(`onboarding-${first}`)?.focus();
       return;
     }
-    setLocalError("");
-    setStep(1);
+    focusStep(2);
+  }
+
+  function continueProfile() {
+    const data = formData();
+    const city = String(data.get("city") ?? "").trim();
+    const bio = String(data.get("bio") ?? "").trim();
+    const errors: Record<string, string> = {};
+    if (city.length > 60) errors.city = "Keep your city under 60 characters.";
+    if (bio.length > 240) errors.bio = "Keep your About you text under 240 characters.";
+    setLocalErrors(errors);
+    const first = Object.keys(errors)[0];
+    if (first) {
+      document.getElementById(`onboarding-${first}`)?.focus();
+      return;
+    }
+    const file = data.get("avatar");
+    const hand = String(data.get("dominantHand") ?? "");
+    setReview({
+      name: String(data.get("name") ?? "").trim(),
+      username: String(data.get("username") ?? "").trim(),
+      photo: file instanceof File && file.size ? file.name : initial.imageUrl ? "Current photo" : "Not added",
+      city: city || "Not added",
+      experience: playingExperienceLabel(String(data.get("skillLevel") ?? "")),
+      hand: hand ? `${hand[0].toUpperCase()}${hand.slice(1)}` : "Not added",
+      bio: bio || "Not added",
+    });
+    focusStep(3);
   }
 
   return (
-    <div className="w-full max-w-[720px]">
+    <div className="w-full max-w-[760px]">
       <div className="mb-8 flex items-center justify-between gap-4">
         <div
           role="progressbar"
           aria-valuemin={1}
-          aria-valuemax={steps.length}
-          aria-valuenow={step + 1}
-          className="flex gap-1.5"
-          aria-label={`Step ${step + 1} of ${steps.length}`}
+          aria-valuemax={phases.length}
+          aria-valuenow={activeStep}
+          aria-label={`Profile setup step ${activeStep} of ${phases.length}: ${phases[activeStep - 1]}`}
+          className="flex flex-1 gap-1.5"
         >
-          {steps.map((item, index) => (
+          {phases.map((phase, index) => (
             <span
-              key={item.title}
-              className={`h-1.5 w-10 rounded-full ${index <= step ? "bg-primary" : "bg-surface-strong"}`}
+              key={phase}
+              aria-hidden
+              className={`h-1.5 flex-1 rounded-full ${index < activeStep ? "bg-primary" : "bg-surface-strong"}`}
             />
           ))}
         </div>
-        <span className="score text-xs font-semibold text-muted">
-          {step + 1} / {steps.length}
+        <span className="score shrink-0 text-xs font-semibold text-muted">
+          {activeStep} / {phases.length}
         </span>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
-        <header>
-          <StepIcon aria-hidden size={24} className="text-primary" />
-          <h1 className="mt-5 text-[1.75rem] font-[680] leading-tight tracking-[-0.03em]">{steps[step].title}</h1>
-          <p className="mt-3 text-sm leading-6 text-muted">{steps[step].description}</p>
-          <p className="mt-4 text-xs text-muted">Usually under a minute.</p>
-        </header>
+      <form ref={formRef} action={action} onSubmitCapture={preserveValues} noValidate>
+        <input type="hidden" name="next" value={next} />
 
-        <div>
-          {state.error ? (
-            <div
-              role="alert"
-              className="mb-5 rounded-lg bg-danger/8 px-3.5 py-3 text-sm text-danger ring-1 ring-danger/15"
-            >
-              <p className="font-semibold">{state.error}</p>
-              {state.fieldErrors?.username ? (
-                <button
-                  type="button"
-                  onClick={() => setStep(0)}
-                  className="mt-1 font-semibold underline underline-offset-2"
-                >
-                  Review profile details
-                </button>
-              ) : null}
+        <section hidden={activeStep !== 1} aria-labelledby="onboarding-step-title" className="mx-auto max-w-xl">
+          <UserCircle aria-hidden size={25} className="text-primary" />
+          <h1
+            ref={activeStep === 1 ? headingRef : undefined}
+            tabIndex={-1}
+            id="onboarding-step-title"
+            className="mt-5 text-[1.75rem] font-[680] leading-tight tracking-[-0.03em] outline-none"
+          >
+            How should players know you?
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Use the identity friends will recognize in rosters and invites.
+          </p>
+          <div className="mt-7 space-y-5">
+            <div>
+              <label htmlFor="onboarding-name" className="text-sm font-semibold">
+                Name
+              </label>
+              <input
+                id="onboarding-name"
+                name="name"
+                className={fieldClass}
+                defaultValue={initial.name}
+                required
+                minLength={2}
+                maxLength={60}
+                autoComplete="name"
+                aria-invalid={Boolean(localErrors.name || state.fieldErrors?.name)}
+                aria-describedby="onboarding-name-hint onboarding-name-error"
+              />
+              <p id="onboarding-name-hint" className="mt-1.5 text-xs text-muted">
+                Use the name your pickleball friends call you.
+              </p>
+              <FieldError id="onboarding-name-error" message={localErrors.name ?? state.fieldErrors?.name?.[0]} />
             </div>
-          ) : null}
-          <form ref={formRef} action={action} onSubmitCapture={preserveValues} noValidate>
-            <input type="hidden" name="next" value={next} />
-            <fieldset hidden={step !== 0} className="space-y-5">
-              <legend className="sr-only">Player profile</legend>
-              <div>
-                <label htmlFor="onboarding-name" className="text-sm font-semibold">
-                  Name
-                </label>
+            <div>
+              <label htmlFor="onboarding-username" className="text-sm font-semibold">
+                Username
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-[17px] text-muted">@</span>
                 <input
-                  id="onboarding-name"
-                  name="name"
-                  className={fieldClass}
-                  defaultValue={initial.name}
+                  id="onboarding-username"
+                  name="username"
+                  className={`${fieldClass} pl-8`}
+                  defaultValue={initial.username}
                   required
-                  minLength={2}
-                  maxLength={60}
-                  autoComplete="name"
+                  minLength={3}
+                  maxLength={24}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  aria-invalid={Boolean(localErrors.username || state.fieldErrors?.username)}
+                  aria-describedby="onboarding-username-hint onboarding-username-error"
                 />
-                <p className="mt-1.5 text-xs text-muted">Use the name your friends call you.</p>
-                {state.fieldErrors?.name ? (
-                  <p className="mt-1 text-sm text-danger">{state.fieldErrors.name[0]}</p>
-                ) : null}
               </div>
-              <div>
-                <label htmlFor="onboarding-username" className="text-sm font-semibold">
-                  Username
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3.5 top-[17px] text-muted">@</span>
-                  <input
-                    id="onboarding-username"
-                    name="username"
-                    className={`${fieldClass} pl-8`}
-                    defaultValue={initial.username}
-                    required
-                    minLength={3}
-                    maxLength={24}
-                    autoCapitalize="none"
-                    autoCorrect="off"
-                    spellCheck={false}
-                  />
-                </div>
-                <p className="mt-1.5 text-xs text-muted">Lowercase letters, numbers, and hyphens.</p>
-                {state.fieldErrors?.username ? (
-                  <p className="mt-1 text-sm text-danger">{state.fieldErrors.username[0]}</p>
-                ) : null}
+              <p id="onboarding-username-hint" className="mt-1.5 text-xs leading-5 text-muted">
+                Lowercase letters, numbers, and single hyphens.
+              </p>
+              <FieldError
+                id="onboarding-username-error"
+                message={localErrors.username ?? state.fieldErrors?.username?.[0]}
+              />
+            </div>
+          </div>
+          <div className="mt-7 flex justify-end border-t border-line pt-5">
+            <Button type="button" onClick={continueIdentity}>
+              Continue <ArrowRight aria-hidden size={16} />
+            </Button>
+          </div>
+        </section>
+
+        <section hidden={activeStep !== 2} aria-labelledby="onboarding-profile-title" className="mx-auto max-w-2xl">
+          <h1
+            ref={activeStep === 2 ? headingRef : undefined}
+            tabIndex={-1}
+            id="onboarding-profile-title"
+            className="text-[1.75rem] font-[680] leading-tight tracking-[-0.03em] outline-none"
+          >
+            Add more about your game
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Everything on this step is optional. Add what helps your crew recognize and place you.
+          </p>
+
+          <div className="mt-7 grid gap-7 sm:grid-cols-[150px_minmax(0,1fr)]">
+            <div>
+              {initial.imageUrl ? <Avatar name={initial.name} imageUrl={initial.imageUrl} size="xl" /> : null}
+              <div className={initial.imageUrl ? "mt-4" : ""}>
+                <ImageFileField
+                  id="onboarding-avatar"
+                  name="avatar"
+                  label="Profile photo"
+                  hint={
+                    initial.imageUrl
+                      ? "Choose a new photo or keep the current one."
+                      : "Choose a clear photo friends will recognize."
+                  }
+                  buttonLabel={initial.imageUrl ? "Replace photo" : "Choose photo"}
+                />
               </div>
-              <div>
+              <FieldError id="onboarding-avatar-error" message={state.fieldErrors?.avatar?.[0]} />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <div className="sm:col-span-2">
                 <label htmlFor="onboarding-city" className="text-sm font-semibold">
                   City <span className="font-normal text-muted">Optional</span>
                 </label>
                 <input
                   id="onboarding-city"
                   name="city"
-                  className={fieldClass}
-                  defaultValue={initial.city}
                   maxLength={60}
+                  defaultValue={initial.city}
                   autoComplete="address-level2"
                   placeholder="Mandaluyong"
+                  className={fieldClass}
                 />
-                <p className="mt-1.5 text-xs text-muted">Helps friends recognize the right player.</p>
+                <FieldError id="onboarding-city-error" message={localErrors.city ?? state.fieldErrors?.city?.[0]} />
               </div>
-              {localError ? (
-                <p role="alert" className="text-sm font-medium text-danger">
-                  {localError}
-                </p>
-              ) : null}
-            </fieldset>
-
-            <fieldset hidden={step !== 1} className="space-y-7">
-              <legend className="sr-only">Playing preferences</legend>
-              <div>
-                <p className="text-sm font-semibold">
-                  Playing experience <span className="font-normal text-muted">Optional</span>
-                </p>
-                <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                  <Choice
-                    name="skillLevel"
-                    value="new"
-                    label="Just starting"
-                    defaultChecked={initial.skillLevel === "new"}
-                  />
-                  <Choice
-                    name="skillLevel"
-                    value="casual"
-                    label="Casual"
-                    description="I play now and then"
-                    defaultChecked={initial.skillLevel === "casual"}
-                  />
-                  <Choice
-                    name="skillLevel"
-                    value="regular"
-                    label="Regular"
-                    description="I play most weeks"
-                    defaultChecked={initial.skillLevel === "regular"}
-                  />
-                  <Choice
-                    name="skillLevel"
-                    value="experienced"
-                    label="Experienced"
-                    defaultChecked={initial.skillLevel === "experienced"}
-                  />
-                </div>
-                <p className="mt-2 text-xs leading-5 text-muted">
-                  This is social context, not a competitive rating. It helps Balanced Mix make closer teams.
-                </p>
-              </div>
-              <input type="hidden" name="dominantHand" value={initial.dominantHand} />
-              <div className="border-t border-line pt-6">
-                <p className="text-sm font-semibold">Appearance on this device</p>
-                <p className="mt-1 text-xs leading-5 text-muted">You can change these later from Profile.</p>
-                <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-medium text-muted">Theme</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <PreferenceChoice
-                        selected={theme === "light"}
-                        onClick={() => setThemePreference("light")}
-                        icon={Sun}
-                      >
-                        Light
-                      </PreferenceChoice>
-                      <PreferenceChoice
-                        selected={theme === "dark"}
-                        onClick={() => setThemePreference("dark")}
-                        icon={Moon}
-                      >
-                        Dark
-                      </PreferenceChoice>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted">Layout</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <PreferenceChoice
-                        selected={density === "comfortable"}
-                        onClick={() => setDensityPreference("comfortable")}
-                        icon={Rows}
-                      >
-                        Default
-                      </PreferenceChoice>
-                      <PreferenceChoice
-                        selected={density === "compact"}
-                        onClick={() => setDensityPreference("compact")}
-                        icon={Rows}
-                      >
-                        Compact
-                      </PreferenceChoice>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset hidden={step !== 2} className="space-y-5">
-              <legend className="sr-only">Finish setup</legend>
               <SelectField
-                id="discovery-source"
-                name="discoverySource"
-                label="How did you discover Relay? (optional)"
-                defaultValue=""
-                options={[{ value: "", label: "Choose an answer" }, ...discoverySourceOptions]}
+                id="onboarding-skillLevel"
+                name="skillLevel"
+                label="Playing experience (optional)"
+                defaultValue={initial.skillLevel}
+                options={[
+                  { value: "", label: "Not set" },
+                  ...playingExperienceOptions.map(({ value, label }) => ({ value, label })),
+                ]}
               />
-              <div className="divide-y divide-line border-y border-line">
-                {[
-                  "Plan once and invite everyone with one link.",
-                  "Run courts, rotations, and scores together.",
-                  "Keep payments, photos, and the final story with the game.",
-                ].map((item) => (
-                  <p key={item} className="py-3 text-sm leading-5 text-muted">
-                    {item}
-                  </p>
-                ))}
+              <SelectField
+                id="onboarding-dominantHand"
+                name="dominantHand"
+                label="Dominant hand (optional)"
+                defaultValue={initial.dominantHand}
+                options={[
+                  { value: "", label: "Not set" },
+                  { value: "right", label: "Right" },
+                  { value: "left", label: "Left" },
+                  { value: "both", label: "Both" },
+                ]}
+              />
+              <div className="sm:col-span-2">
+                <label htmlFor="onboarding-bio" className="text-sm font-semibold">
+                  About you <span className="font-normal text-muted">Optional</span>
+                </label>
+                <textarea
+                  id="onboarding-bio"
+                  name="bio"
+                  maxLength={240}
+                  rows={3}
+                  defaultValue={initial.bio}
+                  placeholder="What your pickleball friends should know…"
+                  className={`${fieldClass} min-h-24 resize-y py-3.5 leading-6`}
+                />
+                <FieldError id="onboarding-bio-error" message={localErrors.bio ?? state.fieldErrors?.bio?.[0]} />
               </div>
-            </fieldset>
-
-            <div className="mt-8 flex items-center justify-between gap-3 border-t border-line pt-5">
-              {step > 0 ? (
-                <Button type="button" variant="quiet" onClick={() => setStep((current) => current - 1)}>
-                  <ArrowLeft aria-hidden size={16} />
-                  Back
-                </Button>
-              ) : (
-                <span />
-              )}
-              {step === 0 ? (
-                <Button type="button" onClick={continueFromProfile}>
-                  Continue
-                  <ArrowRight aria-hidden size={16} />
-                </Button>
-              ) : step === 1 ? (
-                <Button type="button" onClick={() => setStep(2)}>
-                  Continue
-                  <ArrowRight aria-hidden size={16} />
-                </Button>
-              ) : (
-                <SubmitButton />
-              )}
             </div>
-          </form>
-        </div>
-      </div>
+          </div>
+          <p className="mt-5 text-xs leading-5 text-muted">
+            Experience helps Balanced Mix make closer teams. It is never a public rating.
+          </p>
+          <div className="mt-7 flex items-center justify-between gap-3 border-t border-line pt-5">
+            <Button type="button" variant="quiet" onClick={() => focusStep(1)}>
+              <ArrowLeft aria-hidden size={16} /> Back
+            </Button>
+            <Button type="button" onClick={continueProfile}>
+              Review profile <ArrowRight aria-hidden size={16} />
+            </Button>
+          </div>
+        </section>
 
-      <form noValidate action={skipProfileSetup} className="mt-8 border-t border-line pt-5 text-center">
-        <input type="hidden" name="next" value={next} />
-        <PendingSubmit
-          pendingLabel="Skipping setup…"
-          className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted hover:text-ink"
+        <section hidden={activeStep !== 3} aria-labelledby="onboarding-confirm-title" className="mx-auto max-w-xl">
+          <h1
+            ref={activeStep === 3 ? headingRef : undefined}
+            tabIndex={-1}
+            id="onboarding-confirm-title"
+            className="text-[1.75rem] font-[680] leading-tight tracking-[-0.03em] outline-none"
+          >
+            Confirm your profile
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-muted">
+            Check what your crew will see. You can change any of this later.
+          </p>
+          {state.error ? (
+            <div
+              role="alert"
+              className="mt-5 rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger ring-1 ring-danger/15"
+            >
+              <p>{state.error}</p>
+              <button
+                type="button"
+                onClick={() => focusStep(state.fieldErrors?.name || state.fieldErrors?.username ? 1 : 2)}
+                className="mt-2 font-semibold underline underline-offset-2"
+              >
+                Review marked details
+              </button>
+            </div>
+          ) : null}
+          {review ? (
+            <dl className="mt-7 divide-y divide-line border-y border-line">
+              {[
+                ["Name", review.name],
+                ["Username", `@${review.username}`],
+                ["Profile photo", review.photo],
+                ["City", review.city],
+                ["Playing experience", review.experience],
+                ["Dominant hand", review.hand],
+                ["About you", review.bio],
+              ].map(([label, value]) => (
+                <div key={label} className="grid grid-cols-[130px_minmax(0,1fr)] gap-4 py-3.5 text-sm">
+                  <dt className="text-muted">{label}</dt>
+                  <dd className="break-words font-medium">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <div className="mt-7 flex items-center justify-between gap-3">
+            <Button type="button" variant="quiet" onClick={() => focusStep(2)}>
+              <ArrowLeft aria-hidden size={16} /> Edit
+            </Button>
+            <SaveButton />
+          </div>
+        </section>
+
+        <section
+          hidden={activeStep !== 4}
+          aria-labelledby="onboarding-complete-title"
+          className="mx-auto max-w-xl py-6 text-center"
         >
-          Skip setup and use my defaults
-        </PendingSubmit>
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary-soft text-primary">
+            <Check aria-hidden size={23} weight="bold" />
+          </span>
+          <h1
+            ref={activeStep === 4 ? headingRef : undefined}
+            tabIndex={-1}
+            id="onboarding-complete-title"
+            className="mt-5 text-[1.75rem] font-[680] leading-tight tracking-[-0.03em] outline-none"
+          >
+            You’re all set
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-muted">
+            Your player profile is ready. Take a short tour, then create your first game or explore Relay.
+          </p>
+          <Link
+            href={tourHref}
+            className="pressable mt-7 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-semibold text-white hover:bg-primary-hover"
+          >
+            Start product tour <ArrowRight aria-hidden size={16} />
+          </Link>
+        </section>
       </form>
+
+      {activeStep < 3 ? (
+        <form action={skipProfileSetup} noValidate className="mx-auto mt-4 max-w-2xl text-center">
+          <input type="hidden" name="next" value={next} />
+          <PendingSubmit
+            pendingLabel="Opening tour…"
+            className="pressable inline-flex min-h-11 items-center text-sm font-medium text-muted hover:text-ink"
+          >
+            Use my defaults and start the tour
+          </PendingSubmit>
+        </form>
+      ) : null}
     </div>
   );
 }

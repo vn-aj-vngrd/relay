@@ -4,7 +4,10 @@ import { expect, test } from "@playwright/test";
 test("the landing page introduces Relay and protected routes open a usable login", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Plan the game. Share the link. Play." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
+  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute(
+    "href",
+    "/signup?next=%2Fgames%2Fnew",
+  );
   const landingCourtFinder = page.locator("#court-finder");
   await expect(landingCourtFinder.getByRole("button", { name: "Zoom in" })).toBeVisible();
   await expect(landingCourtFinder.getByRole("button", { name: "Load interactive map" })).toHaveCount(0);
@@ -48,7 +51,10 @@ test("the landing page introduces Relay and protected routes open a usable login
 test("the public court finder works without an account", async ({ page }) => {
   await page.goto("/courts");
   await expect(page.getByRole("heading", { name: /Find a (?:pickleball )?court/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create a game" })).toHaveAttribute("href", "/signup");
+  await expect(page.getByRole("link", { name: "Create a game" })).toHaveAttribute(
+    "href",
+    "/signup?next=%2Fgames%2Fnew",
+  );
   await expect(page.getByRole("textbox", { name: "Search courts" })).toBeVisible();
 
   await page.goto("/court");
@@ -66,6 +72,7 @@ test("the court map leaves its loading state when raster tiles stall", async ({ 
 
 test("public Quick Play prepares players, rotates, and scores without an account", async ({ page }) => {
   await page.goto("/play");
+  await expect(page.getByRole("link", { name: "Plan a game" })).toHaveAttribute("href", "/signup?next=%2Fgames%2Fnew");
   await expect(page.getByRole("heading", { name: "Set up Play" })).toBeVisible();
   await expect(page.locator("select")).toHaveCount(0);
   await page.getByRole("button", { name: "Queue rule" }).click();
@@ -137,7 +144,10 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute("href", "/signup");
+  await expect(page.getByRole("link", { name: "Get started", exact: true }).first()).toHaveAttribute(
+    "href",
+    "/signup?next=%2Fgames%2Fnew",
+  );
   await page.goto("/home");
   const desktopCreate = await page.getByRole("link", { name: "Create", exact: true }).first().boundingBox();
   expect(desktopCreate).not.toBeNull();

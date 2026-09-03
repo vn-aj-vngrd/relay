@@ -27,7 +27,7 @@ export default async function CourtLayout({ children }: { children: React.ReactN
               </Link>
             )}
             <Link
-              href={user ? "/home" : "/signup"}
+              href={user ? "/home" : "/signup?next=%2Fgames%2Fnew"}
               className="pressable inline-flex min-h-10 items-center justify-center rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover"
             >
               {user ? "Open Relay" : "Create a game"}

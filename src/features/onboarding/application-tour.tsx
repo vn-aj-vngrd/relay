@@ -98,6 +98,8 @@ export function ApplicationTour({ required }: { required: boolean }) {
   const closeForm = useRef<HTMLFormElement>(null);
   const current = steps[step];
   const replay = !required;
+  const requestedDestination = searchParams.get("next");
+  const createDestination = requestedDestination?.startsWith("/games/new") ? requestedDestination : "/games/new";
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -244,17 +246,17 @@ export function ApplicationTour({ required }: { required: boolean }) {
                   pendingLabel="Finishing…"
                   className="pressable inline-flex h-9 items-center rounded-lg px-2.5 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
                 >
-                  Home
+                  Explore Relay
                 </PendingSubmit>
               </form>
               <form noValidate action={completeProductTour}>
-                <input type="hidden" name="destination" value="/games/new" />
+                <input type="hidden" name="destination" value={createDestination} />
                 <PendingSubmit
                   data-tour-primary
                   pendingLabel="Opening…"
                   className="pressable inline-flex h-9 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
                 >
-                  Create first game
+                  Create a game
                   <ArrowRight aria-hidden size={15} />
                 </PendingSubmit>
               </form>

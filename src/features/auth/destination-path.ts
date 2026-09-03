@@ -4,7 +4,15 @@ export function safeNextPath(value: unknown) {
 
 export function onboardingDestination(path: string, onboardingComplete: boolean) {
   if (onboardingComplete) return path;
-  return path === "/home" ? "/onboarding" : `/onboarding?next=${encodeURIComponent(path)}`;
+  const destination = path === "/home" ? "/games/new" : path;
+  return `/onboarding?next=${encodeURIComponent(destination)}`;
+}
+
+export function postSetupDestination(next: unknown) {
+  const destination = safeNextPath(next);
+  const params = new URLSearchParams({ tour: "1" });
+  if (destination.startsWith("/games/new")) params.set("next", destination);
+  return `/home?${params}`;
 }
 
 export function sharedSessionSlug(path: string) {

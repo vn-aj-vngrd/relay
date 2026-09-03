@@ -2,16 +2,17 @@ import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { safeNextPath } from "@/features/auth/destination-path";
+import { postSetupDestination, safeNextPath } from "@/features/auth/destination-path";
 import { requireUser } from "@/features/auth/session";
 import { SetupWizard } from "@/features/onboarding/setup-wizard";
+import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const next = safeNextPath((await searchParams).next);
   const user = await requireUser(`/onboarding?next=${encodeURIComponent(next)}`);
   const profile = await ensureProfile(user);
-  if (profile.onboardingCompletedAt) redirect(next);
+  if (profile.onboardingCompletedAt) redirect(profile.productTourCompletedAt ? next : postSetupDestination(next));
 
   return (
     <main id="main-content" className="min-h-screen bg-canvas">
@@ -25,9 +26,11 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
           initial={{
             name: profile.name,
             username: profile.username,
+            imageUrl: profileAvatarUrl(profile.avatarPath),
             city: profile.city ?? "",
             skillLevel: profile.skillLevel ?? "",
             dominantHand: profile.dominantHand ?? "",
+            bio: profile.bio ?? "",
           }}
         />
       </section>

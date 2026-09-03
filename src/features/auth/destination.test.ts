@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { onboardingDestination, safeNextPath, sharedSessionSlug } from "./destination-path";
+import { onboardingDestination, postSetupDestination, safeNextPath, sharedSessionSlug } from "./destination-path";
 
 describe("post-auth destination", () => {
   it("accepts local destinations and rejects protocol-relative redirects", () => {
@@ -9,12 +9,20 @@ describe("post-auth destination", () => {
     expect(safeNextPath("https://malicious.example")).toBe("/home");
   });
 
-  it("keeps a selected court through onboarding", () => {
+  it("takes a new player to game creation while preserving a selected court", () => {
+    expect(onboardingDestination("/home", false)).toBe("/onboarding?next=%2Fgames%2Fnew");
     const game = "/games/new?venue=Central+Pickle&address=Cebu+City";
     expect(onboardingDestination(game, false)).toBe(
       "/onboarding?next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle%26address%3DCebu%2BCity",
     );
     expect(onboardingDestination(game, true)).toBe(game);
+  });
+
+  it("opens the tour before creation and preserves prefilled game details", () => {
+    expect(postSetupDestination("/games/new")).toBe("/home?tour=1&next=%2Fgames%2Fnew");
+    expect(postSetupDestination("/games/new?venue=Central+Pickle")).toBe(
+      "/home?tour=1&next=%2Fgames%2Fnew%3Fvenue%3DCentral%2BPickle",
+    );
   });
 
   it("recognizes only a shared game root", () => {

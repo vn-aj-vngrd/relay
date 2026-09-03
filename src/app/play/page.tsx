@@ -39,7 +39,7 @@ export default function QuickPlayPage() {
               <MapPin aria-hidden size={16} /> Find a court
             </Link>
             <Link
-              href="/signup"
+              href="/signup?next=%2Fgames%2Fnew"
               className="pressable inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-[13px] font-semibold text-white hover:bg-primary-hover"
             >
               Plan a game <ArrowRight aria-hidden size={15} />

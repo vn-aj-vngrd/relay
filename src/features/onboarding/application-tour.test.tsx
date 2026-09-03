@@ -65,8 +65,8 @@ describe("ApplicationTour", () => {
     expect(screen.getByRole("dialog", { name: "Find a court" })).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(screen.getByRole("dialog", { name: "Open your profile" })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Create first game" })).toHaveClass("whitespace-nowrap", "shrink-0");
-    expect(screen.getByRole("button", { name: "Home" })).toHaveClass("whitespace-nowrap");
+    expect(screen.getByRole("button", { name: "Create a game" })).toHaveClass("whitespace-nowrap", "shrink-0");
+    expect(screen.getByRole("button", { name: "Explore Relay" })).toHaveClass("whitespace-nowrap");
   });
 
   it("targets the visible responsive navigation control", () => {
@@ -83,6 +83,19 @@ describe("ApplicationTour", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
 
     expect(document.querySelector<HTMLElement>("[data-tour-spotlight]")).toHaveStyle({ left: "7px", width: "210px" });
+  });
+
+  it("preserves a prefilled game destination through the tour", () => {
+    const destination = "/games/new?venue=Central+Pickle&address=Cebu+City";
+    window.history.replaceState({}, "", `/home?tour=1&next=${encodeURIComponent(destination)}`);
+    render(<ApplicationTour required />);
+
+    for (let step = 0; step < 4; step += 1) fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+    const createButton = screen.getByRole("button", { name: "Create a game" });
+    expect(createButton.closest("form")?.querySelector<HTMLInputElement>('input[name="destination"]')).toHaveValue(
+      destination,
+    );
   });
 
   it("can replay from the tour query without resetting onboarding", async () => {

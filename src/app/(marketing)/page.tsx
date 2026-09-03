@@ -45,7 +45,7 @@ const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-[13px] font-semibold hover:border-muted hover:bg-surface-strong";
 
 export default function MarketingPage() {
-  const primaryHref = "/signup";
+  const primaryHref = "/signup?next=%2Fgames%2Fnew";
 
   return (
     <main id="main-content" className="marketing-page min-h-screen bg-canvas text-ink">
