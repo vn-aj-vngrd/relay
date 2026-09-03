@@ -447,11 +447,8 @@ test("public entry pages have no serious accessibility violations in light and d
   for (const path of ["/", "/play", "/courts", "/login", "/signup", "/privacy", "/terms"]) {
     await page.goto(path);
     for (const theme of ["light", "dark"] as const) {
-      await page.evaluate((nextTheme) => {
-        document.documentElement.dataset.theme = nextTheme;
-        document.documentElement.style.colorScheme = nextTheme;
-        window.dispatchEvent(new Event("relay-theme-change"));
-      }, theme);
+      await page.evaluate((nextTheme) => localStorage.setItem("relay-theme", nextTheme), theme);
+      await page.reload();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
