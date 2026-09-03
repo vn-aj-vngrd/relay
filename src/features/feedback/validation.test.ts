@@ -16,6 +16,34 @@ describe("submitFeedbackSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts an issue report attached to a completed game", () => {
+    expect(
+      submitFeedbackSchema.safeParse({
+        type: "bug",
+        area: "play",
+        title: "Rotation skipped a player",
+        description: "The next rotation left one available player out of the queue.",
+        pagePath: "/games/8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75/play",
+        contactAllowed: true,
+        sessionId: "8768e5bf-25aa-4c4f-9cdf-6fcdb78b9c75",
+        experience: "issues",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects game experience without a valid game reference", () => {
+    const result = submitFeedbackSchema.safeParse({
+      type: "bug",
+      area: "play",
+      title: "Rotation skipped a player",
+      description: "The next rotation left one available player out of the queue.",
+      pagePath: "/games/example/play",
+      contactAllowed: true,
+      experience: "issues",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects vague, oversized, and external submissions", () => {
     const result = submitFeedbackSchema.safeParse({
       type: "feature",

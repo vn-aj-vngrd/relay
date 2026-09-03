@@ -29,6 +29,11 @@ export default async function AdminFeedbackDetailPage({ params }: { params: Prom
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
               <span className="font-semibold text-primary">{feedbackTypeLabels[feedback.type]}</span>
               <span className="text-muted">{feedbackAreaLabels[feedback.area as FeedbackArea]}</span>
+              {feedback.experience ? (
+                <span className="text-muted">
+                  Game felt {feedback.experience === "smooth" ? "smooth" : "difficult"}
+                </span>
+              ) : null}
               <AdminDate value={feedback.createdAt} includeTime />
             </div>
             <h2 id="submission-details" className="sr-only">

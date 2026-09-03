@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
+import { shouldShowPostGameFeedback } from "@/features/feedback/queries";
 import { getWorkspaceLiveSession } from "@/features/matches/queries";
 import { SessionPlay, type SessionPlayViewer } from "@/features/matches/session-play";
 import { postGameContinuation } from "@/features/sessions/post-game";
@@ -26,6 +27,9 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
   };
   const completed = data.session.status === "completed";
   const continuation = postGameContinuation(data.session, user.id);
+  const canReviewGame = data.session.hostId === user.id || data.membership?.rsvp === "going";
+  const showPostGameFeedback =
+    completed && canReviewGame ? await shouldShowPostGameFeedback(user.id, data.session.id) : false;
 
   return (
     <>
@@ -52,6 +56,7 @@ export default async function PlayPage({ params }: { params: Promise<{ id: strin
           setupHref={`/games/${data.session.id}/play/setup`}
           storyHref={`/games/${data.session.id}/story`}
           continuation={continuation}
+          showPostGameFeedback={showPostGameFeedback}
         />
       </div>
     </>

@@ -1,10 +1,11 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { db } from "@/db/client";
-import { adminAuditLogs, feedbackSubmissions } from "@/db/schema";
+import { adminAuditLogs, feedbackSubmissions, productEvents, sessionPlayers, sessions } from "@/db/schema";
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -17,6 +18,25 @@ export type FeedbackActionState = {
   fieldErrors?: Record<string, string[]>;
 };
 
+async function canReviewCompletedSession(userId: string, sessionId: string) {
+  const session = await db.query.sessions.findFirst({
+    columns: { hostId: true, status: true },
+    where: eq(sessions.id, sessionId),
+  });
+  if (!session || session.status !== "completed") return false;
+  if (session.hostId === userId) return true;
+  return Boolean(
+    await db.query.sessionPlayers.findFirst({
+      columns: { id: true },
+      where: and(
+        eq(sessionPlayers.sessionId, sessionId),
+        eq(sessionPlayers.userId, userId),
+        eq(sessionPlayers.rsvp, "going"),
+      ),
+    }),
+  );
+}
+
 export async function submitFeedbackAction(_: FeedbackActionState, formData: FormData): Promise<FeedbackActionState> {
   const user = await requireUser("/feedback");
   const limit = await checkRateLimit({ scope: "feedback-submit", limit: 5, windowSeconds: 3600 }, `user:${user.id}`);
@@ -28,6 +48,8 @@ export async function submitFeedbackAction(_: FeedbackActionState, formData: For
     description: formData.get("description"),
     pagePath: formData.get("pagePath") ?? "",
     contactAllowed: formData.get("contactAllowed") === "on",
+    sessionId: formData.get("sessionId") || undefined,
+    experience: formData.get("experience") || undefined,
   });
   if (!parsed.success) {
     return {
@@ -36,19 +58,78 @@ export async function submitFeedbackAction(_: FeedbackActionState, formData: For
     };
   }
 
-  await db.insert(feedbackSubmissions).values({
-    userId: user.id,
-    type: parsed.data.type,
-    area: parsed.data.area,
-    title: parsed.data.title,
-    description: parsed.data.description,
-    pagePath: parsed.data.pagePath ?? null,
-    contactAllowed: parsed.data.contactAllowed,
-  });
+  if (parsed.data.sessionId && !(await canReviewCompletedSession(user.id, parsed.data.sessionId)))
+    return { error: "This completed game is not available for feedback." };
+
+  const inserted = await db
+    .insert(feedbackSubmissions)
+    .values({
+      userId: user.id,
+      sessionId: parsed.data.sessionId ?? null,
+      experience: parsed.data.experience ?? null,
+      type: parsed.data.type,
+      area: parsed.data.area,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      pagePath: parsed.data.pagePath ?? null,
+      contactAllowed: parsed.data.contactAllowed,
+    })
+    .onConflictDoNothing()
+    .returning({ id: feedbackSubmissions.id });
+  if (!inserted.length) return { success: "You already shared feedback for this game." };
 
   revalidatePath("/feedback");
   revalidatePath("/admin/feedback");
+  if (parsed.data.sessionId) {
+    revalidatePath(`/games/${parsed.data.sessionId}/play`);
+    revalidatePath("/admin/insights");
+  }
   return { success: "Thanks—your feedback is in the Relay inbox." };
+}
+
+export async function recordSmoothGameFeedback(
+  _: FeedbackActionState,
+  formData: FormData,
+): Promise<FeedbackActionState> {
+  const user = await requireUser("/games");
+  const parsedSessionId = z.uuid().safeParse(formData.get("sessionId"));
+  if (!parsedSessionId.success) return { error: "This completed game is unavailable." };
+  const sessionId = parsedSessionId.data;
+  if (!(await canReviewCompletedSession(user.id, sessionId))) return { error: "This completed game is unavailable." };
+  await db
+    .insert(productEvents)
+    .values({
+      name: "post_game_feedback_smooth",
+      userId: user.id,
+      sessionId,
+      source: "server",
+      metadata: {},
+      dedupeKey: `session:${sessionId}:post-game-feedback:${user.id}`,
+    })
+    .onConflictDoNothing({ target: productEvents.dedupeKey });
+  revalidatePath(`/games/${sessionId}/play`);
+  revalidatePath("/admin/insights");
+  return { success: "Thanks—glad the game ran smoothly." };
+}
+
+export async function dismissPostGameFeedback(formData: FormData) {
+  const user = await requireUser("/games");
+  const parsedSessionId = z.uuid().safeParse(formData.get("sessionId"));
+  if (!parsedSessionId.success) return;
+  const sessionId = parsedSessionId.data;
+  if (!(await canReviewCompletedSession(user.id, sessionId))) return;
+  await db
+    .insert(productEvents)
+    .values({
+      name: "post_game_feedback_dismissed",
+      userId: user.id,
+      sessionId,
+      source: "server",
+      metadata: {},
+      dedupeKey: `session:${sessionId}:post-game-feedback:${user.id}`,
+    })
+    .onConflictDoNothing({ target: productEvents.dedupeKey });
+  revalidatePath(`/games/${sessionId}/play`);
 }
 
 export async function updateFeedbackAction(_: FeedbackActionState, formData: FormData): Promise<FeedbackActionState> {

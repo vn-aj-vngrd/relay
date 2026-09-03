@@ -44,8 +44,9 @@ describe("AuthEntry", () => {
 
     render(<AuthEntry mode="signin" />);
 
-    const googleButton = screen.getByRole("button", { name: "Continue with Google" });
+    const googleButton = screen.getByRole("button", { name: "Continue with Google Beta" });
     expect(googleButton).toBeVisible();
+    expect(screen.getByText("Beta")).toBeVisible();
     expect(googleButton.querySelector("img")).toHaveAttribute("src", expect.stringContaining("google-g.svg"));
     expect(googleButton.closest("form")?.querySelector('input[name="next"]')).toHaveValue("/games");
     expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute("href", "/signup?next=%2Fgames");

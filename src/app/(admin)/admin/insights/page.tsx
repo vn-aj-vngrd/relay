@@ -44,6 +44,7 @@ export default async function AdminInsightsPage() {
       <nav aria-label="Insight topics" className="public-session-scroll overflow-x-auto border-b border-line">
         <div className="flex min-w-max gap-5">
           {[
+            ["Field readiness", "#field-readiness"],
             ["Acquisition", "#acquisition"],
             ["Activation", "#activation"],
             ["Game funnel", "#core-loop"],
@@ -56,7 +57,40 @@ export default async function AdminInsightsPage() {
         </div>
       </nav>
 
-      <section id="acquisition" aria-labelledby="acquisition-title" className="scroll-mt-6 py-9">
+      <section id="field-readiness" aria-labelledby="field-readiness-title" className="scroll-mt-6 py-9">
+        <h2 id="field-readiness-title" className="text-lg font-bold">
+          Beta field readiness
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
+          A qualifying game ended with at least four going players and one completed match. Five are required before
+          unrestricted release.
+        </p>
+        <dl className="mt-4 divide-y divide-line border-y border-line">
+          {[
+            ["Qualifying completed games", data.betaReadiness.qualifyingGames, "of 5 required"],
+            ["Games with reported issues", data.betaReadiness.gamesWithIssues, "from post-game responses"],
+            ["Smooth responses", data.betaReadiness.smoothResponses, "players who said the game ran smoothly"],
+            ["Play Again games published", data.betaReadiness.playAgainGames, "return games created from a recap"],
+          ].map(([label, value, detail]) => (
+            <div key={label} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-4">
+              <dt className="text-sm font-medium">
+                {label}
+                <span className="mt-1 block text-xs font-normal text-muted">{detail}</span>
+              </dt>
+              <dd className="score text-lg font-bold">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-4 max-w-2xl text-xs leading-5 text-muted">
+          Relay cannot infer direct database repairs. Record operator intervention in the five-game field notes; any
+          repair reopens the release gate. {data.betaReadiness.issueResponses} issue response
+          {data.betaReadiness.issueResponses === 1 ? " is" : "s are"} currently in the feedback inbox, and{" "}
+          {data.betaReadiness.dismissedPrompts} prompt
+          {data.betaReadiness.dismissedPrompts === 1 ? " was" : "s were"} dismissed.
+        </p>
+      </section>
+
+      <section id="acquisition" aria-labelledby="acquisition-title" className="scroll-mt-6 border-t border-line py-9">
         <h2 id="acquisition-title" className="text-lg font-bold">
           Acquisition
         </h2>

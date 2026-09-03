@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/features/matches/actions", () => ({ correctCompletedScore: vi.fn(async () => ({})) }));
@@ -28,6 +29,7 @@ function renderRecap(
   status: "published" | "live" | "completed",
   matches: RecapMatch[],
   continuation?: { replayHref: string; saveCrewHref?: string },
+  feedback?: ReactNode,
 ) {
   return render(
     <SessionRecap
@@ -41,6 +43,7 @@ function renderRecap(
       recap={buildSessionRecap(matches, players)}
       storyHref="/games/session/story"
       continuation={continuation}
+      feedback={feedback}
     />,
   );
 }
@@ -72,6 +75,14 @@ describe("SessionRecap states", () => {
     expect(screen.getByText("Session highlights")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Share story" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open story/ })).toHaveAttribute("href", "/games/session/story");
+  });
+
+  it("places optional feedback before the existing continuation actions", () => {
+    renderRecap("completed", [match], { replayHref: "/games/new?from=session" }, <p>How did this game go?</p>);
+
+    const feedback = screen.getByText("How did this game go?");
+    const continuation = screen.getByRole("heading", { name: "Keep this crew moving." });
+    expect(feedback.compareDocumentPosition(continuation) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("consolidates the host’s post-game actions", () => {

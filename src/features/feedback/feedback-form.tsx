@@ -24,7 +24,7 @@ function FieldError({ errors }: { errors?: string[] }) {
   ) : null;
 }
 
-export function FeedbackForm() {
+export function FeedbackForm({ gameContext }: { gameContext?: { sessionId: string; pagePath: string } }) {
   const [state, action] = useActionState<FeedbackActionState, FormData>(submitFeedbackAction, {});
   const [type, setType] = useState<FeedbackType>("bug");
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +42,14 @@ export function FeedbackForm() {
       onSubmitCapture={preserveValues}
       className="border-y border-line py-6 sm:py-8"
     >
+      {gameContext ? (
+        <div className="mb-6 border-y border-line bg-surface-strong px-3 py-3 text-sm">
+          <p className="font-semibold">Feedback from your completed game</p>
+          <p className="mt-1 leading-5 text-muted">The game and recap page will be attached automatically.</p>
+          <input type="hidden" name="sessionId" value={gameContext.sessionId} />
+          <input type="hidden" name="experience" value="issues" />
+        </div>
+      ) : null}
       <fieldset>
         <legend className="text-sm font-[650]">What would you like to share?</legend>
         <div className="mt-2 divide-y divide-line border-y border-line">
@@ -83,7 +91,7 @@ export function FeedbackForm() {
             id="feedback-area"
             name="area"
             label="Which part of Relay?"
-            defaultValue="general"
+            defaultValue={gameContext ? "play" : "general"}
             options={feedbackAreas.map((area) => ({ value: area, label: feedbackAreaLabels[area] }))}
           />
           <FieldError errors={state.fieldErrors?.area} />
@@ -141,7 +149,15 @@ export function FeedbackForm() {
           <label htmlFor="feedback-page" className="block text-sm font-[650]">
             Related Relay page <span className="font-normal text-muted">(optional)</span>
           </label>
-          <input id="feedback-page" name="pagePath" maxLength={300} placeholder="/games/…" className="field" />
+          <input
+            id="feedback-page"
+            name="pagePath"
+            maxLength={300}
+            defaultValue={gameContext?.pagePath}
+            readOnly={Boolean(gameContext)}
+            placeholder="/games/…"
+            className="field read-only:bg-surface-strong read-only:text-muted"
+          />
           <p className="mt-1.5 text-xs leading-5 text-muted">Paste the path after relay-pickleball.vercel.app.</p>
           <FieldError errors={state.fieldErrors?.pagePath} />
         </div>

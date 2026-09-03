@@ -1,13 +1,31 @@
 import "server-only";
 
-import { and, count, desc, eq, ilike, lt, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, lt, or, type SQL } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { feedbackSubmissions, profiles, users } from "@/db/schema";
+import { feedbackSubmissions, productEvents, profiles, users } from "@/db/schema";
 import { type AdminCursor, encodeAdminCursor } from "@/features/admin/cursor";
 import { ADMIN_PAGE_SIZE, type AdminFeedbackRecord, type AdminPage } from "@/features/admin/records";
 
 import { type FeedbackStatus, feedbackStatuses, type FeedbackType, feedbackTypes } from "./domain";
+
+export async function shouldShowPostGameFeedback(userId: string, sessionId: string) {
+  const [feedback, dismissal] = await Promise.all([
+    db.query.feedbackSubmissions.findFirst({
+      columns: { id: true },
+      where: and(eq(feedbackSubmissions.userId, userId), eq(feedbackSubmissions.sessionId, sessionId)),
+    }),
+    db.query.productEvents.findFirst({
+      columns: { id: true },
+      where: and(
+        eq(productEvents.userId, userId),
+        eq(productEvents.sessionId, sessionId),
+        inArray(productEvents.name, ["post_game_feedback_smooth", "post_game_feedback_dismissed"]),
+      ),
+    }),
+  ]);
+  return !feedback && !dismissal;
+}
 
 export async function getOwnFeedback(userId: string) {
   return db

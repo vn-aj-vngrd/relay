@@ -81,7 +81,10 @@ export function AuthEntry({ mode, confirmationEmail }: { mode: EntryMode; confir
                 <input type="hidden" name="next" value={next ?? "/home"} />
                 <SubmitButton variant="secondary" className="h-11 w-full" pendingLabel="Opening Google…">
                   <Image src="/google-g.svg" alt="" aria-hidden width={18} height={18} />
-                  Continue with Google
+                  Continue with Google{" "}
+                  <span className="rounded-full bg-surface-strong px-1.5 py-0.5 text-[10px] font-bold leading-none text-ink">
+                    Beta
+                  </span>
                 </SubmitButton>
               </form>
             </>

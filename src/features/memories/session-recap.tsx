@@ -1,4 +1,5 @@
 import { ArrowClockwise, ArrowRight, ShareNetwork, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import type { ReactNode } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { MatchResults } from "@/features/matches/match-results";
@@ -13,6 +14,7 @@ export function SessionRecap({
   storyHref,
   continuation,
   canCorrectScores = false,
+  feedback,
 }: {
   session: {
     id: string;
@@ -25,6 +27,7 @@ export function SessionRecap({
   storyHref: string;
   continuation?: PostGameContinuation;
   canCorrectScores?: boolean;
+  feedback?: ReactNode;
 }) {
   const date = formatSessionDateLong(session.startsAt);
   const completed = session.status === "completed";
@@ -195,6 +198,8 @@ export function SessionRecap({
           </div>
         </section>
       ) : null}
+
+      {completed ? feedback : null}
 
       {completed && continuation ? (
         <section className="border-y border-line py-7 sm:py-8" aria-labelledby="post-game-title">

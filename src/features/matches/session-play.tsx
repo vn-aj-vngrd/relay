@@ -4,6 +4,7 @@ import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { PostGameFeedback } from "@/features/feedback/post-game-feedback";
 import { completeSession, createQueueMatch } from "@/features/matches/actions";
 import { getLiveSession } from "@/features/matches/queries";
 import { getSessionRecapData } from "@/features/memories/queries";
@@ -36,6 +37,7 @@ type SessionPlayProps = {
   setupHref?: string;
   storyHref: string;
   continuation?: PostGameContinuation;
+  showPostGameFeedback?: boolean;
 };
 
 function playerName(player: { guestName: string | null }, profile: { name: string } | null) {
@@ -48,7 +50,14 @@ function canScoreMatch(viewer: SessionPlayViewer, playerIds: string[]) {
   );
 }
 
-export async function SessionPlay({ data, viewer, setupHref, storyHref, continuation }: SessionPlayProps) {
+export async function SessionPlay({
+  data,
+  viewer,
+  setupHref,
+  storyHref,
+  continuation,
+  showPostGameFeedback = false,
+}: SessionPlayProps) {
   if (data.session.status === "completed") {
     const recap = await getSessionRecapData(data.session.id);
     return (
@@ -58,6 +67,11 @@ export async function SessionPlay({ data, viewer, setupHref, storyHref, continua
         storyHref={storyHref}
         continuation={continuation}
         canCorrectScores={viewer.canManagePlay}
+        feedback={
+          showPostGameFeedback ? (
+            <PostGameFeedback sessionId={data.session.id} issueHref={`/feedback?session=${data.session.id}`} />
+          ) : undefined
+        }
       />
     );
   }

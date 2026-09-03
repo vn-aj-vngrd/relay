@@ -9,18 +9,25 @@ const optionalPagePath = z
   .refine((value) => !value || (value.startsWith("/") && !value.startsWith("//")), "Use a Relay page path.")
   .transform((value) => value || undefined);
 
-export const submitFeedbackSchema = z.object({
-  type: z.enum(feedbackTypes),
-  area: z.enum(feedbackAreas),
-  title: z.string().trim().min(5, "Add a short, specific title.").max(100, "Keep the title under 100 characters."),
-  description: z
-    .string()
-    .trim()
-    .min(15, "Add a little more detail so we can understand the request.")
-    .max(3000, "Keep the description under 3,000 characters."),
-  pagePath: optionalPagePath,
-  contactAllowed: z.boolean(),
-});
+export const submitFeedbackSchema = z
+  .object({
+    type: z.enum(feedbackTypes),
+    area: z.enum(feedbackAreas),
+    title: z.string().trim().min(5, "Add a short, specific title.").max(100, "Keep the title under 100 characters."),
+    description: z
+      .string()
+      .trim()
+      .min(15, "Add a little more detail so we can understand the request.")
+      .max(3000, "Keep the description under 3,000 characters."),
+    pagePath: optionalPagePath,
+    contactAllowed: z.boolean(),
+    sessionId: z.uuid().optional(),
+    experience: z.enum(["issues"]).optional(),
+  })
+  .refine(({ experience, sessionId }) => Boolean(experience) === Boolean(sessionId), {
+    message: "Game feedback needs a matching completed-game context.",
+    path: ["sessionId"],
+  });
 
 export const updateFeedbackSchema = z.object({
   feedbackId: z.uuid(),

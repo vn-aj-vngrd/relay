@@ -31,7 +31,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   expect(brandBox).not.toBeNull();
   expect(headerBox).not.toBeNull();
   expect(Math.abs(brandBox!.x + brandBox!.width / 2 - (headerBox!.x + headerBox!.width / 2))).toBeLessThan(1);
-  const googleButton = page.getByRole("button", { name: "Continue with Google" });
+  const googleButton = page.getByRole("button", { name: "Continue with Google Beta" });
   if (await googleButton.count()) await expect(googleButton).toBeVisible();
   await expect(page.getByRole("link", { name: "Forgot password?" })).toHaveAttribute("href", "/forgot-password");
   await page.getByRole("link", { name: "Forgot password?" }).click();

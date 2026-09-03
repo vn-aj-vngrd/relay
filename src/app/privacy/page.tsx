@@ -24,7 +24,7 @@ export default function PrivacyPage() {
           </li>
           <li>
             Operational records such as notification preferences, registered push-device endpoints, delivery status,
-            moderation history, and a small set of product lifecycle events.
+            feedback and its optional game context, moderation history, and a small set of product lifecycle events.
           </li>
         </ul>
       </section>

@@ -40,7 +40,23 @@ export async function getAdminInsights() {
     .groupBy(sessionPlayers.sessionId)
     .having(sql`count(*) >= 4`)
     .as("four_player_games");
-  const [profileCount, onboardingCount, tourCount, discoveryRows, funnelRows, publicationRows] = await Promise.all([
+  const completedMatchGames = db
+    .select({ sessionId: matches.sessionId })
+    .from(matches)
+    .where(eq(matches.status, "completed"))
+    .groupBy(matches.sessionId)
+    .as("completed_match_games");
+  const [
+    profileCount,
+    onboardingCount,
+    tourCount,
+    discoveryRows,
+    funnelRows,
+    publicationRows,
+    qualifyingRows,
+    experienceRows,
+    followUpRows,
+  ] = await Promise.all([
     db.$count(profiles),
     db.$count(profiles, isNotNull(profiles.onboardingCompletedAt)),
     db.$count(profiles, isNotNull(profiles.productTourCompletedAt)),
@@ -71,6 +87,28 @@ export async function getAdminInsights() {
       .from(sessions)
       .where(isNotNull(sessions.publishedAt))
       .orderBy(asc(sessions.publishedAt)),
+    db
+      .select({ total: sql<number>`count(distinct ${sessions.id})::int` })
+      .from(sessions)
+      .innerJoin(fourPlayerGames, eq(fourPlayerGames.sessionId, sessions.id))
+      .innerJoin(completedMatchGames, eq(completedMatchGames.sessionId, sessions.id))
+      .where(eq(sessions.status, "completed")),
+    db
+      .select({
+        experience: feedbackSubmissions.experience,
+        responses: sql<number>`count(*)::int`,
+        games: sql<number>`count(distinct ${feedbackSubmissions.sessionId})::int`,
+      })
+      .from(feedbackSubmissions)
+      .where(isNotNull(feedbackSubmissions.experience))
+      .groupBy(feedbackSubmissions.experience),
+    db
+      .select({
+        playAgainGames: sql<number>`count(distinct ${productEvents.sessionId}) filter (where ${productEvents.name} = 'play_again_published')::int`,
+        smoothResponses: sql<number>`count(*) filter (where ${productEvents.name} = 'post_game_feedback_smooth')::int`,
+        dismissedPrompts: sql<number>`count(*) filter (where ${productEvents.name} = 'post_game_feedback_dismissed')::int`,
+      })
+      .from(productEvents),
   ]);
   const discovery = new Map(discoveryRows.map(({ source, total }) => [source, Number(total)]));
   const answeredDiscovery = [...discovery.values()].reduce((sum, total) => sum + total, 0);
@@ -85,6 +123,9 @@ export async function getAdminInsights() {
     recapShared: 0,
   };
   const funnel = funnelRows[0] ?? emptyFunnel;
+  const experience = new Map(
+    experienceRows.map((row) => [row.experience, { responses: Number(row.responses), games: Number(row.games) }]),
+  );
   return {
     profileCount,
     onboardingCount,
@@ -95,6 +136,14 @@ export async function getAdminInsights() {
     hostRetention: buildHostRetention(
       publicationRows.flatMap(({ hostId, publishedAt }) => (publishedAt ? [{ hostId, publishedAt }] : [])),
     ),
+    betaReadiness: {
+      qualifyingGames: Number(qualifyingRows[0]?.total ?? 0),
+      smoothResponses: Number(followUpRows[0]?.smoothResponses ?? 0),
+      issueResponses: experience.get("issues")?.responses ?? 0,
+      gamesWithIssues: experience.get("issues")?.games ?? 0,
+      playAgainGames: Number(followUpRows[0]?.playAgainGames ?? 0),
+      dismissedPrompts: Number(followUpRows[0]?.dismissedPrompts ?? 0),
+    },
   };
 }
 

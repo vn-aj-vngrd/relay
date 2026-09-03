@@ -692,6 +692,8 @@ export const feedbackSubmissions = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
+    sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
+    experience: text("experience"),
     type: feedbackType("type").notNull(),
     status: feedbackStatus("status").notNull().default("new"),
     area: text("area").notNull().default("general"),
@@ -708,6 +710,8 @@ export const feedbackSubmissions = pgTable(
   (table) => [
     index("feedback_status_created_idx").on(table.status, table.createdAt),
     index("feedback_type_created_idx").on(table.type, table.createdAt),
+    unique("feedback_user_session_unique").on(table.userId, table.sessionId),
+    check("feedback_experience_valid", sql`${table.experience} is null or ${table.experience} in ('smooth', 'issues')`),
     index("feedback_user_created_idx").on(table.userId, table.createdAt),
     index("feedback_created_id_idx").on(table.createdAt.desc(), table.id.desc()),
   ],

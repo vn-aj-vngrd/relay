@@ -1,11 +1,17 @@
+import { z } from "zod";
+
 import { requireUser } from "@/features/auth/session";
 import { feedbackAreaLabels, feedbackTypeLabels } from "@/features/feedback/domain";
 import { FeedbackForm } from "@/features/feedback/feedback-form";
 import { FeedbackStatusBadge } from "@/features/feedback/feedback-status";
 import { getOwnFeedback } from "@/features/feedback/queries";
 
-export default async function FeedbackPage() {
+export default async function FeedbackPage({ searchParams }: { searchParams: Promise<{ session?: string }> }) {
   const user = await requireUser("/feedback");
+  const sessionId = z.uuid().safeParse((await searchParams).session);
+  const gameContext = sessionId.success
+    ? { sessionId: sessionId.data, pagePath: `/games/${sessionId.data}/play` }
+    : undefined;
   const submissions = await getOwnFeedback(user.id);
 
   return (
@@ -24,7 +30,7 @@ export default async function FeedbackPage() {
           </h2>
           <p className="mt-1 text-sm text-muted">Specific examples help us understand and prioritize the right fix.</p>
         </div>
-        <FeedbackForm />
+        <FeedbackForm gameContext={gameContext} />
       </section>
 
       <section aria-labelledby="past-feedback-title" className="pb-8 pt-2">

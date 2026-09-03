@@ -68,6 +68,7 @@ Each pillar is scored from 0–10. A public release requires:
 - The full reviewed directory remains the current source of court truth; marketing labels its embedded courts as representative, states that coverage is Philippines-only, and does not imply the inventory is exhaustive.
 - Mobile Court Finder filters meet Relay’s 44 px touch-target requirement.
 - The published support channel is owned and has 24-hour security and two-business-day account-access acknowledgement targets in `docs/SUPPORT.md`.
+- Completed-game Recap asks each signed-in participant once whether the game ran smoothly. Issue responses enter the existing feedback inbox with game context; Admin Insights counts qualifying field games and Play Again usage without claiming that direct database repairs can be inferred.
 
 ## Blocking evidence register
 
@@ -175,7 +176,7 @@ The database dump contains sensitive Auth and Storage metadata but does not repl
 
 ## Real-session acceptance
 
-A session counts only when it has at least four going players and one completed match. For each of five sessions, record:
+Use [`BETA_FIELD_SESSIONS.md`](./BETA_FIELD_SESSIONS.md) as the privacy-safe operating log. A session counts only when it has at least four going players and one completed match. For each of five sessions, record:
 
 - device and connection conditions;
 - invite view and guest RSVP result;
