@@ -62,7 +62,10 @@ export function SessionOverviewStatus({
       </p>
       {isHost ? <SessionReadinessPanel readiness={readiness} sessionId={sessionId} /> : null}
       {isHost ? (
-        <ButtonLink href={`/games/${sessionId}/play`} className="mt-5 w-full">
+        <ButtonLink
+          href={status === "live" ? `/games/${sessionId}/play` : `/games/${sessionId}/play/setup`}
+          className="mt-5 w-full"
+        >
           <Play aria-hidden weight="fill" size={15} />
           {status === "live" ? "Open Play" : "Set up Play"}
         </ButtonLink>

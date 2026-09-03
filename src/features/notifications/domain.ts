@@ -205,7 +205,7 @@ export function notificationPresentation({
       return {
         title: customTitle ?? "Game wrapped",
         body: customBody ?? `${game} is now saved with its scores and standings.`,
-        href: gameHref,
+        href: `${gameHref}/play`,
         tone: "play",
       };
     default:

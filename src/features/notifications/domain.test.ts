@@ -93,6 +93,17 @@ describe("notificationPresentation", () => {
     ).toMatchObject({ href: "/games/session-1/play", tone: "play" });
   });
 
+  it("opens a completed game at its recap", () => {
+    expect(
+      notificationPresentation({
+        type: "session_completed",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      }),
+    ).toMatchObject({ href: "/games/session-1/play", tone: "play" });
+  });
+
   it("never links a removed player back into an inaccessible session", () => {
     expect(
       notificationPresentation({

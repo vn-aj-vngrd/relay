@@ -27,6 +27,15 @@ describe("SessionOverviewStatus", () => {
     expect(screen.getByText("Host access")).toBeVisible();
     expect(screen.getByText("You manage this game")).toBeVisible();
     expect(screen.getByText("Ready to play")).toBeVisible();
-    expect(screen.getByRole("link", { name: /Set up Play/ })).toBeVisible();
+    expect(screen.getByRole("link", { name: /Set up Play/ })).toHaveAttribute(
+      "href",
+      `/games/${base.sessionId}/play/setup`,
+    );
+  });
+
+  it("opens the live court directly once Play starts", () => {
+    render(<SessionOverviewStatus {...base} status="live" isHost />);
+
+    expect(screen.getByRole("link", { name: /Open Play/ })).toHaveAttribute("href", `/games/${base.sessionId}/play`);
   });
 });

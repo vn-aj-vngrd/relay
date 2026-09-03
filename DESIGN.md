@@ -116,7 +116,7 @@ Authenticated destinations begin with one compact breadcrumb trail that anchors 
 
 Authenticated game chrome is persistent across navigation: the tab rail stays left, while Edit game (host/co-host) and Share game sit beside the session name. The session name, destination title, and destination subtitle render before the data boundary; only each tab’s content becomes a layout-accurate skeleton. This prevents navigation, actions, and headings from flashing between tabs.
 
-Management controls sit beside the information they change and render only for hosts or co-hosts. Sharing is the persistent session action, so inviting someone never requires returning to another tab. Player screens remain readable and action-light; they are not disabled host dashboards.
+Management controls sit beside the information they change and render only for hosts or co-hosts. Before play, the host Overview’s Set up Play action opens arrival and rotation setup directly; once live it opens Play. Sharing is the persistent session action, so inviting someone never requires returning to another tab. Player screens remain readable and action-light; they are not disabled host dashboards.
 
 ## Onboarding
 
@@ -124,7 +124,7 @@ First-run profile setup uses four clear phases: Identity, optional Profile detai
 
 ## Notifications
 
-Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
+Notifications are a contextual inbox, not an activity feed. Group updates by recency, distinguish unread items with one quiet dot and stronger icon treatment, and route every row directly to the relevant session surface. Tomorrow reminders open Overview, starting-soon reminders open Play for arrival, and completion notices open the saved recap. The sidebar shows a compact numeric unread count and updates through one user-scoped realtime subscription. Notification color remains restrained; urgency comes from specific copy and destination, not red badges or promotional cards.
 
 ## Admin console
 
