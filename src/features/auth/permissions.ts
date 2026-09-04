@@ -3,6 +3,7 @@ export type SessionActor = {
   guestPlayerId?: string;
   role?: "host" | "cohost" | "player";
   assignedScorer?: boolean;
+  leadOrganizer?: boolean;
 };
 
 const participatingRsvps = new Set(["going", "maybe", "waitlisted"]);
@@ -20,7 +21,9 @@ export function sessionActor(input: {
     return { userId: input.userId, role: "host" };
   const membership = input.membership;
   const role =
-    membership && !membership.leftAt && participatingRsvps.has(membership.rsvp)
+    membership &&
+    !membership.leftAt &&
+    (membership.role === "cohost" || participatingRsvps.has(membership.rsvp))
       ? membership.role
       : undefined;
   return { userId: input.userId, role };
@@ -66,6 +69,8 @@ export function can(
     action === "complete" ||
     action === "delete"
   )
-    return actor.role === "host";
+    return action === "complete"
+      ? actor.role === "host" || Boolean(actor.leadOrganizer)
+      : actor.role === "host";
   return false;
 }

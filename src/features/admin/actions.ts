@@ -497,6 +497,10 @@ export async function cancelSessionAction(
       .update(sessions)
       .set({
         status: "cancelled",
+        cancelledAt: new Date(),
+        cancelledById: actor.id,
+        cancellationCategory: "other",
+        cancellationReason: parsed.data.reason,
         updatedAt: new Date(),
         version: session.version + 1,
       })
@@ -514,7 +518,7 @@ export async function cancelSessionAction(
           userId,
           sessionId: session.id,
           type: "session_cancelled",
-          payload: {},
+          payload: { reason: parsed.data.reason },
           dedupeKey: `session-cancelled:${session.id}:${userId}`,
         }))
       );

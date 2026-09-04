@@ -92,8 +92,9 @@ export default async function PaymentsPage({
     hostId: data.session.hostId,
     membership: data.membership,
   });
-  const canManagePayments = can(actor, "confirm_payment");
-  const canCreateExpense = can(actor, "create_expense");
+  const cancelled = data.session.status === "cancelled";
+  const canManagePayments = !cancelled && can(actor, "confirm_payment");
+  const canCreateExpense = !cancelled && can(actor, "create_expense");
   const hostName =
     data.roster.find(({ player }) => player.role === "host")?.profile?.name ??
     "The host";
@@ -169,6 +170,15 @@ export default async function PaymentsPage({
         title={canManagePayments ? "Payments" : "Your payment"}
         description={`${canManagePayments ? "Collect player shares and review proof." : "Repay the host, then upload one screenshot."} Relay tracks status only.`}
       />
+      {cancelled ? (
+        <p
+          role="status"
+          className="mt-5 border-y border-line bg-surface-raised px-4 py-3 text-sm text-muted"
+        >
+          This game was cancelled. Payment records remain visible, but
+          submissions and changes are closed.
+        </p>
+      ) : null}
       {sessionExpenses.length ? (
         <div className="grid gap-8 sm:pt-7 lg:grid-cols-[1fr_340px]">
           <section className="space-y-10">
@@ -273,7 +283,9 @@ export default async function PaymentsPage({
                                 </div>
                               </details>
                             ) : null}
-                            {own && payment.status === "unpaid" ? (
+                            {!cancelled &&
+                            own &&
+                            payment.status === "unpaid" ? (
                               <PaymentProofForm
                                 paymentId={payment.id}
                                 reviewNote={payment.reviewNote}

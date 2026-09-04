@@ -23,6 +23,9 @@ export default async function PlayersPage({
   const user = await requireUser();
   const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
+  const organizers = data.roster.filter(
+    ({ player }) => !player.leftAt && ["host", "cohost"].includes(player.role)
+  );
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const pending = data.roster.filter(({ player }) => player.rsvp === "pending");
   const waitlist = data.roster.filter(
@@ -30,7 +33,9 @@ export default async function PlayersPage({
   );
   const otherResponses = data.roster.filter(
     ({ player }) =>
-      !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp)
+      !player.leftAt &&
+      player.role === "player" &&
+      ["maybe", "invited", "declined"].includes(player.rsvp)
   );
   const isHost = canManageSessionWorkspace(data.access);
 
@@ -84,6 +89,40 @@ export default async function PlayersPage({
             )}
           </section>
         ) : null}
+
+        <section className="mb-9" aria-labelledby="organizers-title">
+          <h2 id="organizers-title" className="text-lg font-bold">
+            Organizers
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            Management access is separate from taking a player spot.
+          </p>
+          <ul className="mt-3 divide-y divide-line border-y border-line">
+            {organizers.map(({ player, profile }, index) => {
+              const name = profile?.name ?? player.guestName ?? "Organizer";
+              return (
+                <li
+                  key={player.id}
+                  className="flex min-h-14 items-center gap-3 py-2"
+                >
+                  <Avatar
+                    name={name}
+                    imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                    index={index}
+                    size="sm"
+                  />
+                  <span className="min-w-0 flex-1 truncate font-medium">
+                    {name}
+                  </span>
+                  <span className="text-xs text-muted">
+                    {player.role === "host" ? "Host" : "Co-host"}
+                    {player.rsvp !== "going" ? " · Not playing" : ""}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
 
         {isHost && pending.length ? (
           <section className="mb-9" aria-labelledby="pending-title">

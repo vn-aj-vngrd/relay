@@ -1,0 +1,3 @@
+ALTER TABLE "matches" ADD COLUMN "replacement_requested_by_id" uuid;--> statement-breakpoint
+ALTER TABLE "matches" ADD COLUMN "replacement_requested_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "matches" ADD CONSTRAINT "matches_replacement_requested_by_id_session_players_id_fk" FOREIGN KEY ("replacement_requested_by_id") REFERENCES "public"."session_players"("id") ON DELETE set null ON UPDATE no action;

@@ -121,9 +121,22 @@ export function notificationPresentation({
         title: customTitle ?? `${game} was cancelled`,
         body:
           customBody ??
-          "The game is no longer going ahead. Open Relay to review your games.",
-        href: "/games",
+          (typeof payload.reason === "string"
+            ? payload.reason
+            : "The game is no longer going ahead."),
+        href: gameHref,
         tone: "session",
+      };
+    case "match_assignment_changed":
+      return {
+        title: customTitle ?? "Your court plan changed",
+        body:
+          customBody ??
+          (typeof payload.reason === "string"
+            ? `The match was cancelled: ${payload.reason}`
+            : `Open ${game} to see your latest Play status.`),
+        href: `${gameHref}/play`,
+        tone: "play",
       };
     case "booking_confirmed":
       return {
@@ -230,6 +243,17 @@ export function notificationPresentation({
         body: customBody ?? `Review your updated share for ${game}.`,
         href: `${gameHref}/payments`,
         tone: "payment",
+      };
+    case "replacement_requested":
+      return {
+        title: customTitle ?? "Replacement requested",
+        body:
+          customBody ??
+          (typeof payload.courtLabel === "string"
+            ? `A player needs help on ${payload.courtLabel}.`
+            : `A player in ${game} requested a replacement.`),
+        href: `${gameHref}/play`,
+        tone: "play",
       };
     case "match_assignment":
       return {

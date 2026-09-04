@@ -162,7 +162,15 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
         id: match.id,
         courtLabel: match.courtLabel,
         teams: [names("A"), names("B")] as [string, string],
+        teamAPlayerIds: matchMembers
+          .filter((item) => item.matchPlayer.team === "A")
+          .map((item) => item.player.id),
+        teamBPlayerIds: matchMembers
+          .filter((item) => item.matchPlayer.team === "B")
+          .map((item) => item.player.id),
         scores: [match.teamAScore, match.teamBScore] as [number, number],
+        winningTeam: match.winningTeam,
+        finishedAt: match.finishedAt,
         version: match.version,
       };
     }),
@@ -177,9 +185,58 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
       queue,
       pairs,
       activeMatches: liveDetails.activeMatches,
-      courtCount: sessionCourts.length,
+      courtCount: sessionCourts.filter((court) => court.availableForPlay)
+        .length,
       completedMatchCount,
     }),
+  };
+}
+
+export async function getCompactPersonalPlayStatus(
+  sessionId: string,
+  userId: string
+) {
+  const membership = await db.query.sessionPlayers.findFirst({
+    where: and(
+      eq(sessionPlayers.sessionId, sessionId),
+      eq(sessionPlayers.userId, userId)
+    ),
+  });
+  if (membership?.rsvp !== "going") return null;
+  const [assignment] = await db
+    .select({ courtLabel: matches.courtLabel })
+    .from(matchPlayers)
+    .innerJoin(matches, eq(matches.id, matchPlayers.matchId))
+    .where(
+      and(
+        eq(matches.sessionId, sessionId),
+        eq(matches.status, "active"),
+        eq(matchPlayers.sessionPlayerId, membership.id)
+      )
+    )
+    .limit(1);
+  if (assignment)
+    return { label: `Playing now · ${assignment.courtLabel}`, urgent: true };
+  if (membership.playState === "resting")
+    return { label: "Taking a break", urgent: false };
+  const waiting = await db
+    .select({ playerId: sessionQueue.sessionPlayerId })
+    .from(sessionQueue)
+    .where(
+      and(
+        eq(sessionQueue.sessionId, sessionId),
+        eq(sessionQueue.state, "waiting")
+      )
+    )
+    .orderBy(asc(sessionQueue.position));
+  const position = waiting.findIndex((item) => item.playerId === membership.id);
+  if (position < 0) return { label: "Not in the Play queue", urgent: false };
+  if (position < 4)
+    return { label: "Get ready · you’re near the front", urgent: true };
+  const groupsAhead = Math.floor(position / 4);
+  return {
+    label: `${groupsAhead} ${groupsAhead === 1 ? "group" : "groups"} ahead`,
+    urgent: false,
   };
 }
 

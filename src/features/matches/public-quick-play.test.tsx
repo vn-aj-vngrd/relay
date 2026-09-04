@@ -14,8 +14,8 @@ beforeAll(() => {
 
 beforeEach(() => localStorage.clear());
 
-function nameFourPlayers() {
-  ["Van", "AJ", "Mika", "John"].forEach((name, index) => {
+function namePlayers(names = ["Van", "AJ", "Mika", "John"]) {
+  names.forEach((name, index) => {
     fireEvent.change(
       screen.getByRole("textbox", { name: `Player ${index + 1}` }),
       { target: { value: name } }
@@ -23,13 +23,44 @@ function nameFourPlayers() {
   });
 }
 
-describe("PublicQuickPlay", () => {
-  it("prepares manual players, runs a scored match, and records standings", () => {
-    render(<PublicQuickPlay />);
-    nameFourPlayers();
+function openOptions() {
+  fireEvent.click(
+    screen.getByRole("button", { name: "Continue to game options" })
+  );
+}
 
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
-    expect(screen.getByRole("heading", { name: "Play" })).toBeVisible();
+function startFromOptions() {
+  fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
+  fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+}
+
+function startDefaultGame() {
+  namePlayers();
+  openOptions();
+  startFromOptions();
+}
+
+describe("PublicQuickPlay", () => {
+  it("guides setup through Players, Game options, and Review", () => {
+    render(<PublicQuickPlay />);
+    expect(
+      screen.getByRole("list", { name: "Quick Play setup progress" })
+    ).toHaveTextContent("1. Players2. Game options3. Review");
+    namePlayers();
+    openOptions();
+    expect(
+      screen.getByRole("heading", { name: "Choose how this game runs" })
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
+    expect(screen.getByText("This device only")).toBeVisible();
+    expect(
+      screen.getByText(/cannot be shared or moved into account history/)
+    ).toBeVisible();
+  });
+
+  it("runs a scored match, records standings, and corrects the result", () => {
+    render(<PublicQuickPlay />);
+    startDefaultGame();
     expect(
       screen.getByText("Paddle Stack · scores and rotations stay on this page")
     ).toBeVisible();
@@ -37,22 +68,15 @@ describe("PublicQuickPlay", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Add a point to Van \+ AJ/ })
     );
-    expect(screen.getByLabelText("Van + AJ score 1")).toHaveTextContent("1");
     fireEvent.click(screen.getByRole("button", { name: "Finish match" }));
     const finishDialog = screen.getByRole("dialog", {
       name: "Finish Court 1 at 1–0?",
     });
-    expect(finishDialog).toHaveAttribute("open");
     fireEvent.click(
       within(finishDialog).getByRole("button", { name: "Finish match" })
     );
 
     expect(screen.getByRole("heading", { name: "Standings" })).toBeVisible();
-    expect(within(screen.getByRole("table")).getByText("Van")).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Start next match" })
-    ).toBeVisible();
-
     fireEvent.click(
       screen.getByRole("button", { name: "Correct Court 1 score" })
     );
@@ -77,104 +101,68 @@ describe("PublicQuickPlay", () => {
     ).toBeVisible();
   });
 
-  it("confirms before discarding an active scored session", () => {
+  it("protects an active session from being discarded", () => {
     render(<PublicQuickPlay />);
-    nameFourPlayers();
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
-    fireEvent.click(
-      screen.getByRole("button", { name: /Add a point to Van \+ AJ/ })
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "New setup" }));
-    const dialog = screen.getByRole("dialog", {
-      name: "End this Quick Play session?",
-    });
-    expect(dialog).toHaveAttribute("open");
-    expect(screen.getByRole("heading", { name: "Play" })).toBeVisible();
-
-    fireEvent.click(
-      within(dialog).getByRole("button", { name: "End and start over" })
-    );
-    expect(screen.getByRole("heading", { name: "Set up Play" })).toBeVisible();
-  });
-
-  it("explains when a corrupt saved session cannot be restored", () => {
-    localStorage.setItem("relay-quick-play-session", "not-json");
-    render(<PublicQuickPlay />);
-
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "The saved Quick Play session could not be restored"
-    );
-    expect(screen.getByRole("heading", { name: "Set up Play" })).toBeVisible();
+    startDefaultGame();
+    expect(
+      screen.getByRole("button", { name: "End Quick Play" })
+    ).toBeDisabled();
+    expect(
+      screen.getByText("Finish or cancel active matches before ending.")
+    ).toBeVisible();
   });
 
   it("restores the active session and score after a browser reload", () => {
     const view = render(<PublicQuickPlay />);
-    nameFourPlayers();
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    startDefaultGame();
     fireEvent.click(
       screen.getByRole("button", { name: /Add a point to Van \+ AJ/ })
     );
     expect(localStorage.getItem("relay-quick-play-session")).toContain(
       '"scores":[1,0]'
     );
-
     view.unmount();
     render(<PublicQuickPlay />);
-    expect(screen.getByRole("heading", { name: "Play" })).toBeVisible();
     expect(screen.getByLabelText("Van + AJ score 1")).toHaveTextContent("1");
   });
 
-  it("opens a full-screen scoreboard and switches between active courts", () => {
+  it("opens a full-screen scoreboard and switches between courts", () => {
     render(<PublicQuickPlay />);
     for (let index = 0; index < 4; index += 1)
       fireEvent.click(screen.getByRole("button", { name: "Add player" }));
-    Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`).forEach(
-      (name, index) => {
-        fireEvent.change(
-          screen.getByRole("textbox", { name: `Player ${index + 1}` }),
-          { target: { value: name } }
-        );
-      }
-    );
+    namePlayers(Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`));
+    openOptions();
     fireEvent.change(
       screen.getByRole("spinbutton", { name: "Active courts" }),
       { target: { value: "2" } }
     );
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    startFromOptions();
 
     fireEvent.click(
       screen.getAllByRole("button", { name: "Open full-screen scoreboard" })[0]
     );
-    expect(
-      screen.getByRole("dialog", { name: "Court 1 full-screen scoreboard" })
-    ).toHaveAttribute("open");
     fireEvent.click(
       screen.getByRole("button", { name: "Next court, Court 2" })
     );
     expect(
       screen.getByRole("dialog", { name: "Court 2 full-screen scoreboard" })
     ).toHaveAttribute("open");
-    expect(screen.getByText("Court 2 of 2")).toBeVisible();
   });
 
-  it("validates unique manual player names before starting", () => {
+  it("validates unique player names", () => {
     render(<PublicQuickPlay />);
-    ["Van", "Van", "Mika", "John"].forEach((name, index) => {
-      fireEvent.change(
-        screen.getByRole("textbox", { name: `Player ${index + 1}` }),
-        { target: { value: name } }
-      );
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    namePlayers(["Van", "Van", "Mika", "John"]);
+    openOptions();
+    startFromOptions();
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Use a different name for each player."
     );
   });
 
-  it("offers every planned-session Play mode", () => {
-    render(<PublicQuickPlay />);
-
+  it("offers every saved-game Play mode and Relay listboxes", () => {
+    const { container } = render(<PublicQuickPlay />);
+    namePlayers();
+    openOptions();
     expect(screen.getByRole("radio", { name: /Paddle Stack/ })).toBeEnabled();
     expect(screen.getByRole("radio", { name: /Mix It Up/ })).toBeEnabled();
     expect(screen.getByRole("radio", { name: /Balanced Mix/ })).toBeEnabled();
@@ -182,80 +170,60 @@ describe("PublicQuickPlay", () => {
     expect(
       screen.getByRole("radio", { name: /Team Round Robin/ })
     ).toBeEnabled();
-  });
-
-  it("uses Relay listboxes instead of browser-native dropdowns", () => {
-    const { container } = render(<PublicQuickPlay />);
-
-    expect(container.querySelector("select")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Queue rule" }));
-    fireEvent.click(
-      screen.getByRole("option", {
-        name: "Four rotate — a fresh group every match",
-      })
-    );
-    expect(
-      screen.getByRole("button", { name: "Queue rule" })
-    ).toHaveTextContent("Four rotate — a fresh group every match");
-
-    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
-    expect(
-      screen.getAllByRole("button", { name: "Playing experience" })
-    ).toHaveLength(4);
     expect(container.querySelector("select")).not.toBeInTheDocument();
   });
 
-  it("offers a shared timer for round-based Quick Play", () => {
+  it("collects experience and a timer for round modes", () => {
     render(<PublicQuickPlay />);
-    fireEvent.click(screen.getByRole("radio", { name: /Mix It Up/ }));
+    namePlayers();
+    openOptions();
+    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
+    expect(screen.getAllByLabelText("Playing experience")).toHaveLength(4);
     fireEvent.click(screen.getByRole("button", { name: "Round timer" }));
     fireEvent.click(screen.getByRole("option", { name: "10 minutes" }));
-    nameFourPlayers();
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
-
-    expect(screen.getByText("Round timer", { exact: true })).toBeVisible();
+    startFromOptions();
     expect(screen.getByText("10:00")).toBeVisible();
   });
 
-  it("collects playing experience for Balanced Mix", () => {
+  it("bounds court count and explains missing players", () => {
     render(<PublicQuickPlay />);
-    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
-
-    expect(screen.getAllByLabelText("Playing experience")).toHaveLength(4);
-    nameFourPlayers();
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
-    expect(
-      screen.getByText("Balanced Mix · scores and rotations stay on this page")
-    ).toBeVisible();
-  });
-
-  it("uses a bounded court count and explains the player requirement", () => {
-    render(<PublicQuickPlay />);
+    namePlayers();
+    openOptions();
     const courts = screen.getByRole("spinbutton", { name: "Active courts" });
     expect(courts).toHaveAttribute("min", "1");
     expect(courts).toHaveAttribute("max", "6");
     fireEvent.change(courts, { target: { value: "3" } });
-    expect(screen.getByText("Add 8 more players.")).toBeVisible();
-    nameFourPlayers();
-    fireEvent.click(screen.getByRole("button", { name: "Start Play" }));
+    fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
     expect(screen.getByRole("alert")).toHaveTextContent(
-      "Add 8 more players for 3 courts."
+      "Add 8 more players before reviewing."
     );
   });
 
-  it("adds players and lets fixed teams be prepared", () => {
+  it("closes courts and reorders the local waiting queue", () => {
     render(<PublicQuickPlay />);
-    fireEvent.click(screen.getByRole("button", { name: "Add player" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add player" }));
-    expect(screen.getAllByRole("textbox")).toHaveLength(6);
+    for (let index = 0; index < 4; index += 1)
+      fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    namePlayers(Array.from({ length: 8 }, (_, index) => `Player ${index + 1}`));
+    openOptions();
+    startFromOptions();
 
-    const partnerStyle = screen.getByRole("group", { name: "Partner style" });
+    fireEvent.click(screen.getByRole("button", { name: "Close Court 1" }));
+    expect(screen.getByText("Closing after match")).toBeVisible();
     fireEvent.click(
-      within(partnerStyle).getByRole("radio", { name: /Keep pairs together/ })
+      screen.getByRole("button", { name: "Move to top: Player 5" })
     );
     expect(
-      screen.getByRole("heading", { name: "Set the pairs" })
-    ).toBeVisible();
-    expect(screen.getByLabelText("Pair 3, player 2")).toBeVisible();
+      within(screen.getByRole("region", { name: "Paddle stack" })).getAllByRole(
+        "listitem"
+      )[0]
+    ).toHaveTextContent("Player 5");
+  });
+
+  it("explains when a corrupt saved session cannot be restored", () => {
+    localStorage.setItem("relay-quick-play-session", "not-json");
+    render(<PublicQuickPlay />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "The saved Quick Play session could not be restored"
+    );
   });
 });

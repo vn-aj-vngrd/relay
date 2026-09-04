@@ -2,7 +2,13 @@
 
 import {
   ArrowCounterClockwise,
+  ArrowDown,
+  ArrowLineDown,
+  ArrowLineUp,
   ArrowsLeftRight,
+  ArrowUp,
+  LockSimple,
+  LockSimpleOpen,
   PencilSimple,
   Prohibit,
   Shuffle,
@@ -46,9 +52,11 @@ import {
   type QuickPlaySession,
   quickPlayStandings,
   quickPlayStorageKey,
+  reorderQuickPlayQueue,
   restoreQuickPlaySession,
   scoreQuickPlayMatch,
   serializeQuickPlaySession,
+  setQuickPlayCourtAvailability,
   startNextQuickPlayMatches,
   startQuickPlay,
   swapQuickPlayMatchSides,
@@ -342,6 +350,7 @@ function QuickPlaySetup({
   restoreWarning?: string;
 }) {
   const nextPlayerNumber = useRef(5);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [players, setPlayers] = useState(initialPlayers);
   const [pairOrder, setPairOrder] = useState(
     initialPlayers.map((player) => player.id)
@@ -391,6 +400,37 @@ function QuickPlaySetup({
     setPlayers(nextPlayers);
     setPairOrder((current) => current.filter((playerId) => playerId !== id));
     setError("");
+  }
+
+  function continueToOptions() {
+    const unnamed = players.findIndex(
+      (player) => player.name.trim().length < 1
+    );
+    if (unnamed >= 0) {
+      setError(`Add a name for Player ${unnamed + 1}.`);
+      return;
+    }
+    setError("");
+    setStep(2);
+  }
+
+  function continueToReview() {
+    if (!courtCountValid) {
+      setError(`Choose 1–${maxQuickPlayCourts} courts.`);
+      return;
+    }
+    if (missingPlayerCount > 0) {
+      setError(
+        `Add ${missingPlayerCount} more ${missingPlayerCount === 1 ? "player" : "players"} before reviewing.`
+      );
+      return;
+    }
+    if (fixedPartners && !pairsAvailable) {
+      setError("Fixed partners need an even roster of at least four players.");
+      return;
+    }
+    setError("");
+    setStep(3);
   }
 
   function start() {
@@ -446,12 +486,30 @@ function QuickPlaySetup({
       </header>
 
       <div className="mx-auto w-full max-w-2xl pb-8 pt-6">
+        <ol
+          aria-label="Quick Play setup progress"
+          className="mb-7 grid grid-cols-3 border-y border-line"
+        >
+          {["Players", "Game options", "Review"].map((label, index) => {
+            const number = index + 1;
+            const current = step === number;
+            return (
+              <li
+                key={label}
+                aria-current={current ? "step" : undefined}
+                className={`py-3 text-center text-xs font-semibold sm:text-sm ${current ? "text-primary" : number < step ? "text-ink" : "text-muted"}`}
+              >
+                {number}. {label}
+              </li>
+            );
+          })}
+        </ol>
         {restoreWarning ? (
           <Alert variant="info" className="mb-6">
             {restoreWarning}
           </Alert>
         ) : null}
-        <section aria-labelledby="quick-players-title">
+        <section aria-labelledby="quick-players-title" hidden={step !== 1}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h2 id="quick-players-title" className="text-lg font-bold">
@@ -519,7 +577,7 @@ function QuickPlaySetup({
           </div>
         </section>
 
-        <section aria-labelledby="quick-format-title" className="mt-10">
+        <section aria-labelledby="quick-format-title" hidden={step !== 2}>
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0 flex-1">
               <h2 id="quick-format-title" className="text-lg font-bold">
@@ -734,14 +792,84 @@ function QuickPlaySetup({
           ) : null}
         </section>
 
-        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted">
-            {players.length} players · {courtCount}{" "}
-            {courtCount === 1 ? "court" : "courts"} · local only
+        <section hidden={step !== 3} aria-labelledby="quick-review-title">
+          <h2 id="quick-review-title" className="text-lg font-bold">
+            Review Quick Play
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-muted">
+            Check the temporary setup before creating the first assignments.
           </p>
-          <Button type="button" onClick={start} className="w-full sm:w-auto">
-            Start Play
-          </Button>
+          <dl className="mt-5 divide-y divide-line border-y border-line">
+            <div className="flex items-start justify-between gap-4 py-4">
+              <dt className="text-sm text-muted">Players</dt>
+              <dd className="max-w-[70%] text-right text-sm font-semibold">
+                {players.map((player) => player.name).join(", ")}
+              </dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 py-4">
+              <dt className="text-sm text-muted">Courts</dt>
+              <dd className="text-right text-sm font-semibold">{courtCount}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 py-4">
+              <dt className="text-sm text-muted">Flow</dt>
+              <dd className="text-right text-sm font-semibold">
+                {rotationName(mode)}
+              </dd>
+            </div>
+            <div className="flex items-start justify-between gap-4 py-4">
+              <dt className="text-sm text-muted">Storage</dt>
+              <dd className="text-right text-sm font-semibold">
+                This device only
+              </dd>
+            </div>
+          </dl>
+          <Alert variant="info" className="mt-5">
+            Quick Play is temporary and cannot be shared or moved into account
+            history. Plan a Relay game when the crew needs a saved link.
+          </Alert>
+        </section>
+
+        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            {step > 1 ? (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setError("");
+                  setStep(step === 3 ? 2 : 1);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Back
+              </Button>
+            ) : (
+              <p className="text-sm text-muted">
+                Everything stays on this device.
+              </p>
+            )}
+          </div>
+          {step === 1 ? (
+            <Button
+              type="button"
+              onClick={continueToOptions}
+              className="w-full sm:w-auto"
+            >
+              Continue to game options
+            </Button>
+          ) : step === 2 ? (
+            <Button
+              type="button"
+              onClick={continueToReview}
+              className="w-full sm:w-auto"
+            >
+              Review setup
+            </Button>
+          ) : (
+            <Button type="button" onClick={start} className="w-full sm:w-auto">
+              Start Play
+            </Button>
+          )}
         </div>
         {error ? (
           <p role="alert" className="mt-3 text-sm font-medium text-danger">
@@ -820,15 +948,23 @@ function QuickPlayLive({
             page
           </p>
         </div>
-        <ConfirmActionButton
-          variant="secondary"
-          confirmTitle="End this Quick Play session?"
-          confirmText="Active scores and completed results will be removed from this browser."
-          confirmLabel="End and start over"
-          onConfirm={onEdit}
-        >
-          <ArrowCounterClockwise aria-hidden size={16} /> New setup
-        </ConfirmActionButton>
+        <div className="text-right">
+          <ConfirmActionButton
+            variant="secondary"
+            confirmTitle="End this Quick Play session?"
+            confirmText="The local recap and completed results will be removed from this browser."
+            confirmLabel="End and start over"
+            onConfirm={onEdit}
+            disabled={session.activeMatches.length > 0}
+          >
+            <ArrowCounterClockwise aria-hidden size={16} /> End Quick Play
+          </ConfirmActionButton>
+          {session.activeMatches.length ? (
+            <p className="mt-1 text-xs text-muted">
+              Finish or cancel active matches before ending.
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -987,6 +1123,83 @@ function QuickPlayLive({
         </section>
 
         <aside className="space-y-8">
+          <section aria-labelledby="quick-court-availability-title">
+            <h2
+              id="quick-court-availability-title"
+              className="text-lg font-bold"
+            >
+              Court availability
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-muted">
+              Closed courts stay in local history and receive no new match.
+            </p>
+            <div className="mt-3 divide-y divide-line border-y border-line">
+              {Array.from({ length: session.courtCount }, (_, index) => {
+                const courtId = `court-${index + 1}`;
+                const label = `Court ${index + 1}`;
+                const available =
+                  !session.unavailableCourtIds.includes(courtId);
+                const active = session.activeMatches.some(
+                  (match) => match.courtId === courtId
+                );
+                return (
+                  <div
+                    key={courtId}
+                    className="flex min-h-14 items-center gap-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">{label}</p>
+                      <p className="text-xs text-muted">
+                        {available
+                          ? "Available"
+                          : active
+                            ? "Closing after match"
+                            : "Unavailable"}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={session.mode === "king_of_court"}
+                      aria-label={`${available ? "Close" : "Reopen"} ${label}`}
+                      onClick={() => {
+                        try {
+                          onChange(
+                            setQuickPlayCourtAvailability(
+                              session,
+                              courtId,
+                              !available
+                            )
+                          );
+                          setError("");
+                        } catch (reason) {
+                          setError(
+                            reason instanceof Error
+                              ? reason.message
+                              : "That court couldn’t be updated."
+                          );
+                        }
+                      }}
+                    >
+                      {available ? (
+                        <LockSimple aria-hidden size={16} />
+                      ) : (
+                        <LockSimpleOpen aria-hidden size={16} />
+                      )}
+                      {available ? "Close" : "Reopen"}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            {session.mode === "king_of_court" ? (
+              <p className="mt-2 text-xs text-muted">
+                Court Climb keeps a fixed ladder. Use a new setup to change
+                courts.
+              </p>
+            ) : null}
+          </section>
+
           <section aria-labelledby="quick-waiting-title">
             <h2 id="quick-waiting-title" className="text-lg font-bold">
               {roundMode ? "Waiting & resting" : "Paddle stack"}
@@ -1007,6 +1220,34 @@ function QuickPlayLive({
                     </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                       {player.name}
+                    </span>
+                    <span className="flex items-center">
+                      {[
+                        ["top", "Move to top", ArrowLineUp],
+                        ["up", "Move up", ArrowUp],
+                        ["down", "Move down", ArrowDown],
+                        ["end", "Move to end", ArrowLineDown],
+                      ].map(([move, label, Icon]) => (
+                        <Button
+                          key={move as string}
+                          type="button"
+                          variant="quiet"
+                          className="h-11 min-h-11 w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9"
+                          aria-label={`${label as string}: ${player.name}`}
+                          title={label as string}
+                          onClick={() =>
+                            onChange(
+                              reorderQuickPlayQueue(
+                                session,
+                                player.id,
+                                move as "top" | "up" | "down" | "end"
+                              )
+                            )
+                          }
+                        >
+                          <Icon aria-hidden size={16} />
+                        </Button>
+                      ))}
                     </span>
                   </li>
                 ))}

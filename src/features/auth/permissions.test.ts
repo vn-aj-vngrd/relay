@@ -14,19 +14,35 @@ describe("session authorization", () => {
     expect(can({ userId: "h", role: "host" }, "create_expense")).toBe(true);
     expect(can({ userId: "h", role: "host" }, "delete")).toBe(true);
   });
-  it("removes management authority when a co-host stops participating", () => {
-    const active = sessionActor({
+  it("keeps co-host authority separate from participation", () => {
+    const playing = sessionActor({
       userId: "c",
       hostId: "h",
       membership: { role: "cohost", rsvp: "going", leftAt: null },
+    });
+    const organizingOnly = sessionActor({
+      userId: "c",
+      hostId: "h",
+      membership: { role: "cohost", rsvp: "declined", leftAt: null },
     });
     const removed = sessionActor({
       userId: "c",
       hostId: "h",
       membership: { role: "cohost", rsvp: "declined", leftAt: new Date() },
     });
-    expect(can(active, "confirm_payment")).toBe(true);
+    expect(can(playing, "confirm_payment")).toBe(true);
+    expect(can(organizingOnly, "confirm_payment")).toBe(true);
     expect(can(removed, "confirm_payment")).toBe(false);
+  });
+
+  it("lets the lead organizer complete without granting host-only deletion", () => {
+    const lead = {
+      userId: "c",
+      role: "cohost" as const,
+      leadOrganizer: true,
+    };
+    expect(can(lead, "complete")).toBe(true);
+    expect(can(lead, "delete")).toBe(false);
   });
 
   it("allows scoped guests only self-service and contribution", () => {

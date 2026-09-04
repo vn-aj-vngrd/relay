@@ -8,6 +8,8 @@ import {
 } from "@/components/shared/authenticated-session-nav";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
+import { CompactPlayStatus } from "@/features/matches/compact-play-status";
+import { getCompactPersonalPlayStatus } from "@/features/matches/queries";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import {
   formatSessionDate,
@@ -27,7 +29,10 @@ export default async function GameWorkspaceLayout({
 }) {
   const user = await requireUser();
   const id = (await params).id;
-  const data = await getSessionForWorkspace(id, user.id);
+  const [data, personalStatus] = await Promise.all([
+    getSessionForWorkspace(id, user.id),
+    getCompactPersonalPlayStatus(id, user.id),
+  ]);
   if (!data) notFound();
   const canManage = canManageSessionWorkspace(data.access);
   const qrDetails = `${formatSessionDate(data.session.startsAt, data.session.timezone)} · ${formatSessionTime(data.session.startsAt, data.session.endsAt, data.session.timezone)} · ${data.session.venueName}`;
@@ -91,6 +96,13 @@ export default async function GameWorkspaceLayout({
           />
         </div>
       </div>
+      {data.session.status === "live" && personalStatus ? (
+        <CompactPlayStatus
+          href={`/games/${id}/play`}
+          label={personalStatus.label}
+          urgent={personalStatus.urgent}
+        />
+      ) : null}
       <div className="game-workspace-content min-h-0 flex-1 pt-3 sm:pt-4">
         {children}
       </div>

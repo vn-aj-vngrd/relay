@@ -26,6 +26,7 @@ export default async function PublicPaymentsPage({
   const data = await getPublicSession(slug);
   if (!data) notFound();
   const viewer = await getSessionViewer(data.session.id, slug);
+  const cancelled = data.session.status === "cancelled";
   const canView = Boolean(viewer && canParticipate(viewer.player.rsvp));
   if (!canView)
     return (
@@ -103,6 +104,15 @@ export default async function PublicPaymentsPage({
           The host paid upfront. Repay your share through their listed app or
           bank, then upload one screenshot. Relay never moves the money.
         </p>
+        {cancelled ? (
+          <p
+            role="status"
+            className="mt-5 border-y border-line bg-surface-raised px-4 py-3 text-sm text-muted"
+          >
+            This game was cancelled. Payment records remain visible, but new
+            proof cannot be submitted.
+          </p>
+        ) : null}
         {items.length ? (
           <div className="space-y-10 sm:mt-8">
             {items.map(({ expense, account, payment, qrUrl, receiptUrl }) =>
@@ -154,6 +164,10 @@ export default async function PublicPaymentsPage({
                       ) : payment.status === "excluded" ? (
                         <p className="text-sm font-semibold text-muted">
                           You are not included in this split.
+                        </p>
+                      ) : cancelled ? (
+                        <p className="text-sm text-muted">
+                          Proof submission is closed.
                         </p>
                       ) : (
                         <PaymentProofForm

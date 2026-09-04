@@ -53,6 +53,13 @@ async function guardPaymentManagement(userId: string) {
   );
 }
 
+function assertPaymentsOpen(session: { status: string }) {
+  if (session.status === "cancelled")
+    throw new Error(
+      "Payment changes are closed because this game was cancelled"
+    );
+}
+
 async function hasPaymentCapability(
   session: { id: string; hostId: string },
   userId: string,
@@ -119,6 +126,7 @@ async function createExpense(formData: FormData) {
     !(await hasPaymentCapability(session, user.id, "create_expense"))
   )
     throw new Error("Only the host can request payment");
+  assertPaymentsOpen(session);
   const limit = await checkRateLimit(
     { scope: "expense-create", limit: 5, windowSeconds: 86400 },
     `user:${user.id}`
@@ -271,6 +279,10 @@ export async function markPaymentSent(
     .limit(1);
   const row = rows[0];
   if (!row) return { error: "This payment could not be found." };
+  if (row.session.status === "cancelled")
+    return {
+      error: "Payment changes are closed because this game was cancelled.",
+    };
   const viewer = await getSessionViewer(
     row.expense.sessionId,
     String(formData.get("slug") ?? "")
@@ -355,6 +367,7 @@ export async function confirmPayment(formData: FormData) {
     !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
   )
     throw new Error("Only a host or co-host can confirm payments");
+  assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
@@ -421,6 +434,7 @@ async function updatePlayerPaymentAmount(formData: FormData) {
     !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
   )
     throw new Error("Only a host or co-host can change payment amounts");
+  assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)
@@ -454,6 +468,7 @@ export async function togglePaymentExcluded(formData: FormData) {
     !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
   )
     throw new Error("Only a host or co-host can exclude players from a split");
+  assertPaymentsOpen(row.session);
   if (row.payment.status === "sent" || row.payment.status === "confirmed")
     throw new Error("Reviewed payments cannot be excluded");
   await db.transaction(async (tx) => {
@@ -524,6 +539,7 @@ async function requestNewPaymentProof(formData: FormData) {
     !(await hasPaymentCapability(row.session, user.id, "confirm_payment"))
   )
     throw new Error("Only a host or co-host can review payment proof");
+  assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
     await tx
       .update(playerPayments)

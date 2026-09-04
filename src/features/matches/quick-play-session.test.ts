@@ -7,9 +7,11 @@ import {
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
   quickPlayStandings,
+  reorderQuickPlayQueue,
   restoreQuickPlaySession,
   scoreQuickPlayMatch,
   serializeQuickPlaySession,
+  setQuickPlayCourtAvailability,
   startNextQuickPlayMatches,
   startQuickPlay,
 } from "./quick-play-session";
@@ -171,6 +173,42 @@ describe("local Quick Play session", () => {
       restoreQuickPlaySession('{"version":1,"session":{"players":[]}}')
     ).toBeNull();
     expect(restoreQuickPlaySession("not-json")).toBeNull();
+  });
+
+  it("keeps a closed court out of future assignments", () => {
+    let session = startQuickPlay(
+      configuration({ players: players(8), courtCount: 2, mode: "queue" })
+    );
+    session = setQuickPlayCourtAvailability(session, "court-1", false);
+    const courtOne = session.activeMatches.find(
+      (match) => match.courtId === "court-1"
+    )!;
+    session = giveSideOneAWin(session, courtOne.id);
+
+    expect(session.unavailableCourtIds).toContain("court-1");
+    expect(canStartNextQuickPlayMatches(session)).toBe(false);
+  });
+
+  it("reorders waiting fixed partners together", () => {
+    const session = startQuickPlay(
+      configuration({
+        players: players(8),
+        courtCount: 1,
+        mode: "queue",
+        fixedPairs: [
+          ["player-1", "player-2"],
+          ["player-3", "player-4"],
+          ["player-5", "player-6"],
+          ["player-7", "player-8"],
+        ],
+      })
+    );
+    expect(
+      reorderQuickPlayQueue(session, "player-7", "top").waitingPlayerIds.slice(
+        0,
+        2
+      )
+    ).toEqual(["player-7", "player-8"]);
   });
 
   it("enforces court capacity, Court Climb, and fixed-pair requirements before play starts", () => {

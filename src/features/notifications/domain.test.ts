@@ -104,7 +104,7 @@ describe("notificationPresentation", () => {
     });
   });
 
-  it("routes cancellations away from an inaccessible game", () => {
+  it("routes cancellations to the retained game summary", () => {
     expect(
       notificationPresentation({
         type: "session_cancelled",
@@ -114,8 +114,8 @@ describe("notificationPresentation", () => {
       })
     ).toEqual({
       title: "Saturday Pickle was cancelled",
-      body: "The game is no longer going ahead. Open Relay to review your games.",
-      href: "/games",
+      body: "The game is no longer going ahead.",
+      href: "/games/session-1",
       tone: "session",
     });
   });

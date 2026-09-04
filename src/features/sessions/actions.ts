@@ -152,6 +152,7 @@ export async function createSessionAction(
           "bookingTotal",
           "bookingNotes",
           "requiresApproval",
+          "hostPlaying",
         ].map((key) => [key, String(formData.get(key) ?? "")])
       ),
       fieldErrors: {
@@ -243,6 +244,7 @@ export async function createSessionAction(
   const experienceByUser = new Map(
     inviteeExperience.map((profile) => [profile.userId, profile.skillLevel])
   );
+  const hostPlaying = formData.get("hostPlaying") !== "no";
   const courtNumbers = String(formData.get("courtNumbers") ?? "")
     .split(",")
     .map((value) => value.trim())
@@ -288,8 +290,8 @@ export async function createSessionAction(
       userId: user.id,
       skillLevel: hostProfile.skillLevel,
       role: "host",
-      rsvp: "going",
-      playState: "waiting",
+      rsvp: hostPlaying ? "going" : "declined",
+      playState: hostPlaying ? "waiting" : "unavailable",
       respondedAt: new Date(),
     });
     const invitees = sessionInviteeIds(user.id, invitedUserIds);
@@ -1121,6 +1123,7 @@ export async function setPlayAvailabilityAction(
             state: plan.queueState,
             ...(plan.queuePosition ? { position: plan.queuePosition } : {}),
             ...(plan.queueState === "waiting" ? { enteredAt: new Date() } : {}),
+            readyAt: null,
             version: sql`${sessionQueue.version} + 1`,
           })
           .where(
@@ -1525,7 +1528,7 @@ export async function rsvpAction(
           } else if (nextRsvp === "going" && queueEntry) {
             await tx
               .update(sessionQueue)
-              .set({ state: "waiting" })
+              .set({ state: "waiting", readyAt: null })
               .where(
                 and(
                   eq(sessionQueue.sessionId, session.id),
@@ -1576,6 +1579,7 @@ export async function rsvpAction(
                   state: "waiting",
                   position,
                   enteredAt: new Date(),
+                  readyAt: null,
                   version: sql`${sessionQueue.version} + 1`,
                 },
               });

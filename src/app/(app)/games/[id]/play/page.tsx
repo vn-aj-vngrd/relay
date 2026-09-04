@@ -21,11 +21,14 @@ export default async function PlayPage({
   const data = await getWorkspaceLiveSession((await params).id, user.id);
   if (!data) notFound();
 
-  const actor = sessionActor({
-    userId: user.id,
-    hostId: data.session.hostId,
-    membership: data.membership,
-  });
+  const actor = {
+    ...sessionActor({
+      userId: user.id,
+      hostId: data.session.hostId,
+      membership: data.membership,
+    }),
+    leadOrganizer: data.session.leadOrganizerId === user.id,
+  };
   const viewer: SessionPlayViewer = {
     playerId: data.membership?.id,
     rsvp: data.membership?.rsvp,

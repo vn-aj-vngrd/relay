@@ -14,7 +14,10 @@ export default async function PublicChatPage({
   const data = await getPublicSession(slug);
   if (!data) notFound();
   const viewer = await getSessionViewer(data.session.id, slug);
-  const canWrite = Boolean(viewer && canParticipate(viewer.player.rsvp));
+  const cancelled = data.session.status === "cancelled";
+  const canWrite = Boolean(
+    !cancelled && viewer && canParticipate(viewer.player.rsvp)
+  );
   return (
     <main
       id="main-content"
@@ -38,7 +41,11 @@ export default async function PublicChatPage({
               playerId: viewer?.player.id ?? "",
               canWrite,
             }}
-            readOnlyMessage="Join the game to send messages and photos."
+            readOnlyMessage={
+              cancelled
+                ? "Chat is read-only because this game was cancelled."
+                : "Join the game to send messages and photos."
+            }
             className="h-full border-t-0"
           />
         </div>

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { messageReactions, messages } from "@/db/schema";
+import { messageReactions, messages, sessions } from "@/db/schema";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getServerEnv } from "@/lib/env";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
@@ -41,6 +41,12 @@ export async function sendMessage(
   );
   if (!viewer || !canParticipate(viewer.player.rsvp))
     return { error: "Join this session before sending messages." };
+  const session = await db.query.sessions.findFirst({
+    columns: { status: true },
+    where: eq(sessions.id, sessionId.data),
+  });
+  if (session?.status === "cancelled")
+    return { error: "Chat is read-only because this game was cancelled." };
   const limit = await checkRateLimit(
     { scope: "session-chat", limit: 30, windowSeconds: 60 },
     `player:${viewer.player.id}`
@@ -103,6 +109,11 @@ export async function toggleMessageReaction(formData: FormData) {
   const slug = String(formData.get("slug") ?? "");
   const viewer = await getSessionViewer(message.sessionId, slug);
   if (!viewer || !canParticipate(viewer.player.rsvp)) return;
+  const session = await db.query.sessions.findFirst({
+    columns: { status: true },
+    where: eq(sessions.id, message.sessionId),
+  });
+  if (session?.status === "cancelled") return;
   await assertRateLimit(
     { scope: "chat-reaction", limit: 60, windowSeconds: 60 },
     `player:${viewer.player.id}`,

@@ -444,6 +444,15 @@ export const sessions = pgTable(
     version: integer("version").notNull().default(1),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     completedAt: timestamp("completed_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledById: uuid("cancelled_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    cancellationCategory: text("cancellation_category"),
+    cancellationReason: text("cancellation_reason"),
+    leadOrganizerId: uuid("lead_organizer_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     ...timestamps,
   },
   (table) => [
@@ -539,6 +548,14 @@ export const courts = pgTable(
       .references(() => sessions.id, { onDelete: "restrict" }),
     label: text("label").notNull(),
     position: integer("position").notNull(),
+    availableForPlay: boolean("available_for_play").notNull().default(true),
+    availabilityChangedAt: timestamp("availability_changed_at", {
+      withTimezone: true,
+    }),
+    availabilityChangedById: uuid("availability_changed_by_id").references(
+      () => users.id,
+      { onDelete: "set null" }
+    ),
     version: integer("version").notNull().default(1),
     ...timestamps,
   },
@@ -625,6 +642,19 @@ export const matches = pgTable(
     teamAScore: integer("team_a_score").notNull().default(0),
     teamBScore: integer("team_b_score").notNull().default(0),
     winningTeam: text("winning_team"),
+    rotationId: uuid("rotation_id"),
+    cancellationReason: text("cancellation_reason"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledById: uuid("cancelled_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    replacementRequestedById: uuid("replacement_requested_by_id").references(
+      () => sessionPlayers.id,
+      { onDelete: "set null" }
+    ),
+    replacementRequestedAt: timestamp("replacement_requested_at", {
+      withTimezone: true,
+    }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     version: integer("version").notNull().default(1),
@@ -695,6 +725,7 @@ export const sessionQueue = pgTable(
     enteredAt: timestamp("entered_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    readyAt: timestamp("ready_at", { withTimezone: true }),
     version: integer("version").notNull().default(1),
   },
   (table) => [

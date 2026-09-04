@@ -60,10 +60,32 @@ export function SessionOverviewStatus({
   className?: string;
 }) {
   const completed = status === "completed";
+  const cancelled = status === "cancelled";
   const playerPaymentAction = paymentAction(payment);
   const shellClass = embedded
     ? "bg-surface py-5"
     : "rounded-xl border border-line bg-surface p-4 sm:p-5";
+
+  if (cancelled)
+    return (
+      <section className={`${shellClass} ${className}`}>
+        <p className="text-sm font-semibold text-danger">Game cancelled</p>
+        <h2 className="mt-1 text-lg font-bold">The plan is closed</h2>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Joining and Play are closed. Payment records remain available for
+          coordination.
+        </p>
+        {playerPaymentAction ? (
+          <ButtonLink
+            href={`/games/${sessionId}/payments`}
+            variant="secondary"
+            className="mt-5 w-full"
+          >
+            {playerPaymentAction}
+          </ButtonLink>
+        ) : null}
+      </section>
+    );
 
   if (completed)
     return (

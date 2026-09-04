@@ -58,8 +58,9 @@ export default async function GameOverviewPage({
     "the host";
   const isHost = session.hostId === user.id || membership?.role === "cohost";
   if (
-    ["invited", "pending"].includes(membership?.rsvp ?? "") ||
-    data.access === "discoverer"
+    session.status !== "cancelled" &&
+    (["invited", "pending"].includes(membership?.rsvp ?? "") ||
+      data.access === "discoverer")
   ) {
     const isInvitation = membership?.rsvp === "invited";
     const isPending = membership?.rsvp === "pending";
@@ -212,7 +213,9 @@ export default async function GameOverviewPage({
     query.created === "1" && isHost && session.status === "published";
   const shareDetails = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)} · ${session.venueName}`;
   const bookingAction =
-    isHost && session.status !== "completed" && !session.bookedAt ? (
+    isHost &&
+    ["draft", "published"].includes(session.status) &&
+    !session.bookedAt ? (
       <form noValidate action={markSessionBookedAction}>
         <input type="hidden" name="sessionId" value={session.id} />
         <SubmitButton
@@ -233,11 +236,30 @@ export default async function GameOverviewPage({
         description={
           session.status === "completed"
             ? "The final plan, roster, results, and saved activity from this game."
-            : isHost
-              ? "The plan, roster, setup progress, and next action for this game."
-              : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`
+            : session.status === "cancelled"
+              ? "The saved plan and cancellation details for this game."
+              : isHost
+                ? "The plan, roster, setup progress, and next action for this game."
+                : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`
         }
       />
+      {session.status === "cancelled" ? (
+        <section
+          aria-labelledby="cancelled-game-title"
+          className="mb-6 border-y border-danger/25 bg-danger/8 px-4 py-5 sm:rounded-xl sm:border"
+        >
+          <h2 id="cancelled-game-title" className="text-lg font-bold">
+            This game was cancelled
+          </h2>
+          <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted">
+            {session.cancellationReason ??
+              "The organizer cancelled this game before Play started."}
+          </p>
+          <p className="mt-2 text-xs text-muted">
+            Payment records remain available for refund coordination.
+          </p>
+        </section>
+      ) : null}
       {showCreated ? (
         <CreatedGameShare
           sessionId={session.id}
@@ -249,6 +271,36 @@ export default async function GameOverviewPage({
           }
           qrEnabled={session.visibility !== "private"}
         />
+      ) : null}
+      {isHost &&
+      membership?.rsvp !== "going" &&
+      ["published", "live"].includes(session.status) ? (
+        <section
+          aria-labelledby="organizer-participation-title"
+          className="mb-6 border-y border-line py-5 sm:rounded-xl sm:border sm:px-5"
+        >
+          <h2 id="organizer-participation-title" className="text-lg font-bold">
+            You’re organizing, not playing
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Join under the same capacity rules when you want a place in the
+            rotations.
+          </p>
+          <div className="mt-4 max-w-xl">
+            <RsvpControl
+              sessionId={session.id}
+              slug={session.slug}
+              signedIn
+              accountName={accountProfile.name}
+              accountUsername={accountProfile.username}
+              currentRsvp={membership?.rsvp}
+              currentSkillLevel={accountProfile.skillLevel}
+              locked={session.rosterLocked}
+              full={going.length >= session.capacity}
+              instance="default"
+            />
+          </div>
+        </section>
       ) : null}
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">

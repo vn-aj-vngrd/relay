@@ -218,7 +218,7 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
     title: values.title,
     venue: values.venue,
     schedule: `${values.date} · ${values.start}–${values.end}`,
-    setup: `${values.capacity} players · ${values.courts} ${courtCount === 1 ? "court" : "courts"}`,
+    setup: `${values.capacity} players · ${values.courts} ${courtCount === 1 ? "court" : "courts"} · ${values.hostPlaying === "no" ? "organizing only" : "host playing"}`,
     access:
       values.visibility === "public"
         ? values.requiresApproval === "on"
@@ -410,7 +410,7 @@ function CreateSessionFormContent({
       title: String(data.get("title")),
       venue: String(data.get("venue")),
       schedule: `${date} · ${start}–${end}`,
-      setup: `${data.get("capacity")} players · ${data.get("courts")} ${Number(data.get("courts")) === 1 ? "court" : "courts"}`,
+      setup: `${data.get("capacity")} players · ${data.get("courts")} ${Number(data.get("courts")) === 1 ? "court" : "courts"} · ${data.get("hostPlaying") === "no" ? "organizing only" : "host playing"}`,
       access:
         visibility === "public"
           ? data.get("requiresApproval") === "on"
@@ -708,6 +708,44 @@ function CreateSessionFormContent({
             Set the roster limit, who can find the game, and what joining costs.
           </p>
         </div>
+        <fieldset>
+          <legend className={labelClass}>Are you playing?</legend>
+          <p className="mt-1 text-sm text-muted">
+            Organizing and playing are separate. You can run the game without
+            taking a roster spot.
+          </p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {[
+              ["yes", "I’m playing", "Count me in the roster and rotations."],
+              [
+                "no",
+                "I’m organizing only",
+                "Keep me out of capacity, costs, and Play.",
+              ],
+            ].map(([option, title, description]) => (
+              <label
+                key={option}
+                className="flex min-h-14 cursor-pointer items-start gap-3 rounded-lg border border-line px-3 py-2.5 has-[:checked]:border-primary has-[:checked]:bg-primary-soft"
+              >
+                <input
+                  type="radio"
+                  name="hostPlaying"
+                  value={option}
+                  defaultChecked={
+                    (value("hostPlaying", "yes") || "yes") === option
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
+                />
+                <span className="min-w-0">
+                  <strong className="block text-sm">{title}</strong>
+                  <span className="mt-0.5 block text-sm leading-5 text-muted">
+                    {description}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
           <QuantityInput
             id="capacity"

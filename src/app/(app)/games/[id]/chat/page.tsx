@@ -15,8 +15,9 @@ export default async function ChatPage({
   const sessionId = (await params).id;
   const data = await getSessionForWorkspace(sessionId, user.id);
   if (!data) notFound();
+  const cancelled = data.session.status === "cancelled";
   const canWrite = Boolean(
-    data.membership && canParticipateInWorkspace(data.access)
+    !cancelled && data.membership && canParticipateInWorkspace(data.access)
   );
 
   return (
@@ -35,7 +36,11 @@ export default async function ChatPage({
               playerId: data.membership?.id ?? "",
               canWrite,
             }}
-            readOnlyMessage="Join the game to send messages and photos."
+            readOnlyMessage={
+              cancelled
+                ? "Chat is read-only because this game was cancelled."
+                : "Join the game to send messages and photos."
+            }
             className="authenticated-chat-viewport h-full"
           />
         </div>

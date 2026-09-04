@@ -449,7 +449,7 @@ export const getPublicSession = cache(async function getPublicSession(
   const session = await db.query.sessions.findFirst({
     where: and(
       eq(sessions.slug, slug),
-      inArray(sessions.status, ["published", "live", "completed"]),
+      inArray(sessions.status, ["published", "live", "completed", "cancelled"]),
       inArray(sessions.visibility, ["public", "link"])
     ),
   });
@@ -461,7 +461,10 @@ export const getPublicSession = cache(async function getPublicSession(
     .where(
       and(
         eq(sessionPlayers.sessionId, session.id),
-        inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"])
+        or(
+          inArray(sessionPlayers.rsvp, ["going", "waitlisted", "maybe"]),
+          inArray(sessionPlayers.role, ["host", "cohost"])
+        )
       )
     )
     .orderBy(

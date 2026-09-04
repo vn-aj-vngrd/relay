@@ -42,11 +42,13 @@ A shared route and its authenticated counterpart must expose the same session fa
 | Update live availability                          | Any player      | Self             | Self         | No                 |
 | Edit plan, roster, booking, payments, and matches | Yes             | No               | No           | No                 |
 | Correct a completed match score                   | Yes             | No               | No           | No                 |
-| End or delete the session                         | Host only       | No               | No           | No                 |
+| End the live session                              | Host or delegated lead | No        | No           | No                 |
+| Delete the session                                | Host only       | No               | No           | No                 |
+| Cancel a published game before Play               | Yes             | No               | No           | No                 |
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |
 
-Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls.
+Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls. Organizer authority and participation are separate: a host or co-host may manage without occupying capacity, entering rotations, appearing in standings, or owing a player share. A host may delegate live-session completion to one lead co-host without delegating ownership or deletion.
 
 ## Shared presentation
 
@@ -56,6 +58,7 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - Keep one `h1` per destination. Session heroes below a destination heading use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.
 - A scoreboard is the digital court: neutral outer shell, deep court field, complete player names, tabular scores, and explicit Live text. It must remain readable in its column and in the expanded view.
+- Identifiable participants receive one personalized Play state—Playing now, Get ready, Waiting, Resting, or Not here—above the shared courts. Authenticated game tabs retain a compact link to that state while Play is live. Predictions must distinguish likely readiness from a committed court assignment.
 - Expanded scoreboards preserve the same score state and permissions. Public viewers can expand but cannot score.
 
 ## Loading and realtime
@@ -64,6 +67,7 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - Subscribe once per mounted session to the session Broadcast invalidation topic. Roster, courts, matches, scores, queue, chat, payments, and memories refresh from authoritative server queries.
 - Reconnect language and concurrency errors must match across access paths.
 - Score controls update locally, debounce one absolute write, and reconcile against the server version. A conflict restores and names the authoritative score before inviting a retry. Hosts, co-hosts, and signed-in players assigned to that active match may score.
+- Host and co-host court, cancellation, replacement, and queue changes serialize through the session and reject stale structural mutations. A closed court keeps its history, lets an active match finish, and receives no new assignment. Match cancellation voids the affected Paddle Stack court or complete synchronized rotation and excludes it from standings.
 - Match completion confirms the teams and final score. Completed results appear on both access paths; only hosts and co-hosts may correct them, and corrections update standings and recap without rewriting later court assignments.
 - Before Play, attendance uses **Here / Not here**. During Play, availability uses **On court**, **Waiting**, **Sitting out**, and **Sitting out after match**. Active players finish their match before sitting out; late and returning players rejoin at the queue’s end. These changes never alter RSVP or past results.
 

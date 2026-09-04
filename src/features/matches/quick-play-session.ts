@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { calculateStandings } from "./domain";
+import { moveQueueGroup, type QueueMove } from "./lifecycle";
 import {
   type PlayMode,
   planMatchFinish,
@@ -42,6 +43,7 @@ export type QuickPlaySession = QuickPlayConfiguration & {
   activeMatches: QuickPlayMatch[];
   completedMatches: QuickPlayMatch[];
   nextMatchNumber: number;
+  unavailableCourtIds: string[];
 };
 
 export const quickPlayStorageKey = "relay-quick-play-session";
@@ -87,6 +89,7 @@ const quickPlaySessionSchema = z.object({
   activeMatches: z.array(quickPlayMatchSchema),
   completedMatches: z.array(quickPlayMatchSchema),
   nextMatchNumber: z.number().int().min(1),
+  unavailableCourtIds: z.array(z.string().min(1)).default([]),
 });
 
 const storedQuickPlaySchema = z.object({
@@ -121,9 +124,13 @@ function nextPlans(session: QuickPlaySession) {
   const availableCourts =
     session.mode === "queue"
       ? courts(session.courtCount).filter(
-          (court) => !occupiedCourts.has(court.id)
+          (court) =>
+            !occupiedCourts.has(court.id) &&
+            !session.unavailableCourtIds.includes(court.id)
         )
-      : courts(session.courtCount);
+      : courts(session.courtCount).filter(
+          (court) => !session.unavailableCourtIds.includes(court.id)
+        );
   const experience = new Map(
     session.players.map((player) => [player.id, player.experience])
   );
@@ -239,6 +246,7 @@ export function startQuickPlay(
     activeMatches: [],
     completedMatches: [],
     nextMatchNumber: 1,
+    unavailableCourtIds: [],
   });
 }
 
@@ -404,6 +412,38 @@ export function cancelQuickPlayMatch(
     activeMatches: session.activeMatches.filter(
       (item) => !cancelledIds.has(item.id)
     ),
+  };
+}
+
+export function setQuickPlayCourtAvailability(
+  session: QuickPlaySession,
+  courtId: string,
+  available: boolean
+): QuickPlaySession {
+  if (!courts(session.courtCount).some((court) => court.id === courtId))
+    return session;
+  if (session.mode === "king_of_court")
+    throw new Error(
+      "Court Climb needs a fixed ladder. Start a new setup to change its courts."
+    );
+  const unavailable = new Set(session.unavailableCourtIds);
+  if (available) unavailable.delete(courtId);
+  else unavailable.add(courtId);
+  return { ...session, unavailableCourtIds: [...unavailable] };
+}
+
+export function reorderQuickPlayQueue(
+  session: QuickPlaySession,
+  playerId: string,
+  move: QueueMove
+): QuickPlaySession {
+  const pair = session.fixedPairs.find((members) => members.includes(playerId));
+  const groupIds = pair ? [...pair] : [playerId];
+  if (!groupIds.every((id) => session.waitingPlayerIds.includes(id)))
+    return session;
+  return {
+    ...session,
+    waitingPlayerIds: moveQueueGroup(session.waitingPlayerIds, groupIds, move),
   };
 }
 

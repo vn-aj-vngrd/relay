@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
+import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
+import { LeadOrganizerControl } from "@/features/sessions/lead-organizer-control";
 import { getSessionForUser } from "@/features/sessions/queries";
 import {
   type SessionSettingsDefaults,
@@ -44,6 +46,16 @@ export default async function GameSettingsPage({
     data.session.status !== "draft" && data.session.status !== "published";
   const start = dateParts(data.session.startsAt, data.session.timezone);
   const end = dateParts(data.session.endsAt, data.session.timezone);
+  const cohosts = data.roster.flatMap(({ player, profile }) =>
+    player.role === "cohost" && player.userId
+      ? [
+          {
+            id: player.userId,
+            name: profile?.name ?? player.guestName ?? "Co-host",
+          },
+        ]
+      : []
+  );
   const defaults: SessionSettingsDefaults = {
     id: data.session.id,
     version: data.session.version,
@@ -95,8 +107,27 @@ export default async function GameSettingsPage({
             </ButtonLink>
           </section>
         ) : (
-          <SessionSettingsForm defaults={defaults} />
+          <>
+            <SessionSettingsForm defaults={defaults} />
+            {data.session.status === "published" ? (
+              <CancelSessionControl
+                sessionId={data.session.id}
+                version={data.session.version}
+                playerCount={data.roster.length}
+              />
+            ) : null}
+          </>
         )}
+        {data.session.hostId === user.id &&
+        data.session.status !== "completed" &&
+        data.session.status !== "cancelled" ? (
+          <LeadOrganizerControl
+            sessionId={data.session.id}
+            version={data.session.version}
+            currentLeadId={data.session.leadOrganizerId}
+            cohosts={cohosts}
+          />
+        ) : null}
       </div>
     </>
   );

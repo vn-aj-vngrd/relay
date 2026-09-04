@@ -129,7 +129,12 @@ export async function generateMetadata({
     title: data.session.title,
     description,
     alternates: { canonical: `/s/${data.session.slug}` },
-    robots: { index: data.session.visibility === "public", follow: true },
+    robots: {
+      index:
+        data.session.visibility === "public" &&
+        data.session.status !== "cancelled",
+      follow: true,
+    },
     openGraph: {
       title: data.session.title,
       description: `${formatSessionDateLong(data.session.startsAt)} · ${data.session.venueName} · ${availability}`,
@@ -210,7 +215,10 @@ export default async function PublicSessionPage({
     startDate: session.startsAt.toISOString(),
     endDate: session.endsAt.toISOString(),
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    eventStatus: "https://schema.org/EventScheduled",
+    eventStatus:
+      session.status === "cancelled"
+        ? "https://schema.org/EventCancelled"
+        : "https://schema.org/EventScheduled",
     location: {
       "@type": "Place",
       name: session.venueName,
@@ -226,6 +234,8 @@ export default async function PublicSessionPage({
       ? { sessionPlayerId: viewer.player.id, canManage }
       : undefined
   );
+  const activePlan =
+    session.status === "published" || session.status === "live";
   const availabilityLabel = session.rosterLocked
     ? "Roster closed"
     : spots
@@ -275,7 +285,7 @@ export default async function PublicSessionPage({
               hostLabel={`Hosted by ${hostProfile?.name ?? "the host"}`}
               headingLevel="h2"
             />
-            {session.status !== "completed" ? (
+            {activePlan ? (
               <div className="border-b border-line px-4 py-3 lg:hidden">
                 <ButtonLink href="#public-rsvp-title" className="w-full">
                   {currentRsvp
@@ -288,12 +298,30 @@ export default async function PublicSessionPage({
             ) : null}
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
               <SessionPlanDetails session={session} />
+              {session.status === "cancelled" ? (
+                <section
+                  aria-labelledby="cancellation-title"
+                  className="mb-7 border-y border-danger/25 bg-danger/8 px-4 py-5"
+                >
+                  <h2 id="cancellation-title" className="text-lg font-bold">
+                    This game was cancelled
+                  </h2>
+                  <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted">
+                    {session.cancellationReason ??
+                      "The organizer cancelled this game before Play started."}
+                  </p>
+                  <p className="mt-2 text-xs text-muted">
+                    Existing payment records remain available to signed-in
+                    participants for coordination.
+                  </p>
+                </section>
+              ) : null}
               <SessionAtAGlance
                 overview={overview}
                 hrefBase={`/s/${session.slug}`}
                 status={session.status}
               />
-              {session.status !== "completed" ? (
+              {activePlan ? (
                 <section
                   aria-labelledby="public-rsvp-title"
                   className="public-session-section border-b border-line lg:hidden"
@@ -333,7 +361,7 @@ export default async function PublicSessionPage({
                 roles={playerRoles}
                 capacity={session.capacity}
                 waitlistCount={waitlisted.length}
-                className={`public-session-section border-b border-line ${session.status === "completed" ? "" : "lg:hidden"}`}
+                className={`public-session-section border-b border-line ${activePlan ? "lg:hidden" : ""}`}
               />
               {session.notes ? (
                 <section
@@ -350,7 +378,7 @@ export default async function PublicSessionPage({
               ) : null}
             </div>
           </article>
-          {session.status !== "completed" ? (
+          {activePlan ? (
             <aside className="hidden space-y-7 self-start lg:sticky lg:top-6 lg:block">
               <section className="public-session-panel public-session-overview-card rounded-xl border border-line bg-surface p-5">
                 <div className="mb-5 border-b border-line pb-5">

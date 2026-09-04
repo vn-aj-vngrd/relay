@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -28,6 +28,11 @@ import { assertRateLimit } from "@/lib/rate-limit";
 
 import { splitFinishedPlayers } from "./availability";
 import {
+  moveQueueGroup,
+  type QueueMove,
+  restoreCancelledPlayers,
+} from "./lifecycle";
+import {
   type PlaySetup,
   parsePlaySetup,
   planMatchFinish,
@@ -54,11 +59,14 @@ async function requirePlayManager(sessionId: string) {
       eq(sessionPlayers.userId, user.id)
     ),
   });
-  const actor = sessionActor({
-    userId: user.id,
-    hostId: session.hostId,
-    membership: player,
-  });
+  const actor = {
+    ...sessionActor({
+      userId: user.id,
+      hostId: session.hostId,
+      membership: player,
+    }),
+    leadOrganizer: session.leadOrganizerId === user.id,
+  };
   if (!can(actor, "edit"))
     throw new Error("Only a host or co-host can manage live play");
   return { session, user, actor };
@@ -319,6 +327,7 @@ export async function startPlay(
     if (!firstRotation.length)
       throw new Error("The first rotation could not be created.");
     const playingIds: string[] = [];
+    const rotationId = crypto.randomUUID();
     for (const plan of firstRotation) {
       const [match] = await tx
         .insert(matches)
@@ -327,6 +336,7 @@ export async function startPlay(
           courtId: plan.courtId,
           courtLabel: plan.courtLabel,
           status: "active",
+          rotationId,
           startedAt: new Date(),
         })
         .returning({ id: matches.id });
@@ -349,7 +359,11 @@ export async function startPlay(
     }
     await tx
       .update(sessionQueue)
-      .set({ state: "playing", version: sql`${sessionQueue.version} + 1` })
+      .set({
+        state: "playing",
+        readyAt: null,
+        version: sql`${sessionQueue.version} + 1`,
+      })
       .where(
         and(
           eq(sessionQueue.sessionId, sessionId),
@@ -360,6 +374,30 @@ export async function startPlay(
       .update(sessionPlayers)
       .set({ playState: "playing" })
       .where(inArray(sessionPlayers.id, playingIds));
+    const assignedPlayers = await tx
+      .select({ id: sessionPlayers.id, userId: sessionPlayers.userId })
+      .from(sessionPlayers)
+      .where(inArray(sessionPlayers.id, playingIds));
+    const assignedCourt = new Map(
+      firstRotation.flatMap((plan) =>
+        [...plan.teamA, ...plan.teamB].map((playerId) => [
+          playerId,
+          plan.courtLabel,
+        ])
+      )
+    );
+    const recipients = assignedPlayers.flatMap((player) =>
+      player.userId ? [{ id: player.id, userId: player.userId }] : []
+    );
+    if (recipients.length)
+      await tx.insert(notifications).values(
+        recipients.map((player) => ({
+          userId: player.userId,
+          sessionId,
+          type: "match_assignment",
+          payload: { courtLabel: assignedCourt.get(player.id) },
+        }))
+      );
     await tx.insert(messages).values({
       sessionId,
       kind: "system",
@@ -460,16 +498,19 @@ export async function createQueueMatch(
         ]);
       if (session.rotationMode !== "queue" && active.length)
         throw new Error("Finish every court before starting the next round.");
+      const enabledCourts = sessionCourts.filter(
+        (court) => court.availableForPlay
+      );
       const used = new Set(active.map((match) => match.courtId));
       const availableCourts =
         session.rotationMode === "queue"
-          ? sessionCourts.filter((court) => !used.has(court.id))
-          : sessionCourts;
+          ? enabledCourts.filter((court) => !used.has(court.id))
+          : enabledCourts;
       if (!availableCourts.length)
         throw new Error("Every court already has an active match.");
       if (
         session.rotationMode === "king_of_court" &&
-        waiting.length !== sessionCourts.length * 4
+        waiting.length !== enabledCourts.length * 4
       )
         throw new Error(
           "Court Climb needs exactly four active players per court."
@@ -539,6 +580,7 @@ export async function createQueueMatch(
 
       const playingIds: string[] = [];
       const assignedCourt = new Map<string, string>();
+      const rotationId = crypto.randomUUID();
       for (const plan of plans) {
         const [match] = await tx
           .insert(matches)
@@ -547,6 +589,7 @@ export async function createQueueMatch(
             courtId: plan.courtId,
             courtLabel: plan.courtLabel,
             status: "active",
+            rotationId,
             startedAt: new Date(),
           })
           .returning();
@@ -573,13 +616,13 @@ export async function createQueueMatch(
         .select({ id: sessionPlayers.id, userId: sessionPlayers.userId })
         .from(sessionPlayers)
         .where(inArray(sessionPlayers.id, playingIds));
-      const recipients = assignedPlayers.filter(
-        (player) => player.userId && player.userId !== session.hostId
+      const recipients = assignedPlayers.flatMap((player) =>
+        player.userId ? [{ id: player.id, userId: player.userId }] : []
       );
       if (recipients.length)
         await tx.insert(notifications).values(
           recipients.map((player) => ({
-            userId: player.userId!,
+            userId: player.userId,
             sessionId,
             type: "match_assignment",
             payload: { courtLabel: assignedCourt.get(player.id) },
@@ -587,7 +630,11 @@ export async function createQueueMatch(
         );
       await tx
         .update(sessionQueue)
-        .set({ state: "playing", version: sql`${sessionQueue.version} + 1` })
+        .set({
+          state: "playing",
+          readyAt: null,
+          version: sql`${sessionQueue.version} + 1`,
+        })
         .where(
           and(
             eq(sessionQueue.sessionId, sessionId),
@@ -629,6 +676,822 @@ export async function createQueueMatch(
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
   return {};
+}
+
+export type PlayManagementActionState = {
+  error?: string;
+  message?: string;
+};
+
+const courtAvailabilityInput = z.object({
+  sessionId: z.uuid(),
+  courtId: z.uuid(),
+  version: z.coerce.number().int().positive(),
+  available: z.enum(["true", "false"]).transform((value) => value === "true"),
+});
+
+export async function setCourtAvailabilityAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = courtAvailabilityInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    courtId: formData.get("courtId"),
+    version: formData.get("version"),
+    available: formData.get("available"),
+  });
+  if (!parsed.success)
+    return { error: "Refresh and try that court change again." };
+  const { session, user } = await requirePlayManager(parsed.data.sessionId);
+  if (session.status !== "live")
+    return { error: "Court availability changes only while Play is live." };
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${parsed.data.sessionId} for update`
+      );
+      const court = await tx.query.courts.findFirst({
+        where: and(
+          eq(courts.id, parsed.data.courtId),
+          eq(courts.sessionId, parsed.data.sessionId)
+        ),
+      });
+      if (!court || court.version !== parsed.data.version)
+        throw new Error("COURT_CONFLICT");
+      if (court.availableForPlay === parsed.data.available) return;
+      const active = await tx.query.matches.findFirst({
+        where: and(
+          eq(matches.sessionId, parsed.data.sessionId),
+          eq(matches.courtId, court.id),
+          eq(matches.status, "active")
+        ),
+      });
+      const [updated] = await tx
+        .update(courts)
+        .set({
+          availableForPlay: parsed.data.available,
+          availabilityChangedAt: new Date(),
+          availabilityChangedById: user.id,
+          version: sql`${courts.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(courts.id, court.id), eq(courts.version, court.version)))
+        .returning({ id: courts.id });
+      if (!updated) throw new Error("COURT_CONFLICT");
+      const body = parsed.data.available
+        ? `${court.label} reopened for upcoming matches.`
+        : active
+          ? `${court.label} will close after its current match.`
+          : `${court.label} closed for upcoming matches.`;
+      await tx.insert(messages).values({
+        sessionId: parsed.data.sessionId,
+        kind: "system",
+        body,
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "COURT_CONFLICT")
+      return {
+        error:
+          "That court changed on another device. Review the latest state and try again.",
+      };
+    console.error(
+      "Court availability update failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return { error: "The court couldn’t be updated. Refresh and try again." };
+  }
+  revalidatePath(`/games/${parsed.data.sessionId}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return {
+    message: parsed.data.available
+      ? "Court reopened."
+      : "Court closed for new matches.",
+  };
+}
+
+const queueMoveInput = z.object({
+  sessionId: z.uuid(),
+  sessionPlayerId: z.uuid(),
+  version: z.coerce.number().int().positive(),
+  move: z.enum(["top", "up", "down", "end"]),
+});
+
+export async function reorderQueueAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = queueMoveInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    sessionPlayerId: formData.get("sessionPlayerId"),
+    version: formData.get("version"),
+    move: formData.get("move"),
+  });
+  if (!parsed.success)
+    return { error: "Refresh and try that queue change again." };
+  const { session } = await requirePlayManager(parsed.data.sessionId);
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${parsed.data.sessionId} for update`
+      );
+      const queue = await tx
+        .select()
+        .from(sessionQueue)
+        .where(eq(sessionQueue.sessionId, parsed.data.sessionId))
+        .orderBy(asc(sessionQueue.position));
+      const target = queue.find(
+        (item) => item.sessionPlayerId === parsed.data.sessionPlayerId
+      );
+      if (target?.state !== "waiting" || target.version !== parsed.data.version)
+        throw new Error("QUEUE_CONFLICT");
+      const pairRows = await tx
+        .select({
+          pairId: sessionPairMembers.pairId,
+          playerId: sessionPairMembers.sessionPlayerId,
+        })
+        .from(sessionPairMembers)
+        .innerJoin(sessionPairs, eq(sessionPairs.id, sessionPairMembers.pairId))
+        .where(eq(sessionPairs.sessionId, parsed.data.sessionId));
+      const pairId = pairRows.find(
+        (row) => row.playerId === parsed.data.sessionPlayerId
+      )?.pairId;
+      const groupIds = pairId
+        ? pairRows
+            .filter((row) => row.pairId === pairId)
+            .map((row) => row.playerId)
+        : [parsed.data.sessionPlayerId];
+      const waiting = queue.filter((item) => item.state === "waiting");
+      if (
+        !groupIds.every((id) =>
+          waiting.some((item) => item.sessionPlayerId === id)
+        )
+      )
+        throw new Error("QUEUE_CONFLICT");
+      const reordered = moveQueueGroup(
+        waiting.map((item) => item.sessionPlayerId),
+        groupIds,
+        parsed.data.move as QueueMove
+      );
+      const positions = waiting
+        .map((item) => item.position)
+        .toSorted((a, b) => a - b);
+      await tx
+        .update(sessionQueue)
+        .set({ position: sql`${sessionQueue.position} + 100000` })
+        .where(
+          and(
+            eq(sessionQueue.sessionId, parsed.data.sessionId),
+            inArray(sessionQueue.sessionPlayerId, reordered)
+          )
+        );
+      for (const [index, playerId] of reordered.entries()) {
+        await tx
+          .update(sessionQueue)
+          .set({
+            position: positions[index],
+            readyAt: null,
+            version: sql`${sessionQueue.version} + 1`,
+          })
+          .where(
+            and(
+              eq(sessionQueue.sessionId, parsed.data.sessionId),
+              eq(sessionQueue.sessionPlayerId, playerId)
+            )
+          );
+      }
+      await tx.insert(messages).values({
+        sessionId: parsed.data.sessionId,
+        kind: "system",
+        body: pairId
+          ? "A fixed pair moved in the queue."
+          : "The Paddle Stack order changed.",
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "QUEUE_CONFLICT")
+      return {
+        error:
+          "The queue changed on another device. Review the latest order and try again.",
+      };
+    console.error(
+      "Queue reorder failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return { error: "The queue couldn’t be reordered. Refresh and try again." };
+  }
+  revalidatePath(`/games/${parsed.data.sessionId}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return { message: "Queue updated." };
+}
+
+const playerMatchInput = z.object({
+  sessionId: z.uuid(),
+  matchId: z.uuid(),
+});
+
+export async function requestMatchReplacementAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = playerMatchInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    matchId: formData.get("matchId"),
+  });
+  if (!parsed.success)
+    return { error: "Your assignment changed. Refresh and try again." };
+  const { sessionId, matchId } = parsed.data;
+  const user = await requireUser();
+
+  try {
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${sessionId} for update`
+      );
+      const session = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (session?.status !== "live") throw new Error("MATCH_INACTIVE");
+      const player = await tx.query.sessionPlayers.findFirst({
+        where: and(
+          eq(sessionPlayers.sessionId, sessionId),
+          eq(sessionPlayers.userId, user.id),
+          eq(sessionPlayers.rsvp, "going")
+        ),
+      });
+      if (!player) throw new Error("NOT_ASSIGNED");
+      const assignment = await tx.query.matchPlayers.findFirst({
+        where: and(
+          eq(matchPlayers.matchId, matchId),
+          eq(matchPlayers.sessionPlayerId, player.id)
+        ),
+      });
+      if (!assignment) throw new Error("NOT_ASSIGNED");
+      const match = await tx.query.matches.findFirst({
+        where: and(
+          eq(matches.id, matchId),
+          eq(matches.sessionId, sessionId),
+          eq(matches.status, "active")
+        ),
+      });
+      if (!match) throw new Error("MATCH_INACTIVE");
+      if (match.replacementRequestedById === player.id)
+        return { session, duplicate: true };
+      const [updated] = await tx
+        .update(matches)
+        .set({
+          replacementRequestedById: player.id,
+          replacementRequestedAt: new Date(),
+          version: sql`${matches.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(matches.id, match.id),
+            eq(matches.status, "active"),
+            eq(matches.version, match.version)
+          )
+        )
+        .returning({ id: matches.id });
+      if (!updated) throw new Error("MATCH_CONFLICT");
+      const managers = await tx
+        .select({ userId: sessionPlayers.userId })
+        .from(sessionPlayers)
+        .where(
+          and(
+            eq(sessionPlayers.sessionId, sessionId),
+            eq(sessionPlayers.role, "cohost"),
+            isNull(sessionPlayers.leftAt)
+          )
+        );
+      const recipientIds = [
+        ...new Set([
+          session.hostId,
+          ...managers.flatMap(({ userId }) => (userId ? [userId] : [])),
+        ]),
+      ].filter((id) => id !== user.id);
+      if (recipientIds.length)
+        await tx.insert(notifications).values(
+          recipientIds.map((userId) => ({
+            userId,
+            sessionId,
+            type: "replacement_requested",
+            payload: { courtLabel: match.courtLabel },
+            dedupeKey: `replacement-requested:${match.id}:${player.id}:${userId}`,
+          }))
+        );
+      await tx.insert(messages).values({
+        sessionId,
+        kind: "system",
+        body: `A player requested a replacement on ${match.courtLabel}.`,
+      });
+      return { session, duplicate: false };
+    });
+    revalidatePath(`/games/${sessionId}/play`);
+    revalidatePath(`/s/${result.session.slug}/play`);
+    return {
+      message: result.duplicate
+        ? "The organizers already have your request."
+        : "Replacement requested. Keep playing until an organizer updates the court.",
+    };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      ["MATCH_INACTIVE", "MATCH_CONFLICT", "NOT_ASSIGNED"].includes(
+        error.message
+      )
+    )
+      return {
+        error:
+          error.message === "MATCH_INACTIVE"
+            ? "This match is no longer active."
+            : "Your assignment changed. Review the latest court and try again.",
+      };
+    console.error(
+      "Replacement request failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return { error: "The request couldn’t be sent. Refresh and try again." };
+  }
+}
+
+export async function acknowledgeReadyAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = z.uuid().safeParse(formData.get("sessionId"));
+  if (!parsed.success)
+    return { error: "Your Play status changed. Refresh and try again." };
+  const sessionId = parsed.data;
+  const user = await requireUser();
+  const player = await db.query.sessionPlayers.findFirst({
+    where: and(
+      eq(sessionPlayers.sessionId, sessionId),
+      eq(sessionPlayers.userId, user.id),
+      eq(sessionPlayers.rsvp, "going")
+    ),
+  });
+  if (!player)
+    return { error: "Only a participating player can confirm readiness." };
+  const [updated] = await db
+    .update(sessionQueue)
+    .set({ readyAt: new Date(), version: sql`${sessionQueue.version} + 1` })
+    .where(
+      and(
+        eq(sessionQueue.sessionId, sessionId),
+        eq(sessionQueue.sessionPlayerId, player.id),
+        eq(sessionQueue.state, "waiting")
+      )
+    )
+    .returning({ id: sessionQueue.sessionPlayerId });
+  if (!updated)
+    return {
+      error: "Your Play status just changed. Review your latest assignment.",
+    };
+  revalidatePath(`/games/${sessionId}/play`);
+  return { message: "The organizers can see that you’re ready." };
+}
+
+const cancelMatchInput = z.object({
+  sessionId: z.uuid(),
+  matchId: z.uuid(),
+  version: z.coerce.number().int().positive(),
+  reason: z.string().trim().min(2).max(240),
+});
+
+export async function cancelMatchAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = cancelMatchInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    matchId: formData.get("matchId"),
+    version: formData.get("version"),
+    reason: formData.get("reason"),
+  });
+  if (!parsed.success)
+    return { error: "Add a brief cancellation reason (2–240 characters)." };
+  const { session, user } = await requirePlayManager(parsed.data.sessionId);
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${parsed.data.sessionId} for update`
+      );
+      const selected = await tx.query.matches.findFirst({
+        where: and(
+          eq(matches.id, parsed.data.matchId),
+          eq(matches.sessionId, parsed.data.sessionId)
+        ),
+      });
+      if (selected?.status !== "active") throw new Error("MATCH_CONFLICT");
+      const targets =
+        session.rotationMode === "queue"
+          ? [selected]
+          : selected.rotationId
+            ? await tx
+                .select()
+                .from(matches)
+                .where(
+                  and(
+                    eq(matches.sessionId, parsed.data.sessionId),
+                    eq(matches.rotationId, selected.rotationId),
+                    inArray(matches.status, ["active", "completed"])
+                  )
+                )
+            : await tx
+                .select()
+                .from(matches)
+                .where(
+                  and(
+                    eq(matches.sessionId, parsed.data.sessionId),
+                    eq(matches.status, "active")
+                  )
+                );
+      const targetIds = targets.map((match) => match.id);
+      const assignments = await tx
+        .select({ playerId: matchPlayers.sessionPlayerId })
+        .from(matchPlayers)
+        .where(inArray(matchPlayers.matchId, targetIds));
+      const playerIds = [...new Set(assignments.map((item) => item.playerId))];
+      const queue = await tx
+        .select()
+        .from(sessionQueue)
+        .where(eq(sessionQueue.sessionId, parsed.data.sessionId))
+        .orderBy(asc(sessionQueue.position));
+      const playerStates = playerIds.length
+        ? await tx
+            .select({
+              id: sessionPlayers.id,
+              playState: sessionPlayers.playState,
+            })
+            .from(sessionPlayers)
+            .where(inArray(sessionPlayers.id, playerIds))
+        : [];
+      const restingIds = new Set(
+        playerStates
+          .filter((item) => item.playState === "resting")
+          .map((item) => item.id)
+      );
+      const restored = restoreCancelledPlayers(
+        queue
+          .filter((item) => item.state === "waiting")
+          .map((item) => ({
+            id: item.sessionPlayerId,
+            position: item.position,
+          })),
+        queue
+          .filter((item) => playerIds.includes(item.sessionPlayerId))
+          .map((item) => ({
+            id: item.sessionPlayerId,
+            position: item.position,
+          }))
+      );
+      const restoredIds = new Set(restored.map((item) => item.id));
+      const remainder = queue
+        .filter((item) => !restoredIds.has(item.sessionPlayerId))
+        .map((item) => item.sessionPlayerId);
+      const order = [...restored.map((item) => item.id), ...remainder];
+      await tx
+        .update(sessionQueue)
+        .set({ position: sql`${sessionQueue.position} + 100000` })
+        .where(eq(sessionQueue.sessionId, parsed.data.sessionId));
+      for (const [index, playerId] of order.entries()) {
+        const cancelledPlayer = playerIds.includes(playerId);
+        await tx
+          .update(sessionQueue)
+          .set({
+            position: index + 1,
+            ...(cancelledPlayer
+              ? {
+                  state: restingIds.has(playerId)
+                    ? ("resting" as const)
+                    : ("waiting" as const),
+                  enteredAt: new Date(),
+                  readyAt: null,
+                }
+              : {}),
+            version: sql`${sessionQueue.version} + 1`,
+          })
+          .where(
+            and(
+              eq(sessionQueue.sessionId, parsed.data.sessionId),
+              eq(sessionQueue.sessionPlayerId, playerId)
+            )
+          );
+      }
+      const returningIds = playerIds.filter((id) => !restingIds.has(id));
+      if (returningIds.length)
+        await tx
+          .update(sessionPlayers)
+          .set({ playState: "waiting" })
+          .where(inArray(sessionPlayers.id, returningIds));
+      await tx
+        .update(matches)
+        .set({
+          status: "cancelled",
+          cancellationReason: parsed.data.reason,
+          cancelledAt: new Date(),
+          cancelledById: user.id,
+          winningTeam: null,
+          replacementRequestedById: null,
+          replacementRequestedAt: null,
+          version: sql`${matches.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(inArray(matches.id, targetIds));
+      const assignedUsers = playerIds.length
+        ? await tx
+            .select({ userId: sessionPlayers.userId })
+            .from(sessionPlayers)
+            .where(inArray(sessionPlayers.id, playerIds))
+        : [];
+      const recipientIds = [
+        ...new Set(
+          assignedUsers.flatMap((item) =>
+            item.userId && item.userId !== user.id ? [item.userId] : []
+          )
+        ),
+      ];
+      if (recipientIds.length)
+        await tx.insert(notifications).values(
+          recipientIds.map((userId) => ({
+            userId,
+            sessionId: parsed.data.sessionId,
+            type: "match_assignment_changed",
+            payload: { reason: parsed.data.reason },
+          }))
+        );
+      await tx.insert(messages).values({
+        sessionId: parsed.data.sessionId,
+        kind: "system",
+        body:
+          targets.length > 1
+            ? `The current rotation was cancelled · ${parsed.data.reason}`
+            : `${selected.courtLabel} match cancelled · ${parsed.data.reason}`,
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "MATCH_CONFLICT")
+      return {
+        error:
+          "That match changed on another device. Review the latest courts and try again.",
+      };
+    console.error(
+      "Match cancellation failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return { error: "The match couldn’t be cancelled. Refresh and try again." };
+  }
+  revalidatePath(`/games/${parsed.data.sessionId}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return { message: "Match cancelled and players restored." };
+}
+
+const replaceMatchPlayerInput = z.object({
+  sessionId: z.uuid(),
+  matchId: z.uuid(),
+  version: z.coerce.number().int().positive(),
+  outgoingIds: z
+    .string()
+    .transform((value) => value.split(",").filter(Boolean)),
+  incomingIds: z
+    .string()
+    .transform((value) => value.split(",").filter(Boolean)),
+  displaced: z.enum(["rest", "queue_end"]),
+});
+
+export async function replaceMatchPlayerAction(
+  _: PlayManagementActionState,
+  formData: FormData
+): Promise<PlayManagementActionState> {
+  const parsed = replaceMatchPlayerInput.safeParse({
+    sessionId: formData.get("sessionId"),
+    matchId: formData.get("matchId"),
+    version: formData.get("version"),
+    outgoingIds: formData.get("outgoingIds"),
+    incomingIds: formData.get("incomingIds"),
+    displaced: formData.get("displaced"),
+  });
+  if (
+    !parsed.success ||
+    ![1, 2].includes(parsed.data.outgoingIds.length) ||
+    parsed.data.outgoingIds.length !== parsed.data.incomingIds.length ||
+    [...parsed.data.outgoingIds, ...parsed.data.incomingIds].some(
+      (id) => !z.uuid().safeParse(id).success
+    )
+  )
+    return { error: "Choose who is leaving and who is coming in." };
+  const { session, user } = await requirePlayManager(parsed.data.sessionId);
+  if (["round_robin", "king_of_court"].includes(session.rotationMode))
+    return {
+      error: "Cancel and restart this rotation to change its players safely.",
+    };
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${parsed.data.sessionId} for update`
+      );
+      const match = await tx.query.matches.findFirst({
+        where: and(
+          eq(matches.id, parsed.data.matchId),
+          eq(matches.sessionId, parsed.data.sessionId),
+          eq(matches.status, "active")
+        ),
+      });
+      if (
+        !match ||
+        match.version !== parsed.data.version ||
+        match.teamAScore !== 0 ||
+        match.teamBScore !== 0
+      )
+        throw new Error("REPLACEMENT_CONFLICT");
+      const assignments = await tx
+        .select()
+        .from(matchPlayers)
+        .where(eq(matchPlayers.matchId, match.id));
+      if (
+        !parsed.data.outgoingIds.every((id) =>
+          assignments.some((item) => item.sessionPlayerId === id)
+        )
+      )
+        throw new Error("REPLACEMENT_CONFLICT");
+      const queue = await tx
+        .select()
+        .from(sessionQueue)
+        .where(eq(sessionQueue.sessionId, parsed.data.sessionId))
+        .orderBy(asc(sessionQueue.position));
+      if (
+        !parsed.data.incomingIds.every((id) =>
+          queue.some(
+            (item) => item.sessionPlayerId === id && item.state === "waiting"
+          )
+        )
+      )
+        throw new Error("REPLACEMENT_CONFLICT");
+      const pairRows = await tx
+        .select({
+          pairId: sessionPairMembers.pairId,
+          playerId: sessionPairMembers.sessionPlayerId,
+        })
+        .from(sessionPairMembers)
+        .innerJoin(sessionPairs, eq(sessionPairs.id, sessionPairMembers.pairId))
+        .where(eq(sessionPairs.sessionId, parsed.data.sessionId));
+      if (pairRows.length) {
+        const onePair = (ids: string[]) => {
+          const pairIds = new Set(
+            ids.map((id) => pairRows.find((row) => row.playerId === id)?.pairId)
+          );
+          return (
+            ids.length === 2 && pairIds.size === 1 && !pairIds.has(undefined)
+          );
+        };
+        if (
+          !onePair(parsed.data.outgoingIds) ||
+          !onePair(parsed.data.incomingIds)
+        )
+          throw new Error("PAIR_REQUIRED");
+      } else if (parsed.data.outgoingIds.length !== 1) {
+        throw new Error("REPLACEMENT_CONFLICT");
+      }
+      const outgoingAssignments = parsed.data.outgoingIds.map(
+        (id) => assignments.find((item) => item.sessionPlayerId === id)!
+      );
+      for (const [index, outgoing] of outgoingAssignments.entries()) {
+        await tx
+          .update(matchPlayers)
+          .set({ sessionPlayerId: parsed.data.incomingIds[index] })
+          .where(
+            and(
+              eq(matchPlayers.matchId, match.id),
+              eq(matchPlayers.sessionPlayerId, outgoing.sessionPlayerId)
+            )
+          );
+      }
+      const remainingWaiting = queue
+        .filter(
+          (item) =>
+            item.state === "waiting" &&
+            !parsed.data.incomingIds.includes(item.sessionPlayerId) &&
+            !parsed.data.outgoingIds.includes(item.sessionPlayerId)
+        )
+        .map((item) => item.sessionPlayerId);
+      const waitingOrder =
+        parsed.data.displaced === "queue_end"
+          ? [...remainingWaiting, ...parsed.data.outgoingIds]
+          : remainingWaiting;
+      const others = queue
+        .map((item) => item.sessionPlayerId)
+        .filter(
+          (id) =>
+            !waitingOrder.includes(id) &&
+            !parsed.data.incomingIds.includes(id) &&
+            !parsed.data.outgoingIds.includes(id)
+        );
+      const order = [
+        ...waitingOrder,
+        ...others,
+        ...parsed.data.incomingIds,
+        ...(parsed.data.displaced === "rest" ? parsed.data.outgoingIds : []),
+      ];
+      await tx
+        .update(sessionQueue)
+        .set({ position: sql`${sessionQueue.position} + 100000` })
+        .where(eq(sessionQueue.sessionId, parsed.data.sessionId));
+      for (const [index, playerId] of order.entries()) {
+        const incoming = parsed.data.incomingIds.includes(playerId);
+        const outgoing = parsed.data.outgoingIds.includes(playerId);
+        await tx
+          .update(sessionQueue)
+          .set({
+            position: index + 1,
+            ...(incoming ? { state: "playing" as const, readyAt: null } : {}),
+            ...(outgoing
+              ? {
+                  state:
+                    parsed.data.displaced === "rest"
+                      ? ("resting" as const)
+                      : ("waiting" as const),
+                  enteredAt: new Date(),
+                  readyAt: null,
+                }
+              : {}),
+            version: sql`${sessionQueue.version} + 1`,
+          })
+          .where(
+            and(
+              eq(sessionQueue.sessionId, parsed.data.sessionId),
+              eq(sessionQueue.sessionPlayerId, playerId)
+            )
+          );
+      }
+      await tx
+        .update(sessionPlayers)
+        .set({ playState: "playing" })
+        .where(inArray(sessionPlayers.id, parsed.data.incomingIds));
+      await tx
+        .update(sessionPlayers)
+        .set({
+          playState: parsed.data.displaced === "rest" ? "resting" : "waiting",
+        })
+        .where(inArray(sessionPlayers.id, parsed.data.outgoingIds));
+      const [updated] = await tx
+        .update(matches)
+        .set({
+          replacementRequestedById: null,
+          replacementRequestedAt: null,
+          version: sql`${matches.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(eq(matches.id, match.id), eq(matches.version, match.version))
+        )
+        .returning({ id: matches.id });
+      if (!updated) throw new Error("REPLACEMENT_CONFLICT");
+      const incomingUsers = await tx
+        .select({ userId: sessionPlayers.userId })
+        .from(sessionPlayers)
+        .where(inArray(sessionPlayers.id, parsed.data.incomingIds));
+      const recipientIds = incomingUsers.flatMap((item) =>
+        item.userId && item.userId !== user.id ? [item.userId] : []
+      );
+      if (recipientIds.length)
+        await tx.insert(notifications).values(
+          recipientIds.map((userId) => ({
+            userId,
+            sessionId: parsed.data.sessionId,
+            type: "match_assignment",
+            payload: { courtLabel: match.courtLabel },
+          }))
+        );
+      await tx.insert(messages).values({
+        sessionId: parsed.data.sessionId,
+        kind: "system",
+        body: `${match.courtLabel} players were replaced before scoring began.`,
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "PAIR_REQUIRED")
+      return {
+        error: "Fixed partners must leave and enter as complete pairs.",
+      };
+    if (error instanceof Error && error.message === "REPLACEMENT_CONFLICT")
+      return {
+        error:
+          "That match or queue changed. Refresh before replacing a player.",
+      };
+    console.error(
+      "Match replacement failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return {
+      error: "The replacement couldn’t be saved. Refresh and try again.",
+    };
+  }
+  revalidatePath(`/games/${parsed.data.sessionId}/play`);
+  revalidatePath(`/s/${session.slug}/play`);
+  return { message: "Replacement saved." };
 }
 
 const scoreInput = z.object({
@@ -961,6 +1824,8 @@ export async function finishMatch(formData: FormData) {
         status: "completed",
         finishedAt: new Date(),
         winningTeam,
+        replacementRequestedById: null,
+        replacementRequestedAt: null,
         version: sql`${matches.version} + 1`,
       })
       .where(eq(matches.id, matchId));
@@ -987,7 +1852,11 @@ export async function finishMatch(formData: FormData) {
         .set({
           position: index + 1,
           ...(isWaiting
-            ? { state: "waiting" as const, enteredAt: new Date() }
+            ? {
+                state: "waiting" as const,
+                enteredAt: new Date(),
+                readyAt: null,
+              }
             : {}),
           ...(isResting ? { state: "resting" as const } : {}),
           version: sql`${sessionQueue.version} + 1`,
