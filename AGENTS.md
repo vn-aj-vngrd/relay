@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project runbooks
 
-- **Code quality:** Read `docs/CODE_QUALITY.md` before adding dependencies, changing TypeScript or Ultracite/Biome conventions, or preparing a production change. Use its tight loop while iterating and run its complete gate before handoff.
+- **Code quality:** Read `docs/CODE_QUALITY.md` before adding dependencies, changing TypeScript or Ultracite/Biome conventions, or preparing a production change. Validate with the smallest check that can falsify the change: changed-file quality, then a direct test, typecheck, or related tests only when the change warrants them. Use the full suite and production build for cross-cutting or release-risk changes; CI remains the full gate.
 - **Integrations:** Read `docs/integrations.md` before provisioning, rotating credentials, changing auth/storage/realtime configuration, or applying the baseline migration.
 - **UI quality:** Read `DESIGN.md` and `docs/UI_QUALITY.md` before changing UI, interaction copy, tokens, responsive behavior, or product states. Apply every completion criterion and run the anti-slop review before shipping.
 - **Session parity:** Read `docs/SESSION_SURFACE_PARITY.md` before changing authenticated game routes, shared RSVP routes, session tabs, Play, roster, payments, chat, or their loading states.

@@ -71,16 +71,18 @@ const sourceFiles = uniqueFiles.filter((file) =>
 const qualityConfigChanged = uniqueFiles.some((file) =>
   ["biome.json", "biome.jsonc", "package.json", "pnpm-lock.yaml"].includes(file)
 );
-const testConfigChanged = uniqueFiles.some(
-  (file) =>
-    file === "package.json" ||
-    file === "pnpm-lock.yaml" ||
-    file === "tsconfig.json" ||
-    file === "vitest.setup.ts" ||
-    file.startsWith("vitest.config")
-);
+const isTestInfrastructure = (file) =>
+  file === "package.json" ||
+  file === "pnpm-lock.yaml" ||
+  file === "tsconfig.json" ||
+  file === "vitest.setup.ts" ||
+  file.startsWith("vitest.config");
+const testConfigChanged = uniqueFiles.some(isTestInfrastructure);
 const deletedSource = deletedFiles.some((file) =>
   sourceExtensions.has(path.extname(file))
+);
+const relatedTestInputs = sourceFiles.filter(
+  (file) => !isTestInfrastructure(file)
 );
 
 if (!testsOnly) {
@@ -102,15 +104,16 @@ if (!testsOnly) {
 
 if (!qualityOnly) {
   if (testConfigChanged || deletedSource) {
-    console.log("Test infrastructure changed; running the full suite.");
-    process.exit(run(executable("vitest"), ["run"]));
-  }
-
-  if (sourceFiles.length > 0) {
-    process.exit(
-      run(executable("vitest"), ["related", "--run", ...sourceFiles])
+    console.log(
+      "A global test input changed; the full suite is deferred to pnpm check:full before handoff."
     );
   }
 
-  console.log("No changed source files need tests.");
+  if (relatedTestInputs.length > 0) {
+    process.exit(
+      run(executable("vitest"), ["related", "--run", ...relatedTestInputs])
+    );
+  }
+
+  console.log("No changed source files have resolvable related tests.");
 }

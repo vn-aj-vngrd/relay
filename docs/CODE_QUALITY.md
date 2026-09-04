@@ -12,29 +12,25 @@ Read this before adding dependencies, changing TypeScript or Ultracite/Biome con
 
 Generated SQL, Drizzle snapshots, the lockfile, build output, reports, public assets, and binary assets are excluded from Biome. Review generated migrations directly instead of rewriting them mechanically.
 
-## Tight agent loop
+## Efficient agent validation
 
-During implementation, run:
+Use the smallest check that can falsify the current change. Run each check after a logical checkpoint, and do not repeat an unchanged passing check.
 
-```bash
-pnpm check:fast
-```
+1. Run `pnpm check:fast` for changed-file Ultracite/Biome validation. It never starts tests.
+2. For isolated behavior, run the directly affected test file with `pnpm exec vitest run <test-file>`.
+3. Add `pnpm typecheck` when TypeScript contracts, imports, server/client boundaries, or generated types could be affected.
+4. Add `pnpm test:related` when a change has meaningful import fan-out and one direct test is insufficient. It never falls back to the full suite.
+5. Use `pnpm check:fix` only when fixes are needed; review the resulting diff.
 
-This checks changed files and runs tests related to changed source. Use `pnpm check:changed` for quality checks only, `pnpm check:fix` to apply explicit fixes, and `pnpm test:related` for related tests only. Run `pnpm typecheck` at logical checkpoints. Prefer a directly affected test file while diagnosing a failure.
+Documentation-only and formatting-only work usually stops after the changed-file check. At handoff, report which validation ran and which broader checks were intentionally deferred to CI.
 
-Production builds and the full test suite belong at handoff rather than after every edit.
+## Full gate
 
-## Complete gate
+Run `pnpm check:full` for cross-cutting changes to shared configuration, dependencies, schemas, build behavior, or release-critical paths. It runs the complete Ultracite/Biome check, strict typecheck, full test suite, and production build. CI runs this coverage for every push, so isolated low-risk work does not need to duplicate it locally.
 
-Before handoff, run:
+Run `pnpm test:e2e` manually when a route, form, authorization rule, responsive workflow, or browser interaction changes.
 
-```bash
-pnpm check:full
-```
-
-This runs the full Ultracite/Biome check, strict typecheck, complete test suite, and production build. Run `pnpm test:e2e` manually when a route, form, authorization rule, responsive workflow, or browser interaction changes.
-
-**Complete when:** the full gate passes, changed behavior has useful tests, no suppression hides a fixable problem, and browser-facing changes have manual E2E evidence.
+**Complete when:** validation is proportional to risk, changed behavior has useful targeted tests, no suppression hides a fixable problem, and the handoff names any checks deferred to CI.
 
 ## Import discipline
 

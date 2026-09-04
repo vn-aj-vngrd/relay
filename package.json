@@ -9,7 +9,7 @@
     "build": "next build",
     "check": "ultracite check",
     "check:changed": "node scripts/fast-check.mjs --quality-only",
-    "check:fast": "node scripts/fast-check.mjs",
+    "check:fast": "node scripts/fast-check.mjs --quality-only",
     "check:fix": "ultracite fix",
     "check:full": "pnpm check && pnpm typecheck && pnpm test && pnpm build",
     "db:generate": "drizzle-kit generate",
