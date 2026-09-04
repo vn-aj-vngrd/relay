@@ -95,8 +95,10 @@ function subscribeTheme(callback: () => void) {
 
 export function PreferenceControls({
   appearanceOnly = false,
+  section,
 }: {
   appearanceOnly?: boolean;
+  section?: "appearance" | "games";
 }) {
   const theme = useSyncExternalStore(
     subscribeTheme,
@@ -124,52 +126,57 @@ export function PreferenceControls({
     notify();
   };
 
+  const showAppearance = section !== "games";
+  const showGames = !appearanceOnly && section !== "appearance";
+
   return (
     <div className="space-y-9">
-      <section aria-labelledby="appearance-title">
-        <h2 id="appearance-title" className="text-sm font-semibold">
-          Appearance
-        </h2>
-        <div className="mt-2 divide-y divide-line border-y border-line">
-          <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-2">
-            <div>
-              <p className="text-sm font-medium">Color theme</p>
-              <p className="mt-0.5 text-xs text-muted">
-                Use light, dark, or your device setting.
-              </p>
+      {showAppearance ? (
+        <section aria-labelledby="appearance-title">
+          <h2 id="appearance-title" className="text-sm font-semibold">
+            Appearance
+          </h2>
+          <div className="mt-2 divide-y divide-line border-y border-line">
+            <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-2">
+              <div>
+                <p className="text-sm font-medium">Color theme</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Use light, dark, or your device setting.
+                </p>
+              </div>
+              <Segmented
+                label="Color theme"
+                value={theme}
+                onChange={setThemePreference}
+                options={[
+                  { value: "light", label: "Light", icon: Sun },
+                  { value: "dark", label: "Dark", icon: Moon },
+                  { value: "system", label: "System", icon: Desktop },
+                ]}
+              />
             </div>
-            <Segmented
-              label="Color theme"
-              value={theme}
-              onChange={setThemePreference}
-              options={[
-                { value: "light", label: "Light", icon: Sun },
-                { value: "dark", label: "Dark", icon: Moon },
-                { value: "system", label: "System", icon: Desktop },
-              ]}
-            />
-          </div>
-          <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
-            <div>
-              <p className="text-sm font-medium">Layout density</p>
-              <p className="mt-0.5 text-xs text-muted">
-                Tighten repeated rows and supporting sections.
-              </p>
+            <div className="flex min-h-14 flex-wrap items-center justify-between gap-4 py-3">
+              <div>
+                <p className="text-sm font-medium">Layout density</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Tighten repeated rows and supporting sections.
+                </p>
+              </div>
+              <Segmented
+                label="Layout density"
+                value={density}
+                onChange={setDensity}
+                options={[
+                  { value: "comfortable", label: "Default" },
+                  { value: "compact", label: "Compact" },
+                ]}
+              />
             </div>
-            <Segmented
-              label="Layout density"
-              value={density}
-              onChange={setDensity}
-              options={[
-                { value: "comfortable", label: "Default" },
-                { value: "compact", label: "Compact" },
-              ]}
-            />
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      {!appearanceOnly ? (
+      {showGames ? (
         <section aria-labelledby="games-title">
           <h2 id="games-title" className="text-sm font-semibold">
             Games

@@ -11,6 +11,13 @@ afterEach(() => {
 });
 
 describe("PreferenceControls", () => {
+  it("shows only the selected preference group", () => {
+    render(<PreferenceControls section="games" />);
+
+    expect(screen.getByText("Default games view")).toBeVisible();
+    expect(screen.queryByText("Color theme")).not.toBeInTheDocument();
+  });
+
   it("offers device-local appearance controls on public session pages", () => {
     render(<PreferenceControls appearanceOnly />);
     expect(screen.getByText("Color theme")).toBeVisible();
