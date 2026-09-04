@@ -65,9 +65,12 @@ function renderMemories(
 describe("SessionMemories", () => {
   it("makes a scheduled invitation with truthful plan and roster facts", () => {
     renderMemories("published");
+    expect(screen.queryByText("Invite the crew")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Invite the crew" })
-    ).toBeVisible();
+      screen.queryByText(
+        "Turn the current plan, price, and roster availability into a clear invitation."
+      )
+    ).not.toBeInTheDocument();
     expect(screen.getByText("₱350")).toBeVisible();
     expect(screen.getByText("6/8")).toBeVisible();
     expect(screen.getByText("Hosted by Van")).toBeVisible();
@@ -139,7 +142,7 @@ describe("SessionMemories", () => {
   it("makes a live update using only safe aggregate facts", () => {
     renderMemories("live");
     expect(
-      screen.getByRole("heading", { name: "Share what’s happening" })
+      screen.getByRole("region", { name: "Create a story" })
     ).toBeVisible();
     expect(screen.getByText("completed matches")).toBeVisible();
     expect(screen.getByText("2")).toBeVisible();
@@ -153,7 +156,7 @@ describe("SessionMemories", () => {
   it("shows story creation and photos after completion", () => {
     renderMemories("completed");
     expect(
-      screen.getByRole("heading", { name: "Share the game" })
+      screen.getByRole("region", { name: "Create a story" })
     ).toBeVisible();
     expect(screen.getByRole("button", { name: "Make" })).toHaveAttribute(
       "aria-pressed",

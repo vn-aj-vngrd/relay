@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CaretDown,
   CaretLeft,
   CaretRight,
   Check,
@@ -8,9 +9,10 @@ import {
   DownloadSimple,
   ImageSquare,
   ShareNetwork,
+  SlidersHorizontal,
 } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
@@ -227,6 +229,8 @@ export function RecapShareCard({
   const [customNote, setCustomNote] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [customizeOpen, setCustomizeOpen] = useState(false);
+  const customizationId = useId();
   const touchStart = useRef<number | null>(null);
   const customPhotoInput = useRef<HTMLInputElement>(null);
   const background =
@@ -779,7 +783,7 @@ export function RecapShareCard({
         : "Share story";
 
   return (
-    <div className="grid items-start gap-7 md:grid-cols-[260px_1fr]">
+    <div className="grid items-start gap-5 md:grid-cols-[260px_1fr] md:gap-7">
       <div
         role="region"
         aria-roledescription="carousel"
@@ -883,162 +887,183 @@ export function RecapShareCard({
           />
         </fieldset>
 
-        <details className="mt-6 border-y border-line py-1">
-          <summary className="flex min-h-11 cursor-pointer items-center font-bold">
-            Customize
-          </summary>
-          <div className="pb-6 pt-3">
-            <fieldset>
-              <legend className="font-bold">Look</legend>
-              <TabChipRail
-                label="Story look"
-                items={storyLayouts.map((item) => ({
-                  value: item.id,
-                  label: item.label,
-                }))}
-                value={layout}
-                onChange={setLayout}
-                className="mt-2"
-                itemClassName="!min-h-11"
-              />
-            </fieldset>
+        <div className="mt-5 border-y border-line">
+          <button
+            type="button"
+            aria-expanded={customizeOpen}
+            aria-controls={customizationId}
+            onClick={() => setCustomizeOpen((open) => !open)}
+            className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+          >
+            <SlidersHorizontal
+              aria-hidden
+              size={19}
+              className="shrink-0 text-primary"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold">Customize story</span>
+              <span className="mt-0.5 block truncate text-xs font-normal text-muted">
+                {storyLayouts.find((item) => item.id === layout)?.label} ·{" "}
+                {background.label}
+              </span>
+            </span>
+            <CaretDown
+              aria-hidden
+              size={17}
+              className={`shrink-0 text-muted transition-transform motion-reduce:transition-none ${customizeOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {customizeOpen ? (
+            <div id={customizationId} className="pb-6 pt-4">
+              <fieldset>
+                <legend className="text-sm font-bold">Layout</legend>
+                <TabChipRail
+                  label="Story look"
+                  items={storyLayouts.map((item) => ({
+                    value: item.id,
+                    label: item.label,
+                  }))}
+                  value={layout}
+                  onChange={setLayout}
+                  className="mt-2"
+                  itemClassName="!min-h-11"
+                />
+              </fieldset>
 
-            <fieldset className="mt-7">
-              <legend className="font-bold">Choose a background</legend>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Pick a Relay color, a session photo, or a private photo from
-                this device.
-              </p>
-              <div
-                className="mt-3 flex flex-wrap gap-2"
-                role="radiogroup"
-                aria-label="Story background"
-              >
-                {backgrounds.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    role="radio"
-                    aria-label={
-                      item.imageUrl ? item.label : `${item.label} background`
-                    }
-                    aria-checked={backgroundId === item.id}
-                    onClick={() => setBackgroundId(item.id)}
-                    className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
-                    style={{ backgroundColor: item.color }}
-                  >
-                    {item.imageUrl ? (
-                      <Image
-                        src={item.imageUrl}
-                        alt=""
-                        fill
-                        sizes="56px"
-                        unoptimized={item.imageUrl.startsWith("blob:")}
-                        className="object-cover"
-                      />
-                    ) : null}
-                    {backgroundId === item.id ? (
-                      <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
-                        <Check aria-hidden size={17} weight="bold" />
-                      </span>
-                    ) : null}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => customPhotoInput.current?.click()}
-                  className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
-                  aria-label="Add a background photo"
+              <fieldset className="mt-6">
+                <legend className="text-sm font-bold">Background</legend>
+                <div
+                  className="mt-3 flex flex-wrap gap-2"
+                  role="radiogroup"
+                  aria-label="Story background"
                 >
-                  <ImageSquare aria-hidden size={21} />
-                </button>
-                <input
-                  ref={customPhotoInput}
-                  type="file"
-                  aria-label="Choose background photo file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="sr-only"
-                  onChange={(event) =>
-                    void chooseCustomPhoto(event.target.files?.[0])
-                  }
-                />
-              </div>
-              <p className="mt-2 text-xs leading-5 text-muted">
-                Device photos stay local unless you separately add them to the
-                session below.
-              </p>
-            </fieldset>
-
-            {background.imageUrl ? (
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <label className="text-sm font-semibold">
-                  Photo position
+                  {backgrounds.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="radio"
+                      aria-label={
+                        item.imageUrl ? item.label : `${item.label} background`
+                      }
+                      aria-checked={backgroundId === item.id}
+                      onClick={() => setBackgroundId(item.id)}
+                      className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
+                      style={{ backgroundColor: item.color }}
+                    >
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt=""
+                          fill
+                          sizes="56px"
+                          unoptimized={item.imageUrl.startsWith("blob:")}
+                          className="object-cover"
+                        />
+                      ) : null}
+                      {backgroundId === item.id ? (
+                        <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
+                          <Check aria-hidden size={17} weight="bold" />
+                        </span>
+                      ) : null}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => customPhotoInput.current?.click()}
+                    className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
+                    aria-label="Add a background photo"
+                  >
+                    <ImageSquare aria-hidden size={21} />
+                  </button>
                   <input
-                    type="range"
-                    aria-label="Photo position"
-                    min="0"
-                    max="100"
-                    value={photoPosition}
+                    ref={customPhotoInput}
+                    type="file"
+                    aria-label="Choose background photo file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
                     onChange={(event) =>
-                      setPhotoPosition(Number(event.target.value))
+                      void chooseCustomPhoto(event.target.files?.[0])
                     }
-                    className="mt-3 w-full accent-primary"
                   />
-                  <span className="mt-1 block text-xs font-normal text-muted">
-                    Move the crop from top to bottom.
-                  </span>
-                </label>
-                <label className="text-sm font-semibold">
-                  Text contrast
-                  <input
-                    type="range"
-                    aria-label="Text contrast"
-                    min="20"
-                    max="80"
-                    value={overlay}
-                    onChange={(event) => setOverlay(Number(event.target.value))}
-                    className="mt-3 w-full accent-primary"
-                  />
-                  <span className="mt-1 block text-xs font-normal text-muted">
-                    Darken the photo behind the story.
-                  </span>
-                </label>
-              </div>
-            ) : null}
+                </div>
+                <p className="mt-2 text-xs leading-5 text-muted">
+                  Device photos stay local unless you separately add them to the
+                  session below.
+                </p>
+              </fieldset>
 
-            <fieldset className="mt-7">
-              <legend className="font-bold">Add your words</legend>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Keep it short enough to read before the story advances.
-              </p>
-              {template === "custom" ? (
-                <label className="mt-3 block text-sm font-semibold">
-                  Headline
-                  <input
-                    value={customHeadline}
-                    onChange={(event) => setCustomHeadline(event.target.value)}
-                    maxLength={56}
-                    className="field"
-                    placeholder="Our kind of game."
-                  />
-                </label>
+              {background.imageUrl ? (
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                  <label className="text-sm font-semibold">
+                    Photo position
+                    <input
+                      type="range"
+                      aria-label="Photo position"
+                      min="0"
+                      max="100"
+                      value={photoPosition}
+                      onChange={(event) =>
+                        setPhotoPosition(Number(event.target.value))
+                      }
+                      className="mt-3 w-full accent-primary"
+                    />
+                    <span className="mt-1 block text-xs font-normal text-muted">
+                      Move the crop from top to bottom.
+                    </span>
+                  </label>
+                  <label className="text-sm font-semibold">
+                    Text contrast
+                    <input
+                      type="range"
+                      aria-label="Text contrast"
+                      min="20"
+                      max="80"
+                      value={overlay}
+                      onChange={(event) =>
+                        setOverlay(Number(event.target.value))
+                      }
+                      className="mt-3 w-full accent-primary"
+                    />
+                    <span className="mt-1 block text-xs font-normal text-muted">
+                      Darken the photo behind the story.
+                    </span>
+                  </label>
+                </div>
               ) : null}
-              <label className="mt-3 block text-sm font-semibold">
-                Personal line{" "}
-                <span className="font-normal text-muted">(optional)</span>
-                <input
-                  value={customNote}
-                  onChange={(event) => setCustomNote(event.target.value)}
-                  maxLength={72}
-                  className="field"
-                  placeholder="Let’s play again soon."
-                />
-              </label>
-            </fieldset>
-          </div>
-        </details>
 
-        <div className="mt-7 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <fieldset className="mt-6">
+                <legend className="text-sm font-bold">Message</legend>
+                {template === "custom" ? (
+                  <label className="mt-3 block text-sm font-semibold">
+                    Headline
+                    <input
+                      value={customHeadline}
+                      onChange={(event) =>
+                        setCustomHeadline(event.target.value)
+                      }
+                      maxLength={56}
+                      className="field"
+                      placeholder="Our kind of game."
+                    />
+                  </label>
+                ) : null}
+                <label className="mt-3 block text-sm font-semibold">
+                  Personal line{" "}
+                  <span className="font-normal text-muted">(optional)</span>
+                  <input
+                    value={customNote}
+                    onChange={(event) => setCustomNote(event.target.value)}
+                    maxLength={72}
+                    className="field"
+                    placeholder="Let’s play again soon."
+                  />
+                </label>
+              </fieldset>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-6">
           <Button
             type="button"
             onClick={share}
@@ -1052,46 +1077,49 @@ export function RecapShareCard({
             )}
             {pending ? "Creating story…" : actionLabel}
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={download}
-            disabled={pending}
-            className="w-full sm:w-auto"
+          <div
+            className={`mt-2 grid gap-2 sm:flex sm:flex-wrap ${sharedUrl ? (sessionId ? "grid-cols-3" : "grid-cols-2") : "grid-cols-1"}`}
           >
-            <DownloadSimple aria-hidden size={16} />
-            Download PNG
-          </Button>
-          {sharedUrl ? (
-            <>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void copyLink()}
-              >
-                <Copy aria-hidden size={16} />
-                Copy link
-              </Button>
-              {sessionId ? (
-                <GameQrShare
-                  url={sharedUrl}
-                  title={title}
-                  details={`${date} · ${venue}`}
-                  sessionId={sessionId}
-                  heading={`Scan to open ${title}`}
-                  description="Open the game in Relay from another phone."
-                  scanLabel="Scan to open game"
-                  event={
-                    phase === "completed" ? "recap_shared" : "invite_shared"
-                  }
-                />
-              ) : null}
-            </>
-          ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={download}
+              disabled={pending}
+              aria-label="Download PNG"
+              className="min-w-0 px-2 sm:px-3"
+            >
+              <DownloadSimple aria-hidden size={16} />
+              Download
+            </Button>
+            {sharedUrl ? (
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => void copyLink()}
+                  className="min-w-0 px-2 sm:px-3"
+                >
+                  <Copy aria-hidden size={16} />
+                  Copy link
+                </Button>
+                {sessionId ? (
+                  <GameQrShare
+                    url={sharedUrl}
+                    title={title}
+                    details={`${date} · ${venue}`}
+                    sessionId={sessionId}
+                    heading={`Scan to open ${title}`}
+                    description="Open the game in Relay from another phone."
+                    scanLabel="Scan to open game"
+                    event={
+                      phase === "completed" ? "recap_shared" : "invite_shared"
+                    }
+                  />
+                ) : null}
+              </>
+            ) : null}
+          </div>
         </div>
-        <p className="mt-2 text-xs text-muted">
-          Exports a 1080 × 1920 image for Instagram, Facebook, and chat apps.
-        </p>
         {message ? (
           <p role="status" className="mt-2 text-sm font-medium text-muted">
             {message}

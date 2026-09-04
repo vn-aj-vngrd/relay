@@ -2,6 +2,22 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  canvasContext: {
+    arc: vi.fn(),
+    arcTo: vi.fn(),
+    beginPath: vi.fn(),
+    closePath: vi.fn(),
+    drawImage: vi.fn(),
+    fill: vi.fn(),
+    fillRect: vi.fn(),
+    fillText: vi.fn(),
+    measureText: vi.fn((text: string) => ({ width: text.length * 20 })),
+    moveTo: vi.fn(),
+    set fillStyle(_value: string) {},
+    set font(_value: string) {},
+    set textAlign(_value: CanvasTextAlign) {},
+    set textBaseline(_value: CanvasTextBaseline) {},
+  },
   toCanvas: vi.fn().mockResolvedValue(undefined),
   track: vi.fn().mockResolvedValue(undefined),
 }));
@@ -22,6 +38,10 @@ beforeEach(() => {
     this.removeAttribute("open");
     this.dispatchEvent(new Event("close"));
   };
+  Object.defineProperty(HTMLCanvasElement.prototype, "getContext", {
+    configurable: true,
+    value: vi.fn(() => mocks.canvasContext),
+  });
   Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
     configurable: true,
     value: vi.fn((callback: BlobCallback) =>
@@ -111,6 +131,12 @@ describe("GameQrShare", () => {
     await waitFor(() =>
       expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled()
     );
+    expect(mocks.canvasContext.fillText).toHaveBeenCalledWith(
+      "Friends Night",
+      80,
+      220
+    );
+    expect(mocks.canvasContext.drawImage).toHaveBeenCalled();
     expect(mocks.track).toHaveBeenCalledTimes(2);
   });
 

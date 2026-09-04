@@ -117,55 +117,34 @@ export function SessionMemories({
       ) : null}
 
       {activeView === "make" ? (
-        <section aria-labelledby="share-memory-title">
-          <div>
-            <h2
-              id="share-memory-title"
-              className="text-2xl font-bold tracking-[-0.025em]"
-            >
-              {completed
-                ? "Share the game"
-                : session.status === "live"
-                  ? "Share what’s happening"
-                  : "Invite the crew"}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-              {completed
-                ? "Choose one true highlight and make a portrait ready to share."
-                : session.status === "live"
-                  ? "Share safe game progress without provisional results or player details."
-                  : "Turn the current plan, price, and roster availability into a clear invitation."}
-            </p>
-          </div>
-          <div className="mt-6 border-y border-line py-7">
-            <RecapShareCard
-              sessionId={session.id}
-              title={session.title}
-              venue={session.venueName}
-              date={date}
-              accent={accent.solid}
-              recap={recap}
-              photos={photos}
-              viewerPlayerId={viewerPlayerId}
-              phase={session.status as "published" | "live" | "completed"}
-              invitation={{
-                hostName,
-                priceLabel:
-                  session.playerPriceCents === null
-                    ? "Price not set"
-                    : session.playerPriceCents === 0
-                      ? "Free"
-                      : (peso(session.playerPriceCents) ?? "Price not set"),
-                goingCount,
-                capacity: session.capacity,
-                requiresApproval: session.requiresApproval,
-                waitlistOpen: goingCount >= session.capacity,
-              }}
-              courtCount={session.courtCount}
-              sharedUrl={sharedUrl}
-              storyAsOf={storyAsOf}
-            />
-          </div>
+        <section aria-label="Create a story">
+          <RecapShareCard
+            sessionId={session.id}
+            title={session.title}
+            venue={session.venueName}
+            date={date}
+            accent={accent.solid}
+            recap={recap}
+            photos={photos}
+            viewerPlayerId={viewerPlayerId}
+            phase={session.status as "published" | "live" | "completed"}
+            invitation={{
+              hostName,
+              priceLabel:
+                session.playerPriceCents === null
+                  ? "Price not set"
+                  : session.playerPriceCents === 0
+                    ? "Free"
+                    : (peso(session.playerPriceCents) ?? "Price not set"),
+              goingCount,
+              capacity: session.capacity,
+              requiresApproval: session.requiresApproval,
+              waitlistOpen: goingCount >= session.capacity,
+            }}
+            courtCount={session.courtCount}
+            sharedUrl={sharedUrl}
+            storyAsOf={storyAsOf}
+          />
         </section>
       ) : null}
 

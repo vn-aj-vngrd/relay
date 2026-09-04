@@ -73,7 +73,7 @@ describe("RecapShareCard", () => {
   it("combines layout, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
-    fireEvent.click(screen.getByText("Customize"));
+    fireEvent.click(screen.getByText("Customize story"));
     expect(
       screen.getByRole("radio", { name: "Court background" })
     ).toBeChecked();
@@ -87,7 +87,9 @@ describe("RecapShareCard", () => {
     );
     expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
-    expect(screen.getByText(/1080 × 1920/)).toBeVisible();
+    expect(screen.getByText("Layout")).toBeVisible();
+    expect(screen.getByText("Background")).toBeVisible();
+    expect(screen.getByText("Message")).toBeVisible();
   });
 
   it("uses a valid device photo without uploading it", async () => {
@@ -95,7 +97,7 @@ describe("RecapShareCard", () => {
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:story-photo");
     renderCard();
-    fireEvent.click(screen.getByText("Customize"));
+    fireEvent.click(screen.getByText("Customize story"));
     const file = new File(
       [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
       "court.png",

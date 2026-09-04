@@ -4,6 +4,7 @@ import { Copy, DownloadSimple, QrCode, X } from "@phosphor-icons/react";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
+import { RelayMark } from "@/components/shared/brand";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
@@ -30,6 +31,119 @@ function downloadName(title: string) {
     .replace(/^-|-$/g, "")
     .slice(0, 48);
   return `${safe || "relay-game"}-qr.png`;
+}
+
+function roundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+) {
+  context.beginPath();
+  context.moveTo(x + radius, y);
+  context.arcTo(x + width, y, x + width, y + height, radius);
+  context.arcTo(x + width, y + height, x, y + height, radius);
+  context.arcTo(x, y + height, x, y, radius);
+  context.arcTo(x, y, x + width, y, radius);
+  context.closePath();
+}
+
+function drawWrappedText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number
+) {
+  const words = text.split(/\s+/);
+  const lines: string[] = [];
+  let line = "";
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    if (context.measureText(candidate).width <= maxWidth) {
+      line = candidate;
+      continue;
+    }
+    if (line) lines.push(line);
+    line = word;
+  }
+  if (line) lines.push(line);
+  const visible = lines.slice(0, maxLines);
+  if (lines.length > maxLines) {
+    let last = visible[maxLines - 1] ?? "";
+    while (last && context.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    visible[maxLines - 1] = `${last.trimEnd()}…`;
+  }
+  visible.forEach((value, index) =>
+    context.fillText(value, x, y + index * lineHeight)
+  );
+  return y + visible.length * lineHeight;
+}
+
+function createBrandedQrCanvas({
+  qr,
+  title,
+  details,
+  scanLabel,
+}: {
+  qr: HTMLCanvasElement;
+  title: string;
+  details: string;
+  scanLabel: string;
+}) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1500;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+
+  context.fillStyle = "#172033";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = "#91aa1e";
+  context.beginPath();
+  context.arc(80, 82, 30, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#b7d62e";
+  context.beginPath();
+  context.arc(76, 78, 26, 0, Math.PI * 2);
+  context.fill();
+
+  context.fillStyle = "#ffffff";
+  context.font = "700 38px Inter, system-ui, sans-serif";
+  context.textBaseline = "middle";
+  context.fillText("Relay", 128, 82);
+  context.font = "500 22px Inter, system-ui, sans-serif";
+  context.fillStyle = "#bfd4df";
+  context.fillText("Pickleball plans in one link", 128, 122);
+
+  context.textBaseline = "alphabetic";
+  context.fillStyle = "#ffffff";
+  context.font = "700 58px Inter, system-ui, sans-serif";
+  const titleBottom = drawWrappedText(context, title, 80, 220, 920, 66, 2);
+  context.font = "500 28px Inter, system-ui, sans-serif";
+  context.fillStyle = "#bfd4df";
+  drawWrappedText(context, details, 80, titleBottom + 18, 920, 38, 2);
+
+  roundedRect(context, 120, 460, 840, 840, 28);
+  context.fillStyle = "#ffffff";
+  context.fill();
+  context.imageSmoothingEnabled = false;
+  context.drawImage(qr, 156, 496, 768, 768);
+
+  context.fillStyle = "#ffffff";
+  context.font = "700 28px Inter, system-ui, sans-serif";
+  context.textAlign = "center";
+  context.fillText(scanLabel, 540, 1410);
+  context.textAlign = "start";
+
+  return canvas;
 }
 
 export function GameQrShare({
@@ -119,8 +233,14 @@ export function GameQrShare({
   async function downloadQr() {
     const canvas = canvasRef.current;
     if (!canvas || status !== "ready") return;
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png")
+    const brandedCanvas = createBrandedQrCanvas({
+      qr: canvas,
+      title,
+      details,
+      scanLabel,
+    });
+    const blob = await new Promise<Blob | null>(
+      (resolve) => brandedCanvas?.toBlob(resolve, "image/png") ?? resolve(null)
     );
     if (!blob) {
       setMessage("The QR code couldn’t be downloaded. Try copying the link.");
@@ -159,6 +279,7 @@ export function GameQrShare({
               data-game-qr-dialog
               onClose={onClose}
               aria-labelledby={titleId}
+              className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
               aria-describedby={descriptionId}
             >
               <div className="p-5 sm:p-6">
@@ -186,26 +307,46 @@ export function GameQrShare({
                   </Button>
                 </div>
 
-                <div className="relative mx-auto mt-5 aspect-square w-full max-w-72 bg-white p-3 ring-1 ring-black/10">
-                  <canvas
-                    ref={canvasRef}
-                    role="img"
-                    aria-label={`QR code for ${title}`}
-                    className={`h-full w-full ${status === "ready" ? "block" : "invisible"}`}
-                  />
-                  {status !== "ready" ? (
-                    <p
-                      className="absolute inset-3 grid place-items-center text-center text-sm text-slate-600"
-                      role="status"
+                <div className="mx-auto mt-5 w-full max-w-80 overflow-hidden rounded-2xl bg-court text-white ring-1 ring-black/10">
+                  <div className="border-b border-white/10 px-5 pb-5 pt-4">
+                    <div
+                      aria-hidden="true"
+                      className="flex items-center gap-2 text-sm font-bold tracking-[-0.025em]"
                     >
-                      {status === "error" ? "QR unavailable" : "Generating QR…"}
+                      <RelayMark className="h-5 w-5" />
+                      <span>Relay</span>
+                    </div>
+                    <p className="mt-4 break-words text-xl font-bold leading-6 text-white">
+                      {title}
                     </p>
-                  ) : null}
+                    <p className="mt-1.5 break-words text-xs leading-5 text-court-line">
+                      {details}
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <div className="relative aspect-square w-full rounded-xl bg-white p-3">
+                      <canvas
+                        ref={canvasRef}
+                        role="img"
+                        aria-label={`QR code for ${title}`}
+                        className={`h-full w-full ${status === "ready" ? "block" : "invisible"}`}
+                      />
+                      {status !== "ready" ? (
+                        <p
+                          className="absolute inset-3 grid place-items-center text-center text-sm text-slate-600"
+                          role="status"
+                        >
+                          {status === "error"
+                            ? "QR unavailable"
+                            : "Generating QR…"}
+                        </p>
+                      ) : null}
+                    </div>
+                    <p className="mt-4 text-center text-sm font-semibold text-white">
+                      {scanLabel}
+                    </p>
+                  </div>
                 </div>
-
-                <p className="mt-4 text-center text-sm font-semibold">
-                  {scanLabel}
-                </p>
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   <Button
                     type="button"
