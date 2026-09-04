@@ -90,5 +90,6 @@ describe("SessionSettingsForm", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /Court is booked/ }));
     expect(screen.getByLabelText("Booking reference")).toBeVisible();
     expect(screen.getByLabelText("Booking total")).toBeVisible();
+    expect(screen.getByLabelText("Booking notes")).toHaveAttribute("rows", "2");
   });
 });

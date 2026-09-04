@@ -429,8 +429,9 @@ export function SessionSettingsForm({
                 id="settings-booking-notes"
                 name="bookingNotes"
                 maxLength={600}
+                rows={2}
                 defaultValue={value("bookingNotes")}
-                className={`${field} min-h-24 resize-y py-3`}
+                className={`${field} h-auto min-h-[4.5rem] resize-y py-3`}
                 placeholder="Court access, reservation name, or arrival instructions…"
               />
               <ErrorText

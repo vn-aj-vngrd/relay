@@ -60,15 +60,11 @@ export function GameWorkspaceFrame({
               href={`/games/${sessionId}`}
               variant="quiet"
               aria-label="Back to game"
-              className="h-11 min-h-11 shrink-0 px-3"
+              className="-ml-3 h-11 min-h-11 shrink-0 px-3"
             >
               <CaretLeft aria-hidden size={18} />
-              <span className="hidden sm:inline">Back to game</span>
+              <span>Back to game</span>
             </ButtonLink>
-            <span className="h-5 w-px shrink-0 bg-line" aria-hidden />
-            <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
-              {sessionTitle}
-            </p>
           </div>
         </div>
       ) : (
