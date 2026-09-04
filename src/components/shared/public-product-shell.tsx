@@ -1,3 +1,4 @@
+import { SignIn, UserPlus } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
 import { Brand } from "./brand";
@@ -20,23 +21,50 @@ export function PublicProductShell({
         </div>
         <PublicProductNav mode="sidebar" />
         <div className="public-sidebar-auth mt-auto border-t border-line pt-3">
-          <p className="sidebar-label px-2 text-xs leading-5 text-muted">
-            Sign in to save games, invite players, and keep scores.
-          </p>
-          <div className="sidebar-label mt-3 grid grid-cols-2 gap-2">
+          <div className="public-sidebar-auth-expanded">
+            <p className="px-2 text-xs leading-5 text-muted">
+              Sign in to save games, invite players, and keep scores.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Link
+                href="/login"
+                className="pressable inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-surface text-[13px] font-semibold hover:bg-surface-strong"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="pressable inline-flex min-h-9 items-center justify-center rounded-lg bg-primary text-[13px] font-semibold text-white hover:bg-primary-hover"
+              >
+                Sign up
+              </Link>
+            </div>
+          </div>
+          <nav
+            aria-label="Account access"
+            className="public-sidebar-auth-compact flex-col items-center gap-1"
+          >
             <Link
               href="/login"
-              className="pressable inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-surface text-[13px] font-semibold hover:bg-surface-strong"
+              aria-label="Log in to Relay"
+              className="sidebar-nav-item pressable group relative grid h-10 w-10 place-items-center rounded-md text-muted hover:bg-surface-strong hover:text-ink"
             >
-              Log in
+              <SignIn aria-hidden size={19} />
+              <span role="tooltip" className="sidebar-item-tooltip">
+                Log in
+              </span>
             </Link>
             <Link
               href="/signup"
-              className="pressable inline-flex min-h-9 items-center justify-center rounded-lg bg-primary text-[13px] font-semibold text-white hover:bg-primary-hover"
+              aria-label="Create a Relay account"
+              className="sidebar-nav-item pressable group relative grid h-10 w-10 place-items-center rounded-md bg-primary text-white hover:bg-primary-hover"
             >
-              Sign up
+              <UserPlus aria-hidden size={19} />
+              <span role="tooltip" className="sidebar-item-tooltip">
+                Create account
+              </span>
             </Link>
-          </div>
+          </nav>
         </div>
       </aside>
 

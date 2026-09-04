@@ -21,5 +21,15 @@ describe("PublicProductShell", () => {
     expect(
       screen.getByRole("button", { name: "Open sidebar" })
     ).toHaveAttribute("aria-expanded", "false");
+
+    const accountAccess = screen.getByRole("navigation", {
+      name: "Account access",
+    });
+    expect(accountAccess).toContainElement(
+      screen.getByRole("link", { name: "Log in to Relay" })
+    );
+    expect(accountAccess).toContainElement(
+      screen.getByRole("link", { name: "Create a Relay account" })
+    );
   });
 });
