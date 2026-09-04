@@ -135,6 +135,16 @@ export default async function NewGamePage({
         venueId: selectedCourt?.id,
         venueAddress: selectedCourt?.address,
       };
+  const pageTitle = source
+    ? "Play again"
+    : group
+      ? `Game for ${group.name}`
+      : "Plan a game";
+  const pageDescription = source
+    ? "Reuse the practical plan, then choose a new date."
+    : group
+      ? "Set the court and schedule for your crew’s next game."
+      : "Set the court, schedule, players, and access in one place.";
   return (
     <div className="create-game-page w-full">
       <div className="create-game-mobile-header -mx-4 mb-6 flex h-14 items-center gap-1 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:hidden">
@@ -145,14 +155,9 @@ export default async function NewGamePage({
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>
-        <p className="text-sm font-semibold text-ink">
-          {source
-            ? "Play again"
-            : group
-              ? `Game for ${group.name}`
-              : "Create a game"}
-        </p>
+        <p className="text-sm font-semibold text-ink">{pageTitle}</p>
       </div>
+      <p className="mb-7 text-sm text-muted lg:hidden">{pageDescription}</p>
       <Link
         href={user ? "/home" : "/"}
         className="compact-sidebar-back pressable mb-5 hidden min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink lg:inline-flex"
@@ -161,13 +166,8 @@ export default async function NewGamePage({
         {user ? "Back to Home" : "Back to Relay"}
       </Link>
       <header className="mb-10 hidden border-b border-line pb-7 lg:block">
-        <h1 className="app-title">
-          {source
-            ? "Play again"
-            : group
-              ? `Game for ${group.name}`
-              : "Create a game"}
-        </h1>
+        <h1 className="app-title">{pageTitle}</h1>
+        <p className="mt-2 text-sm text-muted">{pageDescription}</p>
       </header>
       <div className="mx-auto mb-7 flex w-full max-w-2xl items-center justify-between gap-4 border-y border-line py-3 text-sm">
         <p className="text-muted">Already at the courts?</p>

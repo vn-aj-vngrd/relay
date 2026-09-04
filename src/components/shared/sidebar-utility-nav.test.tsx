@@ -12,7 +12,7 @@ describe("SidebarUtilityNav", () => {
   it("uses concise labels and exposes the current quick action", () => {
     render(<SidebarUtilityNav />);
 
-    expect(screen.getByRole("link", { name: "Create" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
       "aria-current",
       "page"
     );

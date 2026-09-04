@@ -7,6 +7,7 @@ import {
   ArrowLineUp,
   ArrowsLeftRight,
   ArrowUp,
+  Lightning,
   LockSimple,
   LockSimpleOpen,
   PencilSimple,
@@ -15,6 +16,7 @@ import {
   Trash,
   UserPlus,
 } from "@phosphor-icons/react";
+import Link from "next/link";
 import {
   type FormEvent,
   useEffect,
@@ -25,6 +27,7 @@ import {
 } from "react";
 
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
+import { WizardProgress } from "@/components/shared/wizard-progress";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -350,6 +353,7 @@ function QuickPlaySetup({
   restoreWarning?: string;
 }) {
   const nextPlayerNumber = useRef(5);
+  const playerInputRefs = useRef(new Map<string, HTMLInputElement>());
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [players, setPlayers] = useState(initialPlayers);
   const [pairOrder, setPairOrder] = useState(
@@ -360,6 +364,7 @@ function QuickPlaySetup({
   const [queueRule, setQueueRule] = useState<QueueRule>("adaptive");
   const [roundDuration, setRoundDuration] = useState("");
   const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
+  const [playerErrors, setPlayerErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const courtCount = Number(courtCountInput);
   const requiredPlayerCount = courtCount * 4;
@@ -378,6 +383,12 @@ function QuickPlaySetup({
         player.id === id ? { ...player, ...update } : player
       )
     );
+    setPlayerErrors((current) => {
+      if (!current[id]) return current;
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
     setError("");
   }
 
@@ -399,15 +410,34 @@ function QuickPlaySetup({
     const nextPlayers = players.filter((player) => player.id !== id);
     setPlayers(nextPlayers);
     setPairOrder((current) => current.filter((playerId) => playerId !== id));
+    setPlayerErrors((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
     setError("");
   }
 
   function continueToOptions() {
-    const unnamed = players.findIndex(
-      (player) => player.name.trim().length < 1
+    const counts = new Map<string, number>();
+    for (const player of players) {
+      const name = player.name.trim().toLocaleLowerCase();
+      if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    const nextErrors = Object.fromEntries(
+      players.flatMap((player) => {
+        const name = player.name.trim().toLocaleLowerCase();
+        if (!name) return [[player.id, "Enter a player name."]];
+        if ((counts.get(name) ?? 0) > 1)
+          return [[player.id, "Use a unique player name."]];
+        return [];
+      })
     );
-    if (unnamed >= 0) {
-      setError(`Add a name for Player ${unnamed + 1}.`);
+    setPlayerErrors(nextErrors);
+    const firstInvalidPlayer = players.find((player) => nextErrors[player.id]);
+    if (firstInvalidPlayer) {
+      setError("Enter a unique name for every player.");
+      playerInputRefs.current.get(firstInvalidPlayer.id)?.focus();
       return;
     }
     setError("");
@@ -475,35 +505,30 @@ function QuickPlaySetup({
       aria-labelledby="quick-play-setup"
       className="mx-auto w-full max-w-[1180px]"
     >
-      <header>
+      <header className="mb-10 border-b border-line pb-7">
         <h1 id="quick-play-setup" className="app-title">
-          Set up Play
+          Quick Play
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Add players, choose the court flow, and begin the first rotation.
-          Everything stays on this device.
+        <p className="mt-2 text-sm text-muted">
+          Add players, choose a game format, and start the first rotation.
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl pb-8 pt-6">
-        <ol
-          aria-label="Quick Play setup progress"
-          className="mb-7 grid grid-cols-3 border-y border-line"
-        >
-          {["Players", "Game options", "Review"].map((label, index) => {
-            const number = index + 1;
-            const current = step === number;
-            return (
-              <li
-                key={label}
-                aria-current={current ? "step" : undefined}
-                className={`py-3 text-center text-xs font-semibold sm:text-sm ${current ? "text-primary" : number < step ? "text-ink" : "text-muted"}`}
-              >
-                {number}. {label}
-              </li>
-            );
-          })}
-        </ol>
+      <div className="mx-auto w-full max-w-2xl pb-24 sm:pb-8">
+        <div className="mb-7 flex items-center justify-between gap-4 border-y border-line py-3 text-sm">
+          <p className="text-muted">Want to save and share the game?</p>
+          <Link
+            href="/games/new"
+            className="pressable inline-flex min-h-9 shrink-0 items-center gap-1.5 font-semibold text-primary"
+          >
+            <Lightning aria-hidden size={16} /> Plan a game
+          </Link>
+        </div>
+        <WizardProgress
+          ariaLabel="Quick Play setup progress"
+          labels={["Players", "Game options", "Review"]}
+          step={step}
+        />
         {restoreWarning ? (
           <Alert variant="info" className="mb-6">
             {restoreWarning}
@@ -534,20 +559,42 @@ function QuickPlaySetup({
                 key={player.id}
                 className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-end gap-2 py-3"
               >
-                <div className="min-w-0 space-y-3">
-                  <label className="block text-sm font-[650]">
+                <div className="min-w-0">
+                  <label
+                    htmlFor={`quick-player-name-${index + 1}`}
+                    className="block text-sm font-[650]"
+                  >
                     Player {index + 1}
-                    <input
-                      value={player.name}
-                      onChange={(event) =>
-                        updatePlayer(player.id, { name: event.target.value })
-                      }
-                      maxLength={50}
-                      autoComplete="off"
-                      placeholder="Enter name"
-                      className="field"
-                    />
                   </label>
+                  <input
+                    id={`quick-player-name-${index + 1}`}
+                    ref={(node) => {
+                      if (node) playerInputRefs.current.set(player.id, node);
+                      else playerInputRefs.current.delete(player.id);
+                    }}
+                    value={player.name}
+                    onChange={(event) =>
+                      updatePlayer(player.id, { name: event.target.value })
+                    }
+                    maxLength={50}
+                    autoComplete="off"
+                    placeholder="Enter name"
+                    aria-invalid={Boolean(playerErrors[player.id])}
+                    aria-describedby={
+                      playerErrors[player.id]
+                        ? `quick-player-name-${index + 1}-error`
+                        : undefined
+                    }
+                    className={`field mt-1.5 ${playerErrors[player.id] ? "border-danger focus:border-danger focus:ring-danger/15" : ""}`}
+                  />
+                  {playerErrors[player.id] ? (
+                    <p
+                      id={`quick-player-name-${index + 1}-error`}
+                      className="mt-1.5 text-sm font-medium text-danger"
+                    >
+                      {playerErrors[player.id]}
+                    </p>
+                  ) : null}
                   {mode === "balanced" ? (
                     <SelectField
                       id={`quick-player-${index + 1}-experience`}
@@ -560,6 +607,7 @@ function QuickPlaySetup({
                         })
                       }
                       options={playingExperienceOptions}
+                      className="mt-3"
                     />
                   ) : null}
                 </div>
@@ -829,6 +877,7 @@ function QuickPlaySetup({
           </Alert>
         </section>
 
+        {error ? <Alert className="mt-6">{error}</Alert> : null}
         <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             {step > 1 ? (
@@ -871,11 +920,6 @@ function QuickPlaySetup({
             </Button>
           )}
         </div>
-        {error ? (
-          <p role="alert" className="mt-3 text-sm font-medium text-danger">
-            {error}
-          </p>
-        ) : null}
       </div>
     </section>
   );

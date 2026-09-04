@@ -30,7 +30,7 @@ describe("collection loading boundaries", () => {
   it("uses the create shell instead of the parent Games fallback", () => {
     render(<NewGameLoading />);
     expect(
-      screen.getByRole("heading", { name: "Create a game", level: 1 })
+      screen.getByRole("heading", { name: "Plan a game", level: 1 })
     ).toBeVisible();
     expect(
       screen.queryByRole("heading", { name: "Games", level: 1 })

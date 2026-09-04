@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 const items = [
   {
     href: "/games/new",
-    label: "Create",
+    label: "Plan a game",
     icon: PlusCircle,
     tour: "create",
     includeSubpaths: false,

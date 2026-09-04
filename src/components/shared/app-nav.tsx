@@ -27,7 +27,7 @@ const items = [
   },
   {
     href: "/games/new",
-    label: "Create game",
+    label: "Plan a game",
     icon: PlusCircle,
     primary: true,
     mobileOnly: false,
@@ -81,7 +81,7 @@ export function AppNav({
                 <Link
                   href={href}
                   data-tour={
-                    label === "Create game"
+                    label === "Plan a game"
                       ? "create"
                       : label === "Courts"
                         ? "courts"
@@ -143,7 +143,7 @@ export function AppNav({
               <Link
                 href={href}
                 data-tour={
-                  label === "Create game"
+                  label === "Plan a game"
                     ? "create"
                     : label === "Courts"
                       ? "courts"
@@ -172,7 +172,7 @@ export function AppNav({
                     </span>
                   ) : null}
                 </span>
-                <span>{label === "Create game" ? "Create" : label}</span>
+                <span>{label === "Plan a game" ? "Plan" : label}</span>
               </Link>
             </li>
           );

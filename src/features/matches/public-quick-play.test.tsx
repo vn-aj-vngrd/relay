@@ -44,8 +44,12 @@ describe("PublicQuickPlay", () => {
   it("guides setup through Players, Game options, and Review", () => {
     render(<PublicQuickPlay />);
     expect(
-      screen.getByRole("list", { name: "Quick Play setup progress" })
-    ).toHaveTextContent("1. Players2. Game options3. Review");
+      screen.getByRole("navigation", { name: "Quick Play setup progress" })
+    ).toHaveTextContent("Step 1 of 31Players2Game options3Review");
+    expect(screen.getByRole("link", { name: /Plan a game/ })).toHaveAttribute(
+      "href",
+      "/games/new"
+    );
     namePlayers();
     openOptions();
     expect(
@@ -149,14 +153,19 @@ describe("PublicQuickPlay", () => {
     ).toHaveAttribute("open");
   });
 
-  it("validates unique player names", () => {
+  it("requires a unique name for every player before game options", () => {
     render(<PublicQuickPlay />);
-    namePlayers(["Van", "Van", "Mika", "John"]);
+    namePlayers(["Van", "van", "Mika", ""]);
     openOptions();
-    startFromOptions();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Use a different name for each player."
+    expect(screen.getAllByText("Use a unique player name.")).toHaveLength(2);
+    expect(screen.getByText("Enter a player name.")).toBeVisible();
+    expect(screen.getByLabelText("Player 1")).toHaveAttribute(
+      "aria-invalid",
+      "true"
     );
+    expect(
+      screen.queryByRole("heading", { name: "Choose how this game runs" })
+    ).not.toBeInTheDocument();
   });
 
   it("offers every saved-game Play mode and Relay listboxes", () => {

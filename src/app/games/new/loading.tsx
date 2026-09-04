@@ -24,8 +24,11 @@ export default function NewGameLoading() {
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>
-        <p className="text-sm font-semibold text-ink">Create a game</p>
+        <p className="text-sm font-semibold text-ink">Plan a game</p>
       </div>
+      <p className="mb-7 text-sm text-muted lg:hidden">
+        Set the court, schedule, players, and access in one place.
+      </p>
 
       <Link
         href="/home"
@@ -35,7 +38,10 @@ export default function NewGameLoading() {
         Back to Home
       </Link>
       <header className="mb-10 hidden border-b border-line pb-7 lg:block">
-        <h1 className="app-title">Create a game</h1>
+        <h1 className="app-title">Plan a game</h1>
+        <p className="mt-2 text-sm text-muted">
+          Set the court, schedule, players, and access in one place.
+        </p>
       </header>
 
       <div className="mx-auto w-full max-w-2xl lg:mt-9">
