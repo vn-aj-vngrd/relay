@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
+import { getCurrentUser } from "@/features/auth/session";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
@@ -53,8 +54,9 @@ const primaryAction =
 const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-[13px] font-semibold hover:border-muted hover:bg-surface-strong";
 
-export default function MarketingPage() {
+export default async function MarketingPage() {
   const primaryHref = "/games/new";
+  const signedIn = Boolean(await getCurrentUser());
 
   return (
     <main
@@ -67,15 +69,23 @@ export default function MarketingPage() {
           <Brand />
           <MarketingSectionNav />
           <div className="flex items-center gap-1">
-            <Link
-              href="/login"
-              className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink sm:inline-flex"
-            >
-              Log in
-            </Link>
-            <Link href={primaryHref} className={primaryAction}>
-              Get started
-            </Link>
+            {signedIn ? (
+              <Link href="/home" className={primaryAction}>
+                Open app
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink sm:inline-flex"
+                >
+                  Log in
+                </Link>
+                <Link href={primaryHref} className={primaryAction}>
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -111,8 +121,9 @@ export default function MarketingPage() {
               </Link>
             </div>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted">
-              Plan a game, explore open games, use Quick Play, or find a court
-              before signing up. Log in when you want Relay to keep your game.
+              {signedIn
+                ? "Plan a game, explore open games, use Quick Play, or find a court. Relay keeps it all connected to your account."
+                : "Plan a game, explore open games, use Quick Play, or find a court before signing up. Log in when you want Relay to keep your game."}
             </p>
           </div>
           <div id="product" className="marketing-hero-product mt-16 sm:mt-20">
@@ -416,7 +427,9 @@ export default function MarketingPage() {
             <Link href="/play">Quick Play</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
-            <Link href="/login">Log in</Link>
+            <Link href={signedIn ? "/home" : "/login"}>
+              {signedIn ? "Open app" : "Log in"}
+            </Link>
           </nav>
         </div>
       </footer>
