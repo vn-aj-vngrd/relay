@@ -538,6 +538,7 @@ html[data-density="compact"] .collection-row {
     padding-inline: 0;
   }
   html[data-sidebar="compact"] .sidebar-label,
+  html[data-sidebar="compact"] .public-sidebar-auth,
   html[data-sidebar="compact"] .sidebar-account-copy,
   html[data-sidebar="compact"] .sidebar-account-caret,
   html[data-sidebar="compact"] .sidebar-brand .brand-wordmark {

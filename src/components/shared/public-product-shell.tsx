@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Brand } from "./brand";
 import { PublicProductNav } from "./public-product-nav";
+import { SidebarCollapseToggle } from "./sidebar-collapse-toggle";
 
 export function PublicProductShell({
   children,
@@ -11,11 +12,14 @@ export function PublicProductShell({
   return (
     <div className="app-shell flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
       <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
-        <div className="sidebar-header mb-3 flex h-11 items-center border-b border-line px-1 pb-3">
-          <Brand />
+        <div className="sidebar-header mb-3 flex h-11 items-center justify-between gap-2 border-b border-line px-1 pb-3">
+          <span className="sidebar-brand">
+            <Brand />
+          </span>
+          <SidebarCollapseToggle />
         </div>
         <PublicProductNav mode="sidebar" />
-        <div className="mt-auto border-t border-line pt-3">
+        <div className="public-sidebar-auth mt-auto border-t border-line pt-3">
           <p className="sidebar-label px-2 text-xs leading-5 text-muted">
             Sign in to save games, invite players, and keep scores.
           </p>
