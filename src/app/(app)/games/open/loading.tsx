@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/shared/skeleton";
+import { GameViewMenu } from "@/features/sessions/game-view-menu";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import type { OpenGamesFilters as OpenGamesFilterValues } from "@/features/sessions/open-games";
 import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
@@ -42,7 +43,12 @@ function OpenGameRowSkeleton() {
 export default function OpenGamesLoading() {
   return (
     <div>
-      <h1 className="app-title">Games</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="app-title">Games</h1>
+        <div className="sm:hidden">
+          <GameViewMenu />
+        </div>
+      </div>
       <GamesSectionNav current="open" />
       <OpenGamesFilters filters={defaultFilters} />
       <div

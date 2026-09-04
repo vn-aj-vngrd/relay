@@ -7,12 +7,22 @@ import {
   UsersThree,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { z } from "zod";
 
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 
 import { sessionAccentStyle } from "./accent";
+import type { GameCollectionItem } from "./game-collection-types";
+import { useGameViewMode } from "./game-view-menu";
+import { GamesCalendar } from "./games-calendar";
 import type {
   OpenGameItem,
   OpenGamesFilters,
@@ -60,18 +70,75 @@ function rosterState(game: OpenGameItem) {
   return `${spots} ${spots === 1 ? "spot" : "spots"} left`;
 }
 
+function trackOpenGame(gameId: string) {
+  void trackDiscoveryEvent({
+    event: "public_game_opened",
+    sessionId: gameId,
+    source: "open-games",
+  });
+}
+
+function openGameHref(game: OpenGameItem) {
+  return `/games/${game.id}?source=open-games`;
+}
+
+function manilaDateKey(value: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: "Asia/Manila",
+  }).formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
+function toCalendarGame(game: OpenGameItem): GameCollectionItem {
+  return {
+    id: game.id,
+    href: openGameHref(game),
+    title: game.title,
+    date: game.date,
+    dateKey: manilaDateKey(game.startsAt),
+    endsAt: game.endsAt,
+    time: game.time,
+    venue: game.venue,
+    playerCount: game.playerCount,
+    capacity: game.capacity,
+    status: game.status,
+    accentColor: game.accentColor,
+    viewerRsvp: game.viewerRsvp ?? "declined",
+    invitedAt: game.startsAt,
+    hostName: game.hostName,
+    estimatedCostCents: game.estimatedCostCents,
+    requiresApproval: game.requiresApproval,
+    spotsRemaining: Math.max(0, game.capacity - game.playerCount),
+    canReplay: false,
+  };
+}
+
+function getWeekStart(): "sunday" | "monday" {
+  return localStorage.getItem("relay-week-start") === "monday"
+    ? "monday"
+    : "sunday";
+}
+
+function subscribeToWeekStart(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("relay-preferences-change", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("relay-preferences-change", callback);
+  };
+}
+
 function OpenGameRow({ game }: { game: OpenGameItem }) {
   return (
     <Link
-      href={`/games/${game.id}?source=open-games`}
+      href={openGameHref(game)}
       prefetch={false}
-      onClick={() =>
-        void trackDiscoveryEvent({
-          event: "public_game_opened",
-          sessionId: game.id,
-          source: "open-games",
-        })
-      }
+      onClick={() => trackOpenGame(game.id)}
       style={sessionAccentStyle(game.accentColor)}
       className="collection-row pressable group block px-2 py-4 hover:bg-surface-strong sm:grid sm:min-h-24 sm:grid-cols-[minmax(0,1.4fr)_minmax(9rem,1fr)_auto] sm:items-center sm:gap-6 sm:px-3"
     >
@@ -125,18 +192,107 @@ function OpenGameRow({ game }: { game: OpenGameItem }) {
   );
 }
 
+function OpenGameCard({ game }: { game: OpenGameItem }) {
+  return (
+    <article
+      style={sessionAccentStyle(game.accentColor)}
+      className="game-grid-item flex min-w-0 flex-col rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 sm:p-5"
+    >
+      <Link
+        href={openGameHref(game)}
+        prefetch={false}
+        onClick={() => trackOpenGame(game.id)}
+        className="pressable group flex min-w-0 flex-1 flex-col"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <time className="score text-xs font-bold text-primary">
+            {game.date}
+          </time>
+          <span className="score text-right text-xs text-muted">
+            {game.playerCount} / {game.capacity}
+          </span>
+        </div>
+        <h2 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 group-hover:text-primary sm:mt-5 sm:text-lg sm:leading-normal">
+          {game.title}
+        </h2>
+        <p className="mt-1 text-xs text-muted">Hosted by {game.hostName}</p>
+        <div className="mt-3 space-y-1.5 text-[13px] text-muted sm:space-y-2 sm:text-sm">
+          <p className="flex min-w-0 items-center gap-2">
+            <CalendarBlank aria-hidden size={15} className="shrink-0" />
+            <span className="truncate">{game.time}</span>
+          </p>
+          <p className="flex min-w-0 items-center gap-2">
+            <MapPin aria-hidden size={15} className="shrink-0" />
+            <span className="truncate">{game.venue}</span>
+          </p>
+          <p className="flex min-w-0 items-center gap-2">
+            <UsersThree aria-hidden size={15} className="shrink-0" />
+            <span>{rosterState(game)}</span>
+          </p>
+        </div>
+        <div className="mt-auto flex items-end justify-between gap-3 pt-5">
+          <div>
+            <p className="score text-sm font-bold text-ink">
+              {peso(game.estimatedCostCents)}
+            </p>
+            {game.requiresApproval && !game.viewerRsvp ? (
+              <p className="mt-1 text-xs text-muted">Approval required</p>
+            ) : null}
+          </div>
+          <span className="inline-flex items-center gap-1 text-sm font-[650] text-primary">
+            Open
+            <CaretRight
+              aria-hidden
+              size={14}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
+          </span>
+        </div>
+      </Link>
+    </article>
+  );
+}
+
 export function OpenGamesCollection({
   initialPage,
   filters,
+  todayKey,
+  initialMonth,
+  initialDate,
 }: {
   initialPage: OpenGamesPage;
   filters: OpenGamesFilters;
+  todayKey?: string;
+  initialMonth?: string;
+  initialDate?: string;
 }) {
+  const resolvedTodayKey = todayKey ?? manilaDateKey(new Date().toISOString());
+  const mode = useGameViewMode();
+  const weekStart = useSyncExternalStore(
+    subscribeToWeekStart,
+    getWeekStart,
+    (): "sunday" | "monday" => "sunday"
+  );
   const [items, setItems] = useState(initialPage.items);
   const [nextCursor, setNextCursor] = useState(initialPage.nextCursor);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [monthKey, setMonthKey] = useState(
+    initialMonth ?? resolvedTodayKey.slice(0, 7)
+  );
+  const [selectedDate, setSelectedDate] = useState(
+    initialDate ?? resolvedTodayKey
+  );
+  const [calendarItems, setCalendarItems] = useState<OpenGameItem[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [calendarRetry, setCalendarRetry] = useState(0);
+  const calendarCache = useRef(new Map<string, OpenGameItem[]>());
+  const calendarGames = useMemo(
+    () => calendarItems.map(toCalendarGame),
+    [calendarItems]
+  );
 
   useEffect(() => {
     void trackDiscoveryEvent({
@@ -144,6 +300,107 @@ export function OpenGamesCollection({
       source: "open-games",
     });
   }, []);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const requestedMonth = params.get("month");
+      const nextMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth ?? "")
+        ? requestedMonth!
+        : resolvedTodayKey.slice(0, 7);
+      const requestedDate = params.get("selectedDate");
+      const nextDate =
+        requestedDate?.startsWith(nextMonth) &&
+        /^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(requestedDate)
+          ? requestedDate
+          : nextMonth === resolvedTodayKey.slice(0, 7)
+            ? resolvedTodayKey
+            : `${nextMonth}-01`;
+      setMonthKey(nextMonth);
+      setSelectedDate(nextDate);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [resolvedTodayKey]);
+
+  useEffect(() => {
+    if (mode !== "calendar") return;
+    const controller = new AbortController();
+    const cached = calendarCache.current.get(monthKey);
+    setCalendarItems(cached ?? []);
+    setCalendarLoading(true);
+    setCalendarError(null);
+
+    const loadMonth = async () => {
+      const monthItems: OpenGameItem[] = [];
+      let cursor = "";
+      do {
+        const params = new URLSearchParams({
+          month: monthKey,
+          date: filters.date,
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+          time: filters.time,
+          timeFrom: filters.timeFrom,
+          timeTo: filters.timeTo,
+          location: filters.location,
+          available: filters.available ? "1" : "",
+        });
+        if (cursor) params.set("cursor", cursor);
+        const response = await fetch(`/api/games/open?${params}`, {
+          credentials: "same-origin",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("This month could not be loaded.");
+        const parsed = pageSchema.safeParse(await response.json());
+        if (!parsed.success)
+          throw new Error("The server returned invalid calendar data.");
+        monthItems.push(...parsed.data.items);
+        cursor = parsed.data.nextCursor ?? "";
+      } while (cursor && !controller.signal.aborted);
+      if (controller.signal.aborted) return;
+      calendarCache.current.set(monthKey, monthItems);
+      setCalendarItems(monthItems);
+    };
+
+    void loadMonth()
+      .catch((cause: unknown) => {
+        if (controller.signal.aborted) return;
+        setCalendarError(
+          cause instanceof Error
+            ? cause.message
+            : "This month could not be loaded."
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setCalendarLoading(false);
+      });
+    return () => controller.abort();
+  }, [calendarRetry, filters, mode, monthKey]);
+
+  const updateCalendarUrl = (nextMonth: string, nextDate: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("month", nextMonth);
+    url.searchParams.set("selectedDate", nextDate);
+    window.history.pushState(null, "", `${url.pathname}?${url.searchParams}`);
+  };
+  const handleMonthChange = (nextMonth: string, nextDate: string) => {
+    setMonthKey(nextMonth);
+    setSelectedDate(nextDate);
+    updateCalendarUrl(nextMonth, nextDate);
+  };
+  const handleDateSelect = (nextDate: string) => {
+    setSelectedDate(nextDate);
+    const url = new URL(window.location.href);
+    url.searchParams.set("month", nextDate.slice(0, 7));
+    url.searchParams.set("selectedDate", nextDate);
+    window.history.replaceState(
+      null,
+      "",
+      `${url.pathname}?${url.searchParams}`
+    );
+  };
 
   const loadMore = useCallback(async () => {
     if (!nextCursor || loading) return;
@@ -211,13 +468,40 @@ export function OpenGamesCollection({
       </section>
     );
 
-  return (
-    <div>
-      <div className="divide-y divide-line border-t border-line">
-        {items.map((game) => (
-          <OpenGameRow key={game.id} game={game} />
-        ))}
+  if (mode === "calendar")
+    return (
+      <div data-testid="open-games-calendar">
+        <GamesCalendar
+          upcoming={calendarGames}
+          past={[]}
+          todayKey={resolvedTodayKey}
+          weekStart={weekStart}
+          monthKey={monthKey}
+          selectedDate={selectedDate}
+          loading={calendarLoading}
+          error={calendarError}
+          onMonthChange={handleMonthChange}
+          onSelectDate={handleDateSelect}
+          onRetry={() => setCalendarRetry((value) => value + 1)}
+        />
       </div>
+    );
+
+  return (
+    <div data-testid={mode === "grid" ? "open-games-grid" : "open-games-list"}>
+      {mode === "grid" ? (
+        <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+          {items.map((game) => (
+            <OpenGameCard key={game.id} game={game} />
+          ))}
+        </div>
+      ) : (
+        <div className="divide-y divide-line border-t border-line">
+          {items.map((game) => (
+            <OpenGameRow key={game.id} game={game} />
+          ))}
+        </div>
+      )}
       <div
         ref={sentinelRef}
         className="flex min-h-16 items-center justify-center"

@@ -87,8 +87,10 @@ export async function discoverOpenGames(
   userId: string,
   filters: OpenGamesFilters,
   cursor: OpenGameCursor | null = null,
-  now = new Date()
+  now = new Date(),
+  month?: string
 ): Promise<OpenGamesPage> {
+  const pageSize = month ? 100 : OPEN_GAME_PAGE_SIZE;
   const goingCount = sql<number>`(
     select count(*)::int
     from ${sessionPlayers}
@@ -124,6 +126,9 @@ export async function discoverOpenGames(
         isNotNull(sessions.estimatedCostCents),
         dateCondition(filters, now),
         timeCondition(filters),
+        month
+          ? sql`to_char(${sessions.startsAt} at time zone ${sessions.timezone}, 'YYYY-MM') = ${month}`
+          : undefined,
         filters.location
           ? or(
               ilike(sessions.venueName, locationPattern),
@@ -142,10 +147,10 @@ export async function discoverOpenGames(
       )
     )
     .orderBy(asc(sessions.startsAt), asc(sessions.id))
-    .limit(OPEN_GAME_PAGE_SIZE + 1);
+    .limit(pageSize + 1);
 
-  const hasMore = rows.length > OPEN_GAME_PAGE_SIZE;
-  const pageRows = rows.slice(0, OPEN_GAME_PAGE_SIZE);
+  const hasMore = rows.length > pageSize;
+  const pageRows = rows.slice(0, pageSize);
   const sessionIds = pageRows.map((row) => row.id);
   const memberships = sessionIds.length
     ? await db

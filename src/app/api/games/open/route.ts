@@ -44,7 +44,15 @@ export async function GET(request: NextRequest) {
   });
   const cursorValue = request.nextUrl.searchParams.get("cursor");
   const cursor = parseOpenGameCursor(cursorValue);
-  if (!parsedFilters.success || (cursorValue && !cursor))
+  const requestedMonth = request.nextUrl.searchParams.get("month");
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth ?? "")
+    ? requestedMonth!
+    : undefined;
+  if (
+    !parsedFilters.success ||
+    (cursorValue && !cursor) ||
+    (requestedMonth && !month)
+  )
     return Response.json(
       { error: "Invalid Open games request" },
       {
@@ -58,7 +66,13 @@ export async function GET(request: NextRequest) {
 
   try {
     return Response.json(
-      await discoverOpenGames(user.id, parsedFilters.data, cursor),
+      await discoverOpenGames(
+        user.id,
+        parsedFilters.data,
+        cursor,
+        new Date(),
+        month
+      ),
       {
         headers: {
           ...rateLimitHeaders(limit),

@@ -37,12 +37,12 @@ function saveView(mode: GameViewMode) {
   window.dispatchEvent(new Event("relay-games-view-change"));
 }
 
+export function useGameViewMode() {
+  return useSyncExternalStore(subscribe, getView, (): GameViewMode => "list");
+}
+
 export function GameViewMenu() {
-  const mode = useSyncExternalStore(
-    subscribe,
-    getView,
-    (): GameViewMode => "list"
-  );
+  const mode = useGameViewMode();
   return (
     <MobileViewMenu
       label="Game view"
@@ -54,11 +54,7 @@ export function GameViewMenu() {
 }
 
 export function GameDesktopViewControls() {
-  const mode = useSyncExternalStore(
-    subscribe,
-    getView,
-    (): GameViewMode => "list"
-  );
+  const mode = useGameViewMode();
 
   return (
     <div
