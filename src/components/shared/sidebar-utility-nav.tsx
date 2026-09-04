@@ -43,7 +43,7 @@ const items = [
 export function SidebarUtilityNav() {
   const pathname = usePathname();
   return (
-    <nav aria-label="Quick actions">
+    <nav aria-label="Quick actions" className="mb-3 border-b border-line pb-3">
       <ul className="space-y-0.5">
         {items.map(({ href, label, icon: Icon, tour, includeSubpaths }) => {
           const active = includeSubpaths

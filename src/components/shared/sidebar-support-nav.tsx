@@ -1,22 +1,10 @@
 "use client";
 
-import {
-  Bell,
-  ChatText,
-  Lifebuoy,
-  PlusCircle,
-  ShieldCheck,
-} from "@phosphor-icons/react";
+import { Bell, ChatText, Lifebuoy, PlusCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SidebarSupportNav({
-  unreadCount,
-  isAdmin,
-}: {
-  unreadCount: number;
-  isAdmin: boolean;
-}) {
+export function SidebarSupportNav({ unreadCount }: { unreadCount: number }) {
   const pathname = usePathname();
   const items = [
     {
@@ -33,25 +21,13 @@ export function SidebarSupportNav({
     },
     { href: "/help", label: "Help Center", icon: Lifebuoy, badge: 0 },
     { href: "/feedback", label: "Send feedback", icon: ChatText, badge: 0 },
-    ...(isAdmin
-      ? [
-          {
-            href: "/admin",
-            label: "Admin console",
-            icon: ShieldCheck,
-            badge: 0,
-          },
-        ]
-      : []),
   ];
 
   return (
     <nav aria-label="Account support">
       <ul className="space-y-1">
         {items.map(({ href, label, icon: Icon, badge }) => {
-          const active =
-            pathname === href ||
-            (href === "/admin" && pathname.startsWith("/admin/"));
+          const active = pathname === href;
           return (
             <li key={href}>
               <Link
