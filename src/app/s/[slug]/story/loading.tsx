@@ -9,7 +9,7 @@ export default function PublicStoryLoading() {
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
         <h1 className="public-tab-title app-title">Story</h1>
         <p className="public-tab-description mt-2 text-sm text-muted">
-          Story-ready highlights, photos, reactions, and notes from the crew.
+          Preparing the shareable game story and available photos.
         </p>
         <div className="sm:mt-7">
           <MemoriesSkeleton />

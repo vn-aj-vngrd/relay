@@ -14,20 +14,30 @@ export default async function GameStoryPage({
 }) {
   const user = await requireUser();
   const data = await getSessionForWorkspace((await params).id, user.id);
-  if (
-    !data ||
-    !["published", "live", "completed"].includes(data.session.status)
-  )
-    notFound();
+  if (!data) notFound();
   const { recap, memory } = await getSessionRecap(data.session.id);
   const canContribute =
     canManageSessionWorkspace(data.access) || data.membership?.rsvp === "going";
   const description =
     data.session.status === "completed"
-      ? "Make a shareable recap and add photos from the game."
+      ? "Make a shareable story or revisit photos from the game."
       : data.session.status === "live"
-        ? "The final Story will appear after the host ends the game."
-        : "Scores and photos will appear here after the game is played.";
+        ? "Share a safe live update while play continues."
+        : data.session.status === "cancelled"
+          ? "This game ended before a story could be made."
+          : data.session.status === "draft"
+            ? "Publish the game before sharing its invitation."
+            : "Share the invitation before everyone reaches the court.";
+  const goingCount = data.roster.filter(
+    ({ player }) => player.rsvp === "going"
+  ).length;
+  const host = data.roster.find(({ player }) => player.role === "host");
+  const hostName = host?.profile?.name ?? host?.player.guestName ?? "The host";
+  const storyAsOf = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: data.session.timezone,
+  }).format(new Date());
 
   return (
     <>
@@ -39,6 +49,9 @@ export default async function GameStoryPage({
           memory={memory}
           canContribute={canContribute}
           viewerPlayerId={data.membership?.id}
+          goingCount={goingCount}
+          hostName={hostName}
+          storyAsOf={storyAsOf}
         />
       </div>
     </>

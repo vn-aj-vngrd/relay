@@ -1,7 +1,13 @@
 import Image from "next/image";
 
 import type { SessionRecap } from "./recap";
-import { type RecapShareTemplateId, viewerStanding } from "./recap-share";
+import {
+  invitationStateLabel,
+  type RecapShareTemplateId,
+  type StoryInvitationFacts,
+  type StoryPhase,
+  viewerStanding,
+} from "./recap-share";
 
 export type RecapBackground = {
   id: string;
@@ -36,7 +42,11 @@ export function RecapStoryCard({
   photoPosition = 50,
   customHeadline = "Our kind of game.",
   customNote = "",
+  storyAsOf,
   className = "",
+  phase = "completed",
+  invitation,
+  courtCount = 0,
 }: {
   title: string;
   venue: string;
@@ -51,7 +61,11 @@ export function RecapStoryCard({
   photoPosition?: number;
   customHeadline?: string;
   customNote?: string;
+  storyAsOf?: string;
   className?: string;
+  phase?: StoryPhase;
+  invitation?: StoryInvitationFacts;
+  courtCount?: number;
 }) {
   const personal = viewerStanding(recap, viewerPlayerId);
   const light = Boolean(background.light) && !background.imageUrl;
@@ -96,10 +110,159 @@ export function RecapStoryCard({
       ) : null}
       <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-[7%] text-[clamp(8px,3.4cqw,12px)] font-bold tracking-[0.08em]">
         <span className="h-2 w-2 rounded-full" style={{ background: accent }} />
-        RELAY · NIGHT MEMORY
+        RELAY ·{" "}
+        {phase === "published"
+          ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}`
+          : phase === "live"
+            ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}`
+            : "NIGHT MEMORY"}
       </div>
       <div className={`absolute inset-x-0 ${contentPosition}`}>
         <div className={contentFrame}>
+          {template === "invitation" && invitation ? (
+            <>
+              <p className="line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+                {title}
+              </p>
+              <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
+                {date} · {venue}
+              </p>
+              <p
+                className={`mt-2 text-[clamp(9px,3.4cqw,13px)] font-semibold ${secondary}`}
+              >
+                Hosted by {invitation.hostName}
+              </p>
+              <div
+                className={`mt-[10%] grid grid-cols-2 border-y py-[7%] ${light ? "border-black/15" : "border-white/20"}`}
+              >
+                <p>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {invitation.priceLabel}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    per player
+                  </span>
+                </p>
+                <p className="text-right">
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {invitation.goingCount}/{invitation.capacity}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    Going
+                  </span>
+                </p>
+              </div>
+              <p
+                className={`mt-[7%] text-[clamp(10px,4cqw,15px)] ${secondary}`}
+              >
+                {invitationStateLabel(invitation)}
+              </p>
+            </>
+          ) : null}
+
+          {template === "spots" && invitation ? (
+            <>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                WHO’S IN?
+              </p>
+              <p className="score mt-[7%] text-[clamp(48px,22cqw,92px)] font-bold leading-none tracking-[-0.04em]">
+                {invitation.waitlistOpen
+                  ? "FULL"
+                  : Math.max(0, invitation.capacity - invitation.goingCount)}
+              </p>
+              <p className={`mt-3 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
+                {invitation.waitlistOpen
+                  ? "Waitlist open"
+                  : `${Math.max(0, invitation.capacity - invitation.goingCount)} ${invitation.capacity - invitation.goingCount === 1 ? "spot" : "spots"} open`}
+              </p>
+              <div
+                className={`mt-[9%] border-y py-[6%] ${light ? "border-black/15" : "border-white/20"}`}
+              >
+                <p className="text-[clamp(17px,7cqw,32px)] font-bold leading-tight">
+                  {title}
+                </p>
+                <p
+                  className={`mt-2 text-[clamp(9px,3.5cqw,13px)] ${secondary}`}
+                >
+                  {date} · {venue}
+                </p>
+              </div>
+              <p
+                className={`mt-[6%] text-[clamp(9px,3.4cqw,13px)] font-semibold ${secondary}`}
+              >
+                Hosted by {invitation.hostName}
+              </p>
+            </>
+          ) : null}
+
+          {template === "live" ? (
+            <>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                LIVE · AS OF {storyAsOf ?? "THIS UPDATE"}
+              </p>
+              <p className="mt-3 line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+                {title}
+              </p>
+              <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
+                {venue}
+              </p>
+              <div
+                className={`mt-[10%] grid grid-cols-2 border-y py-[7%] text-center ${light ? "border-black/15" : "border-white/20"}`}
+              >
+                <p>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {recap.matchCount}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    completed matches
+                  </span>
+                </p>
+                <p>
+                  <strong className="score block text-[clamp(18px,8cqw,38px)]">
+                    {courtCount}
+                  </strong>
+                  <span className={`text-[clamp(8px,3cqw,12px)] ${secondary}`}>
+                    {courtCount === 1 ? "planned court" : "planned courts"}
+                  </span>
+                </p>
+              </div>
+            </>
+          ) : null}
+
+          {template === "live-pulse" ? (
+            <>
+              <p
+                className={`text-[clamp(9px,3.5cqw,13px)] font-semibold ${secondary}`}
+              >
+                MATCH PULSE
+              </p>
+              <p className="score mt-[7%] text-[clamp(48px,22cqw,92px)] font-bold leading-none tracking-[-0.06em]">
+                {recap.matchCount}
+              </p>
+              <p className={`mt-3 text-[clamp(10px,4cqw,15px)] ${secondary}`}>
+                {recap.matchCount === 1
+                  ? "match complete at this snapshot"
+                  : "matches complete at this snapshot"}
+              </p>
+              <div
+                className={`mt-[10%] border-y py-[7%] ${light ? "border-black/15" : "border-white/20"}`}
+              >
+                <p className="text-[clamp(18px,7.5cqw,34px)] font-bold leading-tight">
+                  {title}
+                </p>
+                <p
+                  className={`mt-2 text-[clamp(9px,3.5cqw,13px)] ${secondary}`}
+                >
+                  Live at {venue}
+                </p>
+              </div>
+            </>
+          ) : null}
+
           {template === "overview" ? (
             <>
               <p className="line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">

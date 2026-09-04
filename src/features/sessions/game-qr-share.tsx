@@ -10,6 +10,19 @@ import { trackSharedSessionEvent } from "@/features/analytics/actions";
 
 const subscribeToBrowser = () => () => undefined;
 
+function trackQrShare(
+  sessionId: string,
+  event: "invite_shared" | "recap_shared"
+) {
+  try {
+    void Promise.resolve(trackSharedSessionEvent({ sessionId, event })).catch(
+      () => undefined
+    );
+  } catch {
+    // Analytics is best-effort and must not change successful share feedback.
+  }
+}
+
 function downloadName(title: string) {
   const safe = title
     .toLowerCase()
@@ -27,6 +40,10 @@ export function GameQrShare({
   menuItem = false,
   onClose,
   onShared,
+  heading,
+  description,
+  scanLabel = "Scan to view and RSVP",
+  event = "invite_shared",
 }: {
   url: string;
   title: string;
@@ -35,6 +52,10 @@ export function GameQrShare({
   menuItem?: boolean;
   onClose?: () => void;
   onShared?: (method: "copy" | "download") => void;
+  heading?: string;
+  description?: string;
+  scanLabel?: string;
+  event?: "invite_shared" | "recap_shared";
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -88,7 +109,7 @@ export function GameQrShare({
     try {
       await navigator.clipboard.writeText(absoluteUrlRef.current);
       setMessage("Game link copied");
-      await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
+      trackQrShare(sessionId, event);
       onShared?.("copy");
     } catch {
       setMessage("The link couldn’t be copied. Use Share game instead.");
@@ -112,7 +133,7 @@ export function GameQrShare({
     anchor.click();
     URL.revokeObjectURL(objectUrl);
     setMessage("QR code downloaded");
-    await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
+    trackQrShare(sessionId, event);
     onShared?.("download");
   }
 
@@ -144,14 +165,14 @@ export function GameQrShare({
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h2 id={titleId} className="text-lg font-[680]">
-                      Scan to join {title}
+                      {heading ?? `Scan to join ${title}`}
                     </h2>
                     <p
                       id={descriptionId}
                       className="mt-1 text-sm leading-6 text-muted"
                     >
-                      {details}. Players can scan this with their phone camera
-                      to view the plan and RSVP.
+                      {description ??
+                        `${details}. Players can scan this with their phone camera to view the plan and RSVP.`}
                     </p>
                   </div>
                   <Button
@@ -183,7 +204,7 @@ export function GameQrShare({
                 </div>
 
                 <p className="mt-4 text-center text-sm font-semibold">
-                  Scan to view and RSVP
+                  {scanLabel}
                 </p>
                 <div className="mt-5 grid grid-cols-2 gap-2">
                   <Button

@@ -114,6 +114,39 @@ describe("GameQrShare", () => {
     expect(mocks.track).toHaveBeenCalledTimes(2);
   });
 
+  it("supports contextual story copy while preserving the default scan copy", async () => {
+    const { unmount } = render(<GameQrShare {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Scan to join Friends Night" })
+    ).toHaveTextContent("Scan to view and RSVP");
+    unmount();
+
+    render(
+      <GameQrShare
+        {...props}
+        heading="Scan to open Friends Night"
+        description="Open this game in Relay."
+        scanLabel="Scan to open game"
+        event="recap_shared"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Scan to open Friends Night" })
+    ).toHaveTextContent("Open this game in Relay.");
+    expect(screen.getByText("Scan to open game")).toBeVisible();
+  });
+
+  it("keeps successful copy feedback when analytics fails", async () => {
+    mocks.track.mockRejectedValueOnce(new Error("analytics unavailable"));
+    render(<GameQrShare {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+    await screen.findByRole("button", { name: "Copy link" });
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(await screen.findByText("Game link copied")).toBeVisible();
+  });
+
   it("closes with a labeled keyboard-focusable action", async () => {
     render(<GameQrShare {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Show QR" }));

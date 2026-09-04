@@ -1,39 +1,58 @@
 "use server";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { memories, memoryMedia, sessionPlayers, sessions } from "@/db/schema";
-import { requireUser } from "@/features/auth/session";
+import { memories, memoryMedia, sessions } from "@/db/schema";
+import { getCurrentUser } from "@/features/auth/session";
+import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
+import { canContributeMemory } from "./permissions";
+
 async function requireCompletedParticipant(sessionId: string) {
-  const user = await requireUser();
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.id, sessionId),
   });
-  const player = await db.query.sessionPlayers.findFirst({
-    where: and(
-      eq(sessionPlayers.sessionId, sessionId),
-      eq(sessionPlayers.userId, user.id),
-      eq(sessionPlayers.rsvp, "going")
-    ),
-  });
+  if (session?.status !== "completed")
+    throw new Error("Photos can be added after the game ends.");
+
+  const viewer = await getSessionViewer(session.id, session.slug);
+  const user = viewer?.user ?? (await getCurrentUser());
+  const player = viewer?.player;
   if (
-    session?.status !== "completed" ||
-    (!player && session.hostId !== user.id)
+    !canContributeMemory(session, {
+      userId: user?.id,
+      player,
+    })
   )
-    throw new Error("Only players can add to this memory");
+    throw new Error("Only players and organizers can add game photos.");
+
   let memory = await db.query.memories.findFirst({
     where: eq(memories.sessionId, sessionId),
   });
-  if (!memory)
-    [memory] = await db.insert(memories).values({ sessionId }).returning();
-  return { user, session, memory };
+  if (!memory) {
+    [memory] = await db
+      .insert(memories)
+      .values({ sessionId })
+      .onConflictDoNothing({ target: memories.sessionId })
+      .returning();
+    memory ??= await db.query.memories.findFirst({
+      where: eq(memories.sessionId, sessionId),
+    });
+  }
+  if (!memory) throw new Error("The game memory could not be prepared.");
+
+  return {
+    actorKey: user ? `user:${user.id}` : `guest:${player?.id}`,
+    uploaderId: user?.id ?? null,
+    session,
+    memory,
+  };
 }
 
 export type MemoryPhotoActionState = { error?: string; success?: boolean };
@@ -63,7 +82,7 @@ export async function uploadMemoryPhotoState(
 
 async function uploadMemoryPhoto(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const { user, session, memory } =
+  const { actorKey, uploaderId, session, memory } =
     await requireCompletedParticipant(sessionId);
   const file = formData.get("photo");
   if (
@@ -77,7 +96,7 @@ async function uploadMemoryPhoto(formData: FormData) {
     throw new Error("That file doesn’t appear to be a valid image.");
   const limit = await checkRateLimit(
     { scope: "memory-photo", limit: 20, windowSeconds: 86400 },
-    `user:${user.id}`
+    actorKey
   );
   if (!limit.allowed)
     throw new Error(
@@ -89,7 +108,7 @@ async function uploadMemoryPhoto(formData: FormData) {
     .max(240)
     .parse(formData.get("caption") ?? "");
   const extension = file.type.split("/")[1].replace("jpeg", "jpg");
-  const path = `${sessionId}/${user.id}/${crypto.randomUUID()}.${extension}`;
+  const path = `${sessionId}/${actorKey.replace(":", "-")}/${crypto.randomUUID()}.${extension}`;
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.storage
     .from("session-memories")
@@ -98,7 +117,7 @@ async function uploadMemoryPhoto(formData: FormData) {
   try {
     await db.insert(memoryMedia).values({
       memoryId: memory.id,
-      uploaderId: user.id,
+      uploaderId,
       storagePath: path,
       mediaType: "image",
       caption: caption || null,

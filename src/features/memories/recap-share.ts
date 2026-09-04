@@ -1,6 +1,21 @@
 import type { SessionRecap } from "./recap";
 
+export type StoryPhase = "published" | "live" | "completed";
+
+export type StoryInvitationFacts = {
+  hostName: string;
+  priceLabel: string;
+  goingCount: number;
+  capacity: number;
+  requiresApproval: boolean;
+  waitlistOpen: boolean;
+};
+
 export type RecapShareTemplateId =
+  | "invitation"
+  | "spots"
+  | "live"
+  | "live-pulse"
   | "overview"
   | "personal"
   | "winning-team"
@@ -20,6 +35,26 @@ export type RecapShareTemplate = {
 };
 
 const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
+  invitation: {
+    id: "invitation",
+    label: "Invitation",
+    description: "The plan, price, and place",
+  },
+  spots: {
+    id: "spots",
+    label: "Who’s in?",
+    description: "Open spots and the plan",
+  },
+  live: {
+    id: "live",
+    label: "We’re playing",
+    description: "Safe progress from the courts",
+  },
+  "live-pulse": {
+    id: "live-pulse",
+    label: "Match pulse",
+    description: "Completed games, still going",
+  },
   overview: {
     id: "overview",
     label: "Night recap",
@@ -77,10 +112,25 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   },
 };
 
+export function invitationStateLabel(facts: StoryInvitationFacts) {
+  if (facts.requiresApproval && facts.waitlistOpen)
+    return "Host approval required · Waitlist open";
+  if (facts.waitlistOpen) return "Full · waitlist open";
+  const spots = Math.max(0, facts.capacity - facts.goingCount);
+  const availability = `${spots} ${spots === 1 ? "spot" : "spots"} open`;
+  return facts.requiresApproval
+    ? `${availability} · Host approval required`
+    : availability;
+}
+
 export function recapShareTemplates(
   recap: SessionRecap,
-  viewerPlayerId?: string | null
+  viewerPlayerId?: string | null,
+  phase: StoryPhase = "completed"
 ) {
+  if (phase === "published") return [templates.invitation, templates.spots];
+  if (phase === "live") return [templates.live, templates["live-pulse"]];
+  if (recap.matchCount === 0) return [templates.custom];
   return [
     templates.overview,
     ...(viewerPlayerId &&

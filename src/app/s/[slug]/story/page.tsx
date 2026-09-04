@@ -5,6 +5,7 @@ import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
+import { getSessionViewer } from "@/features/sessions/viewer";
 
 export default async function PublicStoryPage({
   params,
@@ -12,24 +13,37 @@ export default async function PublicStoryPage({
   params: Promise<{ slug: string }>;
 }) {
   const slug = (await params).slug;
-  const [data, user] = await Promise.all([
-    getPublicSession(slug),
+  const data = await getPublicSession(slug);
+  if (!data) notFound();
+  const [{ recap, memory }, viewer, user] = await Promise.all([
+    getSessionRecap(data.session.id),
+    getSessionViewer(data.session.id, data.session.slug),
     getCurrentUser(),
   ]);
-  if (!data) notFound();
-  const { recap, memory } = await getSessionRecap(data.session.id);
-  const viewerPlayer = user
-    ? data.roster.find(({ player }) => player.userId === user.id)?.player
-    : null;
+  const viewerPlayer = viewer?.player;
   const canContribute = Boolean(
-    user && (data.session.hostId === user.id || viewerPlayer?.rsvp === "going")
+    (user && data.session.hostId === user.id) ||
+      viewerPlayer?.role === "host" ||
+      viewerPlayer?.role === "cohost" ||
+      viewerPlayer?.rsvp === "going"
   );
   const description =
     data.session.status === "completed"
-      ? "View the final scores and photos from the game."
+      ? "Make a shareable story or revisit photos from the game."
       : data.session.status === "live"
-        ? "The final Story will appear after the host ends the game."
-        : "Scores and photos will appear here after the game is played.";
+        ? "Share a safe live update while play continues."
+        : data.session.status === "cancelled"
+          ? "This game ended before a story could be made."
+          : "Share the invitation before everyone reaches the court.";
+  const goingCount = data.roster.filter(
+    ({ player }) => player.rsvp === "going"
+  ).length;
+  const hostName = data.hostProfile?.name ?? "The host";
+  const storyAsOf = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: data.session.timezone,
+  }).format(new Date());
 
   return (
     <main
@@ -49,6 +63,9 @@ export default async function PublicStoryPage({
             memory={memory}
             canContribute={canContribute}
             viewerPlayerId={viewerPlayer?.id}
+            goingCount={goingCount}
+            hostName={hostName}
+            storyAsOf={storyAsOf}
           />
         </div>
       </div>

@@ -22,6 +22,16 @@ const match: RecapMatch = {
 };
 
 describe("recap share templates", () => {
+  it("offers lifecycle-specific pre-game and live hooks", () => {
+    const recap = buildSessionRecap([match], players);
+    expect(
+      recapShareTemplates(recap, "a", "published").map(({ id }) => id)
+    ).toEqual(["invitation", "spots"]);
+    expect(recapShareTemplates(recap, "a", "live").map(({ id }) => id)).toEqual(
+      ["live", "live-pulse"]
+    );
+  });
+
   it("offers only templates supported by real session data", () => {
     const recap = buildSessionRecap([match], players);
     expect(recapShareTemplates(recap, "a").map(({ id }) => id)).toEqual([
@@ -47,7 +57,6 @@ describe("recap share templates", () => {
   it("keeps an empty session shareable without inventing results", () => {
     const recap = buildSessionRecap([], players);
     expect(recapShareTemplates(recap, "a").map(({ id }) => id)).toEqual([
-      "overview",
       "custom",
     ]);
     expect(viewerStanding(recap, "a")).toBeNull();

@@ -641,7 +641,7 @@ export async function SessionPlay({
                 variant="secondary"
                 className="w-full"
                 confirmTitle="End this session?"
-                confirmText="You won’t be able to add more matches or scores. Play will become the final Recap, and Story will unlock sharing, photos, and crew notes."
+                confirmText="You won’t be able to add more matches or scores. Play will become the final Recap, and Story will keep sharing and game photos available."
                 confirmLabel="End session"
                 cancelLabel="Keep playing"
                 pendingLabel="Ending session…"

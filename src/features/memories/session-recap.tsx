@@ -197,7 +197,7 @@ export function SessionRecap({
           </h2>
           <p className="mt-2 text-sm leading-6 text-muted">
             {completed
-              ? "The crew can still keep photos and notes in Story without inventing results."
+              ? "The crew can still keep photos in Story without inventing results."
               : "This space will update after the first final score. Nothing needs to be prepared here."}
           </p>
         </section>
@@ -304,12 +304,16 @@ export function SessionRecap({
           <h2 id="recap-story-title" className="text-lg font-bold">
             {completed
               ? "Keep what happened off the scoreboard"
-              : "Story opens after the last point"}
+              : inProgress
+                ? "Share a live update"
+                : "Share the invitation"}
           </h2>
           <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
             {completed
-              ? "Build a story-ready highlight, add photos, and leave notes with the crew in Story."
-              : "When the host ends the session, Story shows the final scores and game photos."}
+              ? "Build a story-ready highlight and add photos from the game."
+              : inProgress
+                ? "Story shares completed-match and court counts without provisional player details."
+                : "Story turns the current game plan and availability into a shareable portrait."}
           </p>
           <ButtonLink href={storyHref} variant="secondary" className="mt-4">
             Open story <ArrowRight aria-hidden size={16} />

@@ -15,17 +15,19 @@ export function MemoriesSkeleton() {
         <div className="mt-6 grid gap-7 border-y border-line py-7 md:grid-cols-[260px_1fr]">
           <Skeleton className="aspect-[9/16] w-full max-w-[260px] rounded-xl" />
           <div>
-            <Skeleton className="h-6 w-36" />
-            <div className="mt-4 space-y-2">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Skeleton key={index} className="h-12 w-full" />
+            <Skeleton className="h-6 w-20" />
+            <div className="mt-3 flex gap-2 overflow-hidden">
+              {Array.from({ length: 4 }, (_, index) => (
+                <Skeleton
+                  key={index}
+                  className="h-11 w-28 shrink-0 rounded-full"
+                />
               ))}
             </div>
-            <Skeleton className="mt-6 h-6 w-44" />
-            <div className="mt-3 flex gap-2">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Skeleton key={index} className="h-14 w-14 rounded-lg" />
-              ))}
+            <Skeleton className="mt-6 h-11 w-full" />
+            <div className="mt-7 flex gap-2">
+              <Skeleton className="h-10 w-36" />
+              <Skeleton className="h-10 w-32" />
             </div>
           </div>
         </div>

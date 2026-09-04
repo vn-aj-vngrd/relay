@@ -292,7 +292,7 @@ export const faqSections = [
       ],
       [
         "What happens after the game ends?",
-        "Play becomes the factual recap with completed results and standings. Story unlocks shareable portraits supported by the game’s real data and photos.",
+        "Play becomes the factual recap with completed results and standings. Story makes invitation, live-update, and completed portraits from the game’s real data and photos.",
       ],
     ],
   },

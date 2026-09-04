@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
@@ -30,29 +31,35 @@ const recap = buildSessionRecap(
   ]
 );
 
-function renderCard() {
-  return render(
-    <RecapShareCard
-      title="Saturday Night Pickle"
-      venue="Central Pickle"
-      date="August 19, 2026"
-      accent="#635bde"
-      recap={recap}
-      photos={[]}
-      viewerPlayerId="a"
-    />
-  );
+const baseProps: ComponentProps<typeof RecapShareCard> = {
+  title: "Saturday Night Pickle",
+  venue: "Central Pickle",
+  date: "August 19, 2026 · 6:00–8:00 PM",
+  accent: "#635bde",
+  recap,
+  photos: [],
+  viewerPlayerId: "a",
+};
+
+function renderCard(overrides: Partial<typeof baseProps> = {}) {
+  return render(<RecapShareCard {...baseProps} {...overrides} />);
 }
+
+beforeEach(() => {
+  Object.assign(navigator, {
+    clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+  });
+});
 
 describe("RecapShareCard", () => {
   it("offers many truthful portrait stories", () => {
     renderCard();
 
     expect(screen.getByText("Night recap · 1 of 11")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Points played/ })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Court time/ })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /The crew/ })).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Your story/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Points played" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Court time" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "The crew" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Your story" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Next story" }));
     expect(screen.getByText("My game · 2 of 11")).toBeInTheDocument();
 
@@ -66,13 +73,14 @@ describe("RecapShareCard", () => {
   it("combines layout, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
+    fireEvent.click(screen.getByText("Customize"));
     expect(
       screen.getByRole("radio", { name: "Court background" })
     ).toBeChecked();
     expect(
       screen.getByRole("radio", { name: "Optic background" })
     ).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Snapshot/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Snapshot" })).toBeEnabled();
     expect(screen.getByLabelText(/Personal line/)).toHaveAttribute(
       "maxlength",
       "72"
@@ -87,6 +95,7 @@ describe("RecapShareCard", () => {
       .spyOn(URL, "createObjectURL")
       .mockReturnValue("blob:story-photo");
     renderCard();
+    fireEvent.click(screen.getByText("Customize"));
     const file = new File(
       [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
       "court.png",
@@ -102,9 +111,54 @@ describe("RecapShareCard", () => {
       "hasn’t been uploaded"
     );
     expect(screen.getByLabelText(/Photo position/)).toBeVisible();
-    expect(screen.getByRole("button", { name: /Snapshot/ })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Snapshot" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
+  });
+
+  it("uses phase-aware facts and actions before and during play", () => {
+    const { rerender } = renderCard({
+      phase: "published",
+      invitation: {
+        hostName: "Van",
+        priceLabel: "Free",
+        goingCount: 8,
+        capacity: 8,
+        requiresApproval: false,
+        waitlistOpen: true,
+      },
+      courtCount: 3,
+    });
+    expect(screen.getByText("Free")).toBeVisible();
+    expect(screen.getByText("8/8")).toBeVisible();
+    expect(screen.getByText("Full · waitlist open")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Who’s in?" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Share invitation" })
+    ).toBeEnabled();
+
+    rerender(<RecapShareCard {...baseProps} phase="live" courtCount={3} />);
+    expect(screen.getByText("completed matches")).toBeVisible();
+    expect(screen.getByText("3")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Match pulse" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Share live update" })
+    ).toBeEnabled();
+    expect(screen.queryByText("Van")).not.toBeInTheDocument();
+  });
+
+  it("copies the canonical game link when sharing is allowed", async () => {
+    renderCard({
+      sessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
+      sharedUrl: "/s/friends-night",
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    await waitFor(() =>
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "http://localhost:3000/s/friends-night"
+      )
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Story link copied");
   });
 });
