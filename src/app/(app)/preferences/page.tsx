@@ -16,11 +16,11 @@ export default async function PreferencesPage({
 }) {
   const [user, query] = await Promise.all([requireUser(), searchParams]);
   const section: PreferencesSection =
+    query.section === "appearance" ||
     query.section === "games" ||
-    query.section === "notifications" ||
-    query.section === "account"
+    query.section === "notifications"
       ? query.section
-      : "appearance";
+      : "account";
   const notificationSettings =
     section === "notifications" ? await getNotificationSettings(user.id) : null;
 

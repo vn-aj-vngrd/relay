@@ -9,10 +9,10 @@ export type PreferencesSection =
   | "account";
 
 const items = [
-  { value: "appearance" as const, label: "Appearance" },
-  { value: "games" as const, label: "Games" },
-  { value: "notifications" as const, label: "Notifications" },
   { value: "account" as const, label: "Account" },
+  { value: "notifications" as const, label: "Notifications" },
+  { value: "games" as const, label: "Games" },
+  { value: "appearance" as const, label: "Appearance" },
 ];
 
 export function PreferencesTabs({ active }: { active: PreferencesSection }) {
@@ -24,7 +24,7 @@ export function PreferencesTabs({ active }: { active: PreferencesSection }) {
         value={active}
         variant="underline"
         hrefFor={(item) =>
-          item.value === "appearance"
+          item.value === "account"
             ? "/preferences"
             : `/preferences?section=${item.value}`
         }

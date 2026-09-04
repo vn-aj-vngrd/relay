@@ -12,9 +12,12 @@ describe("PreferencesTabs", () => {
     expect(
       screen.getByRole("navigation", { name: "Preference sections" })
     ).toBeVisible();
+    expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual(
+      ["Account", "Notifications", "Games", "Appearance"]
+    );
     expect(screen.getByRole("link", { name: "Appearance" })).toHaveAttribute(
       "href",
-      "/preferences"
+      "/preferences?section=appearance"
     );
     expect(screen.getByRole("link", { name: "Games" })).toHaveAttribute(
       "href",
@@ -26,7 +29,7 @@ describe("PreferencesTabs", () => {
     );
     expect(screen.getByRole("link", { name: "Account" })).toHaveAttribute(
       "href",
-      "/preferences?section=account"
+      "/preferences"
     );
     expect(screen.getByRole("link", { name: "Notifications" })).toHaveAttribute(
       "aria-current",
