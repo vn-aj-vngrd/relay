@@ -103,12 +103,12 @@ export function SidebarAccount({
           </Link>
           <Link
             role="menuitem"
-            href="/preferences"
+            href="/settings"
             onClick={() => setOpen(false)}
             className="flex min-h-9 items-center gap-2 rounded-md px-2 text-sm text-muted hover:bg-surface-strong hover:text-ink"
           >
             <SlidersHorizontal size={17} />
-            Preferences
+            Settings
           </Link>
           {isAdmin ? (
             <Link

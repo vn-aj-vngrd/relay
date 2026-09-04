@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./settings-actions", () => ({
@@ -49,8 +49,27 @@ describe("NotificationSettingsForm", () => {
     expect(
       screen.getByRole("checkbox", { name: "One hour before" })
     ).toBeChecked();
-    expect(screen.getByLabelText("Quiet from")).toHaveValue("22:00");
-    expect(screen.getByLabelText("Quiet until")).toHaveValue("07:00");
-    expect(screen.getByLabelText("Time zone")).toHaveValue("Asia/Manila");
+    expect(
+      screen.getByRole("checkbox", { name: "Use quiet hours" })
+    ).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: /Quiet from/ })
+    ).toHaveTextContent("10:00 PM");
+    expect(
+      screen.getByRole("button", { name: /Quiet until/ })
+    ).toHaveTextContent("7:00 AM");
+    expect(screen.getByRole("button", { name: /Time zone/ })).toHaveTextContent(
+      "Philippine Time"
+    );
+  });
+
+  it("keeps quiet-hour controls visible while allowing the window to be disabled", () => {
+    render(<NotificationSettingsForm preferences={preferences} />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Use quiet hours" }));
+
+    expect(screen.getByRole("button", { name: /Quiet from/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Quiet until/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Time zone/ })).toBeEnabled();
   });
 });

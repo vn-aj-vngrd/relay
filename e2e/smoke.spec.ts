@@ -243,7 +243,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await page
     .locator('button[aria-haspopup="menu"]:not([data-next-mark])')
     .click();
-  await page.getByRole("menuitem", { name: "Preferences" }).click();
+  await page.getByRole("menuitem", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Dark", exact: true }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("button", { name: "Light", exact: true }).click();

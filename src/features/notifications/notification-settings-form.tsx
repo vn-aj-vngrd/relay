@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
+import { TimePickerField } from "@/components/ui/date-time-picker";
 import { PendingSubmit } from "@/components/ui/pending-submit";
+import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import type { NotificationCategoryPreferences } from "@/db/schema";
 
@@ -13,6 +15,16 @@ import {
 } from "./preferences";
 import { PushDeviceControl } from "./push-device-control";
 import { removePushDevice, saveNotificationSettings } from "./settings-actions";
+
+const commonTimeZones = [
+  { value: "Asia/Manila", label: "Philippine Time (Asia/Manila)" },
+  { value: "Asia/Singapore", label: "Singapore Time (Asia/Singapore)" },
+  { value: "Asia/Tokyo", label: "Japan Time (Asia/Tokyo)" },
+  { value: "Australia/Sydney", label: "Sydney (Australia/Sydney)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (Los Angeles)" },
+  { value: "America/New_York", label: "Eastern Time (New York)" },
+  { value: "Europe/London", label: "London (Europe/London)" },
+] as const;
 
 type Preferences = {
   emailEnabled: boolean;
@@ -62,6 +74,18 @@ export function NotificationSettingsForm({
   devices?: { id: string; deviceLabel: string | null; lastUsedAt: Date }[];
 }) {
   const [state, action] = useActionState(saveNotificationSettings, {});
+  const [quietHoursEnabled, setQuietHoursEnabled] = useState(
+    Boolean(preferences.quietHoursStart && preferences.quietHoursEnd)
+  );
+  const timeZoneOptions = commonTimeZones.some(
+    (option) => option.value === preferences.timeZone
+  )
+    ? commonTimeZones
+    : [
+        ...commonTimeZones,
+        { value: preferences.timeZone, label: preferences.timeZone },
+      ];
+
   return (
     <section
       id="notifications"
@@ -148,53 +172,57 @@ export function NotificationSettingsForm({
           </div>
         </div>
 
-        <details className="group border-y border-line py-3">
-          <summary className="cursor-pointer text-sm font-semibold">
-            Quiet hours and time zone
-          </summary>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <label className="text-sm font-medium">
-              Quiet from
+        <section aria-labelledby="quiet-hours-title">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h3 id="quiet-hours-title" className="text-sm font-semibold">
+                Quiet hours
+              </h3>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-muted">
+                Pause push notifications and time-sensitive email reminders
+                during a daily window.
+              </p>
+            </div>
+            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-medium">
               <input
-                name="quietHoursStart"
-                type="time"
-                defaultValue={preferences.quietHoursStart?.slice(0, 5) ?? ""}
-                className="field mt-1.5"
+                name="quietHoursEnabled"
+                type="checkbox"
+                checked={quietHoursEnabled}
+                onChange={(event) =>
+                  setQuietHoursEnabled(event.currentTarget.checked)
+                }
+                className="h-4 w-4 accent-primary"
               />
-            </label>
-            <label className="text-sm font-medium">
-              Quiet until
-              <input
-                name="quietHoursEnd"
-                type="time"
-                defaultValue={preferences.quietHoursEnd?.slice(0, 5) ?? ""}
-                className="field mt-1.5"
-              />
-            </label>
-            <label className="text-sm font-medium">
-              Time zone
-              <input
-                name="timeZone"
-                list="relay-time-zones"
-                defaultValue={preferences.timeZone}
-                className="field mt-1.5"
-              />
-              <datalist id="relay-time-zones">
-                <option value="Asia/Manila" />
-                <option value="Asia/Singapore" />
-                <option value="Asia/Tokyo" />
-                <option value="Australia/Sydney" />
-                <option value="America/Los_Angeles" />
-                <option value="America/New_York" />
-                <option value="Europe/London" />
-              </datalist>
+              Use quiet hours
             </label>
           </div>
-          <p className="mt-3 text-xs leading-5 text-muted">
-            Push waits until quiet hours end. Time-sensitive email reminders are
-            suppressed during quiet hours.
+          <div className="mt-3 grid gap-4 border-y border-line py-4 sm:grid-cols-3">
+            <TimePickerField
+              id="quiet-hours-start"
+              name="quietHoursStart"
+              label="Quiet from"
+              defaultValue={preferences.quietHoursStart?.slice(0, 5) ?? "22:00"}
+              disabled={!quietHoursEnabled}
+            />
+            <TimePickerField
+              id="quiet-hours-end"
+              name="quietHoursEnd"
+              label="Quiet until"
+              defaultValue={preferences.quietHoursEnd?.slice(0, 5) ?? "07:00"}
+              disabled={!quietHoursEnabled}
+            />
+            <SelectField
+              id="notification-time-zone"
+              name="timeZone"
+              label="Time zone"
+              options={timeZoneOptions}
+              defaultValue={preferences.timeZone}
+            />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-muted">
+            Quiet hours repeat every day in your selected time zone.
           </p>
-        </details>
+        </section>
 
         {state.error ? (
           <p role="alert" className="text-sm font-medium text-danger">
@@ -205,8 +233,8 @@ export function NotificationSettingsForm({
             {state.success}
           </p>
         ) : null}
-        <SubmitButton pendingLabel="Saving preferences…">
-          Save notification preferences
+        <SubmitButton pendingLabel="Saving settings…">
+          Save notification settings
         </SubmitButton>
       </form>
 

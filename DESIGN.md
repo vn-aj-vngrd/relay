@@ -42,7 +42,7 @@ Restrained foundation with a stronger courtside state. Court blue occupies less 
 --danger: oklch(0.56 0.2 26);
 ```
 
-Dark mode uses neutral blue-black architecture rather than inverting light colors. The app starts light and stores the user’s explicit Light, Dark, or System choice. Appearance controls stay in authenticated setup and Preferences; public landing, utility, legal, authentication, and shared-game pages do not expose theme controls. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
+Dark mode uses neutral blue-black architecture rather than inverting light colors. The app starts light and stores the user’s explicit Light, Dark, or System choice. Appearance controls stay in authenticated setup and Settings; public landing, utility, legal, authentication, and shared-game pages do not expose theme controls. Court blue becomes lighter but not fluorescent. `signal` is reserved for queue readiness, match point, and compact live indicators; it never becomes a general CTA color.
 
 ### Color rules
 
@@ -230,7 +230,7 @@ Product motion communicates state in 140–220ms using ease-out-quart. Modal dia
 ## Accessibility and platform behavior
 
 - `/courts` and `/courts/[slug]` are the only Philippines finder routes and adapt their shell to authentication state. `/play` is public, device-local Play with manual players, the same rotation modes, multi-court full-screen scoring, and versioned browser persistence; it also remains directly available in the authenticated desktop sidebar. `/games/open` is publicly browsable, while joining with account identity and keeping history require authentication. It requires no account or network write. Public court CTAs preserve the selected court through signup and onboarding, then open a prefilled game.
-- Relay is installable as a standalone PWA with the same light-first theme, ball mark, and responsive app shell. Preferences owns the install affordance; browsers without a programmatic prompt receive platform-appropriate manual guidance.
+- Relay is installable as a standalone PWA with the same light-first theme, ball mark, and responsive app shell. Settings owns the install affordance; browsers without a programmatic prompt receive platform-appropriate manual guidance.
 - Offline state is explicit and restrained. Network-backed navigation and mutations remain pending when supported, live data never pretends to be current, and a full offline load shows one branded recovery page rather than cached private content.
 - WCAG 2.2 AA minimum.
 - Visible 3px focus halo with offset.

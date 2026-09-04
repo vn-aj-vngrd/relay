@@ -379,6 +379,7 @@ export function TimePickerField({
   error,
   describedBy,
   hideLabel = false,
+  disabled = false,
   density = "default",
   className = "",
   placeholder = "Choose a time",
@@ -395,6 +396,7 @@ export function TimePickerField({
   error?: string;
   describedBy?: string;
   hideLabel?: boolean;
+  disabled?: boolean;
   density?: "default" | "compact";
   className?: string;
   placeholder?: string;
@@ -442,7 +444,7 @@ export function TimePickerField({
         id={id}
         type="button"
         aria-haspopup="listbox"
-        aria-expanded={open}
+        aria-expanded={open && !disabled}
         aria-controls={listbox.listboxId}
         aria-activedescendant={
           open && listbox.activeIndex >= 0
@@ -450,12 +452,13 @@ export function TimePickerField({
             : undefined
         }
         aria-describedby={describedBy}
+        disabled={disabled}
         onClick={() => {
           if (open) listbox.close();
           else listbox.show();
         }}
         onKeyDown={listbox.handleKeyDown}
-        className={`${triggerBaseClass} score ${hideLabel ? "mt-0" : "mt-1.5"} ${density === "compact" ? "compact-control h-9 min-h-9 text-[13px]" : "h-11 text-[15px]"} ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"} ${className}`}
+        className={`${triggerBaseClass} score ${hideLabel ? "mt-0" : "mt-1.5"} ${density === "compact" ? "compact-control h-9 min-h-9 text-[13px]" : "h-11 text-[15px]"} ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"} disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${className}`}
       >
         <Clock aria-hidden size={17} className="shrink-0 text-muted" />
         <span className={`flex-1 ${value ? "" : "font-sans text-muted"}`}>
@@ -463,7 +466,7 @@ export function TimePickerField({
         </span>
         <CaretDown aria-hidden size={14} className="text-muted" />
       </button>
-      {open ? (
+      {open && !disabled ? (
         <div
           id={listbox.listboxId}
           role="listbox"

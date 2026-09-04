@@ -470,25 +470,25 @@ export async function updateRecoveredPassword(formData: FormData) {
 
 export async function changePassword(formData: FormData) {
   const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/preferences/password");
+  if (!user) redirect("/login?next=/settings/password");
   const currentPassword = passwordSchema.safeParse(
     formData.get("currentPassword")
   );
   const password = passwordSchema.safeParse(formData.get("password"));
   const confirmation = formData.get("confirmation");
   if (!currentPassword.success)
-    authError("Enter your current password.", "/preferences/password");
+    authError("Enter your current password.", "/settings/password");
   if (!password.success)
     authError(
       "Use at least 8 characters with a letter and number.",
-      "/preferences/password"
+      "/settings/password"
     );
   if (password.data !== confirmation)
-    authError("Passwords do not match.", "/preferences/password");
+    authError("Passwords do not match.", "/settings/password");
   if (password.data === currentPassword.data)
     authError(
       "Choose a new password that differs from your current password.",
-      "/preferences/password"
+      "/settings/password"
     );
 
   await guardAuthAttempt({
@@ -497,7 +497,7 @@ export async function changePassword(formData: FormData) {
     ipLimit: 10,
     accountLimit: 5,
     windowSeconds: 3600,
-    destination: "/preferences/password",
+    destination: "/settings/password",
   });
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({
@@ -508,9 +508,9 @@ export async function changePassword(formData: FormData) {
     const message = error.message.toLowerCase().includes("password")
       ? "Your current password is incorrect."
       : "Your password could not be changed. Try again.";
-    authError(message, "/preferences/password");
+    authError(message, "/settings/password");
   }
-  redirect("/preferences/password?success=1");
+  redirect("/settings/password?success=1");
 }
 
 export async function setTemporaryPassword(formData: FormData) {

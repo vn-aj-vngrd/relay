@@ -173,11 +173,11 @@ async function AccountSection({
       </h2>
       <div className="divide-y divide-line border-y border-line">
         <Link
-          href="/preferences"
+          href="/settings"
           className="flex min-h-12 items-center gap-3 py-2 text-sm"
         >
           <SlidersHorizontal size={18} className="text-muted" />
-          <span className="flex-1">Preferences</span>
+          <span className="flex-1">Settings</span>
           <CaretRight size={15} className="text-muted" />
         </Link>
         <Link

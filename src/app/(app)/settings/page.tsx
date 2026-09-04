@@ -4,18 +4,18 @@ import { NotificationSettingsForm } from "@/features/notifications/notification-
 import { getNotificationSettings } from "@/features/notifications/settings";
 import { PreferenceControls } from "@/features/preferences/preference-controls";
 import {
-  type PreferencesSection,
-  PreferencesTabs,
-} from "@/features/preferences/preferences-tabs";
+  type SettingsSection,
+  SettingsTabs,
+} from "@/features/preferences/settings-tabs";
 import { InstallAppControl } from "@/features/pwa/install-app-control";
 
-export default async function PreferencesPage({
+export default async function SettingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ section?: string | string[] }>;
 }) {
   const [user, query] = await Promise.all([requireUser(), searchParams]);
-  const section: PreferencesSection =
+  const section: SettingsSection =
     query.section === "appearance" ||
     query.section === "games" ||
     query.section === "notifications"
@@ -27,12 +27,13 @@ export default async function PreferencesPage({
   return (
     <div className="mx-auto w-full max-w-6xl">
       <header className="pb-5">
-        <h1 className="app-title">Preferences</h1>
+        <h1 className="app-title">Settings</h1>
         <p className="mt-2 text-sm text-muted">
-          Choose how Relay looks, organizes your games, and keeps you informed.
+          Manage your account and choose how Relay looks, organizes your games,
+          and keeps you informed.
         </p>
       </header>
-      <PreferencesTabs active={section} />
+      <SettingsTabs active={section} />
       <div className="py-8">
         {section === "appearance" ? (
           <div className="space-y-9">
@@ -47,11 +48,8 @@ export default async function PreferencesPage({
             devices={notificationSettings.devices}
           />
         ) : (
-          <section aria-labelledby="account-preferences-title">
-            <h2
-              id="account-preferences-title"
-              className="text-lg font-semibold"
-            >
+          <section aria-labelledby="account-settings-title">
+            <h2 id="account-settings-title" className="text-lg font-semibold">
               Account
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
@@ -59,7 +57,7 @@ export default async function PreferencesPage({
               needed.
             </p>
             <ButtonLink
-              href="/preferences/password"
+              href="/settings/password"
               variant="secondary"
               className="mt-4"
             >

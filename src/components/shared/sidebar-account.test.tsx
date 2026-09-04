@@ -24,5 +24,9 @@ describe("SidebarAccount", () => {
     expect(
       screen.queryByRole("menuitem", { name: "Admin console" })
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/settings"
+    );
   });
 });

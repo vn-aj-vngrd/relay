@@ -24,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         "/notifications",
         "/offline",
         "/onboarding/",
-        "/preferences",
+        "/settings",
         "/profile/",
         "/read-only",
         "/s/",

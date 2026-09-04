@@ -29,7 +29,6 @@ const labels: Record<string, string> = {
   payments: "Payments",
   play: "Play",
   players: "Players",
-  preferences: "Preferences",
   profile: "Profile",
   story: "Story",
   search: "Search",

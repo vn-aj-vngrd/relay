@@ -50,7 +50,7 @@ const steps = [
     target: "profile",
     title: "Open your profile",
     description:
-      "Your profile keeps your games and memories together. Theme, layout, and other preferences live here too.",
+      "Your profile keeps your games and memories together. Theme, layout, and other settings live here too.",
   },
 ] as const;
 

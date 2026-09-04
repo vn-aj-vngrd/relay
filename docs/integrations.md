@@ -75,7 +75,7 @@ The Supabase **Before User Created** hook enforces the singleton `public.signup_
 2. Create a password account, verify the custom confirmation email arrives through Resend, follow its single-use link, confirm Relay reaches authenticated home, then sign out and sign in again.
 3. With Resend SMTP configured, open `/forgot-password`, request a reset for a known account, and verify Resend logs show mail from `Relay <relay@vanajvanguardia.tech>`.
 4. Follow the reset link, confirm `/update-password` accepts a new password, signs the recovery session out, and returns to `/login` with a success message. Verify the link cannot be reused.
-5. Sign in with the new password, open Preferences → Change password, and confirm the current-password flow works. Confirm an incorrect current password fails without changing it.
+5. Sign in with the new password, open Settings → Change password, and confirm the current-password flow works. Confirm an incorrect current password fails without changing it.
 6. When production SMTP is configured, set `NEXT_PUBLIC_MAGIC_LINK_ENABLED=true`, request a magic link, and confirm it returns through `/auth/callback`.
 7. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
 8. In Supabase Authentication → Users, verify one identity per enabled method.

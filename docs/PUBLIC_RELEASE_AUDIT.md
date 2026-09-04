@@ -102,7 +102,7 @@ Use ISO dates and link to the deployment, dashboard screenshot, CI run, or field
 ## Public acquisition and theme checklist
 
 - [x] Landing page supports explicit, persistent light and dark modes without fixed light-only content surfaces.
-- [x] Authentication, legal, Court Finder, shared game, Quick Play, app, onboarding, preferences, and admin surfaces inherit accessible semantic theme tokens.
+- [x] Authentication, legal, Court Finder, shared game, Quick Play, app, onboarding, settings, and admin surfaces inherit accessible semantic theme tokens.
 - [x] Map style changes between light and dark without exposing the Geoapify key.
 - [x] Court map, moderation coordinates, and community submissions cover the Philippines; out-of-country map tiles and publish coordinates fail closed.
 - [x] Landing and Court Finder state that geographic coverage is limited to the Philippines and that reviewed listings are growing.

@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/preferences/:path*",
+        destination: "/settings/:path*",
+        permanent: true,
+      },
+      {
         source: "/venues/:path*",
         destination: "/courts/:path*",
         permanent: true,

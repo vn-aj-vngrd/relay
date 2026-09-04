@@ -39,16 +39,26 @@ export async function saveNotificationSettings(
   _: NotificationSettingsState,
   formData: FormData
 ): Promise<NotificationSettingsState> {
-  const user = await requireUser("/preferences");
+  const user = await requireUser("/settings");
   await assertRateLimit(
     { scope: "notification-preferences", limit: 20, windowSeconds: 60 },
     `user:${user.id}`,
-    "Notification preferences are changing too quickly. Wait a moment and try again."
+    "Notification settings are changing too quickly. Wait a moment and try again."
   );
-  const quietStart = time.safeParse(formData.get("quietHoursStart") || null);
-  const quietEnd = time.safeParse(formData.get("quietHoursEnd") || null);
+  const quietHoursEnabled = checked(formData, "quietHoursEnabled");
+  const quietStart = time.safeParse(
+    quietHoursEnabled ? formData.get("quietHoursStart") : null
+  );
+  const quietEnd = time.safeParse(
+    quietHoursEnabled ? formData.get("quietHoursEnd") : null
+  );
   const timeZone = String(formData.get("timeZone") || "Asia/Manila");
-  if (!quietStart.success || !quietEnd.success || !validTimeZone(timeZone))
+  if (
+    !quietStart.success ||
+    !quietEnd.success ||
+    (quietHoursEnabled && (!quietStart.data || !quietEnd.data)) ||
+    !validTimeZone(timeZone)
+  )
     return { error: "Choose valid quiet hours and time zone." };
 
   const emailCategories = Object.fromEntries(
@@ -82,12 +92,12 @@ export async function saveNotificationSettings(
       target: notificationPreferences.userId,
       set: values,
     });
-  revalidatePath("/preferences");
-  return { success: "Notification preferences saved." };
+  revalidatePath("/settings");
+  return { success: "Notification settings saved." };
 }
 
 export async function removePushDevice(formData: FormData) {
-  const user = await requireUser("/preferences");
+  const user = await requireUser("/settings");
   await assertRateLimit(
     { scope: "push-device-remove", limit: 20, windowSeconds: 60 },
     `user:${user.id}`,
@@ -102,5 +112,5 @@ export async function removePushDevice(formData: FormData) {
         eq(pushSubscriptions.userId, user.id)
       )
     );
-  revalidatePath("/preferences");
+  revalidatePath("/settings");
 }

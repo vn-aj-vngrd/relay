@@ -366,7 +366,7 @@ export function RsvpControl({
                   Choose email or push reminders after confirming your response.
                 </p>
                 <ButtonLink
-                  href="/preferences#notifications"
+                  href="/settings?section=notifications#notifications"
                   variant="quiet"
                   className="mt-2 -ml-2.5"
                 >

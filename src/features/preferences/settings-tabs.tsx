@@ -2,7 +2,7 @@
 
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 
-export type PreferencesSection =
+export type SettingsSection =
   | "appearance"
   | "games"
   | "notifications"
@@ -15,18 +15,18 @@ const items = [
   { value: "appearance" as const, label: "Appearance" },
 ];
 
-export function PreferencesTabs({ active }: { active: PreferencesSection }) {
+export function SettingsTabs({ active }: { active: SettingsSection }) {
   return (
-    <nav aria-label="Preference sections" className="border-b border-line">
+    <nav aria-label="Settings sections" className="border-b border-line">
       <TabChipRail
-        label="Preference sections"
+        label="Settings sections"
         items={items}
         value={active}
         variant="underline"
         hrefFor={(item) =>
           item.value === "account"
-            ? "/preferences"
-            : `/preferences?section=${item.value}`
+            ? "/settings"
+            : `/settings?section=${item.value}`
         }
       />
     </nav>

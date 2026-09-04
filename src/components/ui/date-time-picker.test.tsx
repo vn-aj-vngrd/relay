@@ -89,6 +89,22 @@ describe("date and time pickers", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("keeps disabled time fields visible without opening their listbox", () => {
+    render(
+      <TimePickerField
+        id="quiet-start"
+        label="Quiet from"
+        defaultValue="22:00"
+        disabled
+      />
+    );
+
+    const trigger = screen.getByRole("button", { name: "Quiet from" });
+    expect(trigger).toBeDisabled();
+    fireEvent.click(trigger);
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
   it("offers end times after the start and start times before the end", () => {
     const { unmount } = render(
       <TimePickerField id="end" label="End time" afterValue="20:00" />

@@ -67,7 +67,7 @@ export default async function EditProfilePage({
             longer know it.
           </p>
           <ButtonLink
-            href="/preferences/password"
+            href="/settings/password"
             variant="secondary"
             className="mt-4"
           >

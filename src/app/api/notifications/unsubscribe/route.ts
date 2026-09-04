@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       },
     });
   return new Response(
-    `<!doctype html><html lang="en"><meta name="viewport" content="width=device-width"><title>Relay email preferences</title><body style="font-family:Arial,sans-serif;max-width:560px;margin:64px auto;padding:0 20px;color:#191b20"><h1>Turn off game reminder emails?</h1><p>In-app notifications will remain available. You can turn email back on from Relay Preferences.</p><form method="post" action="?token=${encodeURIComponent(token)}"><button style="padding:11px 16px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:700">Turn off reminder emails</button></form></body></html>`,
+    `<!doctype html><html lang="en"><meta name="viewport" content="width=device-width"><title>Relay email settings</title><body style="font-family:Arial,sans-serif;max-width:560px;margin:64px auto;padding:0 20px;color:#191b20"><h1>Turn off game reminder emails?</h1><p>In-app notifications will remain available. You can turn email back on from Relay Settings.</p><form method="post" action="?token=${encodeURIComponent(token)}"><button style="padding:11px 16px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:700">Turn off reminder emails</button></form></body></html>`,
     {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     .set({ emailEnabled: false, updatedAt: new Date() })
     .where(eq(notificationPreferences.userId, userId));
   return new Response(
-    "Relay game reminder emails are now off. You can change this again from Preferences.",
+    "Relay game reminder emails are now off. You can change this again from Settings.",
     {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

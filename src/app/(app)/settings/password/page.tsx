@@ -21,10 +21,10 @@ export default async function ChangePasswordPage({
       <header className="border-b border-line pb-6">
         <p className="mb-3 text-sm">
           <Link
-            href="/preferences"
+            href="/settings"
             className="font-semibold text-primary hover:underline"
           >
-            Preferences
+            Settings
           </Link>
         </p>
         <h1 className="app-title">Change password</h1>
