@@ -15,7 +15,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "dev": "next dev --turbopack -p 3002",
-    "prepare": "lefthook install --reset-hooks-path",
+    "prepare": "node scripts/install-git-hooks.mjs",
     "release:check": "./scripts/release-gate.sh",
     "release:verify-production": "./scripts/verify-production-release.sh",
     "start": "next start -p 3002",
