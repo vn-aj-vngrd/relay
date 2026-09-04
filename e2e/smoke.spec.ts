@@ -98,6 +98,18 @@ test("the public court finder works without an account", async ({ page }) => {
   await expect(
     page.getByRole("textbox", { name: "Search courts" })
   ).toBeVisible();
+  await expect(page.locator(".court-finder-workspace")).toBeVisible();
+  const outerOverflow = await page
+    .locator(".app-scroll-surface")
+    .evaluate((element) => element.scrollHeight - element.clientHeight);
+  expect(outerOverflow).toBeLessThanOrEqual(1);
+  const courtList = page.locator("[data-court-list-pane] ul");
+  await expect(courtList).toHaveCSS("overflow-y", "auto");
+  expect(
+    await courtList.evaluate(
+      (element) => element.scrollHeight > element.clientHeight
+    )
+  ).toBe(true);
 
   const removedCourtRoute = await page.request.get("/court", {
     maxRedirects: 0,
