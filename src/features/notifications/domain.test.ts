@@ -3,6 +3,30 @@ import { describe, expect, it } from "vitest";
 import { notificationGroup, notificationPresentation } from "./domain";
 
 describe("notificationPresentation", () => {
+  it("routes court suggestion outcomes to the player’s history", () => {
+    expect(
+      notificationPresentation({
+        type: "court_suggestion_approved",
+        sessionId: null,
+        sessionTitle: null,
+        payload: { body: "Central Pickle was updated." },
+      })
+    ).toEqual({
+      title: "Court suggestion applied",
+      body: "Central Pickle was updated.",
+      href: "/court/suggest#your-suggestions",
+      tone: "system",
+    });
+    expect(
+      notificationPresentation({
+        type: "court_suggestion_duplicate",
+        sessionId: null,
+        sessionTitle: null,
+        payload: {},
+      }).href
+    ).toBe("/court/suggest#your-suggestions");
+  });
+
   it("gives game invites enough context to respond confidently", () => {
     expect(
       notificationPresentation({

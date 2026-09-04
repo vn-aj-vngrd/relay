@@ -26,6 +26,7 @@ const optionalPrice = z.union([
 const optionalHttpUrl = z.union([
   z
     .url("Add a complete link beginning with https://.")
+    .max(2048, "Keep the link under 2,048 characters.")
     .refine(
       (value) => /^https?:\/\//i.test(value),
       "Use an http or https link."
@@ -177,6 +178,7 @@ export const venueSubmissionSchema = z
     city: z.string().trim().max(80),
     officialUrl: z
       .url("Add a complete source or Google Maps link beginning with https://.")
+      .max(2048, "Keep the source link under 2,048 characters.")
       .refine(
         (value) => /^https?:\/\//i.test(value),
         "Use an http or https link."

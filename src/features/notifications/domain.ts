@@ -67,6 +67,33 @@ export function notificationPresentation({
   };
 
   switch (type) {
+    case "court_suggestion_approved":
+      return {
+        title: customTitle ?? "Court suggestion applied",
+        body:
+          customBody ??
+          "Relay verified your suggestion and updated Court Finder.",
+        href: "/court/suggest#your-suggestions",
+        tone: "system",
+      };
+    case "court_suggestion_rejected":
+      return {
+        title: customTitle ?? "Court suggestion reviewed",
+        body:
+          customBody ??
+          "Relay reviewed your suggestion but did not apply the proposed changes.",
+        href: "/court/suggest#your-suggestions",
+        tone: "system",
+      };
+    case "court_suggestion_duplicate":
+      return {
+        title: customTitle ?? "Court suggestion already covered",
+        body:
+          customBody ??
+          "Relay found an existing court or another suggestion covering this information.",
+        href: "/court/suggest#your-suggestions",
+        tone: "system",
+      };
     case "session_invite":
       return {
         title: customTitle ?? "You’re invited",

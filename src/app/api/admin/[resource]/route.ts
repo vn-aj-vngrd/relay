@@ -1,12 +1,13 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { getAuthorizedAdmin } from "@/features/admin/auth";
+import { getAuthorizedAal2Admin } from "@/features/admin/auth";
 import { parseAdminCursor } from "@/features/admin/cursor";
 import {
   getAdminAuditLog,
   getAdminSessions,
   getAdminUsers,
+  getAdminVenueChangeRequests,
   getAdminVenues,
 } from "@/features/admin/queries";
 import { adminResources } from "@/features/admin/records";
@@ -19,7 +20,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ resource: string }> }
 ) {
-  const admin = await getAuthorizedAdmin();
+  const admin = await getAuthorizedAal2Admin();
   if (!admin)
     return Response.json(
       { error: "Administrator access required" },
@@ -74,9 +75,16 @@ export async function GET(
           ? await getAdminSessions({ query, status, cursor })
           : resource.data === "venues"
             ? await getAdminVenues({ query, status, cursor })
-            : resource.data === "feedback"
-              ? await getAdminFeedback({ query, status, type, cursor })
-              : await getAdminAuditLog(cursor);
+            : resource.data === "court-requests"
+              ? await getAdminVenueChangeRequests({
+                  query,
+                  status,
+                  type,
+                  cursor,
+                })
+              : resource.data === "feedback"
+                ? await getAdminFeedback({ query, status, type, cursor })
+                : await getAdminAuditLog(cursor);
 
     return Response.json(
       { items: page.items, nextCursor: page.nextCursor },

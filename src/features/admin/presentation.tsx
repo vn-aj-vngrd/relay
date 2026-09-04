@@ -11,6 +11,13 @@ const statusStyles: Record<string, string> = {
   rejected: "bg-danger/10 text-danger",
   unverified: "bg-surface-strong text-muted",
   archived: "bg-surface-strong text-muted",
+  submitted: "bg-warning/12 text-warning",
+  needs_info: "bg-danger/10 text-danger",
+  in_review: "bg-primary-soft text-primary",
+  approved: "bg-success/10 text-success",
+  partially_approved: "bg-success/10 text-success",
+  duplicate: "bg-surface-strong text-muted",
+  withdrawn: "bg-surface-strong text-muted",
 };
 
 export function AdminStatus({ value }: { value: string }) {
@@ -18,7 +25,7 @@ export function AdminStatus({ value }: { value: string }) {
     <span
       className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold capitalize ${statusStyles[value] ?? "bg-surface-strong text-muted"}`}
     >
-      {value}
+      {value.replaceAll("_", " ")}
     </span>
   );
 }

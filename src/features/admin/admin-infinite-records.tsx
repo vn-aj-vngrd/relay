@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import type {
   AdminAuditRecord,
+  AdminCourtRequestRecord,
   AdminFeedbackRecord,
   AdminPage,
   AdminRecord,
@@ -23,6 +24,7 @@ import {
   feedbackTypeLabels,
 } from "@/features/feedback/domain";
 import { FeedbackStatusBadge } from "@/features/feedback/feedback-status";
+import { venueChangeRequestStatusLabels } from "@/features/venues/request-status";
 
 const pageSchema = z.object({
   items: z.array(z.object({ id: z.string() }).passthrough()),
@@ -195,6 +197,57 @@ function AuditRows({ items }: { items: AdminAuditRecord[] }) {
   ));
 }
 
+function CourtRequestRows({ items }: { items: AdminCourtRequestRecord[] }) {
+  return (
+    <ol className="divide-y divide-line border-y border-line">
+      {items.map((item) => (
+        <li key={item.id}>
+          <Link
+            href={`/admin/court-requests/${item.id}`}
+            className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="font-semibold">{item.name}</p>
+                <span className="text-xs font-semibold text-muted">
+                  {item.requestType === "create"
+                    ? "Missing court"
+                    : "Listing update"}
+                </span>
+              </div>
+              {item.address ? (
+                <p className="mt-1 truncate text-sm text-muted">
+                  {item.address}
+                </p>
+              ) : null}
+              <p className="mt-2 text-xs text-muted">
+                {item.fieldCount} proposed{" "}
+                {item.fieldCount === 1 ? "field" : "fields"}
+                {item.submitterName ? ` · ${item.submitterName}` : ""}
+                {item.sameCourtOpenCount > 1
+                  ? ` · ${item.sameCourtOpenCount} open requests for this court`
+                  : ""}
+              </p>
+              <div className="mt-2 sm:hidden">
+                <AdminStatus value={item.status} />
+              </div>
+            </div>
+            <div className="hidden shrink-0 text-right sm:block">
+              <AdminDate value={item.createdAt} />
+              <p className="mt-1 text-xs text-muted">
+                {venueChangeRequestStatusLabels[
+                  item.status as keyof typeof venueChangeRequestStatusLabels
+                ] ?? item.status}
+              </p>
+            </div>
+            <ArrowRight aria-hidden size={17} className="shrink-0 text-muted" />
+          </Link>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 function FeedbackRows({ items }: { items: AdminFeedbackRecord[] }) {
   return (
     <ol className="divide-y divide-line border-y border-line">
@@ -330,6 +383,8 @@ export function AdminInfiniteRecords({
       >
         <AuditRows items={items as AdminAuditRecord[]} />
       </TableShell>
+    ) : resource === "court-requests" ? (
+      <CourtRequestRows items={items as AdminCourtRequestRecord[]} />
     ) : (
       <FeedbackRows items={items as AdminFeedbackRecord[]} />
     );

@@ -68,6 +68,38 @@ describe("AdminInfiniteRecords", () => {
     expect(screen.queryByText(/showing up to/i)).not.toBeInTheDocument();
   });
 
+  it("shows grouped workload context for court requests", () => {
+    render(
+      <AdminInfiniteRecords
+        resource="court-requests"
+        initialPage={{
+          items: [
+            {
+              id: "9cb9ca5e-7a91-45f3-b07d-d66e796147cd",
+              requestType: "update",
+              status: "submitted",
+              name: "Cebu Pickleball Club",
+              address: "Cebu City",
+              createdAt: "2026-08-19T09:00:00.000Z",
+              submitterName: "Ana Player",
+              fieldCount: 2,
+              sameCourtOpenCount: 3,
+            },
+          ],
+          nextCursor: null,
+        }}
+        emptyMessage="No requests"
+      />
+    );
+
+    expect(screen.getByText("Cebu Pickleball Club")).toBeVisible();
+    expect(
+      screen.getByText(
+        "2 proposed fields · Ana Player · 3 open requests for this court"
+      )
+    ).toBeVisible();
+  });
+
   it("loads and deduplicates the next cursor page when the sentinel approaches", async () => {
     vi.stubGlobal(
       "fetch",

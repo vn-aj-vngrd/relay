@@ -1,8 +1,8 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
-import { and, eq, ilike, or } from "drizzle-orm";
+import { and, eq, ilike, inArray, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,13 +10,14 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import {
   adminAuditLogs,
+  notifications,
   venueChangeRequests,
   venueOperatingPeriods,
   venues,
 } from "@/db/schema";
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 
 import {
   buildVenueProposedChanges,
@@ -29,12 +30,23 @@ import {
 } from "./details";
 import { expireCourtDirectory } from "./directory";
 import { adminVenueSchema, venueSubmissionSchema } from "./domain";
+import { openVenueChangeRequestStatuses } from "./request-status";
 
 export type VenueActionState = {
   error?: string;
   success?: string;
   fieldErrors?: Record<string, string[]>;
 };
+
+function requestFingerprint(parts: string[]) {
+  return createHash("sha256")
+    .update(
+      parts
+        .map((part) => part.trim().toLowerCase().replace(/\s+/g, " "))
+        .join("|")
+    )
+    .digest("base64url");
+}
 
 function venueSlug(name: string) {
   const base = name
@@ -44,6 +56,34 @@ function venueSlug(name: string) {
     .replace(/^-|-$/g, "")
     .slice(0, 64);
   return `${base || "philippines-court"}-${randomBytes(3).toString("hex")}`;
+}
+
+function courtSuggestionNotification(input: {
+  userId: string;
+  requestId: string;
+  outcome: "approved" | "rejected" | "duplicate";
+  courtName: string;
+  note?: string | null;
+}) {
+  const title =
+    input.outcome === "approved"
+      ? "Court suggestion applied"
+      : input.outcome === "duplicate"
+        ? "Court suggestion already covered"
+        : "Court suggestion reviewed";
+  const body =
+    input.note ||
+    (input.outcome === "approved"
+      ? `${input.courtName} was updated after Relay reviewed your suggestion.`
+      : input.outcome === "duplicate"
+        ? `${input.courtName} is already listed or covered by another suggestion.`
+        : `Relay reviewed your suggestion for ${input.courtName} but did not apply it.`);
+  return {
+    userId: input.userId,
+    type: `court_suggestion_${input.outcome}`,
+    payload: { title, body },
+    dedupeKey: `court-suggestion:${input.requestId}:${input.outcome}`,
+  };
 }
 
 function operatingHoursFormData(formData: FormData) {
@@ -60,14 +100,23 @@ export async function submitVenueAction(
   formData: FormData
 ): Promise<VenueActionState> {
   const user = await requireUser();
-  const limit = await checkRateLimit(
-    { scope: "venue-submit", limit: 5, windowSeconds: 86400 },
-    `user:${user.id}`
-  );
-  if (!limit.allowed)
+  const ipIdentity = await requestIdentity();
+  const [userAttemptLimit, ipAttemptLimit] = await Promise.all([
+    checkRateLimit(
+      { scope: "venue-submit-attempt", limit: 20, windowSeconds: 3600 },
+      `user:${user.id}`
+    ),
+    checkRateLimit(
+      { scope: "venue-submit-attempt", limit: 60, windowSeconds: 3600 },
+      ipIdentity
+    ),
+  ]);
+  if (!userAttemptLimit.allowed || !ipAttemptLimit.allowed)
     return {
-      error: "You’ve submitted several courts recently. Try again tomorrow.",
+      error:
+        "Too many submission attempts. Check the form and try again later.",
     };
+
   const parsed = venueSubmissionSchema.safeParse({
     requestType: formData.get("requestType"),
     venueId: formData.get("venueId") ?? "",
@@ -135,15 +184,97 @@ export async function submitVenueAction(
       };
   }
 
-  await db.insert(venueChangeRequests).values({
-    requestType: parsed.data.requestType,
-    venueId: targetVenue?.id ?? null,
-    proposedChanges: buildVenueProposedChanges(parsed.data),
-    evidenceUrls: [parsed.data.officialUrl],
-    note: parsed.data.note || null,
-    submittedById: user.id,
-  });
+  const proposedChanges = buildVenueProposedChanges(parsed.data);
+  const fingerprint =
+    parsed.data.requestType === "update"
+      ? requestFingerprint(["update", user.id, parsed.data.venueId])
+      : requestFingerprint([
+          "create",
+          parsed.data.name,
+          parsed.data.address,
+          parsed.data.city,
+        ]);
+  const [unresolvedCount, courtOpenCount, duplicateRequest] = await Promise.all(
+    [
+      db.$count(
+        venueChangeRequests,
+        and(
+          eq(venueChangeRequests.submittedById, user.id),
+          inArray(venueChangeRequests.status, openVenueChangeRequestStatuses)
+        )
+      ),
+      targetVenue
+        ? db.$count(
+            venueChangeRequests,
+            and(
+              eq(venueChangeRequests.venueId, targetVenue.id),
+              inArray(
+                venueChangeRequests.status,
+                openVenueChangeRequestStatuses
+              )
+            )
+          )
+        : Promise.resolve(0),
+      db.query.venueChangeRequests.findFirst({
+        columns: { id: true },
+        where: and(
+          eq(venueChangeRequests.fingerprint, fingerprint),
+          inArray(venueChangeRequests.status, openVenueChangeRequestStatuses)
+        ),
+      }),
+    ]
+  );
+  if (duplicateRequest)
+    return {
+      error:
+        parsed.data.requestType === "update"
+          ? "You already have an update for this court awaiting review."
+          : "This missing court has already been submitted for review.",
+    };
+  if (unresolvedCount >= 10)
+    return {
+      error:
+        "You already have 10 suggestions awaiting review. Wait for a decision before sending another.",
+    };
+  if (courtOpenCount >= 5)
+    return {
+      error:
+        "This court already has several updates awaiting review. Try again after Relay processes them.",
+    };
+
+  const acceptedLimit = await checkRateLimit(
+    { scope: "venue-submit-accepted", limit: 3, windowSeconds: 86400 },
+    `user:${user.id}`
+  );
+  if (!acceptedLimit.allowed)
+    return {
+      error: "You’ve submitted three suggestions today. Try again tomorrow.",
+    };
+
+  const inserted = await db
+    .insert(venueChangeRequests)
+    .values({
+      requestType: parsed.data.requestType,
+      venueId: targetVenue?.id ?? null,
+      fingerprint,
+      proposedChanges,
+      evidenceUrls: [parsed.data.officialUrl],
+      note: parsed.data.note || null,
+      submittedById: user.id,
+    })
+    .onConflictDoNothing()
+    .returning({ id: venueChangeRequests.id });
+  if (!inserted.length)
+    return {
+      error:
+        parsed.data.requestType === "update"
+          ? "You already have an update for this court awaiting review."
+          : "This missing court has already been submitted for review.",
+    };
+
+  revalidatePath("/court/suggest");
   revalidatePath("/admin/courts");
+  revalidatePath("/admin/court-requests");
   return {
     success:
       parsed.data.requestType === "create"
@@ -235,8 +366,8 @@ export async function updateVenueAction(
       await transaction
         .insert(venueOperatingPeriods)
         .values(periods.map((period) => ({ venueId: existing.id, ...period })));
-    if (verified)
-      await transaction
+    if (verified) {
+      const approvedRequests = await transaction
         .update(venueChangeRequests)
         .set({
           status: "approved",
@@ -250,7 +381,29 @@ export async function updateVenueAction(
             eq(venueChangeRequests.requestType, "create"),
             eq(venueChangeRequests.status, "in_review")
           )
-        );
+        )
+        .returning({
+          id: venueChangeRequests.id,
+          submittedById: venueChangeRequests.submittedById,
+        });
+      const notificationRows = approvedRequests.flatMap((request) =>
+        request.submittedById
+          ? [
+              courtSuggestionNotification({
+                userId: request.submittedById,
+                requestId: request.id,
+                outcome: "approved",
+                courtName: parsed.data.name,
+              }),
+            ]
+          : []
+      );
+      if (notificationRows.length)
+        await transaction
+          .insert(notifications)
+          .values(notificationRows)
+          .onConflictDoNothing({ target: notifications.dedupeKey });
+    }
     await transaction.insert(adminAuditLogs).values({
       actorUserId: actor.id,
       action: "venue.updated",
@@ -266,6 +419,7 @@ export async function updateVenueAction(
   revalidatePath(`/courts/${existing.slug}`);
   revalidatePath("/admin/courts");
   revalidatePath(`/admin/courts/${existing.id}`);
+  revalidatePath("/court/suggest");
   return { success: "Court saved." };
 }
 
@@ -430,7 +584,7 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
             }))
           );
       }
-      await transaction
+      const [approvedRequest] = await transaction
         .update(venueChangeRequests)
         .set({
           status: "approved",
@@ -438,7 +592,27 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
           reviewedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(venueChangeRequests.id, request.id));
+        .where(
+          and(
+            eq(venueChangeRequests.id, request.id),
+            inArray(venueChangeRequests.status, openVenueChangeRequestStatuses)
+          )
+        )
+        .returning({ id: venueChangeRequests.id });
+      if (!approvedRequest)
+        throw new Error("This court request was already reviewed.");
+      if (request.submittedById)
+        await transaction
+          .insert(notifications)
+          .values(
+            courtSuggestionNotification({
+              userId: request.submittedById,
+              requestId: request.id,
+              outcome: "approved",
+              courtName: existing.name,
+            })
+          )
+          .onConflictDoNothing({ target: notifications.dedupeKey });
       await transaction.insert(adminAuditLogs).values({
         actorUserId: actor.id,
         action: "venue.change_request_approved",
@@ -452,6 +626,7 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
 
   revalidatePath("/admin/courts");
   revalidatePath("/admin/court-requests");
+  revalidatePath("/court/suggest");
   revalidatePath("/court");
   revalidatePath("/courts");
   redirect(`/admin/courts/${targetId}`);
@@ -473,7 +648,7 @@ export async function resolveVenueChangeRequestAction(formData: FormData) {
   )
     redirect("/admin/court-requests");
   await db.transaction(async (transaction) => {
-    await transaction
+    const [resolvedRequest] = await transaction
       .update(venueChangeRequests)
       .set({
         status: parsed.decision,
@@ -482,7 +657,47 @@ export async function resolveVenueChangeRequestAction(formData: FormData) {
         reviewedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(venueChangeRequests.id, request.id));
+      .where(
+        and(
+          eq(venueChangeRequests.id, request.id),
+          inArray(venueChangeRequests.status, openVenueChangeRequestStatuses)
+        )
+      )
+      .returning({ id: venueChangeRequests.id });
+    if (!resolvedRequest)
+      throw new Error("This court request was already reviewed.");
+    if (request.requestType === "create" && request.venueId)
+      await transaction
+        .update(venues)
+        .set({
+          listingStatus: "rejected",
+          verificationNote: parsed.resolutionNote,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(venues.id, request.venueId),
+            eq(venues.listingStatus, "pending")
+          )
+        );
+    if (request.submittedById) {
+      const proposal = request.proposedChanges as Record<string, unknown>;
+      await transaction
+        .insert(notifications)
+        .values(
+          courtSuggestionNotification({
+            userId: request.submittedById,
+            requestId: request.id,
+            outcome: parsed.decision,
+            courtName:
+              typeof proposal.name === "string"
+                ? proposal.name
+                : "your court listing",
+            note: parsed.resolutionNote,
+          })
+        )
+        .onConflictDoNothing({ target: notifications.dedupeKey });
+    }
     await transaction.insert(adminAuditLogs).values({
       actorUserId: actor.id,
       action: `venue.change_request_${parsed.decision}`,
@@ -493,5 +708,6 @@ export async function resolveVenueChangeRequestAction(formData: FormData) {
     });
   });
   revalidatePath("/admin/court-requests");
+  revalidatePath("/court/suggest");
   redirect("/admin/court-requests");
 }

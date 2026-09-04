@@ -3,6 +3,7 @@ export const adminResources = [
   "users",
   "sessions",
   "venues",
+  "court-requests",
   "feedback",
   "audit",
 ] as const;
@@ -41,6 +42,18 @@ export type AdminVenueRecord = {
   updatedAt: AdminDateValue;
 };
 
+export type AdminCourtRequestRecord = {
+  id: string;
+  requestType: "create" | "update";
+  status: string;
+  name: string;
+  address: string | null;
+  createdAt: AdminDateValue;
+  submitterName: string | null;
+  fieldCount: number;
+  sameCourtOpenCount: number;
+};
+
 export type AdminFeedbackRecord = {
   id: string;
   type: string;
@@ -67,6 +80,7 @@ export type AdminRecord =
   | AdminUserRecord
   | AdminSessionRecord
   | AdminVenueRecord
+  | AdminCourtRequestRecord
   | AdminFeedbackRecord
   | AdminAuditRecord;
 
@@ -74,6 +88,7 @@ export type AdminRecordMap = {
   users: AdminUserRecord;
   sessions: AdminSessionRecord;
   venues: AdminVenueRecord;
+  "court-requests": AdminCourtRequestRecord;
   feedback: AdminFeedbackRecord;
   audit: AdminAuditRecord;
 };

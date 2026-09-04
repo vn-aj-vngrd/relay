@@ -106,6 +106,17 @@ describe("Philippines venue moderation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects oversized evidence links", () => {
+    const result = venueSubmissionSchema.safeParse({
+      name: "Cebu Court",
+      address: "Lahug",
+      city: "Cebu City",
+      officialUrl: `https://example.com/${"a".repeat(2048)}`,
+      ...optionalSubmissionDetails,
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("requires a public source for submissions elsewhere in the Philippines", () => {
     const result = venueSubmissionSchema.safeParse({
       name: "Manila Pickle",

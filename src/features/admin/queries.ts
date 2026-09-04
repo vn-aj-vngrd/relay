@@ -7,10 +7,13 @@ import {
   count,
   desc,
   eq,
+  gt,
   gte,
   ilike,
+  inArray,
   isNotNull,
   lt,
+  ne,
   or,
   type SQL,
   sql,
@@ -36,6 +39,7 @@ import {
 } from "@/db/schema";
 import {
   ADMIN_PAGE_SIZE,
+  type AdminCourtRequestRecord,
   type AdminPage,
   type AdminSessionRecord,
   type AdminUserRecord,
@@ -45,6 +49,11 @@ import {
   buildHostRetention,
   type SessionFunnel,
 } from "@/features/analytics/insights";
+import {
+  openVenueChangeRequestStatuses,
+  type VenueChangeRequestStatus,
+  venueChangeRequestStatuses,
+} from "@/features/venues/request-status";
 
 import { type AdminCursor, encodeAdminCursor } from "./cursor";
 
@@ -487,22 +496,137 @@ export async function getAdminVenues(
   };
 }
 
-export async function getAdminVenueChangeRequests() {
+export async function getAdminVenueChangeRequests(
+  input: {
+    query?: string;
+    status?: string;
+    type?: string;
+    cursor?: AdminCursor | null;
+  } = {}
+) {
   await connection();
-  return db
-    .select({
-      id: venueChangeRequests.id,
-      requestType: venueChangeRequests.requestType,
-      status: venueChangeRequests.status,
-      proposedChanges: venueChangeRequests.proposedChanges,
-      createdAt: venueChangeRequests.createdAt,
-      venueId: venueChangeRequests.venueId,
-      venueName: venues.name,
-    })
-    .from(venueChangeRequests)
-    .leftJoin(venues, eq(venues.id, venueChangeRequests.venueId))
-    .orderBy(desc(venueChangeRequests.createdAt), desc(venueChangeRequests.id))
-    .limit(30);
+  const conditions: SQL[] = [];
+  const query = input.query?.trim();
+  if (query) {
+    const pattern = `%${query}%`;
+    const search = or(
+      ilike(venues.name, pattern),
+      ilike(venues.address, pattern),
+      ilike(profiles.name, pattern),
+      sql<boolean>`coalesce(${venueChangeRequests.proposedChanges}->>'name', '') ilike ${pattern}`,
+      sql<boolean>`coalesce(${venueChangeRequests.proposedChanges}->>'address', '') ilike ${pattern}`
+    );
+    if (search) conditions.push(search);
+  }
+  if (input.status === "open") {
+    conditions.push(
+      inArray(venueChangeRequests.status, openVenueChangeRequestStatuses)
+    );
+  } else if (
+    venueChangeRequestStatuses.includes(
+      input.status as VenueChangeRequestStatus
+    )
+  ) {
+    conditions.push(
+      eq(venueChangeRequests.status, input.status as VenueChangeRequestStatus)
+    );
+  }
+  if (input.type === "create" || input.type === "update") {
+    conditions.push(eq(venueChangeRequests.requestType, input.type));
+  }
+
+  const priority = sql<number>`case when ${venueChangeRequests.status} in ('submitted', 'needs_info', 'in_review') then 1 else 0 end`;
+  if (input.cursor) {
+    const cursorCondition = or(
+      lt(priority, input.cursor.priority ?? 0),
+      and(
+        eq(priority, input.cursor.priority ?? 0),
+        or(
+          gt(venueChangeRequests.createdAt, input.cursor.at),
+          and(
+            eq(venueChangeRequests.createdAt, input.cursor.at),
+            gt(venueChangeRequests.id, input.cursor.id)
+          )
+        )
+      )
+    );
+    if (cursorCondition) conditions.push(cursorCondition);
+  }
+
+  const [rows, statusRows] = await Promise.all([
+    db
+      .select({
+        priority,
+        id: venueChangeRequests.id,
+        requestType: venueChangeRequests.requestType,
+        status: venueChangeRequests.status,
+        proposedChanges: venueChangeRequests.proposedChanges,
+        createdAt: venueChangeRequests.createdAt,
+        venueName: venues.name,
+        venueAddress: venues.address,
+        submitterName: profiles.name,
+        sameCourtOpenCount: sql<number>`case
+          when ${venueChangeRequests.venueId} is null then 1
+          else (select count(*)::int from venue_change_requests sibling
+            where sibling.venue_id = ${venueChangeRequests.venueId}
+              and sibling.status in ('submitted', 'needs_info', 'in_review'))
+        end`,
+      })
+      .from(venueChangeRequests)
+      .leftJoin(venues, eq(venues.id, venueChangeRequests.venueId))
+      .leftJoin(
+        profiles,
+        eq(profiles.userId, venueChangeRequests.submittedById)
+      )
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(
+        desc(priority),
+        asc(venueChangeRequests.createdAt),
+        asc(venueChangeRequests.id)
+      )
+      .limit(ADMIN_PAGE_SIZE + 1),
+    db
+      .select({ status: venueChangeRequests.status, total: count() })
+      .from(venueChangeRequests)
+      .groupBy(venueChangeRequests.status),
+  ]);
+
+  const pageRows = rows.slice(0, ADMIN_PAGE_SIZE);
+  const items: AdminCourtRequestRecord[] = pageRows.map((row) => {
+    const proposal = row.proposedChanges as Record<string, unknown>;
+    return {
+      id: row.id,
+      requestType: row.requestType,
+      status: row.status,
+      name:
+        row.venueName ??
+        (typeof proposal.name === "string"
+          ? proposal.name
+          : "New court request"),
+      address:
+        row.venueAddress ??
+        (typeof proposal.address === "string" ? proposal.address : null),
+      createdAt: row.createdAt,
+      submitterName: row.submitterName,
+      fieldCount: Object.keys(proposal).length,
+      sameCourtOpenCount: Number(row.sameCourtOpenCount),
+    };
+  });
+  const last = pageRows.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > ADMIN_PAGE_SIZE && last
+        ? encodeAdminCursor({
+            at: last.createdAt,
+            id: last.id,
+            priority: last.priority,
+          })
+        : null,
+    statusCounts: Object.fromEntries(
+      statusRows.map((row) => [row.status, Number(row.total)])
+    ) as Partial<Record<VenueChangeRequestStatus, number>>,
+  };
 }
 
 export async function getAdminVenueChangeRequest(requestId: string) {
@@ -511,17 +635,56 @@ export async function getAdminVenueChangeRequest(requestId: string) {
     where: eq(venueChangeRequests.id, requestId),
   });
   if (!request) return null;
-  const [venue, submitter] = await Promise.all([
-    request.venueId
-      ? db.query.venues.findFirst({ where: eq(venues.id, request.venueId) })
-      : null,
-    request.submittedById
-      ? db.query.profiles.findFirst({
-          where: eq(profiles.userId, request.submittedById),
-        })
-      : null,
-  ]);
-  return { ...request, venue: venue ?? null, submitter: submitter ?? null };
+  const [venue, operatingHours, submitter, relatedRequests] = await Promise.all(
+    [
+      request.venueId
+        ? db.query.venues.findFirst({ where: eq(venues.id, request.venueId) })
+        : null,
+      request.venueId
+        ? db
+            .select()
+            .from(venueOperatingPeriods)
+            .where(eq(venueOperatingPeriods.venueId, request.venueId))
+            .orderBy(
+              asc(venueOperatingPeriods.dayOfWeek),
+              asc(venueOperatingPeriods.sequence)
+            )
+        : [],
+      request.submittedById
+        ? db.query.profiles.findFirst({
+            where: eq(profiles.userId, request.submittedById),
+          })
+        : null,
+      request.venueId
+        ? db
+            .select({
+              id: venueChangeRequests.id,
+              status: venueChangeRequests.status,
+              createdAt: venueChangeRequests.createdAt,
+              proposedChanges: venueChangeRequests.proposedChanges,
+            })
+            .from(venueChangeRequests)
+            .where(
+              and(
+                eq(venueChangeRequests.venueId, request.venueId),
+                ne(venueChangeRequests.id, request.id),
+                inArray(
+                  venueChangeRequests.status,
+                  openVenueChangeRequestStatuses
+                )
+              )
+            )
+            .orderBy(asc(venueChangeRequests.createdAt))
+            .limit(8)
+        : [],
+    ]
+  );
+  return {
+    ...request,
+    venue: venue ? { ...venue, operatingHours } : null,
+    submitter: submitter ?? null,
+    relatedRequests,
+  };
 }
 
 export async function getAdminVenue(venueId: string) {

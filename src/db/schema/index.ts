@@ -283,6 +283,7 @@ export const venueChangeRequests = pgTable(
     venueId: uuid("venue_id").references(() => venues.id, {
       onDelete: "set null",
     }),
+    fingerprint: text("fingerprint"),
     proposedChanges: jsonb("proposed_changes")
       .$type<Record<string, unknown>>()
       .notNull(),
@@ -316,6 +317,11 @@ export const venueChangeRequests = pgTable(
       table.submittedById,
       table.createdAt.desc()
     ),
+    uniqueIndex("venue_change_requests_open_fingerprint_idx")
+      .on(table.fingerprint)
+      .where(
+        sql`${table.fingerprint} is not null and ${table.status} in ('submitted', 'needs_info', 'in_review')`
+      ),
   ]
 );
 

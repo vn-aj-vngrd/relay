@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
+import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import { getAdminVenueChangeRequest } from "@/features/admin/queries";
 import {
   applyVenueChangeRequestAction,
@@ -44,9 +45,16 @@ export default async function AdminCourtRequestPage({
   );
   if (!proposal.success)
     throw new Error("This stored court request is invalid.");
-  const resolved = ["approved", "rejected", "duplicate", "withdrawn"].includes(
-    request.status
-  );
+  const resolved = [
+    "approved",
+    "partially_approved",
+    "rejected",
+    "duplicate",
+    "withdrawn",
+  ].includes(request.status);
+  const currentVenue = request.venue
+    ? (request.venue as unknown as Record<string, unknown>)
+    : null;
 
   return (
     <div>
@@ -56,37 +64,55 @@ export default async function AdminCourtRequestPage({
             ? "Missing court request"
             : "Court update request"
         }
-        description={`${request.status.replaceAll("_", " ")} · submitted by ${request.submitter?.name ?? "Unknown player"}`}
-        action={
-          request.venue ? (
-            <Link
-              href={`/admin/courts/${request.venue.id}`}
-              className="pressable inline-flex min-h-9 items-center rounded-lg border border-line px-3 text-[13px] font-semibold hover:bg-surface-strong"
-            >
-              Open court
-            </Link>
-          ) : undefined
-        }
+        description={`Submitted by ${request.submitter?.name ?? "Unknown player"}`}
+        action={<AdminStatus value={request.status} />}
       />
 
       <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section>
-          <h2 className="text-lg font-[680]">Proposed information</h2>
-          <dl className="mt-4 divide-y divide-line border-y border-line">
-            {Object.entries(proposal.data).map(([field, value]) => (
-              <div
-                key={field}
-                className="grid gap-1 py-3 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4"
-              >
-                <dt className="text-sm font-semibold text-muted">
-                  {fieldLabel(field)}
-                </dt>
-                <dd className="break-words text-sm font-medium text-ink">
-                  {valueLabel(value)}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-[680]">
+                {request.requestType === "update"
+                  ? "Current and proposed"
+                  : "Proposed information"}
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                {Object.keys(proposal.data).length} proposed fields
+              </p>
+            </div>
+            <AdminDate value={request.createdAt} includeTime />
+          </div>
+          <div className="mt-4 overflow-x-auto border-y border-line">
+            <table className="w-full min-w-[620px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-line text-xs font-semibold text-muted">
+                  <th className="px-3 py-3">Field</th>
+                  {request.requestType === "update" ? (
+                    <th className="px-3 py-3">Current</th>
+                  ) : null}
+                  <th className="px-3 py-3">Proposed</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {Object.entries(proposal.data).map(([field, value]) => (
+                  <tr key={field} className="align-top">
+                    <th className="px-3 py-4 text-sm font-semibold text-muted">
+                      {fieldLabel(field)}
+                    </th>
+                    {request.requestType === "update" ? (
+                      <td className="max-w-sm break-words px-3 py-4 text-sm leading-6 text-muted">
+                        {valueLabel(currentVenue?.[field])}
+                      </td>
+                    ) : null}
+                    <td className="max-w-sm break-words px-3 py-4 text-sm font-medium leading-6">
+                      {valueLabel(value)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           {request.note ? (
             <div className="mt-6">
               <h2 className="text-sm font-[680]">Contributor note</h2>
@@ -125,6 +151,29 @@ export default async function AdminCourtRequestPage({
             </div>
           </section>
 
+          {request.relatedRequests.length ? (
+            <section>
+              <h2 className="text-sm font-[680]">
+                Other open requests for this court
+              </h2>
+              <ul className="mt-3 divide-y divide-line border-y border-line">
+                {request.relatedRequests.map((related) => (
+                  <li key={related.id}>
+                    <Link
+                      href={`/admin/court-requests/${related.id}`}
+                      className="pressable flex min-h-11 items-center justify-between gap-3 py-3 text-sm hover:bg-surface-strong sm:px-2"
+                    >
+                      <span className="font-semibold capitalize">
+                        {related.status.replaceAll("_", " ")}
+                      </span>
+                      <AdminDate value={related.createdAt} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           {!resolved ? (
             <>
               <form action={applyVenueChangeRequestAction} noValidate>
@@ -134,7 +183,7 @@ export default async function AdminCourtRequestPage({
                     ? request.venue
                       ? "Continue court review"
                       : "Create review draft"
-                    : "Approve verified changes"}
+                    : `Approve all ${Object.keys(proposal.data).length} fields`}
                 </button>
                 {request.requestType === "create" ? (
                   <p className="mt-2 text-xs leading-5 text-muted">

@@ -1,0 +1,2 @@
+ALTER TABLE "venue_change_requests" ADD COLUMN "fingerprint" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "venue_change_requests_open_fingerprint_idx" ON "venue_change_requests" USING btree ("fingerprint") WHERE "venue_change_requests"."fingerprint" is not null and "venue_change_requests"."status" in ('submitted', 'needs_info', 'in_review');

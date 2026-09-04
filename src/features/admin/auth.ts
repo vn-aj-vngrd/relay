@@ -21,6 +21,15 @@ export async function getAuthorizedAdmin(): Promise<User | null> {
   return user && isAdminEmail(user.email) ? user : null;
 }
 
+export async function getAuthorizedAal2Admin(): Promise<User | null> {
+  const user = await getAuthorizedAdmin();
+  if (!user) return null;
+  const supabase = await createSupabaseServerClient();
+  const { data, error } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  return !error && data.currentLevel === "aal2" ? user : null;
+}
+
 export async function requireAdmin(): Promise<User> {
   const user = await requireUser("/admin");
   if (!isAdminEmail(user.email)) redirect("/admin-access-denied");
