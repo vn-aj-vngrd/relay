@@ -40,6 +40,9 @@ export async function GET(request: NextRequest) {
     timeTo: request.nextUrl.searchParams.get("timeTo") ?? "",
     location: request.nextUrl.searchParams.get("location") ?? "",
     available: request.nextUrl.searchParams.get("available") ?? undefined,
+    price: request.nextUrl.searchParams.get("price") ?? "any",
+    minPrice: request.nextUrl.searchParams.get("minPrice") ?? "",
+    maxPrice: request.nextUrl.searchParams.get("maxPrice") ?? "",
   });
   const cursorValue = request.nextUrl.searchParams.get("cursor");
   const cursor = parseOpenGameCursor(cursorValue);

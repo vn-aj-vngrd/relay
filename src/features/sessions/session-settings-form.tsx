@@ -227,7 +227,7 @@ export function SessionSettingsForm({
       >
         <div className="mb-5">
           <h2 id="settings-sharing" className="text-lg font-bold">
-            Appearance, sharing, and cost
+            Appearance, sharing, and payment
           </h2>
           <p className="mt-1 text-sm text-muted">
             Customize the cover and keep the shared plan accurate before players
@@ -244,7 +244,7 @@ export function SessionSettingsForm({
             onValueChange={(next) => setVisibility(next as typeof visibility)}
             options={[
               { value: "link", label: "Anyone with the link" },
-              { value: "public", label: "Public — listed in Open games" },
+              { value: "public", label: "Public — eligible for Open games" },
               { value: "private", label: "Private — invited players only" },
             ]}
           />
@@ -254,9 +254,7 @@ export function SessionSettingsForm({
               {[
                 ["free", "Free"],
                 ["estimated", "Estimated per player"],
-                ...(visibility === "public"
-                  ? []
-                  : [["unspecified", "Not provided"]]),
+                ["unspecified", "Not set yet"],
               ].map(([kind, text]) => (
                 <label
                   key={kind}
@@ -275,8 +273,9 @@ export function SessionSettingsForm({
               ))}
             </div>
             {visibility === "public" && costKind === "unspecified" ? (
-              <p className="mt-2 text-sm font-medium text-warning">
-                Choose Free or Estimated before saving a public game.
+              <p className="mt-2 text-sm text-muted">
+                This game stays out of Open games until you mark it Free or add
+                an amount.
               </p>
             ) : null}
             <ErrorText

@@ -1,6 +1,6 @@
 # Public Open Games
 
-Migration `0026_public_open_games.sql` prepares session discovery without weakening link-only or private access.
+Migration `0026_public_open_games.sql` prepared session discovery without weakening link-only or private access. Its publication-time cost constraint is superseded by `0039_foamy_firedrake.sql`, which lets public games start with payment unset while keeping them outside Open games.
 
 ## Product invariant
 

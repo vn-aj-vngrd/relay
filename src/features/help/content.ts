@@ -54,7 +54,7 @@ export const helpGuides = [
       {
         title: "Set capacity and costs",
         detail:
-          "Enter player capacity, number of courts, and an optional estimated cost. More options cover booking status, notes, approvals, and game color.",
+          "Enter player capacity, number of courts, visibility, and approval behavior. Payment starts unset and can be added after publishing.",
       },
       {
         title: "Publish and share",

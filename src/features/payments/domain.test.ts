@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   collectFromPlayers,
+  disclosedPlayerTotal,
   splitExpense,
   validatePaymentProof,
 } from "./domain";
@@ -17,6 +18,16 @@ describe("expense splitting", () => {
       b: 1000,
       c: 1000,
     });
+  });
+  it("discloses the highest total owed across every collection", () => {
+    expect(
+      disclosedPlayerTotal([
+        { sessionPlayerId: "a", amountCents: 334 },
+        { sessionPlayerId: "b", amountCents: 333 },
+        { sessionPlayerId: "a", amountCents: 200 },
+      ])
+    ).toBe(534);
+    expect(disclosedPlayerTotal([])).toBeNull();
   });
   it("keeps the host out of a repayment split after they pay upfront", () => {
     expect(

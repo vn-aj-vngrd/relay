@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" DROP CONSTRAINT "session_public_cost_required";

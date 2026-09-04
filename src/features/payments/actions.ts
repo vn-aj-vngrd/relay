@@ -27,6 +27,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import {
   collectFromPlayers,
+  disclosedPlayerTotal,
   splitExpense,
   validatePaymentProof,
 } from "./domain";
@@ -239,6 +240,18 @@ async function createExpense(formData: FormData) {
           amountCents: shares[sessionPlayerId],
         }))
       );
+    const currentPayments = await tx
+      .select({
+        sessionPlayerId: playerPayments.sessionPlayerId,
+        amountCents: playerPayments.amountCents,
+      })
+      .from(playerPayments)
+      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+      .where(eq(expenses.sessionId, sessionId));
+    await tx
+      .update(sessions)
+      .set({ estimatedCostCents: disclosedPlayerTotal(currentPayments) })
+      .where(eq(sessions.id, sessionId));
     const recipients = players
       .filter((player) => payingIds.includes(player.id) && player.userId)
       .map((player) => player.userId!);
@@ -252,7 +265,10 @@ async function createExpense(formData: FormData) {
         }))
       );
   });
+  revalidatePath("/games/open");
+  revalidatePath(`/games/${sessionId}`);
   revalidatePath(`/games/${sessionId}/payments`);
+  revalidatePath(`/s/${session.slug}`);
 }
 
 export async function markPaymentSent(

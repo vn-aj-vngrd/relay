@@ -88,13 +88,6 @@ function validateSessionDetails(
       path: ["endsAt"],
       message: "End time must be after start time.",
     });
-  if (value.visibility === "public" && value.costKind === "unspecified")
-    context.addIssue({
-      code: "custom",
-      path: ["costKind"],
-      message:
-        "Public games must be marked free or include an estimated cost per player.",
-    });
   if (
     value.costKind === "estimated" &&
     (!value.estimatedCostCents || value.estimatedCostCents <= 0)

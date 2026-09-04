@@ -12,6 +12,9 @@ const defaultFilters: OpenGamesFilterValues = {
   timeTo: "",
   location: "",
   available: false,
+  price: "any",
+  minPrice: null,
+  maxPrice: null,
 };
 
 function OpenGameRowSkeleton() {

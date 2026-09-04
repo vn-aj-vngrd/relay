@@ -23,6 +23,9 @@ describe("Open games request domain", () => {
       timeTo: "",
       location: "Cebu",
       available: true,
+      price: "any",
+      minPrice: null,
+      maxPrice: null,
     });
     expect(
       openGamesFilterSchema.safeParse({
@@ -37,6 +40,34 @@ describe("Open games request domain", () => {
         location: "x".repeat(81),
         available: "",
       }).success
+    ).toBe(false);
+  });
+
+  it("accepts Free and bounded paid price filters", () => {
+    expect(
+      openGamesFilterSchema.parse({
+        price: "paid",
+        minPrice: "150",
+        maxPrice: "500.50",
+      })
+    ).toMatchObject({
+      price: "paid",
+      minPrice: 15_000,
+      maxPrice: 50_050,
+    });
+    expect(
+      openGamesFilterSchema.safeParse({
+        price: "paid",
+        minPrice: "500",
+        maxPrice: "150",
+      }).success
+    ).toBe(false);
+    expect(openGamesFilterSchema.safeParse({ price: "free" }).success).toBe(
+      true
+    );
+    expect(
+      openGamesFilterSchema.safeParse({ price: "paid", maxPrice: "0.001" })
+        .success
     ).toBe(false);
   });
 

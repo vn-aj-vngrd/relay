@@ -10,7 +10,11 @@ import {
   sessions,
 } from "@/db/schema";
 
-import { collectFromPlayers, splitExpense } from "./domain";
+import {
+  collectFromPlayers,
+  disclosedPlayerTotal,
+  splitExpense,
+} from "./domain";
 
 export async function reconcileUnpaidExpenseShares(sessionId: string) {
   await db.transaction(async (tx) => {
@@ -42,8 +46,8 @@ export async function reconcileUnpaidExpenseShares(sessionId: string) {
           .delete(playerPayments)
           .where(eq(playerPayments.expenseId, expense.id));
       const payingIds = collectFromPlayers(players, session.hostId);
-      if (!payingIds.length) continue;
       const shares = splitExpense(expense.totalCents, payingIds);
+      if (!payingIds.length) continue;
       await tx.insert(playerPayments).values(
         payingIds.map((sessionPlayerId) => ({
           expenseId: expense.id,
@@ -52,6 +56,18 @@ export async function reconcileUnpaidExpenseShares(sessionId: string) {
         }))
       );
     }
+    const currentPayments = await tx
+      .select({
+        sessionPlayerId: playerPayments.sessionPlayerId,
+        amountCents: playerPayments.amountCents,
+      })
+      .from(playerPayments)
+      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+      .where(eq(expenses.sessionId, sessionId));
+    await tx
+      .update(sessions)
+      .set({ estimatedCostCents: disclosedPlayerTotal(currentPayments) })
+      .where(eq(sessions.id, sessionId));
   });
 }
 

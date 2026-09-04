@@ -114,10 +114,6 @@ export default async function NewGamePage({
         courts: template.courtCount,
         start: time(template.startsAt),
         end: time(template.endsAt),
-        cost:
-          template.estimatedCostCents == null
-            ? undefined
-            : template.estimatedCostCents / 100,
         accentColor: template.accentColor,
         visibility: template.visibility,
         requiresApproval: template.requiresApproval,

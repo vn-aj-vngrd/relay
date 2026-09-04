@@ -38,6 +38,9 @@ export default async function OpenGamesPage({
     timeTo?: string;
     location?: string;
     available?: string;
+    price?: string;
+    minPrice?: string;
+    maxPrice?: string;
     month?: string;
     selectedDate?: string;
   }>;
@@ -52,6 +55,9 @@ export default async function OpenGamesPage({
     timeTo: params.timeTo ?? "",
     location: params.location ?? "",
     available: params.available,
+    price: params.price ?? "any",
+    minPrice: params.minPrice ?? "",
+    maxPrice: params.maxPrice ?? "",
   });
   const filters = parsed.success
     ? parsed.data
@@ -109,7 +115,7 @@ export default async function OpenGamesPage({
       <OpenGamesFilters filters={filters} />
       <div className="mt-6">
         <OpenGamesCollection
-          key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}`}
+          key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}:${filters.price}:${filters.minPrice}:${filters.maxPrice}`}
           initialPage={page}
           filters={filters}
           todayKey={todayKey}

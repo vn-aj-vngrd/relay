@@ -284,24 +284,14 @@ describe("CreateSessionForm", () => {
     expect(screen.getByText(/draft stays in this browser/i)).toBeVisible();
   });
 
-  it("requires a cost expectation before reviewing a public game", () => {
+  it("starts payment unset and lets a public game reach review", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToAccess();
+
+    expect(screen.queryByText("Cost expectation")).not.toBeInTheDocument();
+    expect(screen.getByText(/Payment starts unset/)).toBeVisible();
+
     fireEvent.click(screen.getByRole("radio", { name: /^Public/ }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Continue to details" })
-    );
-    expect(
-      screen.getByText(
-        "Public games must be marked free or include an estimated cost per player."
-      )
-    ).toBeVisible();
-    fireEvent.click(screen.getByRole("radio", { name: "Free" }));
-    expect(
-      screen.queryByText(
-        "Public games must be marked free or include an estimated cost per player."
-      )
-    ).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: "Continue to details" })
     );
@@ -309,9 +299,6 @@ describe("CreateSessionForm", () => {
       screen.getByRole("heading", { name: "Optional details" })
     ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
-    expect(
-      screen.getByRole("heading", { name: "Review your game" })
-    ).toBeVisible();
-    expect(screen.getAllByText("Free").at(-1)).toBeVisible();
+    expect(screen.getByText("Payment not set up yet")).toBeVisible();
   });
 });

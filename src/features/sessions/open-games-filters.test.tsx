@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OpenGamesFilters } from "./open-games-filters";
@@ -17,6 +23,9 @@ const defaultFilters = {
   timeTo: "",
   location: "",
   available: false,
+  price: "any" as const,
+  minPrice: null,
+  maxPrice: null,
 };
 
 afterEach(() => {
@@ -68,6 +77,39 @@ describe("OpenGamesFilters", () => {
 
     expect(replace).toHaveBeenCalledWith(
       "/games/open?location=Cebu+City&date=today&available=1",
+      { scroll: false }
+    );
+  });
+
+  it("applies Free or a paid range from one price chip", async () => {
+    const { rerender } = render(<OpenGamesFilters filters={defaultFilters} />);
+
+    const priceTrigger = screen.getByRole("button", { name: "Price" });
+    fireEvent.click(priceTrigger);
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "Any" })).toHaveFocus()
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Free" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply price" }));
+    expect(replace).toHaveBeenCalledWith("/games/open?price=free", {
+      scroll: false,
+    });
+    expect(priceTrigger).toHaveFocus();
+
+    rerender(
+      <OpenGamesFilters filters={{ ...defaultFilters, price: "free" }} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Free" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Paid" }));
+    fireEvent.change(screen.getByRole("spinbutton", { name: /Minimum/ }), {
+      target: { value: "150" },
+    });
+    fireEvent.change(screen.getByRole("spinbutton", { name: /Maximum/ }), {
+      target: { value: "500" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Apply price" }));
+    expect(replace).toHaveBeenLastCalledWith(
+      "/games/open?price=paid&minPrice=150&maxPrice=500",
       { scroll: false }
     );
   });

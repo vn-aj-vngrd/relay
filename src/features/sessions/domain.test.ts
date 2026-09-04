@@ -47,17 +47,16 @@ describe("session validation", () => {
       true
     );
   });
-  it("requires a transparent cost expectation for public games", () => {
-    const missing = createSchema.safeParse({ ...valid, visibility: "public" });
-    expect(
-      missing.success ? [] : missing.error.flatten().fieldErrors.costKind
-    ).toContain(
-      "Public games must be marked free or include an estimated cost per player."
-    );
+  it("allows every visibility to start without payment details", () => {
+    for (const visibility of ["public", "link", "private"] as const)
+      expect(createSchema.safeParse({ ...valid, visibility }).success).toBe(
+        true
+      );
+  });
+  it("still validates an explicit payment state", () => {
     expect(
       createSchema.safeParse({
         ...valid,
-        visibility: "public",
         costKind: "free",
         estimatedCostCents: 0,
       }).success
@@ -65,27 +64,10 @@ describe("session validation", () => {
     expect(
       createSchema.safeParse({
         ...valid,
-        visibility: "public",
-        costKind: "estimated",
-        estimatedCostCents: 30_000,
-      }).success
-    ).toBe(true);
-    expect(
-      createSchema.safeParse({
-        ...valid,
-        visibility: "public",
         costKind: "estimated",
         estimatedCostCents: 0,
       }).success
     ).toBe(false);
-  });
-  it("keeps cost optional for link-only and private games", () => {
-    expect(
-      createSchema.safeParse({ ...valid, visibility: "link" }).success
-    ).toBe(true);
-    expect(
-      createSchema.safeParse({ ...valid, visibility: "private" }).success
-    ).toBe(true);
   });
   it("validates editable sharing and booking fields", () => {
     const update = {

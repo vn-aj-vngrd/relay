@@ -422,9 +422,11 @@ export default async function PaymentsPage({
             Payment details aren’t set up
           </h2>
           <p className="mt-2 text-pretty text-muted">
-            {data.session.estimatedCostCents
-              ? `The current estimate is ${peso(data.session.estimatedCostCents)} per player. The host hasn’t requested payment yet.`
-              : "The host hasn’t added an expense or payment method."}
+            {data.session.estimatedCostCents === 0
+              ? "The host marked this game Free. No repayment is needed."
+              : data.session.estimatedCostCents
+                ? `The current estimate is ${peso(data.session.estimatedCostCents)} per player. The host hasn’t requested payment yet.`
+                : "The host hasn’t added a repayment amount or payment method yet."}
           </p>
         </section>
       )}

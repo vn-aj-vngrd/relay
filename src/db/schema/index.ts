@@ -463,10 +463,6 @@ export const sessions = pgTable(
       sql`${table.roundDurationMinutes} is null or ${table.roundDurationMinutes} between 5 and 60`
     ),
     check("session_time_valid", sql`${table.endsAt} > ${table.startsAt}`),
-    check(
-      "session_public_cost_required",
-      sql`${table.visibility} <> 'public' or ${table.estimatedCostCents} is not null`
-    ),
     index("sessions_starts_at_idx").on(table.startsAt),
     index("sessions_public_discovery_idx").on(
       table.visibility,

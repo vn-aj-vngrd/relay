@@ -16,6 +16,19 @@ export function collectFromPlayers(
     .map((player) => player.id);
 }
 
+export function disclosedPlayerTotal(
+  payments: Array<{ sessionPlayerId: string; amountCents: number }>
+): number | null {
+  const totals = new Map<string, number>();
+  for (const payment of payments)
+    totals.set(
+      payment.sessionPlayerId,
+      (totals.get(payment.sessionPlayerId) ?? 0) + payment.amountCents
+    );
+  const amounts = [...totals.values()];
+  return amounts.length ? Math.max(...amounts) : null;
+}
+
 export function splitExpense(
   totalCents: number,
   playerIds: string[],

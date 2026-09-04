@@ -47,7 +47,9 @@ describe("SessionSettingsForm", () => {
     );
     expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
     expect(
-      screen.getByRole("heading", { name: "Appearance, sharing, and cost" })
+      screen.getByRole("heading", {
+        name: "Appearance, sharing, and payment",
+      })
     ).toBeVisible();
     expect(
       screen.getByText(/Sets the cover, active tabs, and actions/)

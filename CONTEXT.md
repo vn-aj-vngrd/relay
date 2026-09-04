@@ -69,7 +69,7 @@ A published or live public session that has not ended and discloses either Free 
 _Avoid_: Community post, pickup feed
 
 **Cost expectation**:
-The pre-join price context for a session: Free, an estimated per-player amount, or unspecified. Public games require Free or an estimate; link-only and private games may remain unspecified. It is not a charge or payment request.
+The pre-join price context for a session: Free, a per-player amount, or not set yet. Creation starts unset for every visibility. A public session becomes an Open game only after the host marks it Free or adds a per-player amount after creation. It is not a charge or checkout.
 _Avoid_: Price guarantee, checkout amount
 
 **Shared game link**:

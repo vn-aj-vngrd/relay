@@ -5,10 +5,12 @@ import {
   asc,
   eq,
   gt,
+  gte,
   ilike,
   inArray,
   isNotNull,
   lt,
+  lte,
   or,
   sql,
 } from "drizzle-orm";
@@ -62,6 +64,20 @@ function dateCondition(filters: OpenGamesFilters, now: Date) {
   return lt(
     sessions.startsAt,
     new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
+  );
+}
+
+function priceCondition(filters: OpenGamesFilters) {
+  if (filters.price === "any") return;
+  if (filters.price === "free") return eq(sessions.estimatedCostCents, 0);
+  return and(
+    gt(sessions.estimatedCostCents, 0),
+    filters.minPrice === null
+      ? undefined
+      : gte(sessions.estimatedCostCents, filters.minPrice),
+    filters.maxPrice === null
+      ? undefined
+      : lte(sessions.estimatedCostCents, filters.maxPrice)
   );
 }
 
@@ -126,6 +142,7 @@ export async function discoverOpenGames(
         isNotNull(sessions.estimatedCostCents),
         dateCondition(filters, now),
         timeCondition(filters),
+        priceCondition(filters),
         month
           ? sql`to_char(${sessions.startsAt} at time zone ${sessions.timezone}, 'YYYY-MM') = ${month}`
           : undefined,

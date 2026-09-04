@@ -123,7 +123,7 @@ export async function createSessionAction(
     courtCount: formData.get("courts"),
     notes: formData.get("notes") || undefined,
     visibility: formData.get("visibility") || "link",
-    ...costInput(formData),
+    costKind: "unspecified",
     ...bookingInput(formData),
   });
   if (!parsed.success) {

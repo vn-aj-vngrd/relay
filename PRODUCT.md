@@ -31,7 +31,7 @@ Relay organizes one real-world game around one durable shared link and one sessi
 
 A typical game moves through four connected moments:
 
-1. **Plan and invite:** the host moves through a short Plan → Players and access → optional Details → read-only Review flow, sets the schedule, court, roster, visibility, and expected cost, optionally records booking details, then publishes one shared game link.
+1. **Plan and invite:** the host moves through a short Plan → Players and access → optional Details → read-only Review flow, sets the schedule, court, roster, and visibility, optionally records booking details, then publishes one shared game link. Payment starts unset and is added afterward.
 2. **Confirm and coordinate:** players or named guests RSVP; capacity and waitlist state remain authoritative; the group checks changes, chats, and coordinates external court booking and repayment.
 3. **Play courtside:** the host marks attendance, chooses a supported play format, creates court assignments, records scores, advances the queue, and monitors standings and timers from a phone.
 4. **Remember and repeat:** the completed game retains results, standings, chat, photos, and shareable recap imagery; a host can reuse the game structure for another date.

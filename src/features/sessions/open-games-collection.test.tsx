@@ -16,6 +16,9 @@ const filters = {
   timeTo: "",
   location: "",
   available: false,
+  price: "any" as const,
+  minPrice: null,
+  maxPrice: null,
 };
 
 afterEach(() => {

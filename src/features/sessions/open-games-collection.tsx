@@ -364,6 +364,11 @@ export function OpenGamesCollection({
           timeTo: filters.timeTo,
           location: filters.location,
           available: filters.available ? "1" : "",
+          price: filters.price,
+          minPrice:
+            filters.minPrice === null ? "" : String(filters.minPrice / 100),
+          maxPrice:
+            filters.maxPrice === null ? "" : String(filters.maxPrice / 100),
         });
         if (cursor) params.set("cursor", cursor);
         const response = await fetch(`/api/games/open?${params}`, {
@@ -436,6 +441,11 @@ export function OpenGamesCollection({
         timeTo: filters.timeTo,
         location: filters.location,
         available: filters.available ? "1" : "",
+        price: filters.price,
+        minPrice:
+          filters.minPrice === null ? "" : String(filters.minPrice / 100),
+        maxPrice:
+          filters.maxPrice === null ? "" : String(filters.maxPrice / 100),
       });
       const response = await fetch(`/api/games/open?${params}`, {
         headers: { Accept: "application/json" },

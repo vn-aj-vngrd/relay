@@ -34,7 +34,7 @@ const anonymousDraftStorageKey = "relay-game-draft-v1";
 
 const stepFields: Record<number, string[]> = {
   1: ["title", "venue", "date", "start", "end"],
-  2: ["capacity", "courts", "visibility", "costKind", "cost"],
+  2: ["capacity", "courts", "visibility"],
   3: ["notes", "booked", "bookingReference", "bookingTotal", "bookingNotes"],
 };
 
@@ -167,7 +167,6 @@ export type CreateSessionDefaults = {
   courts?: number;
   start?: string;
   end?: string;
-  cost?: number;
   accentColor?: string;
   visibility?: "public" | "link" | "private";
   requiresApproval?: boolean;
@@ -213,7 +212,6 @@ function PublishButton() {
 function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
   if (!values.title || !values.venue || !values.date) return null;
   const courtCount = Number(values.courts);
-  const cost = Number(values.cost);
   return {
     title: values.title,
     venue: values.venue,
@@ -227,12 +225,7 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
         : values.visibility === "private"
           ? "Private · Invited players only"
           : "Anyone with the link",
-    cost:
-      values.costKind === "free"
-        ? "Free"
-        : values.costKind === "estimated"
-          ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(cost)} estimated per player`
-          : "Not provided",
+    cost: "Payment not set up yet",
     details:
       values.courtNumbers ||
       values.notes ||
@@ -264,16 +257,6 @@ function CreateSessionFormContent({
     (initialValues?.visibility as "public" | "link" | "private") ??
       defaults.visibility ??
       "link"
-  );
-  const [costKind, setCostKind] = useState<
-    "unspecified" | "free" | "estimated"
-  >(
-    (initialValues?.costKind as "unspecified" | "free" | "estimated") ??
-      (defaults.cost === 0
-        ? "free"
-        : defaults.cost != null
-          ? "estimated"
-          : "unspecified")
   );
   const [review, setReview] = useState<ReviewValues | null>(() =>
     initialValues ? reviewFromDraft(initialValues) : null
@@ -374,19 +357,10 @@ function CreateSessionFormContent({
     const errors: Record<string, string> = {};
     const capacity = Number(data.get("capacity"));
     const courtCount = Number(data.get("courts"));
-    const amount = Number(data.get("cost"));
     if (!Number.isInteger(capacity) || capacity < 2 || capacity > 40)
       errors.capacity = "Choose a whole-number player limit from 2 to 40.";
     if (!Number.isInteger(courtCount) || courtCount < 1 || courtCount > 20)
       errors.courts = "Choose a whole-number court quantity from 1 to 20.";
-    if (visibility === "public" && costKind === "unspecified")
-      errors.costKind =
-        "Public games must be marked free or include an estimated cost per player.";
-    if (
-      costKind === "estimated" &&
-      (!Number.isFinite(amount) || amount <= 0 || amount > 100_000)
-    )
-      errors.cost = "Enter an estimated cost from ₱0.01 to ₱100,000.";
     return errors;
   }
 
@@ -405,7 +379,6 @@ function CreateSessionFormContent({
     setClientErrors(errors);
     const first = Object.keys(errors)[0];
     if (first) return focusField(first);
-    const amount = Number(data.get("cost"));
     setReview({
       title: String(data.get("title")),
       venue: String(data.get("venue")),
@@ -419,12 +392,7 @@ function CreateSessionFormContent({
           : visibility === "link"
             ? "Anyone with the link"
             : "Private · Invited players only",
-      cost:
-        costKind === "free"
-          ? "Free"
-          : costKind === "estimated"
-            ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(amount)} estimated per player`
-            : "Not provided",
+      cost: "Payment not set up yet",
       details: "No optional details added",
       booking: "Booking details not added",
     });
@@ -781,7 +749,7 @@ function CreateSessionFormContent({
               [
                 "public",
                 "Public",
-                "Listed in Open games. Anyone can view and respond.",
+                "Share it now. It appears in Open games after payment is marked Free or an amount is added.",
               ],
               [
                 "link",
@@ -816,105 +784,11 @@ function CreateSessionFormContent({
             ))}
           </div>
         </fieldset>
-        <fieldset
-          aria-describedby={
-            errorFor(state, clientErrors, "costKind")
-              ? "cost-kind-error"
-              : "cost-kind-hint"
-          }
-        >
-          <legend className={labelClass}>Cost expectation</legend>
-          <p id="cost-kind-hint" className="mt-1 text-sm text-muted">
-            Public players must know the expected cost before joining.
-          </p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <label
-              className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 ${costKind === "free" ? "border-primary bg-primary-soft" : "border-line"}`}
-            >
-              <input
-                type="radio"
-                name="costKind"
-                value="free"
-                checked={costKind === "free"}
-                onChange={() => setCostKind("free")}
-                className="h-5 w-5 accent-[var(--primary)]"
-              />
-              <span className="text-sm font-semibold">Free</span>
-            </label>
-            <label
-              className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 ${costKind === "estimated" ? "border-primary bg-primary-soft" : "border-line"}`}
-            >
-              <input
-                type="radio"
-                name="costKind"
-                value="estimated"
-                checked={costKind === "estimated"}
-                onChange={() => setCostKind("estimated")}
-                className="h-5 w-5 accent-[var(--primary)]"
-              />
-              <span className="text-sm font-semibold">
-                Estimated per player
-              </span>
-            </label>
-            {visibility !== "public" ? (
-              <label
-                className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 sm:col-span-2 ${costKind === "unspecified" ? "border-primary bg-primary-soft" : "border-line"}`}
-              >
-                <input
-                  type="radio"
-                  name="costKind"
-                  value="unspecified"
-                  checked={costKind === "unspecified"}
-                  onChange={() => setCostKind("unspecified")}
-                  className="h-5 w-5 accent-[var(--primary)]"
-                />
-                <span className="text-sm font-semibold">Not provided yet</span>
-              </label>
-            ) : null}
-          </div>
-          <FieldError
-            id="cost-kind-error"
-            message={errorFor(state, clientErrors, "costKind")}
-          />
-          {costKind === "estimated" ? (
-            <div className="mt-4">
-              <label className={labelClass} htmlFor="cost">
-                Estimated cost per player
-              </label>
-              <div className="relative">
-                <span className="absolute left-3.5 top-[14px] text-muted">
-                  ₱
-                </span>
-                <input
-                  className={`${fieldClass(errorFor(state, clientErrors, "cost"))} score pl-8`}
-                  id="cost"
-                  name="cost"
-                  type="number"
-                  min="0.01"
-                  max="100000"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="300"
-                  defaultValue={value(
-                    "cost",
-                    defaults.cost == null ? "" : String(defaults.cost)
-                  )}
-                  aria-invalid={Boolean(errorFor(state, clientErrors, "cost"))}
-                />
-              </div>
-              <FieldError
-                id="cost-error"
-                message={errorFor(state, clientErrors, "cost")}
-              />
-            </div>
-          ) : (
-            <input
-              type="hidden"
-              name="cost"
-              value={costKind === "free" ? "0" : ""}
-            />
-          )}
-        </fieldset>
+        <input type="hidden" name="costKind" value="unspecified" />
+        <p className="text-sm leading-6 text-muted">
+          Payment starts unset. After publishing, add a repayment collection or
+          mark the game Free from game settings.
+        </p>
         <label className="flex min-h-12 cursor-pointer items-start gap-3">
           <input
             type="checkbox"

@@ -15,11 +15,24 @@ export const openGameTimeFilters = [
   "evening",
   "custom",
 ] as const;
+export const openGamePriceFilters = ["any", "free", "paid"] as const;
 
 const optionalDate = z.union([z.iso.date(), z.literal("")]).default("");
 const optionalTime = z
   .union([z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/), z.literal("")])
   .default("");
+const optionalPrice = z
+  .union([
+    z.literal(""),
+    z
+      .string()
+      .trim()
+      .regex(/^\d{1,6}(?:\.\d{1,2})?$/)
+      .transform((pesos) => Number(pesos) * 100)
+      .pipe(z.number().int().min(1).max(10_000_000)),
+  ])
+  .default("")
+  .transform((value) => (value === "" ? null : value));
 
 export const openGamesFilterSchema = z
   .object({
@@ -38,6 +51,9 @@ export const openGamesFilterSchema = z
       .union([z.literal("1"), z.literal("0"), z.literal("")])
       .default("")
       .transform((value) => value === "1"),
+    price: z.enum(openGamePriceFilters).default("any"),
+    minPrice: optionalPrice,
+    maxPrice: optionalPrice,
   })
   .refine(
     (filters) =>
@@ -50,6 +66,14 @@ export const openGamesFilterSchema = z
       !(filters.timeFrom && filters.timeTo) ||
       filters.timeFrom < filters.timeTo,
     { message: "The end time must be after the start time." }
+  )
+  .refine(
+    (filters) =>
+      filters.price !== "paid" ||
+      filters.minPrice === null ||
+      filters.maxPrice === null ||
+      filters.minPrice <= filters.maxPrice,
+    { message: "The maximum price must be at least the minimum price." }
   );
 
 const cursorSchema = z.object({
