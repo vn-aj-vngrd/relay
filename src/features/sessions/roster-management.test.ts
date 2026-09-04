@@ -127,9 +127,11 @@ describe("manageRoster", () => {
     expect(mocks.reconcile).toHaveBeenCalledWith(session.id);
     expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual([
       "/home",
+      "/games/open",
       "/notifications",
       `/games/${session.id}/players`,
       `/games/${session.id}/payments`,
+      `/games/${session.id}/settings`,
       `/games/${session.id}`,
       `/s/${session.slug}`,
     ]);

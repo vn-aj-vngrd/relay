@@ -77,9 +77,11 @@ async function requireSessionManager(sessionId: string, userId: string) {
 
 function invalidateRoster(session: { id: string; slug: string }) {
   revalidatePath("/home");
+  revalidatePath("/games/open");
   revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}/players`);
   revalidatePath(`/games/${session.id}/payments`);
+  revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/s/${session.slug}`);
 }

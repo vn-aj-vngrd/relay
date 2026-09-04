@@ -31,6 +31,7 @@ import type {
   GameCollectionItem,
   GameCollectionPage,
   GameCollectionPhase,
+  GameCollectionScope,
   GameInvitationPage,
 } from "./game-collection-types";
 import { encodeGameCursor, type GameCursor } from "./game-pagination";
@@ -269,7 +270,7 @@ async function toGameCollectionItems(
       viewerRsvp: player.rsvp,
       invitedAt: player.invitedAt.toISOString(),
       hostName: hostNames.get(session.hostId) ?? "Relay host",
-      estimatedCostCents: session.estimatedCostCents,
+      playerPriceCents: session.playerPriceCents,
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
       canReplay: session.hostId === userId && session.status === "completed",
@@ -281,7 +282,7 @@ async function toGameCollectionItems(
               goingCount: playerCount,
               booked: Boolean(session.bookedAt),
               expectsCollection: Boolean(
-                session.estimatedCostCents || session.bookingTotalCents
+                session.playerPriceCents || session.bookingTotalCents
               ),
               collectionCreated: sessionsWithExpense.has(session.id),
             }),
@@ -348,10 +349,18 @@ export async function getGameInvitations(
 export async function getGameCollectionPage(
   userId: string,
   phase: GameCollectionPhase,
-  cursor: GameCursor | null = null
+  cursor: GameCursor | null = null,
+  scope: GameCollectionScope = "all"
 ): Promise<GameCollectionPage> {
   const now = new Date();
   const ascending = phase === "upcoming";
+  const membershipCondition =
+    scope === "organizing"
+      ? and(
+          eq(sessionPlayers.userId, userId),
+          inArray(sessionPlayers.role, ["host", "cohost"])
+        )
+      : userSessionCondition(userId);
   const phaseCondition = ascending
     ? and(
         gt(sessions.endsAt, now),
@@ -359,6 +368,7 @@ export async function getGameCollectionPage(
       )
     : or(
         eq(sessions.status, "completed"),
+        scope === "organizing" ? eq(sessions.status, "cancelled") : undefined,
         and(
           lte(sessions.endsAt, now),
           inArray(sessions.status, ["published", "live"])
@@ -381,8 +391,10 @@ export async function getGameCollectionPage(
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
     .where(
       and(
-        userSessionCondition(userId),
-        phase === "upcoming" ? ne(sessionPlayers.rsvp, "invited") : undefined,
+        membershipCondition,
+        phase === "upcoming" && scope === "all"
+          ? ne(sessionPlayers.rsvp, "invited")
+          : undefined,
         phaseCondition,
         cursorCondition
       )
@@ -405,8 +417,19 @@ export async function getGameCollectionPage(
   };
 }
 
-export async function getGameCollectionMonth(userId: string, monthKey: string) {
+export async function getGameCollectionMonth(
+  userId: string,
+  monthKey: string,
+  scope: GameCollectionScope = "all"
+) {
   const monthStart = new Date(`${monthKey}-01T00:00:00.000Z`);
+  const membershipCondition =
+    scope === "organizing"
+      ? and(
+          eq(sessionPlayers.userId, userId),
+          inArray(sessionPlayers.role, ["host", "cohost"])
+        )
+      : and(userSessionCondition(userId), ne(sessionPlayers.rsvp, "invited"));
   const rangeStart = new Date(monthStart);
   rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
   const rangeEnd = new Date(
@@ -418,11 +441,15 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
     .where(
       and(
-        userSessionCondition(userId),
-        ne(sessionPlayers.rsvp, "invited"),
+        membershipCondition,
         gte(sessions.startsAt, rangeStart),
         lt(sessions.startsAt, rangeEnd),
-        inArray(sessions.status, ["published", "live", "completed"])
+        inArray(
+          sessions.status,
+          scope === "organizing"
+            ? ["published", "live", "completed", "cancelled"]
+            : ["published", "live", "completed"]
+        )
       )
     )
     .orderBy(asc(sessions.startsAt), asc(sessions.id));
@@ -438,7 +465,9 @@ export async function getGameCollectionMonth(userId: string, monthKey: string) {
     ),
     past: items.filter(
       (item) =>
-        item.status === "completed" || new Date(item.endsAt).getTime() <= now
+        item.status === "completed" ||
+        item.status === "cancelled" ||
+        new Date(item.endsAt).getTime() <= now
     ),
   };
 }
@@ -503,7 +532,7 @@ export const getSessionForWorkspace = cache(
       visibility: session.visibility,
       status: session.status,
       endsAt: session.endsAt,
-      estimatedCostCents: session.estimatedCostCents,
+      playerPriceCents: session.playerPriceCents,
       membership,
     });
     if (!access) return null;

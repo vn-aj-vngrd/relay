@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   collectFromPlayers,
   disclosedPlayerTotal,
+  resolvedPlayerPrice,
   splitExpense,
   validatePaymentProof,
 } from "./domain";
@@ -28,6 +29,16 @@ describe("expense splitting", () => {
       ])
     ).toBe(534);
     expect(disclosedPlayerTotal([])).toBeNull();
+    expect(
+      disclosedPlayerTotal([{ sessionPlayerId: "a", amountCents: 0 }])
+    ).toBeNull();
+  });
+  it("preserves an explicit Free price until a positive share supersedes it", () => {
+    expect(resolvedPlayerPrice([], 0)).toBe(0);
+    expect(resolvedPlayerPrice([], null)).toBeNull();
+    expect(
+      resolvedPlayerPrice([{ sessionPlayerId: "a", amountCents: 500 }], 0)
+    ).toBe(500);
   });
   it("keeps the host out of a repayment split after they pay upfront", () => {
     expect(

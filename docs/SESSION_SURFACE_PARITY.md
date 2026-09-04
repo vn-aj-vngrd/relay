@@ -14,7 +14,7 @@ Both paths represent the same session and use the same vocabulary, information o
 ## Route ownership
 
 - Signed-in players stay on `/games/[id]` when they open an invite, notification, search result, or Open games result inside Relay.
-- A signed-in nonparticipant may open `/games/[id]` only when the game is currently eligible for public discovery: public, published or live, not ended, and carrying a stated cost expectation. The workspace is read-only except for the viewer’s RSVP.
+- A signed-in nonparticipant may open `/games/[id]` only when the game is currently eligible for public discovery: public, published or live, not ended, and carrying a stated player price. The workspace is read-only except for the viewer’s RSVP.
 - `/s/[slug]` remains the account-optional shared entry point and the host’s explicit shared-link preview. Signing in does not make a private or link-only game discoverable by identifier.
 - RSVP changes update capabilities in place. Hosts and co-hosts see management controls; participants see personal actions; invitees, pending players, and discoverers see only actions they can complete.
 - Guest RSVP never requires registration. A successful guest response may offer account creation afterward; authentication must claim the existing response, reconcile an unanswered account invitation without adding a second roster row, and return the player to that game. The guest token remains valid when signup is canceled or interrupted.
@@ -48,12 +48,12 @@ A shared route and its authenticated counterpart must expose the same session fa
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |
 
-Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls. Organizer authority and participation are separate: a host or co-host may manage without occupying capacity, entering rotations, appearing in standings, or owing a player share. A host may delegate live-session completion to one lead co-host without delegating ownership or deletion.
+Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls. Organizer authority and participation are separate: a host or co-host may manage without occupying capacity, entering rotations, appearing in standings, or owing a player share. Organizer authority is managed in the Organizers tab of Game settings rather than Players; before Play, only the original Host may grant or remove Co-host access. Players remains participation-focused and shows a Host or Co-host indicator whenever an organizer appears in a roster state. A host may delegate live-session completion to one lead co-host without delegating ownership or deletion.
 
 ## Shared presentation
 
 - Reuse domain components for session hero, plan details, at-a-glance status, scoreboard, queue rows, standings, and chat.
-- Use the same game accent, labels, status language, score values, cost expectation, approval requirement, capacity state, and player ordering on both paths.
+- Use the same game accent, labels, status language, score values, player price, approval requirement, capacity state, and player ordering on both paths.
 - Free is an explicit payment state, not missing data. Newly created games may say payment is not set up yet. Public games appear in Open games only after the host marks them Free or adds a per-player amount, so discoverers always see price context before the RSVP action.
 - Keep one `h1` per destination. Session heroes below a destination heading use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.

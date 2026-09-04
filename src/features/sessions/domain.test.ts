@@ -58,14 +58,14 @@ describe("session validation", () => {
       createSchema.safeParse({
         ...valid,
         costKind: "free",
-        estimatedCostCents: 0,
+        playerPriceCents: 0,
       }).success
     ).toBe(true);
     expect(
       createSchema.safeParse({
         ...valid,
-        costKind: "estimated",
-        estimatedCostCents: 0,
+        costKind: "unspecified",
+        playerPriceCents: 30_000,
       }).success
     ).toBe(false);
   });

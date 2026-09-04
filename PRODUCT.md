@@ -49,7 +49,7 @@ The public shared surface and authenticated workspace expose the same session fa
 - Relay stores court and booking context and links to external directions or booking. It does not reserve courts. Court Finder accepts reviewed listings and evidence-backed creation or correction requests throughout the Philippines; its initial verified inventory remains strongest in Cebu. Restricted facilities stay discoverable when their access and reservation rules are explicit.
 - Session collaboration uses one Broadcast invalidation topic per mounted session and refetches authoritative server state after changes or reconnects. Score and queue mutations preserve explicit concurrency controls.
 - The installable web app provides an offline fallback and network-state feedback. It intentionally does not cache authenticated pages, API responses, game data, payment media, chat media, or map tiles for offline use.
-- Anyone may browse public, unended sessions that disclose Free or an estimated per-player cost. Signed-out visitors open the shared game and authenticate when they want account identity or history. Link-only sessions remain accessible only by shared link and private sessions only to hosts and invited participants.
+- Anyone may browse public, unended sessions that disclose Free or a current player price backed by a repayment split. Signed-out visitors open the shared game and authenticate when they want account identity or history. Link-only sessions remain accessible only by shared link and private sessions only to hosts and invited participants.
 - Authorization is enforced at server boundaries for host, participant, guest, and admin capabilities. Link visibility, route rendering, and identifier secrecy are not treated as authorization.
 - The responsive web interface supports light and dark themes. Product language uses **game** in the interface while the durable domain model uses **session**.
 
@@ -77,7 +77,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 5. **The game becomes the memory.** Results, people, photos, and reactions accumulate around the event rather than becoming a generic content feed.
 6. **Useful before signup.** One public product shell lets any visitor find a court, explore open games, run device-local Quick Play, and complete a local game draft before creating an account.
 7. **Ask at the value boundary.** Authentication begins when a visitor wants to publish, share, save, or collaborate. Court selection, draft values, Quick Play state, and intended destination survive that transition.
-8. **Public means informed.** A discoverable game states its court, roster limit, admission behavior, and cost expectation before a new player joins.
+8. **Public means informed.** A discoverable game states its court, roster limit, admission behavior, and player price before a new player joins.
 
 ## Accessibility & Inclusion
 

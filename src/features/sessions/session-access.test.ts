@@ -8,7 +8,7 @@ const activePublicGame = {
   visibility: "public",
   status: "published",
   endsAt: new Date("2030-08-22T13:00:00.000Z"),
-  estimatedCostCents: 0,
+  playerPriceCents: 0,
   membership: null,
   now: new Date("2030-08-22T10:00:00.000Z"),
 };
@@ -38,7 +38,7 @@ describe("session workspace access", () => {
     ).toBe("pending");
   });
 
-  it("allows signed-in discovery only for active public games with a cost expectation", () => {
+  it("allows signed-in discovery only for active public games with a player price", () => {
     expect(resolveSessionWorkspaceAccess(activePublicGame)).toBe("discoverer");
     expect(
       resolveSessionWorkspaceAccess({ ...activePublicGame, visibility: "link" })
@@ -58,7 +58,7 @@ describe("session workspace access", () => {
     expect(
       resolveSessionWorkspaceAccess({
         ...activePublicGame,
-        estimatedCostCents: null,
+        playerPriceCents: null,
       })
     ).toBeNull();
     expect(

@@ -185,7 +185,7 @@ function InviteVisual() {
           <p className="mt-1 font-bold">8 of 10 going</p>
         </div>
         <div>
-          <p className="text-muted">ESTIMATED</p>
+          <p className="text-muted">PER PLAYER</p>
           <p className="mt-1 font-bold">₱300 / player</p>
         </div>
       </div>

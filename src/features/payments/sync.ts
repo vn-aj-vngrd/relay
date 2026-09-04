@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -12,12 +12,15 @@ import {
 
 import {
   collectFromPlayers,
-  disclosedPlayerTotal,
+  resolvedPlayerPrice,
   splitExpense,
 } from "./domain";
 
 export async function reconcileUnpaidExpenseShares(sessionId: string) {
   await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${sessionId} for update`
+    );
     const [sessionExpenses, session] = await Promise.all([
       tx.select().from(expenses).where(eq(expenses.sessionId, sessionId)),
       tx.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
@@ -63,10 +66,22 @@ export async function reconcileUnpaidExpenseShares(sessionId: string) {
       })
       .from(playerPayments)
       .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-      .where(eq(expenses.sessionId, sessionId));
+      .where(
+        and(
+          eq(expenses.sessionId, sessionId),
+          ne(playerPayments.status, "excluded")
+        )
+      );
     await tx
       .update(sessions)
-      .set({ estimatedCostCents: disclosedPlayerTotal(currentPayments) })
+      .set({
+        playerPriceCents: resolvedPlayerPrice(
+          currentPayments,
+          session.playerPriceCents
+        ),
+        version: sql`${sessions.version} + 1`,
+        updatedAt: new Date(),
+      })
       .where(eq(sessions.id, sessionId));
   });
 }

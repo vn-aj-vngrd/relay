@@ -25,8 +25,15 @@ export function disclosedPlayerTotal(
       payment.sessionPlayerId,
       (totals.get(payment.sessionPlayerId) ?? 0) + payment.amountCents
     );
-  const amounts = [...totals.values()];
+  const amounts = [...totals.values()].filter((amount) => amount > 0);
   return amounts.length ? Math.max(...amounts) : null;
+}
+
+export function resolvedPlayerPrice(
+  payments: Array<{ sessionPlayerId: string; amountCents: number }>,
+  currentPriceCents: number | null
+): number | null {
+  return disclosedPlayerTotal(payments) ?? (currentPriceCents === 0 ? 0 : null);
 }
 
 export function splitExpense(

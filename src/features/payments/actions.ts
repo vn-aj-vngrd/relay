@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
@@ -27,7 +27,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import {
   collectFromPlayers,
-  disclosedPlayerTotal,
+  resolvedPlayerPrice,
   splitExpense,
   validatePaymentProof,
 } from "./domain";
@@ -61,6 +61,34 @@ function assertPaymentsOpen(session: { status: string }) {
     );
 }
 
+function revalidatePlayerPriceSurfaces(session: { id: string; slug: string }) {
+  revalidatePath("/home");
+  revalidatePath("/games/open");
+  revalidatePath(`/games/${session.id}`);
+  revalidatePath(`/games/${session.id}/settings`);
+  revalidatePath(`/games/${session.id}/payments`);
+  revalidatePath(`/s/${session.slug}`);
+}
+
+function hasPaymentCapabilityForMembership(
+  session: { hostId: string },
+  userId: string,
+  membership:
+    | {
+        role: "host" | "cohost" | "player";
+        rsvp: string;
+        leftAt: Date | null;
+      }
+    | null
+    | undefined,
+  action: Extract<SessionAction, "confirm_payment" | "create_expense">
+) {
+  return can(
+    sessionActor({ userId, hostId: session.hostId, membership }),
+    action
+  );
+}
+
 async function hasPaymentCapability(
   session: { id: string; hostId: string },
   userId: string,
@@ -75,10 +103,7 @@ async function hasPaymentCapability(
             eq(sessionPlayers.userId, userId)
           ),
         });
-  return can(
-    sessionActor({ userId, hostId: session.hostId, membership }),
-    action
-  );
+  return hasPaymentCapabilityForMembership(session, userId, membership, action);
 }
 
 export async function createExpenseState(
@@ -199,6 +224,15 @@ async function createExpense(formData: FormData) {
     if (error) throw new Error("The receipt could not be uploaded");
   }
   await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${sessionId} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+    });
+    if (!lockedSession || lockedSession.hostId !== user.id)
+      throw new Error("Only the host can request payment");
+    assertPaymentsOpen(lockedSession);
     const [account] = await tx
       .insert(paymentAccounts)
       .values({
@@ -247,10 +281,22 @@ async function createExpense(formData: FormData) {
       })
       .from(playerPayments)
       .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-      .where(eq(expenses.sessionId, sessionId));
+      .where(
+        and(
+          eq(expenses.sessionId, sessionId),
+          ne(playerPayments.status, "excluded")
+        )
+      );
     await tx
       .update(sessions)
-      .set({ estimatedCostCents: disclosedPlayerTotal(currentPayments) })
+      .set({
+        playerPriceCents: resolvedPlayerPrice(
+          currentPayments,
+          lockedSession.playerPriceCents
+        ),
+        version: sql`${sessions.version} + 1`,
+        updatedAt: new Date(),
+      })
       .where(eq(sessions.id, sessionId));
     const recipients = players
       .filter((player) => payingIds.includes(player.id) && player.userId)
@@ -265,10 +311,7 @@ async function createExpense(formData: FormData) {
         }))
       );
   });
-  revalidatePath("/games/open");
-  revalidatePath(`/games/${sessionId}`);
-  revalidatePath(`/games/${sessionId}/payments`);
-  revalidatePath(`/s/${session.slug}`);
+  revalidatePlayerPriceSurfaces(session);
 }
 
 export async function markPaymentSent(
@@ -333,8 +376,15 @@ export async function markPaymentSent(
         "The proof could not be uploaded. Check your connection and try again.",
     };
 
-  await db.transaction(async (tx) => {
-    await tx
+  const saved = await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${row.session.id} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, row.session.id),
+    });
+    if (!lockedSession || lockedSession.status === "cancelled") return false;
+    const [updated] = await tx
       .update(playerPayments)
       .set({
         status: "sent",
@@ -344,14 +394,27 @@ export async function markPaymentSent(
         confirmedAt: null,
         confirmedById: null,
       })
-      .where(eq(playerPayments.id, row.payment.id));
+      .where(
+        and(
+          eq(playerPayments.id, row.payment.id),
+          inArray(playerPayments.status, ["unpaid", "sent"])
+        )
+      )
+      .returning({ id: playerPayments.id });
+    if (!updated) return false;
     await tx.insert(notifications).values({
       userId: row.session.hostId,
       sessionId: row.expense.sessionId,
       type: "payment_sent",
       payload: {},
     });
+    return true;
   });
+  if (!saved)
+    return {
+      error:
+        "This payment changed while you were uploading. Reload and try again.",
+    };
   revalidatePath(`/games/${row.expense.sessionId}/payments`);
   const slug = formData.get("slug");
   if (typeof slug === "string" && slug) revalidatePath(`/s/${slug}/payments`);
@@ -385,7 +448,30 @@ export async function confirmPayment(formData: FormData) {
     throw new Error("Only a host or co-host can confirm payments");
   assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
-    await tx
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${row.session.id} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, row.session.id),
+    });
+    const membership = await tx.query.sessionPlayers.findFirst({
+      where: and(
+        eq(sessionPlayers.sessionId, row.session.id),
+        eq(sessionPlayers.userId, user.id)
+      ),
+    });
+    if (
+      !lockedSession ||
+      !hasPaymentCapabilityForMembership(
+        lockedSession,
+        user.id,
+        membership,
+        "confirm_payment"
+      )
+    )
+      throw new Error("Only a host or co-host can confirm payments");
+    assertPaymentsOpen(lockedSession);
+    const [updated] = await tx
       .update(playerPayments)
       .set({
         status: "confirmed",
@@ -393,7 +479,11 @@ export async function confirmPayment(formData: FormData) {
         confirmedAt: new Date(),
         confirmedById: user.id,
       })
-      .where(eq(playerPayments.id, paymentId));
+      .where(
+        and(eq(playerPayments.id, paymentId), eq(playerPayments.status, "sent"))
+      )
+      .returning({ id: playerPayments.id });
+    if (!updated) throw new Error("Only a sent payment can be confirmed");
     if (row.player.userId)
       await tx.insert(notifications).values({
         userId: row.player.userId,
@@ -452,10 +542,57 @@ async function updatePlayerPaymentAmount(formData: FormData) {
     throw new Error("Only a host or co-host can change payment amounts");
   assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${row.session.id} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, row.session.id),
+    });
+    const membership = await tx.query.sessionPlayers.findFirst({
+      where: and(
+        eq(sessionPlayers.sessionId, row.session.id),
+        eq(sessionPlayers.userId, user.id)
+      ),
+    });
+    if (
+      !lockedSession ||
+      !hasPaymentCapabilityForMembership(
+        lockedSession,
+        user.id,
+        membership,
+        "confirm_payment"
+      )
+    )
+      throw new Error("Only a host or co-host can change payment amounts");
+    assertPaymentsOpen(lockedSession);
     await tx
       .update(playerPayments)
       .set({ amountCents, updatedAt: new Date() })
       .where(eq(playerPayments.id, paymentId));
+    const currentPayments = await tx
+      .select({
+        sessionPlayerId: playerPayments.sessionPlayerId,
+        amountCents: playerPayments.amountCents,
+      })
+      .from(playerPayments)
+      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+      .where(
+        and(
+          eq(expenses.sessionId, row.session.id),
+          ne(playerPayments.status, "excluded")
+        )
+      );
+    await tx
+      .update(sessions)
+      .set({
+        playerPriceCents: resolvedPlayerPrice(
+          currentPayments,
+          lockedSession.playerPriceCents
+        ),
+        version: sql`${sessions.version} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, row.session.id));
     if (row.player.userId)
       await tx.insert(notifications).values({
         userId: row.player.userId,
@@ -464,7 +601,7 @@ async function updatePlayerPaymentAmount(formData: FormData) {
         payload: {},
       });
   });
-  revalidatePath(`/games/${row.session.id}/payments`);
+  revalidatePlayerPriceSurfaces(row.session);
 }
 
 export async function togglePaymentExcluded(formData: FormData) {
@@ -488,13 +625,68 @@ export async function togglePaymentExcluded(formData: FormData) {
   if (row.payment.status === "sent" || row.payment.status === "confirmed")
     throw new Error("Reviewed payments cannot be excluded");
   await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${row.session.id} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, row.session.id),
+    });
+    const membership = await tx.query.sessionPlayers.findFirst({
+      where: and(
+        eq(sessionPlayers.sessionId, row.session.id),
+        eq(sessionPlayers.userId, user.id)
+      ),
+    });
+    if (
+      !lockedSession ||
+      !hasPaymentCapabilityForMembership(
+        lockedSession,
+        user.id,
+        membership,
+        "confirm_payment"
+      )
+    )
+      throw new Error(
+        "Only a host or co-host can exclude players from a split"
+      );
+    assertPaymentsOpen(lockedSession);
+    const current = await tx.query.playerPayments.findFirst({
+      where: eq(playerPayments.id, paymentId),
+    });
+    if (!current) throw new Error("This payment could not be found");
+    if (current.status === "sent" || current.status === "confirmed")
+      throw new Error("Reviewed payments cannot be excluded");
     await tx
       .update(playerPayments)
       .set({
-        status: row.payment.status === "excluded" ? "unpaid" : "excluded",
+        status: current.status === "excluded" ? "unpaid" : "excluded",
         updatedAt: new Date(),
       })
       .where(eq(playerPayments.id, paymentId));
+    const currentPayments = await tx
+      .select({
+        sessionPlayerId: playerPayments.sessionPlayerId,
+        amountCents: playerPayments.amountCents,
+      })
+      .from(playerPayments)
+      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+      .where(
+        and(
+          eq(expenses.sessionId, row.session.id),
+          ne(playerPayments.status, "excluded")
+        )
+      );
+    await tx
+      .update(sessions)
+      .set({
+        playerPriceCents: resolvedPlayerPrice(
+          currentPayments,
+          lockedSession.playerPriceCents
+        ),
+        version: sql`${sessions.version} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, row.session.id));
     const player = await tx.query.sessionPlayers.findFirst({
       where: eq(sessionPlayers.id, row.payment.sessionPlayerId),
     });
@@ -506,7 +698,7 @@ export async function togglePaymentExcluded(formData: FormData) {
         payload: {},
       });
   });
-  revalidatePath(`/games/${row.session.id}/payments`);
+  revalidatePlayerPriceSurfaces(row.session);
 }
 
 export async function requestNewPaymentProofState(
@@ -557,7 +749,30 @@ async function requestNewPaymentProof(formData: FormData) {
     throw new Error("Only a host or co-host can review payment proof");
   assertPaymentsOpen(row.session);
   await db.transaction(async (tx) => {
-    await tx
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${row.session.id} for update`
+    );
+    const lockedSession = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, row.session.id),
+    });
+    const membership = await tx.query.sessionPlayers.findFirst({
+      where: and(
+        eq(sessionPlayers.sessionId, row.session.id),
+        eq(sessionPlayers.userId, user.id)
+      ),
+    });
+    if (
+      !lockedSession ||
+      !hasPaymentCapabilityForMembership(
+        lockedSession,
+        user.id,
+        membership,
+        "confirm_payment"
+      )
+    )
+      throw new Error("Only a host or co-host can review payment proof");
+    assertPaymentsOpen(lockedSession);
+    const [updated] = await tx
       .update(playerPayments)
       .set({
         status: "unpaid",
@@ -565,7 +780,15 @@ async function requestNewPaymentProof(formData: FormData) {
         confirmedAt: null,
         confirmedById: null,
       })
-      .where(eq(playerPayments.id, paymentId));
+      .where(
+        and(
+          eq(playerPayments.id, paymentId),
+          inArray(playerPayments.status, ["sent", "confirmed"])
+        )
+      )
+      .returning({ id: playerPayments.id });
+    if (!updated)
+      throw new Error("This payment has no submitted proof to review");
     if (row.player.userId)
       await tx.insert(notifications).values({
         userId: row.player.userId,

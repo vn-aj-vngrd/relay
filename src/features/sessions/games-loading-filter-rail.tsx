@@ -6,6 +6,7 @@ const items = [
   { value: "upcoming", label: "Upcoming" },
   { value: "invites", label: "Invites" },
   { value: "past", label: "Past" },
+  { value: "organizing", label: "Organizing" },
 ] as const;
 
 export function GamesLoadingFilterRail() {

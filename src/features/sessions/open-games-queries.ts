@@ -69,15 +69,15 @@ function dateCondition(filters: OpenGamesFilters, now: Date) {
 
 function priceCondition(filters: OpenGamesFilters) {
   if (filters.price === "any") return;
-  if (filters.price === "free") return eq(sessions.estimatedCostCents, 0);
+  if (filters.price === "free") return eq(sessions.playerPriceCents, 0);
   return and(
-    gt(sessions.estimatedCostCents, 0),
+    gt(sessions.playerPriceCents, 0),
     filters.minPrice === null
       ? undefined
-      : gte(sessions.estimatedCostCents, filters.minPrice),
+      : gte(sessions.playerPriceCents, filters.minPrice),
     filters.maxPrice === null
       ? undefined
-      : lte(sessions.estimatedCostCents, filters.maxPrice)
+      : lte(sessions.playerPriceCents, filters.maxPrice)
   );
 }
 
@@ -126,7 +126,7 @@ export async function discoverOpenGames(
       venueAddress: sessions.venueAddress,
       hostName: profiles.name,
       capacity: sessions.capacity,
-      estimatedCostCents: sessions.estimatedCostCents,
+      playerPriceCents: sessions.playerPriceCents,
       requiresApproval: sessions.requiresApproval,
       status: sessions.status,
       accentColor: sessions.accentColor,
@@ -139,7 +139,7 @@ export async function discoverOpenGames(
         eq(sessions.visibility, "public"),
         inArray(sessions.status, ["published", "live"]),
         gt(sessions.endsAt, now),
-        isNotNull(sessions.estimatedCostCents),
+        isNotNull(sessions.playerPriceCents),
         dateCondition(filters, now),
         timeCondition(filters),
         priceCondition(filters),
@@ -204,7 +204,7 @@ export async function discoverOpenGames(
         hostName: row.hostName || "Relay host",
         playerCount: Number(row.playerCount),
         capacity: row.capacity,
-        estimatedCostCents: row.estimatedCostCents ?? 0,
+        playerPriceCents: row.playerPriceCents ?? 0,
         requiresApproval: row.requiresApproval,
         status: row.status as "published" | "live",
         accentColor: row.accentColor,

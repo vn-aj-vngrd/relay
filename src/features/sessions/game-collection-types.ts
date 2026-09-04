@@ -20,7 +20,7 @@ export type GameCollectionItem = {
     | "declined";
   invitedAt: string;
   hostName: string;
-  estimatedCostCents: number | null;
+  playerPriceCents: number | null;
   requiresApproval: boolean;
   spotsRemaining: number;
   canReplay: boolean;
@@ -44,3 +44,5 @@ export type GameInvitationPage = {
 };
 
 export type GameCollectionPhase = "upcoming" | "past";
+
+export type GameCollectionScope = "all" | "organizing";

@@ -69,7 +69,7 @@ export function LeadOrganizerControl({
         </form>
       ) : (
         <p className="mt-4 text-sm text-muted">
-          Add a co-host from Players before delegating Play.
+          Add a co-host above before delegating Play.
         </p>
       )}
     </section>

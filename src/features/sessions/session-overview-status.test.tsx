@@ -59,7 +59,7 @@ describe("SessionOverviewStatus", () => {
     );
   });
 
-  it("does not turn an estimated cost into a payment request", () => {
+  it("does not turn a player price into a payment request", () => {
     render(
       <SessionOverviewStatus
         {...base}

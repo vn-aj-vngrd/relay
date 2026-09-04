@@ -47,6 +47,29 @@ describe("notificationPresentation", () => {
     });
   });
 
+  it("routes co-host access changes to the relevant game surface", () => {
+    expect(
+      notificationPresentation({
+        type: "cohost_assigned",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      })
+    ).toMatchObject({
+      title: "You’re a co-host for Saturday Pickle",
+      href: "/games/session-1/settings",
+      tone: "session",
+    });
+    expect(
+      notificationPresentation({
+        type: "cohost_removed",
+        sessionId: "session-1",
+        sessionTitle: "Saturday Pickle",
+        payload: {},
+      }).href
+    ).toBe("/games/session-1");
+  });
+
   it("routes join requests to roster management with useful guest context", () => {
     expect(
       notificationPresentation({
@@ -93,12 +116,12 @@ describe("notificationPresentation", () => {
         sessionId: "session-1",
         sessionTitle: "Saturday Pickle",
         payload: {
-          body: "Estimated cost updated from ₱300 per player to ₱400 per player.",
+          body: "Player price updated from ₱300 per player to ₱400 per player.",
         },
       })
     ).toEqual({
       title: "Saturday Pickle cost updated",
-      body: "Estimated cost updated from ₱300 per player to ₱400 per player.",
+      body: "Player price updated from ₱300 per player to ₱400 per player.",
       href: "/games/session-1",
       tone: "payment",
     });

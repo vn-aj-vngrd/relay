@@ -225,7 +225,7 @@ export const faqSections = [
     items: [
       [
         "Can friends view a game without an account?",
-        "Yes. The shared link shows the plan, roster, open spots, estimated cost, and booking status before sign-in.",
+        "Yes. The shared link shows the plan, roster, open spots, player price, and booking status before sign-in.",
       ],
       [
         "How does guest RSVP work?",

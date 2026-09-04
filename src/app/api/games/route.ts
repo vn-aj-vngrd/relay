@@ -10,6 +10,7 @@ import {
 import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 const phaseSchema = z.enum(["upcoming", "past"]);
+const scopeSchema = z.enum(["all", "organizing"]);
 const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 
 export async function GET(request: NextRequest) {
@@ -36,6 +37,21 @@ export async function GET(request: NextRequest) {
       }
     );
 
+  const scope = scopeSchema.safeParse(
+    request.nextUrl.searchParams.get("scope") ?? "all"
+  );
+  if (!scope.success)
+    return Response.json(
+      { error: "Invalid game collection scope" },
+      {
+        status: 400,
+        headers: {
+          ...rateLimitHeaders(limit),
+          "Cache-Control": "private, no-store",
+        },
+      }
+    );
+
   const monthValue = request.nextUrl.searchParams.get("month");
   const month = monthSchema.safeParse(monthValue);
   if (monthValue) {
@@ -51,12 +67,15 @@ export async function GET(request: NextRequest) {
         }
       );
     try {
-      return Response.json(await getGameCollectionMonth(user.id, month.data), {
-        headers: {
-          ...rateLimitHeaders(limit),
-          "Cache-Control": "private, no-store",
-        },
-      });
+      return Response.json(
+        await getGameCollectionMonth(user.id, month.data, scope.data),
+        {
+          headers: {
+            ...rateLimitHeaders(limit),
+            "Cache-Control": "private, no-store",
+          },
+        }
+      );
     } catch (error) {
       console.error(
         "Game calendar loading failed",
@@ -94,7 +113,7 @@ export async function GET(request: NextRequest) {
 
   try {
     return Response.json(
-      await getGameCollectionPage(user.id, phase.data, cursor),
+      await getGameCollectionPage(user.id, phase.data, cursor, scope.data),
       {
         headers: {
           ...rateLimitHeaders(limit),

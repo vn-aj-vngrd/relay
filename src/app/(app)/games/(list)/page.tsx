@@ -16,11 +16,20 @@ export default async function GamesPage({
   searchParams: Promise<{ filter?: string; month?: string; date?: string }>;
 }) {
   const user = await requireUser();
-  const [params, upcomingPage, invitationPage, pastPage] = await Promise.all([
+  const [
+    params,
+    upcomingPage,
+    invitationPage,
+    pastPage,
+    organizingUpcomingPage,
+    organizingPastPage,
+  ] = await Promise.all([
     searchParams,
     getGameCollectionPage(user.id, "upcoming"),
     getGameInvitations(user.id),
     getGameCollectionPage(user.id, "past"),
+    getGameCollectionPage(user.id, "upcoming", null, "organizing"),
+    getGameCollectionPage(user.id, "past", null, "organizing"),
   ]);
 
   const todayKey = sessionDateKey(new Date());
@@ -51,13 +60,17 @@ export default async function GamesPage({
         upcomingPage={upcomingPage}
         invitationPage={invitationPage}
         pastPage={pastPage}
+        organizingUpcomingPage={organizingUpcomingPage}
+        organizingPastPage={organizingPastPage}
         todayKey={todayKey}
         initialFilter={
           params.filter === "invites"
             ? "invites"
             : params.filter === "past"
               ? "past"
-              : "upcoming"
+              : params.filter === "organizing"
+                ? "organizing"
+                : "upcoming"
         }
         initialMonth={initialMonth}
         initialDate={initialDate}

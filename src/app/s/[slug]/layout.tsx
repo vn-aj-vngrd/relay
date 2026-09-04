@@ -30,7 +30,7 @@ export default async function PublicSessionLayout({
         visibility: data.session.visibility,
         status: data.session.status,
         endsAt: data.session.endsAt,
-        estimatedCostCents: data.session.estimatedCostCents,
+        playerPriceCents: data.session.playerPriceCents,
         membership,
       })
   );

@@ -288,7 +288,7 @@ describe("CreateSessionForm", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToAccess();
 
-    expect(screen.queryByText("Cost expectation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Player price")).not.toBeInTheDocument();
     expect(screen.getByText(/Payment starts unset/)).toBeVisible();
 
     fireEvent.click(screen.getByRole("radio", { name: /^Public/ }));

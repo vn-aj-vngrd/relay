@@ -4,8 +4,14 @@ import { notFound } from "next/navigation";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
+import { profileAvatarUrl } from "@/features/players/avatar";
 import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
+import {
+  type GameSettingsSection,
+  GameSettingsTabs,
+} from "@/features/sessions/game-settings-tabs";
 import { LeadOrganizerControl } from "@/features/sessions/lead-organizer-control";
+import { OrganizerSettings } from "@/features/sessions/organizer-settings";
 import { getSessionForUser } from "@/features/sessions/queries";
 import {
   type SessionSettingsDefaults,
@@ -32,11 +38,15 @@ function dateParts(date: Date, timeZone: string) {
 
 export default async function GameSettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ section?: string | string[] }>;
 }) {
   const user = await requireUser();
-  const sessionId = (await params).id;
+  const [{ id: sessionId }, query] = await Promise.all([params, searchParams]);
+  const section: GameSettingsSection =
+    query.section === "organizers" ? "organizers" : "details";
   const data = await getSessionForUser(sessionId, user.id);
   if (!data) notFound();
   const canEdit =
@@ -46,14 +56,39 @@ export default async function GameSettingsPage({
     data.session.status !== "draft" && data.session.status !== "published";
   const start = dateParts(data.session.startsAt, data.session.timezone);
   const end = dateParts(data.session.endsAt, data.session.timezone);
-  const cohosts = data.roster.flatMap(({ player, profile }) =>
-    player.role === "cohost" && player.userId
+  const activeRoster = data.roster.filter(({ player }) => !player.leftAt);
+  const organizers = activeRoster
+    .flatMap(({ player, profile }) =>
+      ["host", "cohost"].includes(player.role) && player.userId
+        ? [
+            {
+              sessionPlayerId: player.id,
+              userId: player.userId,
+              name: profile?.name ?? player.guestName ?? "Organizer",
+              imageUrl: profileAvatarUrl(profile?.avatarPath),
+              role: player.role as "host" | "cohost",
+              playing: player.rsvp === "going",
+            },
+          ]
+        : []
+    )
+    .toSorted(
+      (left, right) =>
+        Number(right.role === "host") - Number(left.role === "host")
+    );
+  const cohostCandidates = activeRoster.flatMap(({ player, profile }) =>
+    player.role === "player" && player.userId
       ? [
           {
-            id: player.userId,
-            name: profile?.name ?? player.guestName ?? "Co-host",
+            sessionPlayerId: player.id,
+            name: profile?.name ?? "Relay player",
           },
         ]
+      : []
+  );
+  const cohosts = organizers.flatMap((organizer) =>
+    organizer.role === "cohost"
+      ? [{ id: organizer.userId, name: organizer.name }]
       : []
   );
   const defaults: SessionSettingsDefaults = {
@@ -71,9 +106,9 @@ export default async function GameSettingsPage({
     courts: data.session.courtCount,
     courtNumbers: data.session.courtNumbers?.join(", ") ?? "",
     cost:
-      data.session.estimatedCostCents == null
+      data.session.playerPriceCents == null
         ? ""
-        : String(data.session.estimatedCostCents / 100),
+        : String(data.session.playerPriceCents / 100),
     notes: data.session.notes ?? "",
     visibility: data.session.visibility,
     requiresApproval: data.session.requiresApproval,
@@ -93,41 +128,54 @@ export default async function GameSettingsPage({
         description="Keep the shared plan accurate for everyone with the invite."
       />
       <div className="mx-auto w-full max-w-6xl">
-        {locked ? (
-          <section className="border-y border-line py-10 text-center">
-            <LockKey aria-hidden size={24} className="mx-auto text-muted" />
-            <h2 className="mt-4 text-xl font-bold">Settings are locked</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-              Game details stop changing once Play begins or the session is
-              complete. This protects court assignments, results, and the shared
-              memory.
-            </p>
-            <ButtonLink href={`/games/${sessionId}`} className="mt-6">
-              Back to game
-            </ButtonLink>
-          </section>
+        <GameSettingsTabs sessionId={sessionId} active={section} />
+        {section === "details" ? (
+          locked ? (
+            <section className="border-b border-line py-10 text-center">
+              <LockKey aria-hidden size={24} className="mx-auto text-muted" />
+              <h2 className="mt-4 text-xl font-bold">Settings are locked</h2>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
+                Game details stop changing once Play begins or the session is
+                complete. This protects court assignments, results, and the
+                shared memory.
+              </p>
+              <ButtonLink href={`/games/${sessionId}`} className="mt-6">
+                Back to game
+              </ButtonLink>
+            </section>
+          ) : (
+            <div className="mt-7">
+              <SessionSettingsForm defaults={defaults} />
+              {data.session.status === "published" ? (
+                <CancelSessionControl
+                  sessionId={data.session.id}
+                  version={data.session.version}
+                  playerCount={data.roster.length}
+                />
+              ) : null}
+            </div>
+          )
         ) : (
           <>
-            <SessionSettingsForm defaults={defaults} />
-            {data.session.status === "published" ? (
-              <CancelSessionControl
+            <OrganizerSettings
+              sessionId={data.session.id}
+              version={data.session.version}
+              organizers={organizers}
+              candidates={cohostCandidates}
+              canManage={data.session.hostId === user.id && !locked}
+            />
+            {data.session.hostId === user.id &&
+            data.session.status !== "completed" &&
+            data.session.status !== "cancelled" ? (
+              <LeadOrganizerControl
                 sessionId={data.session.id}
                 version={data.session.version}
-                playerCount={data.roster.length}
+                currentLeadId={data.session.leadOrganizerId}
+                cohosts={cohosts}
               />
             ) : null}
           </>
         )}
-        {data.session.hostId === user.id &&
-        data.session.status !== "completed" &&
-        data.session.status !== "cancelled" ? (
-          <LeadOrganizerControl
-            sessionId={data.session.id}
-            version={data.session.version}
-            currentLeadId={data.session.leadOrganizerId}
-            cohosts={cohosts}
-          />
-        ) : null}
       </div>
     </>
   );

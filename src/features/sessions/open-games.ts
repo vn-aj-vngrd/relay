@@ -118,7 +118,7 @@ export type OpenGameItem = {
   hostName: string;
   playerCount: number;
   capacity: number;
-  estimatedCostCents: number;
+  playerPriceCents: number;
   requiresApproval: boolean;
   status: "published" | "live";
   accentColor: string;

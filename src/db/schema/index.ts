@@ -425,7 +425,7 @@ export const sessions = pgTable(
     courtCount: integer("court_count").notNull().default(1),
     courtNumbers: text("court_numbers").array(),
     notes: text("notes"),
-    estimatedCostCents: integer("estimated_cost_cents"),
+    playerPriceCents: integer("player_price_cents"),
     status: sessionStatus("status").notNull().default("draft"),
     visibility: visibility("visibility").notNull().default("link"),
     rotationMode: rotationMode("rotation_mode").notNull().default("queue"),

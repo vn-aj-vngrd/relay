@@ -9,10 +9,12 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import {
   courts,
+  expenses,
   groupMembers,
   matches,
   messages,
   notifications,
+  playerPayments,
   profiles,
   sessionPlayers,
   sessionQueue,
@@ -26,6 +28,7 @@ import {
 import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { planPlayAvailability } from "@/features/matches/availability";
+import { disclosedPlayerTotal } from "@/features/payments/domain";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
@@ -67,15 +70,9 @@ function manilaDate(
 
 function costInput(formData: FormData) {
   const costKind = formData.get("costKind");
-  const rawCost = formData.get("cost");
   return {
-    costKind,
-    estimatedCostCents:
-      costKind === "free"
-        ? 0
-        : costKind === "estimated" && typeof rawCost === "string" && rawCost
-          ? Math.round(Number(rawCost) * 100)
-          : undefined,
+    costKind: costKind === "free" ? "free" : "unspecified",
+    playerPriceCents: costKind === "free" ? 0 : undefined,
   };
 }
 
@@ -165,7 +162,7 @@ export async function createSessionAction(
         courts: errors.courtCount ?? [],
         notes: errors.notes ?? [],
         costKind: errors.costKind ?? [],
-        cost: errors.estimatedCostCents ?? [],
+        cost: errors.playerPriceCents ?? [],
         booked: errors.booked ?? [],
         bookingReference: errors.bookingReference ?? [],
         bookingTotal: errors.bookingTotalCents ?? [],
@@ -268,7 +265,7 @@ export async function createSessionAction(
         courtCount: parsed.data.courtCount,
         courtNumbers,
         notes: parsed.data.notes,
-        estimatedCostCents: parsed.data.estimatedCostCents,
+        playerPriceCents: parsed.data.playerPriceCents,
         visibility: parsed.data.visibility,
         status: intent,
         publishedAt: intent === "published" ? new Date() : null,
@@ -362,7 +359,7 @@ function courtLabel(value: string | undefined, position: number) {
 
 function costLabel(value: number | null | undefined) {
   if (value === 0) return "free";
-  if (value == null) return "not provided";
+  if (value == null) return "not set";
   return `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(value / 100)} per player`;
 }
 
@@ -372,9 +369,9 @@ function costChangeMessage(
 ) {
   if (next === 0)
     return previous == null ? "This game is free." : "This game is now free.";
-  if (previous == null) return `Estimated cost set to ${costLabel(next)}.`;
-  if (next == null) return "The estimated cost was removed.";
-  return `Estimated cost updated from ${costLabel(previous)} to ${costLabel(next)}.`;
+  if (previous == null) return `Player price set to ${costLabel(next)}.`;
+  if (next == null) return "The player price was removed.";
+  return `Player price updated from ${costLabel(previous)} to ${costLabel(next)}.`;
 }
 
 export async function updateSessionAction(
@@ -444,7 +441,7 @@ export async function updateSessionAction(
         courts: errors.courtCount ?? [],
         notes: errors.notes ?? [],
         costKind: errors.costKind ?? [],
-        cost: errors.estimatedCostCents ?? [],
+        cost: errors.playerPriceCents ?? [],
         bookingReference: errors.bookingReference ?? [],
         bookingTotal: errors.bookingTotalCents ?? [],
         bookingNotes: errors.bookingNotes ?? [],
@@ -534,10 +531,25 @@ export async function updateSessionAction(
     }
   }
 
-  const nextCost = parsed.data.estimatedCostCents ?? null;
-  const costChanged = existing.estimatedCostCents !== nextCost;
+  const paymentRows = await db
+    .select({
+      sessionPlayerId: playerPayments.sessionPlayerId,
+      amountCents: playerPayments.amountCents,
+    })
+    .from(playerPayments)
+    .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+    .where(
+      and(
+        eq(expenses.sessionId, existing.id),
+        ne(playerPayments.status, "excluded")
+      )
+    );
+  const repaymentPrice = disclosedPlayerTotal(paymentRows);
+  const nextCost =
+    repaymentPrice ?? (parsed.data.costKind === "free" ? 0 : null);
+  const costChanged = existing.playerPriceCents !== nextCost;
   const costMessage = costChanged
-    ? costChangeMessage(existing.estimatedCostCents, nextCost)
+    ? costChangeMessage(existing.playerPriceCents, nextCost)
     : null;
   const changedFields = [
     existing.title !== parsed.data.title ? "title" : null,
@@ -555,7 +567,7 @@ export async function updateSessionAction(
     JSON.stringify(existing.courtNumbers ?? []) !== JSON.stringify(labels)
       ? "courts"
       : null,
-    costChanged ? "estimated cost" : null,
+    costChanged ? "player price" : null,
     existing.visibility !== parsed.data.visibility ? "visibility" : null,
     existing.notes !== (parsed.data.notes ?? null) ? "notes" : null,
     Boolean(existing.bookedAt) !== parsed.data.booked ||
@@ -597,7 +609,7 @@ export async function updateSessionAction(
           courtCount: parsed.data.courtCount,
           courtNumbers: labels,
           notes: parsed.data.notes ?? null,
-          estimatedCostCents: parsed.data.estimatedCostCents ?? null,
+          playerPriceCents: nextCost,
           visibility: parsed.data.visibility,
           requiresApproval: parsed.data.requiresApproval,
           bookedAt: parsed.data.booked
@@ -1672,7 +1684,12 @@ export async function rsvpAction(
               discoverySource: parsed.data.discoverySource,
               response: resolvedRsvp ?? "unknown",
               approvalRequired: session.requiresApproval,
-              costKind: session.estimatedCostCents === 0 ? "free" : "estimated",
+              costKind:
+                session.playerPriceCents === 0
+                  ? "free"
+                  : session.playerPriceCents == null
+                    ? "unspecified"
+                    : "share",
               capacityState:
                 resolvedRsvp === "waitlisted" ? "full" : "available",
             },
@@ -1682,9 +1699,11 @@ export async function rsvpAction(
   ]);
   revalidatePath("/home");
   revalidatePath("/games");
+  revalidatePath("/games/open");
   revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/games/${session.id}/payments`);
+  revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/s/${session.slug}`);
   return { success: true, rsvp: resolvedRsvp };
 }

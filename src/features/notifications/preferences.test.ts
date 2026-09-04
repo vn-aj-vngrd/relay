@@ -12,6 +12,8 @@ import {
 describe("notification delivery preferences", () => {
   it("uses one category policy across email and push", () => {
     expect(notificationCategory("moved_from_waitlist")).toBe("roster");
+    expect(notificationCategory("cohost_assigned")).toBe("changes");
+    expect(channelAllowsNotification("email", "cohost_removed")).toBe(true);
     expect(channelAllowsNotification("email", "moved_from_waitlist")).toBe(
       true
     );

@@ -58,6 +58,8 @@ export const defaultCategoryPreferences: NotificationCategoryPreferences = {
 
 const categoriesByType: Record<string, NotificationCategory> = {
   session_invite: "invitations",
+  cohost_assigned: "changes",
+  cohost_removed: "changes",
   join_request: "roster",
   player_joined: "roster",
   player_left: "roster",
@@ -90,6 +92,8 @@ const pushCategories = new Set<NotificationCategory>(notificationCategories);
 
 const emailTypes = new Set([
   "session_invite",
+  "cohost_assigned",
+  "cohost_removed",
   "moved_from_waitlist",
   "session_tomorrow",
   "session_details_changed",

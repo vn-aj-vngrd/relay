@@ -52,6 +52,7 @@ describe("collection loading boundaries", () => {
     expect(filters).toHaveTextContent("Upcoming");
     expect(filters).toHaveTextContent("Invites");
     expect(filters).toHaveTextContent("Past");
+    expect(filters).toHaveTextContent("Organizing");
   });
 
   it("keeps notification filters real while notifications load", () => {

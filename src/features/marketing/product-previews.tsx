@@ -37,7 +37,7 @@ const heroSession = {
   courtNumbers: ["2", "3"],
   courtCount: 2,
   bookedAt: new Date("2026-08-18T03:00:00.000Z"),
-  estimatedCostCents: 30000,
+  playerPriceCents: 30000,
 };
 
 const heroPlayers = ["Van", "AJ", "Mika", "Bea", "John"];

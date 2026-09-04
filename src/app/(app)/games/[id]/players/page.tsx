@@ -23,9 +23,6 @@ export default async function PlayersPage({
   const user = await requireUser();
   const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
-  const organizers = data.roster.filter(
-    ({ player }) => !player.leftAt && ["host", "cohost"].includes(player.role)
-  );
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const pending = data.roster.filter(({ player }) => player.rsvp === "pending");
   const waitlist = data.roster.filter(
@@ -33,9 +30,7 @@ export default async function PlayersPage({
   );
   const otherResponses = data.roster.filter(
     ({ player }) =>
-      !player.leftAt &&
-      player.role === "player" &&
-      ["maybe", "invited", "declined"].includes(player.rsvp)
+      !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp)
   );
   const isHost = canManageSessionWorkspace(data.access);
 
@@ -90,40 +85,6 @@ export default async function PlayersPage({
           </section>
         ) : null}
 
-        <section className="mb-9" aria-labelledby="organizers-title">
-          <h2 id="organizers-title" className="text-lg font-bold">
-            Organizers
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Management access is separate from taking a player spot.
-          </p>
-          <ul className="mt-3 divide-y divide-line border-y border-line">
-            {organizers.map(({ player, profile }, index) => {
-              const name = profile?.name ?? player.guestName ?? "Organizer";
-              return (
-                <li
-                  key={player.id}
-                  className="flex min-h-14 items-center gap-3 py-2"
-                >
-                  <Avatar
-                    name={name}
-                    imageUrl={profileAvatarUrl(profile?.avatarPath)}
-                    index={index}
-                    size="sm"
-                  />
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {name}
-                  </span>
-                  <span className="text-xs text-muted">
-                    {player.role === "host" ? "Host" : "Co-host"}
-                    {player.rsvp !== "going" ? " · Not playing" : ""}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
         {isHost && pending.length ? (
           <section className="mb-9" aria-labelledby="pending-title">
             <div className="flex items-center gap-2">
@@ -151,6 +112,7 @@ export default async function PlayersPage({
                       <p className="font-medium">{name}</p>
                       <p className="mt-0.5 text-xs text-muted">
                         Requested a spot
+                        {player.role === "cohost" ? " · Co-host" : ""}
                       </p>
                     </div>
                     <PendingPlayerActions
@@ -209,7 +171,7 @@ export default async function PlayersPage({
                       {playingExperienceLabel(player.skillLevel)}
                     </span>
                   </span>
-                  {isHost && player.role !== "host" ? (
+                  {isHost && player.role === "player" ? (
                     <RemovePlayerButton
                       sessionId={data.session.id}
                       playerId={player.id}
@@ -238,8 +200,19 @@ export default async function PlayersPage({
                     <span className="score w-5 text-sm text-muted">
                       {index + 1}
                     </span>
-                    <span className="flex-1 font-medium">{name}</span>
-                    {isHost ? (
+                    <span className="flex-1 font-medium">
+                      {name}
+                      {player.role === "host" ? (
+                        <span className="ml-2 text-xs font-normal text-muted">
+                          Host
+                        </span>
+                      ) : player.role === "cohost" ? (
+                        <span className="ml-2 text-xs font-normal text-muted">
+                          Co-host
+                        </span>
+                      ) : null}
+                    </span>
+                    {isHost && player.role === "player" ? (
                       <RemovePlayerButton
                         sessionId={data.session.id}
                         playerId={player.id}
@@ -276,13 +249,19 @@ export default async function PlayersPage({
                   >
                     <span className="flex-1 font-medium">{name}</span>
                     <span className="text-sm capitalize text-muted">
-                      {player.rsvp}
+                      {player.role === "host"
+                        ? `Host · ${player.rsvp}`
+                        : player.role === "cohost"
+                          ? `Co-host · ${player.rsvp}`
+                          : player.rsvp}
                     </span>
-                    <RemovePlayerButton
-                      sessionId={data.session.id}
-                      playerId={player.id}
-                      name={name}
-                    />
+                    {player.role === "player" ? (
+                      <RemovePlayerButton
+                        sessionId={data.session.id}
+                        playerId={player.id}
+                        name={name}
+                      />
+                    ) : null}
                   </li>
                 );
               })}

@@ -101,6 +101,24 @@ export function notificationPresentation({
         href: gameHref,
         tone: "session",
       };
+    case "cohost_assigned":
+      return {
+        title: customTitle ?? `You’re a co-host for ${game}`,
+        body:
+          customBody ??
+          "You can now help manage the plan, roster, payments, and Play.",
+        href: `${gameHref}/settings`,
+        tone: "session",
+      };
+    case "cohost_removed":
+      return {
+        title: customTitle ?? `Co-host access removed for ${game}`,
+        body:
+          customBody ??
+          "You remain on the player roster, but no longer manage this game.",
+        href: gameHref,
+        tone: "session",
+      };
     case "session_details_changed":
       return {
         title: customTitle ?? `${game} was updated`,

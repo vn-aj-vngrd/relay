@@ -20,6 +20,14 @@ const label = "block text-sm font-[650]";
 const field =
   "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
+function formatPlayerPrice(value: string) {
+  return new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+    maximumFractionDigits: 2,
+  }).format(Number(value));
+}
+
 function ErrorText({ id, message }: { id: string; message?: string }) {
   return message ? (
     <p id={id} role="alert" className="mt-1.5 text-sm font-medium text-danger">
@@ -69,17 +77,15 @@ export function SessionSettingsForm({
     (state.values?.visibility as "public" | "link" | "private" | undefined) ??
       defaults.visibility
   );
-  const [costKind, setCostKind] = useState<
-    "unspecified" | "free" | "estimated"
-  >(
-    state.values?.costKind === "free" || state.values?.costKind === "estimated"
-      ? state.values.costKind
-      : state.values?.costKind === "unspecified"
-        ? "unspecified"
-        : Number(defaults.cost) === 0 && defaults.cost !== ""
-          ? "free"
-          : defaults.cost
-            ? "estimated"
+  const [costKind, setCostKind] = useState<"unspecified" | "free" | "share">(
+    defaults.cost && Number(defaults.cost) > 0
+      ? "share"
+      : state.values?.costKind === "free"
+        ? "free"
+        : state.values?.costKind === "unspecified"
+          ? "unspecified"
+          : Number(defaults.cost) === 0 && defaults.cost !== ""
+            ? "free"
             : "unspecified"
   );
   const value = (key: keyof SessionSettingsDefaults) =>
@@ -249,33 +255,45 @@ export function SessionSettingsForm({
             ]}
           />
           <fieldset>
-            <legend className={label}>Cost expectation</legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[
-                ["free", "Free"],
-                ["estimated", "Estimated per player"],
-                ["unspecified", "Not set yet"],
-              ].map(([kind, text]) => (
-                <label
-                  key={kind}
-                  className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold sm:min-h-10 ${costKind === kind ? "border-primary bg-primary-soft text-primary" : "border-line"}`}
-                >
-                  <input
-                    type="radio"
-                    name="costKind"
-                    value={kind}
-                    checked={costKind === kind}
-                    onChange={() => setCostKind(kind as typeof costKind)}
-                    className="h-4 w-4 accent-[var(--primary)]"
-                  />
-                  {text}
-                </label>
-              ))}
-            </div>
+            <legend className={label}>Player price</legend>
+            {costKind === "share" ? (
+              <div className="mt-2 rounded-lg border border-line px-3 py-2.5">
+                <input type="hidden" name="costKind" value="unspecified" />
+                <p className="score text-sm font-semibold">
+                  {formatPlayerPrice(value("cost"))} per player
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  Calculated from the current repayment split. Manage it in
+                  Payments.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[
+                  ["free", "Free"],
+                  ["unspecified", "Not set yet"],
+                ].map(([kind, text]) => (
+                  <label
+                    key={kind}
+                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold sm:min-h-10 ${costKind === kind ? "border-primary bg-primary-soft text-primary" : "border-line"}`}
+                  >
+                    <input
+                      type="radio"
+                      name="costKind"
+                      value={kind}
+                      checked={costKind === kind}
+                      onChange={() => setCostKind(kind as typeof costKind)}
+                      className="h-4 w-4 accent-[var(--primary)]"
+                    />
+                    {text}
+                  </label>
+                ))}
+              </div>
+            )}
             {visibility === "public" && costKind === "unspecified" ? (
               <p className="mt-2 text-sm text-muted">
-                This game stays out of Open games until you mark it Free or add
-                an amount.
+                This game stays out of Open games until you mark it Free or
+                create a repayment split.
               </p>
             ) : null}
             <ErrorText
@@ -284,36 +302,11 @@ export function SessionSettingsForm({
             />
           </fieldset>
         </div>
-        {costKind === "estimated" ? (
-          <div className="mt-6 max-w-sm">
-            <label htmlFor="settings-cost" className={label}>
-              Estimated cost per player
-            </label>
-            <div className="relative">
-              <span className="absolute left-3.5 top-[14px] text-muted">₱</span>
-              <input
-                id="settings-cost"
-                name="cost"
-                type="number"
-                min="0.01"
-                max="100000"
-                step="0.01"
-                inputMode="decimal"
-                defaultValue={value("cost")}
-                className={`${field} score pl-8`}
-                placeholder="300"
-                aria-invalid={Boolean(error("cost"))}
-              />
-            </div>
-            <ErrorText id="settings-cost-error" message={error("cost")} />
-          </div>
-        ) : (
-          <input
-            type="hidden"
-            name="cost"
-            value={costKind === "free" ? "0" : ""}
-          />
-        )}
+        <input
+          type="hidden"
+          name="cost"
+          value={costKind === "free" ? "0" : ""}
+        />
         <div className="mt-6">
           <label htmlFor="settings-notes" className={label}>
             Note for players

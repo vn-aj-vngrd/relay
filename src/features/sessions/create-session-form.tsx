@@ -749,7 +749,7 @@ function CreateSessionFormContent({
               [
                 "public",
                 "Public",
-                "Share it now. It appears in Open games after payment is marked Free or an amount is added.",
+                "Share it now. It appears in Open games after it is marked Free or a repayment split is created.",
               ],
               [
                 "link",

@@ -101,7 +101,9 @@ describe("OpenGamesFilters", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Free" }));
     fireEvent.click(screen.getByRole("radio", { name: "Paid" }));
-    fireEvent.change(screen.getByRole("spinbutton", { name: /Minimum/ }), {
+    const minimumInput = screen.getByRole("spinbutton", { name: /Minimum/ });
+    expect(minimumInput).toHaveClass("focus-visible:!outline-none");
+    fireEvent.change(minimumInput, {
       target: { value: "150" },
     });
     fireEvent.change(screen.getByRole("spinbutton", { name: /Maximum/ }), {

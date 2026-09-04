@@ -64,7 +64,7 @@ async function findGames(
       membershipId: sessionPlayers.id,
       membershipRsvp: sessionPlayers.rsvp,
       capacity: sessions.capacity,
-      estimatedCostCents: sessions.estimatedCostCents,
+      playerPriceCents: sessions.playerPriceCents,
       requiresApproval: sessions.requiresApproval,
       playerCount: goingCount,
     })
@@ -91,7 +91,7 @@ async function findGames(
             eq(sessions.visibility, "public"),
             inArray(sessions.status, ["published", "live"]),
             gt(sessions.endsAt, now),
-            isNotNull(sessions.estimatedCostCents)
+            isNotNull(sessions.playerPriceCents)
           ),
           eq(sessions.hostId, userId),
           isNotNull(sessionPlayers.id)
@@ -125,10 +125,10 @@ async function findGames(
     items: result.rows.map((session): SearchResult => {
       const spots = Math.max(0, session.capacity - Number(session.playerCount));
       const cost =
-        session.estimatedCostCents === 0
+        session.playerPriceCents === 0
           ? "Free"
-          : session.estimatedCostCents
-            ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(session.estimatedCostCents / 100)} est.`
+          : session.playerPriceCents
+            ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(session.playerPriceCents / 100)} per player`
             : null;
       const state = session.membershipRsvp
         ? session.membershipRsvp === "pending"

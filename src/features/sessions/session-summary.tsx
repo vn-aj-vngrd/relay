@@ -22,7 +22,7 @@ type SessionPlanData = Pick<
   | "courtNumbers"
   | "courtCount"
   | "bookedAt"
-  | "estimatedCostCents"
+  | "playerPriceCents"
 >;
 
 export function SessionHero({
@@ -139,11 +139,11 @@ export function SessionPlanDetails({
             {session.bookedAt ? "Court confirmed" : "Booking pending"}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {session.estimatedCostCents === 0
+            {session.playerPriceCents === 0
               ? "Free"
-              : session.estimatedCostCents
-                ? `${peso(session.estimatedCostCents)} estimated per player`
-                : "Cost not added yet"}
+              : session.playerPriceCents
+                ? `${peso(session.playerPriceCents)} per player`
+                : "Payment not set up yet"}
           </p>
           {bookingAction ? <div className="mt-2">{bookingAction}</div> : null}
         </div>

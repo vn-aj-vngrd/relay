@@ -65,11 +65,11 @@ The geographic area where Relay accepts court submissions, verified listing coor
 _Avoid_: Complete court coverage, court inventory
 
 **Open game**:
-A published or live public session that has not ended and discloses either Free or an estimated per-player cost. Signed-in players discover and open it inside the authenticated session workspace, where they can join, request approval, or waitlist without leaving the app shell. The shared game link remains the account-optional external entry point.
+A published or live public session that has not ended and discloses either Free or a current player price. Signed-in players discover and open it inside the authenticated session workspace, where they can join, request approval, or waitlist without leaving the app shell. The shared game link remains the account-optional external entry point.
 _Avoid_: Community post, pickup feed
 
-**Cost expectation**:
-The pre-join price context for a session: Free, a per-player amount, or not set yet. Creation starts unset for every visibility. A public session becomes an Open game only after the host marks it Free or adds a per-player amount after creation. It is not a charge or checkout.
+**Player price**:
+The pre-join payment context for a session: Free, the highest current total assigned to one player across repayment collections, or not set yet. Creation starts unset for every visibility. A public session becomes an Open game only after the host marks it Free or creates a real repayment split. It is payment context, not a charge or checkout.
 _Avoid_: Price guarantee, checkout amount
 
 **Shared game link**:

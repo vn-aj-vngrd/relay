@@ -49,7 +49,7 @@ describe("OpenGamesCollection", () => {
               hostName: "Mika",
               playerCount: 6,
               capacity: 8,
-              estimatedCostCents: 30_000,
+              playerPriceCents: 30_000,
               requiresApproval: true,
               status: "published",
               accentColor: "violet",
@@ -63,7 +63,7 @@ describe("OpenGamesCollection", () => {
     expect(
       screen.getByRole("link", { name: /Saturday Pickle/ })
     ).toHaveAttribute("href", "/s/saturday-pickle?source=open-games");
-    expect(screen.getByText(/₱300/)).toBeVisible();
+    expect(screen.getByText("₱300.00 per player")).toBeVisible();
     expect(screen.getByText(/2 spots left/)).toBeVisible();
     expect(screen.getByText("Host approval required")).toBeVisible();
   });
@@ -89,7 +89,7 @@ describe("OpenGamesCollection", () => {
               hostName: "Mika",
               playerCount: 6,
               capacity: 8,
-              estimatedCostCents: 30_000,
+              playerPriceCents: 30_000,
               requiresApproval: true,
               status: "published",
               accentColor: "violet",
@@ -129,7 +129,7 @@ describe("OpenGamesCollection", () => {
               hostName: "Mika",
               playerCount: 6,
               capacity: 8,
-              estimatedCostCents: 30_000,
+              playerPriceCents: 30_000,
               requiresApproval: true,
               status: "published",
               accentColor: "violet",
@@ -159,7 +159,7 @@ describe("OpenGamesCollection", () => {
               hostName: "Mika",
               playerCount: 6,
               capacity: 8,
-              estimatedCostCents: 30_000,
+              playerPriceCents: 30_000,
               requiresApproval: true,
               status: "published",
               accentColor: "violet",

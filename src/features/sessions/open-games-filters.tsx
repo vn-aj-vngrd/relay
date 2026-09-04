@@ -231,7 +231,7 @@ function PriceFilter({
                           setRangeError("");
                         }}
                         placeholder="0"
-                        className="score min-w-0 flex-1 bg-transparent pl-1 outline-none"
+                        className="score min-w-0 flex-1 bg-transparent pl-1 outline-none focus-visible:!outline-none"
                       />
                     </span>
                   </label>
@@ -252,7 +252,7 @@ function PriceFilter({
                           setRangeError("");
                         }}
                         placeholder="Any"
-                        className="score min-w-0 flex-1 bg-transparent pl-1 outline-none"
+                        className="score min-w-0 flex-1 bg-transparent pl-1 outline-none focus-visible:!outline-none"
                       />
                     </span>
                   </label>

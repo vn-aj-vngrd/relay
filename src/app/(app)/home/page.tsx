@@ -49,7 +49,7 @@ export default async function HomePage() {
           goingCount: next.playerCount,
           booked: Boolean(next.session.bookedAt),
           expectsCollection: Boolean(
-            next.session.estimatedCostCents || next.session.bookingTotalCents
+            next.session.playerPriceCents || next.session.bookingTotalCents
           ),
           collectionCreated: next.hasExpense,
         })
@@ -75,7 +75,7 @@ export default async function HomePage() {
       viewerRsvp: player.rsvp,
       invitedAt: player.invitedAt.toISOString(),
       hostName,
-      estimatedCostCents: session.estimatedCostCents,
+      playerPriceCents: session.playerPriceCents,
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
       canReplay: false,
@@ -157,9 +157,11 @@ export default async function HomePage() {
                     <Users size={16} />
                     {next.playerCount} / {next.session.capacity} players
                   </span>
-                  {next.session.estimatedCostCents ? (
+                  {next.session.playerPriceCents !== null ? (
                     <span className="score text-sm font-semibold">
-                      {peso(next.session.estimatedCostCents)} estimated
+                      {next.session.playerPriceCents === 0
+                        ? "Free"
+                        : `${peso(next.session.playerPriceCents)} per player`}
                     </span>
                   ) : null}
                 </div>

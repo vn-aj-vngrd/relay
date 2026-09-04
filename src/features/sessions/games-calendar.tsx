@@ -147,7 +147,10 @@ function DayAgenda({
                   <span
                     className={`text-xs font-[680] ${game.phase === "live" ? "text-live" : "text-muted"}`}
                   >
-                    {phaseLabel(game.phase)} · {shortTime(game.time)}
+                    {game.status === "cancelled"
+                      ? "Cancelled"
+                      : phaseLabel(game.phase)}{" "}
+                    · {shortTime(game.time)}
                   </span>
                 </div>
                 <p className="mt-1.5 line-clamp-2 font-[680] text-ink group-hover:text-primary">
@@ -164,7 +167,13 @@ function DayAgenda({
                       ? game.playerCount
                       : `${game.playerCount} / ${game.capacity}`}
                   </span>
-                  <span>{game.phase === "past" ? "played" : "going"}</span>
+                  <span>
+                    {game.phase === "past"
+                      ? game.status === "cancelled"
+                        ? "players"
+                        : "played"
+                      : "going"}
+                  </span>
                   {game.readiness && game.phase !== "past" ? (
                     <span
                       className={

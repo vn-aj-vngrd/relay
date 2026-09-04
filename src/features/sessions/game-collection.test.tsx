@@ -37,7 +37,7 @@ const game: GameCollectionItem = {
   viewerRsvp: "going",
   invitedAt: "2026-08-01T00:00:00.000Z",
   hostName: "Mika Reyes",
-  estimatedCostCents: 30000,
+  playerPriceCents: 30000,
   requiresApproval: false,
   spotsRemaining: 2,
   canReplay: false,
@@ -70,6 +70,14 @@ const invitation: GameCollectionItem = {
   readiness: undefined,
 };
 
+const cohostedGame: GameCollectionItem = {
+  ...game,
+  id: "game-cohosted",
+  href: "/games/game-cohosted",
+  title: "Co-hosted Open Play",
+  readiness: undefined,
+};
+
 const pastGame: GameCollectionItem = {
   ...game,
   id: "game-2",
@@ -87,6 +95,15 @@ const pastGame: GameCollectionItem = {
     total: 3,
     missing: ["booking"],
   },
+};
+
+const cancelledGame: GameCollectionItem = {
+  ...pastGame,
+  id: "game-cancelled",
+  href: "/games/game-cancelled",
+  title: "Cancelled Host Game",
+  status: "cancelled",
+  canReplay: false,
 };
 
 function page(items: GameCollectionItem[], nextCursor: string | null = null) {
@@ -235,6 +252,27 @@ describe("GameCollection", () => {
     expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
   });
 
+  it("shows hosted and co-hosted games together under Organizing", () => {
+    render(
+      <GameCollection
+        upcomingPage={page([game])}
+        pastPage={page([pastGame])}
+        organizingUpcomingPage={page([game, cohostedGame])}
+        organizingPastPage={page([pastGame, cancelledGame])}
+        todayKey="2026-08-15"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Organizing" }));
+
+    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
+    expect(screen.getByText("Co-hosted Open Play")).toBeVisible();
+    expect(screen.getByText("Friday Crew")).toBeVisible();
+    expect(screen.getByText("Cancelled Host Game")).toBeVisible();
+    expect(screen.getByText("Cancelled")).toBeVisible();
+    expect(window.location.search).toContain("filter=organizing");
+  });
+
   it("does not expose Play again for another player’s completed game", () => {
     render(
       <GameCollection
@@ -262,7 +300,7 @@ describe("GameCollection", () => {
     );
 
     expect(screen.getByText("Hosted by Mika Reyes")).toBeVisible();
-    expect(screen.getByText("₱300 estimated")).toBeVisible();
+    expect(screen.getByText("₱300 per player")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Going" }));
 
     await waitFor(() =>

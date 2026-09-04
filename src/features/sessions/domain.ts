@@ -40,12 +40,12 @@ const sessionDetailsSchema = z.object({
     .max(1200, "Keep the note under 1,200 characters.")
     .optional(),
   visibility: z.enum(["public", "link", "private"]).default("link"),
-  costKind: z.enum(["unspecified", "free", "estimated"]).default("unspecified"),
-  estimatedCostCents: z.coerce
+  costKind: z.enum(["unspecified", "free"]).default("unspecified"),
+  playerPriceCents: z.coerce
     .number()
     .int("Enter a valid amount.")
     .nonnegative("Cost can’t be negative.")
-    .max(10_000_000, "Estimated cost can’t exceed ₱100,000 per player.")
+    .max(10_000_000, "Player price can’t exceed ₱100,000.")
     .optional(),
   booked: z.boolean().default(false),
   bookingReference: z
@@ -70,8 +70,8 @@ type ValidatedSessionDetails = {
   startsAt: Date;
   endsAt: Date;
   visibility: "public" | "link" | "private";
-  costKind: "unspecified" | "free" | "estimated";
-  estimatedCostCents?: number;
+  costKind: "unspecified" | "free";
+  playerPriceCents?: number;
   booked: boolean;
   bookingReference?: string;
   bookingTotalCents?: number;
@@ -88,25 +88,13 @@ function validateSessionDetails(
       path: ["endsAt"],
       message: "End time must be after start time.",
     });
-  if (
-    value.costKind === "estimated" &&
-    (!value.estimatedCostCents || value.estimatedCostCents <= 0)
-  )
-    context.addIssue({
-      code: "custom",
-      path: ["estimatedCostCents"],
-      message: "Enter an estimated cost greater than ₱0.",
-    });
-  if (value.costKind === "free" && value.estimatedCostCents !== 0)
+  if (value.costKind === "free" && value.playerPriceCents !== 0)
     context.addIssue({
       code: "custom",
       path: ["costKind"],
       message: "Free games must have a zero cost.",
     });
-  if (
-    value.costKind === "unspecified" &&
-    value.estimatedCostCents !== undefined
-  )
+  if (value.costKind === "unspecified" && value.playerPriceCents !== undefined)
     context.addIssue({
       code: "custom",
       path: ["costKind"],

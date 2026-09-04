@@ -36,8 +36,13 @@ export type { GameCollectionItem } from "./game-collection-types";
 export { GameViewMenu } from "./game-view-menu";
 
 type ViewMode = "list" | "grid" | "calendar";
-type GameFilter = "upcoming" | "invites" | "past";
+type GameFilter = "upcoming" | "invites" | "past" | "organizing";
+type GameCollectionRequest =
+  | GameCollectionPhase
+  | "organizing-upcoming"
+  | "organizing-past";
 const preferenceKey = "relay-games-view";
+const emptyGamePage: GameCollectionPage = { items: [], nextCursor: null };
 const emptyInvitationPage: GameInvitationPage = { items: [], total: 0 };
 
 const gameItemSchema = z.object({
@@ -63,7 +68,7 @@ const gameItemSchema = z.object({
   ]),
   invitedAt: z.string(),
   hostName: z.string(),
-  estimatedCostCents: z.number().nullable(),
+  playerPriceCents: z.number().nullable(),
   requiresApproval: z.boolean(),
   spotsRemaining: z.number(),
   canReplay: z.boolean(),
@@ -257,6 +262,10 @@ function rsvpLabel(rsvp: GameCollectionItem["viewerRsvp"]) {
   return null;
 }
 
+function finishedLabel(game: GameCollectionItem) {
+  return game.status === "cancelled" ? "Cancelled" : "Ended";
+}
+
 function InvitationSection({
   items,
   onResponded,
@@ -353,7 +362,7 @@ function GameList({
                 <span className="sm:hidden"> · </span>
                 {game.time} · {game.venue}
                 {past ? (
-                  <span className="sm:hidden"> · Ended</span>
+                  <span className="sm:hidden"> · {finishedLabel(game)}</span>
                 ) : rsvpLabel(game.viewerRsvp) ? (
                   <span className="sm:hidden">
                     {" "}
@@ -364,7 +373,7 @@ function GameList({
             </div>
             {past ? (
               <span className="hidden text-xs font-[650] text-muted sm:block">
-                Ended
+                {finishedLabel(game)}
               </span>
             ) : game.readiness ? (
               <span
@@ -428,7 +437,7 @@ function GameGrid({
               <span className="text-right">
                 {past ? (
                   <span className="block text-xs font-[650] text-muted">
-                    Ended
+                    {finishedLabel(game)}
                   </span>
                 ) : rsvpLabel(game.viewerRsvp) ? (
                   <span className="block text-xs font-[650] text-primary">
@@ -436,7 +445,12 @@ function GameGrid({
                   </span>
                 ) : null}
                 <span className="score mt-0.5 block text-xs text-muted">
-                  {game.playerCount} {past ? "played" : `/ ${game.capacity}`}
+                  {game.playerCount}{" "}
+                  {past
+                    ? game.status === "cancelled"
+                      ? "players"
+                      : "played"
+                    : `/ ${game.capacity}`}
                 </span>
               </span>
             </div>
@@ -477,7 +491,7 @@ function GameGrid({
                 </div>
               </div>
             ) : null}
-            <span className="mt-6 hidden items-center gap-1 text-sm font-[650] text-primary sm:inline-flex">
+            <span className="mt-auto hidden items-center gap-1 pt-6 text-sm font-[650] text-primary sm:inline-flex">
               Open game{" "}
               <CaretRight
                 aria-hidden
@@ -540,6 +554,8 @@ export function GameCollection({
   upcomingPage,
   invitationPage = emptyInvitationPage,
   pastPage,
+  organizingUpcomingPage = emptyGamePage,
+  organizingPastPage = emptyGamePage,
   todayKey,
   initialFilter = "upcoming",
   initialMonth = todayKey.slice(0, 7),
@@ -548,6 +564,8 @@ export function GameCollection({
   upcomingPage: GameCollectionPage;
   invitationPage?: GameInvitationPage;
   pastPage: GameCollectionPage;
+  organizingUpcomingPage?: GameCollectionPage;
+  organizingPastPage?: GameCollectionPage;
   todayKey: string;
   initialFilter?: GameFilter;
   initialMonth?: string;
@@ -563,16 +581,27 @@ export function GameCollection({
   const [invitations, setInvitations] = useState(invitationPage.items);
   const [upcoming, setUpcoming] = useState(upcomingPage.items);
   const [past, setPast] = useState(pastPage.items);
+  const [organizingUpcoming, setOrganizingUpcoming] = useState(
+    organizingUpcomingPage.items
+  );
+  const [organizingPast, setOrganizingPast] = useState(
+    organizingPastPage.items
+  );
   const [responseAnnouncement, setResponseAnnouncement] = useState("");
   const [upcomingCursor, setUpcomingCursor] = useState(upcomingPage.nextCursor);
   const [pastCursor, setPastCursor] = useState(pastPage.nextCursor);
-  const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(
-    null
+  const [organizingUpcomingCursor, setOrganizingUpcomingCursor] = useState(
+    organizingUpcomingPage.nextCursor
   );
+  const [organizingPastCursor, setOrganizingPastCursor] = useState(
+    organizingPastPage.nextCursor
+  );
+  const [loadingRequest, setLoadingRequest] =
+    useState<GameCollectionRequest | null>(null);
   const [pageErrors, setPageErrors] = useState<
-    Partial<Record<GameCollectionPhase, string>>
+    Partial<Record<GameCollectionRequest, string>>
   >({});
-  const loadingPhaseRef = useRef<GameCollectionPhase | null>(null);
+  const loadingRequestRef = useRef<GameCollectionRequest | null>(null);
   const [monthKey, setMonthKey] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [calendarData, setCalendarData] = useState<CalendarPage | null>(null);
@@ -583,14 +612,24 @@ export function GameCollection({
   const calendarEnabled = filter !== "invites";
 
   const loadMore = useCallback(
-    async (phase: GameCollectionPhase) => {
-      const cursor = phase === "upcoming" ? upcomingCursor : pastCursor;
-      if (!cursor || loadingPhaseRef.current) return;
-      loadingPhaseRef.current = phase;
-      setLoadingPhase(phase);
-      setPageErrors((current) => ({ ...current, [phase]: undefined }));
+    async (phase: GameCollectionPhase, organizing = false) => {
+      const request: GameCollectionRequest = organizing
+        ? `organizing-${phase}`
+        : phase;
+      const cursor = organizing
+        ? phase === "upcoming"
+          ? organizingUpcomingCursor
+          : organizingPastCursor
+        : phase === "upcoming"
+          ? upcomingCursor
+          : pastCursor;
+      if (!cursor || loadingRequestRef.current) return;
+      loadingRequestRef.current = request;
+      setLoadingRequest(request);
+      setPageErrors((current) => ({ ...current, [request]: undefined }));
       try {
         const params = new URLSearchParams({ phase, cursor });
+        if (organizing) params.set("scope", "organizing");
         const response = await fetch(`/api/games?${params}`, {
           credentials: "same-origin",
           headers: { Accept: "application/json" },
@@ -611,7 +650,13 @@ export function GameCollection({
             ...parsed.data.items.filter((item) => !ids.has(item.id)),
           ];
         };
-        if (phase === "upcoming") {
+        if (request === "organizing-upcoming") {
+          setOrganizingUpcoming(append);
+          setOrganizingUpcomingCursor(parsed.data.nextCursor);
+        } else if (request === "organizing-past") {
+          setOrganizingPast(append);
+          setOrganizingPastCursor(parsed.data.nextCursor);
+        } else if (phase === "upcoming") {
           setUpcoming(append);
           setUpcomingCursor(parsed.data.nextCursor);
         } else {
@@ -621,17 +666,17 @@ export function GameCollection({
       } catch (cause) {
         setPageErrors((current) => ({
           ...current,
-          [phase]:
+          [request]:
             cause instanceof Error
               ? cause.message
               : "More games could not be loaded.",
         }));
       } finally {
-        loadingPhaseRef.current = null;
-        setLoadingPhase(null);
+        loadingRequestRef.current = null;
+        setLoadingRequest(null);
       }
     },
-    [pastCursor, upcomingCursor]
+    [organizingPastCursor, organizingUpcomingCursor, pastCursor, upcomingCursor]
   );
 
   useEffect(() => {
@@ -651,7 +696,9 @@ export function GameCollection({
           ? "invites"
           : requestedFilter === "past"
             ? "past"
-            : "upcoming"
+            : requestedFilter === "organizing"
+              ? "organizing"
+              : "upcoming"
       );
       setMonthKey(nextMonth);
       setSelectedDate(nextDate);
@@ -663,11 +710,14 @@ export function GameCollection({
   useEffect(() => {
     if (mode !== "calendar" || !calendarEnabled) return;
     const controller = new AbortController();
-    const cached = calendarCache.current.get(monthKey);
+    const calendarKey = `${filter}:${monthKey}`;
+    const cached = calendarCache.current.get(calendarKey);
     setCalendarData(cached ?? null);
     setCalendarLoading(true);
     setCalendarError(null);
-    void fetch(`/api/games?month=${monthKey}`, {
+    const params = new URLSearchParams({ month: monthKey });
+    if (filter === "organizing") params.set("scope", "organizing");
+    void fetch(`/api/games?${params}`, {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
       signal: controller.signal,
@@ -677,7 +727,7 @@ export function GameCollection({
         const parsed = calendarPageSchema.safeParse(await response.json());
         if (!parsed.success)
           throw new Error("The server returned invalid calendar data.");
-        calendarCache.current.set(monthKey, parsed.data);
+        calendarCache.current.set(calendarKey, parsed.data);
         setCalendarData(parsed.data);
       })
       .catch((cause: unknown) => {
@@ -692,7 +742,7 @@ export function GameCollection({
         if (!controller.signal.aborted) setCalendarLoading(false);
       });
     return () => controller.abort();
-  }, [calendarEnabled, calendarRetry, mode, monthKey]);
+  }, [calendarEnabled, calendarRetry, filter, mode, monthKey]);
 
   const handleInviteResponse = useCallback(
     (game: GameCollectionItem, response: ActiveInviteResponse) => {
@@ -723,6 +773,12 @@ export function GameCollection({
 
   const liveGames = upcoming.filter((game) => game.status === "live");
   const scheduledGames = upcoming.filter((game) => game.status !== "live");
+  const organizingLiveGames = organizingUpcoming.filter(
+    (game) => game.status === "live"
+  );
+  const organizingScheduledGames = organizingUpcoming.filter(
+    (game) => game.status !== "live"
+  );
   const filterItems = [
     { value: "upcoming" as const, label: "Upcoming" },
     {
@@ -730,26 +786,34 @@ export function GameCollection({
       label: invitations.length ? `Invites ${invitations.length}` : "Invites",
     },
     { value: "past" as const, label: "Past" },
+    { value: "organizing" as const, label: "Organizing" },
   ];
 
-  const upcomingFooter = (
-    <GamePageSentinel
-      phase="upcoming"
-      nextCursor={upcomingCursor}
-      loading={loadingPhase === "upcoming"}
-      error={pageErrors.upcoming ?? null}
-      onLoad={loadMore}
-    />
-  );
-  const pastFooter = (
-    <GamePageSentinel
-      phase="past"
-      nextCursor={pastCursor}
-      loading={loadingPhase === "past"}
-      error={pageErrors.past ?? null}
-      onLoad={loadMore}
-    />
-  );
+  const collectionFooter = (phase: GameCollectionPhase, organizing = false) => {
+    const request: GameCollectionRequest = organizing
+      ? `organizing-${phase}`
+      : phase;
+    const nextCursor = organizing
+      ? phase === "upcoming"
+        ? organizingUpcomingCursor
+        : organizingPastCursor
+      : phase === "upcoming"
+        ? upcomingCursor
+        : pastCursor;
+    return (
+      <GamePageSentinel
+        phase={phase}
+        nextCursor={nextCursor}
+        loading={loadingRequest === request}
+        error={pageErrors[request] ?? null}
+        onLoad={(nextPhase) => loadMore(nextPhase, organizing)}
+      />
+    );
+  };
+  const upcomingFooter = collectionFooter("upcoming");
+  const pastFooter = collectionFooter("past");
+  const organizingUpcomingFooter = collectionFooter("upcoming", true);
+  const organizingPastFooter = collectionFooter("past", true);
   const handleFilterChange = (nextFilter: GameFilter) => {
     setFilter(nextFilter);
     updateGamesUrl({ filter: nextFilter }, "push");
@@ -849,6 +913,45 @@ export function GameCollection({
                   mode={mode}
                   past
                   footer={pastFooter}
+                />
+              ) : null}
+              {filter === "organizing" &&
+              !organizingUpcoming.length &&
+              !organizingPast.length &&
+              !organizingUpcomingCursor &&
+              !organizingPastCursor ? (
+                <div className="border-y border-line py-5 sm:py-8">
+                  <p className="font-[650]">No games to organize</p>
+                  <p className="mt-1 text-sm text-muted">
+                    Games you host or co-host will appear here.
+                  </p>
+                </div>
+              ) : null}
+              {filter === "organizing" && organizingLiveGames.length ? (
+                <CollectionSection
+                  title="Live now"
+                  items={organizingLiveGames}
+                  mode={mode}
+                  live
+                />
+              ) : null}
+              {filter === "organizing" &&
+              (organizingScheduledGames.length || organizingUpcomingCursor) ? (
+                <CollectionSection
+                  title="Upcoming"
+                  items={organizingScheduledGames}
+                  mode={mode}
+                  footer={organizingUpcomingFooter}
+                />
+              ) : null}
+              {filter === "organizing" &&
+              (organizingPast.length || organizingPastCursor) ? (
+                <CollectionSection
+                  title="Past games"
+                  items={organizingPast}
+                  mode={mode}
+                  past
+                  footer={organizingPastFooter}
                 />
               ) : null}
             </div>

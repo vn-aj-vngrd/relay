@@ -205,7 +205,7 @@ export default async function GameOverviewPage({
     goingCount: going.length,
     booked: Boolean(session.bookedAt),
     expectsCollection: Boolean(
-      session.estimatedCostCents || session.bookingTotalCents
+      session.playerPriceCents || session.bookingTotalCents
     ),
     collectionCreated: overview.payment.view === "host",
   });

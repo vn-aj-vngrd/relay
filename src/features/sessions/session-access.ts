@@ -12,7 +12,7 @@ type WorkspaceAccessInput = {
   visibility: string;
   status: string;
   endsAt: Date;
-  estimatedCostCents: number | null;
+  playerPriceCents: number | null;
   membership: { role: string; rsvp: string } | null | undefined;
   now?: Date;
 };
@@ -23,7 +23,7 @@ export function resolveSessionWorkspaceAccess({
   visibility,
   status,
   endsAt,
-  estimatedCostCents,
+  playerPriceCents,
   membership,
   now = new Date(),
 }: WorkspaceAccessInput): SessionWorkspaceAccess | null {
@@ -37,7 +37,7 @@ export function resolveSessionWorkspaceAccess({
     visibility === "public" &&
     ["published", "live"].includes(status) &&
     endsAt > now &&
-    estimatedCostCents !== null
+    playerPriceCents !== null
   )
     return "discoverer";
   return null;

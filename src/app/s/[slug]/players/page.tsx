@@ -14,9 +14,6 @@ export default async function PublicPlayersPage({
   const slug = (await params).slug;
   const data = await getPublicSession(slug);
   if (!data) notFound();
-  const organizers = data.roster.filter(({ player }) =>
-    ["host", "cohost"].includes(player.role)
-  );
   const going = data.roster.filter(({ player }) => player.rsvp === "going");
   const waitlist = data.roster.filter(
     ({ player }) => player.rsvp === "waitlisted"
@@ -39,41 +36,7 @@ export default async function PublicPlayersPage({
             {Math.max(0, data.session.capacity - going.length)} left
           </span>
         </div>
-        <section className="mt-7" aria-labelledby="public-organizers-title">
-          <h2 id="public-organizers-title" className="text-lg font-bold">
-            Organizers
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Running the game does not require taking a player spot.
-          </p>
-          <ul className="mt-3 divide-y divide-line border-y border-line">
-            {organizers.map(({ player, profile }, index) => {
-              const name = profile?.name ?? player.guestName ?? "Organizer";
-              return (
-                <li
-                  key={player.id}
-                  className="flex min-h-14 items-center gap-3 py-2"
-                >
-                  <Avatar
-                    name={name}
-                    imageUrl={profileAvatarUrl(profile?.avatarPath)}
-                    index={index}
-                    size="sm"
-                  />
-                  <span className="min-w-0 flex-1 truncate font-medium">
-                    {name}
-                  </span>
-                  <span className="text-xs text-muted">
-                    {player.role === "host" ? "Host" : "Co-host"}
-                    {player.rsvp !== "going" ? " · Not playing" : ""}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        <h2 className="mt-9 text-lg font-bold" id="public-going-title">
+        <h2 className="mt-7 text-lg font-bold" id="public-going-title">
           Going
         </h2>
         <ul
@@ -100,7 +63,11 @@ export default async function PublicPlayersPage({
                   </span>
                 </span>
                 <span className="text-xs text-muted">
-                  {player.role === "host" ? "Host" : "Going"}
+                  {player.role === "host"
+                    ? "Host"
+                    : player.role === "cohost"
+                      ? "Co-host"
+                      : "Going"}
                 </span>
               </li>
             );
@@ -118,9 +85,14 @@ export default async function PublicPlayersPage({
                   <span className="score w-5 text-sm text-muted">
                     {index + 1}
                   </span>
-                  <span className="font-medium">
+                  <span className="flex-1 font-medium">
                     {profile?.name ?? player.guestName ?? "Guest"}
                   </span>
+                  {player.role === "host" || player.role === "cohost" ? (
+                    <span className="text-xs text-muted">
+                      {player.role === "host" ? "Host" : "Co-host"}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ol>

@@ -43,7 +43,7 @@ const invitation: GameCollectionItem = {
   viewerRsvp: "invited",
   invitedAt: "2026-09-01T00:00:00.000Z",
   hostName: "Mika Reyes",
-  estimatedCostCents: 30000,
+  playerPriceCents: 30000,
   requiresApproval: true,
   spotsRemaining: 2,
   canReplay: false,
@@ -69,7 +69,7 @@ describe("HomeInvitations", () => {
     ).toHaveAttribute("href", "/games/game-invite");
     expect(screen.getByText("Hosted by Mika Reyes")).toBeVisible();
     expect(screen.getByText("Central Pickle")).toBeVisible();
-    expect(screen.getByText("₱300 estimated")).toBeVisible();
+    expect(screen.getByText("₱300 per player")).toBeVisible();
     expect(screen.getByText("2 spots open")).toBeVisible();
     expect(
       screen.getByText("Going sends a request for the host to approve.")

@@ -94,11 +94,13 @@ export default async function AdminSessionPage({
               </dd>
             </div>
             <div className="grid grid-cols-[120px_1fr] gap-4 py-4">
-              <dt className="text-sm text-muted">Estimated cost</dt>
+              <dt className="text-sm text-muted">Player price</dt>
               <dd className="score text-sm font-semibold">
-                {game.estimatedCostCents
-                  ? peso(game.estimatedCostCents)
-                  : "Not set"}
+                {game.playerPriceCents === 0
+                  ? "Free"
+                  : game.playerPriceCents
+                    ? peso(game.playerPriceCents)
+                    : "Not set"}
               </dd>
             </div>
           </dl>

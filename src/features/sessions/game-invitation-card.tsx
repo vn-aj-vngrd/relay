@@ -78,11 +78,11 @@ export function GameInvitationCard({
   }, [game, onResponded, state.rsvp, state.success]);
 
   const cost =
-    game.estimatedCostCents === 0
+    game.playerPriceCents === 0
       ? "Free"
-      : game.estimatedCostCents
-        ? `${peso(game.estimatedCostCents)} estimated`
-        : "Cost not added";
+      : game.playerPriceCents
+        ? `${peso(game.playerPriceCents)} per player`
+        : "Payment not set yet";
   const availability = game.spotsRemaining
     ? `${game.spotsRemaining} spots open`
     : "Waitlist available";
