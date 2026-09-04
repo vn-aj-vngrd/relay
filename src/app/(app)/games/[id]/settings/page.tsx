@@ -46,7 +46,11 @@ export default async function GameSettingsPage({
   const user = await requireUser();
   const [{ id: sessionId }, query] = await Promise.all([params, searchParams]);
   const section: GameSettingsSection =
-    query.section === "organizers" ? "organizers" : "details";
+    query.section === "invite" ||
+    query.section === "booking" ||
+    query.section === "organizers"
+      ? query.section
+      : "plan";
   const data = await getSessionForUser(sessionId, user.id);
   if (!data) notFound();
   const canEdit =
@@ -76,16 +80,6 @@ export default async function GameSettingsPage({
       (left, right) =>
         Number(right.role === "host") - Number(left.role === "host")
     );
-  const cohostCandidates = activeRoster.flatMap(({ player, profile }) =>
-    player.role === "player" && player.userId
-      ? [
-          {
-            sessionPlayerId: player.id,
-            name: profile?.name ?? "Relay player",
-          },
-        ]
-      : []
-  );
   const cohosts = organizers.flatMap((organizer) =>
     organizer.role === "cohost"
       ? [{ id: organizer.userId, name: organizer.name }]
@@ -129,7 +123,7 @@ export default async function GameSettingsPage({
       />
       <div className="mx-auto w-full max-w-6xl">
         <GameSettingsTabs sessionId={sessionId} active={section} />
-        {section === "details" ? (
+        {section !== "organizers" ? (
           locked ? (
             <section className="border-b border-line py-10 text-center">
               <LockKey aria-hidden size={24} className="mx-auto text-muted" />
@@ -145,8 +139,8 @@ export default async function GameSettingsPage({
             </section>
           ) : (
             <div className="mt-7">
-              <SessionSettingsForm defaults={defaults} />
-              {data.session.status === "published" ? (
+              <SessionSettingsForm defaults={defaults} section={section} />
+              {section === "plan" && data.session.status === "published" ? (
                 <CancelSessionControl
                   sessionId={data.session.id}
                   version={data.session.version}
@@ -161,7 +155,6 @@ export default async function GameSettingsPage({
               sessionId={data.session.id}
               version={data.session.version}
               organizers={organizers}
-              candidates={cohostCandidates}
               canManage={data.session.hostId === user.id && !locked}
             />
             {data.session.hostId === user.id &&

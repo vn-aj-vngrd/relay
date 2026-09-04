@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./organizer-actions", () => ({
+  addCohostAction: vi.fn(async () => ({})),
   setCohostRoleAction: vi.fn(async () => ({})),
 }));
 
@@ -22,8 +23,6 @@ const organizers = [
   },
 ];
 
-const candidates = [{ sessionPlayerId: "candidate-player", name: "Jamie Tan" }];
-
 afterEach(cleanup);
 
 describe("OrganizerSettings", () => {
@@ -33,7 +32,6 @@ describe("OrganizerSettings", () => {
         sessionId="session-1"
         version={2}
         organizers={organizers}
-        candidates={candidates}
         canManage
       />
     );
@@ -44,7 +42,25 @@ describe("OrganizerSettings", () => {
     expect(
       screen.getByRole("button", { name: "Remove Alex Cruz as co-host" })
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Co-host" })).toBeVisible();
+    expect(
+      screen.getByRole("textbox", { name: "Relay username" })
+    ).toBeVisible();
+  });
+
+  it("lets the host add an organizer who is not already on the player roster", () => {
+    render(
+      <OrganizerSettings
+        sessionId="session-1"
+        version={2}
+        organizers={organizers}
+        canManage
+      />
+    );
+
+    expect(
+      screen.getByRole("textbox", { name: "Relay username" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Add co-host" })).toBeVisible();
   });
 
   it("shows organizer information without host controls to a co-host", () => {
@@ -53,7 +69,6 @@ describe("OrganizerSettings", () => {
         sessionId="session-1"
         version={2}
         organizers={organizers}
-        candidates={candidates}
         canManage={false}
       />
     );

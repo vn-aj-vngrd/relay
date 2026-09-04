@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   assertRateLimit: vi.fn(),
   findSession: vi.fn(),
+  findProfile: vi.fn(),
   transaction: vi.fn(),
   execute: vi.fn(),
   selectWhere: vi.fn(),
@@ -24,12 +25,15 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("@/db/client", () => ({
   db: {
-    query: { sessions: { findFirst: mocks.findSession } },
+    query: {
+      profiles: { findFirst: mocks.findProfile },
+      sessions: { findFirst: mocks.findSession },
+    },
     transaction: mocks.transaction,
   },
 }));
 
-import { setCohostRoleAction } from "./organizer-actions";
+import { addCohostAction, setCohostRoleAction } from "./organizer-actions";
 
 const hostId = "eb152226-c01b-4931-8ad9-1f056b6bd8fa";
 const playerUserId = "26b0227a-a39d-4e43-a3ce-a1709d510f91";
@@ -42,6 +46,14 @@ const session = {
   version: 4,
   leadOrganizerId: null,
 };
+
+function addFormData(username = "@jamie-tan", version = 4) {
+  const data = new FormData();
+  data.set("sessionId", session.id);
+  data.set("version", String(version));
+  data.set("username", username);
+  return data;
+}
 
 function formData(role: "player" | "cohost", version = 4) {
   const data = new FormData();
@@ -56,6 +68,12 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireUser.mockResolvedValue({ id: hostId });
   mocks.findSession.mockResolvedValue(session);
+  mocks.findProfile.mockResolvedValue({
+    userId: playerUserId,
+    username: "jamie-tan",
+    name: "Jamie Tan",
+    skillLevel: "intermediate",
+  });
   mocks.selectWhere.mockResolvedValue([
     {
       id: sessionPlayerId,
@@ -93,6 +111,65 @@ beforeEach(() => {
       });
     }
   );
+});
+
+describe("addCohostAction", () => {
+  it("adds a Relay member as a non-playing co-host without requiring a roster invitation", async () => {
+    mocks.selectWhere.mockResolvedValue([]);
+
+    await expect(addCohostAction({}, addFormData())).resolves.toEqual({
+      message: "@jamie-tan added as a co-host.",
+    });
+
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(1, {
+      sessionId: session.id,
+      userId: playerUserId,
+      skillLevel: "intermediate",
+      role: "cohost",
+      rsvp: "declined",
+      playState: "unavailable",
+      respondedAt: expect.any(Date),
+    });
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(2, {
+      sessionId: session.id,
+      kind: "system",
+      body: "The host assigned a co-host.",
+    });
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(3, {
+      userId: playerUserId,
+      sessionId: session.id,
+      type: "cohost_assigned",
+      payload: {},
+    });
+  });
+
+  it("explains when the Relay username does not exist", async () => {
+    mocks.findProfile.mockResolvedValue(null);
+
+    await expect(
+      addCohostAction({}, addFormData("@missing-player"))
+    ).resolves.toEqual({
+      error: "No Relay member found for @missing-player.",
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+
+  it("allows only the original host to add co-host access before Play", async () => {
+    mocks.findSession.mockResolvedValueOnce({
+      ...session,
+      hostId: "other-host",
+    });
+    await expect(addCohostAction({}, addFormData())).resolves.toEqual({
+      error: "Only the host can add a co-host.",
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+
+    mocks.findSession.mockResolvedValueOnce({ ...session, status: "live" });
+    await expect(addCohostAction({}, addFormData())).resolves.toEqual({
+      error: "Co-host access can only be changed before Play starts.",
+    });
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
 });
 
 describe("setCohostRoleAction", () => {

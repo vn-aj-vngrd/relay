@@ -14,6 +14,7 @@ import { VenueCombobox } from "@/features/venues/venue-combobox";
 
 import { type SessionActionState, updateSessionAction } from "./actions";
 import { QuantityInput } from "./create-session-form";
+import type { GameSettingsSection } from "./game-settings-tabs";
 import { SessionAccentPicker } from "./session-accent-picker";
 
 const label = "block text-sm font-[650]";
@@ -62,8 +63,10 @@ export type SessionSettingsDefaults = {
 
 export function SessionSettingsForm({
   defaults,
+  section = "plan",
 }: {
   defaults: SessionSettingsDefaults;
+  section?: Exclude<GameSettingsSection, "organizers">;
 }) {
   const [state, action] = useActionState<SessionActionState, FormData>(
     updateSessionAction,
@@ -110,7 +113,7 @@ export function SessionSettingsForm({
         </div>
       ) : null}
 
-      <section aria-labelledby="settings-plan">
+      <section aria-labelledby="settings-plan" hidden={section !== "plan"}>
         <div className="mb-5">
           <h2 id="settings-plan" className="text-lg font-bold">
             Plan
@@ -229,11 +232,11 @@ export function SessionSettingsForm({
       <section
         id="settings-appearance"
         aria-labelledby="settings-sharing"
-        className="scroll-mt-6 border-t border-line pt-8"
+        hidden={section !== "invite"}
       >
         <div className="mb-5">
           <h2 id="settings-sharing" className="text-lg font-bold">
-            Appearance, sharing, and payment
+            Invite settings
           </h2>
           <p className="mt-1 text-sm text-muted">
             Customize the cover and keep the shared plan accurate before players
@@ -346,7 +349,7 @@ export function SessionSettingsForm({
 
       <section
         aria-labelledby="settings-booking"
-        className="border-t border-line pt-8"
+        hidden={section !== "booking"}
       >
         <div className="mb-5">
           <h2 id="settings-booking" className="text-lg font-bold">
@@ -440,7 +443,7 @@ export function SessionSettingsForm({
       </section>
 
       <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-6">
-        <ButtonLink href={`/games/${defaults.id}/more`} variant="secondary">
+        <ButtonLink href={`/games/${defaults.id}`} variant="secondary">
           Cancel
         </ButtonLink>
         <SubmitButton pendingLabel="Saving changes…">Save changes</SubmitButton>

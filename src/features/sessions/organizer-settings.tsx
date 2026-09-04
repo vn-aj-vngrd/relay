@@ -4,10 +4,10 @@ import { useActionState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
-import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import {
+  addCohostAction,
   type OrganizerActionState,
   setCohostRoleAction,
 } from "./organizer-actions";
@@ -18,11 +18,6 @@ export type OrganizerSummary = {
   imageUrl?: string;
   role: "host" | "cohost";
   playing: boolean;
-};
-
-export type CohostCandidate = {
-  sessionPlayerId: string;
-  name: string;
 };
 
 function RemoveCohostControl({
@@ -54,7 +49,7 @@ function RemoveCohostControl({
         aria-label={`Remove ${organizer.name} as co-host`}
         className="min-h-9 px-3 text-danger"
         confirmTitle={`Remove ${organizer.name} as co-host?`}
-        confirmText="They will remain on the player roster but lose organizer access."
+        confirmText="They will lose organizer access. Their game RSVP stays unchanged."
         confirmLabel="Remove co-host"
         cancelLabel="Keep co-host"
       >
@@ -77,17 +72,15 @@ export function OrganizerSettings({
   sessionId,
   version,
   organizers,
-  candidates,
   canManage,
 }: {
   sessionId: string;
   version: number;
   organizers: OrganizerSummary[];
-  candidates: CohostCandidate[];
   canManage: boolean;
 }) {
   const [state, action] = useActionState<OrganizerActionState, FormData>(
-    setCohostRoleAction,
+    addCohostAction,
     {}
   );
 
@@ -133,43 +126,44 @@ export function OrganizerSettings({
       </ul>
 
       {canManage ? (
-        candidates.length ? (
-          <form action={action} className="mt-5 max-w-md" noValidate>
-            <input type="hidden" name="sessionId" value={sessionId} />
-            <input type="hidden" name="version" value={version} />
-            <input type="hidden" name="role" value="cohost" />
-            <SelectField
-              id="cohost-player"
-              name="sessionPlayerId"
-              label="Co-host"
-              defaultValue=""
-              options={[
-                { value: "", label: "Choose a Relay player" },
-                ...candidates.map((candidate) => ({
-                  value: candidate.sessionPlayerId,
-                  label: candidate.name,
-                })),
-              ]}
+        <form action={action} className="mt-5 max-w-md" noValidate>
+          <input type="hidden" name="sessionId" value={sessionId} />
+          <input type="hidden" name="version" value={version} />
+          <label htmlFor="cohost-username" className="block text-sm font-[650]">
+            Relay username
+          </label>
+          <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
+            <input
+              id="cohost-username"
+              name="username"
+              required
+              autoCapitalize="none"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="@username"
+              className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 sm:text-sm"
             />
-            <SubmitButton pendingLabel="Adding…" className="mt-3">
+            <SubmitButton
+              pendingLabel="Adding…"
+              className="h-11 min-h-11 sm:px-4"
+            >
               Add co-host
             </SubmitButton>
-            {state.error ? (
-              <p role="alert" className="mt-2 text-sm text-danger">
-                {state.error}
-              </p>
-            ) : state.message ? (
-              <p role="status" className="mt-2 text-sm text-primary">
-                {state.message}
-              </p>
-            ) : null}
-          </form>
-        ) : (
-          <p className="mt-4 text-sm text-muted">
-            Add a Relay account player to the roster before assigning co-host
-            access.
+          </div>
+          <p className="mt-2 text-sm leading-5 text-muted">
+            Add any Relay member. Organizer access does not add them as a
+            player.
           </p>
-        )
+          {state.error ? (
+            <p role="alert" className="mt-2 text-sm text-danger">
+              {state.error}
+            </p>
+          ) : state.message ? (
+            <p role="status" className="mt-2 text-sm text-primary">
+              {state.message}
+            </p>
+          ) : null}
+        </form>
       ) : null}
     </section>
   );

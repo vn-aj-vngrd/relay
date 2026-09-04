@@ -30,7 +30,9 @@ export default async function PlayersPage({
   );
   const otherResponses = data.roster.filter(
     ({ player }) =>
-      !player.leftAt && ["maybe", "invited", "declined"].includes(player.rsvp)
+      !player.leftAt &&
+      player.role === "player" &&
+      ["maybe", "invited", "declined"].includes(player.rsvp)
   );
   const isHost = canManageSessionWorkspace(data.access);
 

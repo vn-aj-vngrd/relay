@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/client";
-import { messages, notifications, sessionPlayers, sessions } from "@/db/schema";
+import {
+  messages,
+  notifications,
+  profiles,
+  sessionPlayers,
+  sessions,
+} from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { assertRateLimit } from "@/lib/rate-limit";
 
@@ -15,6 +21,23 @@ const inputSchema = z.object({
   sessionId: z.uuid(),
   version: z.coerce.number().int().positive(),
   leadOrganizerId: z.union([z.uuid(), z.literal("")]),
+});
+
+const addCohostInputSchema = z.object({
+  sessionId: z.uuid(),
+  version: z.coerce.number().int().positive(),
+  username: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .transform((value) => value.replace(/^@/, ""))
+    .pipe(
+      z
+        .string()
+        .min(3, "Enter a Relay username with at least 3 characters.")
+        .max(24, "Relay usernames have at most 24 characters.")
+        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Enter a valid Relay username.")
+    ),
 });
 
 const cohostInputSchema = z.object({
@@ -106,6 +129,154 @@ export async function setLeadOrganizerAction(
   return {
     message: lead ? "Lead organizer assigned." : "Lead organizer removed.",
   };
+}
+
+export async function addCohostAction(
+  _: OrganizerActionState,
+  formData: FormData
+): Promise<OrganizerActionState> {
+  const user = await requireUser();
+  await assertRateLimit(
+    organizerRateLimit,
+    `user:${user.id}`,
+    organizerRateLimitMessage
+  );
+  const parsed = addCohostInputSchema.safeParse({
+    sessionId: formData.get("sessionId"),
+    version: formData.get("version"),
+    username: formData.get("username"),
+  });
+  if (!parsed.success)
+    return {
+      error: parsed.error.issues[0]?.message ?? "Enter a Relay username.",
+    };
+
+  const [session, profile] = await Promise.all([
+    db.query.sessions.findFirst({
+      where: eq(sessions.id, parsed.data.sessionId),
+    }),
+    db.query.profiles.findFirst({
+      where: eq(profiles.username, parsed.data.username),
+    }),
+  ]);
+  if (!session || session.hostId !== user.id)
+    return { error: "Only the host can add a co-host." };
+  if (session.status !== "draft" && session.status !== "published")
+    return { error: "Co-host access can only be changed before Play starts." };
+  if (!profile)
+    return { error: `No Relay member found for @${parsed.data.username}.` };
+  if (profile.userId === session.hostId)
+    return { error: "You’re already the host of this game." };
+
+  const now = new Date();
+  try {
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${session.id} for update`
+      );
+      const [existing] = await tx
+        .select({
+          id: sessionPlayers.id,
+          role: sessionPlayers.role,
+          leftAt: sessionPlayers.leftAt,
+        })
+        .from(sessionPlayers)
+        .where(
+          and(
+            eq(sessionPlayers.sessionId, session.id),
+            eq(sessionPlayers.userId, profile.userId)
+          )
+        );
+      if (existing?.role === "host") return "INVALID_TARGET" as const;
+      if (existing?.role === "cohost" && !existing.leftAt)
+        return "ALREADY_COHOST" as const;
+
+      const [changedSession] = await tx
+        .update(sessions)
+        .set({
+          version: sql`${sessions.version} + 1`,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(sessions.id, session.id),
+            eq(sessions.hostId, user.id),
+            eq(sessions.version, parsed.data.version),
+            inArray(sessions.status, ["draft", "published"])
+          )
+        )
+        .returning({ id: sessions.id });
+      if (!changedSession) return "CONFLICT" as const;
+
+      if (existing) {
+        await tx
+          .update(sessionPlayers)
+          .set({
+            role: "cohost",
+            ...(existing.leftAt
+              ? {
+                  rsvp: "declined" as const,
+                  playState: "unavailable" as const,
+                  checkedInAt: null,
+                  waitlistPosition: null,
+                  respondedAt: now,
+                  leftAt: null,
+                }
+              : {}),
+            updatedAt: now,
+          })
+          .where(eq(sessionPlayers.id, existing.id));
+      } else {
+        await tx.insert(sessionPlayers).values({
+          sessionId: session.id,
+          userId: profile.userId,
+          skillLevel: profile.skillLevel,
+          role: "cohost",
+          rsvp: "declined",
+          playState: "unavailable",
+          respondedAt: now,
+        });
+      }
+
+      await tx.insert(messages).values({
+        sessionId: session.id,
+        kind: "system",
+        body: "The host assigned a co-host.",
+      });
+      await tx.insert(notifications).values({
+        userId: profile.userId,
+        sessionId: session.id,
+        type: "cohost_assigned",
+        payload: {},
+      });
+      return "UPDATED" as const;
+    });
+
+    if (result === "INVALID_TARGET")
+      return { error: "That account cannot be added as a co-host." };
+    if (result === "ALREADY_COHOST")
+      return { error: `@${parsed.data.username} is already a co-host.` };
+    if (result === "CONFLICT")
+      return {
+        error: "The game changed on another device. Refresh and try again.",
+      };
+  } catch (error) {
+    console.error(
+      "Co-host assignment failed",
+      error instanceof Error ? error.name : "UnknownError"
+    );
+    return { error: "The co-host couldn’t be added. Try again." };
+  }
+
+  revalidatePath("/home");
+  revalidatePath("/games");
+  revalidatePath("/notifications");
+  revalidatePath(`/games/${session.id}`);
+  revalidatePath(`/games/${session.id}/players`);
+  revalidatePath(`/games/${session.id}/settings`);
+  revalidatePath(`/s/${session.slug}`);
+  revalidatePath(`/s/${session.slug}/players`);
+  return { message: `@${parsed.data.username} added as a co-host.` };
 }
 
 export async function setCohostRoleAction(

@@ -45,12 +45,28 @@ describe("SessionSettingsForm", () => {
     expect(container.querySelector('input[name="visibility"]')).toHaveValue(
       "link"
     );
-    expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
+    expect(
+      screen.queryByRole("heading", {
+        name: "Invite settings",
+      })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+  });
+
+  it("shows invite controls without exposing the other settings sections", () => {
+    const { container } = render(
+      <SessionSettingsForm defaults={defaults} section="invite" />
+    );
+
     expect(
       screen.getByRole("heading", {
-        name: "Appearance, sharing, and payment",
+        name: "Invite settings",
       })
     ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Plan" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Teal" })).toBeChecked();
     expect(
       screen.getByText(/Sets the cover, active tabs, and actions/)
     ).toBeVisible();
@@ -64,11 +80,10 @@ describe("SessionSettingsForm", () => {
     expect(
       screen.getByRole("checkbox", { name: /Approve new players/ })
     ).not.toBeChecked();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
   });
 
   it("reveals booking details only when the host confirms a reservation", () => {
-    render(<SessionSettingsForm defaults={defaults} />);
+    render(<SessionSettingsForm defaults={defaults} section="booking" />);
     expect(
       screen.queryByLabelText("Booking reference")
     ).not.toBeInTheDocument();
