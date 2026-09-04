@@ -33,6 +33,7 @@ beforeAll(() => {
 beforeEach(() => {
   saveScore.mockClear();
   refresh.mockClear();
+  localStorage.clear();
 });
 
 const props = {
@@ -96,6 +97,43 @@ describe("LiveCourt", () => {
       expect.objectContaining({ teamAScore: 10, teamBScore: 6, version: 1 })
     );
     vi.useRealTimers();
+  });
+
+  it("flushes and journals a pending score when the court unmounts", async () => {
+    vi.useFakeTimers();
+    const view = render(<LiveCourt {...props} canScore />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add a point to Van Rivera + Mika Reyes",
+      })
+    );
+
+    expect(
+      localStorage.getItem(
+        "relay-pending-score:00000000-0000-4000-8000-000000000001:00000000-0000-4000-8000-000000000002"
+      )
+    ).toContain('"scores":[9,6]');
+    view.unmount();
+    await act(async () => Promise.resolve());
+
+    expect(saveScore).toHaveBeenCalledWith(
+      expect.objectContaining({ teamAScore: 9, teamBScore: 6, version: 1 })
+    );
+    vi.useRealTimers();
+  });
+
+  it("recovers a journaled score after the scorer returns", async () => {
+    localStorage.setItem(
+      "relay-pending-score:00000000-0000-4000-8000-000000000001:00000000-0000-4000-8000-000000000002",
+      JSON.stringify({ scores: [10, 7], version: 1 })
+    );
+
+    render(<LiveCourt {...props} canScore />);
+    await act(async () => Promise.resolve());
+
+    expect(saveScore).toHaveBeenCalledWith(
+      expect.objectContaining({ teamAScore: 10, teamBScore: 7, version: 1 })
+    );
   });
 
   it("shows the authoritative score and a retry path after a concurrent update", async () => {

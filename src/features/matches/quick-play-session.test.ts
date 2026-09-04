@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
+  correctQuickPlayMatchScore,
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
   quickPlayStandings,
@@ -28,6 +30,7 @@ function configuration(
     mode: "random",
     queueRule: "adaptive",
     fixedPairs: [],
+    roundDurationMinutes: null,
     ...overrides,
   };
 }
@@ -105,6 +108,58 @@ describe("local Quick Play session", () => {
       expect.objectContaining({ name: "Player 1", wins: 1, differential: 1 }),
       expect.objectContaining({ name: "Player 2", wins: 1, differential: 1 }),
     ]);
+  });
+
+  it("corrects a completed score without changing later court assignments", () => {
+    let session = startQuickPlay(
+      configuration({ players: players(4), courtCount: 1, mode: "random" })
+    );
+    const matchId = session.activeMatches[0].id;
+    session = scoreQuickPlayMatch(session, matchId, 0, 1);
+    session = finishQuickPlayMatch(session, matchId);
+    const waitingAfterFinish = session.waitingPlayerIds;
+
+    session = correctQuickPlayMatchScore(session, matchId, [3, 5]);
+
+    expect(session.completedMatches[0]).toMatchObject({
+      scores: [3, 5],
+      winner: "B",
+    });
+    expect(session.waitingPlayerIds).toEqual(waitingAfterFinish);
+    expect(() => correctQuickPlayMatchScore(session, matchId, [4, 4])).toThrow(
+      "A completed match needs a winner."
+    );
+  });
+
+  it("cancels one queue match and restores its players to the front", () => {
+    const session = startQuickPlay(
+      configuration({
+        players: players(9),
+        courtCount: 2,
+        mode: "queue",
+      })
+    );
+    const cancelled = session.activeMatches[0];
+    const next = cancelQuickPlayMatch(session, cancelled.id);
+
+    expect(next.activeMatches).toHaveLength(1);
+    expect(next.waitingPlayerIds.slice(0, 4)).toEqual([
+      ...cancelled.teamA,
+      ...cancelled.teamB,
+    ]);
+  });
+
+  it("cancels the whole active round in round-based modes", () => {
+    const session = startQuickPlay(configuration());
+    const activePlayerIds = session.activeMatches.flatMap((match) => [
+      ...match.teamA,
+      ...match.teamB,
+    ]);
+    const next = cancelQuickPlayMatch(session, session.activeMatches[0].id);
+
+    expect(next.activeMatches).toHaveLength(0);
+    expect(next.waitingPlayerIds).toEqual(activePlayerIds);
+    expect(next.completedMatches).toHaveLength(0);
   });
 
   it("restores a versioned browser session and rejects invalid stored data", () => {

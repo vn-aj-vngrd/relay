@@ -1,15 +1,10 @@
-import {
-  Broadcast,
-  DotsSixVertical,
-  Shuffle,
-} from "@phosphor-icons/react/dist/ssr";
+import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { ButtonLink } from "@/components/ui/button";
-import { SubmitButton } from "@/components/ui/submit-button";
 import { PostGameFeedback } from "@/features/feedback/post-game-feedback";
-import { completeSession, createQueueMatch } from "@/features/matches/actions";
+import { completeSession } from "@/features/matches/actions";
 import type { getLiveSession } from "@/features/matches/queries";
 import { getSessionRecapData } from "@/features/memories/queries";
 import { SessionRecap } from "@/features/memories/session-recap";
@@ -24,6 +19,7 @@ import { LiveCourtDeck } from "./live-court";
 import { MatchResults } from "./match-results";
 import { rotationDescription, rotationName } from "./rotation";
 import { RoundTimer } from "./round-timer";
+import { StartRotationForm } from "./start-rotation-form";
 
 export type SessionPlayData = Omit<
   NonNullable<Awaited<ReturnType<typeof getLiveSession>>>,
@@ -164,17 +160,12 @@ export async function SessionPlay({
           {viewer.canManagePlay &&
           canStartRotation &&
           data.activeMatches.length > 0 ? (
-            <form noValidate action={createQueueMatch}>
-              <input type="hidden" name="sessionId" value={data.session.id} />
-              <SubmitButton
-                pendingLabel="Creating match…"
-                variant="secondary"
-                className="whitespace-nowrap"
-              >
-                <Shuffle size={17} />
-                {rotationLabel}
-              </SubmitButton>
-            </form>
+            <StartRotationForm
+              sessionId={data.session.id}
+              label={rotationLabel}
+              pendingLabel="Creating match…"
+              secondary
+            />
           ) : null}
         </div>
         {data.session.roundDurationMinutes && roundStartedAt ? (
@@ -228,17 +219,15 @@ export async function SessionPlay({
                     : "The next four players are ready."}
             </p>
             {viewer.canManagePlay && canStartRotation ? (
-              <form noValidate action={createQueueMatch} className="mt-5">
-                <input type="hidden" name="sessionId" value={data.session.id} />
-                <SubmitButton
+              <div className="mt-5">
+                <StartRotationForm
+                  sessionId={data.session.id}
+                  label={rotationLabel}
                   pendingLabel={
                     roundMode ? "Starting round…" : "Starting match…"
                   }
-                >
-                  <Shuffle size={17} />
-                  {rotationLabel}
-                </SubmitButton>
-              </form>
+                />
+              </div>
             ) : null}
           </div>
         )}
@@ -339,13 +328,6 @@ export async function SessionPlay({
                     <span className="min-w-0 flex-1 truncate text-sm font-semibold">
                       {names.join(" + ")}
                     </span>
-                    {viewer.canManagePlay ? (
-                      <DotsSixVertical
-                        aria-label={`Move ${names.join(" and ")}`}
-                        className="text-muted"
-                        size={18}
-                      />
-                    ) : null}
                   </li>
                 );
               })}
@@ -374,13 +356,6 @@ export async function SessionPlay({
                     size="sm"
                   />
                   <span className="flex-1 text-sm font-semibold">{name}</span>
-                  {viewer.canManagePlay ? (
-                    <DotsSixVertical
-                      aria-label={`Move ${name}`}
-                      className="text-muted"
-                      size={18}
-                    />
-                  ) : null}
                 </li>
               );
             })}

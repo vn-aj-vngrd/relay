@@ -10,7 +10,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   ).toBeVisible();
   await expect(
     page.getByRole("link", { name: "Get started", exact: true }).first()
-  ).toHaveAttribute("href", "/signup?next=%2Fgames%2Fnew");
+  ).toHaveAttribute("href", "/games/new");
   const landingCourtFinder = page.locator("#court-finder");
   await expect(
     landingCourtFinder.getByRole("button", { name: "Zoom in" })
@@ -163,6 +163,10 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await page.reload();
   await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
   await page.getByRole("button", { name: "Finish match" }).click();
+  await page
+    .getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+    .getByRole("button", { name: "Finish match" })
+    .click();
   await expect(page.getByRole("heading", { name: "Standings" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Start next match" })
@@ -252,7 +256,7 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.goto("/");
   await expect(
     page.getByRole("link", { name: "Get started", exact: true }).first()
-  ).toHaveAttribute("href", "/signup?next=%2Fgames%2Fnew");
+  ).toHaveAttribute("href", "/games/new");
   await page.goto("/home");
   const desktopCreate = await page
     .getByRole("link", { name: "Create", exact: true })
@@ -588,7 +592,6 @@ test("an authenticated host and guest can complete the core session flow", async
   await page.getByRole("button", { name: "Round timer" }).click();
   await page.getByRole("option", { name: "10 minutes" }).click();
   await page.getByRole("button", { name: "Start Play" }).click();
-  await page.getByRole("button", { name: "Start first round" }).click();
   await expect(page.getByText("Match in progress").first()).toBeVisible();
   await expect(page.getByText("Round timer", { exact: true })).toBeVisible();
   await guestPage.goto(`${publicHref}/play`);

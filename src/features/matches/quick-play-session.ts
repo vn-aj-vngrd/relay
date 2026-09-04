@@ -24,6 +24,7 @@ export type QuickPlayMatch = {
   scores: [number, number];
   status: "active" | "completed";
   winner: "A" | "B" | null;
+  startedAt: number;
   finishedAt: number | null;
 };
 
@@ -33,6 +34,7 @@ export type QuickPlayConfiguration = {
   mode: PlayMode;
   queueRule: QueueRule;
   fixedPairs: Array<[string, string]>;
+  roundDurationMinutes: number | null;
 };
 
 export type QuickPlaySession = QuickPlayConfiguration & {
@@ -64,6 +66,7 @@ const quickPlayMatchSchema = z.object({
   ]),
   status: z.enum(["active", "completed"]),
   winner: z.enum(["A", "B"]).nullable(),
+  startedAt: z.number().default(0),
   finishedAt: z.number().nullable(),
 });
 
@@ -73,6 +76,13 @@ const quickPlaySessionSchema = z.object({
   mode: z.enum(["queue", "random", "balanced", "king_of_court", "round_robin"]),
   queueRule: z.enum(["adaptive", "four_off", "winner_stays"]),
   fixedPairs: z.array(z.tuple([z.string().min(1), z.string().min(1)])),
+  roundDurationMinutes: z
+    .number()
+    .int()
+    .min(5)
+    .max(60)
+    .nullable()
+    .default(null),
   waitingPlayerIds: z.array(z.string().min(1)),
   activeMatches: z.array(quickPlayMatchSchema),
   completedMatches: z.array(quickPlayMatchSchema),
@@ -145,6 +155,13 @@ function validateConfiguration(configuration: QuickPlayConfiguration) {
     throw new Error("Add a name for every player.");
   if (new Set(names).size !== names.length)
     throw new Error("Use a different name for each player.");
+  if (
+    configuration.roundDurationMinutes !== null &&
+    (!Number.isInteger(configuration.roundDurationMinutes) ||
+      configuration.roundDurationMinutes < 5 ||
+      configuration.roundDurationMinutes > 60)
+  )
+    throw new Error("Choose a round timer between 5 and 60 minutes.");
   if (
     !Number.isInteger(configuration.courtCount) ||
     configuration.courtCount < 1 ||
@@ -233,6 +250,7 @@ export function startNextQuickPlayMatches(
   const playing = new Set(
     plans.flatMap((plan) => [...plan.teamA, ...plan.teamB])
   );
+  const startedAt = Date.now();
   const activeMatches = plans.map<QuickPlayMatch>((plan, index) => ({
     id: `quick-match-${session.nextMatchNumber + index}`,
     courtId: plan.courtId,
@@ -242,6 +260,7 @@ export function startNextQuickPlayMatches(
     scores: [0, 0],
     status: "active",
     winner: null,
+    startedAt,
     finishedAt: null,
   }));
   return {
@@ -329,6 +348,62 @@ export function finishQuickPlayMatch(
     waitingPlayerIds: [...finishPlan.orderedPlayerIds, ...remaining],
     activeMatches: session.activeMatches.filter((item) => item.id !== matchId),
     completedMatches: [...session.completedMatches, completed],
+  };
+}
+
+export function correctQuickPlayMatchScore(
+  session: QuickPlaySession,
+  matchId: string,
+  scores: [number, number]
+): QuickPlaySession {
+  if (
+    scores.some((score) => !Number.isInteger(score) || score < 0 || score > 99)
+  )
+    throw new Error("Enter scores from 0 to 99.");
+  if (scores[0] === scores[1])
+    throw new Error("A completed match needs a winner.");
+  if (!session.completedMatches.some((match) => match.id === matchId))
+    throw new Error("That completed match could not be found.");
+
+  return {
+    ...session,
+    completedMatches: session.completedMatches.map((match) =>
+      match.id === matchId
+        ? {
+            ...match,
+            scores,
+            winner: scores[0] > scores[1] ? "A" : "B",
+          }
+        : match
+    ),
+  };
+}
+
+export function cancelQuickPlayMatch(
+  session: QuickPlaySession,
+  matchId: string
+): QuickPlaySession {
+  const match = session.activeMatches.find((item) => item.id === matchId);
+  if (!match) return session;
+  const cancelledMatches =
+    session.mode === "queue" ? [match] : session.activeMatches;
+  const cancelledIds = new Set(cancelledMatches.map((item) => item.id));
+  const returnedPlayerIds = cancelledMatches.flatMap((item) => [
+    ...item.teamA,
+    ...item.teamB,
+  ]);
+
+  return {
+    ...session,
+    waitingPlayerIds: [
+      ...returnedPlayerIds,
+      ...session.waitingPlayerIds.filter(
+        (id) => !returnedPlayerIds.includes(id)
+      ),
+    ],
+    activeMatches: session.activeMatches.filter(
+      (item) => !cancelledIds.has(item.id)
+    ),
   };
 }
 

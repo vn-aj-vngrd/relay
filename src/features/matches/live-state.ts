@@ -51,15 +51,18 @@ export function deriveLiveState<TQueue extends QueueEntry>(input: {
   const roundRobinComplete =
     input.rotationMode === "round_robin" &&
     input.completedMatchCount >= roundRobinMatchCount;
+  const readyMatchCount = input.pairs.length
+    ? Math.floor(waitingPairs.length / 2)
+    : Math.floor(waiting.length / 4);
   const canStartRotation =
     !roundRobinComplete &&
-    waiting.length >= 4 &&
+    readyMatchCount > 0 &&
     (roundMode
       ? input.activeMatches.length === 0
       : input.activeMatches.length < input.courtCount);
   const nextCourtCount = Math.min(
     Math.max(0, input.courtCount - input.activeMatches.length),
-    Math.floor(waiting.length / 4)
+    readyMatchCount
   );
   const roundStartedAt = input.activeMatches
     .flatMap((match) => (match.startedAt ? [match.startedAt] : []))

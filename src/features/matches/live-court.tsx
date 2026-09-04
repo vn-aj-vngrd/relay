@@ -22,6 +22,11 @@ export type LiveCourtProps = {
   canScore: boolean;
 };
 
+type PendingScore = {
+  scores: [number, number];
+  version: number;
+};
+
 type ManagedLiveCourtProps = LiveCourtProps & {
   expanded?: boolean;
   onExpandedChange?: (expanded: boolean) => void;
@@ -30,6 +35,43 @@ type ManagedLiveCourtProps = LiveCourtProps & {
 
 function scoreboardTeam(name: string): CourtScoreboardTeam {
   return { label: name, players: name.split(" + ") };
+}
+
+function pendingScoreKey(sessionId: string, matchId: string) {
+  return `relay-pending-score:${sessionId}:${matchId}`;
+}
+
+function readPendingScore(key: string): PendingScore | null {
+  try {
+    const value = localStorage.getItem(key);
+    if (!value) return null;
+    const parsed: unknown = JSON.parse(value);
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      !("scores" in parsed) ||
+      !("version" in parsed) ||
+      !Array.isArray(parsed.scores) ||
+      parsed.scores.length !== 2 ||
+      parsed.scores.some(
+        (score) => !Number.isInteger(score) || score < 0 || score > 99
+      ) ||
+      !Number.isInteger(parsed.version)
+    )
+      return null;
+    return parsed as PendingScore;
+  } catch {
+    return null;
+  }
+}
+
+function writePendingScore(key: string, value: PendingScore | null) {
+  try {
+    if (value) localStorage.setItem(key, JSON.stringify(value));
+    else localStorage.removeItem(key);
+  } catch {
+    // Scoring still works when browser storage is unavailable.
+  }
 }
 
 function ManagedLiveCourt({
@@ -48,6 +90,7 @@ function ManagedLiveCourt({
   const serverScoreA = scores[0];
   const serverScoreB = scores[1];
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushScoreRef = useRef<() => void>(() => undefined);
   const desiredRef = useRef<[number, number]>(scores);
   const versionRef = useRef(version);
   const dirtyRef = useRef(false);
@@ -63,13 +106,6 @@ function ManagedLiveCourt({
     versionRef.current = version;
     setLocalScores(next);
   }, [serverScoreA, serverScoreB, version]);
-
-  useEffect(
-    () => () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    },
-    []
-  );
 
   async function flushScore() {
     if (savingRef.current || !dirtyRef.current) return;
@@ -91,6 +127,7 @@ function ManagedLiveCourt({
         ];
         desiredRef.current = latestScores;
         dirtyRef.current = false;
+        writePendingScore(pendingScoreKey(sessionId, matchId), null);
         setLocalScores(latestScores);
         setScorePending(false);
         setError(
@@ -102,9 +139,14 @@ function ManagedLiveCourt({
         desiredRef.current[1] !== savingScores[1]
       ) {
         setError("");
+        writePendingScore(pendingScoreKey(sessionId, matchId), {
+          scores: desiredRef.current,
+          version: versionRef.current,
+        });
         timerRef.current = setTimeout(() => void flushScore(), 120);
       } else {
         dirtyRef.current = false;
+        writePendingScore(pendingScoreKey(sessionId, matchId), null);
         setLocalScores([saved.teamAScore, saved.teamBScore]);
         setScorePending(false);
         setError("");
@@ -121,18 +163,51 @@ function ManagedLiveCourt({
     }
   }
 
+  flushScoreRef.current = () => void flushScore();
+
+  useEffect(() => {
+    const key = pendingScoreKey(sessionId, matchId);
+    const pending = readPendingScore(key);
+    if (pending?.version === versionRef.current) {
+      desiredRef.current = pending.scores;
+      dirtyRef.current = true;
+      setLocalScores(pending.scores);
+      setScorePending(true);
+      flushScoreRef.current();
+    } else if (pending) writePendingScore(key, null);
+
+    function flush() {
+      flushScoreRef.current();
+    }
+
+    function flushWhenHidden() {
+      if (document.visibilityState === "hidden") flush();
+    }
+
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flushWhenHidden);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flushWhenHidden);
+      flush();
+    };
+  }, [matchId, sessionId]);
+
   function score(side: 0 | 1, amount: -1 | 1) {
-    setLocalScores((current) => {
-      const next: [number, number] = [...current];
-      next[side] = Math.min(99, Math.max(0, next[side] + amount));
-      desiredRef.current = next;
-      return next;
-    });
+    const next: [number, number] = [...desiredRef.current];
+    next[side] = Math.min(99, Math.max(0, next[side] + amount));
+    desiredRef.current = next;
+    setLocalScores(next);
     dirtyRef.current = true;
+    writePendingScore(pendingScoreKey(sessionId, matchId), {
+      scores: next,
+      version: versionRef.current,
+    });
     setScorePending(true);
     setError("");
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => void flushScore(), 420);
+    timerRef.current = setTimeout(() => flushScoreRef.current(), 420);
   }
 
   return (

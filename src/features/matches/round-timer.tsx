@@ -63,6 +63,11 @@ export function RoundTimer({
           </p>
         </div>
       </div>
+      {ended ? (
+        <span role="status" className="sr-only">
+          Round time has ended. Finish the rally, then enter the result.
+        </span>
+      ) : null}
       <time
         className={`score text-2xl font-bold tabular-nums ${ended ? "text-warning" : "text-ink"}`}
         dateTime={`PT${Math.ceil(remaining / 1000)}S`}

@@ -3,13 +3,25 @@
 import {
   ArrowCounterClockwise,
   ArrowsLeftRight,
+  PencilSimple,
+  Prohibit,
   Shuffle,
   Trash,
   UserPlus,
 } from "@phosphor-icons/react";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  type FormEvent,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
+import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
 import {
   type PlayingExperience,
@@ -23,7 +35,9 @@ import {
 } from "./court-scoreboard";
 import { playModeOptions } from "./play-mode-options";
 import {
+  cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
+  correctQuickPlayMatchScore,
   finishQuickPlayMatch,
   maxQuickPlayCourts,
   maxQuickPlayPlayers,
@@ -45,6 +59,7 @@ import {
   rotationDescription,
   rotationName,
 } from "./rotation";
+import { RoundTimer } from "./round-timer";
 
 type DraftPlayer = {
   id: string;
@@ -66,7 +81,9 @@ type QuickCourtProps = {
   onExpandedChange: (expanded: boolean) => void;
   onScore: (side: 0 | 1, amount: -1 | 1) => void;
   onSwap: () => void;
+  onCancel: () => void;
   onFinish: () => void;
+  cancelWholeRound: boolean;
 };
 
 function QuickCourt({
@@ -77,7 +94,9 @@ function QuickCourt({
   onExpandedChange,
   onScore,
   onSwap,
+  onCancel,
   onFinish,
+  cancelWholeRound,
 }: QuickCourtProps) {
   const teams = ([match.teamA, match.teamB] as const).map((team) => {
     const names = team.map((id) => players.get(id) ?? "Player");
@@ -108,17 +127,147 @@ function QuickCourt({
         </button>
       }
       finishControl={
-        <Button
-          type="button"
-          variant="secondary"
-          className="w-full"
-          disabled={match.scores[0] === match.scores[1]}
-          onClick={onFinish}
-        >
-          Finish match
-        </Button>
+        <div className="grid grid-cols-[auto_1fr] gap-2">
+          <ConfirmActionButton
+            variant="quiet"
+            aria-label={
+              cancelWholeRound
+                ? "Cancel active round"
+                : `Cancel ${match.courtLabel}`
+            }
+            confirmTitle={
+              cancelWholeRound
+                ? "Cancel the active round?"
+                : `Cancel ${match.courtLabel}?`
+            }
+            confirmText={
+              cancelWholeRound
+                ? "No scores will be recorded. Everyone in the active round returns to the waiting list."
+                : "No score will be recorded. The players return to the front of the waiting list."
+            }
+            confirmLabel={cancelWholeRound ? "Cancel round" : "Cancel match"}
+            onConfirm={onCancel}
+          >
+            <Prohibit aria-hidden size={16} />
+            {cancelWholeRound ? "Cancel round" : "Cancel"}
+          </ConfirmActionButton>
+          <ConfirmActionButton
+            variant="secondary"
+            className="w-full"
+            disabled={match.scores[0] === match.scores[1]}
+            confirmTitle={`Finish ${match.courtLabel} at ${match.scores[0]}–${match.scores[1]}?`}
+            confirmText={`${teams[0].label} ${match.scores[0]}, ${teams[1].label} ${match.scores[1]}. Confirming advances the rotation.`}
+            confirmLabel="Finish match"
+            onConfirm={onFinish}
+          >
+            Finish match
+          </ConfirmActionButton>
+        </div>
       }
     />
+  );
+}
+
+function QuickScoreCorrectionControl({
+  match,
+  players,
+  onCorrect,
+}: {
+  match: QuickPlayMatch;
+  players: Map<string, string>;
+  onCorrect: (scores: [number, number]) => void;
+}) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+  const [error, setError] = useState("");
+  const teamNames = ([match.teamA, match.teamB] as const).map((team) =>
+    team.map((id) => players.get(id) ?? "Player").join(" + ")
+  ) as [string, string];
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const scores: [number, number] = [
+      Number(formData.get("teamAScore")),
+      Number(formData.get("teamBScore")),
+    ];
+    try {
+      onCorrect(scores);
+      setError("");
+      dialogRef.current?.close();
+    } catch (reason) {
+      setError(
+        reason instanceof Error ? reason.message : "The score is not valid."
+      );
+    }
+  }
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="quiet"
+        className="shrink-0"
+        aria-label={`Correct ${match.courtLabel} score`}
+        onClick={() => dialogRef.current?.showModal()}
+      >
+        <PencilSimple aria-hidden size={15} /> Correct
+      </Button>
+      <Dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+      >
+        <form noValidate className="p-5 sm:p-6" onSubmit={submit}>
+          <h2 id={titleId} className="text-lg font-[680]">
+            Correct {match.courtLabel} score
+          </h2>
+          <p id={descriptionId} className="mt-2 text-sm leading-6 text-muted">
+            This updates the result and standings. Later court assignments stay
+            as played.
+          </p>
+          <div className="mt-6 grid grid-cols-[1fr_5.5rem] items-center gap-x-4 gap-y-4">
+            {teamNames.map((name, index) => (
+              <div key={name} className="contents">
+                <label
+                  htmlFor={`${titleId}-${index}`}
+                  className="min-w-0 text-sm font-semibold"
+                >
+                  <span className="line-clamp-2">{name}</span>
+                </label>
+                <input
+                  id={`${titleId}-${index}`}
+                  name={index ? "teamBScore" : "teamAScore"}
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={99}
+                  required
+                  defaultValue={match.scores[index]}
+                  className="field score text-center text-lg"
+                />
+              </div>
+            ))}
+          </div>
+          {error ? (
+            <p role="alert" className="mt-4 text-sm font-medium text-danger">
+              {error}
+            </p>
+          ) : null}
+          <div className="mt-7 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => dialogRef.current?.close()}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save correction</Button>
+          </div>
+        </form>
+      </Dialog>
+    </>
   );
 }
 
@@ -187,8 +336,10 @@ function PairBuilder({
 
 function QuickPlaySetup({
   onStart,
+  restoreWarning,
 }: {
   onStart: (session: QuickPlaySession) => void;
+  restoreWarning?: string;
 }) {
   const nextPlayerNumber = useRef(5);
   const [players, setPlayers] = useState(initialPlayers);
@@ -198,6 +349,7 @@ function QuickPlaySetup({
   const [courtCountInput, setCourtCountInput] = useState("1");
   const [mode, setMode] = useState<PlayMode>("queue");
   const [queueRule, setQueueRule] = useState<QueueRule>("adaptive");
+  const [roundDuration, setRoundDuration] = useState("");
   const [partnerPolicy, setPartnerPolicy] = useState<"mix" | "fixed">("mix");
   const [error, setError] = useState("");
   const courtCount = Number(courtCountInput);
@@ -265,6 +417,8 @@ function QuickPlaySetup({
           mode,
           queueRule,
           fixedPairs,
+          roundDurationMinutes:
+            mode === "queue" || !roundDuration ? null : Number(roundDuration),
         })
       );
     } catch (reason) {
@@ -292,6 +446,11 @@ function QuickPlaySetup({
       </header>
 
       <div className="mx-auto w-full max-w-2xl pb-8 pt-6">
+        {restoreWarning ? (
+          <Alert variant="info" className="mb-6">
+            {restoreWarning}
+          </Alert>
+        ) : null}
         <section aria-labelledby="quick-players-title">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -543,6 +702,29 @@ function QuickPlaySetup({
             </div>
           ) : null}
 
+          {mode !== "queue" ? (
+            <div className="mt-5">
+              <SelectField
+                id="quick-round-duration"
+                name="roundDuration"
+                label="Round timer"
+                value={roundDuration}
+                onValueChange={setRoundDuration}
+                options={[
+                  { value: "", label: "No timer — finish by score" },
+                  { value: "10", label: "10 minutes" },
+                  { value: "12", label: "12 minutes" },
+                  { value: "15", label: "15 minutes" },
+                  { value: "20", label: "20 minutes" },
+                ]}
+              />
+              <p className="mt-1.5 text-xs leading-5 text-muted">
+                Optional. Every court sees the same countdown; time running out
+                never finishes a score automatically.
+              </p>
+            </div>
+          ) : null}
+
           {fixedPartners && pairsAvailable ? (
             <PairBuilder
               players={players}
@@ -597,6 +779,9 @@ function QuickPlayLive({
     !session.activeMatches.length &&
     !canStartNext &&
     session.completedMatches.length > 0;
+  const roundStartedAt = session.activeMatches.length
+    ? Math.min(...session.activeMatches.map((match) => match.startedAt))
+    : null;
 
   function finish(matchId: string) {
     try {
@@ -609,6 +794,10 @@ function QuickPlayLive({
           : "Enter a winner before finishing."
       );
     }
+  }
+
+  function correct(matchId: string, scores: [number, number]) {
+    onChange(correctQuickPlayMatchScore(session, matchId, scores));
   }
 
   return (
@@ -631,19 +820,15 @@ function QuickPlayLive({
             page
           </p>
         </div>
-        <Button
-          type="button"
+        <ConfirmActionButton
           variant="secondary"
-          onClick={() => {
-            if (
-              !session.completedMatches.length ||
-              window.confirm("End this Quick Play session and return to setup?")
-            )
-              onEdit();
-          }}
+          confirmTitle="End this Quick Play session?"
+          confirmText="Active scores and completed results will be removed from this browser."
+          confirmLabel="End and start over"
+          onConfirm={onEdit}
         >
           <ArrowCounterClockwise aria-hidden size={16} /> New setup
-        </Button>
+        </ConfirmActionButton>
       </div>
 
       <div className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -671,6 +856,14 @@ function QuickPlayLive({
               </Button>
             ) : null}
           </div>
+          {session.roundDurationMinutes && roundStartedAt ? (
+            <div className="mt-4">
+              <RoundTimer
+                startedAt={new Date(roundStartedAt).toISOString()}
+                durationMinutes={session.roundDurationMinutes}
+              />
+            </div>
+          ) : null}
           {session.activeMatches.length ? (
             <div className="mt-4 grid gap-5">
               {session.activeMatches.map((match, index) => {
@@ -712,7 +905,11 @@ function QuickPlayLive({
                     onSwap={() =>
                       onChange(swapQuickPlayMatchSides(session, match.id))
                     }
+                    onCancel={() =>
+                      onChange(cancelQuickPlayMatch(session, match.id))
+                    }
                     onFinish={() => finish(match.id)}
+                    cancelWholeRound={roundMode}
                   />
                 );
               })}
@@ -737,6 +934,55 @@ function QuickPlayLive({
             <p role="alert" className="mt-4 text-sm font-medium text-danger">
               {error}
             </p>
+          ) : null}
+          {session.completedMatches.length ? (
+            <section aria-labelledby="quick-completed-title" className="mt-9">
+              <h2 id="quick-completed-title" className="text-xl font-bold">
+                Completed matches
+              </h2>
+              <p className="mt-1 text-sm text-muted">
+                Final scores from this Quick Play session
+              </p>
+              <ol className="mt-4 divide-y divide-line border-y border-line">
+                {session.completedMatches.toReversed().map((match) => {
+                  const teamNames = ([match.teamA, match.teamB] as const).map(
+                    (team) =>
+                      team.map((id) => names.get(id) ?? "Player").join(" + ")
+                  ) as [string, string];
+                  return (
+                    <li
+                      key={match.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-muted">
+                          {match.courtLabel}
+                        </p>
+                        <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
+                          <span className="min-w-0 break-words font-medium">
+                            {teamNames[0]}
+                          </span>
+                          <strong className="score text-base">
+                            {match.scores[0]}
+                          </strong>
+                          <span className="min-w-0 break-words font-medium">
+                            {teamNames[1]}
+                          </span>
+                          <strong className="score text-base">
+                            {match.scores[1]}
+                          </strong>
+                        </div>
+                      </div>
+                      <QuickScoreCorrectionControl
+                        match={match}
+                        players={names}
+                        onCorrect={(scores) => correct(match.id, scores)}
+                      />
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
           ) : null}
         </section>
 
@@ -832,10 +1078,24 @@ function QuickPlayLive({
 
 const subscribeToBrowser = () => () => undefined;
 
+function loadStoredQuickPlay() {
+  const stored = localStorage.getItem(quickPlayStorageKey);
+  const session = restoreQuickPlaySession(stored);
+  return {
+    session,
+    restoreWarning:
+      stored && !session
+        ? "The saved Quick Play session could not be restored, so Relay started a fresh setup."
+        : "",
+  };
+}
+
 function PersistentQuickPlay() {
-  const [session, setSession] = useState<QuickPlaySession | null>(() =>
-    restoreQuickPlaySession(localStorage.getItem(quickPlayStorageKey))
+  const [initial] = useState(loadStoredQuickPlay);
+  const [session, setSession] = useState<QuickPlaySession | null>(
+    initial.session
   );
+  const [restoreWarning, setRestoreWarning] = useState(initial.restoreWarning);
 
   useEffect(() => {
     if (session)
@@ -847,6 +1107,7 @@ function PersistentQuickPlay() {
   }, [session]);
 
   function showSession(nextSession: QuickPlaySession | null) {
+    setRestoreWarning("");
     setSession(nextSession);
     if (!nextSession) localStorage.removeItem(quickPlayStorageKey);
     document.documentElement.scrollTop = 0;
@@ -860,7 +1121,7 @@ function PersistentQuickPlay() {
       onEdit={() => showSession(null)}
     />
   ) : (
-    <QuickPlaySetup onStart={showSession} />
+    <QuickPlaySetup onStart={showSession} restoreWarning={restoreWarning} />
   );
 }
 

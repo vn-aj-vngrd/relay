@@ -188,17 +188,17 @@ export async function startPlay(
       assigned.some((id, index) => id !== eligible[index])
     )
       return { error: "Assign every going player to exactly one pair." };
-    if (setup.mode === "round_robin") {
-      const activeIds = new Set(activePlayers.map((player) => player.id));
-      const completePairsHere = setupPairs.filter((pair) =>
-        pair.every((playerId) => activeIds.has(playerId))
-      ).length;
-      if (completePairsHere < 2)
-        return {
-          error:
-            "Team Round Robin needs at least two complete pairs here to start.",
-        };
-    }
+    const activeIds = new Set(activePlayers.map((player) => player.id));
+    const completePairsHere = setupPairs.filter((pair) =>
+      pair.every((playerId) => activeIds.has(playerId))
+    ).length;
+    if (completePairsHere < 2)
+      return {
+        error:
+          setup.mode === "round_robin"
+            ? "Team Round Robin needs at least two complete pairs here to start."
+            : "Keep pairs together needs at least two complete pairs here to start.",
+      };
   }
   if (
     setup.mode === "king_of_court" &&
@@ -299,6 +299,67 @@ export async function startPlay(
           players.map((player) => player.id)
         )
       );
+
+    const sessionCourts = await tx
+      .select()
+      .from(courts)
+      .where(eq(courts.sessionId, sessionId))
+      .orderBy(asc(courts.position));
+    const firstRotation = planRotation({
+      mode: setup.mode,
+      courts: sessionCourts,
+      waiting: players.map((player, index) => ({
+        id: player.id,
+        position: index + 1,
+        experience: playingExperienceWeight(player.skillLevel),
+      })),
+      history: [],
+      fixedPairs: setupPairs,
+    });
+    if (!firstRotation.length)
+      throw new Error("The first rotation could not be created.");
+    const playingIds: string[] = [];
+    for (const plan of firstRotation) {
+      const [match] = await tx
+        .insert(matches)
+        .values({
+          sessionId,
+          courtId: plan.courtId,
+          courtLabel: plan.courtLabel,
+          status: "active",
+          startedAt: new Date(),
+        })
+        .returning({ id: matches.id });
+      const assignments = [
+        ...plan.teamA.map((sessionPlayerId, index) => ({
+          matchId: match.id,
+          sessionPlayerId,
+          team: "A" as const,
+          position: index + 1,
+        })),
+        ...plan.teamB.map((sessionPlayerId, index) => ({
+          matchId: match.id,
+          sessionPlayerId,
+          team: "B" as const,
+          position: index + 1,
+        })),
+      ];
+      await tx.insert(matchPlayers).values(assignments);
+      playingIds.push(...plan.teamA, ...plan.teamB);
+    }
+    await tx
+      .update(sessionQueue)
+      .set({ state: "playing", version: sql`${sessionQueue.version} + 1` })
+      .where(
+        and(
+          eq(sessionQueue.sessionId, sessionId),
+          inArray(sessionQueue.sessionPlayerId, playingIds)
+        )
+      );
+    await tx
+      .update(sessionPlayers)
+      .set({ playState: "playing" })
+      .where(inArray(sessionPlayers.id, playingIds));
     await tx.insert(messages).values({
       sessionId,
       kind: "system",
@@ -322,219 +383,252 @@ export async function startPlay(
   redirect(`/games/${sessionId}/play`);
 }
 
-export async function createQueueMatch(formData: FormData) {
+export type CreateMatchActionState = { error?: string };
+
+export async function createQueueMatch(
+  _: CreateMatchActionState,
+  formData: FormData
+): Promise<CreateMatchActionState> {
   const sessionId = String(formData.get("sessionId"));
   const { session } = await requirePlayManager(sessionId);
-  await db.transaction(async (tx) => {
-    await tx.execute(
-      sql`select id from ${sessions} where id = ${sessionId} for update`
-    );
-    const [active, sessionCourts, waiting, completed, pairRows] =
-      await Promise.all([
-        tx
-          .select()
-          .from(matches)
-          .where(
-            and(eq(matches.sessionId, sessionId), eq(matches.status, "active"))
-          ),
-        tx
-          .select()
-          .from(courts)
-          .where(eq(courts.sessionId, sessionId))
-          .orderBy(asc(courts.position)),
-        tx
-          .select({
-            sessionPlayerId: sessionQueue.sessionPlayerId,
-            position: sessionQueue.position,
-            skillLevel: sessionPlayers.skillLevel,
-          })
-          .from(sessionQueue)
-          .innerJoin(
-            sessionPlayers,
-            eq(sessionPlayers.id, sessionQueue.sessionPlayerId)
-          )
-          .where(
-            and(
-              eq(sessionQueue.sessionId, sessionId),
-              eq(sessionQueue.state, "waiting")
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${sessionId} for update`
+      );
+      const [active, sessionCourts, waiting, completed, pairRows] =
+        await Promise.all([
+          tx
+            .select()
+            .from(matches)
+            .where(
+              and(
+                eq(matches.sessionId, sessionId),
+                eq(matches.status, "active")
+              )
+            ),
+          tx
+            .select()
+            .from(courts)
+            .where(eq(courts.sessionId, sessionId))
+            .orderBy(asc(courts.position)),
+          tx
+            .select({
+              sessionPlayerId: sessionQueue.sessionPlayerId,
+              position: sessionQueue.position,
+              skillLevel: sessionPlayers.skillLevel,
+            })
+            .from(sessionQueue)
+            .innerJoin(
+              sessionPlayers,
+              eq(sessionPlayers.id, sessionQueue.sessionPlayerId)
             )
-          )
-          .orderBy(asc(sessionQueue.position)),
-        tx
-          .select()
-          .from(matches)
-          .where(
-            and(
-              eq(matches.sessionId, sessionId),
-              eq(matches.status, "completed")
+            .where(
+              and(
+                eq(sessionQueue.sessionId, sessionId),
+                eq(sessionQueue.state, "waiting")
+              )
             )
+            .orderBy(asc(sessionQueue.position)),
+          tx
+            .select()
+            .from(matches)
+            .where(
+              and(
+                eq(matches.sessionId, sessionId),
+                eq(matches.status, "completed")
+              )
+            )
+            .orderBy(asc(matches.finishedAt)),
+          tx
+            .select({
+              pairId: sessionPairs.id,
+              pairPosition: sessionPairs.position,
+              sessionPlayerId: sessionPairMembers.sessionPlayerId,
+              memberPosition: sessionPairMembers.position,
+            })
+            .from(sessionPairs)
+            .innerJoin(
+              sessionPairMembers,
+              eq(sessionPairMembers.pairId, sessionPairs.id)
+            )
+            .where(eq(sessionPairs.sessionId, sessionId))
+            .orderBy(
+              asc(sessionPairs.position),
+              asc(sessionPairMembers.position)
+            ),
+        ]);
+      if (session.rotationMode !== "queue" && active.length)
+        throw new Error("Finish every court before starting the next round.");
+      const used = new Set(active.map((match) => match.courtId));
+      const availableCourts =
+        session.rotationMode === "queue"
+          ? sessionCourts.filter((court) => !used.has(court.id))
+          : sessionCourts;
+      if (!availableCourts.length)
+        throw new Error("Every court already has an active match.");
+      if (
+        session.rotationMode === "king_of_court" &&
+        waiting.length !== sessionCourts.length * 4
+      )
+        throw new Error(
+          "Court Climb needs exactly four active players per court."
+        );
+      if (waiting.length < 4)
+        throw new Error("Four waiting players are required.");
+
+      const completedIds = completed.map((match) => match.id);
+      const historyPlayers = completedIds.length
+        ? await tx
+            .select()
+            .from(matchPlayers)
+            .where(inArray(matchPlayers.matchId, completedIds))
+        : [];
+      const courtPositions = new Map(
+        sessionCourts.map((court) => [court.id, court.position])
+      );
+      const history: RotationHistory[] = completed.map((match) => ({
+        courtId: match.courtId ?? "",
+        courtPosition: courtPositions.get(match.courtId ?? "") ?? 0,
+        teamA: historyPlayers
+          .filter(
+            (player) => player.matchId === match.id && player.team === "A"
           )
-          .orderBy(asc(matches.finishedAt)),
-        tx
-          .select({
-            pairId: sessionPairs.id,
-            pairPosition: sessionPairs.position,
-            sessionPlayerId: sessionPairMembers.sessionPlayerId,
-            memberPosition: sessionPairMembers.position,
+          .sort((a, b) => a.position - b.position)
+          .map((player) => player.sessionPlayerId),
+        teamB: historyPlayers
+          .filter(
+            (player) => player.matchId === match.id && player.team === "B"
+          )
+          .sort((a, b) => a.position - b.position)
+          .map((player) => player.sessionPlayerId),
+        winner: match.winningTeam === "B" ? "B" : "A",
+        finishedAt: match.finishedAt?.getTime() ?? 0,
+      }));
+      const pairIds = [...new Set(pairRows.map((row) => row.pairId))];
+      const fixedPairs = pairIds.map(
+        (pairId) =>
+          pairRows
+            .filter((row) => row.pairId === pairId)
+            .map((row) => row.sessionPlayerId) as [string, string]
+      );
+      const mode =
+        session.rotationMode === "random" ||
+        session.rotationMode === "balanced" ||
+        session.rotationMode === "king_of_court" ||
+        session.rotationMode === "round_robin"
+          ? session.rotationMode
+          : "queue";
+      const plans = planRotation({
+        mode,
+        courts: availableCourts,
+        waiting: waiting.map((item) => ({
+          id: item.sessionPlayerId,
+          position: item.position,
+          experience: playingExperienceWeight(item.skillLevel),
+        })),
+        history,
+        fixedPairs,
+      });
+      if (!plans.length)
+        throw new Error(
+          mode === "round_robin"
+            ? "Every pair has completed the round robin."
+            : "There are not enough waiting players for another match."
+        );
+
+      const playingIds: string[] = [];
+      const assignedCourt = new Map<string, string>();
+      for (const plan of plans) {
+        const [match] = await tx
+          .insert(matches)
+          .values({
+            sessionId,
+            courtId: plan.courtId,
+            courtLabel: plan.courtLabel,
+            status: "active",
+            startedAt: new Date(),
           })
-          .from(sessionPairs)
-          .innerJoin(
-            sessionPairMembers,
-            eq(sessionPairMembers.pairId, sessionPairs.id)
+          .returning();
+        const assignments = [
+          ...plan.teamA.map((id, index) => ({
+            matchId: match.id,
+            sessionPlayerId: id,
+            team: "A",
+            position: index + 1,
+          })),
+          ...plan.teamB.map((id, index) => ({
+            matchId: match.id,
+            sessionPlayerId: id,
+            team: "B",
+            position: index + 1,
+          })),
+        ];
+        await tx.insert(matchPlayers).values(assignments);
+        playingIds.push(...plan.teamA, ...plan.teamB);
+        for (const playerId of [...plan.teamA, ...plan.teamB])
+          assignedCourt.set(playerId, plan.courtLabel);
+      }
+      const assignedPlayers = await tx
+        .select({ id: sessionPlayers.id, userId: sessionPlayers.userId })
+        .from(sessionPlayers)
+        .where(inArray(sessionPlayers.id, playingIds));
+      const recipients = assignedPlayers.filter(
+        (player) => player.userId && player.userId !== session.hostId
+      );
+      if (recipients.length)
+        await tx.insert(notifications).values(
+          recipients.map((player) => ({
+            userId: player.userId!,
+            sessionId,
+            type: "match_assignment",
+            payload: { courtLabel: assignedCourt.get(player.id) },
+          }))
+        );
+      await tx
+        .update(sessionQueue)
+        .set({ state: "playing", version: sql`${sessionQueue.version} + 1` })
+        .where(
+          and(
+            eq(sessionQueue.sessionId, sessionId),
+            inArray(sessionQueue.sessionPlayerId, playingIds)
           )
-          .where(eq(sessionPairs.sessionId, sessionId))
-          .orderBy(
-            asc(sessionPairs.position),
-            asc(sessionPairMembers.position)
-          ),
-      ]);
-    if (session.rotationMode !== "queue" && active.length)
-      throw new Error("Finish every court before starting the next round.");
-    const used = new Set(active.map((match) => match.courtId));
-    const availableCourts =
-      session.rotationMode === "queue"
-        ? sessionCourts.filter((court) => !used.has(court.id))
-        : sessionCourts;
-    if (!availableCourts.length)
-      throw new Error("Every court already has an active match.");
-    if (
-      session.rotationMode === "king_of_court" &&
-      waiting.length !== sessionCourts.length * 4
-    )
-      throw new Error(
-        "Court Climb needs exactly four active players per court."
-      );
-    if (waiting.length < 4)
-      throw new Error("Four waiting players are required.");
-
-    const completedIds = completed.map((match) => match.id);
-    const historyPlayers = completedIds.length
-      ? await tx
-          .select()
-          .from(matchPlayers)
-          .where(inArray(matchPlayers.matchId, completedIds))
-      : [];
-    const courtPositions = new Map(
-      sessionCourts.map((court) => [court.id, court.position])
-    );
-    const history: RotationHistory[] = completed.map((match) => ({
-      courtId: match.courtId ?? "",
-      courtPosition: courtPositions.get(match.courtId ?? "") ?? 0,
-      teamA: historyPlayers
-        .filter((player) => player.matchId === match.id && player.team === "A")
-        .sort((a, b) => a.position - b.position)
-        .map((player) => player.sessionPlayerId),
-      teamB: historyPlayers
-        .filter((player) => player.matchId === match.id && player.team === "B")
-        .sort((a, b) => a.position - b.position)
-        .map((player) => player.sessionPlayerId),
-      winner: match.winningTeam === "B" ? "B" : "A",
-      finishedAt: match.finishedAt?.getTime() ?? 0,
-    }));
-    const pairIds = [...new Set(pairRows.map((row) => row.pairId))];
-    const fixedPairs = pairIds.map(
-      (pairId) =>
-        pairRows
-          .filter((row) => row.pairId === pairId)
-          .map((row) => row.sessionPlayerId) as [string, string]
-    );
-    const mode =
-      session.rotationMode === "random" ||
-      session.rotationMode === "balanced" ||
-      session.rotationMode === "king_of_court" ||
-      session.rotationMode === "round_robin"
-        ? session.rotationMode
-        : "queue";
-    const plans = planRotation({
-      mode,
-      courts: availableCourts,
-      waiting: waiting.map((item) => ({
-        id: item.sessionPlayerId,
-        position: item.position,
-        experience: playingExperienceWeight(item.skillLevel),
-      })),
-      history,
-      fixedPairs,
+        );
+      await tx
+        .update(sessionPlayers)
+        .set({ playState: "playing" })
+        .where(inArray(sessionPlayers.id, playingIds));
+      await tx.insert(messages).values({
+        sessionId,
+        kind: "system",
+        body:
+          plans.length === 1
+            ? `${plans[0].courtLabel} match started.`
+            : `A new ${plans.length}-court round started.`,
+      });
     });
-    if (!plans.length)
-      throw new Error(
-        mode === "round_robin"
-          ? "Every pair has completed the round robin."
-          : "There are not enough waiting players for another match."
-      );
-
-    const playingIds: string[] = [];
-    const assignedCourt = new Map<string, string>();
-    for (const plan of plans) {
-      const [match] = await tx
-        .insert(matches)
-        .values({
-          sessionId,
-          courtId: plan.courtId,
-          courtLabel: plan.courtLabel,
-          status: "active",
-          startedAt: new Date(),
-        })
-        .returning();
-      const assignments = [
-        ...plan.teamA.map((id, index) => ({
-          matchId: match.id,
-          sessionPlayerId: id,
-          team: "A",
-          position: index + 1,
-        })),
-        ...plan.teamB.map((id, index) => ({
-          matchId: match.id,
-          sessionPlayerId: id,
-          team: "B",
-          position: index + 1,
-        })),
-      ];
-      await tx.insert(matchPlayers).values(assignments);
-      playingIds.push(...plan.teamA, ...plan.teamB);
-      for (const playerId of [...plan.teamA, ...plan.teamB])
-        assignedCourt.set(playerId, plan.courtLabel);
-    }
-    const assignedPlayers = await tx
-      .select({ id: sessionPlayers.id, userId: sessionPlayers.userId })
-      .from(sessionPlayers)
-      .where(inArray(sessionPlayers.id, playingIds));
-    const recipients = assignedPlayers.filter(
-      (player) => player.userId && player.userId !== session.hostId
+  } catch (error) {
+    const expectedMessages = new Set([
+      "Finish every court before starting the next round.",
+      "Every court already has an active match.",
+      "Court Climb needs exactly four active players per court.",
+      "Four waiting players are required.",
+      "Every pair has completed the round robin.",
+      "There are not enough waiting players for another match.",
+    ]);
+    if (error instanceof Error && expectedMessages.has(error.message))
+      return { error: error.message };
+    console.error(
+      "Starting the next Play rotation failed",
+      error instanceof Error ? error.name : "UnknownError"
     );
-    if (recipients.length)
-      await tx.insert(notifications).values(
-        recipients.map((player) => ({
-          userId: player.userId!,
-          sessionId,
-          type: "match_assignment",
-          payload: { courtLabel: assignedCourt.get(player.id) },
-        }))
-      );
-    await tx
-      .update(sessionQueue)
-      .set({ state: "playing", version: sql`${sessionQueue.version} + 1` })
-      .where(
-        and(
-          eq(sessionQueue.sessionId, sessionId),
-          inArray(sessionQueue.sessionPlayerId, playingIds)
-        )
-      );
-    await tx
-      .update(sessionPlayers)
-      .set({ playState: "playing" })
-      .where(inArray(sessionPlayers.id, playingIds));
-    await tx.insert(messages).values({
-      sessionId,
-      kind: "system",
-      body:
-        plans.length === 1
-          ? `${plans[0].courtLabel} match started.`
-          : `A new ${plans.length}-court round started.`,
-    });
-  });
+    return {
+      error: "The next rotation couldn’t start. Refresh and try again.",
+    };
+  }
   revalidatePath(`/games/${sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
+  return {};
 }
 
 const scoreInput = z.object({

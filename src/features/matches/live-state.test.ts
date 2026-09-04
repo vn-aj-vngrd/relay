@@ -36,6 +36,26 @@ describe("live session state", () => {
     expect(state.rotationLabel).toBe("Start first match");
   });
 
+  it("does not offer a match when four waiting players form fewer than two complete pairs", () => {
+    const state = deriveLiveState({
+      rotationMode: "queue",
+      queue: [queued("a", 1), queued("c", 2), queued("e", 3), queued("g", 4)],
+      pairs: [
+        { id: "one", position: 1, members: ["a", "b"] },
+        { id: "two", position: 2, members: ["c", "d"] },
+        { id: "three", position: 3, members: ["e", "f"] },
+        { id: "four", position: 4, members: ["g", "h"] },
+      ],
+      activeMatches: [],
+      courtCount: 2,
+      completedMatchCount: 0,
+    });
+
+    expect(state.waitingPairs).toHaveLength(0);
+    expect(state.canStartRotation).toBe(false);
+    expect(state.nextCourtCount).toBe(0);
+  });
+
   it("waits for the active synchronized round to finish", () => {
     const state = deriveLiveState({
       rotationMode: "balanced",
