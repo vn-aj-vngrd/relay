@@ -30,11 +30,11 @@ describe("AppNav", () => {
     expect(screen.getByRole("link", { name: "Games" })).toHaveClass(
       "text-muted"
     );
-    expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Courts" })).toHaveAttribute(
       "href",
-      "/court"
+      "/courts"
     );
-    expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Courts" })).toHaveAttribute(
       "data-tour",
       "courts"
     );

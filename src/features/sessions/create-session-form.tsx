@@ -30,6 +30,8 @@ const manilaDateTimeFormatter = new Intl.DateTimeFormat("en-CA", {
   minute: "2-digit",
   hourCycle: "h23",
 });
+const anonymousDraftStorageKey = "relay-game-draft-v1";
+
 const stepFields: Record<number, string[]> = {
   1: ["title", "venue", "date", "start", "end"],
   2: ["capacity", "courts", "visibility", "costKind", "cost"],
@@ -208,41 +210,84 @@ function PublishButton() {
   );
 }
 
-export function CreateSessionForm({
+function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
+  if (!values.title || !values.venue || !values.date) return null;
+  const courtCount = Number(values.courts);
+  const cost = Number(values.cost);
+  return {
+    title: values.title,
+    venue: values.venue,
+    schedule: `${values.date} · ${values.start}–${values.end}`,
+    setup: `${values.capacity} players · ${values.courts} ${courtCount === 1 ? "court" : "courts"}`,
+    access:
+      values.visibility === "public"
+        ? values.requiresApproval === "on"
+          ? "Public · Host approval required"
+          : "Public · Players join directly"
+        : values.visibility === "private"
+          ? "Private · Invited players only"
+          : "Anyone with the link",
+    cost:
+      values.costKind === "free"
+        ? "Free"
+        : values.costKind === "estimated"
+          ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" }).format(cost)} estimated per player`
+          : "Not provided",
+    details:
+      values.courtNumbers ||
+      values.notes ||
+      (values.accentColor && values.accentColor !== "violet")
+        ? "Optional game details added"
+        : "No optional details added",
+    booking:
+      values.booked === "on" ? "Court booked" : "Booking details not added",
+  };
+}
+
+function CreateSessionFormContent({
   defaults,
   now,
-  courts = [],
+  courts,
+  isAuthenticated,
+  initialValues,
 }: {
   defaults: CreateSessionDefaults;
   now?: string;
-  courts?: CourtSuggestion[];
+  courts: CourtSuggestion[];
+  isAuthenticated: boolean;
+  initialValues?: Record<string, string>;
 }) {
   const [state, action] = useActionState(createSessionAction, {});
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialValues ? 4 : 1);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [visibility, setVisibility] = useState<"public" | "link" | "private">(
-    defaults.visibility ?? "link"
+    (initialValues?.visibility as "public" | "link" | "private") ??
+      defaults.visibility ??
+      "link"
   );
   const [costKind, setCostKind] = useState<
     "unspecified" | "free" | "estimated"
   >(
-    defaults.cost === 0
-      ? "free"
-      : defaults.cost != null
-        ? "estimated"
-        : "unspecified"
+    (initialValues?.costKind as "unspecified" | "free" | "estimated") ??
+      (defaults.cost === 0
+        ? "free"
+        : defaults.cost != null
+          ? "estimated"
+          : "unspecified")
   );
-  const [review, setReview] = useState<ReviewValues | null>(null);
-  const [booked, setBooked] = useState(state.values?.booked === "on");
+  const [review, setReview] = useState<ReviewValues | null>(() =>
+    initialValues ? reviewFromDraft(initialValues) : null
+  );
+  const [booked, setBooked] = useState(
+    (state.values?.booked ?? initialValues?.booked) === "on"
+  );
   const formRef = useRef<HTMLFormElement>(null);
   const preserveValues = usePreserveFormValuesOnError(state);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const value = (field: string, initial?: string | number) =>
     state.values
       ? (state.values[field] ?? "")
-      : initial == null
-        ? ""
-        : String(initial);
+      : (initialValues?.[field] ?? (initial == null ? "" : String(initial)));
   const [date, setDate] = useState(() => value("date", defaults.date));
   const [start, setStart] = useState(() => value("start", defaults.start));
   const [end, setEnd] = useState(() => value("end", defaults.end));
@@ -278,6 +323,23 @@ export function CreateSessionForm({
       );
       target?.focus();
     });
+  }
+
+  function continueAfterAuthentication(destination: "login" | "signup") {
+    const form = formRef.current;
+    if (!form) return;
+    const values = Object.fromEntries(
+      Array.from(new FormData(form).entries(), ([key, entry]) => [
+        key,
+        String(entry),
+      ])
+    );
+    localStorage.setItem(
+      anonymousDraftStorageKey,
+      JSON.stringify({ version: 1, values })
+    );
+    const next = encodeURIComponent("/games/new?resume=draft");
+    window.location.assign(`/${destination}?next=${next}`);
   }
 
   function clearFieldError(...fields: string[]) {
@@ -537,7 +599,7 @@ export function CreateSessionForm({
               Court
             </label>
             <Link
-              href="/court"
+              href="/courts"
               className="pressable inline-flex min-h-9 items-center gap-1.5 rounded-md px-2 text-[13px] font-semibold text-primary hover:bg-primary-soft"
             >
               <MapPin aria-hidden size={15} /> Find a court
@@ -1127,13 +1189,83 @@ export function CreateSessionForm({
           >
             Back
           </Button>
-          <PublishButton />
+          {isAuthenticated ? (
+            <PublishButton />
+          ) : (
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => continueAfterAuthentication("login")}
+                className="min-h-11 w-full sm:min-h-9 sm:w-auto"
+              >
+                Log in
+              </Button>
+              <Button
+                type="button"
+                onClick={() => continueAfterAuthentication("signup")}
+                className="min-h-11 w-full sm:min-h-9 sm:w-auto"
+              >
+                Create account and publish
+              </Button>
+            </div>
+          )}
         </div>
         <p className="text-center text-xs leading-5 text-muted sm:text-right">
-          Publishing creates the link to share. You can change every optional
-          detail later.
+          {isAuthenticated
+            ? "Publishing creates the link to share. You can change every optional detail later."
+            : "Your draft stays in this browser. Sign in to own the game, publish it, and create the link to share."}
         </p>
       </section>
     </form>
+  );
+}
+
+export function CreateSessionForm({
+  defaults,
+  now,
+  courts = [],
+  isAuthenticated = true,
+  resumeAnonymousDraft = false,
+}: {
+  defaults: CreateSessionDefaults;
+  now?: string;
+  courts?: CourtSuggestion[];
+  isAuthenticated?: boolean;
+  resumeAnonymousDraft?: boolean;
+}) {
+  const [restoredValues, setRestoredValues] = useState<
+    Record<string, string> | null | undefined
+  >(resumeAnonymousDraft ? undefined : null);
+
+  useEffect(() => {
+    if (!resumeAnonymousDraft) return;
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem(anonymousDraftStorageKey) ?? "null"
+      ) as { version?: number; values?: Record<string, string> } | null;
+      setRestoredValues(
+        stored?.version === 1 && stored.values ? stored.values : null
+      );
+    } catch {
+      setRestoredValues(null);
+    }
+  }, [resumeAnonymousDraft]);
+
+  if (restoredValues === undefined)
+    return (
+      <p role="status" className="py-12 text-center text-sm text-muted">
+        Restoring your game draft…
+      </p>
+    );
+
+  return (
+    <CreateSessionFormContent
+      defaults={defaults}
+      now={now}
+      courts={courts}
+      isAuthenticated={isAuthenticated}
+      initialValues={restoredValues ?? undefined}
+    />
   );
 }

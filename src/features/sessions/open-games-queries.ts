@@ -84,7 +84,7 @@ function timeCondition(filters: OpenGamesFilters) {
 }
 
 export async function discoverOpenGames(
-  userId: string,
+  userId: string | undefined,
   filters: OpenGamesFilters,
   cursor: OpenGameCursor | null = null,
   now = new Date(),
@@ -152,20 +152,21 @@ export async function discoverOpenGames(
   const hasMore = rows.length > pageSize;
   const pageRows = rows.slice(0, pageSize);
   const sessionIds = pageRows.map((row) => row.id);
-  const memberships = sessionIds.length
-    ? await db
-        .select({
-          sessionId: sessionPlayers.sessionId,
-          rsvp: sessionPlayers.rsvp,
-        })
-        .from(sessionPlayers)
-        .where(
-          and(
-            eq(sessionPlayers.userId, userId),
-            inArray(sessionPlayers.sessionId, sessionIds)
+  const memberships =
+    sessionIds.length && userId
+      ? await db
+          .select({
+            sessionId: sessionPlayers.sessionId,
+            rsvp: sessionPlayers.rsvp,
+          })
+          .from(sessionPlayers)
+          .where(
+            and(
+              eq(sessionPlayers.userId, userId),
+              inArray(sessionPlayers.sessionId, sessionIds)
+            )
           )
-        )
-    : [];
+      : [];
   const rsvpBySession = new Map(
     memberships.map((membership) => [membership.sessionId, membership.rsvp])
   );

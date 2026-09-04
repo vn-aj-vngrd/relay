@@ -17,7 +17,7 @@ import {
 import type { CourtListing } from "./directory";
 
 function updateHref(court: CourtListing, isAuthenticated: boolean) {
-  const path = `/court/suggest?${new URLSearchParams({ court: court.slug }).toString()}`;
+  const path = `/courts/suggest?${new URLSearchParams({ court: court.slug }).toString()}`;
   return isAuthenticated ? path : `/signup?next=${encodeURIComponent(path)}`;
 }
 
@@ -35,9 +35,7 @@ export function CourtDetails({
   isAuthenticated: boolean;
 }) {
   const gamePath = `/games/new?${new URLSearchParams({ venueId: court.id }).toString()}`;
-  const createHref = isAuthenticated
-    ? gamePath
-    : `/signup?next=${encodeURIComponent(gamePath)}`;
+  const createHref = gamePath;
   const operationalLabel = formatCourtOperationalStatus(
     court.operationalStatus
   );

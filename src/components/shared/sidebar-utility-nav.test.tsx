@@ -19,20 +19,24 @@ describe("SidebarUtilityNav", () => {
     expect(screen.getByRole("link", { name: "Search" })).not.toHaveAttribute(
       "aria-current"
     );
-    expect(screen.getByRole("link", { name: "Court" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Courts" })).toHaveAttribute(
       "href",
-      "/court"
+      "/courts"
     );
-    expect(screen.getByRole("link", { name: "Court" })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Courts" })).not.toHaveAttribute(
       "aria-current"
+    );
+    expect(screen.getByRole("link", { name: "Quick Play" })).toHaveAttribute(
+      "href",
+      "/play"
     );
     expect(screen.queryByText("Create game")).not.toBeInTheDocument();
   });
 
-  it("does not mark Court current on the separate suggestion destination", () => {
-    usePathname.mockReturnValue("/court/suggest");
+  it("does not mark Courts current on the separate suggestion destination", () => {
+    usePathname.mockReturnValue("/courts/suggest");
     render(<SidebarUtilityNav />);
-    expect(screen.getByRole("link", { name: "Court" })).not.toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Courts" })).not.toHaveAttribute(
       "aria-current"
     );
   });

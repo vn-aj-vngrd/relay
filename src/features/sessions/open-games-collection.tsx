@@ -78,8 +78,10 @@ function trackOpenGame(gameId: string) {
   });
 }
 
-function openGameHref(game: OpenGameItem) {
-  return `/games/${game.id}?source=open-games`;
+function openGameHref(game: OpenGameItem, isAuthenticated: boolean) {
+  return isAuthenticated
+    ? `/games/${game.id}?source=open-games`
+    : `/s/${game.slug}?source=open-games`;
 }
 
 function manilaDateKey(value: string) {
@@ -94,10 +96,13 @@ function manilaDateKey(value: string) {
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
 
-function toCalendarGame(game: OpenGameItem): GameCollectionItem {
+function toCalendarGame(
+  game: OpenGameItem,
+  isAuthenticated: boolean
+): GameCollectionItem {
   return {
     id: game.id,
-    href: openGameHref(game),
+    href: openGameHref(game, isAuthenticated),
     title: game.title,
     date: game.date,
     dateKey: manilaDateKey(game.startsAt),
@@ -133,10 +138,16 @@ function subscribeToWeekStart(callback: () => void) {
   };
 }
 
-function OpenGameRow({ game }: { game: OpenGameItem }) {
+function OpenGameRow({
+  game,
+  isAuthenticated,
+}: {
+  game: OpenGameItem;
+  isAuthenticated: boolean;
+}) {
   return (
     <Link
-      href={openGameHref(game)}
+      href={openGameHref(game, isAuthenticated)}
       prefetch={false}
       onClick={() => trackOpenGame(game.id)}
       style={sessionAccentStyle(game.accentColor)}
@@ -192,14 +203,20 @@ function OpenGameRow({ game }: { game: OpenGameItem }) {
   );
 }
 
-function OpenGameCard({ game }: { game: OpenGameItem }) {
+function OpenGameCard({
+  game,
+  isAuthenticated,
+}: {
+  game: OpenGameItem;
+  isAuthenticated: boolean;
+}) {
   return (
     <article
       style={sessionAccentStyle(game.accentColor)}
       className="game-grid-item flex min-w-0 flex-col rounded-lg border border-line bg-surface p-3.5 hover:border-primary/35 sm:p-5"
     >
       <Link
-        href={openGameHref(game)}
+        href={openGameHref(game, isAuthenticated)}
         prefetch={false}
         onClick={() => trackOpenGame(game.id)}
         className="pressable group flex min-w-0 flex-1 flex-col"
@@ -259,12 +276,14 @@ export function OpenGamesCollection({
   todayKey,
   initialMonth,
   initialDate,
+  isAuthenticated = true,
 }: {
   initialPage: OpenGamesPage;
   filters: OpenGamesFilters;
   todayKey?: string;
   initialMonth?: string;
   initialDate?: string;
+  isAuthenticated?: boolean;
 }) {
   const resolvedTodayKey = todayKey ?? manilaDateKey(new Date().toISOString());
   const mode = useGameViewMode();
@@ -290,8 +309,8 @@ export function OpenGamesCollection({
   const [calendarRetry, setCalendarRetry] = useState(0);
   const calendarCache = useRef(new Map<string, OpenGameItem[]>());
   const calendarGames = useMemo(
-    () => calendarItems.map(toCalendarGame),
-    [calendarItems]
+    () => calendarItems.map((game) => toCalendarGame(game, isAuthenticated)),
+    [calendarItems, isAuthenticated]
   );
 
   useEffect(() => {
@@ -492,13 +511,21 @@ export function OpenGamesCollection({
       {mode === "grid" ? (
         <div className="grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3">
           {items.map((game) => (
-            <OpenGameCard key={game.id} game={game} />
+            <OpenGameCard
+              key={game.id}
+              game={game}
+              isAuthenticated={isAuthenticated}
+            />
           ))}
         </div>
       ) : (
         <div className="divide-y divide-line border-t border-line">
           {items.map((game) => (
-            <OpenGameRow key={game.id} game={game} />
+            <OpenGameRow
+              key={game.id}
+              game={game}
+              isAuthenticated={isAuthenticated}
+            />
           ))}
         </div>
       )}

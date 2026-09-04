@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({
   createSessionAction: vi.fn(async () => ({})),
@@ -7,6 +7,7 @@ vi.mock("./actions", () => ({
 
 import { CreateSessionForm } from "./create-session-form";
 
+beforeEach(() => localStorage.clear());
 afterEach(cleanup);
 
 describe("CreateSessionForm", () => {
@@ -230,6 +231,57 @@ describe("CreateSessionForm", () => {
     expect(screen.getByText(/This step is read-only/)).toBeVisible();
     expect(screen.getByLabelText("Booking reference")).not.toBeVisible();
     expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(3);
+  });
+
+  it("restores an anonymous draft at Review after authentication", async () => {
+    localStorage.setItem(
+      "relay-game-draft-v1",
+      JSON.stringify({
+        version: 1,
+        values: {
+          title: "Saturday Pickle",
+          venue: "Central Pickle",
+          date: "2030-08-22",
+          start: "19:00",
+          end: "21:00",
+          capacity: "8",
+          courts: "2",
+          visibility: "link",
+          costKind: "free",
+          cost: "0",
+          accentColor: "violet",
+        },
+      })
+    );
+
+    render(<CreateSessionForm defaults={{}} now={now} resumeAnonymousDraft />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Review your game" })
+    ).toBeVisible();
+    expect(screen.getByText("Saturday Pickle · Central Pickle")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Publish game" })).toBeVisible();
+  });
+
+  it("asks anonymous planners to authenticate only after review", () => {
+    render(
+      <CreateSessionForm
+        defaults={completePlan}
+        now={now}
+        isAuthenticated={false}
+      />
+    );
+    moveToDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Review game" }));
+
+    expect(
+      screen.getByRole("button", { name: "Create account and publish" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Log in" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Publish game" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/draft stays in this browser/i)).toBeVisible();
   });
 
   it("requires a cost expectation before reviewing a public game", () => {

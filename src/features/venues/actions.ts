@@ -272,7 +272,7 @@ export async function submitVenueAction(
           : "This missing court has already been submitted for review.",
     };
 
-  revalidatePath("/court/suggest");
+  revalidatePath("/courts/suggest");
   revalidatePath("/admin/courts");
   revalidatePath("/admin/court-requests");
   return {
@@ -413,13 +413,11 @@ export async function updateVenueAction(
     });
   });
   expireCourtDirectory();
-  revalidatePath("/court");
   revalidatePath("/courts");
-  revalidatePath(`/court/${existing.slug}`);
   revalidatePath(`/courts/${existing.slug}`);
   revalidatePath("/admin/courts");
   revalidatePath(`/admin/courts/${existing.id}`);
-  revalidatePath("/court/suggest");
+  revalidatePath("/courts/suggest");
   return { success: "Court saved." };
 }
 
@@ -626,8 +624,7 @@ export async function applyVenueChangeRequestAction(formData: FormData) {
 
   revalidatePath("/admin/courts");
   revalidatePath("/admin/court-requests");
-  revalidatePath("/court/suggest");
-  revalidatePath("/court");
+  revalidatePath("/courts/suggest");
   revalidatePath("/courts");
   redirect(`/admin/courts/${targetId}`);
 }
@@ -708,6 +705,6 @@ export async function resolveVenueChangeRequestAction(formData: FormData) {
     });
   });
   revalidatePath("/admin/court-requests");
-  revalidatePath("/court/suggest");
+  revalidatePath("/courts/suggest");
   redirect("/admin/court-requests");
 }

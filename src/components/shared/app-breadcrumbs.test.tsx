@@ -41,10 +41,10 @@ describe("buildBreadcrumbItems", () => {
   });
 
   it("uses the canonical court route for court details", () => {
-    expect(buildBreadcrumbItems("/court/central-pickleball")).toEqual([
+    expect(buildBreadcrumbItems("/courts/central-pickleball")).toEqual([
       { href: "/home", label: "Home" },
-      { href: "/court", label: "Find a court" },
-      { href: undefined, label: "Central Pickleball" },
+      { href: "/courts", label: "Courts" },
+      { href: undefined, label: "Court" },
     ]);
   });
 

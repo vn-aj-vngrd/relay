@@ -6,17 +6,17 @@ vi.mock("next/navigation", () => ({
 }));
 
 import GamesLoading from "@/app/(app)/games/(list)/loading";
-import NewGameLoading from "@/app/(app)/games/new/loading";
-import OpenGamesLoading from "@/app/(app)/games/open/loading";
 import GroupsLoading from "@/app/(app)/groups/loading";
 import NotificationsLoading from "@/app/(app)/notifications/loading";
+import NewGameLoading from "@/app/games/new/loading";
+import OpenGamesLoading from "@/app/games/open/loading";
 
 afterEach(cleanup);
 
 describe("collection loading boundaries", () => {
   it.each([
     ["Games", GamesLoading],
-    ["Games", OpenGamesLoading],
+    ["Open games", OpenGamesLoading],
     ["Groups", GroupsLoading],
     ["Notifications", NotificationsLoading],
   ] as const)("keeps the %s title as real UI", (title, Loading) => {
@@ -40,13 +40,11 @@ describe("collection loading boundaries", () => {
     ).toHaveTextContent("Step 1 of 4");
   });
 
-  it("keeps Games section tabs real while game rows load", () => {
+  it("keeps collection controls real while game rows load", () => {
     render(<OpenGamesLoading />);
-    const navigation = screen.getByRole("navigation", {
-      name: "Games sections",
-    });
-    expect(navigation).toHaveTextContent("My games");
-    expect(navigation).toHaveTextContent("Open games");
+    expect(
+      screen.getByRole("region", { name: "Open game filters" })
+    ).toBeVisible();
 
     cleanup();
     render(<GamesLoading />);

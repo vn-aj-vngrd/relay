@@ -14,7 +14,7 @@ describe("notificationPresentation", () => {
     ).toEqual({
       title: "Court suggestion applied",
       body: "Central Pickle was updated.",
-      href: "/court/suggest#your-suggestions",
+      href: "/courts/suggest#your-suggestions",
       tone: "system",
     });
     expect(
@@ -24,7 +24,7 @@ describe("notificationPresentation", () => {
         sessionTitle: null,
         payload: {},
       }).href
-    ).toBe("/court/suggest#your-suggestions");
+    ).toBe("/courts/suggest#your-suggestions");
   });
 
   it("gives game invites enough context to respond confidently", () => {

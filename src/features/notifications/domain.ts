@@ -73,7 +73,7 @@ export function notificationPresentation({
         body:
           customBody ??
           "Relay verified your suggestion and updated Court Finder.",
-        href: "/court/suggest#your-suggestions",
+        href: "/courts/suggest#your-suggestions",
         tone: "system",
       };
     case "court_suggestion_rejected":
@@ -82,7 +82,7 @@ export function notificationPresentation({
         body:
           customBody ??
           "Relay reviewed your suggestion but did not apply the proposed changes.",
-        href: "/court/suggest#your-suggestions",
+        href: "/courts/suggest#your-suggestions",
         tone: "system",
       };
     case "court_suggestion_duplicate":
@@ -91,7 +91,7 @@ export function notificationPresentation({
         body:
           customBody ??
           "Relay found an existing court or another suggestion covering this information.",
-        href: "/court/suggest#your-suggestions",
+        href: "/courts/suggest#your-suggestions",
         tone: "system",
       };
     case "session_invite":

@@ -91,15 +91,18 @@ test("the public court finder works without an account", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: /Find a (?:pickleball )?court/ })
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: "Create a game" })
-  ).toHaveAttribute("href", "/signup?next=%2Fgames%2Fnew");
+  await expect(page.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
+    "href",
+    "/games/new"
+  );
   await expect(
     page.getByRole("textbox", { name: "Search courts" })
   ).toBeVisible();
 
-  await page.goto("/court");
-  await expect(page).toHaveURL(/\/login/);
+  const removedCourtRoute = await page.request.get("/court", {
+    maxRedirects: 0,
+  });
+  expect(removedCourtRoute.status()).toBe(404);
 });
 
 test("the court map leaves its loading state when raster tiles stall", async ({
@@ -129,7 +132,7 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await page.goto("/play");
   await expect(page.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
     "href",
-    "/signup?next=%2Fgames%2Fnew"
+    "/games/new"
   );
   await expect(
     page.getByRole("heading", { name: "Set up Play" })
@@ -703,6 +706,7 @@ test("public entry pages have no serious accessibility violations in light and d
     "/",
     "/play",
     "/courts",
+    "/games/open",
     "/login",
     "/signup",
     "/privacy",
@@ -793,9 +797,9 @@ test("core public and protected routes fail safely", async ({ page }) => {
   const globalSearch = await page.request.get("/api/search?q=v&type=all");
   expect(globalSearch.status()).toBe(401);
   await page.goto("/games/open");
-  expect(new URL(page.url()).pathname).toBe("/login");
+  await expect(page.getByRole("heading", { name: "Open games" })).toBeVisible();
   await page.goto("/games/new");
-  expect(new URL(page.url()).pathname).toBe("/login");
+  await expect(page.getByRole("heading", { name: "The plan" })).toBeVisible();
   await page.goto("/groups/new");
   expect(new URL(page.url()).pathname).toBe("/login");
   await page.goto("/feedback");

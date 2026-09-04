@@ -33,8 +33,8 @@ const items = [
     mobileOnly: false,
   },
   {
-    href: "/court",
-    label: "Court",
+    href: "/courts",
+    label: "Courts",
     icon: MapPin,
     primary: false,
     mobileOnly: true,
@@ -64,7 +64,7 @@ export function AppNav({
         (pathname.startsWith("/games/") && pathname !== "/games/new")
       );
     if (href === "/games/new") return pathname === "/games/new";
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   if (mode === "sidebar") {
@@ -83,7 +83,7 @@ export function AppNav({
                   data-tour={
                     label === "Create game"
                       ? "create"
-                      : label === "Court"
+                      : label === "Courts"
                         ? "courts"
                         : label.toLowerCase()
                   }
@@ -124,7 +124,10 @@ export function AppNav({
     );
   }
 
-  if (pathname === "/games/new" || /^\/games\/[^/]+(?:\/.*)?$/.test(pathname))
+  if (
+    pathname === "/games/new" ||
+    /^\/games\/(?!new(?:\/|$)|open(?:\/|$))[^/]+(?:\/.*)?$/i.test(pathname)
+  )
     return null;
 
   return (
@@ -142,7 +145,7 @@ export function AppNav({
                 data-tour={
                   label === "Create game"
                     ? "create"
-                    : label === "Court"
+                    : label === "Courts"
                       ? "courts"
                       : label.toLowerCase()
                 }

@@ -230,10 +230,10 @@ describe("CourtFinder", () => {
     );
     expect(
       screen.getByRole("link", { name: /Can’t find your court/ })
-    ).toHaveAttribute("href", "/court/suggest");
+    ).toHaveAttribute("href", "/courts/suggest");
   });
 
-  it("sends public visitors through signup without losing the selected court", () => {
+  it("lets public visitors plan with the selected court before signup", () => {
     render(<CourtFinder venues={[venue]} detailBasePath="/courts" />);
 
     const courtLink = screen.getByRole("link", {
@@ -248,10 +248,7 @@ describe("CourtFinder", () => {
     );
     expect(
       screen.getByRole("link", { name: "Plan a game here" })
-    ).toHaveAttribute(
-      "href",
-      "/signup?next=%2Fgames%2Fnew%3FvenueId%3Dnice-serve"
-    );
+    ).toHaveAttribute("href", "/games/new?venueId=nice-serve");
   });
 
   it("filters locally while keeping a submission path", () => {

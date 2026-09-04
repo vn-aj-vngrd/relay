@@ -13,8 +13,8 @@ const labels: Record<string, string> = {
   admin: "Admin Console",
   audit: "Audit log",
   chat: "Chat",
-  court: "Find a court",
-  courts: "Play",
+  court: "Court",
+  courts: "Courts",
   edit: "Edit",
   feedback: "Feedback",
   games: "Games",
@@ -74,6 +74,7 @@ function segmentLabel(segments: string[], index: number) {
     return "Game";
   }
   if (segments[index - 1] === "profile") return "Profile";
+  if (segments[index - 1] === "courts") return "Court";
   return labels[segment] ?? titleCase(segment);
 }
 
@@ -95,8 +96,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segment === "profile" && index < segments.length - 1) return;
     const current = index === segments.length - 1;
     const path = `/${segments.slice(0, index + 1).join("/")}`;
-    let href = current ? undefined : path;
-    if (segment === "court") href = current ? undefined : "/court";
+    const href = current ? undefined : path;
     items.push({ href, label: segmentLabel(segments, index) });
   });
 

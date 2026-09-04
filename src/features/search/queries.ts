@@ -286,7 +286,7 @@ async function findCourts(query: string, offset: number, limit: number) {
         type: "courts",
         title: venue.name,
         subtitle: venue.address,
-        href: `/court/${venue.slug}`,
+        href: `/courts/${venue.slug}`,
       })
     ),
   };

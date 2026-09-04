@@ -30,6 +30,7 @@ describe("sitemap", () => {
           url: "https://relay.example/courts/makati-pickleball-club",
         }),
         expect.objectContaining({ url: "https://relay.example/play" }),
+        expect.objectContaining({ url: "https://relay.example/games/open" }),
       ])
     );
   });

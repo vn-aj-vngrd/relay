@@ -13,7 +13,7 @@ describe("robots", () => {
 
     expect(result.host).toBe("https://relay.example");
     expect(result.sitemap).toBe("https://relay.example/sitemap.xml");
-    expect(rules?.allow).toBe("/");
+    expect(rules?.allow).toEqual(["/", "/games/open"]);
     expect(rules?.disallow).toEqual(
       expect.arrayContaining(["/admin/", "/games/", "/groups/", "/s/"])
     );

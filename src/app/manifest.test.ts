@@ -21,6 +21,6 @@ describe("PWA manifest", () => {
     ]);
     expect(
       value.shortcuts?.find((shortcut) => shortcut.short_name === "Court")?.url
-    ).toBe("/court?source=pwa-shortcut");
+    ).toBe("/courts?source=pwa-shortcut");
   });
 });

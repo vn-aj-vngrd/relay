@@ -15,7 +15,7 @@ export const helpGuides = [
     summary:
       "Search Relay’s verified Philippines directory, compare practical details, and carry your choice into a new game.",
     time: "About 2 minutes",
-    action: { href: "/court", label: "Open Court Finder" },
+    action: { href: "/courts", label: "Open Court Finder" },
     steps: [
       {
         title: "Search or filter",

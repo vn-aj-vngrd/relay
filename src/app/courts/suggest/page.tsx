@@ -12,7 +12,7 @@ export default async function SuggestCourtPage({
 }: {
   searchParams: Promise<{ court?: string }>;
 }) {
-  const user = await requireUser("/court/suggest");
+  const user = await requireUser("/courts/suggest");
   const params = await searchParams;
   const [courts, initialVenue, submissions] = await Promise.all([
     getCourtListings(),

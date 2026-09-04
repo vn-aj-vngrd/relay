@@ -17,7 +17,7 @@ function CourtFinderPreview({ courts }: { courts: CourtListing[] }) {
         <CourtFinder
           venues={courts}
           isAuthenticated
-          detailBasePath="/court"
+          detailBasePath="/courts"
           showFilterTopBorder={false}
           compactPreview
           className="mt-0"

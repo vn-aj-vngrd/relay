@@ -20,7 +20,7 @@ export function SidebarSupportNav({
   const pathname = usePathname();
   const items = [
     {
-      href: "/court/suggest",
+      href: "/courts/suggest",
       label: "Suggest a court",
       icon: PlusCircle,
       badge: 0,

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/venues/:path*",
-        destination: "/court/:path*",
+        destination: "/courts/:path*",
         permanent: true,
       },
     ];

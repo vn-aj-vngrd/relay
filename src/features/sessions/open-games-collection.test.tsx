@@ -25,10 +25,11 @@ afterEach(() => {
 });
 
 describe("OpenGamesCollection", () => {
-  it("shows cost, availability, approval, and host context in a mobile-first row", () => {
+  it("shows public game context and opens the shared route before login", () => {
     render(
       <OpenGamesCollection
         filters={filters}
+        isAuthenticated={false}
         initialPage={{
           nextCursor: null,
           items: [
@@ -58,7 +59,7 @@ describe("OpenGamesCollection", () => {
 
     expect(
       screen.getByRole("link", { name: /Saturday Pickle/ })
-    ).toHaveAttribute("href", "/games/game-1?source=open-games");
+    ).toHaveAttribute("href", "/s/saturday-pickle?source=open-games");
     expect(screen.getByText(/₱300/)).toBeVisible();
     expect(screen.getByText(/2 spots left/)).toBeVisible();
     expect(screen.getByText("Host approval required")).toBeVisible();
@@ -97,6 +98,9 @@ describe("OpenGamesCollection", () => {
     );
 
     expect(screen.getByTestId("open-games-grid")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: /Saturday Pickle/ })
+    ).toHaveAttribute("href", "/games/game-1?source=open-games");
     expect(screen.getByText("Hosted by Mika")).toBeVisible();
     expect(screen.getByText("2 spots left")).toBeVisible();
   });

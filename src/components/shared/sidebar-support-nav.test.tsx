@@ -25,11 +25,11 @@ describe("SidebarSupportNav", () => {
     );
     expect(
       screen.getByRole("link", { name: "Suggest a court" })
-    ).toHaveAttribute("href", "/court/suggest");
+    ).toHaveAttribute("href", "/courts/suggest");
   });
 
   it("marks the court suggestion form as the current sidebar destination", () => {
-    usePathname.mockReturnValue("/court/suggest");
+    usePathname.mockReturnValue("/courts/suggest");
     render(<SidebarSupportNav unreadCount={0} isAdmin={false} />);
     expect(
       screen.getByRole("link", { name: "Suggest a court" })

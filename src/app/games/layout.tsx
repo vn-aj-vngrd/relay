@@ -1,6 +1,6 @@
 import { AdaptiveProductShell } from "@/components/shared/adaptive-product-shell";
 
-export default function CourtsLayout({
+export default function PublicGamesLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -72,11 +72,8 @@ const courtViewOptions = [
   { value: "list" as const, label: "List", icon: List },
 ];
 
-function createHref(venue: CourtListing, isAuthenticated: boolean) {
-  const gamePath = `/games/new?${new URLSearchParams({ venueId: venue.id }).toString()}`;
-  return isAuthenticated
-    ? gamePath
-    : `/signup?next=${encodeURIComponent(gamePath)}`;
+function createHref(venue: CourtListing) {
+  return `/games/new?${new URLSearchParams({ venueId: venue.id }).toString()}`;
 }
 
 function directionsHref(venue: CourtListing) {
@@ -84,7 +81,7 @@ function directionsHref(venue: CourtListing) {
 }
 
 function suggestUpdateHref(venue: CourtListing, isAuthenticated: boolean) {
-  const path = `/court/suggest?${new URLSearchParams({ court: venue.slug }).toString()}`;
+  const path = `/courts/suggest?${new URLSearchParams({ court: venue.slug }).toString()}`;
   return isAuthenticated ? path : `/signup?next=${encodeURIComponent(path)}`;
 }
 
@@ -124,7 +121,7 @@ function SelectedCourtOverlay({
   onClose: () => void;
   onCopy: () => void;
   isAuthenticated: boolean;
-  detailBasePath: "/court" | "/courts";
+  detailBasePath: "/courts";
 }) {
   const { venue, distance } = result;
   const hours = formatCourtOperatingHours(venue.operatingHours);
@@ -199,7 +196,7 @@ function SelectedCourtOverlay({
 
       <div className="mt-4 grid gap-2 min-[420px]:grid-cols-2">
         <Link
-          href={createHref(venue, isAuthenticated)}
+          href={createHref(venue)}
           className="compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-hover sm:px-3 sm:text-[13px]"
         >
           <Plus aria-hidden size={15} /> Plan a game here
@@ -270,7 +267,7 @@ function CourtResults({
   mobileEdgeToEdge: boolean;
   compactHeader: boolean;
   suggestHref: string | null;
-  detailBasePath: "/court" | "/courts";
+  detailBasePath: "/courts";
 }) {
   const listRef = useRef<HTMLUListElement>(null);
   const rowRefs = useRef(new Map<string, HTMLAnchorElement>());
@@ -418,14 +415,14 @@ function CourtResults({
 export function CourtFinder({
   venues,
   isAuthenticated = false,
-  detailBasePath = "/court",
+  detailBasePath = "/courts",
   showFilterTopBorder = true,
   compactPreview = false,
   className = "mt-7",
 }: {
   venues: CourtListing[];
   isAuthenticated?: boolean;
-  detailBasePath?: "/court" | "/courts";
+  detailBasePath?: "/courts";
   showFilterTopBorder?: boolean;
   compactPreview?: boolean;
   className?: string;
@@ -978,7 +975,7 @@ export function CourtFinder({
             mobileEdgeToEdge={!compactPreview}
             compactHeader={!compactPreview}
             suggestHref={
-              isAuthenticated && !compactPreview ? "/court/suggest" : null
+              isAuthenticated && !compactPreview ? "/courts/suggest" : null
             }
             detailBasePath={detailBasePath}
           />

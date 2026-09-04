@@ -104,7 +104,7 @@ export function VenueSubmissionForm({
           {state.success}
         </p>
         <Link
-          href={initialVenue ? `/court/${initialVenue.slug}` : "/court"}
+          href={initialVenue ? `/courts/${initialVenue.slug}` : "/courts"}
           className="mt-5 inline-flex text-sm font-semibold text-primary"
         >
           {initialVenue ? "Back to court details" : "Back to Court Finder"}
@@ -137,7 +137,7 @@ export function VenueSubmissionForm({
               value="create"
               checked={requestType === "create"}
               onChange={() => {
-                if (initialVenue) router.push("/court/suggest");
+                if (initialVenue) router.push("/courts/suggest");
                 else setRequestType("create");
               }}
               className="sr-only"
@@ -189,7 +189,7 @@ export function VenueSubmissionForm({
               const court = courts.find((item) => item.id === id);
               if (court)
                 router.push(
-                  `/court/suggest?court=${encodeURIComponent(court.slug)}`
+                  `/courts/suggest?court=${encodeURIComponent(court.slug)}`
                 );
             }}
             options={courts.map((court) => ({
@@ -199,7 +199,7 @@ export function VenueSubmissionForm({
             }))}
           />
           <Link
-            href="/court"
+            href="/courts"
             className="mt-4 inline-flex text-sm font-semibold text-primary"
           >
             Browse Court Finder

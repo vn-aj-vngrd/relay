@@ -54,7 +54,7 @@ const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-[13px] font-semibold hover:border-muted hover:bg-surface-strong";
 
 export default function MarketingPage() {
-  const primaryHref = "/signup?next=%2Fgames%2Fnew";
+  const primaryHref = "/games/new";
 
   return (
     <main
@@ -106,10 +106,13 @@ export default function MarketingPage() {
               <Link href="/courts" className={secondaryAction}>
                 Find a court
               </Link>
+              <Link href="/games/open" className={secondaryAction}>
+                Explore open games
+              </Link>
             </div>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted">
-              Quick Play and Court Finder are public—no account required. Court
-              coverage is limited to the Philippines.
+              Plan a game, explore open games, use Quick Play, or find a court
+              before signing up. Log in when you want Relay to keep your game.
             </p>
           </div>
           <div id="product" className="marketing-hero-product mt-16 sm:mt-20">
@@ -407,6 +410,8 @@ export default function MarketingPage() {
           <Brand />
           <p>Plan games, invite players, and record scores.</p>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
+            <Link href="/games/new">Plan a game</Link>
+            <Link href="/games/open">Open games</Link>
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>
             <Link href="/privacy">Privacy</Link>

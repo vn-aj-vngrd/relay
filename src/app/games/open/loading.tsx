@@ -1,6 +1,5 @@
 import { Skeleton } from "@/components/shared/skeleton";
 import { GameViewMenu } from "@/features/sessions/game-view-menu";
-import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import type { OpenGamesFilters as OpenGamesFilterValues } from "@/features/sessions/open-games";
 import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
 
@@ -44,12 +43,16 @@ export default function OpenGamesLoading() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="app-title">Games</h1>
+        <div>
+          <h1 className="app-title">Open games</h1>
+          <p className="mt-2 text-sm text-muted">
+            Find a public game with a clear schedule, court, cost, and roster.
+          </p>
+        </div>
         <div className="sm:hidden">
           <GameViewMenu />
         </div>
       </div>
-      <GamesSectionNav current="open" />
       <OpenGamesFilters filters={defaultFilters} />
       <div
         role="status"

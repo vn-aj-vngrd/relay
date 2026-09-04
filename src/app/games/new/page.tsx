@@ -1,27 +1,49 @@
-import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft, Lightning } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
-import { requireUser } from "@/features/auth/session";
+import { getCurrentUser } from "@/features/auth/session";
 import {
   type CreateSessionDefaults,
   CreateSessionForm,
 } from "@/features/sessions/create-session-form";
 import { getCourtSuggestions } from "@/features/venues/directory";
 
+export const metadata: Metadata = {
+  title: "Plan a pickleball game",
+  description:
+    "Build the court, schedule, player limit, and access plan before creating your Relay account.",
+  robots: { index: false, follow: false },
+};
+
 export default async function NewGamePage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; group?: string; venueId?: string }>;
+  searchParams: Promise<{
+    from?: string;
+    group?: string;
+    resume?: string;
+    venueId?: string;
+  }>;
 }) {
-  const user = await requireUser();
-  const [params, courts] = await Promise.all([
+  const [user, params, courts] = await Promise.all([
+    getCurrentUser(),
     searchParams,
     getCourtSuggestions(),
   ]);
+  if ((params.from || params.group) && !user) {
+    const protectedParams = new URLSearchParams();
+    if (params.from) protectedParams.set("from", params.from);
+    if (params.group) protectedParams.set("group", params.group);
+    if (params.venueId) protectedParams.set("venueId", params.venueId);
+    redirect(
+      `/login?next=${encodeURIComponent(`/games/new?${protectedParams}`)}`
+    );
+  }
   const selectedCourt = params.venueId
     ? courts.find((court) => court.id === params.venueId)
     : undefined;
@@ -29,7 +51,7 @@ export default async function NewGamePage({
     ? await db.query.sessions.findFirst({
         where: and(
           eq(sessions.id, params.from),
-          eq(sessions.hostId, user.id),
+          eq(sessions.hostId, user!.id),
           eq(sessions.status, "completed")
         ),
       })
@@ -40,7 +62,7 @@ export default async function NewGamePage({
     ? await db.query.groupMembers.findFirst({
         where: and(
           eq(groupMembers.groupId, requestedGroupId),
-          eq(groupMembers.userId, user.id)
+          eq(groupMembers.userId, user!.id)
         ),
       })
     : null;
@@ -117,8 +139,8 @@ export default async function NewGamePage({
     <div className="create-game-page w-full">
       <div className="create-game-mobile-header -mx-4 mb-6 flex h-14 items-center gap-1 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:hidden">
         <Link
-          href="/home"
-          aria-label="Back to Home"
+          href={user ? "/home" : "/"}
+          aria-label={user ? "Back to Home" : "Back to Relay"}
           className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
         >
           <ArrowLeft aria-hidden size={18} />
@@ -132,11 +154,11 @@ export default async function NewGamePage({
         </p>
       </div>
       <Link
-        href="/home"
+        href={user ? "/home" : "/"}
         className="compact-sidebar-back pressable mb-5 hidden min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink lg:inline-flex"
       >
         <ArrowLeft aria-hidden size={15} />
-        Back to Home
+        {user ? "Back to Home" : "Back to Relay"}
       </Link>
       <header className="mb-10 hidden border-b border-line pb-7 lg:block">
         <h1 className="app-title">
@@ -147,10 +169,21 @@ export default async function NewGamePage({
               : "Create a game"}
         </h1>
       </header>
+      <div className="mx-auto mb-7 flex w-full max-w-2xl items-center justify-between gap-4 border-y border-line py-3 text-sm">
+        <p className="text-muted">Already at the courts?</p>
+        <Link
+          href="/play"
+          className="pressable inline-flex min-h-9 items-center gap-1.5 font-semibold text-primary"
+        >
+          <Lightning aria-hidden size={16} /> Start Quick Play
+        </Link>
+      </div>
       <CreateSessionForm
         defaults={defaults}
         now={new Date().toISOString()}
         courts={courts}
+        isAuthenticated={Boolean(user)}
+        resumeAnonymousDraft={params.resume === "draft"}
       />
     </div>
   );

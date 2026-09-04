@@ -6,19 +6,18 @@ import {
   parseOpenGameCursor,
 } from "@/features/sessions/open-games";
 import { discoverOpenGames } from "@/features/sessions/open-games-queries";
-import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
+import {
+  checkRateLimit,
+  rateLimitHeaders,
+  requestIdentity,
+} from "@/lib/rate-limit";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  if (!user)
-    return Response.json(
-      { error: "Authentication required" },
-      { status: 401, headers: { "Cache-Control": "private, no-store" } }
-    );
-
+  const identity = await requestIdentity(user?.id);
   const limit = await checkRateLimit(
     { scope: "open-games", limit: 120, windowSeconds: 60 },
-    `user:${user.id}`
+    identity
   );
   if (!limit.allowed)
     return Response.json(
@@ -67,7 +66,7 @@ export async function GET(request: NextRequest) {
   try {
     return Response.json(
       await discoverOpenGames(
-        user.id,
+        user?.id,
         parsedFilters.data,
         cursor,
         new Date(),

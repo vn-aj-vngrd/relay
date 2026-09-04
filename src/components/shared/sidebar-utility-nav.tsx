@@ -1,6 +1,11 @@
 "use client";
 
-import { MagnifyingGlass, MapPin, PlusCircle } from "@phosphor-icons/react";
+import {
+  Lightning,
+  MagnifyingGlass,
+  MapPin,
+  PlusCircle,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,11 +25,18 @@ const items = [
     includeSubpaths: false,
   },
   {
-    href: "/court",
-    label: "Court",
+    href: "/courts",
+    label: "Courts",
     icon: MapPin,
     tour: "courts",
     includeSubpaths: true,
+  },
+  {
+    href: "/play",
+    label: "Quick Play",
+    icon: Lightning,
+    tour: "quick-play",
+    includeSubpaths: false,
   },
 ];
 

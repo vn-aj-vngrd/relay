@@ -1,4 +1,7 @@
-import { requireUser } from "@/features/auth/session";
+import type { Metadata } from "next";
+import Link from "next/link";
+
+import { getCurrentUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
 import { GameViewMenu } from "@/features/sessions/game-view-menu";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
@@ -6,6 +9,13 @@ import { openGamesFilterSchema } from "@/features/sessions/open-games";
 import { OpenGamesCollection } from "@/features/sessions/open-games-collection";
 import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
 import { discoverOpenGames } from "@/features/sessions/open-games-queries";
+
+export const metadata: Metadata = {
+  title: "Open pickleball games",
+  description:
+    "Explore upcoming public pickleball games, compare courts, schedules, costs, and available spots, then join through Relay.",
+  alternates: { canonical: "/games/open" },
+};
 
 function validDate(value: string | undefined) {
   if (!value || !/^\d{4}-(0[1-9]|1[0-2])-([0-2]\d|3[01])$/.test(value))
@@ -46,8 +56,8 @@ export default async function OpenGamesPage({
   const filters = parsed.success
     ? parsed.data
     : openGamesFilterSchema.parse({});
-  const user = await requireUser();
-  const page = await discoverOpenGames(user.id, filters);
+  const user = await getCurrentUser();
+  const page = await discoverOpenGames(user?.id, filters);
   const todayKey = sessionDateKey(new Date());
   const initialMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.month ?? "")
     ? params.month!
@@ -63,12 +73,31 @@ export default async function OpenGamesPage({
   return (
     <div>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="app-title">Games</h1>
+        <div>
+          <h1 className="app-title">Open games</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            Find a public game with a clear schedule, court, cost, and roster.
+          </p>
+        </div>
         <div className="sm:hidden">
           <GameViewMenu />
         </div>
       </div>
-      <GamesSectionNav current="open" />
+      {user ? (
+        <GamesSectionNav current="open" />
+      ) : (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-line py-3 text-sm">
+          <p className="text-muted">
+            Sign in to join a game and keep it in your Relay schedule.
+          </p>
+          <Link
+            href="/login?next=%2Fgames%2Fopen"
+            className="font-semibold text-primary"
+          >
+            Log in to join
+          </Link>
+        </div>
+      )}
       {!parsed.success ? (
         <div
           role="alert"
@@ -86,6 +115,7 @@ export default async function OpenGamesPage({
           todayKey={todayKey}
           initialMonth={initialMonth}
           initialDate={initialDate}
+          isAuthenticated={Boolean(user)}
         />
       </div>
     </div>
