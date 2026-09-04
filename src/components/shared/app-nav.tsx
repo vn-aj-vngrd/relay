@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   CalendarBlank,
   House,
   MapPin,
@@ -46,14 +47,24 @@ const items = [
     primary: false,
     mobileOnly: false,
   },
+  {
+    href: "/notifications",
+    label: "Notifications",
+    icon: Bell,
+    primary: false,
+    mobileOnly: false,
+    desktopOnly: true,
+  },
 ];
 
 export function AppNav({
   mode,
   invitationCount = 0,
+  unreadCount = 0,
 }: {
   mode: "sidebar" | "mobile";
   invitationCount?: number;
+  unreadCount?: number;
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => {
@@ -91,7 +102,9 @@ export function AppNav({
                   aria-label={
                     label === "Games" && invitationCount
                       ? `Games, ${invitationCount} invites`
-                      : label
+                      : label === "Notifications" && unreadCount
+                        ? `Notifications, ${unreadCount} unread`
+                        : label
                   }
                   aria-current={active ? "page" : undefined}
                   className={`sidebar-row sidebar-nav-item pressable group relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-[14px] font-medium ${primary ? "bg-primary text-white hover:bg-primary-hover" : active ? "bg-surface-strong text-ink" : "text-muted hover:bg-surface-strong/70 hover:text-ink"}`}
@@ -109,11 +122,21 @@ export function AppNav({
                         {invitationCount > 99 ? "99+" : invitationCount}
                       </span>
                     ) : null}
+                    {label === "Notifications" && unreadCount ? (
+                      <span
+                        aria-label={`${unreadCount} unread notifications`}
+                        className="score inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-soft px-1.5 text-[10px] font-bold text-primary"
+                      >
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    ) : null}
                   </span>
                   <span role="tooltip" className="sidebar-item-tooltip">
                     {label === "Games" && invitationCount
                       ? `${label}, ${invitationCount} invites`
-                      : label}
+                      : label === "Notifications" && unreadCount
+                        ? `${label} · ${unreadCount} unread`
+                        : label}
                   </span>
                 </Link>
               </li>
@@ -136,47 +159,49 @@ export function AppNav({
       className="mobile-chrome app-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-line lg:hidden"
     >
       <ul className="mx-auto flex h-[60px] max-w-lg items-stretch px-2">
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = isActive(href);
-          return (
-            <li key={href} className="min-w-0 flex-1">
-              <Link
-                href={href}
-                data-tour={
-                  label === "Plan a game"
-                    ? "create"
-                    : label === "Courts"
-                      ? "courts"
-                      : label.toLowerCase()
-                }
-                prefetch={false}
-                aria-current={active ? "page" : undefined}
-                aria-label={
-                  label === "Games" && invitationCount
-                    ? `Games, ${invitationCount} invites`
-                    : label
-                }
-                className={`app-mobile-tab pressable flex h-full flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-[600] ${active ? "text-primary" : "text-muted hover:text-ink"}`}
-              >
-                <span
-                  className={`app-mobile-tab-icon relative grid h-7 min-w-8 place-items-center rounded-lg ${active ? "bg-primary-soft" : ""}`}
+        {items
+          .filter((item) => !("desktopOnly" in item && item.desktopOnly))
+          .map(({ href, label, icon: Icon }) => {
+            const active = isActive(href);
+            return (
+              <li key={href} className="min-w-0 flex-1">
+                <Link
+                  href={href}
+                  data-tour={
+                    label === "Plan a game"
+                      ? "create"
+                      : label === "Courts"
+                        ? "courts"
+                        : label.toLowerCase()
+                  }
+                  prefetch={false}
+                  aria-current={active ? "page" : undefined}
+                  aria-label={
+                    label === "Games" && invitationCount
+                      ? `Games, ${invitationCount} invites`
+                      : label
+                  }
+                  className={`app-mobile-tab pressable flex h-full flex-col items-center justify-center gap-0.5 rounded-lg text-[11px] font-[600] ${active ? "text-primary" : "text-muted hover:text-ink"}`}
                 >
-                  <Icon
-                    aria-hidden
-                    size={21}
-                    weight={active ? "fill" : "regular"}
-                  />
-                  {label === "Games" && invitationCount ? (
-                    <span className="score absolute -right-1.5 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-bold text-white ring-2 ring-surface">
-                      {invitationCount > 9 ? "9+" : invitationCount}
-                    </span>
-                  ) : null}
-                </span>
-                <span>{label === "Plan a game" ? "Plan" : label}</span>
-              </Link>
-            </li>
-          );
-        })}
+                  <span
+                    className={`app-mobile-tab-icon relative grid h-7 min-w-8 place-items-center rounded-lg ${active ? "bg-primary-soft" : ""}`}
+                  >
+                    <Icon
+                      aria-hidden
+                      size={21}
+                      weight={active ? "fill" : "regular"}
+                    />
+                    {label === "Games" && invitationCount ? (
+                      <span className="score absolute -right-1.5 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[8px] font-bold text-white ring-2 ring-surface">
+                        {invitationCount > 9 ? "9+" : invitationCount}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span>{label === "Plan a game" ? "Plan" : label}</span>
+                </Link>
+              </li>
+            );
+          })}
       </ul>
     </nav>
   );

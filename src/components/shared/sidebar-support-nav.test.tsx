@@ -9,35 +9,28 @@ vi.mock("next/navigation", () => ({ usePathname: () => usePathname() }));
 describe("SidebarSupportNav", () => {
   beforeEach(() => usePathname.mockReturnValue("/help"));
 
-  it("shows the active support page and a useful unread count", () => {
-    render(<SidebarSupportNav unreadCount={12} />);
+  it("keeps only court suggestion, help, and feedback in the support area", () => {
+    render(<SidebarSupportNav />);
+
     expect(
-      screen.getByRole("link", { name: "Notifications, 12 unread" })
-    ).toHaveAttribute("href", "/notifications");
-    expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
+      screen.getAllByRole("link").map((link) => link.getAttribute("href"))
+    ).toEqual(["/courts/suggest", "/help", "/feedback"]);
     expect(screen.getByRole("link", { name: "Help Center" })).toHaveAttribute(
       "aria-current",
       "page"
     );
-    expect(screen.getByRole("link", { name: "Send feedback" })).toHaveAttribute(
-      "href",
-      "/feedback"
-    );
-    expect(
-      screen.getByRole("link", { name: "Suggest a court" })
-    ).toHaveAttribute("href", "/courts/suggest");
   });
 
   it("marks the court suggestion form as the current sidebar destination", () => {
     usePathname.mockReturnValue("/courts/suggest");
-    render(<SidebarSupportNav unreadCount={0} />);
+    render(<SidebarSupportNav />);
     expect(
       screen.getByRole("link", { name: "Suggest a court" })
     ).toHaveAttribute("aria-current", "page");
   });
 
   it("keeps the admin console out of support navigation", () => {
-    render(<SidebarSupportNav unreadCount={0} />);
+    render(<SidebarSupportNav />);
     expect(
       screen.queryByRole("link", { name: "Admin console" })
     ).not.toBeInTheDocument();

@@ -14,6 +14,8 @@ describe("PublicProductShell", () => {
   it("offers the persistent desktop sidebar collapse control", () => {
     render(<PublicProductShell>Public content</PublicProductShell>);
 
+    expect(screen.getByRole("complementary")).toHaveClass("overflow-y-auto");
+
     fireEvent.click(screen.getByRole("button", { name: "Close sidebar" }));
 
     expect(document.documentElement).toHaveAttribute("data-sidebar", "compact");

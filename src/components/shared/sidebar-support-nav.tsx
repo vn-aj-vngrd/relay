@@ -1,23 +1,17 @@
 "use client";
 
-import { Bell, ChatText, Lifebuoy, PlusCircle } from "@phosphor-icons/react";
+import { ChatText, Lifebuoy, MapPinPlus } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export function SidebarSupportNav({ unreadCount }: { unreadCount: number }) {
+export function SidebarSupportNav() {
   const pathname = usePathname();
   const items = [
     {
       href: "/courts/suggest",
       label: "Suggest a court",
-      icon: PlusCircle,
+      icon: MapPinPlus,
       badge: 0,
-    },
-    {
-      href: "/notifications",
-      label: "Notifications",
-      icon: Bell,
-      badge: unreadCount,
     },
     { href: "/help", label: "Help Center", icon: Lifebuoy, badge: 0 },
     { href: "/feedback", label: "Send feedback", icon: ChatText, badge: 0 },
@@ -32,9 +26,6 @@ export function SidebarSupportNav({ unreadCount }: { unreadCount: number }) {
             <li key={href}>
               <Link
                 href={href}
-                data-tour={
-                  href === "/notifications" ? "notifications" : undefined
-                }
                 prefetch={false}
                 aria-label={badge ? `${label}, ${badge} unread` : label}
                 aria-current={active ? "page" : undefined}

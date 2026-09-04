@@ -51,6 +51,30 @@ describe("AppNav", () => {
     ).toHaveTextContent("3");
   });
 
+  it("places notifications below groups in the desktop main navigation", () => {
+    render(<AppNav mode="sidebar" unreadCount={12} />);
+
+    const links = screen.getAllByRole("link");
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/home",
+      "/games",
+      "/groups",
+      "/notifications",
+    ]);
+    expect(
+      screen.getByRole("link", { name: "Notifications, 12 unread" })
+    ).toHaveAttribute("href", "/notifications");
+    expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
+  });
+
+  it("keeps notifications out of the mobile bottom navigation", () => {
+    render(<AppNav mode="mobile" unreadCount={12} />);
+
+    expect(
+      screen.queryByRole("link", { name: "Notifications, 12 unread" })
+    ).not.toBeInTheDocument();
+  });
+
   it("removes global mobile navigation inside a focused game workspace", () => {
     navigationState.pathname = "/games/game-1/chat";
 

@@ -12,7 +12,7 @@ export function PublicProductShell({
 }) {
   return (
     <div className="app-shell flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
-      <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
+      <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col overflow-y-auto overscroll-y-contain bg-canvas px-3 py-3 lg:flex">
         <div className="sidebar-header mb-3 flex h-11 items-center justify-between gap-2 border-b border-line px-1 pb-3">
           <span className="sidebar-brand">
             <Brand />

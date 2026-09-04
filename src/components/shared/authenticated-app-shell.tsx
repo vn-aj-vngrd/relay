@@ -45,7 +45,7 @@ export async function AuthenticatedAppShell({
       <Suspense fallback={null}>
         <ApplicationTour required={!profile.productTourCompletedAt} />
       </Suspense>
-      <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col bg-canvas px-3 py-3 lg:flex">
+      <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col overflow-y-auto overscroll-y-contain bg-canvas px-3 py-3 lg:flex">
         <div className="sidebar-header mb-3 flex h-11 items-center justify-between gap-2 border-b border-line px-1 pb-3">
           <span className="sidebar-brand">
             <Brand href="/home" />
@@ -53,9 +53,13 @@ export async function AuthenticatedAppShell({
           <SidebarCollapseToggle />
         </div>
         <SidebarUtilityNav />
-        <AppNav mode="sidebar" invitationCount={invitationCount} />
+        <AppNav
+          mode="sidebar"
+          invitationCount={invitationCount}
+          unreadCount={unreadCount}
+        />
         <div className="mt-auto">
-          <SidebarSupportNav unreadCount={unreadCount} />
+          <SidebarSupportNav />
           <div className="mt-1 border-t border-line pt-1">
             <SidebarAccount
               name={profile.name}
