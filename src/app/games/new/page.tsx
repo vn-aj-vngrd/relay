@@ -153,7 +153,6 @@ export default async function NewGamePage({
         </Link>
         <p className="text-sm font-semibold text-ink">{pageTitle}</p>
       </div>
-      <p className="mb-7 text-sm text-muted lg:hidden">{pageDescription}</p>
       <Link
         href={user ? "/home" : "/"}
         className="compact-sidebar-back pressable mb-5 hidden min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink lg:inline-flex"
