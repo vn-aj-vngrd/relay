@@ -63,6 +63,8 @@ Hosts and co-hosts may view Game settings in every session state. During Play, s
 - While Play is live, authenticated game routes outside Play retain a compact link to the participant’s current Playing, Waiting, Resting, or Not here state. The Play page itself does not repeat that status in a personalized banner; current assignments and waiting order live in Courts and Queue.
 - Expanded scoreboards preserve the same score state and permissions. Public viewers can expand but cannot score.
 
+Before Play, hosts confirm an unresolved court booking in a compact dialog, then use three steps: Players, Game options, Review. Confirmed bookings and No booking needed bypass the prompt. Back preserves selections; only Review offers Start Play. Booking changes reopen the prompt without losing setup; roster/court changes require a fresh review. The server rechecks booking and play eligibility under the session lock. Overview, Home, and Games show next actions instead of percentages. Payments are independent and can be arranged before, during, or after Play; unset payment never becomes Free implicitly and public discovery still requires a stated price. Public and authenticated plan summaries use the same booking/payment facts. Existing live sessions continue without retroactive gating.
+
 ## Loading and realtime
 
 - A route loading state must match that route’s final structure. Scoreboard skeletons preserve the header, two score sides, controls when applicable, and adjacent queue.

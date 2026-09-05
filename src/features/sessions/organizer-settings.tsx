@@ -90,8 +90,7 @@ export function OrganizerSettings({
         Organizers
       </h2>
       <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
-        Co-hosts can manage the plan, roster, payments, and Play. Playing in the
-        game remains a separate choice.
+        Co-hosts help organize the game.
       </p>
       <ul className="mt-4 divide-y divide-line border-y border-line">
         {organizers.map((organizer, index) => (

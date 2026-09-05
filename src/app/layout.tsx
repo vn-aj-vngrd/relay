@@ -4,9 +4,10 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 
+import { BootstrapScripts } from "@/components/shared/bootstrap-scripts";
+
 import { OfflineIndicator } from "@/features/pwa/offline-indicator";
 import { PwaManager } from "@/features/pwa/pwa-manager";
-import { THEME_INIT_SCRIPT } from "@/lib/theme-init";
 
 const inter = Inter({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({
@@ -86,18 +87,7 @@ export default function RootLayout({
   return (
     <html lang="en-PH" data-theme="light" suppressHydrationWarning>
       <head>
-        {process.env.NODE_ENV !== "production" ? (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `(()=>{if(!('serviceWorker'in navigator))return;const k='relay-development-sw-cleanup';if(!navigator.serviceWorker.controller){sessionStorage.removeItem(k);return}if(sessionStorage.getItem(k)==='1'){sessionStorage.removeItem(k);return}sessionStorage.setItem(k,'1');window.stop();Promise.all([navigator.serviceWorker.getRegistrations().then(r=>Promise.all(r.map(x=>x.unregister()))),('caches'in window?caches.keys().then(n=>Promise.all(n.filter(x=>x.startsWith('relay-pwa-')).map(x=>caches.delete(x)))):Promise.resolve())]).finally(()=>location.reload())})()`,
-            }}
-          />
-        ) : null}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: THEME_INIT_SCRIPT,
-          }}
-        />
+        <BootstrapScripts development={process.env.NODE_ENV !== "production"} />
       </head>
       <body className={`${inter.variable} ${geistMono.variable}`}>
         <script

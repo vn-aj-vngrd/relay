@@ -104,6 +104,7 @@ export default async function GameSettingsPage({
     visibility: data.session.visibility,
     requiresApproval: data.session.requiresApproval,
     booked: Boolean(data.session.bookedAt),
+    bookingNotRequired: data.session.bookingNotRequired,
     bookingReference: data.session.bookingReference ?? "",
     bookingTotal:
       data.session.bookingTotalCents == null

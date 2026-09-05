@@ -78,14 +78,21 @@ function costInput(formData: FormData) {
 
 function bookingInput(formData: FormData) {
   const rawTotal = formData.get("bookingTotal");
+  const bookingNotRequired = formData.get("bookingNotRequired") === "on";
+  const booked = !bookingNotRequired && formData.get("booked") === "on";
   return {
-    booked: formData.get("booked") === "on",
-    bookingReference: formData.get("bookingReference") || undefined,
+    booked,
+    bookingNotRequired,
+    bookingReference: booked
+      ? formData.get("bookingReference") || undefined
+      : undefined,
     bookingTotalCents:
-      typeof rawTotal === "string" && rawTotal
+      booked && typeof rawTotal === "string" && rawTotal
         ? Math.round(Number(rawTotal) * 100)
         : undefined,
-    bookingNotes: formData.get("bookingNotes") || undefined,
+    bookingNotes: booked
+      ? formData.get("bookingNotes") || undefined
+      : undefined,
   };
 }
 
@@ -264,6 +271,7 @@ export async function createSessionAction(
         status: intent,
         publishedAt: intent === "published" ? new Date() : null,
         bookedAt: parsed.data.booked ? new Date() : null,
+        bookingNotRequired: parsed.data.bookingNotRequired,
         bookingReference: parsed.data.booked
           ? (parsed.data.bookingReference ?? null)
           : null,
@@ -406,6 +414,7 @@ export async function updateSessionAction(
       "notes",
       "visibility",
       "booked",
+      "bookingNotRequired",
       "bookingReference",
       "bookingTotal",
       "bookingNotes",
@@ -550,6 +559,7 @@ export async function updateSessionAction(
     existing.visibility !== parsed.data.visibility ? "visibility" : null,
     existing.notes !== (parsed.data.notes ?? null) ? "notes" : null,
     Boolean(existing.bookedAt) !== parsed.data.booked ||
+    existing.bookingNotRequired !== parsed.data.bookingNotRequired ||
     existing.bookingReference !==
       (parsed.data.booked ? (parsed.data.bookingReference ?? null) : null) ||
     existing.bookingTotalCents !==
@@ -608,6 +618,7 @@ export async function updateSessionAction(
           bookedAt: parsed.data.booked
             ? (existing.bookedAt ?? new Date())
             : null,
+          bookingNotRequired: parsed.data.bookingNotRequired,
           bookingReference: parsed.data.booked
             ? (parsed.data.bookingReference ?? null)
             : null,
@@ -815,6 +826,7 @@ export async function markSessionBookedAction(formData: FormData) {
       .update(sessions)
       .set({
         bookedAt: new Date(),
+        bookingNotRequired: false,
         version: session.version + 1,
         updatedAt: new Date(),
       })

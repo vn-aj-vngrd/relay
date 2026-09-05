@@ -21,9 +21,10 @@ import {
 
 import { calculateStandings } from "./domain";
 import { deriveLiveState } from "./live-state";
+import { courtLabel } from "./presentation";
 
 async function getLiveDetails(sessionId: string, rotationMode: string) {
-  const [sessionCourts, sessionMatches, queue, pairRows] = await Promise.all([
+  const [storedCourts, storedMatches, queue, pairRows] = await Promise.all([
     db
       .select()
       .from(courts)
@@ -67,9 +68,18 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
       .where(eq(sessionPairs.sessionId, sessionId))
       .orderBy(asc(sessionPairs.position), asc(sessionPairMembers.position)),
   ]);
+  const sessionCourts = storedCourts.map((court) => ({
+    ...court,
+    label: courtLabel(court.position),
+  }));
   const courtPositions = new Map(
     sessionCourts.map((court) => [court.id, court.position])
   );
+  // Retired labels may survive in snapshots until the cleanup migration runs.
+  const sessionMatches = storedMatches.map((match) => ({
+    ...match,
+    courtLabel: courtLabel(courtPositions.get(match.courtId ?? "")),
+  }));
   const activeMatches = sessionMatches
     .filter((match) => match.status === "active")
     .toSorted(
@@ -204,9 +214,10 @@ export async function getCompactPersonalPlayStatus(
   });
   if (membership?.rsvp !== "going") return null;
   const [assignment] = await db
-    .select({ courtLabel: matches.courtLabel })
+    .select({ courtPosition: courts.position })
     .from(matchPlayers)
     .innerJoin(matches, eq(matches.id, matchPlayers.matchId))
+    .leftJoin(courts, eq(courts.id, matches.courtId))
     .where(
       and(
         eq(matches.sessionId, sessionId),
@@ -216,7 +227,10 @@ export async function getCompactPersonalPlayStatus(
     )
     .limit(1);
   if (assignment)
-    return { label: `Playing now · ${assignment.courtLabel}`, urgent: true };
+    return {
+      label: `Playing now · ${courtLabel(assignment.courtPosition)}`,
+      urgent: true,
+    };
   if (membership.playState === "resting")
     return { label: "Taking a break", urgent: false };
   const waiting = await db

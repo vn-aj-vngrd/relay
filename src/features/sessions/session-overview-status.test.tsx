@@ -43,7 +43,7 @@ describe("SessionOverviewStatus", () => {
 
     expect(screen.getByText("Host access")).toBeVisible();
     expect(screen.getByText("You manage this game")).toBeVisible();
-    expect(screen.getByText("Ready to play")).toBeVisible();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Set up Play/ })).toHaveAttribute(
       "href",
       `/games/${base.sessionId}/play/setup`
@@ -51,7 +51,24 @@ describe("SessionOverviewStatus", () => {
   });
 
   it("opens the live court directly once Play starts", () => {
-    render(<SessionOverviewStatus {...base} status="live" isHost />);
+    render(
+      <SessionOverviewStatus
+        {...base}
+        status="live"
+        isHost
+        readiness={{
+          ready: false,
+          percent: 67,
+          completed: 2,
+          total: 3,
+          missing: ["booking"],
+        }}
+      />
+    );
+    expect(screen.getByRole("heading", { name: "Play is live" })).toBeVisible();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText("67%")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Finish the game setup/)).not.toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: /Open Play/ })).toHaveAttribute(
       "href",

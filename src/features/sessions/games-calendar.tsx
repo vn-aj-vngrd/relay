@@ -9,11 +9,10 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
-
 import { ButtonLink } from "@/components/ui/button";
-
 import { sessionAccentStyle } from "./accent";
 import type { GameCollectionItem } from "./game-collection-types";
+import { playSetupNextAction } from "./readiness";
 
 type CalendarPhase = "live" | "upcoming" | "past";
 type CalendarGame = GameCollectionItem & { phase: CalendarPhase };
@@ -174,7 +173,9 @@ function DayAgenda({
                         : "played"
                       : "going"}
                   </span>
-                  {game.readiness && game.phase !== "past" ? (
+                  {game.readiness &&
+                  game.phase !== "past" &&
+                  game.status !== "live" ? (
                     <span
                       className={
                         game.readiness.ready
@@ -182,10 +183,7 @@ function DayAgenda({
                           : "text-muted"
                       }
                     >
-                      ·{" "}
-                      {game.readiness.ready
-                        ? "Ready"
-                        : `${game.readiness.percent}% ready`}
+                      · {playSetupNextAction(game.readiness)}
                     </span>
                   ) : null}
                 </p>

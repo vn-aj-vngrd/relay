@@ -24,6 +24,8 @@ import { trackSessionMilestone } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { playingExperienceWeight } from "@/features/players/playing-experience";
+import { readinessTaskLabel } from "@/features/sessions/readiness";
+import { loadPlayReadiness } from "@/features/sessions/readiness-query";
 import { assertRateLimit } from "@/lib/rate-limit";
 
 import { splitFinishedPlayers } from "./availability";
@@ -122,7 +124,7 @@ export async function startPlay(
   formData: FormData
 ): Promise<StartPlayActionState> {
   const sessionId = String(formData.get("sessionId"));
-  const { session, user } = await requirePlayManager(sessionId);
+  const { user } = await requirePlayManager(sessionId);
   let setup: PlaySetup;
   try {
     const pairCount = Math.max(
@@ -162,64 +164,77 @@ export async function startPlay(
     return { error: "Choose a round timer between 5 and 60 minutes." };
   const roundDurationMinutes =
     setup.mode === "queue" ? null : (roundDuration?.data ?? null);
-  if (session.status !== "draft" && session.status !== "published")
-    return { error: "Play has already started." };
-  const goingPlayers = await db
-    .select({
-      id: sessionPlayers.id,
-      checkedInAt: sessionPlayers.checkedInAt,
-      playState: sessionPlayers.playState,
-    })
-    .from(sessionPlayers)
-    .where(
-      and(
-        eq(sessionPlayers.sessionId, sessionId),
-        eq(sessionPlayers.rsvp, "going")
-      )
-    );
-  const checkedInPlayers = goingPlayers.filter((player) => player.checkedInAt);
-  const attendanceTaken =
-    checkedInPlayers.length > 0 ||
-    goingPlayers.some((player) => player.playState === "unavailable");
-  const activePlayers = attendanceTaken ? checkedInPlayers : goingPlayers;
-  const goingCount = activePlayers.length;
-  if (goingCount < 4)
-    return {
-      error: "At least four players need to be going before Play can start.",
-    };
-  const setupPairs = "pairs" in setup ? setup.pairs : [];
-  if (setupPairs.length) {
-    const assigned = setupPairs.flat().toSorted();
-    const eligible = goingPlayers.map((player) => player.id).toSorted();
-    if (
-      assigned.length !== eligible.length ||
-      assigned.some((id, index) => id !== eligible[index])
-    )
-      return { error: "Assign every going player to exactly one pair." };
-    const activeIds = new Set(activePlayers.map((player) => player.id));
-    const completePairsHere = setupPairs.filter((pair) =>
-      pair.every((playerId) => activeIds.has(playerId))
-    ).length;
-    if (completePairsHere < 2)
-      return {
-        error:
-          setup.mode === "round_robin"
-            ? "Team Round Robin needs at least two complete pairs here to start."
-            : "Keep pairs together needs at least two complete pairs here to start.",
-      };
-  }
-  if (
-    setup.mode === "king_of_court" &&
-    (session.courtCount < 2 || goingCount !== session.courtCount * 4)
-  )
-    return {
-      error: `Court Climb needs exactly ${session.courtCount * 4} active players for ${session.courtCount} courts.`,
-    };
-
-  await db.transaction(async (tx) => {
+  const outcome = await db.transaction(async (tx) => {
     await tx.execute(
       sql`select id from ${sessions} where id = ${sessionId} for update`
     );
+    const session = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+    });
+    if (
+      !session ||
+      (session.status !== "draft" && session.status !== "published")
+    )
+      return { error: "Play has already started or this game is closed." };
+    const membership = await tx.query.sessionPlayers.findFirst({
+      where: and(
+        eq(sessionPlayers.sessionId, sessionId),
+        eq(sessionPlayers.userId, user.id)
+      ),
+    });
+    if (
+      session.hostId !== user.id &&
+      (membership?.role !== "cohost" || membership.leftAt)
+    )
+      return { error: "Only a current host or co-host can start Play." };
+    const { goingPlayers, activePlayers, readiness } = await loadPlayReadiness(
+      session,
+      tx
+    );
+    if (!readiness.ready)
+      return {
+        error: `Complete setup before starting: ${readiness.missing.map(readinessTaskLabel).join("; ")}.`,
+      };
+    const goingCount = activePlayers.length;
+    const sessionCourts = await tx
+      .select()
+      .from(courts)
+      .where(eq(courts.sessionId, sessionId))
+      .orderBy(asc(courts.position));
+    if (!sessionCourts.some((court) => court.availableForPlay))
+      return { error: "Open at least one court before starting Play." };
+    const setupPairs = "pairs" in setup ? setup.pairs : [];
+    if (setupPairs.length) {
+      const assigned = setupPairs.flat().toSorted();
+      const eligible = goingPlayers.map((player) => player.id).toSorted();
+      if (
+        assigned.length !== eligible.length ||
+        assigned.some((id, index) => id !== eligible[index])
+      )
+        return { error: "Assign every going player to exactly one pair." };
+      const activeIds = new Set(activePlayers.map((player) => player.id));
+      const completePairsHere = setupPairs.filter((pair) =>
+        pair.every((playerId) => activeIds.has(playerId))
+      ).length;
+      if (completePairsHere < 2)
+        return {
+          error:
+            setup.mode === "round_robin"
+              ? "Team Round Robin needs at least two complete pairs here to start."
+              : "Keep pairs together needs at least two complete pairs here to start.",
+        };
+    }
+    if (
+      setup.mode === "king_of_court" &&
+      (sessionCourts.filter((court) => court.availableForPlay).length < 2 ||
+        goingCount !==
+          sessionCourts.filter((court) => court.availableForPlay).length * 4)
+    )
+      return {
+        error:
+          "Court Climb needs exactly four eligible players per open court, with at least two open courts.",
+      };
+
     const rotationConfig =
       setup.mode === "queue"
         ? { queueRule: setup.queueRule, partnerPolicy: setup.partnerPolicy }
@@ -308,14 +323,9 @@ export async function startPlay(
         )
       );
 
-    const sessionCourts = await tx
-      .select()
-      .from(courts)
-      .where(eq(courts.sessionId, sessionId))
-      .orderBy(asc(courts.position));
     const firstRotation = planRotation({
       mode: setup.mode,
-      courts: sessionCourts,
+      courts: sessionCourts.filter((court) => court.availableForPlay),
       waiting: players.map((player, index) => ({
         id: player.id,
         position: index + 1,
@@ -402,7 +412,16 @@ export async function startPlay(
       kind: "system",
       body: `Play started · ${rotationDescription(setup.mode, rotationConfig)}`,
     });
+    return {
+      playerCount: goingCount,
+      courtCount: session.courtCount,
+      slug: session.slug,
+    };
   });
+  if ("error" in outcome) {
+    revalidatePath(`/games/${sessionId}/play/setup`);
+    return { error: outcome.error };
+  }
   await trackSessionMilestone({
     name: "play_started",
     userId: user.id,
@@ -410,13 +429,15 @@ export async function startPlay(
     source: "authenticated",
     metadata: {
       mode: setup.mode,
-      playerCount: goingCount,
-      courtCount: session.courtCount,
+      playerCount: outcome.playerCount,
+      courtCount: outcome.courtCount,
       timed: Boolean(roundDurationMinutes),
     },
   });
-  revalidatePath(`/games/${sessionId}/play`);
-  revalidatePath(`/s/${session.slug}/play`);
+  revalidatePath("/home");
+  revalidatePath("/games");
+  revalidatePath(`/games/${sessionId}`, "layout");
+  revalidatePath(`/s/${outcome.slug}`, "layout");
   redirect(`/games/${sessionId}/play`);
 }
 

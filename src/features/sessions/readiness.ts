@@ -1,4 +1,4 @@
-export type ReadinessTask = "roster" | "booking" | "payment";
+export type ReadinessTask = "roster" | "booking";
 
 export type SessionReadiness = {
   ready: boolean;
@@ -8,21 +8,32 @@ export type SessionReadiness = {
   missing: ReadinessTask[];
 };
 
+export function eligiblePlayPlayers<
+  T extends {
+    checkedInAt: Date | string | null;
+    playState: string;
+  },
+>(players: T[]): T[] {
+  const checkedIn = players.filter((player) => player.checkedInAt);
+  const attendanceTaken =
+    checkedIn.length > 0 ||
+    players.some((player) => player.playState === "unavailable");
+  return attendanceTaken ? checkedIn : players;
+}
+
 export function sessionReadiness(input: {
   goingCount: number;
   booked: boolean;
-  expectsCollection: boolean;
-  collectionCreated: boolean;
+  bookingNotRequired: boolean;
 }): SessionReadiness {
   const complete: Record<ReadinessTask, boolean> = {
     roster: input.goingCount >= 4,
-    booking: input.booked,
-    payment: !input.expectsCollection || input.collectionCreated,
+    booking: input.booked || input.bookingNotRequired,
   };
   const missing = (Object.keys(complete) as ReadinessTask[]).filter(
     (task) => !complete[task]
   );
-  const total = 3;
+  const total = 2;
   const completed = total - missing.length;
   return {
     ready: missing.length === 0,
@@ -34,7 +45,15 @@ export function sessionReadiness(input: {
 }
 
 export function readinessTaskLabel(task: ReadinessTask): string {
-  if (task === "roster") return "Get at least 4 players going";
-  if (task === "booking") return "Confirm the court booking";
-  return "Create the player repayment split";
+  return task === "roster"
+    ? "Confirm at least 4 eligible players"
+    : "Confirm the court arrangement";
+}
+
+export function playSetupNextAction(readiness: {
+  missing: readonly string[];
+}): string {
+  return readiness.missing.includes("booking")
+    ? "Confirm court arrangement"
+    : "Set up Play";
 }

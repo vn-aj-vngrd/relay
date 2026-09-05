@@ -79,6 +79,7 @@ describe("updateLiveSessionAction", () => {
     expect(mocks.set).toHaveBeenCalledWith({
       bookedAt: expect.any(Date),
       bookingReference: "REF-1",
+      bookingNotRequired: false,
       bookingTotalCents: 120000,
       bookingNotes: null,
       version: 5,

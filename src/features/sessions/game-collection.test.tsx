@@ -155,7 +155,8 @@ describe("GameCollection", () => {
         .getByRole("link", { name: /Saturday Night Pickle/ })
         .parentElement?.style.getPropertyValue("--primary")
     ).toContain("#bd4545");
-    expect(screen.getByText("67% ready")).toBeVisible();
+    expect(screen.getByText("Confirm court arrangement")).toBeVisible();
+    expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
       "href",
       "/games/new"
@@ -172,7 +173,7 @@ describe("GameCollection", () => {
         .getByRole("link", { name: /Saturday Night Pickle/ })
         .closest("article")
     ).toHaveClass("p-3.5", "sm:p-5");
-    expect(screen.getByText("Game setup")).toBeVisible();
+    expect(screen.getByText("Confirm court arrangement")).toBeVisible();
     expect(localStorage.getItem("relay-games-view")).toBe("grid");
 
     unmount();

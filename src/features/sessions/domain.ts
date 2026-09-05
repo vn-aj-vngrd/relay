@@ -48,6 +48,7 @@ const sessionDetailsSchema = z.object({
     .max(10_000_000, "Player price can’t exceed ₱100,000.")
     .optional(),
   booked: z.boolean().default(false),
+  bookingNotRequired: z.boolean().default(false),
   bookingReference: z
     .string()
     .trim()
@@ -94,7 +95,7 @@ function validateSessionDetails(
       path: ["costKind"],
       message: "Free games must have a zero cost.",
     });
-  if (value.costKind === "unspecified" && value.playerPriceCents !== undefined)
+  if (value.costKind !== "free" && value.playerPriceCents !== undefined)
     context.addIssue({
       code: "custom",
       path: ["costKind"],
@@ -142,6 +143,7 @@ export const updateLiveSessionSchema = z.discriminatedUnion("section", [
   sessionDetailsSchema
     .pick({
       booked: true,
+      bookingNotRequired: true,
       bookingReference: true,
       bookingTotalCents: true,
       bookingNotes: true,

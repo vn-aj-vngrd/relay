@@ -22,7 +22,8 @@ type SessionPlanData = Pick<
   | "courtCount"
   | "bookedAt"
   | "playerPriceCents"
->;
+> &
+  Partial<Pick<SessionSummary, "bookingNotRequired">>;
 
 export function SessionHero({
   session,
@@ -128,12 +129,16 @@ export function SessionPlanDetails({
       <div className="col-span-2 flex gap-3 sm:col-span-1">
         <CheckCircle
           aria-hidden
-          className={`mt-0.5 shrink-0 ${session.bookedAt ? "text-success" : "text-muted"}`}
+          className={`mt-0.5 shrink-0 ${session.bookedAt || session.bookingNotRequired ? "text-success" : "text-muted"}`}
           size={20}
         />
         <div className="min-w-0">
           <p className="font-semibold">
-            {session.bookedAt ? "Court confirmed" : "Booking pending"}
+            {session.bookedAt
+              ? "Court confirmed"
+              : session.bookingNotRequired
+                ? "No booking needed"
+                : "Booking pending"}
           </p>
           <p className="mt-1 text-sm text-muted">
             {session.playerPriceCents === 0

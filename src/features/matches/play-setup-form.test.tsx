@@ -15,6 +15,57 @@ const players = [
 ];
 
 describe("PlaySetupForm", () => {
+  it("requires a fresh review after arrivals change", () => {
+    const props = {
+      sessionId: "session",
+      playerCount: 4,
+      courtCount: 1,
+      players,
+      activePlayerIds: players.map((player) => player.id),
+      readiness: { ready: true },
+    };
+    const onReview = vi.fn();
+    const { rerender } = render(
+      <PlaySetupForm {...props} wizardStep="options" onReview={onReview} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
+    expect(onReview).toHaveBeenCalledOnce();
+    rerender(<PlaySetupForm {...props} wizardStep="review" />);
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeEnabled();
+    rerender(
+      <PlaySetupForm
+        {...props}
+        playerCount={3}
+        activePlayerIds={props.activePlayerIds.slice(0, 3)}
+        wizardStep="review"
+      />
+    );
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Arrivals or courts changed"
+    );
+  });
+
+  it("blocks incomplete setup and preserves the rotation when arrangements are saved", () => {
+    const props = {
+      sessionId: "session",
+      playerCount: 4,
+      courtCount: 1,
+      players,
+    };
+    const { rerender } = render(
+      <PlaySetupForm {...props} readiness={{ ready: false }} />
+    );
+    fireEvent.click(screen.getByRole("radio", { name: /Mix It Up/ }));
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: /Complete the missing setup/ })
+    ).toHaveAttribute("href", "#setup-readiness");
+    rerender(<PlaySetupForm {...props} readiness={{ ready: true }} />);
+    expect(screen.getByRole("radio", { name: /Mix It Up/ })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Start Play" })).toBeEnabled();
+  });
+
   it("starts with the flexible Paddle Stack setup and reveals its queue rule", () => {
     const { container } = render(
       <PlaySetupForm

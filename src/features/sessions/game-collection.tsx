@@ -16,10 +16,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import { z } from "zod";
-
 import { ButtonLink } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
-
 import { sessionAccentStyle } from "./accent";
 import type {
   GameCollectionItem,
@@ -31,6 +29,7 @@ import type { ActiveInviteResponse } from "./game-invitation-card";
 import { GameInvitationCard } from "./game-invitation-card";
 import { GameDesktopViewControls } from "./game-view-menu";
 import { GamesCalendar } from "./games-calendar";
+import { playSetupNextAction } from "./readiness";
 
 export type { GameCollectionItem } from "./game-collection-types";
 export { GameViewMenu } from "./game-view-menu";
@@ -375,13 +374,11 @@ function GameList({
               <span className="hidden text-xs font-[650] text-muted sm:block">
                 {finishedLabel(game)}
               </span>
-            ) : game.readiness ? (
+            ) : game.readiness && game.status !== "live" ? (
               <span
                 className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
               >
-                {game.readiness.ready
-                  ? "Ready"
-                  : `${game.readiness.percent}% ready`}
+                {playSetupNextAction(game.readiness)}
               </span>
             ) : (
               <span className="hidden text-right sm:block">
@@ -467,29 +464,10 @@ function GameGrid({
                 <span className="truncate">{game.venue}</span>
               </p>
             </div>
-            {game.readiness && !past ? (
-              <div className="mt-3 sm:mt-5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted">Game setup</span>
-                  <span
-                    className={
-                      game.readiness.ready
-                        ? "font-semibold text-success"
-                        : "score font-semibold text-muted"
-                    }
-                  >
-                    {game.readiness.ready
-                      ? "Ready"
-                      : `${game.readiness.percent}%`}
-                  </span>
-                </div>
-                <div className="mt-2 h-1 overflow-hidden rounded-full bg-surface-strong">
-                  <span
-                    className={`block h-full rounded-full ${game.readiness.ready ? "bg-success" : "bg-primary"}`}
-                    style={{ width: `${game.readiness.percent}%` }}
-                  />
-                </div>
-              </div>
+            {game.readiness && !past && game.status !== "live" ? (
+              <p className="mt-3 text-xs font-semibold text-muted sm:mt-5">
+                {playSetupNextAction(game.readiness)}
+              </p>
             ) : null}
             <span className="mt-auto hidden items-center gap-1 pt-6 text-sm font-[650] text-primary sm:inline-flex">
               Open game{" "}

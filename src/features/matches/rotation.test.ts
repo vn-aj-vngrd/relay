@@ -65,6 +65,24 @@ describe("play rotation", () => {
     ]);
   });
 
+  it("never copies retired court labels into new matches", () => {
+    const legacyCourts = [
+      { id: "court-3", label: "Court labels etc", position: 3 },
+    ];
+    const plans = planRotation({
+      mode: "queue",
+      courts: legacyCourts,
+      waiting: waiting(["a", "b", "c", "d"]),
+      history: [],
+    });
+
+    expect(plans[0]).toMatchObject({
+      courtId: "court-3",
+      courtLabel: "Court 3",
+    });
+    expect(legacyCourts[0].label).toBe("Court labels etc");
+  });
+
   it("fills every open court when enough paddles are waiting", () => {
     expect(
       planRotation({

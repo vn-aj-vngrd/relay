@@ -169,13 +169,7 @@ export async function SessionPlay({
         courts={
           <section>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-bold">Active courts</h2>
-                <p className="mt-1 text-sm text-muted">
-                  {rotationName(data.session.rotationMode)} · scores update for
-                  everyone
-                </p>
-              </div>
+              <h2 className="text-lg font-bold">Active courts</h2>
               {viewer.canManagePlay &&
               canStartRotation &&
               data.activeMatches.length > 0 ? (

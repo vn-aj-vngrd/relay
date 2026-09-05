@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { courtLabel } from "./presentation";
+
 export const queueRules = ["adaptive", "four_off", "winner_stays"] as const;
 export type QueueRule = (typeof queueRules)[number];
 export type PartnerPolicy = "mix" | "fixed";
@@ -396,7 +398,9 @@ export function planRotation(input: {
   history: RotationHistory[];
   fixedPairs?: FixedPair[];
 }): RotationPlan[] {
-  const courts = input.courts.toSorted((a, b) => a.position - b.position);
+  const courts = input.courts
+    .map((court) => ({ ...court, label: courtLabel(court.position) }))
+    .toSorted((a, b) => a.position - b.position);
   const waiting = input.waiting.toSorted((a, b) => a.position - b.position);
   if (waiting.length < 4 || courts.length === 0) return [];
   if (input.mode === "king_of_court")

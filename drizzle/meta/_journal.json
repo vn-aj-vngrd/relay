@@ -309,6 +309,27 @@
       "when": 1788589952070,
       "tag": "0043_retire_custom_court_labels",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1788589952071,
+      "tag": "0044_normalize_match_court_labels",
+      "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1788592571458,
+      "tag": "0045_play_setup_arrangements",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1788595458919,
+      "tag": "0046_retire_payment_deferral_gate",
+      "breakpoints": true
     }
   ]
 }

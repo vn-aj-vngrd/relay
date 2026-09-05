@@ -28,7 +28,10 @@ import {
   homePendingRequestLabel,
 } from "@/features/sessions/home-presentation";
 import { getHomeSessions } from "@/features/sessions/queries";
-import { sessionReadiness } from "@/features/sessions/readiness";
+import {
+  playSetupNextAction,
+  sessionReadiness,
+} from "@/features/sessions/readiness";
 
 export default async function HomePage() {
   const user = await requireUser();
@@ -44,14 +47,13 @@ export default async function HomePage() {
   );
   const hasTentative = !next && upcoming.length > 0;
   const nextReadiness =
-    next && next.session.hostId === user.id
+    next &&
+    next.session.hostId === user.id &&
+    next.session.status === "published"
       ? sessionReadiness({
-          goingCount: next.playerCount,
+          goingCount: next.eligiblePlayerCount,
           booked: Boolean(next.session.bookedAt),
-          expectsCollection: Boolean(
-            next.session.playerPriceCents || next.session.bookingTotalCents
-          ),
-          collectionCreated: next.hasExpense,
+          bookingNotRequired: next.session.bookingNotRequired,
         })
       : null;
   const invitations: GameCollectionItem[] = data.invitations.map(
@@ -131,12 +133,12 @@ export default async function HomePage() {
                     {nextIsLive
                       ? "Live now"
                       : nextReadiness
-                        ? nextReadiness.ready
-                          ? "Ready to play"
-                          : `${nextReadiness.percent}% ready`
+                        ? playSetupNextAction(nextReadiness)
                         : next.session.bookedAt
                           ? "Court confirmed"
-                          : "Booking pending"}
+                          : next.session.bookingNotRequired
+                            ? "No booking needed"
+                            : "Booking pending"}
                   </span>
                 </div>
                 <h3

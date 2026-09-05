@@ -436,6 +436,9 @@ export const sessions = pgTable(
     rosterLocked: boolean("roster_locked").notNull().default(false),
     requiresApproval: boolean("requires_approval").notNull().default(false),
     bookedAt: timestamp("booked_at", { withTimezone: true }),
+    bookingNotRequired: boolean("booking_not_required")
+      .default(false)
+      .notNull(),
     bookingReference: text("booking_reference"),
     bookingScreenshotPath: text("booking_screenshot_path"),
     bookingTotalCents: integer("booking_total_cents"),

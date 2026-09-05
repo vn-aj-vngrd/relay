@@ -21,7 +21,8 @@ export async function updateLiveSessionAction(
     `user:${user.id}`,
     "Game changes are happening too quickly. Wait a moment and try again."
   );
-  const booked = formData.get("booked") === "on";
+  const bookingNotRequired = formData.get("bookingNotRequired") === "on";
+  const booked = !bookingNotRequired && formData.get("booked") === "on";
   const total = formData.get("bookingTotal");
   const parsed = updateLiveSessionSchema.safeParse({
     section: formData.get("section"),
@@ -29,6 +30,7 @@ export async function updateLiveSessionAction(
     version: formData.get("version"),
     notes: formData.get("notes") || undefined,
     booked,
+    bookingNotRequired,
     bookingReference: booked
       ? formData.get("bookingReference") || undefined
       : undefined,
@@ -81,6 +83,7 @@ export async function updateLiveSessionAction(
           ...(details.section === "invite"
             ? { notes: details.notes ?? null }
             : {
+                bookingNotRequired: details.bookingNotRequired,
                 bookedAt: details.booked
                   ? (session.bookedAt ?? new Date())
                   : null,

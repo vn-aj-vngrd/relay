@@ -43,8 +43,7 @@ const heroPlayers = ["Van", "AJ", "Mika", "Bea", "John"];
 const heroReadiness = sessionReadiness({
   goingCount: 8,
   booked: true,
-  expectsCollection: true,
-  collectionCreated: false,
+  bookingNotRequired: false,
 });
 const heroOverview: SessionOverview = {
   messageCount: 12,

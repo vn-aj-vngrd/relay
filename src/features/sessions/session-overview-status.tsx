@@ -8,8 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 
 import { peso } from "./format";
 import type { SessionOverview } from "./overview";
-import type { SessionReadiness } from "./readiness";
-import { SessionReadinessPanel } from "./session-readiness";
+import { playSetupNextAction, type SessionReadiness } from "./readiness";
 
 function responseLabel(rsvp?: string) {
   if (rsvp === "waitlisted") return "You’re on the waitlist";
@@ -129,16 +128,21 @@ export function SessionOverviewStatus({
         {isHost ? "Host access" : "Your response"}
       </p>
       <h2 className="mt-1 text-lg font-bold">
-        {isHost ? "You manage this game" : responseLabel(rsvp)}
+        {isHost
+          ? status === "live"
+            ? "Play is live"
+            : "You manage this game"
+          : responseLabel(rsvp)}
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">
         {isHost
-          ? "Finish the game setup, then open Play when the group reaches the court."
+          ? status === "live"
+            ? "Manage courts, scores, and the queue in Play. Booking and payment details can still be updated."
+            : readiness.missing.includes("booking")
+              ? "Confirm that the court is ready before setting up Play. Payments can be arranged separately."
+              : "Confirm players and choose your rotation when the group reaches the court."
           : responseDetail(rsvp)}
       </p>
-      {isHost ? (
-        <SessionReadinessPanel readiness={readiness} sessionId={sessionId} />
-      ) : null}
       {isHost ? (
         <ButtonLink
           href={
@@ -149,7 +153,7 @@ export function SessionOverviewStatus({
           className="mt-5 w-full"
         >
           <Play aria-hidden weight="fill" size={15} />
-          {status === "live" ? "Open Play" : "Set up Play"}
+          {status === "live" ? "Open Play" : playSetupNextAction(readiness)}
         </ButtonLink>
       ) : playerPaymentAction ? (
         <ButtonLink

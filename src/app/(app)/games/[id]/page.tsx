@@ -16,7 +16,7 @@ import {
 } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
-import { sessionReadiness } from "@/features/sessions/readiness";
+import { loadPlayReadiness } from "@/features/sessions/readiness-query";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionOverviewStatus } from "@/features/sessions/session-overview-status";
@@ -199,21 +199,15 @@ export default async function GameOverviewPage({
     sessionPlayerId: membership?.id ?? "",
     canManage: isHost,
   });
-  const readiness = sessionReadiness({
-    goingCount: going.length,
-    booked: Boolean(session.bookedAt),
-    expectsCollection: Boolean(
-      session.playerPriceCents || session.bookingTotalCents
-    ),
-    collectionCreated: overview.payment.view === "host",
-  });
+  const { readiness } = await loadPlayReadiness(session);
   const showCreated =
     query.created === "1" && isHost && session.status === "published";
   const shareDetails = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)} · ${session.venueName}`;
   const bookingAction =
     isHost &&
     ["draft", "published"].includes(session.status) &&
-    !session.bookedAt ? (
+    !session.bookedAt &&
+    !session.bookingNotRequired ? (
       <form noValidate action={markSessionBookedAction}>
         <input type="hidden" name="sessionId" value={session.id} />
         <SubmitButton

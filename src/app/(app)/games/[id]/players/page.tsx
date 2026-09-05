@@ -63,13 +63,6 @@ export default async function PlayersPage({
                   <h2 id="add-player-title" className="font-bold">
                     Build the roster your way
                   </h2>
-                  <p className="mt-1 text-sm leading-6 text-muted">
-                    Add guests by name, invite Relay players with @username, or
-                    share the game link.{" "}
-                    {data.session.requiresApproval
-                      ? "New join requests need approval."
-                      : "New players join automatically while spots are open."}
-                  </p>
                 </div>
               </div>
               <RosterLockButton

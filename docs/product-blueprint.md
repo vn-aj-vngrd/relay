@@ -31,8 +31,8 @@ Relay coordinates everything around a recreational pickleball session; it does n
 
 ### Arrive → play live
 
-1. Host starts Play.
-2. Available players enter a deterministic queue; host picks manual, queue, random, winner-stays, or king-of-court rotation.
+1. Host selects Set up Play. An unresolved booking prompts Is the court ready? with Booking confirmed, No booking needed, or Not yet. Resolved bookings open the three-step wizard directly: Players, Game options, Review. Payment arrangement is independent and can be done before, during, or after Play.
+2. Host confirms eligible arrivals, chooses the rotation, and assigns pairs when required. Back preserves selections; Start Play appears only after a read-only review of players, courts, rotation, and pairs. Start Play rechecks prerequisites, current organizer authority, open courts, and mode-specific player/pair rules under the session lock before activating the session. Live sessions replace setup percentages with live guidance.
 3. Active court cards show teams and large scores. Score controls use optimistic version checks.
 4. Completing a match records the result, updates standings, and advances the queue according to the selected rule.
 5. Realtime subscriptions cover only court, match, queue, score, and chat changes.

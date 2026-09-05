@@ -37,6 +37,7 @@ import type {
 import { encodeGameCursor, type GameCursor } from "./game-pagination";
 import { visibleHomePendingCount } from "./home-presentation";
 import { sessionReadiness } from "./readiness";
+import { eligiblePlayerCount } from "./readiness-query";
 import { resolveSessionWorkspaceAccess } from "./session-access";
 
 export async function getUserSessions(userId: string) {
@@ -153,6 +154,7 @@ export async function getHomeSessions(userId: string) {
           .select({
             sessionId: sessionPlayers.sessionId,
             goingTotal: sql<number>`count(*) filter (where ${sessionPlayers.rsvp} = 'going')`,
+            eligibleTotal: eligiblePlayerCount,
             pendingTotal: sql<number>`count(*) filter (where ${sessionPlayers.rsvp} = 'pending')`,
           })
           .from(sessionPlayers)
@@ -194,6 +196,10 @@ export async function getHomeSessions(userId: string) {
         row.session.hostId === userId
       ),
       hasExpense: sessionsWithExpense.has(row.session.id),
+      eligiblePlayerCount: Number(
+        counts.find((count) => count.sessionId === row.session.id)
+          ?.eligibleTotal ?? 0
+      ),
       hostName: hostNames.get(row.session.hostId) ?? "Relay host",
     };
   };
@@ -218,9 +224,13 @@ async function toGameCollectionItems(
   const now = new Date();
   const sessionIds = rows.map(({ session }) => session.id);
   const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
-  const [counts, expenseRows, hostProfiles] = await Promise.all([
+  const [counts, hostProfiles] = await Promise.all([
     db
-      .select({ sessionId: sessionPlayers.sessionId, total: count() })
+      .select({
+        sessionId: sessionPlayers.sessionId,
+        total: count(),
+        eligibleTotal: eligiblePlayerCount,
+      })
       .from(sessionPlayers)
       .where(
         and(
@@ -230,19 +240,12 @@ async function toGameCollectionItems(
       )
       .groupBy(sessionPlayers.sessionId),
     db
-      .select({ sessionId: expenses.sessionId })
-      .from(expenses)
-      .where(inArray(expenses.sessionId, sessionIds)),
-    db
       .select({ userId: profiles.userId, name: profiles.name })
       .from(profiles)
       .where(inArray(profiles.userId, hostIds)),
   ]);
   const playerCounts = new Map(
     counts.map(({ sessionId, total }) => [sessionId, Number(total)])
-  );
-  const sessionsWithExpense = new Set(
-    expenseRows.map(({ sessionId }) => sessionId)
   );
   const hostNames = new Map(
     hostProfiles.map(({ userId, name }) => [userId, name])
@@ -276,15 +279,15 @@ async function toGameCollectionItems(
       canReplay: session.hostId === userId && session.status === "completed",
       ...(session.hostId === userId &&
       session.endsAt > now &&
-      ["published", "live"].includes(session.status)
+      session.status === "published"
         ? {
             readiness: sessionReadiness({
-              goingCount: playerCount,
-              booked: Boolean(session.bookedAt),
-              expectsCollection: Boolean(
-                session.playerPriceCents || session.bookingTotalCents
+              goingCount: Number(
+                counts.find((count) => count.sessionId === session.id)
+                  ?.eligibleTotal ?? 0
               ),
-              collectionCreated: sessionsWithExpense.has(session.id),
+              booked: Boolean(session.bookedAt),
+              bookingNotRequired: session.bookingNotRequired,
             }),
           }
         : {}),

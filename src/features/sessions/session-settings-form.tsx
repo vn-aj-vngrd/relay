@@ -56,6 +56,7 @@ export type SessionSettingsDefaults = {
   visibility: "public" | "link" | "private";
   requiresApproval: boolean;
   booked: boolean;
+  bookingNotRequired?: boolean;
   bookingReference: string;
   bookingTotal: string;
   bookingNotes: string;
@@ -77,6 +78,9 @@ export function SessionSettingsForm({
   const preserveValues = usePreserveFormValuesOnError(state);
   const [booked, setBooked] = useState(
     state.values ? state.values.booked === "on" : defaults.booked
+  );
+  const [bookingNotRequired, setBookingNotRequired] = useState(
+    defaults.bookingNotRequired ?? false
   );
   const [visibility, setVisibility] = useState<"public" | "link" | "private">(
     (state.values?.visibility as "public" | "link" | "private" | undefined) ??
@@ -375,7 +379,10 @@ export function SessionSettingsForm({
             type="checkbox"
             name="booked"
             checked={booked}
-            onChange={(event) => setBooked(event.target.checked)}
+            onChange={(event) => {
+              setBooked(event.target.checked);
+              if (event.target.checked) setBookingNotRequired(false);
+            }}
             className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
           />
           <span>
@@ -384,6 +391,19 @@ export function SessionSettingsForm({
               Show a confirmed booking status to players.
             </span>
           </span>
+        </label>
+        <label className="flex min-h-12 cursor-pointer items-center gap-3">
+          <input
+            type="checkbox"
+            name="bookingNotRequired"
+            checked={bookingNotRequired}
+            onChange={(event) => {
+              setBookingNotRequired(event.target.checked);
+              if (event.target.checked) setBooked(false);
+            }}
+            className="size-5 accent-[var(--primary)]"
+          />
+          <span className="text-sm font-semibold">No booking needed</span>
         </label>
         {booked ? (
           <div className="mt-5 space-y-5">
