@@ -19,7 +19,6 @@ type SessionPlanData = Pick<
   | "endsAt"
   | "venueName"
   | "venueAddress"
-  | "courtNumbers"
   | "courtCount"
   | "bookedAt"
   | "playerPriceCents"
@@ -122,9 +121,7 @@ export function SessionPlanDetails({
               : `${durationMinutes} minutes`}
           </p>
           <p className="mt-1 text-sm text-muted">
-            {session.courtNumbers?.length
-              ? `Courts ${session.courtNumbers.join(" & ")}`
-              : `${session.courtCount} ${session.courtCount === 1 ? "court" : "courts"}`}
+            {`${session.courtCount} ${session.courtCount === 1 ? "court" : "courts"}`}
           </p>
         </div>
       </div>

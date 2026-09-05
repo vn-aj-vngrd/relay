@@ -133,6 +133,26 @@ export const updateSessionSchema = sessionDetailsSchema
   })
   .superRefine(validateSessionDetails);
 
+export const updateLiveSessionSchema = z.discriminatedUnion("section", [
+  sessionDetailsSchema.pick({ notes: true }).extend({
+    section: z.literal("invite"),
+    sessionId: z.uuid(),
+    version: z.coerce.number().int().positive(),
+  }),
+  sessionDetailsSchema
+    .pick({
+      booked: true,
+      bookingReference: true,
+      bookingTotalCents: true,
+      bookingNotes: true,
+    })
+    .extend({
+      section: z.literal("booking"),
+      sessionId: z.uuid(),
+      version: z.coerce.number().int().positive(),
+    }),
+]);
+
 export function canRespondToSession(input: {
   visibility: "public" | "link" | "private";
   hostId: string;

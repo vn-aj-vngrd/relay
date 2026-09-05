@@ -227,9 +227,7 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
           : "Anyone with the link",
     cost: "Payment not set up yet",
     details:
-      values.courtNumbers ||
-      values.notes ||
-      (values.accentColor && values.accentColor !== "violet")
+      values.notes || (values.accentColor && values.accentColor !== "violet")
         ? "Optional game details added"
         : "No optional details added",
     booking:
@@ -417,9 +415,6 @@ function CreateSessionFormContent({
     if (first) return focusField(first);
 
     const detailLabels = [
-      String(data.get("courtNumbers") ?? "").trim()
-        ? "Court labels added"
-        : null,
       String(data.get("notes") ?? "").trim() ? "Player note added" : null,
       String(data.get("accentColor") ?? "violet") !== "violet"
         ? "Custom game color"
@@ -731,7 +726,7 @@ function CreateSessionFormContent({
           <QuantityInput
             id="courts"
             label="Court quantity"
-            hint="1–20 courts. You can label them later."
+            hint="1–20 courts."
             min={1}
             max={20}
             initialValue={
@@ -852,21 +847,6 @@ function CreateSessionFormContent({
         <SessionAccentPicker
           defaultValue={value("accentColor", defaults.accentColor ?? "violet")}
         />
-        <div>
-          <label className={labelClass} htmlFor="court-numbers">
-            Court labels
-          </label>
-          <input
-            className={fieldClass()}
-            id="court-numbers"
-            name="courtNumbers"
-            placeholder="2, 3, Center"
-            defaultValue={value("courtNumbers")}
-          />
-          <p className="mt-1.5 text-sm text-muted">
-            Optional names shown in Play.
-          </p>
-        </div>
         <div>
           <label className={labelClass} htmlFor="notes">
             Note for players

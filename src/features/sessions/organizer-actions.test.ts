@@ -154,7 +154,18 @@ describe("addCohostAction", () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
 
-  it("allows only the original host to add co-host access before Play", async () => {
+  it("adds a co-host during live Play without changing participation", async () => {
+    mocks.findSession.mockResolvedValueOnce({ ...session, status: "live" });
+    await expect(addCohostAction({}, addFormData())).resolves.toEqual({
+      message: "@jamie-tan added as a co-host.",
+    });
+    expect(mocks.playerUpdateSet).toHaveBeenCalledWith({
+      role: "cohost",
+      updatedAt: expect.any(Date),
+    });
+  });
+
+  it("allows only the original host and rejects ended games", async () => {
     mocks.findSession.mockResolvedValueOnce({
       ...session,
       hostId: "other-host",
@@ -164,9 +175,12 @@ describe("addCohostAction", () => {
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
 
-    mocks.findSession.mockResolvedValueOnce({ ...session, status: "live" });
+    mocks.findSession.mockResolvedValueOnce({
+      ...session,
+      status: "completed",
+    });
     await expect(addCohostAction({}, addFormData())).resolves.toEqual({
-      error: "Co-host access can only be changed before Play starts.",
+      error: "Co-host access is view-only after the game ends.",
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
@@ -251,7 +265,18 @@ describe("setCohostRoleAction", () => {
     });
   });
 
-  it("allows only the session host before Play", async () => {
+  it("allows role changes during live Play without changing participation", async () => {
+    mocks.findSession.mockResolvedValueOnce({ ...session, status: "live" });
+    await expect(setCohostRoleAction({}, formData("cohost"))).resolves.toEqual({
+      message: "Co-host access assigned.",
+    });
+    expect(mocks.playerUpdateSet).toHaveBeenCalledWith({
+      role: "cohost",
+      updatedAt: expect.any(Date),
+    });
+  });
+
+  it("allows only the session host and rejects ended games", async () => {
     mocks.findSession.mockResolvedValueOnce({
       ...session,
       hostId: "other-host",
@@ -261,9 +286,12 @@ describe("setCohostRoleAction", () => {
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
 
-    mocks.findSession.mockResolvedValueOnce({ ...session, status: "live" });
+    mocks.findSession.mockResolvedValueOnce({
+      ...session,
+      status: "cancelled",
+    });
     await expect(setCohostRoleAction({}, formData("cohost"))).resolves.toEqual({
-      error: "Co-host access can only be changed before Play starts.",
+      error: "Co-host access is view-only after the game ends.",
     });
     expect(mocks.transaction).not.toHaveBeenCalled();
   });

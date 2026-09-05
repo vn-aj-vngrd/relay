@@ -423,7 +423,6 @@ export const sessions = pgTable(
     timezone: text("timezone").notNull().default("Asia/Manila"),
     capacity: integer("capacity").notNull(),
     courtCount: integer("court_count").notNull().default(1),
-    courtNumbers: text("court_numbers").array(),
     notes: text("notes"),
     playerPriceCents: integer("player_price_cents"),
     status: sessionStatus("status").notNull().default("draft"),

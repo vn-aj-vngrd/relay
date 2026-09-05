@@ -369,7 +369,7 @@ export default async function PublicSessionPage({
                   className="public-session-notes"
                 >
                   <h2 id="notes-title" className="text-lg font-bold">
-                    A note from {hostProfile?.name?.split(" ")[0] ?? "the host"}
+                    Note
                   </h2>
                   <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">
                     {session.notes}

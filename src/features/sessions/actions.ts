@@ -142,7 +142,6 @@ export async function createSessionAction(
           "visibility",
           "costKind",
           "cost",
-          "courtNumbers",
           "notes",
           "booked",
           "bookingReference",
@@ -242,10 +241,6 @@ export async function createSessionAction(
     inviteeExperience.map((profile) => [profile.userId, profile.skillLevel])
   );
   const hostPlaying = formData.get("hostPlaying") !== "no";
-  const courtNumbers = String(formData.get("courtNumbers") ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
   const created = await db.transaction(async (tx) => {
     const [session] = await tx
       .insert(sessions)
@@ -263,7 +258,6 @@ export async function createSessionAction(
         endsAt: parsed.data.endsAt,
         capacity: parsed.data.capacity,
         courtCount: parsed.data.courtCount,
-        courtNumbers,
         notes: parsed.data.notes,
         playerPriceCents: parsed.data.playerPriceCents,
         visibility: parsed.data.visibility,
@@ -320,9 +314,7 @@ export async function createSessionAction(
     await tx.insert(courts).values(
       Array.from({ length: session.courtCount }, (__, index) => ({
         sessionId: session.id,
-        label: courtNumbers[index]
-          ? `Court ${courtNumbers[index]}`
-          : `Court ${index + 1}`,
+        label: `Court ${index + 1}`,
         position: index + 1,
       }))
     );
@@ -350,11 +342,6 @@ export async function createSessionAction(
   revalidatePath("/games");
   revalidatePath("/groups");
   redirect(createSessionDestination(created.id, intent === "published"));
-}
-
-function courtLabel(value: string | undefined, position: number) {
-  if (!value) return `Court ${position}`;
-  return /^court\b/i.test(value) ? value : `Court ${value}`;
 }
 
 function costLabel(value: number | null | undefined) {
@@ -416,7 +403,6 @@ export async function updateSessionAction(
       "courts",
       "costKind",
       "cost",
-      "courtNumbers",
       "notes",
       "visibility",
       "booked",
@@ -495,10 +481,6 @@ export async function updateSessionAction(
       },
     };
 
-  const labels = String(formData.get("courtNumbers") ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
   if (parsed.data.courtCount < existing.courtCount) {
     const removedCourts = await db
       .select({ id: courts.id })
@@ -563,10 +545,7 @@ export async function updateSessionAction(
       ? "schedule"
       : null,
     existing.capacity !== parsed.data.capacity ? "player limit" : null,
-    existing.courtCount !== parsed.data.courtCount ||
-    JSON.stringify(existing.courtNumbers ?? []) !== JSON.stringify(labels)
-      ? "courts"
-      : null,
+    existing.courtCount !== parsed.data.courtCount ? "courts" : null,
     costChanged ? "player price" : null,
     existing.visibility !== parsed.data.visibility ? "visibility" : null,
     existing.notes !== (parsed.data.notes ?? null) ? "notes" : null,
@@ -592,7 +571,22 @@ export async function updateSessionAction(
       const current = await tx.query.sessions.findFirst({
         where: eq(sessions.id, existing.id),
       });
-      if (!current || current.version !== parsed.data.version)
+      if (
+        !current ||
+        current.version !== parsed.data.version ||
+        (current.status !== "draft" && current.status !== "published")
+      )
+        throw new Error("VERSION_CONFLICT");
+      const currentMembership = await tx.query.sessionPlayers.findFirst({
+        where: and(
+          eq(sessionPlayers.sessionId, current.id),
+          eq(sessionPlayers.userId, user.id)
+        ),
+      });
+      if (
+        current.hostId !== user.id &&
+        (currentMembership?.role !== "cohost" || currentMembership.leftAt)
+      )
         throw new Error("VERSION_CONFLICT");
       await tx
         .update(sessions)
@@ -607,7 +601,6 @@ export async function updateSessionAction(
           endsAt: parsed.data.endsAt,
           capacity: parsed.data.capacity,
           courtCount: parsed.data.courtCount,
-          courtNumbers: labels,
           notes: parsed.data.notes ?? null,
           playerPriceCents: nextCost,
           visibility: parsed.data.visibility,
@@ -635,7 +628,7 @@ export async function updateSessionAction(
         .where(eq(courts.sessionId, existing.id));
       for (let index = 0; index < parsed.data.courtCount; index += 1) {
         const position = index + 1;
-        const label = courtLabel(labels[index], position);
+        const label = `Court ${position}`;
         const currentCourt = existingCourts.find(
           (court) => court.position === position
         );

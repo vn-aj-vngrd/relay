@@ -1,8 +1,6 @@
-import { LockKey } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";
-import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
@@ -56,8 +54,8 @@ export default async function GameSettingsPage({
   const canEdit =
     data.session.hostId === user.id || data.membership?.role === "cohost";
   if (!canEdit) notFound();
-  const locked =
-    data.session.status !== "draft" && data.session.status !== "published";
+  const ended =
+    data.session.status === "completed" || data.session.status === "cancelled";
   const start = dateParts(data.session.startsAt, data.session.timezone);
   const end = dateParts(data.session.endsAt, data.session.timezone);
   const activeRoster = data.roster.filter(({ player }) => !player.leftAt);
@@ -98,7 +96,6 @@ export default async function GameSettingsPage({
     end: end.time,
     capacity: data.session.capacity,
     courts: data.session.courtCount,
-    courtNumbers: data.session.courtNumbers?.join(", ") ?? "",
     cost:
       data.session.playerPriceCents == null
         ? ""
@@ -117,45 +114,32 @@ export default async function GameSettingsPage({
 
   return (
     <>
-      <GamePageIntro
-        title="Game settings"
-        description="Keep the shared plan accurate for everyone with the invite."
-      />
+      <GamePageIntro title="Game settings" />
       <div className="mx-auto w-full max-w-6xl">
         <GameSettingsTabs sessionId={sessionId} active={section} />
         {section !== "organizers" ? (
-          locked ? (
-            <section className="border-b border-line py-10 text-center">
-              <LockKey aria-hidden size={24} className="mx-auto text-muted" />
-              <h2 className="mt-4 text-xl font-bold">Settings are locked</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-                Game details stop changing once Play begins or the session is
-                complete. This protects court assignments, results, and the
-                shared memory.
-              </p>
-              <ButtonLink href={`/games/${sessionId}`} className="mt-6">
-                Back to game
-              </ButtonLink>
-            </section>
-          ) : (
-            <div className="mt-7">
-              <SessionSettingsForm defaults={defaults} section={section} />
-              {section === "plan" && data.session.status === "published" ? (
-                <CancelSessionControl
-                  sessionId={data.session.id}
-                  version={data.session.version}
-                  playerCount={data.roster.length}
-                />
-              ) : null}
-            </div>
-          )
+          <div className="mt-7">
+            <SessionSettingsForm
+              key={`${section}-${data.session.status}`}
+              defaults={defaults}
+              section={section}
+              status={data.session.status}
+            />
+            {section === "plan" && data.session.status === "published" ? (
+              <CancelSessionControl
+                sessionId={data.session.id}
+                version={data.session.version}
+                playerCount={data.roster.length}
+              />
+            ) : null}
+          </div>
         ) : (
           <>
             <OrganizerSettings
               sessionId={data.session.id}
               version={data.session.version}
               organizers={organizers}
-              canManage={data.session.hostId === user.id && !locked}
+              canManage={data.session.hostId === user.id && !ended}
             />
             {data.session.hostId === user.id &&
             data.session.status !== "completed" &&

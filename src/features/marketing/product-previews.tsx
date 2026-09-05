@@ -34,7 +34,6 @@ const heroSession = {
   endsAt: new Date("2026-08-22T14:00:00.000Z"),
   venueName: "Central Pickle",
   venueAddress: "Greenfield District, Mandaluyong",
-  courtNumbers: ["2", "3"],
   courtCount: 2,
   bookedAt: new Date("2026-08-18T03:00:00.000Z"),
   playerPriceCents: 30000,

@@ -161,8 +161,8 @@ export async function addCohostAction(
   ]);
   if (!session || session.hostId !== user.id)
     return { error: "Only the host can add a co-host." };
-  if (session.status !== "draft" && session.status !== "published")
-    return { error: "Co-host access can only be changed before Play starts." };
+  if (session.status === "completed" || session.status === "cancelled")
+    return { error: "Co-host access is view-only after the game ends." };
   if (!profile)
     return { error: `No Relay member found for @${parsed.data.username}.` };
   if (profile.userId === session.hostId)
@@ -202,7 +202,7 @@ export async function addCohostAction(
             eq(sessions.id, session.id),
             eq(sessions.hostId, user.id),
             eq(sessions.version, parsed.data.version),
-            inArray(sessions.status, ["draft", "published"])
+            inArray(sessions.status, ["draft", "published", "live"])
           )
         )
         .returning({ id: sessions.id });
@@ -303,8 +303,8 @@ export async function setCohostRoleAction(
   });
   if (!session || session.hostId !== user.id)
     return { error: "Only the host can change co-host access." };
-  if (session.status !== "draft" && session.status !== "published")
-    return { error: "Co-host access can only be changed before Play starts." };
+  if (session.status === "completed" || session.status === "cancelled")
+    return { error: "Co-host access is view-only after the game ends." };
 
   const desiredRole = parsed.data.role;
   try {
@@ -352,7 +352,7 @@ export async function setCohostRoleAction(
             eq(sessions.id, session.id),
             eq(sessions.hostId, user.id),
             eq(sessions.version, parsed.data.version),
-            inArray(sessions.status, ["draft", "published"])
+            inArray(sessions.status, ["draft", "published", "live"])
           )
         )
         .returning({ id: sessions.id });

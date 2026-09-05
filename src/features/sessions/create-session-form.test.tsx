@@ -117,7 +117,7 @@ describe("CreateSessionForm", () => {
 
     expect(courts).toHaveValue(2);
     expect(courts.parentElement?.nextElementSibling).toHaveTextContent(
-      "1–20 courts. You can label them later."
+      "1–20 courts."
     );
     const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
     expect(capacity.parentElement?.nextElementSibling).toHaveTextContent(
@@ -205,6 +205,19 @@ describe("CreateSessionForm", () => {
     expect(screen.getByRole("radio", { name: "Court blue" })).toBeChecked();
   });
 
+  it("keeps player notes without offering custom court labels", () => {
+    const { container } = render(
+      <CreateSessionForm defaults={completePlan} now={now} />
+    );
+    moveToDetails();
+
+    expect(screen.getByLabelText("Note for players")).toBeVisible();
+    expect(screen.queryByLabelText("Court labels")).not.toBeInTheDocument();
+    expect(container.querySelector('[name="courtNumbers"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Review game" }));
+    expect(screen.getByText("No optional details added")).toBeVisible();
+  });
+
   it("offers optional booking details before a read-only review", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToDetails();
@@ -233,7 +246,7 @@ describe("CreateSessionForm", () => {
     expect(screen.getAllByRole("button", { name: "Edit" })).toHaveLength(3);
   });
 
-  it("restores an anonymous draft at Review after authentication", async () => {
+  it("restores an anonymous draft without reviving retired court labels", async () => {
     localStorage.setItem(
       "relay-game-draft-v1",
       JSON.stringify({
@@ -246,6 +259,7 @@ describe("CreateSessionForm", () => {
           end: "21:00",
           capacity: "8",
           courts: "2",
+          courtNumbers: "2, 3, Center",
           visibility: "link",
           costKind: "free",
           cost: "0",
@@ -260,6 +274,8 @@ describe("CreateSessionForm", () => {
       await screen.findByRole("heading", { name: "Review your game" })
     ).toBeVisible();
     expect(screen.getByText("Saturday Pickle · Central Pickle")).toBeVisible();
+    expect(screen.getByText("No optional details added")).toBeVisible();
+    expect(screen.queryByDisplayValue("2, 3, Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish game" })).toBeVisible();
   });
 

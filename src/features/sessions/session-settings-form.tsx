@@ -15,6 +15,7 @@ import { VenueCombobox } from "@/features/venues/venue-combobox";
 import { type SessionActionState, updateSessionAction } from "./actions";
 import { QuantityInput } from "./create-session-form";
 import type { GameSettingsSection } from "./game-settings-tabs";
+import { updateLiveSessionAction } from "./live-settings-actions";
 import { SessionAccentPicker } from "./session-accent-picker";
 
 const label = "block text-sm font-[650]";
@@ -50,7 +51,6 @@ export type SessionSettingsDefaults = {
   end: string;
   capacity: number;
   courts: number;
-  courtNumbers: string;
   cost: string;
   notes: string;
   visibility: "public" | "link" | "private";
@@ -64,12 +64,14 @@ export type SessionSettingsDefaults = {
 export function SessionSettingsForm({
   defaults,
   section = "plan",
+  status = "published",
 }: {
   defaults: SessionSettingsDefaults;
+  status?: "draft" | "published" | "live" | "completed" | "cancelled";
   section?: Exclude<GameSettingsSection, "organizers">;
 }) {
   const [state, action] = useActionState<SessionActionState, FormData>(
-    updateSessionAction,
+    status === "live" ? updateLiveSessionAction : updateSessionAction,
     {}
   );
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -94,6 +96,9 @@ export function SessionSettingsForm({
   const value = (key: keyof SessionSettingsDefaults) =>
     state.values?.[key] ?? String(defaults[key] ?? "");
   const error = (key: string) => state.fieldErrors?.[key]?.[0];
+  const locked = status !== "draft" && status !== "published";
+  const readOnly = status === "completed" || status === "cancelled";
+  const canSave = !readOnly && (!locked || section !== "plan");
 
   return (
     <form
@@ -104,6 +109,15 @@ export function SessionSettingsForm({
     >
       <input type="hidden" name="sessionId" value={defaults.id} />
       <input type="hidden" name="version" value={defaults.version} />
+      <input type="hidden" name="section" value={section} />
+      {locked ? (
+        <p role="status" className="text-sm leading-6 text-muted">
+          {readOnly
+            ? "This game has ended. Settings are view-only."
+            : "The plan and access rules are locked during Play. You can still update the player note, booking details, and organizers."}
+        </p>
+      ) : null}
+      {state.success ? <p role="status">Changes saved.</p> : null}
       {state.error ? (
         <div
           role="alert"
@@ -113,7 +127,12 @@ export function SessionSettingsForm({
         </div>
       ) : null}
 
-      <section aria-labelledby="settings-plan" hidden={section !== "plan"}>
+      <fieldset
+        disabled={locked}
+        className="min-w-0"
+        aria-labelledby="settings-plan"
+        hidden={section !== "plan"}
+      >
         <div className="mb-5">
           <h2 id="settings-plan" className="text-lg font-bold">
             Plan
@@ -211,105 +230,92 @@ export function SessionSettingsForm({
               error={error("courts")}
             />
           </div>
-          <div>
-            <label htmlFor="settings-courts" className={label}>
-              Court labels
-            </label>
-            <input
-              id="settings-courts"
-              name="courtNumbers"
-              defaultValue={value("courtNumbers")}
-              className={field}
-              placeholder="2, 3, Center"
-            />
-            <p className="mt-1.5 text-sm text-muted">
-              Optional labels, separated by commas.
-            </p>
-          </div>
         </div>
-      </section>
+      </fieldset>
 
       <section
         id="settings-appearance"
         aria-labelledby="settings-sharing"
         hidden={section !== "invite"}
       >
-        <div className="mb-5">
-          <h2 id="settings-sharing" className="text-lg font-bold">
-            Invite settings
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            Customize the cover and keep the shared plan accurate before players
-            arrive.
-          </p>
-        </div>
-        <SessionAccentPicker defaultValue={value("accentColor")} />
-        <div className="mt-7 grid gap-6 sm:grid-cols-2">
-          <SelectField
-            id="settings-visibility"
-            name="visibility"
-            label="Visibility"
-            value={visibility}
-            onValueChange={(next) => setVisibility(next as typeof visibility)}
-            options={[
-              { value: "link", label: "Anyone with the link" },
-              { value: "public", label: "Public — eligible for Open games" },
-              { value: "private", label: "Private — invited players only" },
-            ]}
-          />
-          <fieldset>
-            <legend className={label}>Player price</legend>
-            {costKind === "share" ? (
-              <div className="mt-2 rounded-lg border border-line px-3 py-2.5">
-                <input type="hidden" name="costKind" value="unspecified" />
-                <p className="score text-sm font-semibold">
-                  {formatPlayerPrice(value("cost"))} per player
-                </p>
-                <p className="mt-1 text-xs text-muted">
-                  Calculated from the current repayment split. Manage it in
-                  Payments.
-                </p>
-              </div>
-            ) : (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[
-                  ["free", "Free"],
-                  ["unspecified", "Not set yet"],
-                ].map(([kind, text]) => (
-                  <label
-                    key={kind}
-                    className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold sm:min-h-10 ${costKind === kind ? "border-primary bg-primary-soft text-primary" : "border-line"}`}
-                  >
-                    <input
-                      type="radio"
-                      name="costKind"
-                      value={kind}
-                      checked={costKind === kind}
-                      onChange={() => setCostKind(kind as typeof costKind)}
-                      className="h-4 w-4 accent-[var(--primary)]"
-                    />
-                    {text}
-                  </label>
-                ))}
-              </div>
-            )}
-            {visibility === "public" && costKind === "unspecified" ? (
-              <p className="mt-2 text-sm text-muted">
-                This game stays out of Open games until you mark it Free or
-                create a repayment split.
-              </p>
-            ) : null}
-            <ErrorText
-              id="settings-cost-kind-error"
-              message={error("costKind")}
+        <fieldset disabled={locked} className="min-w-0">
+          <div className="mb-5">
+            <h2 id="settings-sharing" className="text-lg font-bold">
+              Invite settings
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Customize the cover and keep the shared plan accurate before
+              players arrive.
+            </p>
+          </div>
+          <SessionAccentPicker defaultValue={value("accentColor")} />
+          <div className="mt-7 grid gap-6 sm:grid-cols-2">
+            <SelectField
+              id="settings-visibility"
+              name="visibility"
+              label="Visibility"
+              value={visibility}
+              onValueChange={(next) => setVisibility(next as typeof visibility)}
+              options={[
+                { value: "link", label: "Anyone with the link" },
+                { value: "public", label: "Public — eligible for Open games" },
+                { value: "private", label: "Private — invited players only" },
+              ]}
             />
-          </fieldset>
-        </div>
-        <input
-          type="hidden"
-          name="cost"
-          value={costKind === "free" ? "0" : ""}
-        />
+            <fieldset>
+              <legend className={label}>Player price</legend>
+              {costKind === "share" ? (
+                <div className="mt-2 rounded-lg border border-line px-3 py-2.5">
+                  <input type="hidden" name="costKind" value="unspecified" />
+                  <p className="score text-sm font-semibold">
+                    {formatPlayerPrice(value("cost"))} per player
+                  </p>
+                  <p className="mt-1 text-xs text-muted">
+                    Calculated from the current repayment split. Manage it in
+                    Payments.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[
+                    ["free", "Free"],
+                    ["unspecified", "Not set yet"],
+                  ].map(([kind, text]) => (
+                    <label
+                      key={kind}
+                      className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm font-semibold sm:min-h-10 ${costKind === kind ? "border-primary bg-primary-soft text-primary" : "border-line"}`}
+                    >
+                      <input
+                        type="radio"
+                        name="costKind"
+                        value={kind}
+                        checked={costKind === kind}
+                        onChange={() => setCostKind(kind as typeof costKind)}
+                        className="h-4 w-4 accent-[var(--primary)]"
+                      />
+                      {text}
+                    </label>
+                  ))}
+                </div>
+              )}
+              {visibility === "public" && costKind === "unspecified" ? (
+                <p className="mt-2 text-sm text-muted">
+                  This game stays out of Open games until you mark it Free or
+                  create a repayment split.
+                </p>
+              ) : null}
+              <ErrorText
+                id="settings-cost-kind-error"
+                message={error("costKind")}
+              />
+            </fieldset>
+          </div>
+          <input
+            type="hidden"
+            name="cost"
+            value={costKind === "free" ? "0" : ""}
+          />
+        </fieldset>
         <div className="mt-6">
           <label htmlFor="settings-notes" className={label}>
             Note for players
@@ -317,6 +323,7 @@ export function SessionSettingsForm({
           <textarea
             id="settings-notes"
             name="notes"
+            disabled={readOnly}
             maxLength={1200}
             defaultValue={value("notes")}
             className={`${field} min-h-28 resize-y py-3`}
@@ -324,30 +331,34 @@ export function SessionSettingsForm({
           />
           <ErrorText id="settings-notes-error" message={error("notes")} />
         </div>
-        <label className="mt-6 flex min-h-12 cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            name="requiresApproval"
-            defaultChecked={
-              state.values
-                ? state.values.requiresApproval === "on"
-                : defaults.requiresApproval
-            }
-            className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
-          />
-          <span>
-            <strong className="block text-sm">
-              Approve new players before they join
-            </strong>
-            <span className="mt-0.5 block text-sm text-muted">
-              Join requests stay pending until a host approves them. You can
-              still remove players later.
+        <fieldset disabled={locked} className="min-w-0">
+          <label className="mt-6 flex min-h-12 cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              name="requiresApproval"
+              defaultChecked={
+                state.values
+                  ? state.values.requiresApproval === "on"
+                  : defaults.requiresApproval
+              }
+              className="mt-0.5 h-5 w-5 accent-[var(--primary)]"
+            />
+            <span>
+              <strong className="block text-sm">
+                Approve new players before they join
+              </strong>
+              <span className="mt-0.5 block text-sm text-muted">
+                Join requests stay pending until a host approves them. You can
+                still remove players later.
+              </span>
             </span>
-          </span>
-        </label>
+          </label>
+        </fieldset>
       </section>
 
-      <section
+      <fieldset
+        disabled={readOnly}
+        className="min-w-0"
         aria-labelledby="settings-booking"
         hidden={section !== "booking"}
       >
@@ -441,13 +452,17 @@ export function SessionSettingsForm({
             </div>
           </div>
         ) : null}
-      </section>
+      </fieldset>
 
       <div className="flex flex-wrap justify-end gap-2 border-t border-line pt-6">
         <ButtonLink href={`/games/${defaults.id}`} variant="secondary">
-          Cancel
+          {canSave ? "Cancel" : "Back to game"}
         </ButtonLink>
-        <SubmitButton pendingLabel="Saving changes…">Save changes</SubmitButton>
+        {canSave ? (
+          <SubmitButton pendingLabel="Saving changes…">
+            Save changes
+          </SubmitButton>
+        ) : null}
       </div>
     </form>
   );

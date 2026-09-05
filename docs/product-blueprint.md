@@ -13,7 +13,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 1. A visitor selects **Plan a game** from the landing page or public product shell; authentication is not required yet.
 2. Completes **Plan**: name, court, date, and time.
 3. Completes **Players and access**: capacity, court count, visibility, and approval behavior. Payment starts unset.
-4. Optionally completes **Details**: color, court labels, player note, booking status, reference, total, and booking notes. Relay states that these can be added later.
+4. Optionally completes **Details**: color, player note, booking status, reference, total, and booking notes. Relay states that these can be added later.
 5. Uses the read-only **Review** stage, with Edit actions returning to each earlier stage.
 6. From Review, a signed-out visitor authenticates to establish ownership; Relay restores the local draft, publishes once, and lands on the session overview with a share link.
 7. Invitee opens `/s/[slug]`, sees the complete plan without signing in, and chooses Going, Maybe, or Can't make it.
