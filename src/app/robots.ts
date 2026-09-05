@@ -18,7 +18,6 @@ export default function robots(): MetadataRoute.Robots {
         "/feedback",
         "/games/",
         "/groups/",
-        "/help",
         "/home",
         "/login",
         "/notifications",

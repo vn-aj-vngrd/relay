@@ -10,11 +10,10 @@ import {
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-
 import { ButtonSpinner } from "@/components/ui/button";
 import { signOut } from "@/features/auth/actions";
-
 import { Avatar } from "./avatar-stack";
+import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 function SignOutButton() {
   const { pending } = useFormStatus();
@@ -79,9 +78,7 @@ export function SidebarAccount({
           size={14}
           className="sidebar-account-caret text-muted"
         />
-        <span role="tooltip" className="sidebar-item-tooltip">
-          {name}
-        </span>
+        <SidebarItemTooltip>{name}</SidebarItemTooltip>
       </button>
       {open ? (
         <div

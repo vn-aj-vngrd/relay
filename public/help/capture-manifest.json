@@ -1,0 +1,20 @@
+{
+  "capturedAt": "2026-09-05",
+  "tool": "agent-browser",
+  "origin": "http://localhost:3002",
+  "browserSession": "relay-help-illustrations",
+  "scenario": "Synthetic Relay documentation demo. Manual Demo court; four Demo players in device-local Quick Play. Light theme.",
+  "processing": "Actual screenshots cropped to task content and encoded as WebP quality 85 with cwebp. No compositing, fabricated success, or UI replacement. Raw temporary captures are not shipped.",
+  "privacy": "No credentials, tokens, real players, payment information, external invitations, or private game data captured. No signup submitted or saved-game backend writes performed.",
+  "observed": ["Anonymous Plan, Players and access, optional Details, Review", "Desktop Review action opened signup with intended draft return", "Quick Play: enter four synthetic players, review Paddle Stack on one court, start, score 3–1, close court, confirm Finish match, inspect completed results and standings, End Quick Play, confirm End and start over, return to empty setup", "Help landing at mobile viewport"],
+  "notCompleted": ["Account creation/verification: awaiting a user-controlled approved signup email", "Saved-game publish/share/guest RSVP", "Saved-game host setup/scoring/completion", "Repayment collection/proof/review", "Saved-game Recap/Story/Play again"],
+  "limitations": "Local frontend uses configured remote services. User authorized a synthetic unreleased-app demo, but mailbox access has not been supplied; verification was not bypassed. Only Quick Play's device-local cycle is complete. Planning screenshots do not prove publication. No dark-mode, real-device, reconnect, multi-user or complete accessibility matrix was exercised. Help mobile capture predates the new illustrated-guide link and is historical evidence, not the final Help screenshot.",
+  "captures": [
+    { "file": "plan.webp", "route": "/games/new", "stage": "Plan", "viewport": [1440, 1000], "image": [680, 610], "crop": "Plan form fields and Continue action", "alt": "Synthetic game name, manual demo court, date, and times" },
+    { "file": "plan-review.webp", "route": "/games/new", "stage": "Review before authentication", "viewport": [1440, 1000], "image": [692, 710], "crop": "Step progress, review facts, and authentication handoff", "alt": "Link-only four-player game remains payment-unset and unpublished" },
+    { "file": "quick-play-review.webp", "route": "/play", "stage": "Device-local setup Review", "viewport": [1440, 1000], "image": [692, 600], "crop": "Review including This device only warning and Start Play", "alt": "Four Demo players, one court, Paddle Stack" },
+    { "file": "quick-play-finish.webp", "route": "/play", "stage": "Finish-match confirmation", "viewport": [1440, 1000], "image": [448, 198], "crop": "Open native Relay dialog", "alt": "Synthetic 3–1 score awaiting confirmation" },
+    { "file": "quick-play-end.webp", "route": "/play", "stage": "End/reset confirmation", "viewport": [1440, 1000], "image": [448, 198], "crop": "Open native Relay dialog", "alt": "Warning that local recap and completed results will be removed" },
+    { "file": "help-mobile.webp", "route": "/help", "stage": "Help landing before illustrated-guide link addition", "viewport": [390, 844], "image": [390, 844], "crop": "None", "alt": "Mobile Help search and beginner paths in the public shell" }
+  ]
+}

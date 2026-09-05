@@ -94,13 +94,14 @@ export default async function OpenGamesPage({
       ) : (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-line py-3 text-sm">
           <p className="text-muted">
-            Sign in to join a game and keep it in your Relay schedule.
+            Open a game to join by name. Sign in to keep it in your Relay
+            schedule.
           </p>
           <Link
             href="/login?next=%2Fgames%2Fopen"
             className="font-semibold text-primary"
           >
-            Log in to join
+            Log in to keep your games
           </Link>
         </div>
       )}

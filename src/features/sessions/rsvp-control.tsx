@@ -52,9 +52,11 @@ function GuestAccountHandoff({
       ? "Your request is with the host."
       : rsvp === "waitlisted"
         ? "Your place on the waitlist is saved."
-        : rsvp === "declined"
-          ? "Your response is saved."
-          : "Your spot is saved.";
+        : rsvp === "maybe"
+          ? "Maybe saved—no spot reserved."
+          : rsvp === "declined"
+            ? "Your response is saved."
+            : "Your spot is saved.";
 
   return (
     <section
@@ -155,7 +157,7 @@ export function RsvpControl({
 
   const responseMessage = state.success
     ? state.rsvp === "pending"
-      ? "Request sent. The host will approve your spot."
+      ? "Request sent. Waiting for the host’s decision."
       : state.rsvp === "waitlisted"
         ? "The game is full. You’re on the waitlist."
         : "Response saved."

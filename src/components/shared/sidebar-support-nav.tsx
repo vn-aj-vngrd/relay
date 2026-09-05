@@ -3,6 +3,7 @@
 import { ChatText, Lifebuoy, MapPinPlus } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 export function SidebarSupportNav() {
   const pathname = usePathname();
@@ -46,10 +47,10 @@ export function SidebarSupportNav() {
                     {badge > 99 ? "99+" : badge}
                   </span>
                 ) : null}
-                <span role="tooltip" className="sidebar-item-tooltip">
+                <SidebarItemTooltip>
                   {label}
                   {badge ? ` · ${badge} unread` : ""}
-                </span>
+                </SidebarItemTooltip>
               </Link>
             </li>
           );

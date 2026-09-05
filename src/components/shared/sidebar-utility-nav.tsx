@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 const items = [
   {
@@ -67,9 +68,7 @@ export function SidebarUtilityNav() {
                   className={`shrink-0 ${active ? "text-primary" : "text-muted"}`}
                 />
                 <span className="sidebar-label">{label}</span>
-                <span role="tooltip" className="sidebar-item-tooltip">
-                  {label}
-                </span>
+                <SidebarItemTooltip>{label}</SidebarItemTooltip>
               </Link>
             </li>
           );

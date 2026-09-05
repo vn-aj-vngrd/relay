@@ -65,6 +65,46 @@ describe("RsvpControl", () => {
     await waitFor(() => expect(mocks.rsvpAction).toHaveBeenCalledOnce());
   });
 
+  it.each([
+    ["maybe", "Maybe saved—no spot reserved."],
+    ["pending", "Your request is with the host."],
+  ] as const)(
+    "keeps %s confirmation distinct from a saved spot",
+    async (rsvp, heading) => {
+      mocks.rsvpAction.mockResolvedValueOnce({ success: true, rsvp });
+      render(<RsvpControl sessionId={sessionId} slug="friends-night" />);
+      fireEvent.change(screen.getByRole("textbox", { name: "Your name" }), {
+        target: { value: "Mika Reyes" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm I’m going" })
+      );
+      expect(
+        await screen.findByRole("heading", { name: heading })
+      ).toBeVisible();
+      expect(screen.queryByText("Your spot is saved.")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: "Keep this game in Relay" })
+      ).toBeVisible();
+    }
+  );
+
+  it("tells account players that approval is a decision, not a guarantee", async () => {
+    mocks.rsvpAction.mockResolvedValueOnce({ success: true, rsvp: "pending" });
+    render(
+      <RsvpControl
+        sessionId={sessionId}
+        slug="friends-night"
+        signedIn
+        accountName="Mika Reyes"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm I’m going" }));
+    expect(
+      await screen.findByText("Request sent. Waiting for the host’s decision.")
+    ).toBeVisible();
+  });
+
   it("uses the account profile experience without allowing a session override", () => {
     render(
       <RsvpControl

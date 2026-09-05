@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 const items = [
   {
@@ -131,13 +132,13 @@ export function AppNav({
                       </span>
                     ) : null}
                   </span>
-                  <span role="tooltip" className="sidebar-item-tooltip">
+                  <SidebarItemTooltip>
                     {label === "Games" && invitationCount
                       ? `${label}, ${invitationCount} invites`
                       : label === "Notifications" && unreadCount
                         ? `${label} · ${unreadCount} unread`
                         : label}
-                  </span>
+                  </SidebarItemTooltip>
                 </Link>
               </li>
             );

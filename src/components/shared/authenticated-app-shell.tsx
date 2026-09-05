@@ -25,9 +25,11 @@ import { SidebarUtilityNav } from "./sidebar-utility-nav";
 export async function AuthenticatedAppShell({
   children,
   user,
+  showApplicationTour = true,
 }: {
   children: React.ReactNode;
   user: User;
+  showApplicationTour?: boolean;
 }) {
   const [profile, unreadCount, invitationCount] = await Promise.all([
     ensureProfile(user),
@@ -42,9 +44,11 @@ export async function AuthenticatedAppShell({
   return (
     <div className="app-shell flex h-dvh flex-col overflow-hidden bg-canvas lg:block">
       <NotificationRealtimeRefresh userId={user.id} />
-      <Suspense fallback={null}>
-        <ApplicationTour required={!profile.productTourCompletedAt} />
-      </Suspense>
+      {showApplicationTour ? (
+        <Suspense fallback={null}>
+          <ApplicationTour required={!profile.productTourCompletedAt} />
+        </Suspense>
+      ) : null}
       <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-[232px] flex-col overflow-y-auto overscroll-y-contain bg-canvas px-3 py-3 lg:flex">
         <div className="sidebar-header mb-3 flex h-11 items-center justify-between gap-2 border-b border-line px-1 pb-3">
           <span className="sidebar-brand">

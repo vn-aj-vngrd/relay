@@ -5,9 +5,11 @@ import {
   Lightning,
   MapPin,
   PlusCircle,
+  Question,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 const items = [
   {
@@ -24,49 +26,64 @@ const items = [
     shortLabel: "Open",
     icon: CalendarDots,
   },
+  { href: "/help", label: "Help Center", shortLabel: "Help", icon: Question },
 ] as const;
 
 function isActive(pathname: string, href: string) {
-  if (href === "/courts")
-    return pathname === href || pathname.startsWith("/courts/");
+  if (href === "/courts" || href === "/help")
+    return pathname === href || pathname.startsWith(`${href}/`);
   return pathname === href;
 }
 
-export function PublicProductNav({ mode }: { mode: "sidebar" | "mobile" }) {
+export function PublicProductNav({
+  mode,
+}: {
+  mode: "sidebar" | "sidebar-support" | "mobile";
+}) {
   const pathname = usePathname();
 
-  if (mode === "sidebar")
+  if (mode !== "mobile")
     return (
-      <nav aria-label="Explore Relay">
-        <p className="sidebar-label mb-2 px-2 text-xs font-semibold text-muted">
-          Try Relay
-        </p>
+      <nav
+        aria-label={
+          mode === "sidebar-support" ? "Public support" : "Explore Relay"
+        }
+      >
+        {mode === "sidebar" ? (
+          <p className="sidebar-label mb-2 px-2 text-xs font-semibold text-muted">
+            Try Relay
+          </p>
+        ) : null}
         <ul className="space-y-0.5">
-          {items.map(({ href, label, icon: Icon }) => {
-            const active = isActive(pathname, href);
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  prefetch={false}
-                  aria-label={label}
-                  aria-current={active ? "page" : undefined}
-                  className={`sidebar-row sidebar-nav-item pressable group relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm font-medium ${active ? "bg-surface-strong text-ink" : "text-muted hover:bg-surface-strong/70 hover:text-ink"}`}
-                >
-                  <Icon
-                    aria-hidden
-                    size={18}
-                    weight={active ? "fill" : "regular"}
-                    className={`shrink-0 ${active ? "text-primary" : "text-muted"}`}
-                  />
-                  <span className="sidebar-label">{label}</span>
-                  <span role="tooltip" className="sidebar-item-tooltip">
-                    {label}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
+          {items
+            .filter((item) =>
+              mode === "sidebar-support"
+                ? item.href === "/help"
+                : item.href !== "/help"
+            )
+            .map(({ href, label, icon: Icon }) => {
+              const active = isActive(pathname, href);
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    prefetch={false}
+                    aria-label={label}
+                    aria-current={active ? "page" : undefined}
+                    className={`sidebar-row sidebar-nav-item pressable group relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-sm font-medium ${active ? "bg-surface-strong text-ink" : "text-muted hover:bg-surface-strong/70 hover:text-ink"}`}
+                  >
+                    <Icon
+                      aria-hidden
+                      size={18}
+                      weight={active ? "fill" : "regular"}
+                      className={`shrink-0 ${active ? "text-primary" : "text-muted"}`}
+                    />
+                    <span className="sidebar-label">{label}</span>
+                    <SidebarItemTooltip>{label}</SidebarItemTooltip>
+                  </Link>
+                </li>
+              );
+            })}
         </ul>
       </nav>
     );

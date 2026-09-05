@@ -30,6 +30,9 @@ describe("AuthEntry", () => {
   it("replaces account creation with a focused, email-specific confirmation state", () => {
     render(<AuthEntry mode="create" confirmationEmail="player@example.com" />);
 
+    expect(
+      screen.queryByRole("link", { name: "Help" })
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/Confirmation sent to/)).toHaveTextContent(
       "Confirmation sent to player@example.com"
     );
@@ -56,6 +59,9 @@ describe("AuthEntry", () => {
 
     render(<AuthEntry mode="signin" />);
 
+    expect(
+      screen.queryByRole("link", { name: "Help" })
+    ).not.toBeInTheDocument();
     const googleButton = screen.getByRole("button", {
       name: "Continue with Google Beta",
     });
