@@ -8,7 +8,7 @@ export default function GameStoryLoading() {
         title="Story"
         description="Preparing the shareable game story and available photos."
       />
-      <div className="mx-auto w-full max-w-6xl sm:pt-6">
+      <div className="mx-auto w-full max-w-6xl">
         <MemoriesSkeleton />
       </div>
     </>

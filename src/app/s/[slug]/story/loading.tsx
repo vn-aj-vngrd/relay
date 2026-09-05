@@ -11,7 +11,7 @@ export default function PublicStoryLoading() {
         <p className="public-tab-description mt-2 text-sm text-muted">
           Preparing the shareable game story and available photos.
         </p>
-        <div className="sm:mt-7">
+        <div className="mt-4">
           <MemoriesSkeleton />
         </div>
       </div>
