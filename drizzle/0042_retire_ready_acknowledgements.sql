@@ -1,0 +1,1 @@
+ALTER TABLE "session_queue" DROP COLUMN "ready_at";

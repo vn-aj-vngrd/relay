@@ -1135,7 +1135,6 @@ export async function setPlayAvailabilityAction(
             state: plan.queueState,
             ...(plan.queuePosition ? { position: plan.queuePosition } : {}),
             ...(plan.queueState === "waiting" ? { enteredAt: new Date() } : {}),
-            readyAt: null,
             version: sql`${sessionQueue.version} + 1`,
           })
           .where(
@@ -1540,7 +1539,7 @@ export async function rsvpAction(
           } else if (nextRsvp === "going" && queueEntry) {
             await tx
               .update(sessionQueue)
-              .set({ state: "waiting", readyAt: null })
+              .set({ state: "waiting" })
               .where(
                 and(
                   eq(sessionQueue.sessionId, session.id),
@@ -1591,7 +1590,6 @@ export async function rsvpAction(
                   state: "waiting",
                   position,
                   enteredAt: new Date(),
-                  readyAt: null,
                   version: sql`${sessionQueue.version} + 1`,
                 },
               });

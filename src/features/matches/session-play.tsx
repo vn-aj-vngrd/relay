@@ -15,10 +15,8 @@ import {
 } from "@/features/sessions/attendance-toggle";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
-import { derivePersonalPlayState } from "./lifecycle";
 import { LiveCourtDeck } from "./live-court";
 import { MatchResults } from "./match-results";
-import { PersonalPlayPanel } from "./personal-play-panel";
 import {
   CourtAvailabilityControl,
   MatchCancellationControl,
@@ -121,51 +119,6 @@ export async function SessionPlay({
       (state === "playing" || state === "waiting")
     );
   }).length;
-  const acknowledgedCount = data.queue.filter(
-    ({ queue }) => queue.state === "waiting" && queue.readyAt
-  ).length;
-  const personalState = derivePersonalPlayState({
-    playerId: viewer.playerId,
-    rsvp: viewer.rsvp,
-    checkedInAt: viewer.checkedInAt,
-    playState: viewer.playState,
-    queue: data.queue.map(({ queue }) => ({
-      playerId: queue.sessionPlayerId,
-      position: queue.position,
-      state: queue.state,
-      readyAt: queue.readyAt,
-    })),
-    activeMatches: data.activeMatches.map((match) => ({
-      id: match.id,
-      courtLabel: match.courtLabel,
-      players: match.players.map(({ matchPlayer, player, profile }) => ({
-        id: player.id,
-        name: playerName(player, profile),
-        team: matchPlayer.team,
-      })),
-    })),
-    pairs: data.pairs,
-  });
-  const recentResult = viewer.playerId
-    ? data.completedMatches.find(
-        (match) =>
-          match.teamAPlayerIds.includes(viewer.playerId!) ||
-          match.teamBPlayerIds.includes(viewer.playerId!)
-      )
-    : null;
-  const personalResult =
-    viewer.playerId && recentResult
-      ? {
-          courtLabel: recentResult.courtLabel,
-          score: `${recentResult.scores[0]}–${recentResult.scores[1]}`,
-          won:
-            (recentResult.teamAPlayerIds.includes(viewer.playerId) &&
-              recentResult.winningTeam === "A") ||
-            (recentResult.teamBPlayerIds.includes(viewer.playerId) &&
-              recentResult.winningTeam === "B"),
-        }
-      : null;
-
   if (data.session.status === "cancelled") {
     return (
       <section className="mx-auto w-full max-w-2xl border-y border-line py-10 text-center sm:mt-8 sm:py-14">
@@ -212,16 +165,6 @@ export async function SessionPlay({
 
   return (
     <div>
-      {viewer.playerId && personalState.kind !== "not_participating" ? (
-        <PersonalPlayPanel
-          sessionId={data.session.id}
-          playerId={viewer.playerId}
-          state={personalState}
-          queueState={queueByPlayerId.get(viewer.playerId)?.state}
-          playerState={viewer.playState ?? "unavailable"}
-          recentResult={personalResult}
-        />
-      ) : null}
       <PlaySectionTabs
         courts={
           <section>
@@ -498,11 +441,8 @@ export async function SessionPlay({
                   Player availability
                 </h2>
                 <p className="mt-1 text-sm leading-5 text-muted">
-                  {readyCount} of {going.length} available
-                  {acknowledgedCount
-                    ? ` · ${acknowledgedCount} confirmed ready`
-                    : ""}{" "}
-                  · late arrivals and returning players join the end.
+                  {readyCount} of {going.length} available · late arrivals and
+                  returning players join the end.
                 </p>
                 <div className="mt-3 divide-y divide-line border-y border-line">
                   {going.map(({ player, profile }) => (

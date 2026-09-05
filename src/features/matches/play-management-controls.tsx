@@ -5,7 +5,6 @@ import {
   ArrowLineDown,
   ArrowLineUp,
   ArrowUp,
-  Check,
   LockSimple,
   LockSimpleOpen,
   Warning,
@@ -17,7 +16,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import {
-  acknowledgeReadyAction,
   cancelMatchAction,
   type PlayManagementActionState,
   reorderQueueAction,
@@ -25,28 +23,6 @@ import {
 } from "./actions";
 
 const initialState: PlayManagementActionState = {};
-
-export function ReadyAcknowledgement({ sessionId }: { sessionId: string }) {
-  const [state, action] = useActionState(acknowledgeReadyAction, initialState);
-  return (
-    <form noValidate action={action} className="mt-4">
-      <input type="hidden" name="sessionId" value={sessionId} />
-      <SubmitButton pendingLabel="Confirming…">
-        <Check aria-hidden size={17} weight="bold" />
-        I’m ready
-      </SubmitButton>
-      {state.error ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {state.error}
-        </p>
-      ) : state.message ? (
-        <p role="status" className="mt-2 text-sm text-primary">
-          {state.message}
-        </p>
-      ) : null}
-    </form>
-  );
-}
 
 export function CourtAvailabilityControl({
   sessionId,

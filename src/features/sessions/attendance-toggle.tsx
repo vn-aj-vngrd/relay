@@ -72,18 +72,12 @@ export function PlayAvailabilityControl({
   name,
   queueState,
   playerState,
-  compact = false,
-  hideStatus = false,
-  iconOnly = false,
 }: {
   sessionId: string;
   sessionPlayerId: string;
   name: string;
   queueState?: string | null;
   playerState: string;
-  compact?: boolean;
-  hideStatus?: boolean;
-  iconOnly?: boolean;
 }) {
   const [state, action, pending] = useActionState(
     setPlayAvailabilityAction,
@@ -106,33 +100,25 @@ export function PlayAvailabilityControl({
       : queueState === "waiting"
         ? "Take a break"
         : "Rejoin queue";
-  const showActionLabel = compact && !iconOnly;
-
   return (
     <form
       noValidate
       action={action}
-      className={
-        compact ? "" : "flex min-h-16 flex-wrap items-center gap-3 py-2"
-      }
+      className="flex min-h-16 flex-wrap items-center gap-3 py-2"
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="sessionPlayerId" value={sessionPlayerId} />
       <input type="hidden" name="intent" value={intent} />
-      {hideStatus ? null : (
-        <div className={compact ? "mb-2" : "min-w-0 flex-1"}>
-          {compact ? null : (
-            <p className="truncate text-sm font-medium">{name}</p>
-          )}
-          <p className="text-xs font-medium text-muted">{status}</p>
-        </div>
-      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{name}</p>
+        <p className="text-xs font-medium text-muted">{status}</p>
+      </div>
       <IconTooltip label={`${actionLabel} for ${name}`} side="top" align="end">
         <button
           type="submit"
           disabled={pending}
           aria-label={`${actionLabel} for ${name}`}
-          className={`pressable inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-surface text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink ${showActionLabel ? "gap-1.5 px-2.5" : "h-9 w-9 px-0"}`}
+          className="pressable inline-flex h-9 min-h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface px-0 text-muted hover:bg-surface-strong hover:text-ink"
         >
           {pending ? (
             <ButtonSpinner />
@@ -141,29 +127,14 @@ export function PlayAvailabilityControl({
           ) : (
             <Pause aria-hidden size={16} weight="fill" />
           )}
-          {showActionLabel ? actionLabel : null}
         </button>
       </IconTooltip>
       {state.error ? (
-        <span
-          role="alert"
-          className={
-            compact
-              ? "ml-2 text-xs text-danger"
-              : "basis-full text-xs text-danger"
-          }
-        >
+        <span role="alert" className="basis-full text-xs text-danger">
           {state.error}
         </span>
       ) : state.message ? (
-        <span
-          role="status"
-          className={
-            compact
-              ? "ml-2 text-xs text-primary"
-              : "basis-full text-xs text-primary"
-          }
-        >
+        <span role="status" className="basis-full text-xs text-primary">
           {state.message}
         </span>
       ) : null}

@@ -232,7 +232,7 @@ export async function getCompactPersonalPlayStatus(
   const position = waiting.findIndex((item) => item.playerId === membership.id);
   if (position < 0) return { label: "Not in the Play queue", urgent: false };
   if (position < 4)
-    return { label: "Get ready · you’re near the front", urgent: true };
+    return { label: "Near the front of the queue", urgent: true };
   const groupsAhead = Math.floor(position / 4);
   return {
     label: `${groupsAhead} ${groupsAhead === 1 ? "group" : "groups"} ahead`,

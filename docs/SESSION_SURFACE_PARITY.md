@@ -58,7 +58,7 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - Keep one `h1` per destination. Session heroes below a destination heading use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.
 - A scoreboard is the digital court: neutral outer shell, deep court field, complete player names, tabular scores, and explicit Live text. It must remain readable in its column and in the expanded view.
-- Identifiable participants receive one personalized Play state—Playing now, Get ready, Waiting, Resting, or Not here—above the shared courts. Authenticated game tabs retain a compact link to that state while Play is live. Predictions must distinguish likely readiness from a committed court assignment.
+- While Play is live, authenticated game routes outside Play retain a compact link to the participant’s current Playing, Waiting, Resting, or Not here state. The Play page itself does not repeat that status in a personalized banner; current assignments and waiting order live in Courts and Queue.
 - Expanded scoreboards preserve the same score state and permissions. Public viewers can expand but cannot score.
 
 ## Loading and realtime

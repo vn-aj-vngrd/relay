@@ -714,7 +714,6 @@ export const sessionQueue = pgTable(
     enteredAt: timestamp("entered_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
-    readyAt: timestamp("ready_at", { withTimezone: true }),
     version: integer("version").notNull().default(1),
   },
   (table) => [

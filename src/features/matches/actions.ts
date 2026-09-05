@@ -361,7 +361,6 @@ export async function startPlay(
       .update(sessionQueue)
       .set({
         state: "playing",
-        readyAt: null,
         version: sql`${sessionQueue.version} + 1`,
       })
       .where(
@@ -632,7 +631,6 @@ export async function createQueueMatch(
         .update(sessionQueue)
         .set({
           state: "playing",
-          readyAt: null,
           version: sql`${sessionQueue.version} + 1`,
         })
         .where(
@@ -851,7 +849,6 @@ export async function reorderQueueAction(
           .update(sessionQueue)
           .set({
             position: positions[index],
-            readyAt: null,
             version: sql`${sessionQueue.version} + 1`,
           })
           .where(
@@ -884,43 +881,6 @@ export async function reorderQueueAction(
   revalidatePath(`/games/${parsed.data.sessionId}/play`);
   revalidatePath(`/s/${session.slug}/play`);
   return { message: "Queue updated." };
-}
-
-export async function acknowledgeReadyAction(
-  _: PlayManagementActionState,
-  formData: FormData
-): Promise<PlayManagementActionState> {
-  const parsed = z.uuid().safeParse(formData.get("sessionId"));
-  if (!parsed.success)
-    return { error: "Your Play status changed. Refresh and try again." };
-  const sessionId = parsed.data;
-  const user = await requireUser();
-  const player = await db.query.sessionPlayers.findFirst({
-    where: and(
-      eq(sessionPlayers.sessionId, sessionId),
-      eq(sessionPlayers.userId, user.id),
-      eq(sessionPlayers.rsvp, "going")
-    ),
-  });
-  if (!player)
-    return { error: "Only a participating player can confirm readiness." };
-  const [updated] = await db
-    .update(sessionQueue)
-    .set({ readyAt: new Date(), version: sql`${sessionQueue.version} + 1` })
-    .where(
-      and(
-        eq(sessionQueue.sessionId, sessionId),
-        eq(sessionQueue.sessionPlayerId, player.id),
-        eq(sessionQueue.state, "waiting")
-      )
-    )
-    .returning({ id: sessionQueue.sessionPlayerId });
-  if (!updated)
-    return {
-      error: "Your Play status just changed. Review your latest assignment.",
-    };
-  revalidatePath(`/games/${sessionId}/play`);
-  return { message: "The organizers can see that you’re ready." };
 }
 
 const cancelMatchInput = z.object({
@@ -1038,7 +998,6 @@ export async function cancelMatchAction(
                     ? ("resting" as const)
                     : ("waiting" as const),
                   enteredAt: new Date(),
-                  readyAt: null,
                 }
               : {}),
             version: sql`${sessionQueue.version} + 1`,
@@ -1475,7 +1434,6 @@ export async function finishMatch(formData: FormData) {
             ? {
                 state: "waiting" as const,
                 enteredAt: new Date(),
-                readyAt: null,
               }
             : {}),
           ...(isResting ? { state: "resting" as const } : {}),
