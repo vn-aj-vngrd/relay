@@ -11,6 +11,7 @@ import {
 import { useActionState } from "react";
 
 import { ButtonSpinner } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import {
@@ -72,6 +73,8 @@ export function PlayAvailabilityControl({
   queueState,
   playerState,
   compact = false,
+  hideStatus = false,
+  iconOnly = false,
 }: {
   sessionId: string;
   sessionPlayerId: string;
@@ -79,6 +82,8 @@ export function PlayAvailabilityControl({
   queueState?: string | null;
   playerState: string;
   compact?: boolean;
+  hideStatus?: boolean;
+  iconOnly?: boolean;
 }) {
   const [state, action, pending] = useActionState(
     setPlayAvailabilityAction,
@@ -88,19 +93,20 @@ export function PlayAvailabilityControl({
   const ready = queueState === "playing" || queueState === "waiting";
   const intent = deferred || !ready ? "ready" : "sit_out";
   const status = deferred
-    ? "Sitting out after match"
+    ? "Taking a break after this match"
     : queueState === "playing"
       ? "On court"
       : queueState === "waiting"
         ? "Waiting"
-        : "Sitting out";
+        : "Taking a break";
   const actionLabel = deferred
-    ? "Stay in"
+    ? "Keep me in rotation"
     : queueState === "playing"
-      ? "Sit out after match"
+      ? "Take a break after this match"
       : queueState === "waiting"
-        ? "Sit out"
+        ? "Take a break"
         : "Rejoin queue";
+  const showActionLabel = compact && !iconOnly;
 
   return (
     <form
@@ -113,27 +119,31 @@ export function PlayAvailabilityControl({
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="sessionPlayerId" value={sessionPlayerId} />
       <input type="hidden" name="intent" value={intent} />
-      <div className={compact ? "mb-2" : "min-w-0 flex-1"}>
-        {compact ? null : (
-          <p className="truncate text-sm font-medium">{name}</p>
-        )}
-        <p className="text-xs font-medium text-muted">{status}</p>
-      </div>
-      <button
-        type="submit"
-        disabled={pending}
-        aria-label={`${actionLabel} for ${name}`}
-        className="pressable inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink"
-      >
-        {pending ? (
-          <ButtonSpinner />
-        ) : intent === "ready" ? (
-          <ArrowClockwise aria-hidden size={16} />
-        ) : (
-          <Pause aria-hidden size={16} weight="fill" />
-        )}
-        {actionLabel}
-      </button>
+      {hideStatus ? null : (
+        <div className={compact ? "mb-2" : "min-w-0 flex-1"}>
+          {compact ? null : (
+            <p className="truncate text-sm font-medium">{name}</p>
+          )}
+          <p className="text-xs font-medium text-muted">{status}</p>
+        </div>
+      )}
+      <IconTooltip label={`${actionLabel} for ${name}`} side="top" align="end">
+        <button
+          type="submit"
+          disabled={pending}
+          aria-label={`${actionLabel} for ${name}`}
+          className={`pressable inline-flex min-h-9 items-center justify-center rounded-lg border border-line bg-surface text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink ${showActionLabel ? "gap-1.5 px-2.5" : "h-9 w-9 px-0"}`}
+        >
+          {pending ? (
+            <ButtonSpinner />
+          ) : intent === "ready" ? (
+            <ArrowClockwise aria-hidden size={16} />
+          ) : (
+            <Pause aria-hidden size={16} weight="fill" />
+          )}
+          {showActionLabel ? actionLabel : null}
+        </button>
+      </IconTooltip>
       {state.error ? (
         <span
           role="alert"

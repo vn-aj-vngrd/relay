@@ -44,9 +44,9 @@ beforeEach(() => {
   });
   Object.defineProperty(HTMLCanvasElement.prototype, "toBlob", {
     configurable: true,
-    value: vi.fn((callback: BlobCallback) =>
-      callback(new Blob(["qr"], { type: "image/png" }))
-    ),
+    value: vi.fn((callback: BlobCallback) => {
+      queueMicrotask(() => callback(new Blob(["qr"], { type: "image/png" })));
+    }),
   });
   vi.stubGlobal(
     "URL",

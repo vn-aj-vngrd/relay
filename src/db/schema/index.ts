@@ -644,13 +644,6 @@ export const matches = pgTable(
     cancelledById: uuid("cancelled_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
-    replacementRequestedById: uuid("replacement_requested_by_id").references(
-      () => sessionPlayers.id,
-      { onDelete: "set null" }
-    ),
-    replacementRequestedAt: timestamp("replacement_requested_at", {
-      withTimezone: true,
-    }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
     version: integer("version").notNull().default(1),

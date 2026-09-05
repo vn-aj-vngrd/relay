@@ -28,7 +28,7 @@ describe("recap share templates", () => {
       recapShareTemplates(recap, "a", "published").map(({ id }) => id)
     ).toEqual(["invitation", "spots"]);
     expect(recapShareTemplates(recap, "a", "live").map(({ id }) => id)).toEqual(
-      ["live", "live-pulse"]
+      ["live", "live-pulse", "invitation", "spots"]
     );
   });
 

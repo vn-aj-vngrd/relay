@@ -8,10 +8,7 @@ import {
 import { PlayAvailabilityControl } from "@/features/sessions/attendance-toggle";
 
 import type { PersonalPlayState } from "./lifecycle";
-import {
-  ReadyAcknowledgement,
-  ReplacementRequest,
-} from "./play-management-controls";
+import { ReadyAcknowledgement } from "./play-management-controls";
 
 type RecentResult = {
   courtLabel: string;
@@ -44,6 +41,8 @@ export function PersonalPlayPanel({
       queueState={queueState}
       playerState={playerState}
       compact
+      hideStatus
+      iconOnly
     />
   );
 
@@ -52,28 +51,26 @@ export function PersonalPlayPanel({
       <section
         aria-labelledby="your-play-title"
         aria-live="polite"
-        className="mb-7 border-y border-primary/25 bg-primary-soft px-4 py-5 sm:rounded-xl sm:border"
+        className="mb-6 border-y border-line py-4"
       >
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-signal text-court">
-            <CourtBasketball aria-hidden size={21} weight="fill" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <h2 id="your-play-title" className="text-xl font-bold">
-              You’re playing · {state.courtLabel}
-            </h2>
-            <p className="mt-1 break-words text-sm leading-6 text-muted">
-              {state.partnerNames.length
-                ? `With ${state.partnerNames.join(" + ")} against ${state.opponentNames.join(" + ")}.`
-                : `Against ${state.opponentNames.join(" + ")}.`}
-            </p>
-            <div className="mt-4 flex flex-wrap items-start gap-3">
-              {availability}
-              <ReplacementRequest
-                sessionId={sessionId}
-                matchId={state.matchId}
-              />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-signal text-court">
+              <CourtBasketball aria-hidden size={19} weight="fill" />
+            </span>
+            <div className="min-w-0">
+              <h2 id="your-play-title" className="text-base font-bold">
+                Playing on {state.courtLabel}
+              </h2>
+              <p className="mt-0.5 break-words text-sm leading-5 text-muted">
+                {state.partnerNames.length
+                  ? `With ${state.partnerNames.join(" + ")} against ${state.opponentNames.join(" + ")}`
+                  : `Against ${state.opponentNames.join(" + ")}`}
+              </p>
             </div>
+          </div>
+          <div className="flex shrink-0 items-start gap-2 sm:ml-auto">
+            {availability}
           </div>
         </div>
       </section>

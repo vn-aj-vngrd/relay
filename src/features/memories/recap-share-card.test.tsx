@@ -46,9 +46,12 @@ function renderCard(overrides: Partial<typeof baseProps> = {}) {
 }
 
 beforeEach(() => {
-  Object.assign(navigator, {
-    clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
-  });
+  HTMLDialogElement.prototype.showModal = function showModal() {
+    this.setAttribute("open", "");
+  };
+  HTMLDialogElement.prototype.close = function close() {
+    this.removeAttribute("open");
+  };
 });
 
 describe("RecapShareCard", () => {
@@ -70,26 +73,76 @@ describe("RecapShareCard", () => {
     expect(screen.getByText("Winning team · 3 of 11")).toBeInTheDocument();
   });
 
+  it("opens a larger preview with navigation and sharing controls", () => {
+    renderCard();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand story preview" })
+    );
+
+    const dialog = screen.getByRole("dialog", {
+      name: "Saturday Night Pickle",
+    });
+    expect(dialog).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Previous expanded story" })
+    ).toBeEnabled();
+    expect(screen.getAllByRole("button", { name: "Share story" })).toHaveLength(
+      2
+    );
+    expect(
+      screen.getAllByRole("button", { name: "Download PNG" })
+    ).toHaveLength(2);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close expanded story" })
+    );
+    expect(dialog).not.toHaveAttribute("open");
+  });
+
   it("combines layout, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
+    expect(
+      screen.getByRole("group", { name: "Story focus" }).parentElement
+        ?.parentElement
+    ).toHaveClass("mt-3");
     fireEvent.click(screen.getByText("Customize story"));
     expect(
-      screen.getByRole("radio", { name: "Court background" })
+      screen.getByRole("radio", { name: "Violet background" })
     ).toBeChecked();
     expect(
-      screen.getByRole("radio", { name: "Optic background" })
+      screen.getByRole("radio", { name: "Court blue background" })
     ).toBeEnabled();
     expect(screen.getByRole("button", { name: "Snapshot" })).toBeEnabled();
+    expect(
+      screen.getByRole("group", { name: "Story look" }).parentElement
+        ?.parentElement
+    ).toHaveClass("mt-3");
     expect(screen.getByLabelText(/Personal line/)).toHaveAttribute(
       "maxlength",
       "72"
     );
     expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Copy link" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Show QR" })
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Layout")).toBeVisible();
     expect(screen.getByText("Background")).toBeVisible();
     expect(screen.getByText("Message")).toBeVisible();
+  });
+
+  it("uses the game color as the default story background", () => {
+    renderCard({ accent: "#bd4545" });
+    fireEvent.click(screen.getByText("Customize story"));
+
+    expect(
+      screen.getByRole("radio", { name: "Coral background" })
+    ).toBeChecked();
   });
 
   it("uses a valid device photo without uploading it", async () => {
@@ -141,6 +194,7 @@ describe("RecapShareCard", () => {
     ).toBeEnabled();
 
     rerender(<RecapShareCard {...baseProps} phase="live" courtCount={3} />);
+    fireEvent.click(screen.getByRole("button", { name: "We’re playing" }));
     expect(screen.getByText("completed matches")).toBeVisible();
     expect(screen.getByText("3")).toBeVisible();
     expect(screen.getByRole("button", { name: "Match pulse" })).toBeEnabled();
@@ -148,19 +202,5 @@ describe("RecapShareCard", () => {
       screen.getByRole("button", { name: "Share live update" })
     ).toBeEnabled();
     expect(screen.queryByText("Van")).not.toBeInTheDocument();
-  });
-
-  it("copies the canonical game link when sharing is allowed", async () => {
-    renderCard({
-      sessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
-      sharedUrl: "/s/friends-night",
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
-    await waitFor(() =>
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        "http://localhost:3000/s/friends-night"
-      )
-    );
-    expect(screen.getByRole("status")).toHaveTextContent("Story link copied");
   });
 });

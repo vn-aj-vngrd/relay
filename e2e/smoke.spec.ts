@@ -61,7 +61,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(
     page.getByRole("link", { name: "Forgot password?" })
   ).toHaveAttribute("href", "/forgot-password");
-  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await page.goto("/forgot-password");
   await expect(page).toHaveURL(/\/forgot-password$/);
   await expect(
     page.getByRole("heading", { name: "Reset your password" })
@@ -142,14 +142,18 @@ test("public Quick Play prepares players, rotates, and scores without an account
   page,
 }) => {
   await page.goto("/play");
-  await expect(page.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
-    "href",
-    "/games/new"
-  );
+  const quickPlay = page.getByRole("region", { name: "Quick Play" });
   await expect(
-    page.getByRole("heading", { name: "Set up Play" })
+    quickPlay.getByRole("link", { name: "Plan a game" })
+  ).toHaveAttribute("href", "/games/new");
+  await expect(
+    quickPlay.getByRole("heading", { name: "Who’s playing" })
   ).toBeVisible();
   await expect(page.locator("select")).toHaveCount(0);
+  for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
+    await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
+  }
+  await page.getByRole("button", { name: "Continue to game options" }).click();
   await page.getByRole("button", { name: "Queue rule" }).click();
   await page
     .getByRole("option", { name: "Four rotate — a fresh group every match" })
@@ -157,9 +161,10 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await expect(page.getByRole("button", { name: "Queue rule" })).toContainText(
     "Four rotate"
   );
-  for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
-    await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
-  }
+  await page.getByRole("button", { name: "Review setup" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Review Quick Play" })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Start Play" }).click();
   await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
   await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
@@ -854,7 +859,9 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
       () => document.documentElement.scrollWidth - window.innerWidth
     )
   ).toBe(0);
-  const button = page.getByRole("button", { name: "Start Play" });
+  const button = page.getByRole("button", {
+    name: "Continue to game options",
+  });
   const box = await button.boundingBox();
   expect(box?.height).toBeGreaterThanOrEqual(44);
   expect(

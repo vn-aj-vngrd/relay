@@ -36,6 +36,9 @@ describe("MatchResults", () => {
     expect(screen.getByText("Van + Mika")).toBeVisible();
     expect(screen.getByText("AJ + Bea")).toBeVisible();
     expect(screen.getByText("11")).toBeVisible();
+    expect(screen.getByText("Winner")).toBeVisible();
+    expect(screen.getByText("Van + Mika")).toHaveClass("font-bold");
+    expect(screen.getByText("AJ + Bea")).toHaveClass("text-muted");
     expect(
       screen.queryByRole("button", { name: "Correct Court 2 score" })
     ).not.toBeInTheDocument();

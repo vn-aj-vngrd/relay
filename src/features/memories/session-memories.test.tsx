@@ -80,7 +80,9 @@ describe("SessionMemories", () => {
     expect(
       screen.getByRole("button", { name: "Share invitation" })
     ).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Copy link" })).toBeEnabled();
+    expect(
+      screen.queryByRole("button", { name: "Copy link" })
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Photos" })
     ).not.toBeInTheDocument();

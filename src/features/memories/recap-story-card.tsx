@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { RelayMark } from "@/components/shared/brand";
+
 import type { SessionRecap } from "./recap";
 import {
   invitationStateLabel,
@@ -32,7 +34,6 @@ export function RecapStoryCard({
   title,
   venue,
   date,
-  accent,
   recap,
   template,
   background,
@@ -68,6 +69,7 @@ export function RecapStoryCard({
   courtCount?: number;
 }) {
   const personal = viewerStanding(recap, viewerPlayerId);
+  const isInvitation = template === "invitation" || template === "spots";
   const light = Boolean(background.light) && !background.imageUrl;
   const foreground = light ? "text-[#17181d]" : "text-white";
   const secondary = light ? "text-[#17181d]/70" : "text-white/65";
@@ -96,7 +98,7 @@ export function RecapStoryCard({
             src={background.imageUrl}
             alt=""
             fill
-            sizes="240px"
+            sizes="(max-width: 640px) 90vw, 430px"
             unoptimized={background.imageUrl.startsWith("blob:")}
             className="-z-20 object-cover"
             style={{ objectPosition: `center ${photoPosition}%` }}
@@ -109,9 +111,9 @@ export function RecapStoryCard({
         </>
       ) : null}
       <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-[7%] text-[clamp(8px,3.4cqw,12px)] font-bold tracking-[0.08em]">
-        <span className="h-2 w-2 rounded-full" style={{ background: accent }} />
+        <RelayMark className="h-[clamp(10px,4cqw,15px)] w-[clamp(10px,4cqw,15px)]" />
         RELAY ·{" "}
-        {phase === "published"
+        {isInvitation
           ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}`
           : phase === "live"
             ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}`

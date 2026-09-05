@@ -42,7 +42,7 @@ export default async function GameStoryPage({
   return (
     <>
       <GamePageIntro title="Story" description={description} />
-      <div className="mx-auto w-full max-w-6xl sm:pt-6">
+      <div className="mx-auto w-full max-w-6xl">
         <SessionMemories
           session={data.session}
           recap={recap}

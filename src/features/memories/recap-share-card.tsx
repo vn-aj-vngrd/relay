@@ -5,19 +5,20 @@ import {
   CaretLeft,
   CaretRight,
   Check,
-  Copy,
   DownloadSimple,
   ImageSquare,
   ShareNetwork,
   SlidersHorizontal,
+  X,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
-import { GameQrShare } from "@/features/sessions/game-qr-share";
+import { sessionAccents } from "@/features/sessions/accent";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
 import type { SessionRecap } from "./recap";
@@ -36,15 +37,6 @@ import {
 } from "./recap-story-card";
 
 type RecapPhoto = { id: string; url: string; alt: string };
-
-const baseBackgrounds: RecapBackground[] = [
-  { id: "court", label: "Court", color: "#18233b" },
-  { id: "ink", label: "Ink", color: "#11131a" },
-  { id: "paper", label: "Paper", color: "#f4f3ef", light: true },
-  { id: "electric", label: "Electric", color: "#4f56c9" },
-  { id: "coral", label: "Coral", color: "#a9433f" },
-  { id: "optic", label: "Optic", color: "#b7d62e", light: true },
-];
 
 const storyLayouts: Array<{
   id: RecapStoryLayout;
@@ -183,7 +175,6 @@ export function RecapShareCard({
   phase = "completed",
   invitation,
   courtCount = 0,
-  sharedUrl,
   storyAsOf,
 }: {
   sessionId?: string;
@@ -197,18 +188,28 @@ export function RecapShareCard({
   phase?: StoryPhase;
   invitation?: StoryInvitationFacts;
   courtCount?: number;
-  sharedUrl?: string;
   storyAsOf?: string;
 }) {
   const templates = useMemo(
     () => recapShareTemplates(recap, viewerPlayerId, phase),
     [phase, recap, viewerPlayerId]
   );
+  const gameAccent =
+    sessionAccents.find(
+      (option) => option.solid.toLowerCase() === accent.toLowerCase()
+    ) ?? sessionAccents[0];
   const [customBackground, setCustomBackground] =
     useState<RecapBackground | null>(null);
   const backgrounds = useMemo<RecapBackground[]>(
     () => [
-      ...baseBackgrounds,
+      ...[
+        gameAccent,
+        ...sessionAccents.filter(({ id }) => id !== gameAccent.id),
+      ].map((option) => ({
+        id: `accent:${option.id}`,
+        label: option.label,
+        color: option.solid,
+      })),
       ...photos.map((photo) => ({
         id: `photo:${photo.id}`,
         label: photo.alt,
@@ -216,13 +217,13 @@ export function RecapShareCard({
       })),
       ...(customBackground ? [customBackground] : []),
     ],
-    [customBackground, photos]
+    [customBackground, gameAccent, photos]
   );
   const [template, setTemplate] = useState<RecapShareTemplateId>(
     templates[0].id
   );
   const [layout, setLayout] = useState<RecapStoryLayout>("courtside");
-  const [backgroundId, setBackgroundId] = useState("court");
+  const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
   const [photoPosition, setPhotoPosition] = useState(50);
   const [customHeadline, setCustomHeadline] = useState("Our kind of game.");
@@ -230,7 +231,10 @@ export function RecapShareCard({
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const customizationId = useId();
+  const previewTitleId = useId();
+  const previewDialog = useRef<HTMLDialogElement>(null);
   const touchStart = useRef<number | null>(null);
   const customPhotoInput = useRef<HTMLInputElement>(null);
   const background =
@@ -250,6 +254,10 @@ export function RecapShareCard({
     },
     [customBackground]
   );
+
+  useEffect(() => {
+    if (previewOpen) previewDialog.current?.showModal();
+  }, [previewOpen]);
 
   async function chooseCustomPhoto(file: File | undefined) {
     if (!file) return;
@@ -278,6 +286,15 @@ export function RecapShareCard({
     const next =
       (templateIndex + direction + templates.length) % templates.length;
     chooseTemplate(templates[next].id);
+  }
+
+  function openPreview() {
+    setPreviewOpen(true);
+  }
+
+  function closePreview() {
+    previewDialog.current?.close();
+    setPreviewOpen(false);
   }
 
   async function createCard() {
@@ -310,14 +327,19 @@ export function RecapShareCard({
     const secondary = light ? "rgba(23,24,29,.62)" : "rgba(255,255,255,.68)";
     const rule = light ? "rgba(23,24,29,.18)" : "rgba(255,255,255,.22)";
 
-    context.fillStyle = accent;
+    context.fillStyle = "#91aa1e";
     context.beginPath();
-    context.arc(82, 84, 10, 0, Math.PI * 2);
+    context.arc(82, 84, 12, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#b7d62e";
+    context.beginPath();
+    context.arc(80, 82, 10, 0, Math.PI * 2);
     context.fill();
     context.fillStyle = foreground;
     setFont(context, 30);
+    const isInvitation = template === "invitation" || template === "spots";
     context.fillText(
-      `RELAY · ${phase === "published" ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`,
+      `RELAY · ${isInvitation ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`,
       112,
       94
     );
@@ -726,24 +748,6 @@ export function RecapShareCard({
     }
   }
 
-  async function copyLink() {
-    if (!sharedUrl) return;
-    try {
-      await navigator.clipboard.writeText(
-        new URL(sharedUrl, window.location.origin).toString()
-      );
-      setMessage(
-        phase === "published" ? "Game link copied." : "Story link copied."
-      );
-      trackStoryShare(
-        sessionId,
-        phase === "completed" ? "recap_shared" : "invite_shared"
-      );
-    } catch {
-      setMessage("The link couldn’t be copied. Try again.");
-    }
-  }
-
   async function share() {
     setPending(true);
     setMessage("");
@@ -776,14 +780,14 @@ export function RecapShareCard({
   }
 
   const actionLabel =
-    phase === "published"
+    template === "invitation" || template === "spots"
       ? "Share invitation"
       : phase === "live"
         ? "Share live update"
         : "Share story";
 
   return (
-    <div className="grid items-start gap-5 md:grid-cols-[260px_1fr] md:gap-7">
+    <div className="grid items-start gap-5 md:grid-cols-[260px_minmax(0,560px)] md:gap-7">
       <div
         role="region"
         aria-roledescription="carousel"
@@ -822,26 +826,34 @@ export function RecapShareCard({
             />
           ))}
         </div>
-        <RecapStoryCard
-          title={title}
-          venue={venue}
-          date={date}
-          accent={accent}
-          recap={recap}
-          template={template}
-          background={background}
-          viewerPlayerId={viewerPlayerId}
-          layout={layout}
-          overlay={overlay}
-          photoPosition={photoPosition}
-          customHeadline={customHeadline}
-          customNote={customNote}
-          phase={phase}
-          storyAsOf={storyAsOf}
-          invitation={invitation}
-          courtCount={courtCount}
-          className="w-full shadow-[0_3px_8px_rgb(20_24_34_/_0.12)]"
-        />
+        <div className="relative">
+          <RecapStoryCard
+            title={title}
+            venue={venue}
+            date={date}
+            accent={accent}
+            recap={recap}
+            template={template}
+            background={background}
+            viewerPlayerId={viewerPlayerId}
+            layout={layout}
+            overlay={overlay}
+            photoPosition={photoPosition}
+            customHeadline={customHeadline}
+            customNote={customNote}
+            phase={phase}
+            storyAsOf={storyAsOf}
+            invitation={invitation}
+            courtCount={courtCount}
+            className="w-full shadow-[0_3px_8px_rgb(20_24_34_/_0.12)]"
+          />
+          <button
+            type="button"
+            onClick={openPreview}
+            className="absolute inset-0 z-10 cursor-zoom-in rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/35"
+            aria-label="Expand story preview"
+          />
+        </div>
         <div className="mt-3 grid grid-cols-[44px_1fr_44px] items-center gap-2">
           <button
             type="button"
@@ -866,28 +878,21 @@ export function RecapShareCard({
       </div>
       <div className="min-w-0">
         <fieldset>
-          <legend className="font-bold">Focus</legend>
-          <p className="mt-1 text-sm leading-6 text-muted">
-            {phase === "completed"
-              ? "Choose a factual highlight from the final game."
-              : phase === "live"
-                ? "Only safe progress from the courts is included."
-                : "Share the current plan as a truthful invitation."}
-          </p>
-          <TabChipRail
-            label="Story focus"
-            items={templates.map((item) => ({
-              value: item.id,
-              label: item.label,
-            }))}
-            value={template}
-            onChange={chooseTemplate}
-            className="mt-2"
-            itemClassName="!min-h-11"
-          />
+          <legend className="text-sm font-bold">Focus</legend>
+          <div className="mt-3">
+            <TabChipRail
+              label="Story focus"
+              items={templates.map((item) => ({
+                value: item.id,
+                label: item.label,
+              }))}
+              value={template}
+              onChange={chooseTemplate}
+            />
+          </div>
         </fieldset>
 
-        <div className="mt-5 border-y border-line">
+        <div className="mt-6 border-y border-line">
           <button
             type="button"
             aria-expanded={customizeOpen}
@@ -917,17 +922,17 @@ export function RecapShareCard({
             <div id={customizationId} className="pb-6 pt-4">
               <fieldset>
                 <legend className="text-sm font-bold">Layout</legend>
-                <TabChipRail
-                  label="Story look"
-                  items={storyLayouts.map((item) => ({
-                    value: item.id,
-                    label: item.label,
-                  }))}
-                  value={layout}
-                  onChange={setLayout}
-                  className="mt-2"
-                  itemClassName="!min-h-11"
-                />
+                <div className="mt-3">
+                  <TabChipRail
+                    label="Story look"
+                    items={storyLayouts.map((item) => ({
+                      value: item.id,
+                      label: item.label,
+                    }))}
+                    value={layout}
+                    onChange={setLayout}
+                  />
+                </div>
               </fieldset>
 
               <fieldset className="mt-6">
@@ -1063,7 +1068,7 @@ export function RecapShareCard({
           ) : null}
         </div>
 
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
             type="button"
             onClick={share}
@@ -1077,48 +1082,17 @@ export function RecapShareCard({
             )}
             {pending ? "Creating story…" : actionLabel}
           </Button>
-          <div
-            className={`mt-2 grid gap-2 sm:flex sm:flex-wrap ${sharedUrl ? (sessionId ? "grid-cols-3" : "grid-cols-2") : "grid-cols-1"}`}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={download}
+            disabled={pending}
+            aria-label="Download PNG"
+            className="w-full sm:w-auto"
           >
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={download}
-              disabled={pending}
-              aria-label="Download PNG"
-              className="min-w-0 px-2 sm:px-3"
-            >
-              <DownloadSimple aria-hidden size={16} />
-              Download
-            </Button>
-            {sharedUrl ? (
-              <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => void copyLink()}
-                  className="min-w-0 px-2 sm:px-3"
-                >
-                  <Copy aria-hidden size={16} />
-                  Copy link
-                </Button>
-                {sessionId ? (
-                  <GameQrShare
-                    url={sharedUrl}
-                    title={title}
-                    details={`${date} · ${venue}`}
-                    sessionId={sessionId}
-                    heading={`Scan to open ${title}`}
-                    description="Open the game in Relay from another phone."
-                    scanLabel="Scan to open game"
-                    event={
-                      phase === "completed" ? "recap_shared" : "invite_shared"
-                    }
-                  />
-                ) : null}
-              </>
-            ) : null}
-          </div>
+            <DownloadSimple aria-hidden size={16} />
+            Download
+          </Button>
         </div>
         {message ? (
           <p role="status" className="mt-2 text-sm font-medium text-muted">
@@ -1126,6 +1100,100 @@ export function RecapShareCard({
           </p>
         ) : null}
       </div>
+
+      {previewOpen ? (
+        <Dialog
+          ref={previewDialog}
+          variant="media"
+          aria-labelledby={previewTitleId}
+          onClose={() => setPreviewOpen(false)}
+        >
+          <div className="flex max-h-[calc(100dvh-2rem)] flex-col items-center">
+            <div className="mb-3 flex w-full max-w-md items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2
+                  id={previewTitleId}
+                  className="truncate text-base font-bold"
+                >
+                  {title}
+                </h2>
+                <p className="text-xs text-white/65">{activeTemplate.label}</p>
+              </div>
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={closePreview}
+                aria-label="Close expanded story"
+                className="shrink-0 text-white hover:bg-white/10 hover:text-white"
+              >
+                <X aria-hidden size={18} />
+              </Button>
+            </div>
+            <RecapStoryCard
+              title={title}
+              venue={venue}
+              date={date}
+              accent={accent}
+              recap={recap}
+              template={template}
+              background={background}
+              viewerPlayerId={viewerPlayerId}
+              layout={layout}
+              overlay={overlay}
+              photoPosition={photoPosition}
+              customHeadline={customHeadline}
+              customNote={customNote}
+              phase={phase}
+              storyAsOf={storyAsOf}
+              invitation={invitation}
+              courtCount={courtCount}
+              className="h-[min(68dvh,760px)] w-auto max-w-full shrink rounded-xl"
+            />
+            <div className="mt-3 grid w-full max-w-md grid-cols-[44px_1fr_44px] items-center gap-2">
+              <button
+                type="button"
+                onClick={() => moveTemplate(-1)}
+                className="grid h-11 w-11 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
+                aria-label="Previous expanded story"
+              >
+                <CaretLeft aria-hidden size={18} />
+              </button>
+              <p className="text-center text-xs font-semibold text-white">
+                {activeTemplate.label} · {templateIndex + 1} of{" "}
+                {templates.length}
+              </p>
+              <button
+                type="button"
+                onClick={() => moveTemplate(1)}
+                className="grid h-11 w-11 place-items-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white"
+                aria-label="Next expanded story"
+              >
+                <CaretRight aria-hidden size={18} />
+              </button>
+            </div>
+            <div className="mt-2 grid w-full max-w-md grid-cols-2 gap-2">
+              <Button type="button" onClick={share} disabled={pending}>
+                {pending ? (
+                  <ButtonSpinner />
+                ) : (
+                  <ShareNetwork aria-hidden size={16} />
+                )}
+                {pending ? "Creating…" : actionLabel}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={download}
+                disabled={pending}
+                aria-label="Download PNG"
+              >
+                <DownloadSimple aria-hidden size={16} />
+                Download
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      ) : null}
     </div>
   );
 }

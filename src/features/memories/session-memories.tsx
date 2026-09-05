@@ -75,11 +75,6 @@ export function SessionMemories({
   const showPhotos = completed || photos.length > 0;
   const [view, setView] = useState<"make" | "photos">("make");
   const activeView = showPhotos ? view : "make";
-  const sharedUrl =
-    session.visibility === "private"
-      ? undefined
-      : `/s/${session.slug}${completed || session.status === "live" ? "/story" : ""}`;
-
   if (session.status === "draft" || session.status === "cancelled") {
     return (
       <section
@@ -142,7 +137,6 @@ export function SessionMemories({
               waitlistOpen: goingCount >= session.capacity,
             }}
             courtCount={session.courtCount}
-            sharedUrl={sharedUrl}
             storyAsOf={storyAsOf}
           />
         </section>

@@ -131,7 +131,7 @@ export default async function GroupPage({
           ) : null}
           <ButtonLink href={`/games/new?group=${group.id}`}>
             <CalendarPlus aria-hidden size={17} />
-            Start a game
+            Plan a game
           </ButtonLink>
         </div>
       </header>
@@ -184,14 +184,14 @@ export default async function GroupPage({
               <div className="border-y border-line py-7">
                 <p className="font-semibold">Nothing scheduled</p>
                 <p className="mt-1 text-sm text-muted">
-                  Start a game and Relay will invite the group.
+                  Plan a game and Relay will invite the group.
                 </p>
                 <ButtonLink
                   href={`/games/new?group=${group.id}`}
                   variant="secondary"
                   className="mt-5"
                 >
-                  Start a game
+                  Plan a game
                 </ButtonLink>
               </div>
             )}

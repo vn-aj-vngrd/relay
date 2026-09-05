@@ -12,9 +12,15 @@ Read this before adding dependencies, changing TypeScript or Ultracite/Biome con
 
 Generated SQL, Drizzle snapshots, the lockfile, build output, reports, public assets, and binary assets are excluded from Biome. Review generated migrations directly instead of rewriting them mechanically.
 
-## Efficient agent validation
+## Validation timing
 
-Use the smallest check that can falsify the current change. Run each check after a logical checkpoint, and do not repeat an unchanged passing check.
+Follow the Development loop in `AGENTS.md`: automated validation is deferred to pre-commit unless the user explicitly requests it earlier.
+
+Before committing code, run `pnpm check:full`. Documentation-only changes use `pnpm check:fast`. Fix failures before committing; rerun affected checks after fixes, without repeating unchanged passing checks.
+
+## Targeted validation
+
+When the user requests earlier validation or a pre-commit failure needs investigation, use the smallest check that can falsify the change:
 
 1. Run `pnpm check:fast` for changed-file Ultracite/Biome validation. It never starts tests.
 2. For isolated behavior, run the directly affected test file with `pnpm exec vitest run <test-file>`.
@@ -22,13 +28,13 @@ Use the smallest check that can falsify the current change. Run each check after
 4. Add `pnpm test:related` when a change has meaningful import fan-out and one direct test is insufficient. It never falls back to the full suite.
 5. Use `pnpm check:fix` only when fixes are needed; review the resulting diff.
 
-Documentation-only and formatting-only work usually stops after the changed-file check. At handoff, report which validation ran and which broader checks were intentionally deferred to CI.
+At handoff, report which validation ran and which checks remain deferred to pre-commit or CI.
 
 ## Full gate
 
-Run `pnpm check:full` for cross-cutting changes to shared configuration, dependencies, schemas, build behavior, or release-critical paths. It runs the complete Ultracite/Biome check, strict typecheck, full test suite, and production build. CI runs this coverage for every push, so isolated low-risk work does not need to duplicate it locally.
+`pnpm check:full` runs the complete Ultracite/Biome check, strict typecheck, full test suite, and production build. CI independently runs this coverage.
 
-Run `pnpm test:e2e` manually when a route, form, authorization rule, responsive workflow, or browser interaction changes.
+At pre-commit, also run `pnpm test:e2e` when a route, form, authorization rule, responsive workflow, or browser interaction changes. If required credentials or services are unavailable, report the blocker rather than claiming verification.
 
 **Complete when:** validation is proportional to risk, changed behavior has useful targeted tests, no suppression hides a fixable problem, and the handoff names any checks deferred to CI.
 
@@ -38,7 +44,7 @@ Biome is the only import-order mechanism. Use `pnpm check:fix`; avoid hand-maint
 
 ## Hooks
 
-Lefthook validates staged supported files without modifying them. Commit subjects use a Conventional Commit prefix. Hooks provide early feedback; CI remains authoritative.
+Lefthook validates staged supported files without modifying them. Commit subjects use a Conventional Commit prefix. The agent's pre-commit validation above is separate from the installed hooks; the hooks do not run the full gate. Keep hooks enabled; CI remains authoritative.
 
 ## CI contract
 

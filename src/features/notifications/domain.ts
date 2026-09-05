@@ -262,17 +262,6 @@ export function notificationPresentation({
         href: `${gameHref}/payments`,
         tone: "payment",
       };
-    case "replacement_requested":
-      return {
-        title: customTitle ?? "Replacement requested",
-        body:
-          customBody ??
-          (typeof payload.courtLabel === "string"
-            ? `A player needs help on ${payload.courtLabel}.`
-            : `A player in ${game} requested a replacement.`),
-        href: `${gameHref}/play`,
-        tone: "play",
-      };
     case "match_assignment":
       return {
         title: customTitle ?? "Your court is ready",

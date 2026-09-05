@@ -65,4 +65,12 @@ describe("GameWorkspaceFrame", () => {
     expect(screen.getAllByText("Game actions")).toHaveLength(2);
     expect(screen.getByText("Play status")).toBeInTheDocument();
   });
+
+  it("removes the duplicate compact status while already on Play", () => {
+    navigation.pathname = "/games/session-1/play";
+    renderFrame();
+
+    expect(screen.queryByText("Play status")).not.toBeInTheDocument();
+    expect(screen.getByText("Desktop game tabs")).toBeInTheDocument();
+  });
 });

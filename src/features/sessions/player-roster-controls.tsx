@@ -29,10 +29,10 @@ import {
 } from "./actions";
 
 export function AddPlayerForm({ sessionId }: { sessionId: string }) {
-  const [state, action] = useActionState<SessionActionState, FormData>(
-    addPlayerAction,
-    {}
-  );
+  const [state, action, isPending] = useActionState<
+    SessionActionState,
+    FormData
+  >(addPlayerAction, {});
   const [playerEntry, setPlayerEntry] = useState("");
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<SearchResult | null>(
@@ -56,7 +56,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
   }, [state]);
 
   useEffect(() => {
-    if (relayQuery.length < 2 || selectedPlayer) return;
+    if (isPending || relayQuery.length < 2 || selectedPlayer) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setSearchStatus("loading");
@@ -89,7 +89,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [relayQuery, selectedPlayer]);
+  }, [isPending, relayQuery, selectedPlayer]);
 
   function resetPlayerEntry() {
     setPlayerEntry("");
@@ -152,7 +152,12 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
       noValidate
       ref={formRef}
       action={action}
+      onSubmit={() => {
+        setSuggestionsOpen(false);
+        setActiveIndex(-1);
+      }}
       onReset={resetPlayerEntry}
+      aria-busy={isPending}
       className="mt-4"
     >
       <input type="hidden" name="sessionId" value={sessionId} />
@@ -182,6 +187,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             maxLength={60}
             autoComplete="off"
             spellCheck={!isRelayInvite}
+            disabled={isPending}
             value={playerEntry}
             onChange={(event) => {
               const nextEntry = event.target.value;
@@ -213,9 +219,9 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             }
             aria-describedby="player-entry-hint"
             placeholder="Guest name or @username"
-            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 sm:text-sm"
+            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted sm:text-sm"
           />
-          {isRelayInvite && suggestionsOpen ? (
+          {isRelayInvite && suggestionsOpen && !isPending ? (
             <div
               id={suggestions.length ? listboxId : undefined}
               role={suggestions.length ? "listbox" : "status"}
@@ -267,6 +273,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             label="Guest playing experience"
             hideLabel
             defaultValue=""
+            disabled={isPending}
             className="!mt-0"
             options={[
               { value: "", label: "Guest experience (optional)" },
@@ -280,7 +287,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
         <SubmitButton
           pendingLabel={isRelayInvite ? "Inviting…" : "Adding…"}
           variant="secondary"
-          disabled={isRelayInvite && !selectedPlayer}
+          disabled={isPending || (isRelayInvite && !selectedPlayer)}
           className="h-11 min-h-11 w-full sm:w-auto"
         >
           <UserPlus aria-hidden size={17} />

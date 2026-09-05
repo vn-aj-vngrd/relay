@@ -67,9 +67,9 @@ Render actions only when the viewer can complete them. Explain the next step ins
 - Subscribe once per mounted session to the session Broadcast invalidation topic. Roster, courts, matches, scores, queue, chat, payments, and memories refresh from authoritative server queries.
 - Reconnect language and concurrency errors must match across access paths.
 - Score controls update locally, debounce one absolute write, and reconcile against the server version. A conflict restores and names the authoritative score before inviting a retry. Hosts, co-hosts, and signed-in players assigned to that active match may score.
-- Host and co-host court, cancellation, replacement, and queue changes serialize through the session and reject stale structural mutations. A closed court keeps its history, lets an active match finish, and receives no new assignment. Match cancellation voids the affected Paddle Stack court or complete synchronized rotation and excludes it from standings.
+- Host and co-host court, cancellation, and queue changes serialize through the session and reject stale structural mutations. A closed court keeps its history, lets an active match finish, and receives no new assignment. Match cancellation voids the affected Paddle Stack court or complete synchronized rotation and excludes it from standings.
 - Match completion confirms the teams and final score. Completed results appear on both access paths; only hosts and co-hosts may correct them, and corrections update standings and recap without rewriting later court assignments.
-- Before Play, attendance uses **Here / Not here**. During Play, availability uses **On court**, **Waiting**, **Sitting out**, and **Sitting out after match**. Active players finish their match before sitting out; late and returning players rejoin at the queue’s end. These changes never alter RSVP or past results.
+- Before Play, attendance uses **Here / Not here**. During Play, availability uses **On court**, **Waiting**, **Taking a break**, and **Taking a break after this match**. Active players finish their match before taking a break; late and returning players rejoin at the queue’s end. These changes never alter RSVP or past results.
 
 ## Completion check
 

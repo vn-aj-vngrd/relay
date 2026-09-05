@@ -129,7 +129,13 @@ export function recapShareTemplates(
   phase: StoryPhase = "completed"
 ) {
   if (phase === "published") return [templates.invitation, templates.spots];
-  if (phase === "live") return [templates.live, templates["live-pulse"]];
+  if (phase === "live")
+    return [
+      templates.live,
+      templates["live-pulse"],
+      templates.invitation,
+      templates.spots,
+    ];
   if (recap.matchCount === 0) return [templates.custom];
   return [
     templates.overview,

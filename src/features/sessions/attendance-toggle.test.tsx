@@ -44,7 +44,7 @@ describe("PlayAvailabilityControl", () => {
     );
     expect(screen.getByText("Waiting")).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Sit out for Mika" })
+      screen.getByRole("button", { name: "Take a break for Mika" })
     ).toBeVisible();
 
     rerender(
@@ -54,7 +54,7 @@ describe("PlayAvailabilityControl", () => {
         playerState="resting"
       />
     );
-    expect(screen.getByText("Sitting out")).toBeVisible();
+    expect(screen.getByText("Taking a break")).toBeVisible();
     expect(
       screen.getByRole("button", { name: "Rejoin queue for Mika" })
     ).toBeVisible();
@@ -68,7 +68,9 @@ describe("PlayAvailabilityControl", () => {
     );
     expect(screen.getByText("On court")).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Sit out after match for Mika" })
+      screen.getByRole("button", {
+        name: "Take a break after this match for Mika",
+      })
     ).toBeVisible();
   });
 
@@ -80,9 +82,9 @@ describe("PlayAvailabilityControl", () => {
         playerState="resting"
       />
     );
-    expect(screen.getByText("Sitting out after match")).toBeVisible();
+    expect(screen.getByText("Taking a break after this match")).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Stay in for Mika" })
+      screen.getByRole("button", { name: "Keep me in rotation for Mika" })
     ).toBeVisible();
   });
 });

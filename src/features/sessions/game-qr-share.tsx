@@ -239,9 +239,19 @@ export function GameQrShare({
       details,
       scanLabel,
     });
-    const blob = await new Promise<Blob | null>(
-      (resolve) => brandedCanvas?.toBlob(resolve, "image/png") ?? resolve(null)
-    );
+    if (!brandedCanvas) {
+      setMessage("The QR code couldn’t be downloaded. Try copying the link.");
+      return;
+    }
+
+    let blob: Blob | null = null;
+    try {
+      blob = await new Promise<Blob | null>((resolve) => {
+        brandedCanvas.toBlob(resolve, "image/png");
+      });
+    } catch {
+      // Canvas export can fail when a browser blocks or cannot encode the image.
+    }
     if (!blob) {
       setMessage("The QR code couldn’t be downloaded. Try copying the link.");
       return;
@@ -250,8 +260,10 @@ export function GameQrShare({
     const anchor = document.createElement("a");
     anchor.href = objectUrl;
     anchor.download = downloadName(title);
+    document.body.append(anchor);
     anchor.click();
-    URL.revokeObjectURL(objectUrl);
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
     setMessage("QR code downloaded");
     trackQrShare(sessionId, event);
     onShared?.("download");

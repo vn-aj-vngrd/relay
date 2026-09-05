@@ -1148,11 +1148,11 @@ export async function setPlayAvailabilityAction(
       outcome =
         parsed.data.intent === "ready"
           ? currentQueue?.state === "playing"
-            ? "Staying in the current match."
+            ? "You’ll stay in the rotation."
             : "Rejoined at the end of the queue."
           : plan.deferred
-            ? "Will sit out after the current match."
-            : "Sitting out until ready to rejoin.";
+            ? "You’ll take a break after the current match."
+            : "Taking a break until you rejoin.";
       await tx.insert(messages).values({
         sessionId: session.id,
         kind: "system",
@@ -1162,8 +1162,8 @@ export async function setPlayAvailabilityAction(
               ? `${name} will stay in rotation.`
               : `${name} rejoined the queue.`
             : plan.deferred
-              ? `${name} will sit out after the current match.`
-              : `${name} is sitting out.`,
+              ? `${name} will take a break after the current match.`
+              : `${name} is taking a break.`,
       });
     });
   } catch (error) {

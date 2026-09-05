@@ -150,31 +150,56 @@ export function MatchResults({
         </p>
       </div>
       <ol className="mt-4 divide-y divide-line border-y border-line">
-        {results.map((result) => (
-          <li
-            key={result.id}
-            className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
-          >
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-muted">
-                {result.courtLabel}
-              </p>
-              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
-                <span className="truncate font-medium">{result.teams[0]}</span>
-                <strong className="score text-base">{result.scores[0]}</strong>
-                <span className="truncate font-medium">{result.teams[1]}</span>
-                <strong className="score text-base">{result.scores[1]}</strong>
+        {results.map((result) => {
+          const winner =
+            result.scores[0] === result.scores[1]
+              ? null
+              : result.scores[0] > result.scores[1]
+                ? 0
+                : 1;
+          return (
+            <li
+              key={result.id}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-muted">
+                  {result.courtLabel}
+                </p>
+                <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 text-sm">
+                  {result.teams.map((team, index) => (
+                    <div key={`${result.id}:${index}`} className="contents">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span
+                          className={`truncate ${winner === index ? "font-bold" : "font-medium text-muted"}`}
+                        >
+                          {team}
+                        </span>
+                        {winner === index ? (
+                          <span className="shrink-0 rounded-full bg-signal px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] text-court">
+                            Winner
+                          </span>
+                        ) : null}
+                      </span>
+                      <strong
+                        className={`score text-base ${winner === index ? "text-ink" : "text-muted"}`}
+                      >
+                        {result.scores[index]}
+                      </strong>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-            {canCorrect ? (
-              <ScoreCorrectionControl
-                key={`${result.id}:${result.version}`}
-                sessionId={sessionId}
-                result={result}
-              />
-            ) : null}
-          </li>
-        ))}
+              {canCorrect ? (
+                <ScoreCorrectionControl
+                  key={`${result.id}:${result.version}`}
+                  sessionId={sessionId}
+                  result={result}
+                />
+              ) : null}
+            </li>
+          );
+        })}
       </ol>
     </section>
   );

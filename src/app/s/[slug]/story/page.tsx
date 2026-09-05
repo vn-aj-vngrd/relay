@@ -56,7 +56,7 @@ export default async function PublicStoryPage({
         <p className="public-tab-description mt-2 text-sm text-muted">
           {description}
         </p>
-        <div className="sm:mt-7">
+        <div className="mt-4">
           <SessionMemories
             session={data.session}
             recap={recap}

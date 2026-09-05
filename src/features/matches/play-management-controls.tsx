@@ -14,7 +14,6 @@ import { useActionState, useEffect, useId, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
-import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import {
@@ -22,43 +21,10 @@ import {
   cancelMatchAction,
   type PlayManagementActionState,
   reorderQueueAction,
-  replaceMatchPlayerAction,
-  requestMatchReplacementAction,
   setCourtAvailabilityAction,
 } from "./actions";
 
 const initialState: PlayManagementActionState = {};
-
-export function ReplacementRequest({
-  sessionId,
-  matchId,
-}: {
-  sessionId: string;
-  matchId: string;
-}) {
-  const [state, action] = useActionState(
-    requestMatchReplacementAction,
-    initialState
-  );
-  return (
-    <form noValidate action={action}>
-      <input type="hidden" name="sessionId" value={sessionId} />
-      <input type="hidden" name="matchId" value={matchId} />
-      <SubmitButton pendingLabel="Requesting…" variant="secondary">
-        I can’t play this match
-      </SubmitButton>
-      {state.error ? (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {state.error}
-        </p>
-      ) : state.message ? (
-        <p role="status" className="mt-2 text-sm text-primary">
-          {state.message}
-        </p>
-      ) : null}
-    </form>
-  );
-}
 
 export function ReadyAcknowledgement({ sessionId }: { sessionId: string }) {
   const [state, action] = useActionState(acknowledgeReadyAction, initialState);
@@ -193,105 +159,6 @@ export function QueueOrderControls({
         </p>
       ) : null}
     </form>
-  );
-}
-
-export function MatchReplacementControl({
-  sessionId,
-  matchId,
-  version,
-  outgoing,
-  incoming,
-}: {
-  sessionId: string;
-  matchId: string;
-  version: number;
-  outgoing: { value: string; label: string }[];
-  incoming: { value: string; label: string }[];
-}) {
-  const [state, action, pending] = useActionState(
-    replaceMatchPlayerAction,
-    initialState
-  );
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  const descriptionId = useId();
-  useEffect(() => {
-    if (state.message) dialogRef.current?.close();
-  }, [state.message]);
-  if (!outgoing.length || !incoming.length) return null;
-  return (
-    <>
-      <Button
-        type="button"
-        variant="quiet"
-        onClick={() => dialogRef.current?.showModal()}
-      >
-        Replace
-      </Button>
-      <Dialog
-        ref={dialogRef}
-        aria-labelledby={titleId}
-        aria-describedby={descriptionId}
-      >
-        <form noValidate action={action} className="p-5 sm:p-6">
-          <input type="hidden" name="sessionId" value={sessionId} />
-          <input type="hidden" name="matchId" value={matchId} />
-          <input type="hidden" name="version" value={version} />
-          <h2 id={titleId} className="text-lg font-[680]">
-            Replace before scoring
-          </h2>
-          <p id={descriptionId} className="mt-2 text-sm leading-6 text-muted">
-            Replacement is available only while the score is 0–0. Fixed partners
-            move together.
-          </p>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <SelectField
-              id={`outgoing-${matchId}`}
-              name="outgoingIds"
-              label="Leaving court"
-              defaultValue={outgoing[0].value}
-              options={outgoing}
-            />
-            <SelectField
-              id={`incoming-${matchId}`}
-              name="incomingIds"
-              label="Coming in"
-              defaultValue={incoming[0].value}
-              options={incoming}
-            />
-          </div>
-          <div className="mt-5">
-            <SelectField
-              id={`displaced-${matchId}`}
-              name="displaced"
-              label="After replacement"
-              defaultValue="rest"
-              options={[
-                { value: "rest", label: "Leaving player rests" },
-                { value: "queue_end", label: "Move to queue end" },
-              ]}
-            />
-          </div>
-          {state.error ? (
-            <p role="alert" className="mt-3 text-sm text-danger">
-              {state.error}
-            </p>
-          ) : null}
-          <div className="mt-6 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => dialogRef.current?.close()}
-              disabled={pending}
-            >
-              Keep assignment
-            </Button>
-            <SubmitButton pendingLabel="Replacing…">Replace</SubmitButton>
-          </div>
-        </form>
-      </Dialog>
-    </>
   );
 }
 

@@ -183,7 +183,7 @@ Avoid achievement spam, permanent skill movement, random power-ups, punishments,
 ## Edge cases a future implementation must define
 
 - A late arrival enters after the active round; they do not invalidate it.
-- A player leaving mid-round produces a visible incomplete/cancelled match and a host replacement option.
+- The earlier recommendation for persisted host replacement is superseded: mid-round substitutions are informal and unrecorded. If the saved assignment can no longer remain truthful, the host cancels the match instead.
 - Odd player counts distribute rests by games played, then rest time.
 - Court count changes take effect after current matches finish.
 - A corrected score may update standings but must not silently rewrite a round already started.

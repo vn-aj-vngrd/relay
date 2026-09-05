@@ -34,6 +34,7 @@ export function GameWorkspaceFrame({
 }) {
   const pathname = usePathname();
   const settingsFocused = pathname === `/games/${sessionId}/settings`;
+  const playFocused = pathname === `/games/${sessionId}/play`;
 
   return (
     <>
@@ -114,7 +115,7 @@ export function GameWorkspaceFrame({
         </div>
       )}
 
-      {!settingsFocused && playStatus ? (
+      {!settingsFocused && !playFocused && playStatus ? (
         <CompactPlayStatus
           href={`/games/${sessionId}/play`}
           label={playStatus.label}
