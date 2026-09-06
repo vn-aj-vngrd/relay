@@ -64,7 +64,7 @@ describe("marketing account actions", () => {
       header.queryByRole("link", { name: "Get started" })
     ).not.toBeInTheDocument();
     expect(
-      screen.getAllByRole("link", { name: "Create a game" })[0]
+      screen.getAllByRole("link", { name: "Create game" })[0]
     ).toHaveAttribute("href", "/games/new");
   });
 

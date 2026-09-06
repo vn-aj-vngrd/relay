@@ -14,7 +14,7 @@ import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 const items = [
   {
     href: "/games/new",
-    label: "Plan a game",
+    label: "Create game",
     shortLabel: "Plan",
     icon: PlusCircle,
   },

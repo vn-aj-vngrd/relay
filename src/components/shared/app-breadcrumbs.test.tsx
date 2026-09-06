@@ -18,6 +18,14 @@ describe("buildBreadcrumbItems", () => {
     ]);
   });
 
+  it("recognizes Invitations as a collection rather than a game ID", () => {
+    expect(buildBreadcrumbItems("/games/invitations")).toEqual([
+      { href: "/home", label: "Home" },
+      { href: "/games", label: "Games" },
+      { href: undefined, label: "Invitations" },
+    ]);
+  });
+
   it("defers game detail breadcrumbs to the session layout", () => {
     expect(
       buildBreadcrumbItems(

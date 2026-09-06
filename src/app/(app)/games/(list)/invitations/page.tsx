@@ -4,7 +4,7 @@ import {
   gameLibraryFilterSchema,
   gameLibraryRangeError,
 } from "@/features/sessions/game-library-filters";
-import { GameViewMenu } from "@/features/sessions/game-view-menu";
+import { GamesCollectionHeader } from "@/features/sessions/games-collection-header";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import { InvitationsCollection } from "@/features/sessions/invitations-collection";
 import {
@@ -74,12 +74,7 @@ export default async function InvitationsPage({
         : `${initialMonth}-01`;
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="app-title">Invitations</h1>
-        <div className="sm:hidden">
-          <GameViewMenu />
-        </div>
-      </div>
+      <GamesCollectionHeader title="Invitations" />
       <GamesSectionNav
         current="invitations"
         invitationCount={invitationCount}

@@ -34,7 +34,7 @@ describe("PublicProductNav", () => {
   it("exposes Relay's useful public entry points", () => {
     render(<PublicProductNav mode="sidebar" />);
 
-    expect(screen.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
       "href",
       "/games/new"
     );

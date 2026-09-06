@@ -85,6 +85,49 @@ describe("ComboboxField", () => {
     expect(onChange).toHaveBeenLastCalledWith("cebu");
   });
 
+  it("reserves emphasis for selection rather than hover or keyboard focus", () => {
+    render(<ControlledCombobox />);
+    const input = screen.getByRole("combobox", { name: "Court" });
+    fireEvent.focus(input);
+
+    expect(screen.getByText("Court District Cebu")).toHaveClass("font-normal");
+    expect(screen.getByText("PicklePoint Iloilo")).toHaveClass("font-normal");
+    fireEvent.click(
+      screen.getByRole("option", { name: /Court District Cebu/ })
+    );
+    fireEvent.focus(input);
+
+    const selected = screen.getByRole("option", {
+      name: /Court District Cebu/,
+    });
+    const other = screen.getByRole("option", { name: /PicklePoint Iloilo/ });
+    expect(selected).toHaveAttribute("aria-selected", "true");
+    expect(within(selected).getByText("Court District Cebu")).toHaveClass(
+      "font-semibold",
+      "text-primary"
+    );
+    expect(within(selected).getByText("Mandaue City, Cebu")).toHaveClass(
+      "text-muted"
+    );
+
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(other).toHaveClass("bg-surface-strong");
+    expect(other).toHaveAttribute("aria-selected", "false");
+    expect(within(other).getByText("PicklePoint Iloilo")).toHaveClass(
+      "font-normal"
+    );
+    expect(selected).toHaveClass("bg-primary-soft");
+    expect(within(selected).getByText("Court District Cebu")).toHaveClass(
+      "font-semibold"
+    );
+
+    fireEvent.mouseEnter(selected);
+    expect(selected).toHaveClass("bg-surface-strong");
+    expect(within(selected).getByText("Court District Cebu")).toHaveClass(
+      "font-semibold"
+    );
+  });
+
   it("shows a useful empty state and restores the selected label on Escape", () => {
     render(<ControlledCombobox />);
     const input = screen.getByRole("combobox", { name: "Court" });

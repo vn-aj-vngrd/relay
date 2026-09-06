@@ -1,26 +1,16 @@
 "use client";
 
-import { useState } from "react";
-
-import { TabChipRail } from "@/components/ui/tab-chip-rail";
-
-const items = [
-  { value: "all", label: "All" },
-  { value: "organizing", label: "Organizing" },
-  { value: "joined", label: "Joined" },
-] as const;
-
-type GroupFilter = (typeof items)[number]["value"];
+import { useSearchParams } from "next/navigation";
+import { defaultGroupFilters, parseGroupFilters } from "./filters";
+import { GroupDesktopViewControls } from "./group-collection";
+import { GroupFilters } from "./group-filters";
 
 export function GroupsLoadingFilterRail() {
-  const [filter, setFilter] = useState<GroupFilter>("all");
+  const parsed = parseGroupFilters(useSearchParams());
   return (
-    <TabChipRail
-      label="Filter groups"
-      items={items}
-      value={filter}
-      onChange={setFilter}
-      className="min-w-0"
+    <GroupFilters
+      filters={parsed.success ? parsed.data : defaultGroupFilters}
+      viewControls={<GroupDesktopViewControls />}
     />
   );
 }

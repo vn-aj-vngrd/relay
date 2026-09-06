@@ -199,7 +199,7 @@ function SelectedCourtOverlay({
           href={createHref(venue)}
           className="compact-control pressable inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-2.5 text-xs font-semibold text-white hover:bg-primary-hover sm:px-3 sm:text-[13px]"
         >
-          <Plus aria-hidden size={15} /> Plan a game here
+          <Plus aria-hidden size={15} /> Create game
         </Link>
         <Link
           href={directionsHref(venue)}

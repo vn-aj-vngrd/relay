@@ -1,10 +1,15 @@
 import "server-only";
 
-import { and, asc, count, eq, gt, gte, inArray, or } from "drizzle-orm";
-
+import { and, asc, count, desc, eq, gt, inArray, lt, or } from "drizzle-orm";
 import { db } from "@/db/client";
 import { groupMembers, groups, sessions } from "@/db/schema";
 import { formatSessionDate } from "@/features/sessions/format";
+import {
+  groupCollectionCondition,
+  groupCollectionOrder,
+  groupFilterContext,
+} from "./collection-query";
+import { defaultGroupFilters, type GroupFilters } from "./filters";
 
 import type { GroupCollectionItem } from "./group-collection";
 import { groupImageUrl } from "./image";
@@ -19,23 +24,46 @@ export type GroupCollectionPage = {
 
 export async function getGroupCollectionPage(
   userId: string,
-  cursor: GroupCursor | null = null
+  cursor: GroupCursor | null = null,
+  filters: GroupFilters = defaultGroupFilters
 ): Promise<GroupCollectionPage> {
+  const context = groupFilterContext(userId, filters);
+  if (
+    cursor &&
+    (cursor.context !== context ||
+      cursor.upcoming === undefined ||
+      !cursor.snapshot)
+  )
+    throw new Error("Group cursor does not match these filters.");
+  const snapshot = cursor?.snapshot ?? new Date().toISOString();
+  const now = new Date(snapshot);
+  const order = groupCollectionOrder(now);
   const cursorCondition = cursor
     ? or(
-        gt(groupMembers.joinedAt, cursor.at),
+        cursor.upcoming ? eq(order.upcoming, false) : undefined,
         and(
-          eq(groupMembers.joinedAt, cursor.at),
-          gt(groupMembers.groupId, cursor.id)
+          eq(order.upcoming, cursor.upcoming!),
+          or(
+            lt(order.activity, cursor.at.toISOString()),
+            and(
+              eq(order.activity, cursor.at.toISOString()),
+              gt(groups.id, cursor.id)
+            )
+          )
         )
       )
     : undefined;
   const memberships = await db
-    .select({ group: groups, member: groupMembers })
+    .select({
+      group: groups,
+      member: groupMembers,
+      upcoming: order.upcoming,
+      activity: order.activity,
+    })
     .from(groupMembers)
     .innerJoin(groups, eq(groupMembers.groupId, groups.id))
-    .where(and(eq(groupMembers.userId, userId), cursorCondition))
-    .orderBy(asc(groupMembers.joinedAt), asc(groupMembers.groupId))
+    .where(and(groupCollectionCondition(userId, filters), cursorCondition))
+    .orderBy(desc(order.upcoming), desc(order.activity), asc(groups.id))
     .limit(GROUP_PAGE_SIZE + 1);
   const hasMore = memberships.length > GROUP_PAGE_SIZE;
   const pageRows = memberships.slice(0, GROUP_PAGE_SIZE);
@@ -55,13 +83,8 @@ export async function getGroupCollectionPage(
           .where(
             and(
               inArray(sessions.groupId, groupIds),
-              or(
-                eq(sessions.status, "live"),
-                and(
-                  eq(sessions.status, "published"),
-                  gte(sessions.startsAt, new Date())
-                )
-              )
+              inArray(sessions.status, ["published", "live"]),
+              gt(sessions.endsAt, now)
             )
           )
           .orderBy(sessions.groupId, asc(sessions.startsAt), asc(sessions.id))
@@ -75,7 +98,7 @@ export async function getGroupCollectionPage(
       session.groupId ? [[session.groupId, session] as const] : []
     )
   );
-  const last = pageRows.at(-1)?.member;
+  const last = pageRows.at(-1);
 
   return {
     items: pageRows.map(({ group, member }) => {
@@ -87,14 +110,20 @@ export async function getGroupCollectionPage(
         initials: group.name.slice(0, 2).toUpperCase(),
         imageUrl: groupImageUrl(group.imagePath),
         memberCount: counts.get(group.id) ?? 1,
-        role: member.role,
+        role: group.ownerId === userId ? "owner" : member.role,
         nextGameDate: next ? formatSessionDate(next.startsAt) : undefined,
         accentColor: next?.accentColor,
       };
     }),
     nextCursor:
       hasMore && last
-        ? encodeGroupCursor({ at: last.joinedAt, id: last.groupId })
+        ? encodeGroupCursor({
+            at: last.activity,
+            id: last.group.id,
+            upcoming: last.upcoming,
+            context,
+            snapshot,
+          })
         : null,
   };
 }

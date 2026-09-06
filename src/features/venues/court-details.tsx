@@ -113,7 +113,7 @@ export function CourtDetails({
       ) : null}
 
       <div className="mt-9 flex flex-wrap gap-3">
-        <ButtonLink href={createHref}>Plan a game here</ButtonLink>
+        <ButtonLink href={createHref}>Create game</ButtonLink>
         {court.bookingUrl ? (
           <ButtonLink
             href={court.bookingUrl}

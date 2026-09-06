@@ -131,7 +131,7 @@ export default async function GroupPage({
           ) : null}
           <ButtonLink href={`/games/new?group=${group.id}`}>
             <CalendarPlus aria-hidden size={17} />
-            Plan a game
+            Create game
           </ButtonLink>
         </div>
       </header>
@@ -191,7 +191,7 @@ export default async function GroupPage({
                   variant="secondary"
                   className="mt-5"
                 >
-                  Plan a game
+                  Create game
                 </ButtonLink>
               </div>
             )}

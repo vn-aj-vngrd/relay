@@ -78,7 +78,7 @@ describe("ApplicationTour", () => {
     expect(
       screen.getByRole("dialog", { name: "Open your profile" })
     ).toBeVisible();
-    expect(screen.getByRole("button", { name: "Create a game" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "Create game" })).toHaveClass(
       "whitespace-nowrap",
       "shrink-0"
     );
@@ -117,7 +117,7 @@ describe("ApplicationTour", () => {
     for (let step = 0; step < 4; step += 1)
       fireEvent.click(screen.getByRole("button", { name: "Next" }));
 
-    const createButton = screen.getByRole("button", { name: "Create a game" });
+    const createButton = screen.getByRole("button", { name: "Create game" });
     expect(
       createButton
         .closest("form")

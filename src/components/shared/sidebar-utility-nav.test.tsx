@@ -12,7 +12,7 @@ describe("SidebarUtilityNav", () => {
   it("uses concise labels and exposes the current quick action", () => {
     render(<SidebarUtilityNav />);
 
-    expect(screen.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
       "aria-current",
       "page"
     );
@@ -30,7 +30,7 @@ describe("SidebarUtilityNav", () => {
       "href",
       "/play"
     );
-    expect(screen.queryByText("Create game")).not.toBeInTheDocument();
+    expect(screen.queryByText("Plan a game")).not.toBeInTheDocument();
   });
 
   it("does not mark Courts current on the separate suggestion destination", () => {

@@ -8,7 +8,7 @@ import { useFormStatus } from "react-dom";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import {
   DatePickerField,
-  TimePickerField,
+  TimeComboboxField,
 } from "@/components/ui/date-time-picker";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import {
@@ -606,7 +606,7 @@ function CreateSessionFormContent({
         </div>
         <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
           <div>
-            <TimePickerField
+            <TimeComboboxField
               id="start"
               label="Start time"
               value={start}
@@ -617,6 +617,11 @@ function CreateSessionFormContent({
                 clearFieldError("start", "end");
               }}
               error={errorFor(state, clientErrors, "start")}
+              describedBy={
+                errorFor(state, clientErrors, "start")
+                  ? "start-error"
+                  : undefined
+              }
             />
             <FieldError
               id="start-error"
@@ -624,7 +629,7 @@ function CreateSessionFormContent({
             />
           </div>
           <div>
-            <TimePickerField
+            <TimeComboboxField
               id="end"
               label="End time"
               value={end}
@@ -635,6 +640,9 @@ function CreateSessionFormContent({
                 clearFieldError("end");
               }}
               error={errorFor(state, clientErrors, "end")}
+              describedBy={
+                errorFor(state, clientErrors, "end") ? "end-error" : undefined
+              }
             />
             <FieldError
               id="end-error"

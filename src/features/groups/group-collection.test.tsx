@@ -1,11 +1,14 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   GroupCollection,
   type GroupCollectionItem,
   GroupViewMenu,
 } from "./group-collection";
+
+const router = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 const items: GroupCollectionItem[] = [
   {
@@ -32,10 +35,6 @@ describe("GroupCollection", () => {
     expect(
       screen.getByRole("link", { name: /Tuesday Dink Club/ })
     ).toHaveAttribute("href", "/groups/tuesday-dink-club");
-    expect(screen.getByRole("link", { name: "Create group" })).toHaveAttribute(
-      "href",
-      "/groups/new"
-    );
     expect(screen.queryByText("1 group")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
@@ -50,15 +49,21 @@ describe("GroupCollection", () => {
     expect(localStorage.getItem("relay-groups-view")).toBe("grid");
   });
 
-  it("filters groups by organizing and joined roles", () => {
-    render(<GroupCollection items={items} />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Joined" }));
-    expect(screen.getByText("No joined groups")).toBeVisible();
+  it("navigates role filters and renders authoritative filtered results", () => {
+    const { rerender } = render(<GroupCollection items={items} />);
+    fireEvent.click(screen.getByRole("button", { name: "Your role" }));
+    fireEvent.click(screen.getByRole("option", { name: "Member" }));
+    expect(router.push).toHaveBeenCalledWith("/groups?role=member", {
+      scroll: false,
+    });
+    rerender(
+      <GroupCollection items={[]} filters={{ q: "", role: "member" }} />
+    );
+    expect(screen.getByText("No groups match these filters")).toBeVisible();
     expect(screen.queryByText("Tuesday Dink Club")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Organizing" }));
-    expect(screen.getByText("Tuesday Dink Club")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Joined" })
+    ).not.toBeInTheDocument();
   });
 
   it("shows the selected group photo as a circle in list and grid views", () => {
@@ -99,9 +104,10 @@ describe("GroupCollection", () => {
 
   it("keeps the empty state useful", () => {
     render(<GroupCollection items={[]} />);
-    expect(screen.getByText("Keep the regular crew together.")).toBeVisible();
-    expect(
-      screen.getByRole("link", { name: "Create a group" })
-    ).toHaveAttribute("href", "/groups/new");
+    expect(screen.getByText("No groups yet")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Create group" })).toHaveAttribute(
+      "href",
+      "/groups/new"
+    );
   });
 });

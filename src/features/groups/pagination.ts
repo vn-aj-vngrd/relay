@@ -3,13 +3,25 @@ import { z } from "zod";
 const groupCursorSchema = z.object({
   at: z.iso.datetime({ offset: true }),
   id: z.uuid(),
+  upcoming: z.boolean().optional(),
+  context: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .optional(),
+  snapshot: z.iso.datetime({ offset: true }).optional(),
 });
 
-export type GroupCursor = { at: Date; id: string };
+export type GroupCursor = {
+  at: Date;
+  id: string;
+  upcoming?: boolean;
+  context?: string;
+  snapshot?: string;
+};
 
 export function encodeGroupCursor(cursor: GroupCursor) {
   return Buffer.from(
-    JSON.stringify({ at: cursor.at.toISOString(), id: cursor.id }),
+    JSON.stringify({ ...cursor, at: cursor.at.toISOString() }),
     "utf8"
   ).toString("base64url");
 }
@@ -21,7 +33,7 @@ export function parseGroupCursor(value: string | null): GroupCursor | null {
       JSON.parse(Buffer.from(value, "base64url").toString("utf8"))
     );
     return parsed.success
-      ? { at: new Date(parsed.data.at), id: parsed.data.id }
+      ? { ...parsed.data, at: new Date(parsed.data.at) }
       : null;
   } catch {
     return null;

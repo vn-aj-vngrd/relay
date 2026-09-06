@@ -46,7 +46,7 @@ describe("PublicQuickPlay", () => {
     expect(
       screen.getByRole("navigation", { name: "Quick Play setup progress" })
     ).toHaveTextContent("Step 1 of 31Players2Game options3Review");
-    expect(screen.getByRole("link", { name: /Plan a game/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Create game/ })).toHaveAttribute(
       "href",
       "/games/new"
     );

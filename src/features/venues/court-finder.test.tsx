@@ -221,9 +221,10 @@ describe("CourtFinder", () => {
       "p-3",
       "sm:p-4"
     );
-    expect(
-      screen.getByRole("link", { name: "Plan a game here" })
-    ).toHaveAttribute("href", "/games/new?venueId=nice-serve");
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
+      "href",
+      "/games/new?venueId=nice-serve"
+    );
     expect(screen.getByRole("link", { name: /booking/i })).toHaveAttribute(
       "href",
       "https://example.com/book"
@@ -246,9 +247,10 @@ describe("CourtFinder", () => {
       "href",
       "/courts/nice-serve"
     );
-    expect(
-      screen.getByRole("link", { name: "Plan a game here" })
-    ).toHaveAttribute("href", "/games/new?venueId=nice-serve");
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
+      "href",
+      "/games/new?venueId=nice-serve"
+    );
   });
 
   it("filters locally while keeping a submission path", () => {

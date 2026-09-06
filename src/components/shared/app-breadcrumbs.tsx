@@ -21,6 +21,7 @@ const labels: Record<string, string> = {
   groups: "Groups",
   help: "Help Center",
   home: "Home",
+  invitations: "Invitations",
   live: "Play",
   more: "More",
   new: "Create",
@@ -46,7 +47,7 @@ function titleCase(value: string) {
 function isGameId(segments: string[], index: number) {
   return (
     segments[index - 1] === "games" &&
-    !["new", "open"].includes(segments[index])
+    !["new", "open", "invitations"].includes(segments[index])
   );
 }
 
@@ -84,7 +85,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
   if (
     segments[0] === "games" &&
     segments[1] &&
-    !["new", "open"].includes(segments[1])
+    !["new", "open", "invitations"].includes(segments[1])
   )
     return [];
 

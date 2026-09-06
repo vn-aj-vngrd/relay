@@ -37,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: "Create a game",
+        name: "Create game",
         short_name: "Create",
         description: "Start a new pickleball session.",
         url: "/games/new?source=pwa-shortcut",

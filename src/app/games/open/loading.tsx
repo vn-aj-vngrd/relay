@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/features/auth/session";
 import { GameResultsSkeleton } from "@/features/sessions/game-results-skeleton";
-import { GameViewMenu } from "@/features/sessions/game-view-menu";
+import { GamesCollectionHeader } from "@/features/sessions/games-collection-header";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import { OpenGamesLoadingFilters } from "@/features/sessions/open-games-loading-filters";
 
@@ -9,14 +9,7 @@ export default async function OpenGamesLoading() {
   const user = await getCurrentUser();
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="app-title">Open games</h1>
-        </div>
-        <div className="sm:hidden">
-          <GameViewMenu />
-        </div>
-      </div>
+      <GamesCollectionHeader title="Open games" />
       {user ? (
         <GamesSectionNav current="open" />
       ) : (

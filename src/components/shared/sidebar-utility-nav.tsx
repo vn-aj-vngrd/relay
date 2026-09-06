@@ -13,7 +13,7 @@ import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 const items = [
   {
     href: "/games/new",
-    label: "Plan a game",
+    label: "Create game",
     icon: PlusCircle,
     tour: "create",
     includeSubpaths: false,

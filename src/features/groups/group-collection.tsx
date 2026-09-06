@@ -5,7 +5,6 @@ import {
   CaretRight,
   GridFour,
   List,
-  Plus,
   UsersThree,
 } from "@phosphor-icons/react";
 import Image from "next/image";
@@ -17,11 +16,20 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-
+import { Skeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
-import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import {
+  GameResultsTransition,
+  useGameResultsTransition,
+} from "@/features/sessions/game-results-transition";
+import {
+  defaultGroupFilters,
+  type GroupFilters as GroupFilterValues,
+  groupFilterParams,
+} from "./filters";
+import { GroupFilters } from "./group-filters";
 
 export type GroupCollectionItem = {
   id: string;
@@ -36,16 +44,10 @@ export type GroupCollectionItem = {
 };
 
 type ViewMode = "list" | "grid";
-type GroupFilter = "all" | "organizing" | "joined";
 const preferenceKey = "relay-groups-view";
 const viewOptions = [
   { value: "list" as const, label: "List", icon: List },
   { value: "grid" as const, label: "Grid", icon: GridFour },
-];
-const filterOptions = [
-  { value: "all" as const, label: "All" },
-  { value: "organizing" as const, label: "Organizing" },
-  { value: "joined" as const, label: "Joined" },
 ];
 
 function getView(): ViewMode {
@@ -185,46 +187,56 @@ function GroupGrid({ items }: { items: GroupCollectionItem[] }) {
   );
 }
 
-function EmptyGroups() {
+function EmptyGroups({ filtered }: { filtered: boolean }) {
   return (
-    <section className="border-y border-line lg:grid lg:grid-cols-[1fr_1fr]">
-      <div className="py-8 lg:border-r lg:border-line lg:pr-12">
-        <UsersThree className="text-primary" size={24} weight="regular" />
-        <h3 className="mt-5 max-w-sm text-2xl font-[720] tracking-[-0.025em]">
-          Keep the regular crew together.
-        </h3>
-        <p className="mt-3 max-w-md leading-7 text-muted">
-          Start with a standalone game. After everyone plays, save the crew so
-          the next invite takes less work.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-2">
-          <ButtonLink href="/groups/new">Create a group</ButtonLink>
-          <ButtonLink href="/games/new" variant="secondary">
-            Create a game
-          </ButtonLink>
-        </div>
-      </div>
-      <dl className="divide-y divide-line py-2 lg:py-5 lg:pl-12">
-        <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
-          <dt className="font-semibold">Members</dt>
-          <dd className="text-sm leading-5 text-muted">
-            Signed-in players ready to invite again.
-          </dd>
-        </div>
-        <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
-          <dt className="font-semibold">Games</dt>
-          <dd className="text-sm leading-5 text-muted">
-            See upcoming and past games for this group.
-          </dd>
-        </div>
-        <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
-          <dt className="font-semibold">Memories</dt>
-          <dd className="text-sm leading-5 text-muted">
-            Photos and results kept with the people who played.
-          </dd>
-        </div>
-      </dl>
+    <section className="py-9">
+      <h2 className="text-lg font-bold">
+        {filtered ? "No groups match these filters" : "No groups yet"}
+      </h2>
+      <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
+        {filtered
+          ? "Try another name or role."
+          : "Create a group for your regular crew."}
+      </p>
+      <ButtonLink href={filtered ? "/groups" : "/groups/new"} className="mt-4">
+        {filtered ? "Clear filters" : "Create group"}
+      </ButtonLink>
     </section>
+  );
+}
+
+export function GroupResultsSkeleton() {
+  const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
+  return (
+    <div
+      role="status"
+      aria-label="Loading groups"
+      aria-busy="true"
+      data-testid="groups-skeleton"
+      className={
+        mode === "grid"
+          ? "grid gap-3 min-[380px]:grid-cols-2 sm:gap-4 xl:grid-cols-3"
+          : "divide-y divide-line border-y border-line"
+      }
+    >
+      {Array.from({ length: mode === "grid" ? 6 : 4 }, (_, index) => (
+        <div
+          key={index}
+          className={
+            mode === "grid"
+              ? "rounded-lg border border-line bg-surface p-3.5 sm:p-5"
+              : "flex min-h-[4.5rem] items-center gap-3 py-3.5 sm:min-h-20 sm:gap-4 sm:px-3 sm:py-4"
+          }
+        >
+          <Skeleton className="size-11 shrink-0 rounded-full" />
+          <div className={mode === "grid" ? "mt-5" : "min-w-0 flex-1"}>
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="mt-2 h-3.5 w-3/5" />
+            {mode === "grid" ? <Skeleton className="mt-3 h-3 w-1/2" /> : null}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -265,49 +277,87 @@ export function GroupDesktopViewControls() {
   );
 }
 
-export function GroupCollection({
-  items: initialItems,
-  nextCursor: initialNextCursor = null,
-}: {
+type GroupCollectionProps = {
   items: GroupCollectionItem[];
   nextCursor?: string | null;
-}) {
+  filters?: GroupFilterValues;
+  error?: string;
+};
+
+export function GroupCollection(props: GroupCollectionProps) {
+  const filters = props.filters ?? defaultGroupFilters;
+  return (
+    <GameResultsTransition>
+      <GroupFilters
+        filters={filters}
+        error={props.error}
+        viewControls={<GroupDesktopViewControls />}
+      />
+      {!props.error ? (
+        <GroupResults
+          key={groupFilterParams(filters).toString()}
+          {...props}
+          filters={filters}
+        />
+      ) : null}
+    </GameResultsTransition>
+  );
+}
+
+function GroupResults({
+  items: initialItems,
+  nextCursor: initialNextCursor = null,
+  filters = defaultGroupFilters,
+}: GroupCollectionProps) {
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
-  const [filter, setFilter] = useState<GroupFilter>("all");
+  const [pending] = useGameResultsTransition();
+  const query = groupFilterParams(filters).toString();
   const [items, setItems] = useState(initialItems);
   const [nextCursor, setNextCursor] = useState(initialNextCursor);
+  const [previousItems, setPreviousItems] = useState(initialItems);
+  if (previousItems !== initialItems) {
+    setPreviousItems(initialItems);
+    setItems(initialItems);
+    setNextCursor(initialNextCursor);
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const loadingRef = useRef(false);
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestRef.current?.abort(), [initialItems]);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(async () => {
-    if (!nextCursor || loadingRef.current) return;
+    if (!nextCursor || loadingRef.current || pending) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
     loadingRef.current = true;
     setLoading(true);
     setError("");
     try {
       const response = await fetch(
-        `/api/groups?cursor=${encodeURIComponent(nextCursor)}`,
-        { cache: "no-store" }
+        `/api/groups?${query ? `${query}&` : ""}cursor=${encodeURIComponent(nextCursor)}`,
+        { cache: "no-store", signal: controller.signal }
       );
       if (!response.ok) throw new Error("request failed");
       const page = (await response.json()) as {
         items: GroupCollectionItem[];
         nextCursor: string | null;
       };
+      if (controller.signal.aborted) return;
       setItems((current) => {
         const seen = new Set(current.map((item) => item.id));
         return [...current, ...page.items.filter((item) => !seen.has(item.id))];
       });
       setNextCursor(page.nextCursor);
     } catch {
-      setError("More groups couldn’t be loaded. Try again.");
+      if (!controller.signal.aborted)
+        setError("More groups couldn’t be loaded. Try again.");
     } finally {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [nextCursor]);
+  }, [nextCursor, query, pending]);
 
   useEffect(() => {
     const target = sentinelRef.current;
@@ -323,33 +373,11 @@ export function GroupCollection({
     return () => observer.disconnect();
   }, [loadMore, nextCursor]);
 
-  const visibleItems = items.filter((item) => {
-    if (filter === "organizing")
-      return item.role === "owner" || item.role === "admin";
-    if (filter === "joined") return item.role === "member";
-    return true;
-  });
+  const visibleItems = items;
+  if (pending) return <GroupResultsSkeleton />;
 
   return (
-    <div className="mt-4 sm:mt-5">
-      <div className="mb-6 flex min-w-0 items-center gap-3 pb-3">
-        <div className="min-w-0 flex-1">
-          <TabChipRail
-            label="Filter groups"
-            items={filterOptions}
-            value={filter}
-            onChange={setFilter}
-            className="min-w-0"
-          />
-        </div>
-        <div className="hidden shrink-0 items-center gap-3 sm:flex">
-          <GroupDesktopViewControls />
-          <ButtonLink href="/groups/new">
-            <Plus aria-hidden size={16} />
-            Create group
-          </ButtonLink>
-        </div>
-      </div>
+    <div>
       <section aria-label="Your groups">
         {items.length ? (
           visibleItems.length ? (
@@ -363,19 +391,10 @@ export function GroupCollection({
               </div>
             )
           ) : (
-            <div className="border-y border-line py-8">
-              <p className="font-[650]">
-                No {filter === "organizing" ? "organizing" : "joined"} groups
-              </p>
-              <p className="mt-1 text-sm text-muted">
-                {filter === "organizing"
-                  ? "Groups you own or help manage will appear here."
-                  : "Groups where you’re a member will appear here."}
-              </p>
-            </div>
+            <EmptyGroups filtered={Boolean(query)} />
           )
         ) : (
-          <EmptyGroups />
+          <EmptyGroups filtered={Boolean(query)} />
         )}
       </section>
       {items.length ? (

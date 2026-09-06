@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
+import { ComboboxField } from "./combobox-field";
 import { useButtonListbox } from "./use-button-listbox";
 
 const weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -365,6 +366,75 @@ const timeOptions = Array.from(
   (_, index) =>
     `${String(Math.floor(index / 4)).padStart(2, "0")}:${String((index % 4) * 15).padStart(2, "0")}`
 );
+
+const typedTimePattern = /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
+
+function parseTypedTime(query: string) {
+  const match = typedTimePattern.exec(query.trim());
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2] ?? 0);
+  const period = match[3]?.toLowerCase();
+  if (minute > 59 || hour > 23 || (period && (hour < 1 || hour > 12)))
+    return null;
+  if (period) hour = (hour % 12) + (period === "pm" ? 12 : 0);
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function TimeComboboxField({
+  id,
+  label,
+  value,
+  onValueChange,
+  minValue,
+  afterValue,
+  beforeValue,
+  error,
+  describedBy,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  minValue?: string;
+  afterValue?: string;
+  beforeValue?: string;
+  error?: string;
+  describedBy?: string;
+}) {
+  function isAllowed(option: string) {
+    return (
+      (!minValue || option >= minValue) &&
+      (!afterValue || option > afterValue) &&
+      (!beforeValue || option < beforeValue)
+    );
+  }
+
+  return (
+    <ComboboxField
+      id={id}
+      label={label}
+      value={value}
+      onValueChange={onValueChange}
+      options={timeOptions.filter(isAllowed).map((option) => ({
+        value: option,
+        label: timeLabel(option),
+      }))}
+      formatValue={timeLabel}
+      resolveOption={(query) => {
+        const parsed = parseTypedTime(query);
+        return parsed && isAllowed(parsed)
+          ? { value: parsed, label: timeLabel(parsed) }
+          : null;
+      }}
+      leadingIcon={<Clock size={17} />}
+      placeholder="Choose or type a time"
+      emptyMessage="Choose an available time or type a valid time, such as 3:45 PM or 15:45. Adjust the date or other time if needed."
+      error={error}
+      describedBy={describedBy}
+    />
+  );
+}
 
 export function TimePickerField({
   id,

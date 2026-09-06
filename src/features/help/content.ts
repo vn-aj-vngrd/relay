@@ -92,7 +92,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Capture status, 2026-09-05: planning and authentication handoff observed in the browser. Account creation and all later saved-game stages remain uncaptured pending a user-controlled signup email and any required verification. The separate Quick Play guide shows a completed device-local cycle, not proof of this saved-game lifecycle.",
     ],
     steps: [
-      "Plan — captured. Open Plan a game and enter a recognizable name, court, date, and times. The example uses a manual Demo court, not a directory reservation. Complete Players and access with capacity and court count; choose link-only for a directly shared game. Add or skip optional Details.",
+      "Plan — captured. Open Create game and enter a recognizable name, court, date, and times. The example uses a manual Demo court, not a directory reservation. Complete Players and access with capacity and court count; choose link-only for a directly shared game. Add or skip optional Details.",
       "Review and account handoff — captured. Check the plan, access, price state, and details before publishing. Create account and publish opens signup with a return to the stored draft. Finish signup/verification and onboarding, then review and explicitly publish. This capture stops at signup: it does not show a created account or published game.",
       "Publish and share — source instructions; not captured. After publishing, use Share game or Show QR for public/link-only games. For account invitations, open Players, enter @username, select the correct account, and Invite. Do not distribute a private game's link as a public invitation.",
       "Join — source instructions; not captured. A guest opens the shared link, reads the plan and price, enters a recognizable name, and responds. Read the actual result: Going is confirmed roster capacity; Maybe reserves no spot; Pending waits for a host decision; Waitlisted is not confirmed attendance.",
@@ -186,7 +186,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A proposed court and schedule. Publishing a saved game requires an account; planning does not.",
     ],
     steps: [
-      "Find a court or enter one manually in Plan a game. Confirm availability and book externally if the venue requires it.",
+      "Find a court or enter one manually in Create game. Confirm availability and book externally if the venue requires it.",
       "Complete Plan, Players and access, optional Details, and Review. Sign in or create an account from Review, then review and publish the restored draft.",
       "Share the link or invite account players. Watch requests and waitlists in Players. In Game settings → Invite, explicitly set Player price to Free if true, or arrange repayment in Payments; Public visibility alone does not put a game in Open games.",
       "Confirm the court arrangement, choose Set up Play, check arrivals, choose a rotation, and start from Review. Finish active matches before ending the game.",
@@ -208,7 +208,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/sessions/create-session-form.tsx",
       "src/features/sessions/readiness.ts",
     ],
-    action: { href: "/games/new", label: "Plan a game" },
+    action: { href: "/games/new", label: "Create game" },
   },
   {
     slug: "relay-basics",
@@ -377,7 +377,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Open Courts and search by court or location. Narrow results using the setting, parking, starting-price, hours, and other available filters.",
       "Use my location if you want on-device nearest-first sorting, or search manually. Switch between results and map; select a row or pin.",
       "Read court details, access restrictions, operating hours, listed prices, verification date, and external booking information. Not listed is missing information, not a promise that a facility is unavailable.",
-      "Use Plan a game here from the detail page to prefill the court and address. Confirm access, availability, and reservation directly with the venue.",
+      "Use Create game from the detail page to prefill the court and address. Confirm access, availability, and reservation directly with the venue.",
     ],
     outcome:
       "You have a court choice and a prefilled plan, not a reservation. Operating hours and verification do not prove a court is free at your chosen time.",
@@ -582,7 +582,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A court or manual venue, future schedule, and intended capacity. An account is required to publish.",
     ],
     steps: [
-      "Open Plan a game. In Plan, enter the game name, court/address, date, and start/end times.",
+      "Open Create game. In Plan, enter the game name, court/address, date, and start/end times.",
       "In Players and access, set player capacity, court count, visibility, and approval policy. The form supports 2–40 players and 1–20 courts; actual Play has additional eligibility requirements.",
       "Use optional Details for color, player notes, and booking information, or continue without them. Payment starts unset.",
       "Read Review and use Edit to correct an earlier stage. Signed-out hosts choose the authentication option here; return to the restored Review and explicitly publish.",
@@ -605,7 +605,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/sessions/domain.ts",
       "src/app/games/new/page.tsx",
     ],
-    action: { href: "/games/new", label: "Plan a game" },
+    action: { href: "/games/new", label: "Create game" },
   },
   {
     slug: "resume-draft",

@@ -50,7 +50,7 @@ test("the landing page introduces Relay and protected routes open a usable login
   }
   if (originalViewport) await page.setViewportSize(originalViewport);
   await expect(
-    page.getByRole("link", { name: "Create a game", exact: true }).first()
+    page.getByRole("link", { name: "Create game", exact: true }).first()
   ).toHaveAttribute("href", "/games/new");
   const landingCourtFinder = page.locator("#court-finder");
   await expect(
@@ -132,7 +132,7 @@ test("the public court finder works without an account", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: /Find a (?:pickleball )?court/ })
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: "Plan a game" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "Create game" })).toHaveAttribute(
     "href",
     "/games/new"
   );
@@ -185,7 +185,7 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await page.goto("/play");
   const quickPlay = page.getByRole("region", { name: "Quick Play" });
   await expect(
-    quickPlay.getByRole("link", { name: "Plan a game" })
+    quickPlay.getByRole("link", { name: "Create game" })
   ).toHaveAttribute("href", "/games/new");
   await expect(
     quickPlay.getByRole("heading", { name: "Who’s playing" })
@@ -424,10 +424,13 @@ test("an authenticated host and guest can complete the core session flow", async
     await page.getByRole("button", { name: "Next month" }).click();
   }
   await page.getByRole("button", { name: gameDateLabel }).click();
-  await page.getByRole("button", { name: "Start time" }).click();
+  await page.getByRole("combobox", { name: "Start time" }).click();
   await page.getByRole("option", { name: "7:00 PM" }).click();
-  await page.getByRole("button", { name: "End time" }).click();
-  await page.getByRole("option", { name: "9:00 PM" }).click();
+  await page.getByRole("combobox", { name: "End time" }).fill("21:00");
+  await page.getByRole("combobox", { name: "End time" }).press("Tab");
+  await expect(page.getByRole("combobox", { name: "End time" })).toHaveValue(
+    "9:00 PM"
+  );
   await page.locator("#venue").fill("Court District");
   await expect(
     page.getByRole("listbox", { name: "Court suggestions" })

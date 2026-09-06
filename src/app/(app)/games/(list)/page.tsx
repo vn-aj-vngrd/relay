@@ -1,16 +1,12 @@
-import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
 import { redirect } from "next/navigation";
-import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
-import {
-  GameCollection,
-  GameViewMenu,
-} from "@/features/sessions/game-collection";
+import { GameCollection } from "@/features/sessions/game-collection";
 import {
   defaultGameLibraryFilters,
   parseGameLibraryFilters,
 } from "@/features/sessions/game-library-filters";
+import { GamesCollectionHeader } from "@/features/sessions/games-collection-header";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import {
   getGameCollectionPage,
@@ -63,18 +59,7 @@ export default async function GamesPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="app-title">Games</h1>
-        <div className="flex items-center gap-3">
-          <div className="sm:hidden">
-            <GameViewMenu />
-          </div>
-          <ButtonLink href="/games/new" className="hidden sm:inline-flex">
-            <CalendarPlus aria-hidden size={17} />
-            Create game
-          </ButtonLink>
-        </div>
-      </div>
+      <GamesCollectionHeader title="Games" />
       <GamesSectionNav current="mine" invitationCount={invitationPage.total} />
       <GameCollection
         upcomingPage={upcomingPage}

@@ -326,7 +326,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
                   pendingLabel="Opening…"
                   className="pressable inline-flex h-9 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
                 >
-                  Create a game
+                  Create game
                   <ArrowRight aria-hidden size={15} />
                 </PendingSubmit>
               </form>

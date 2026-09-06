@@ -107,7 +107,7 @@ export default async function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href={primaryHref} className={primaryAction}>
-                Create a game
+                Create game
                 <ArrowRight aria-hidden size={16} />
               </Link>
               <Link href="/play" className={secondaryAction}>
@@ -410,7 +410,7 @@ export default async function MarketingPage() {
             Add the court and time, then send one link to your players.
           </p>
           <Link href={primaryHref} className={`${primaryAction} mt-9`}>
-            Create a game
+            Create game
             <ArrowRight aria-hidden size={16} />
           </Link>
         </div>
@@ -421,7 +421,7 @@ export default async function MarketingPage() {
           <Brand />
           <p>Plan games, invite players, and record scores.</p>
           <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
-            <Link href="/games/new">Plan a game</Link>
+            <Link href="/games/new">Create game</Link>
             <Link href="/games/open">Open games</Link>
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>

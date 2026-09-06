@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
-import { GameViewMenu } from "@/features/sessions/game-view-menu";
+import { GamesCollectionHeader } from "@/features/sessions/games-collection-header";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 import { openGamesFilterSchema } from "@/features/sessions/open-games";
 import { OpenGamesCollection } from "@/features/sessions/open-games-collection";
@@ -85,14 +85,7 @@ export default async function OpenGamesPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="app-title">Open games</h1>
-        </div>
-        <div className="sm:hidden">
-          <GameViewMenu />
-        </div>
-      </div>
+      <GamesCollectionHeader title="Open games" />
       {user ? (
         <GamesSectionNav current="open" invitationCount={invitationCount} />
       ) : (

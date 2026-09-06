@@ -521,7 +521,7 @@ function QuickPlaySetup({
             href="/games/new"
             className="pressable inline-flex min-h-9 shrink-0 items-center gap-1.5 font-semibold text-primary"
           >
-            <Lightning aria-hidden size={16} /> Plan a game
+            <Lightning aria-hidden size={16} /> Create game
           </Link>
         </div>
         <WizardProgress

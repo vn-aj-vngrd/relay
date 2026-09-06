@@ -78,9 +78,11 @@ describe("NotificationFeed", () => {
     await waitFor(() =>
       expect(notificationActions.markNotificationRead).toHaveBeenCalledOnce()
     );
-    expect(
-      screen.queryByRole("button", { name: "Mark Friday Pickle as read" })
-    ).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Mark Friday Pickle as read" })
+      ).not.toBeInTheDocument()
+    );
     expect(screen.queryAllByRole("img", { name: "Unread" })).toHaveLength(0);
   });
 

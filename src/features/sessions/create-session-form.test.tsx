@@ -47,12 +47,10 @@ describe("CreateSessionForm", () => {
     expect(screen.getByRole("button", { name: "Date" })).toHaveTextContent(
       "Choose a date"
     );
-    expect(
-      screen.getByRole("button", { name: "Start time" })
-    ).toHaveTextContent("Choose a time");
-    expect(screen.getByRole("button", { name: "End time" })).toHaveTextContent(
-      "Choose a time"
+    expect(screen.getByRole("combobox", { name: "Start time" })).toHaveValue(
+      ""
     );
+    expect(screen.getByRole("combobox", { name: "End time" })).toHaveValue("");
     expect(screen.getByText("Step 1 of 4")).toBeVisible();
     expect(
       screen.queryByRole("spinbutton", { name: "Player limit" })
@@ -97,17 +95,31 @@ describe("CreateSessionForm", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Start time" }));
+    fireEvent.focus(screen.getByRole("combobox", { name: "Start time" }));
     expect(
       screen.queryByRole("option", { name: "7:45 PM" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("option", { name: "8:00 PM" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "End time" }));
+    fireEvent.focus(screen.getByRole("combobox", { name: "End time" }));
     expect(
       screen.queryByRole("option", { name: "8:00 PM" })
     ).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "8:15 PM" })).toBeVisible();
+  });
+
+  it("keeps typed times when continuing to players", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    const start = screen.getByRole("combobox", { name: "Start time" });
+    const end = screen.getByRole("combobox", { name: "End time" });
+    fireEvent.change(start, { target: { value: "7:07 PM" } });
+    fireEvent.blur(start);
+    fireEvent.change(end, { target: { value: "21:12" } });
+    fireEvent.blur(end);
+    moveToAccess();
+    expect(screen.getByText("Step 2 of 4")).toBeVisible();
+    expect(screen.getByDisplayValue("19:07")).toHaveAttribute("name", "start");
+    expect(screen.getByDisplayValue("21:12")).toHaveAttribute("name", "end");
   });
 
   it("uses accessible quantity controls instead of limiting courts to presets", () => {
