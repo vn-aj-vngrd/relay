@@ -46,6 +46,28 @@ afterEach(() => {
 });
 
 describe("marketing account actions", () => {
+  it("exposes login and signup without replacing public game planning", async () => {
+    mocks.getCurrentUser.mockResolvedValue(null);
+
+    render(await MarketingPage());
+
+    const header = within(screen.getByRole("banner"));
+    const login = header.getByRole("link", { name: "Log in" });
+    expect(login).toHaveAttribute("href", "/login");
+    expect(login).toHaveClass("inline-flex", "min-h-11");
+    expect(login).not.toHaveClass("hidden");
+    expect(header.getByRole("link", { name: "Sign up" })).toHaveAttribute(
+      "href",
+      "/signup"
+    );
+    expect(
+      header.queryByRole("link", { name: "Get started" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: "Create a game" })[0]
+    ).toHaveAttribute("href", "/games/new");
+  });
+
   it("replaces authentication prompts with one app action when signed in", async () => {
     mocks.getCurrentUser.mockResolvedValue({ id: "player-1" });
 
@@ -61,6 +83,9 @@ describe("marketing account actions", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "Get started" })
+    ).not.toBeInTheDocument();
+    expect(
+      header.queryByRole("link", { name: "Sign up" })
     ).not.toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Open app" })).toHaveLength(2);
   });

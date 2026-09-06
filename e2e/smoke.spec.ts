@@ -8,8 +8,49 @@ test("the landing page introduces Relay and protected routes open a usable login
   await expect(
     page.getByRole("heading", { name: "Plan the game. Share the link. Play." })
   ).toBeVisible();
+  const header = page.locator("header").first();
+  const originalViewport = page.viewportSize();
+  for (const width of [320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const login = header.getByRole("link", { name: "Log in", exact: true });
+    const signup = header.getByRole("link", { name: "Sign up", exact: true });
+    await expect(login).toBeVisible();
+    await expect(login).toHaveAttribute("href", "/login");
+    await expect(signup).toBeVisible();
+    await expect(signup).toHaveAttribute("href", "/signup");
+    const brandBounds = await header
+      .getByRole("link", { name: "Relay home" })
+      .boundingBox();
+    const loginBounds = await login.boundingBox();
+    const signupBounds = await signup.boundingBox();
+    expect(loginBounds!.height).toBeGreaterThanOrEqual(44);
+    expect(signupBounds!.height).toBeGreaterThanOrEqual(44);
+    expect(brandBounds!.x + brandBounds!.width).toBeLessThanOrEqual(
+      loginBounds!.x
+    );
+    expect(loginBounds!.x + loginBounds!.width).toBeLessThanOrEqual(
+      signupBounds!.x
+    );
+    expect(signupBounds!.x + signupBounds!.width).toBeLessThanOrEqual(width);
+    const sectionNav = header.getByRole("navigation", {
+      name: "Marketing navigation",
+    });
+    if (await sectionNav.isVisible()) {
+      const navBounds = await sectionNav.boundingBox();
+      expect(brandBounds!.x + brandBounds!.width).toBeLessThanOrEqual(
+        navBounds!.x
+      );
+      expect(navBounds!.x + navBounds!.width).toBeLessThanOrEqual(
+        loginBounds!.x
+      );
+    }
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth)
+    ).toBeLessThanOrEqual(width);
+  }
+  if (originalViewport) await page.setViewportSize(originalViewport);
   await expect(
-    page.getByRole("link", { name: "Get started", exact: true }).first()
+    page.getByRole("link", { name: "Create a game", exact: true }).first()
   ).toHaveAttribute("href", "/games/new");
   const landingCourtFinder = page.locator("#court-finder");
   await expect(
@@ -303,8 +344,11 @@ test("an authenticated host and guest can complete the core session flow", async
   await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
   await page.goto("/");
   await expect(
-    page.getByRole("link", { name: "Get started", exact: true }).first()
-  ).toHaveAttribute("href", "/games/new");
+    page.locator("header").getByRole("link", { name: "Open app", exact: true })
+  ).toHaveAttribute("href", "/home");
+  await expect(
+    page.locator("header").getByRole("link", { name: "Sign up", exact: true })
+  ).toHaveCount(0);
   await page.goto("/home");
   const desktopCreate = await page
     .getByRole("link", { name: "Create", exact: true })

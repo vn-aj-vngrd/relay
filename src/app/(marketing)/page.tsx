@@ -65,10 +65,10 @@ export default async function MarketingPage() {
     >
       <MarketingEnhancements />
       <header className="safe-top sticky top-0 z-40 border-b border-line bg-canvas/94 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between px-5 sm:px-8">
+        <div className="mx-auto flex h-16 max-w-[1180px] items-center justify-between gap-2 px-5 sm:px-8">
           <Brand />
           <MarketingSectionNav />
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
             {signedIn ? (
               <Link href="/home" className={primaryAction}>
                 Open app
@@ -77,12 +77,12 @@ export default async function MarketingPage() {
               <>
                 <Link
                   href="/login"
-                  className="pressable hidden min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink sm:inline-flex"
+                  className="pressable inline-flex min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink"
                 >
                   Log in
                 </Link>
-                <Link href={primaryHref} className={primaryAction}>
-                  Get started
+                <Link href="/signup" className={`${primaryAction} min-h-11`}>
+                  Sign up
                 </Link>
               </>
             )}
