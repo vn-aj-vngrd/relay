@@ -180,8 +180,8 @@ export default async function PaymentsPage({
         </p>
       ) : null}
       {sessionExpenses.length ? (
-        <div className="grid gap-8 sm:pt-7 lg:grid-cols-[1fr_340px]">
-          <section className="space-y-10">
+        <div className="grid gap-8 sm:pt-7 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section className="min-w-0 space-y-10">
             {sessionExpenses.map(({ expense }) => {
               const expensePayments = visiblePayments.filter(
                 (row) => row.expense.id === expense.id
@@ -191,7 +191,7 @@ export default async function PaymentsPage({
               ).length;
               return (
                 <article key={expense.id}>
-                  <div className="flex items-end justify-between border-b border-line pb-5">
+                  <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
                     <div>
                       <p className="text-sm capitalize text-muted">
                         {expense.kind.replaceAll("_", " ")}
@@ -212,7 +212,7 @@ export default async function PaymentsPage({
                       {hostName.slice(0, 1).toUpperCase()}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-[650]">{hostName}</p>
+                      <p className="break-words font-[650]">{hostName}</p>
                       <p className="mt-0.5 text-xs text-muted">
                         Host · paid the full amount upfront
                       </p>
@@ -231,7 +231,7 @@ export default async function PaymentsPage({
                         return (
                           <li key={payment.id} className="py-4">
                             <div className="flex flex-wrap items-center gap-3">
-                              <span className="min-w-32 flex-1 font-medium">
+                              <span className="min-w-0 basis-32 flex-1 break-words font-medium">
                                 {name}
                               </span>
                               <span className="score text-sm font-semibold">
@@ -313,7 +313,7 @@ export default async function PaymentsPage({
                                     <ImageIcon aria-hidden />
                                   </span>
                                 )}
-                                <div className="min-w-48 flex-1">
+                                <div className="min-w-0 basis-48 flex-1">
                                   <p className="text-sm font-[650]">
                                     Waiting for host review
                                   </p>
@@ -361,7 +361,7 @@ export default async function PaymentsPage({
             <p className="mt-2 text-sm font-medium">
               {sessionExpenses[0].account?.method}
             </p>
-            <p className="mt-1 whitespace-pre-wrap text-sm leading-5 text-muted">
+            <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-muted">
               {sessionExpenses[0].account?.details}
             </p>
             {sessionExpenses[0].account &&

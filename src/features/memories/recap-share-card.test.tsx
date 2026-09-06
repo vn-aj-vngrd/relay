@@ -1,9 +1,16 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
+import * as storyTheme from "./story-theme";
 
 vi.mock("@/features/analytics/actions", () => ({
   trackSharedSessionEvent: vi.fn(),
@@ -46,12 +53,21 @@ function renderCard(overrides: Partial<typeof baseProps> = {}) {
 }
 
 beforeEach(() => {
+  vi.stubGlobal(
+    "createImageBitmap",
+    vi.fn().mockResolvedValue({ width: 2, height: 2, close: vi.fn() })
+  );
   HTMLDialogElement.prototype.showModal = function showModal() {
     this.setAttribute("open", "");
   };
   HTMLDialogElement.prototype.close = function close() {
     this.removeAttribute("open");
   };
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("RecapShareCard", () => {
@@ -108,17 +124,19 @@ describe("RecapShareCard", () => {
         ?.parentElement
     ).toHaveClass("mt-3");
     fireEvent.click(screen.getByText("Customize story"));
-    expect(
-      screen.getByRole("radio", { name: "Violet background" })
-    ).toBeChecked();
-    expect(
-      screen.getByRole("radio", { name: "Court blue background" })
-    ).toBeEnabled();
     expect(screen.getByRole("button", { name: "Snapshot" })).toBeEnabled();
     expect(
       screen.getByRole("group", { name: "Story look" }).parentElement
         ?.parentElement
     ).toHaveClass("mt-3");
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
+    expect(
+      screen.getByRole("button", { name: "Violet background" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Court blue background" })
+    ).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Message" }));
     expect(screen.getByLabelText(/Personal line/)).toHaveAttribute(
       "maxlength",
       "72"
@@ -131,18 +149,195 @@ describe("RecapShareCard", () => {
     expect(
       screen.queryByRole("button", { name: "Show QR" })
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Layout")).toBeVisible();
-    expect(screen.getByText("Background")).toBeVisible();
-    expect(screen.getByText("Message")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Layout" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Background" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Message" })).toBeVisible();
+  });
+
+  it("keeps exports before progressive tools and retains edits when tools close", () => {
+    renderCard();
+    const customize = screen.getByRole("button", { name: /Customize story/ });
+    const download = screen.getByRole("button", { name: "Download PNG" });
+    expect(
+      download.compareDocumentPosition(customize) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    fireEvent.click(customize);
+    expect(screen.queryByLabelText(/Personal line/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Message" }));
+    fireEvent.change(screen.getByLabelText(/Personal line/), {
+      target: { value: "See you next week." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Done customizing" }));
+    expect(customize).toHaveFocus();
+    expect(customize).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(customize);
+    expect(screen.getByLabelText(/Personal line/)).toHaveValue(
+      "See you next week."
+    );
+  });
+
+  it("ignores vertical scrolling and cancelled touches but accepts a deliberate swipe", () => {
+    renderCard();
+    const preview = screen.getByRole("button", {
+      name: "Expand story preview",
+    });
+    fireEvent.touchStart(preview, {
+      touches: [{ clientX: 180, clientY: 100 }],
+    });
+    fireEvent.touchEnd(preview, {
+      changedTouches: [{ clientX: 100, clientY: 260 }],
+    });
+    expect(screen.getByText("Night recap · 1 of 11")).toBeVisible();
+    fireEvent.touchStart(preview, {
+      touches: [{ clientX: 180, clientY: 100 }],
+    });
+    fireEvent.touchCancel(preview);
+    fireEvent.touchEnd(preview, {
+      changedTouches: [{ clientX: 50, clientY: 100 }],
+    });
+    expect(screen.getByText("Night recap · 1 of 11")).toBeVisible();
+    fireEvent.touchStart(preview, {
+      touches: [{ clientX: 180, clientY: 100 }],
+    });
+    fireEvent.touchEnd(preview, {
+      changedTouches: [{ clientX: 50, clientY: 105 }],
+    });
+    expect(screen.getByText("My game · 2 of 11")).toBeVisible();
+  });
+
+  it("supports keyboard focus navigation inside the expanded preview", () => {
+    renderCard();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Expand story preview" })
+    );
+    const dialog = screen.getByRole("dialog", { name: baseProps.title });
+    fireEvent.keyDown(dialog, { key: "ArrowRight" });
+    expect(within(dialog).getByText("My game · 2 of 11")).toBeVisible();
+  });
+
+  it.each(storyTheme.storyThemes)(
+    "exports $label with the same selected theme and full PNG dimensions",
+    async ({ id, label }) => {
+      const context = {
+        fillRect: vi.fn(),
+        strokeRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        fillText: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        drawImage: vi.fn(),
+        measureText: vi.fn(() => ({ width: 100 })),
+      };
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D
+      );
+      const dimensions: number[][] = [];
+      vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+        function (this: HTMLCanvasElement, callback) {
+          dimensions.push([this.width, this.height]);
+          callback(new Blob(["synthetic PNG"], { type: "image/png" }));
+        }
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:synthetic-story");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined
+      );
+      vi.stubGlobal("Path2D", class {});
+      const decoration = vi.spyOn(storyTheme, "drawStoryTheme");
+      const fetchPhoto = vi
+        .fn()
+        .mockRejectedValue(new TypeError("CSP blocks blob fetch"));
+      vi.stubGlobal("fetch", fetchPhoto);
+      renderCard();
+      fireEvent.click(screen.getByText("Customize story"));
+      expect(screen.getByRole("button", { name: "Minimal" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      if (id !== "minimal") {
+        fireEvent.click(screen.getByRole("button", { name: "Background" }));
+        fireEvent.change(
+          screen.getByLabelText("Choose background photo file"),
+          {
+            target: {
+              files: [
+                new File(
+                  [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+                  "court.png",
+                  { type: "image/png" }
+                ),
+              ],
+            },
+          }
+        );
+        await waitFor(() =>
+          expect(screen.getByRole("status")).toHaveTextContent(
+            "hasn’t been uploaded"
+          )
+        );
+      }
+      fireEvent.click(
+        screen.getByRole("button", { name: "Expand story preview" })
+      );
+      const dialog = screen.getByRole("dialog", { name: baseProps.title });
+      expect(dialog.querySelector("[data-story-theme]")).toHaveAttribute(
+        "data-story-theme",
+        id
+      );
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Download PNG" })
+      );
+      await waitFor(() =>
+        expect(within(dialog).getByRole("status")).toHaveTextContent(
+          "1080 × 1920"
+        )
+      );
+      expect(dimensions).toEqual([[1080, 1920]]);
+      expect(decoration).toHaveBeenCalledWith(context, id);
+      expect(fetchPhoto).not.toHaveBeenCalled();
+      if (id !== "minimal") expect(context.drawImage).toHaveBeenCalledOnce();
+    }
+  );
+
+  it("keeps the working background when a supported file cannot be decoded", async () => {
+    vi.mocked(createImageBitmap).mockRejectedValue(new Error("Invalid image"));
+    renderCard();
+    fireEvent.click(screen.getByText("Customize story"));
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
+    fireEvent.change(screen.getByLabelText("Choose background photo file"), {
+      target: {
+        files: [
+          new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "broken.png", {
+            type: "image/png",
+          }),
+        ],
+      },
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("status")).toHaveTextContent("couldn’t be read")
+    );
+    expect(
+      screen.getByRole("button", { name: "Violet background" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("uses the game color as the default story background", () => {
     renderCard({ accent: "#bd4545" });
     fireEvent.click(screen.getByText("Customize story"));
 
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
     expect(
-      screen.getByRole("radio", { name: "Coral background" })
-    ).toBeChecked();
+      screen.getByRole("button", { name: "Coral background" })
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("uses a valid device photo without uploading it", async () => {
@@ -151,6 +346,7 @@ describe("RecapShareCard", () => {
       .mockReturnValue("blob:story-photo");
     renderCard();
     fireEvent.click(screen.getByText("Customize story"));
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
     const file = new File(
       [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
       "court.png",
@@ -166,6 +362,7 @@ describe("RecapShareCard", () => {
       "hasn’t been uploaded"
     );
     expect(screen.getByLabelText(/Photo position/)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
     expect(screen.getByRole("button", { name: "Snapshot" })).toHaveAttribute(
       "aria-pressed",
       "true"

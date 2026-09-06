@@ -135,7 +135,7 @@ export default async function PublicPaymentsPage({
                       <p className="text-sm font-semibold">
                         {account?.method ?? "Payment method"}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted">
+                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
                         {account?.details ??
                           "Ask the host for payment details."}
                       </p>

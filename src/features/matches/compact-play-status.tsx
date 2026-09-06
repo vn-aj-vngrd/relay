@@ -56,7 +56,7 @@ export function CompactPlayStatus({
   }, [fingerprint, href, urgent]);
 
   return (
-    <div className="shrink-0 border-b border-line bg-surface px-4 sm:px-8 lg:px-0">
+    <div className="game-live-status min-w-0 shrink-0 border-t border-line bg-surface px-4 sm:px-8 lg:px-0">
       <div className="mx-auto flex min-h-11 w-full max-w-6xl items-center gap-1">
         <Link
           href={href}
@@ -67,9 +67,17 @@ export function CompactPlayStatus({
             aria-hidden
             size={16}
             weight={urgent ? "fill" : "regular"}
-            className={urgent ? "text-live" : "text-muted"}
+            className={`shrink-0 ${urgent ? "text-live" : "text-muted"}`}
           />
-          <span className="min-w-0 flex-1 truncate">Your Play · {label}</span>
+          <span className="min-w-0 flex-1 break-words py-2 leading-5">
+            <span className="text-muted">Your Play · </span>
+            {label}
+          </span>
+          <CaretRight
+            aria-hidden
+            size={15}
+            className="shrink-0 text-muted sm:hidden"
+          />
           <span className="hidden shrink-0 items-center gap-1 text-xs text-muted sm:inline-flex">
             Open Play <CaretRight aria-hidden size={13} />
           </span>

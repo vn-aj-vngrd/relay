@@ -11,11 +11,14 @@ import {
   viewerStanding,
 } from "./recap-share";
 
+import { type StoryTheme, storyThemeDecorations } from "./story-theme";
+
 export type RecapBackground = {
   id: string;
   label: string;
   color?: string;
   imageUrl?: string;
+  file?: File;
   light?: boolean;
 };
 
@@ -39,6 +42,7 @@ export function RecapStoryCard({
   background,
   viewerPlayerId,
   layout = "courtside",
+  theme = "minimal",
   overlay = 55,
   photoPosition = 50,
   customHeadline = "Our kind of game.",
@@ -58,6 +62,7 @@ export function RecapStoryCard({
   background: RecapBackground;
   viewerPlayerId?: string | null;
   layout?: RecapStoryLayout;
+  theme?: StoryTheme;
   overlay?: number;
   photoPosition?: number;
   customHeadline?: string;
@@ -86,6 +91,7 @@ export function RecapStoryCard({
 
   return (
     <div
+      data-story-theme={theme}
       role="group"
       aria-roledescription="slide"
       aria-label={`${template.replaceAll("-", " ")} social recap preview`}
@@ -536,6 +542,24 @@ export function RecapStoryCard({
           ) : null}
         </div>
       </div>
+      {theme !== "minimal" ? (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1080 1920"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          fill="none"
+        >
+          {storyThemeDecorations(theme).map((decoration) => (
+            <path
+              key={decoration.path}
+              d={decoration.path}
+              fill={decoration.fill ?? "none"}
+              stroke={decoration.stroke}
+              strokeWidth={decoration.strokeWidth}
+            />
+          ))}
+        </svg>
+      ) : null}
     </div>
   );
 }

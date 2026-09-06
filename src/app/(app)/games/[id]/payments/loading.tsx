@@ -12,10 +12,10 @@ export default function PaymentsLoading() {
         role="status"
         aria-label="Loading payments"
         aria-busy="true"
-        className="grid gap-8 sm:pt-7 lg:grid-cols-[1fr_340px]"
+        className="grid gap-8 sm:pt-7 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
         <section>
-          <div className="flex items-end justify-between border-b border-line pb-5">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
             <div>
               <Skeleton className="h-3.5 w-16" />
               <Skeleton className="mt-2 h-8 w-40" />

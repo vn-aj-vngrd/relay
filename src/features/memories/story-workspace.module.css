@@ -1,0 +1,91 @@
+.workspace {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: 1rem;
+}
+
+.carousel {
+  min-width: 0;
+  width: 100%;
+  max-width: 20rem;
+  margin-inline: auto;
+}
+
+/* Bound one dimension only: the card owns the true 9:16 aspect ratio.
+   svh keeps browser chrome opening/closing from jumping the controls. */
+.portrait {
+  position: relative;
+  width: min(100%, 17.5rem, 23.625svh);
+  margin-inline: auto;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.actions > button {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 2.5rem;
+  white-space: normal;
+  line-height: 1.25;
+  padding-block: 0.5rem;
+}
+
+.expanded {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-height: calc(
+    100svh -
+    2rem -
+    env(safe-area-inset-top) -
+    env(safe-area-inset-bottom)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem;
+}
+
+.expanded > * {
+  flex-shrink: 0;
+}
+
+/* Expanded means readable, even on short phones. Let the dialog scroll
+   instead of shrinking the story to the height left below its controls. */
+.expandedPortrait {
+  width: min(100%, 26.875rem);
+}
+
+@media (min-width: 48rem) {
+  .workspace {
+    grid-template-columns: minmax(0, 16.25rem) minmax(0, 35rem);
+    gap: 1.75rem;
+  }
+
+  .portrait {
+    width: min(100%, 30.9375svh);
+  }
+
+  .actions > button {
+    flex: 0 1 auto;
+  }
+}
+
+/* Short landscapes benefit from adjacency, not a sticky portrait that can
+   cover the game tabs or leave its own navigation below the viewport. */
+@media (min-width: 36rem) and (max-height: 31.25rem) and (
+    orientation: landscape
+  ) {
+  .workspace {
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  }
+
+  .portrait {
+    width: min(100%, 28.125svh);
+  }
+}

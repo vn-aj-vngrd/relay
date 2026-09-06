@@ -35,6 +35,9 @@ import {
   RecapStoryCard,
   type RecapStoryLayout,
 } from "./recap-story-card";
+import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
+import { drawStoryTheme, type StoryTheme, storyThemes } from "./story-theme";
+import styles from "./story-workspace.module.css";
 
 type RecapPhoto = { id: string; url: string; alt: string };
 
@@ -72,28 +75,6 @@ function fitText(
     size -= 4;
   }
   return size;
-}
-
-async function drawPhoto(
-  context: CanvasRenderingContext2D,
-  url: string,
-  width: number,
-  height: number,
-  photoPosition: number
-) {
-  const response = await fetch(url);
-  const bitmap = await createImageBitmap(await response.blob());
-  const scale = Math.max(width / bitmap.width, height / bitmap.height);
-  const drawWidth = bitmap.width * scale;
-  const drawHeight = bitmap.height * scale;
-  const overflow = Math.max(0, drawHeight - height);
-  context.drawImage(
-    bitmap,
-    (width - drawWidth) / 2,
-    -overflow * (photoPosition / 100),
-    drawWidth,
-    drawHeight
-  );
 }
 
 function signed(value: number) {
@@ -223,6 +204,7 @@ export function RecapShareCard({
     templates[0].id
   );
   const [layout, setLayout] = useState<RecapStoryLayout>("courtside");
+  const [theme, setTheme] = useState<StoryTheme>("minimal");
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
   const [photoPosition, setPhotoPosition] = useState(50);
@@ -232,11 +214,16 @@ export function RecapShareCard({
   const [message, setMessage] = useState("");
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [customizeSection, setCustomizeSection] = useState<
+    "layout" | "background" | "message"
+  >("layout");
+  const customizeButton = useRef<HTMLButtonElement>(null);
   const customizationId = useId();
   const previewTitleId = useId();
   const previewDialog = useRef<HTMLDialogElement>(null);
-  const touchStart = useRef<number | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
   const customPhotoInput = useRef<HTMLInputElement>(null);
+  const photoSelection = useRef(0);
   const background =
     backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
   const templateIndex = templates.findIndex((item) => item.id === template);
@@ -261,17 +248,35 @@ export function RecapShareCard({
 
   async function chooseCustomPhoto(file: File | undefined) {
     if (!file) return;
+    const selection = ++photoSelection.current;
     if (
       !isSupportedImageType(file.type) ||
       file.size === 0 ||
       file.size > 10 * 1024 * 1024 ||
       !(await hasValidImageSignature(file))
     ) {
-      setMessage("Choose a JPG, PNG, or WebP photo under 10 MB.");
+      if (selection === photoSelection.current)
+        setMessage("Choose a JPG, PNG, or WebP photo under 10 MB.");
       return;
     }
+    try {
+      const bitmap = await decodeStoryPhoto(file);
+      bitmap.close();
+    } catch {
+      if (selection === photoSelection.current)
+        setMessage(
+          "This photo couldn’t be read. Choose another JPG, PNG, or WebP."
+        );
+      return;
+    }
+    if (selection !== photoSelection.current) return;
     const imageUrl = URL.createObjectURL(file);
-    setCustomBackground({ id: "custom-photo", label: file.name, imageUrl });
+    setCustomBackground({
+      id: "custom-photo",
+      label: file.name,
+      imageUrl,
+      file,
+    });
     setBackgroundId("custom-photo");
     setLayout("snapshot");
     setMessage("Photo added to this story only. It hasn’t been uploaded.");
@@ -308,9 +313,9 @@ export function RecapShareCard({
     context.fillRect(0, 0, canvas.width, canvas.height);
     if (background.imageUrl) {
       try {
-        await drawPhoto(
+        await drawStoryPhoto(
           context,
-          background.imageUrl,
+          background.file ?? background.imageUrl,
           canvas.width,
           canvas.height,
           photoPosition
@@ -704,6 +709,7 @@ export function RecapShareCard({
       1880,
       936
     );
+    drawStoryTheme(context, theme);
     return new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (blob) =>
@@ -787,7 +793,7 @@ export function RecapShareCard({
         : "Share story";
 
   return (
-    <div className="grid items-start gap-5 md:grid-cols-[260px_minmax(0,560px)] md:gap-7">
+    <div className={styles.workspace}>
       <div
         role="region"
         aria-roledescription="carousel"
@@ -799,18 +805,7 @@ export function RecapShareCard({
             moveTemplate(event.key === "ArrowLeft" ? -1 : 1);
           }
         }}
-        onTouchStart={(event) => {
-          touchStart.current = event.changedTouches[0]?.clientX ?? null;
-        }}
-        onTouchEnd={(event) => {
-          if (touchStart.current === null) return;
-          const distance =
-            (event.changedTouches[0]?.clientX ?? touchStart.current) -
-            touchStart.current;
-          touchStart.current = null;
-          if (Math.abs(distance) > 44) moveTemplate(distance > 0 ? -1 : 1);
-        }}
-        className="mx-auto w-full max-w-[280px] rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25 md:sticky md:top-4 md:max-w-none"
+        className={`${styles.carousel} rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25`}
       >
         <div
           className="mb-3 grid gap-1"
@@ -826,7 +821,29 @@ export function RecapShareCard({
             />
           ))}
         </div>
-        <div className="relative">
+        <div
+          className={styles.portrait}
+          onTouchStart={(event) => {
+            const touch = event.touches.length === 1 ? event.touches[0] : null;
+            touchStart.current = touch
+              ? { x: touch.clientX, y: touch.clientY }
+              : null;
+          }}
+          onTouchCancel={() => {
+            touchStart.current = null;
+          }}
+          onTouchEnd={(event) => {
+            const start = touchStart.current;
+            const end = event.changedTouches[0];
+            touchStart.current = null;
+            if (!start || !end) return;
+            const x = end.clientX - start.x;
+            const y = end.clientY - start.y;
+            if (Math.abs(x) > 44 && Math.abs(x) > Math.abs(y) * 1.5) {
+              moveTemplate(x > 0 ? -1 : 1);
+            }
+          }}
+        >
           <RecapStoryCard
             title={title}
             venue={venue}
@@ -836,6 +853,7 @@ export function RecapShareCard({
             template={template}
             background={background}
             viewerPlayerId={viewerPlayerId}
+            theme={theme}
             layout={layout}
             overlay={overlay}
             photoPosition={photoPosition}
@@ -858,7 +876,7 @@ export function RecapShareCard({
           <button
             type="button"
             onClick={() => moveTemplate(-1)}
-            className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+            className="grid h-11 w-11 place-items-center rounded-lg text-muted outline-none hover:bg-surface-strong hover:text-ink focus-visible:ring-3 focus-visible:ring-primary/25"
             aria-label="Previous story"
           >
             <CaretLeft aria-hidden size={17} />
@@ -869,7 +887,7 @@ export function RecapShareCard({
           <button
             type="button"
             onClick={() => moveTemplate(1)}
-            className="grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+            className="grid h-11 w-11 place-items-center rounded-lg text-muted outline-none hover:bg-surface-strong hover:text-ink focus-visible:ring-3 focus-visible:ring-primary/25"
             aria-label="Next story"
           >
             <CaretRight aria-hidden size={17} />
@@ -877,7 +895,7 @@ export function RecapShareCard({
         </div>
       </div>
       <div className="min-w-0">
-        <fieldset>
+        <fieldset className="min-w-0">
           <legend className="text-sm font-bold">Focus</legend>
           <div className="mt-3">
             <TabChipRail
@@ -892,189 +910,8 @@ export function RecapShareCard({
           </div>
         </fieldset>
 
-        <div className="mt-6 border-y border-line">
-          <button
-            type="button"
-            aria-expanded={customizeOpen}
-            aria-controls={customizationId}
-            onClick={() => setCustomizeOpen((open) => !open)}
-            className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
-          >
-            <SlidersHorizontal
-              aria-hidden
-              size={19}
-              className="shrink-0 text-primary"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold">Customize story</span>
-              <span className="mt-0.5 block truncate text-xs font-normal text-muted">
-                {storyLayouts.find((item) => item.id === layout)?.label} ·{" "}
-                {background.label}
-              </span>
-            </span>
-            <CaretDown
-              aria-hidden
-              size={17}
-              className={`shrink-0 text-muted transition-transform motion-reduce:transition-none ${customizeOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-          {customizeOpen ? (
-            <div id={customizationId} className="pb-6 pt-4">
-              <fieldset>
-                <legend className="text-sm font-bold">Layout</legend>
-                <div className="mt-3">
-                  <TabChipRail
-                    label="Story look"
-                    items={storyLayouts.map((item) => ({
-                      value: item.id,
-                      label: item.label,
-                    }))}
-                    value={layout}
-                    onChange={setLayout}
-                  />
-                </div>
-              </fieldset>
-
-              <fieldset className="mt-6">
-                <legend className="text-sm font-bold">Background</legend>
-                <div
-                  className="mt-3 flex flex-wrap gap-2"
-                  role="radiogroup"
-                  aria-label="Story background"
-                >
-                  {backgrounds.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="radio"
-                      aria-label={
-                        item.imageUrl ? item.label : `${item.label} background`
-                      }
-                      aria-checked={backgroundId === item.id}
-                      onClick={() => setBackgroundId(item.id)}
-                      className={`relative h-14 w-14 overflow-hidden rounded-lg border-2 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
-                      style={{ backgroundColor: item.color }}
-                    >
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt=""
-                          fill
-                          sizes="56px"
-                          unoptimized={item.imageUrl.startsWith("blob:")}
-                          className="object-cover"
-                        />
-                      ) : null}
-                      {backgroundId === item.id ? (
-                        <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
-                          <Check aria-hidden size={17} weight="bold" />
-                        </span>
-                      ) : null}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => customPhotoInput.current?.click()}
-                    className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
-                    aria-label="Add a background photo"
-                  >
-                    <ImageSquare aria-hidden size={21} />
-                  </button>
-                  <input
-                    ref={customPhotoInput}
-                    type="file"
-                    aria-label="Choose background photo file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    onChange={(event) =>
-                      void chooseCustomPhoto(event.target.files?.[0])
-                    }
-                  />
-                </div>
-                <p className="mt-2 text-xs leading-5 text-muted">
-                  Device photos stay local unless you separately add them to the
-                  session below.
-                </p>
-              </fieldset>
-
-              {background.imageUrl ? (
-                <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <label className="text-sm font-semibold">
-                    Photo position
-                    <input
-                      type="range"
-                      aria-label="Photo position"
-                      min="0"
-                      max="100"
-                      value={photoPosition}
-                      onChange={(event) =>
-                        setPhotoPosition(Number(event.target.value))
-                      }
-                      className="mt-3 w-full accent-primary"
-                    />
-                    <span className="mt-1 block text-xs font-normal text-muted">
-                      Move the crop from top to bottom.
-                    </span>
-                  </label>
-                  <label className="text-sm font-semibold">
-                    Text contrast
-                    <input
-                      type="range"
-                      aria-label="Text contrast"
-                      min="20"
-                      max="80"
-                      value={overlay}
-                      onChange={(event) =>
-                        setOverlay(Number(event.target.value))
-                      }
-                      className="mt-3 w-full accent-primary"
-                    />
-                    <span className="mt-1 block text-xs font-normal text-muted">
-                      Darken the photo behind the story.
-                    </span>
-                  </label>
-                </div>
-              ) : null}
-
-              <fieldset className="mt-6">
-                <legend className="text-sm font-bold">Message</legend>
-                {template === "custom" ? (
-                  <label className="mt-3 block text-sm font-semibold">
-                    Headline
-                    <input
-                      value={customHeadline}
-                      onChange={(event) =>
-                        setCustomHeadline(event.target.value)
-                      }
-                      maxLength={56}
-                      className="field"
-                      placeholder="Our kind of game."
-                    />
-                  </label>
-                ) : null}
-                <label className="mt-3 block text-sm font-semibold">
-                  Personal line{" "}
-                  <span className="font-normal text-muted">(optional)</span>
-                  <input
-                    value={customNote}
-                    onChange={(event) => setCustomNote(event.target.value)}
-                    maxLength={72}
-                    className="field"
-                    placeholder="Let’s play again soon."
-                  />
-                </label>
-              </fieldset>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button
-            type="button"
-            onClick={share}
-            disabled={pending}
-            className="w-full sm:w-auto"
-          >
+        <div className={styles.actions}>
+          <Button type="button" onClick={share} disabled={pending}>
             {pending ? (
               <ButtonSpinner />
             ) : (
@@ -1088,7 +925,6 @@ export function RecapShareCard({
             onClick={download}
             disabled={pending}
             aria-label="Download PNG"
-            className="w-full sm:w-auto"
           >
             <DownloadSimple aria-hidden size={16} />
             Download
@@ -1099,6 +935,233 @@ export function RecapShareCard({
             {message}
           </p>
         ) : null}
+
+        <div className="mt-4 border-y border-line">
+          <button
+            type="button"
+            ref={customizeButton}
+            aria-expanded={customizeOpen}
+            aria-controls={customizationId}
+            onClick={() => setCustomizeOpen((open) => !open)}
+            className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+          >
+            <SlidersHorizontal
+              aria-hidden
+              size={19}
+              className="shrink-0 text-primary"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold">Customize story</span>
+              <span className="mt-0.5 block truncate text-xs font-normal text-muted">
+                {storyThemes.find((item) => item.id === theme)?.label} ·{" "}
+                {storyLayouts.find((item) => item.id === layout)?.label} ·{" "}
+                {background.label}
+              </span>
+            </span>
+            <CaretDown
+              aria-hidden
+              size={17}
+              className={`shrink-0 text-muted transition-transform motion-reduce:transition-none ${customizeOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {customizeOpen ? (
+            <div id={customizationId} className="min-w-0 pb-4 pt-2">
+              <TabChipRail
+                label="Customize options"
+                items={[
+                  { value: "layout", label: "Layout" },
+                  { value: "background", label: "Background" },
+                  { value: "message", label: "Message" },
+                ]}
+                value={customizeSection}
+                onChange={setCustomizeSection}
+                variant="underline"
+              />
+              {customizeSection === "layout" ? (
+                <div>
+                  <fieldset className="mt-4 min-w-0">
+                    <legend className="text-sm font-bold">Theme</legend>
+                    <div className="mt-3">
+                      <TabChipRail
+                        label="Story theme"
+                        items={storyThemes.map((item) => ({
+                          value: item.id,
+                          label: item.label,
+                        }))}
+                        value={theme}
+                        onChange={setTheme}
+                      />
+                    </div>
+                  </fieldset>
+                  <fieldset className="mt-4 min-w-0">
+                    <legend className="text-sm font-bold">Layout</legend>
+                    <div className="mt-3">
+                      <TabChipRail
+                        label="Story look"
+                        items={storyLayouts.map((item) => ({
+                          value: item.id,
+                          label: item.label,
+                        }))}
+                        value={layout}
+                        onChange={setLayout}
+                      />
+                    </div>
+                  </fieldset>
+                </div>
+              ) : null}
+
+              {customizeSection === "background" ? (
+                <div>
+                  <fieldset className="mt-4 min-w-0">
+                    <legend className="text-sm font-bold">Background</legend>
+                    <div
+                      className="mt-3 flex max-h-52 flex-wrap gap-2 overflow-y-auto p-1"
+                      role="group"
+                      aria-label="Story background"
+                    >
+                      {backgrounds.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          aria-label={
+                            item.imageUrl
+                              ? item.label
+                              : `${item.label} background`
+                          }
+                          aria-pressed={backgroundId === item.id}
+                          onClick={() => setBackgroundId(item.id)}
+                          className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-3 focus-visible:ring-primary/25 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
+                          style={{ backgroundColor: item.color }}
+                        >
+                          {item.imageUrl ? (
+                            <Image
+                              src={item.imageUrl}
+                              alt=""
+                              fill
+                              sizes="56px"
+                              unoptimized={item.imageUrl.startsWith("blob:")}
+                              className="object-cover"
+                            />
+                          ) : null}
+                          {backgroundId === item.id ? (
+                            <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
+                              <Check aria-hidden size={17} weight="bold" />
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => customPhotoInput.current?.click()}
+                        className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
+                        aria-label="Add a background photo"
+                      >
+                        <ImageSquare aria-hidden size={21} />
+                      </button>
+                      <input
+                        ref={customPhotoInput}
+                        type="file"
+                        aria-label="Choose background photo file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = "";
+                          void chooseCustomPhoto(file);
+                        }}
+                      />
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted">
+                      Device photos stay local. To share them with the game, add
+                      them separately in Photos.
+                    </p>
+                  </fieldset>
+
+                  {background.imageUrl ? (
+                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                      <label className="text-sm font-semibold">
+                        Photo position
+                        <input
+                          type="range"
+                          aria-label="Photo position"
+                          min="0"
+                          max="100"
+                          value={photoPosition}
+                          onChange={(event) =>
+                            setPhotoPosition(Number(event.target.value))
+                          }
+                          className="mt-1 min-h-11 w-full accent-primary"
+                        />
+                        <span className="mt-1 block text-xs font-normal text-muted">
+                          Move the crop from top to bottom.
+                        </span>
+                      </label>
+                      <label className="text-sm font-semibold">
+                        Text contrast
+                        <input
+                          type="range"
+                          aria-label="Text contrast"
+                          min="20"
+                          max="80"
+                          value={overlay}
+                          onChange={(event) =>
+                            setOverlay(Number(event.target.value))
+                          }
+                          className="mt-1 min-h-11 w-full accent-primary"
+                        />
+                        <span className="mt-1 block text-xs font-normal text-muted">
+                          Darken the photo behind the story.
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {customizeSection === "message" ? (
+                <fieldset className="mt-4 min-w-0">
+                  <legend className="text-sm font-bold">Message</legend>
+                  {template === "custom" ? (
+                    <label className="mt-3 block text-sm font-semibold">
+                      Headline
+                      <input
+                        value={customHeadline}
+                        onChange={(event) =>
+                          setCustomHeadline(event.target.value)
+                        }
+                        maxLength={56}
+                        className="field"
+                        placeholder="Our kind of game."
+                      />
+                    </label>
+                  ) : null}
+                  <label className="mt-3 block text-sm font-semibold">
+                    Personal line{" "}
+                    <span className="font-normal text-muted">(optional)</span>
+                    <input
+                      value={customNote}
+                      onChange={(event) => setCustomNote(event.target.value)}
+                      maxLength={72}
+                      className="field"
+                      placeholder="Let’s play again soon."
+                    />
+                  </label>
+                </fieldset>
+              ) : null}
+              <Button
+                type="button"
+                variant="quiet"
+                className="mt-4"
+                onClick={() => {
+                  setCustomizeOpen(false);
+                  customizeButton.current?.focus();
+                }}
+              >
+                Done customizing
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {previewOpen ? (
@@ -1107,8 +1170,14 @@ export function RecapShareCard({
           variant="media"
           aria-labelledby={previewTitleId}
           onClose={() => setPreviewOpen(false)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+              event.preventDefault();
+              moveTemplate(event.key === "ArrowLeft" ? -1 : 1);
+            }
+          }}
         >
-          <div className="flex max-h-[calc(100dvh-2rem)] flex-col items-center">
+          <div className={styles.expanded}>
             <div className="mb-3 flex w-full max-w-md items-center justify-between gap-3">
               <div className="min-w-0">
                 <h2
@@ -1129,26 +1198,29 @@ export function RecapShareCard({
                 <X aria-hidden size={18} />
               </Button>
             </div>
-            <RecapStoryCard
-              title={title}
-              venue={venue}
-              date={date}
-              accent={accent}
-              recap={recap}
-              template={template}
-              background={background}
-              viewerPlayerId={viewerPlayerId}
-              layout={layout}
-              overlay={overlay}
-              photoPosition={photoPosition}
-              customHeadline={customHeadline}
-              customNote={customNote}
-              phase={phase}
-              storyAsOf={storyAsOf}
-              invitation={invitation}
-              courtCount={courtCount}
-              className="h-[min(68dvh,760px)] w-auto max-w-full shrink rounded-xl"
-            />
+            <div className={styles.expandedPortrait}>
+              <RecapStoryCard
+                title={title}
+                venue={venue}
+                date={date}
+                accent={accent}
+                recap={recap}
+                template={template}
+                background={background}
+                viewerPlayerId={viewerPlayerId}
+                theme={theme}
+                layout={layout}
+                overlay={overlay}
+                photoPosition={photoPosition}
+                customHeadline={customHeadline}
+                customNote={customNote}
+                phase={phase}
+                storyAsOf={storyAsOf}
+                invitation={invitation}
+                courtCount={courtCount}
+                className="w-full"
+              />
+            </div>
             <div className="mt-3 grid w-full max-w-md grid-cols-[44px_1fr_44px] items-center gap-2">
               <button
                 type="button"
@@ -1158,7 +1230,10 @@ export function RecapShareCard({
               >
                 <CaretLeft aria-hidden size={18} />
               </button>
-              <p className="text-center text-xs font-semibold text-white">
+              <p
+                className="text-center text-xs font-semibold text-white"
+                aria-live="polite"
+              >
                 {activeTemplate.label} · {templateIndex + 1} of{" "}
                 {templates.length}
               </p>
@@ -1171,7 +1246,7 @@ export function RecapShareCard({
                 <CaretRight aria-hidden size={18} />
               </button>
             </div>
-            <div className="mt-2 grid w-full max-w-md grid-cols-2 gap-2">
+            <div className={`${styles.actions} w-full max-w-md`}>
               <Button type="button" onClick={share} disabled={pending}>
                 {pending ? (
                   <ButtonSpinner />
@@ -1191,6 +1266,14 @@ export function RecapShareCard({
                 Download
               </Button>
             </div>
+            {message ? (
+              <p
+                role="status"
+                className="mt-2 w-full max-w-md text-sm text-white"
+              >
+                {message}
+              </p>
+            ) : null}
           </div>
         </Dialog>
       ) : null}

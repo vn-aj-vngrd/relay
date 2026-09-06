@@ -400,10 +400,10 @@ export async function SessionPlay({
                 Session Standings
               </h2>
               <div className="mt-3 overflow-hidden border-y border-line">
-                <table className="w-full text-sm">
+                <table className="w-full table-fixed text-sm">
                   <thead className="text-left text-xs text-muted">
                     <tr>
-                      <th className="py-2 font-medium">Player</th>
+                      <th className="w-[55%] py-2 font-medium">Player</th>
                       <th className="py-2 text-right font-medium">W</th>
                       <th className="py-2 text-right font-medium">L</th>
                       <th className="py-2 text-right font-medium">+/−</th>
@@ -412,7 +412,9 @@ export async function SessionPlay({
                   <tbody className="divide-y divide-line">
                     {data.standings.map((row) => (
                       <tr key={row.playerId}>
-                        <td className="py-3 font-medium">{row.name}</td>
+                        <td className="break-words py-3 pr-3 font-medium">
+                          {row.name}
+                        </td>
                         <td className="score py-3 text-right">{row.wins}</td>
                         <td className="score py-3 text-right">{row.losses}</td>
                         <td className="score py-3 text-right">

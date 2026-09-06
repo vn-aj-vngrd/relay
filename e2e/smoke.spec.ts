@@ -174,6 +174,37 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await expect(
     page.getByRole("dialog", { name: "Court 1 full-screen scoreboard" })
   ).toBeVisible();
+  const initialViewport = page.viewportSize();
+  for (const viewport of [
+    { width: 320, height: 568 },
+    { width: 390, height: 844 },
+    { width: 667, height: 375 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const dialog = page.getByRole("dialog", {
+      name: "Court 1 full-screen scoreboard",
+    });
+    const addPoint = dialog.getByRole("button", {
+      name: "Add a point to Van + AJ",
+    });
+    await addPoint.scrollIntoViewIfNeeded();
+    const bounds = await addPoint.boundingBox();
+    expect(bounds?.height).toBeGreaterThanOrEqual(64);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth)
+    ).toBeLessThanOrEqual(viewport.width);
+    const finish = dialog.getByRole("button", {
+      name: "Finish match",
+      exact: true,
+    });
+    await finish.scrollIntoViewIfNeeded();
+    const finishBounds = await finish.boundingBox();
+    expect(finishBounds!.y + finishBounds!.height).toBeLessThanOrEqual(
+      viewport.height
+    );
+  }
+  if (initialViewport) await page.setViewportSize(initialViewport);
   await page
     .getByRole("button", { name: "Close full-screen scoreboard" })
     .click();
@@ -817,7 +848,9 @@ test("core public and protected routes fail safely", async ({ page }) => {
   const globalSearch = await page.request.get("/api/search?q=v&type=all");
   expect(globalSearch.status()).toBe(401);
   await page.goto("/games/open");
-  await expect(page.getByRole("heading", { name: "Open games" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Open games", exact: true })
+  ).toBeVisible();
   await page.goto("/games/new");
   await expect(page.getByRole("heading", { name: "The plan" })).toBeVisible();
   await page.goto("/groups/new");

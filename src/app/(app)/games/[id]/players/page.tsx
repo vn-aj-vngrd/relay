@@ -103,7 +103,7 @@ export default async function PlayersPage({
                       index={index}
                       size="sm"
                     />
-                    <div className="min-w-32 flex-1">
+                    <div className="min-w-0 basis-32 flex-1 break-words">
                       <p className="font-medium">{name}</p>
                       <p className="mt-0.5 text-xs text-muted">
                         Requested a spot
@@ -195,7 +195,7 @@ export default async function PlayersPage({
                     <span className="score w-5 text-sm text-muted">
                       {index + 1}
                     </span>
-                    <span className="flex-1 font-medium">
+                    <span className="min-w-0 flex-1 break-words font-medium">
                       {name}
                       {player.role === "host" ? (
                         <span className="ml-2 text-xs font-normal text-muted">
@@ -242,7 +242,9 @@ export default async function PlayersPage({
                     key={player.id}
                     className="flex min-h-14 items-center gap-3"
                   >
-                    <span className="flex-1 font-medium">{name}</span>
+                    <span className="min-w-0 flex-1 break-words font-medium">
+                      {name}
+                    </span>
                     <span className="text-sm capitalize text-muted">
                       {player.role === "host"
                         ? `Host · ${player.rsvp}`

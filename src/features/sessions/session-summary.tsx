@@ -99,9 +99,11 @@ export function SessionPlanDetails({
           size={21}
         />
         <div className="min-w-0">
-          <p className="font-semibold">{session.venueName}</p>
+          <p className="break-words font-semibold">{session.venueName}</p>
           {session.venueAddress ? (
-            <p className="mt-1 text-sm text-muted">{session.venueAddress}</p>
+            <p className="mt-1 break-words text-sm text-muted">
+              {session.venueAddress}
+            </p>
           ) : null}
           <a
             href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(session.venueAddress || session.venueName)}`}

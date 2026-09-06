@@ -58,7 +58,7 @@ function TeamName({ team }: { team: CourtScoreboardTeam }) {
       {team.players.map((player, index) => (
         <span
           key={`${player}-${index}`}
-          className="block max-w-full break-words"
+          className="block max-w-full [overflow-wrap:anywhere]"
         >
           {index ? (
             <span aria-hidden className="mr-1 text-[var(--scoreboard-line)]">
@@ -90,7 +90,7 @@ function CourtScoreboard({
 }: CourtScoreboardProps) {
   return (
     <article
-      className={`overflow-hidden border border-line bg-surface ${expanded ? "flex h-full flex-col rounded-none border-0" : "rounded-xl"}`}
+      className={`border border-line bg-surface ${expanded ? "flex h-full flex-col overflow-y-auto overscroll-contain rounded-none border-0 [padding:env(safe-area-inset-top)_env(safe-area-inset-right)_env(safe-area-inset-bottom)_env(safe-area-inset-left)]" : "overflow-hidden rounded-xl"}`}
     >
       <header
         className={`flex shrink-0 items-center justify-between gap-3 border-b border-line ${expanded ? "min-h-16 px-5 sm:px-8" : "min-h-14 px-4"}`}
@@ -163,7 +163,7 @@ function CourtScoreboard({
       ) : null}
 
       <div
-        className={`grid shrink-0 grid-cols-2 bg-[var(--scoreboard-field)] text-white ${expanded ? "min-h-0 flex-1" : ""}`}
+        className={`grid shrink-0 grid-cols-2 bg-[var(--scoreboard-field)] text-white ${expanded ? "flex-1" : ""}`}
       >
         {([0, 1] as const).map((side) => (
           <section
@@ -178,7 +178,7 @@ function CourtScoreboard({
               <output
                 aria-live="polite"
                 aria-label={`${teams[side].label} score ${scores[side]}`}
-                className={`score mt-3 block font-bold leading-none tracking-[-0.045em] ${expanded ? "text-[clamp(7rem,22vw,16rem)] landscape:text-[clamp(4rem,14vh,7rem)]" : "text-[5rem] sm:text-[6.5rem]"}`}
+                className={`score mt-3 block font-bold leading-none tracking-[-0.045em] ${expanded ? "text-[clamp(4rem,22vw,16rem)] landscape:text-[clamp(4rem,14vh,7rem)]" : "text-[5rem] sm:text-[6.5rem]"}`}
               >
                 {scores[side]}
               </output>
@@ -190,7 +190,7 @@ function CourtScoreboard({
                   onClick={() => onScore(side, -1)}
                   disabled={scores[side] === 0}
                   aria-label={`Subtract a point from ${teams[side].label}`}
-                  className={`pressable grid place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white disabled:opacity-35 ${expanded ? "min-h-20" : "min-h-16"}`}
+                  className={`compact-control pressable grid place-items-center court-rule border-r text-white/65 hover:bg-white/10 hover:text-white disabled:opacity-35 ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
                   <Minus aria-hidden size={expanded ? 24 : 20} />
                 </button>
@@ -199,7 +199,7 @@ function CourtScoreboard({
                   onClick={() => onScore(side, 1)}
                   disabled={scores[side] === 99}
                   aria-label={`Add a point to ${teams[side].label}`}
-                  className={`pressable grid place-items-center text-white hover:bg-white/10 disabled:opacity-35 ${expanded ? "min-h-20" : "min-h-16"}`}
+                  className={`compact-control pressable grid place-items-center text-white hover:bg-white/10 disabled:opacity-35 ${expanded ? "min-h-20" : "min-h-16"}`}
                 >
                   <Plus aria-hidden size={expanded ? 24 : 20} />
                 </button>

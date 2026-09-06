@@ -162,7 +162,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <div
-        className={`grid gap-2 sm:items-end ${isRelayInvite ? "sm:grid-cols-[minmax(0,1fr)_auto]" : "sm:grid-cols-[minmax(0,1fr)_260px_auto]"}`}
+        className={`grid gap-2 sm:items-end ${isRelayInvite ? "sm:grid-cols-[minmax(0,1fr)_auto]" : "lg:grid-cols-[minmax(0,1fr)_260px_auto]"}`}
       >
         <div
           ref={comboboxRef}

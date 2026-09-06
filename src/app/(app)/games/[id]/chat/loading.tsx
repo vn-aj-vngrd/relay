@@ -21,10 +21,10 @@ export default function ChatLoading() {
             <Skeleton className="h-px flex-1" />
           </div>
           <div className="flex items-start gap-3">
-            <Skeleton className="h-8 w-8 rounded-full" />
-            <div className="space-y-2">
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+            <div className="min-w-0 space-y-2">
               <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-16 w-56 rounded-xl" />
+              <Skeleton className="h-16 w-56 max-w-full rounded-xl" />
             </div>
           </div>
           <div className="flex justify-end">

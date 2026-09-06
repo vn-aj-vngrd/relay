@@ -109,7 +109,7 @@ export default async function GameOverviewPage({
               {session.notes ? (
                 <section className="pt-7">
                   <h2 className="text-lg font-bold">Note</h2>
-                  <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">
+                  <p className="mt-3 max-w-2xl break-words text-pretty leading-7 text-muted">
                     {session.notes}
                   </p>
                 </section>
@@ -326,7 +326,7 @@ export default async function GameOverviewPage({
             {session.notes ? (
               <section className="pt-7">
                 <h2 className="text-lg font-bold">Note</h2>
-                <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">
+                <p className="mt-3 max-w-2xl break-words text-pretty leading-7 text-muted">
                   {session.notes}
                 </p>
               </section>

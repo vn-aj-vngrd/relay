@@ -13,8 +13,10 @@ export default function PublicChatLoading() {
         className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8"
       >
         <div className="min-w-0">
-          <Skeleton className="public-tab-title h-8 w-20" />
-          <Skeleton className="public-tab-description mt-2 h-3.5 w-72 max-w-[70vw]" />
+          <h1 className="public-tab-title app-title">Chat</h1>
+          <p className="public-tab-description mt-2 text-sm text-muted">
+            The session conversation for players and guests.
+          </p>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:mt-5 sm:rounded-xl sm:border sm:border-line">
           <div className="min-h-0 flex-1 overflow-hidden py-5 sm:px-3">

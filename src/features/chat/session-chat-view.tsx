@@ -96,7 +96,7 @@ export async function SessionChatView({
 
   return (
     <div
-      className={`flex min-h-0 flex-col overflow-hidden border-t border-line bg-surface sm:px-3 ${className}`}
+      className={`flex min-h-0 min-w-0 flex-col overflow-hidden border-t border-line bg-surface sm:px-3 ${className}`}
     >
       <ChatThread messageCount={rows.length}>
         {rows.length ? (
@@ -130,7 +130,7 @@ export async function SessionChatView({
                   </div>
                 ) : null}
                 {system ? (
-                  <div className="mx-auto my-4 max-w-lg text-center text-xs leading-5 text-muted">
+                  <div className="mx-auto my-4 max-w-lg break-words text-center text-xs leading-5 text-muted">
                     {message.body}
                   </div>
                 ) : (
@@ -138,7 +138,7 @@ export async function SessionChatView({
                     className={`message-row flex [content-visibility:auto] [contain-intrinsic-size:auto_72px] ${own ? "justify-end" : "justify-start"} ${grouped ? "mt-1" : "mt-4"}`}
                   >
                     <div
-                      className={`flex max-w-[88%] items-end gap-2 sm:max-w-[78%] ${own ? "flex-row-reverse" : ""}`}
+                      className={`flex min-w-0 max-w-[88%] items-end gap-2 sm:max-w-[78%] ${own ? "flex-row-reverse" : ""}`}
                     >
                       {!own ? (
                         groupEnds ? (
@@ -152,9 +152,9 @@ export async function SessionChatView({
                           <span className="w-8 shrink-0" />
                         )
                       ) : null}
-                      <div>
+                      <div className="min-w-0">
                         {!grouped && !own ? (
-                          <p className="mb-1 px-1 text-xs font-semibold text-muted">
+                          <p className="mb-1 break-words px-1 text-xs font-semibold text-muted">
                             {name}
                           </p>
                         ) : null}
@@ -173,7 +173,7 @@ export async function SessionChatView({
                             />
                           ) : null}
                           {message.body ? (
-                            <p className="break-words px-3.5 py-2.5 text-[15px] leading-6">
+                            <p className="[overflow-wrap:anywhere] px-3.5 py-2.5 text-[15px] leading-6">
                               {message.body}
                             </p>
                           ) : null}

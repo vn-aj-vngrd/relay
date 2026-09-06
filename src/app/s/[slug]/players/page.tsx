@@ -85,7 +85,7 @@ export default async function PublicPlayersPage({
                   <span className="score w-5 text-sm text-muted">
                     {index + 1}
                   </span>
-                  <span className="flex-1 font-medium">
+                  <span className="min-w-0 flex-1 break-words font-medium">
                     {profile?.name ?? player.guestName ?? "Guest"}
                   </span>
                   {player.role === "host" || player.role === "cohost" ? (

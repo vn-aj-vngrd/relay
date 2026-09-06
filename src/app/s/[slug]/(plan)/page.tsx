@@ -371,7 +371,7 @@ export default async function PublicSessionPage({
                   <h2 id="notes-title" className="text-lg font-bold">
                     Note
                   </h2>
-                  <p className="mt-3 max-w-2xl text-pretty leading-7 text-muted">
+                  <p className="mt-3 max-w-2xl break-words text-pretty leading-7 text-muted">
                     {session.notes}
                   </p>
                 </section>

@@ -66,6 +66,22 @@ describe("GameWorkspaceFrame", () => {
     expect(screen.getByText("Play status")).toBeInTheDocument();
   });
 
+  it("keeps the live banner inside persistent chrome above the Chat viewport", () => {
+    navigation.pathname = "/games/session-1/chat";
+    renderFrame();
+
+    const status = screen.getByText("Play status");
+    const chrome = status.closest(".session-tab-safe");
+    expect(chrome).toHaveClass("sticky", "shrink-0");
+    expect(chrome).toContainElement(screen.getByText("Mobile game tabs"));
+    expect(chrome).not.toContainElement(screen.getByText("Route content"));
+    expect(screen.getByText("Route content").parentElement).toHaveClass(
+      "min-h-0",
+      "min-w-0",
+      "flex-1"
+    );
+  });
+
   it("removes the duplicate compact status while already on Play", () => {
     navigation.pathname = "/games/session-1/play";
     renderFrame();

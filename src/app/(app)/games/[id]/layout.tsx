@@ -31,7 +31,7 @@ export default async function GameWorkspaceLayout({
 
   return (
     <div
-      className="game-workspace -mt-7 flex h-[calc(100%+1.75rem)] min-h-0 flex-col sm:-mt-9 sm:h-[calc(100%+2.25rem)] lg:mt-0 lg:h-full"
+      className="game-workspace flex h-full min-h-0 min-w-0 flex-col"
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <RealtimeRefresh sessionId={id} silent />

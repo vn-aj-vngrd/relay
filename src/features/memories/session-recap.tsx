@@ -211,7 +211,12 @@ export function SessionRecap({
           <p className="mt-1 text-sm text-muted">
             Only this game. Never a player rating.
           </p>
-          <div className="mt-4 overflow-x-auto border-y border-line">
+          <div
+            role="region"
+            aria-label="Session standings table, scroll for all columns"
+            tabIndex={0}
+            className="mt-4 overflow-x-auto overscroll-x-contain border-y border-line"
+          >
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="text-left text-xs text-muted">
