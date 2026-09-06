@@ -41,7 +41,7 @@ test("Story photo and theme primitives export local PNGs under Relay CSP", async
     try { await fetch(previewUrl); } catch { blobFetchBlocked = true; }
     URL.revokeObjectURL(previewUrl);
     const images = [];
-    for (const theme of ["minimal", "scrapbook", "coquette"]) {
+    for (const { id: theme } of exports.storyThemes) {
       for (const withPhoto of [false, true]) {
         const canvas = document.createElement("canvas");
         canvas.width = 1080; canvas.height = 1920;
@@ -59,7 +59,7 @@ test("Story photo and theme primitives export local PNGs under Relay CSP", async
     return { blobFetchBlocked, images };
   })()`);
   expect(result.blobFetchBlocked).toBe(true);
-  expect(result.images).toHaveLength(6);
+  expect(result.images).toHaveLength(10);
   for (const image of result.images) {
     expect(image).toMatchObject({
       width: 1080,

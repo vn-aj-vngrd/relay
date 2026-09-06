@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 
 import { RelayMark } from "@/components/shared/brand";
 
@@ -11,7 +12,13 @@ import {
   viewerStanding,
 } from "./recap-share";
 
-import { type StoryTheme, storyThemeDecorations } from "./story-theme";
+import { StoryFactFrame } from "./story-fact-frame";
+import {
+  type StoryTheme,
+  storyComposition,
+  storyScoreFont,
+  storyThemeDecorations,
+} from "./story-theme";
 
 export type RecapBackground = {
   id: string;
@@ -96,7 +103,12 @@ export function RecapStoryCard({
       aria-roledescription="slide"
       aria-label={`${template.replaceAll("-", " ")} social recap preview`}
       className={`relative isolate aspect-[9/16] overflow-hidden rounded-xl [container-type:inline-size] ${foreground} ${className}`}
-      style={{ backgroundColor: background.color ?? "#11131a" }}
+      style={
+        {
+          backgroundColor: background.color ?? "#11131a",
+          ...(theme !== "minimal" ? { "--score": storyScoreFont(theme) } : {}),
+        } as CSSProperties
+      }
     >
       {background.imageUrl ? (
         <>
@@ -116,7 +128,21 @@ export function RecapStoryCard({
           />
         </>
       ) : null}
-      <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-[7%] text-[clamp(8px,3.4cqw,12px)] font-bold tracking-[0.08em]">
+      <div
+        data-story-region="header"
+        style={
+          theme === "minimal"
+            ? undefined
+            : {
+                top: `${storyComposition.headerTop / 19.2}%`,
+                height: `${(storyComposition.headerBottom - storyComposition.headerTop) / 19.2}%`,
+                fontSize: "2.2cqw",
+                paddingBlock: 0,
+                lineHeight: 1.2,
+              }
+        }
+        className="absolute inset-x-0 top-0 flex items-center gap-2 p-[7%] text-[clamp(8px,3.4cqw,12px)] font-bold tracking-[0.08em]"
+      >
         <RelayMark className="h-[clamp(10px,4cqw,15px)] w-[clamp(10px,4cqw,15px)]" />
         RELAY ·{" "}
         {isInvitation
@@ -125,7 +151,17 @@ export function RecapStoryCard({
             ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}`
             : "NIGHT MEMORY"}
       </div>
-      <div className={`absolute inset-x-0 ${contentPosition}`}>
+      <StoryFactFrame
+        enabled={theme !== "minimal"}
+        className={`absolute inset-x-0 ${contentPosition}`}
+        position={
+          layout === "poster"
+            ? "top"
+            : layout === "center"
+              ? "center"
+              : "bottom"
+        }
+      >
         <div className={contentFrame}>
           {template === "invitation" && invitation ? (
             <>
@@ -541,7 +577,7 @@ export function RecapStoryCard({
             </p>
           ) : null}
         </div>
-      </div>
+      </StoryFactFrame>
       {theme !== "minimal" ? (
         <svg
           aria-hidden="true"

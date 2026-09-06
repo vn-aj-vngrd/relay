@@ -54,6 +54,13 @@ function renderCard(overrides: Partial<typeof baseProps> = {}) {
 
 beforeEach(() => {
   vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    }
+  );
+  vi.stubGlobal(
     "createImageBitmap",
     vi.fn().mockResolvedValue({ width: 2, height: 2, close: vi.fn() })
   );
@@ -216,11 +223,21 @@ describe("RecapShareCard", () => {
     expect(within(dialog).getByText("My game · 2 of 11")).toBeVisible();
   });
 
-  it.each(storyTheme.storyThemes)(
-    "exports $label with the same selected theme and full PNG dimensions",
-    async ({ id, label }) => {
+  it.each([
+    ...storyTheme.storyThemes.map((theme) => ({
+      ...theme,
+      pink: theme.id === "coquette",
+    })),
+    { id: "coquette" as const, label: "Coquette", pink: false },
+  ])(
+    "exports $label (Pink: $pink) with the same selected theme and full PNG dimensions",
+    async ({ id, label, pink }) => {
+      const fillColors: string[] = [];
       const context = {
-        fillRect: vi.fn(),
+        fillStyle: "#000000",
+        fillRect: vi.fn(function (this: CanvasRenderingContext2D) {
+          fillColors.push(String(this.fillStyle));
+        }),
         strokeRect: vi.fn(),
         beginPath: vi.fn(),
         arc: vi.fn(),
@@ -263,7 +280,15 @@ describe("RecapShareCard", () => {
         "true"
       );
       fireEvent.click(screen.getByRole("button", { name: label }));
-      if (id !== "minimal") {
+      if (pink) {
+        fireEvent.click(screen.getByRole("button", { name: "Background" }));
+        fireEvent.click(
+          screen.getByRole("button", { name: "Pink background" })
+        );
+        expect(
+          screen.getByRole("button", { name: "Pink background" })
+        ).toHaveAttribute("aria-pressed", "true");
+      } else if (id !== "minimal") {
         fireEvent.click(screen.getByRole("button", { name: "Background" }));
         fireEvent.change(
           screen.getByLabelText("Choose background photo file"),
@@ -303,8 +328,20 @@ describe("RecapShareCard", () => {
       );
       expect(dimensions).toEqual([[1080, 1920]]);
       expect(decoration).toHaveBeenCalledWith(context, id);
+      expect(fillColors[0]).toBe(
+        pink ? "#f6cfdf" : id === "minimal" ? "#635bde" : "#11131a"
+      );
       expect(fetchPhoto).not.toHaveBeenCalled();
-      if (id !== "minimal") expect(context.drawImage).toHaveBeenCalledOnce();
+      if (pink) {
+        expect(dialog.querySelector("[data-story-theme]")).toHaveStyle({
+          backgroundColor: "#f6cfdf",
+        });
+        expect(dialog.querySelector("[data-story-theme]")).toHaveClass(
+          "text-[#17181d]"
+        );
+        expect(context.drawImage).not.toHaveBeenCalled();
+      } else if (id !== "minimal")
+        expect(context.drawImage).toHaveBeenCalledOnce();
     }
   );
 

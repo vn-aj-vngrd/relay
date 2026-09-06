@@ -9,11 +9,13 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Story themes", () => {
-  it("offers exactly the three requested styles, preserving Minimal as the default", () => {
+  it("offers five distinct requested styles, preserving Minimal as the default", () => {
     expect(storyThemes.map(({ label }) => label)).toEqual([
       "Minimal",
       "Scrapbook",
       "Coquette",
+      "Court Pop",
+      "Retro Rally",
     ]);
     expect(storyThemeDecorations("minimal")).toEqual([]);
     const save = vi.fn();
@@ -21,7 +23,23 @@ describe("Story themes", () => {
     expect(save).not.toHaveBeenCalled();
   });
 
-  it.each(["scrapbook", "coquette"] as const)(
+  it("gives every expressive theme its own artwork rather than recoloring one frame", () => {
+    const signatures = storyThemes
+      .filter(({ id }) => id !== "minimal")
+      .map(({ id }) =>
+        storyThemeDecorations(id)
+          .map(({ path }) => path)
+          .join("|")
+      );
+    expect(new Set(signatures).size).toBe(4);
+    for (const { id, description } of storyThemes) {
+      expect(description.length).toBeGreaterThan(0);
+      if (id !== "minimal")
+        expect(storyThemeDecorations(id).length).toBeGreaterThan(10);
+    }
+  });
+
+  it.each(["scrapbook", "coquette", "court-pop", "retro-rally"] as const)(
     "uses the same %s path geometry for preview and PNG",
     (theme) => {
       const paths: string[] = [];

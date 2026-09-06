@@ -36,10 +36,21 @@ import {
   type RecapStoryLayout,
 } from "./recap-story-card";
 import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
-import { drawStoryTheme, type StoryTheme, storyThemes } from "./story-theme";
+import {
+  drawStoryTheme,
+  type StoryTheme,
+  storyComposition,
+  storyScoreFont,
+  storyThemes,
+} from "./story-theme";
 import styles from "./story-workspace.module.css";
 
 type RecapPhoto = { id: string; url: string; alt: string };
+
+// Story-only colors do not change the game accent or global app palette.
+const storyPalette: RecapBackground[] = [
+  { id: "story:pink", label: "Pink", color: "#f6cfdf", light: true },
+];
 
 const storyLayouts: Array<{
   id: RecapStoryLayout;
@@ -191,6 +202,7 @@ export function RecapShareCard({
         label: option.label,
         color: option.solid,
       })),
+      ...storyPalette,
       ...photos.map((photo) => ({
         id: `photo:${photo.id}`,
         label: photo.alt,
@@ -303,6 +315,14 @@ export function RecapShareCard({
   }
 
   async function createCard() {
+    function setFont(
+      context: CanvasRenderingContext2D,
+      size: number,
+      weight = 700,
+      mono = false
+    ) {
+      context.font = `${weight} ${size}px ${mono ? storyScoreFont(theme) : "Inter, Arial, sans-serif"}`;
+    }
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
     canvas.height = 1920;
@@ -346,7 +366,8 @@ export function RecapShareCard({
     context.fillText(
       `RELAY · ${isInvitation ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`,
       112,
-      94
+      theme === "minimal" ? 94 : storyComposition.headerBottom - 34,
+      ...(theme === "minimal" ? [] : [896])
     );
 
     const contentOffset =
@@ -359,7 +380,12 @@ export function RecapShareCard({
       context.strokeRect(48, 820, 984, 1020);
     }
     context.save();
-    context.translate(0, contentOffset);
+    context.translate(
+      0,
+      theme === "minimal"
+        ? contentOffset
+        : Math.max(storyComposition.factsTop - 884, contentOffset)
+    );
 
     if (template === "invitation" && invitation) {
       context.fillStyle = foreground;
@@ -693,7 +719,15 @@ export function RecapShareCard({
     }
 
     if (customNote) {
-      const noteRuleY = phase === "published" ? 1730 : 1580;
+      const noteRuleY =
+        theme === "minimal"
+          ? phase === "published"
+            ? 1730
+            : 1580
+          : Math.min(
+              phase === "published" ? 1730 : 1580,
+              storyComposition.factsBottom - 110
+            );
       drawRule(context, noteRuleY, rule);
       context.fillStyle = foreground;
       setFont(context, 30, 600);
@@ -992,6 +1026,12 @@ export function RecapShareCard({
                         onChange={setTheme}
                       />
                     </div>
+                    <p className="mt-2 text-xs leading-5 text-muted">
+                      {
+                        storyThemes.find((item) => item.id === theme)
+                          ?.description
+                      }
+                    </p>
                   </fieldset>
                   <fieldset className="mt-4 min-w-0">
                     <legend className="text-sm font-bold">Layout</legend>
