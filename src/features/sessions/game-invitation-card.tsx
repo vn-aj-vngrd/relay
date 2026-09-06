@@ -63,8 +63,10 @@ export function GameInvitationCard({
   game,
   source,
   onResponded,
+  compact = false,
 }: {
   game: GameCollectionItem;
+  compact?: boolean;
   source: "games" | "home";
   onResponded: (
     game: GameCollectionItem,
@@ -90,7 +92,11 @@ export function GameInvitationCard({
   return (
     <article
       style={sessionAccentStyle(game.accentColor)}
-      className="rounded-xl border border-line bg-surface p-4 sm:p-5"
+      className={
+        compact
+          ? "py-4 sm:px-3 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,auto)] lg:items-center lg:gap-6"
+          : "rounded-xl border border-line bg-surface p-4 sm:p-5"
+      }
     >
       <div className="min-w-0">
         <div className="flex items-start justify-between gap-4">
@@ -135,7 +141,11 @@ export function GameInvitationCard({
       <form
         noValidate
         action={action}
-        className="mt-4 border-t border-line pt-4"
+        className={
+          compact
+            ? "mt-4 border-t border-line pt-4 lg:mt-0 lg:border-0 lg:pt-0"
+            : "mt-4 border-t border-line pt-4"
+        }
       >
         <input type="hidden" name="sessionId" value={game.id} />
         <input type="hidden" name="inviteSource" value={source} />

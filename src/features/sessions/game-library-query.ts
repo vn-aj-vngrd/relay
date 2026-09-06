@@ -5,6 +5,7 @@ import {
   gte,
   ilike,
   inArray,
+  isNotNull,
   isNull,
   lte,
   ne,
@@ -51,11 +52,13 @@ export function gameLibraryConditions(
   return and(
     gameLibraryMembership(userId),
     // Unanswered invitations have their own independent, actionable collection.
-    or(
-      ne(sessionPlayers.rsvp, "invited"),
-      eq(sessions.hostId, userId),
-      eq(sessionPlayers.role, "cohost")
-    ),
+    filters.collection === "invitations"
+      ? isNotNull(sessionPlayers.invitationReceivedAt)
+      : or(
+          ne(sessionPlayers.rsvp, "invited"),
+          eq(sessions.hostId, userId),
+          eq(sessionPlayers.role, "cohost")
+        ),
     filters.cancelled === "false"
       ? ne(sessions.status, "cancelled")
       : undefined,
@@ -69,9 +72,14 @@ export function gameLibraryConditions(
         : filters.role === "player"
           ? and(ne(sessions.hostId, userId), eq(sessionPlayers.role, "player"))
           : undefined,
-    filters.response !== "any"
-      ? eq(sessionPlayers.rsvp, filters.response)
-      : undefined,
+    filters.response === "invited"
+      ? and(
+          eq(sessionPlayers.rsvp, "invited"),
+          gameLibraryPhase("upcoming", now)
+        )
+      : filters.response !== "any"
+        ? eq(sessionPlayers.rsvp, filters.response)
+        : undefined,
     filters.group === "none"
       ? isNull(sessions.groupId)
       : filters.group !== "any"

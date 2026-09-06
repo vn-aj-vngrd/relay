@@ -22,6 +22,16 @@ const whenOptions = [
   { value: "all", label: "All dates" },
   { value: "range", label: "Date range" },
 ];
+const responseOptions = [
+  { value: "invited", label: "Needs response" },
+  { value: "going", label: "Going" },
+  { value: "maybe", label: "Maybe" },
+  { value: "declined", label: "Can’t go" },
+  { value: "pending", label: "Awaiting approval" },
+  { value: "waitlisted", label: "Waitlisted" },
+  { value: "any", label: "All responses" },
+];
+
 const roleOptions = [
   { value: "any", label: "Any role" },
   { value: "player", label: "Player" },
@@ -39,6 +49,16 @@ export function GameLibraryControls({
   loadingOptions?: boolean;
 }) {
   const router = useRouter();
+  const invitations = filters.collection === "invitations";
+  const defaults: GameLibraryFilters = invitations
+    ? {
+        ...defaultGameLibraryFilters,
+        collection: "invitations",
+        response: "invited",
+        cancelled: "true",
+      }
+    : defaultGameLibraryFilters;
+  const destination = invitations ? "/games/invitations" : "/games";
   const [pending, startTransition] = useGameResultsTransition();
   const [search, setSearch] = useState(filters.q);
   const [previousSearch, setPreviousSearch] = useState(filters.q);
@@ -75,7 +95,7 @@ export function GameLibraryControls({
     params.delete("cursor");
     if (clear) for (const key of gameLibraryFilterKeys) params.delete(key);
     for (const [key, value] of Object.entries(values)) {
-      if (value === defaultGameLibraryFilters[key as keyof GameLibraryFilters])
+      if (value === defaults[key as keyof GameLibraryFilters])
         params.delete(key);
       else params.set(key, value);
     }
@@ -85,11 +105,13 @@ export function GameLibraryControls({
     }
     pendingParams.current = { base, query: params.toString() };
     startTransition(() =>
-      router.push(`/games${params.size ? `?${params}` : ""}`, { scroll: false })
+      router.push(`${destination}${params.size ? `?${params}` : ""}`, {
+        scroll: false,
+      })
     );
   };
   const select = (
-    key: "when" | "role",
+    key: "when" | "role" | "response",
     label: string,
     choices: { value: string; label: string }[]
   ) => (
@@ -112,10 +134,7 @@ export function GameLibraryControls({
     />
   );
   const active = gameLibraryFilterKeys.filter(
-    (key) =>
-      filters[key] !== defaultGameLibraryFilters[key] &&
-      key !== "from" &&
-      key !== "until"
+    (key) => filters[key] !== defaults[key] && key !== "from" && key !== "until"
   );
   const rangeError = gameLibraryRangeError(filters);
   return (
@@ -129,14 +148,18 @@ export function GameLibraryControls({
         }}
       >
         <label htmlFor="games-search" className="sr-only">
-          Search your games
+          {invitations ? "Search invitations" : "Search your games"}
         </label>
         <div className="relative">
           <input
             id="games-search"
             type="search"
             maxLength={200}
-            placeholder="Search a game, venue, or host…"
+            placeholder={
+              invitations
+                ? "Search an invitation, venue, or host…"
+                : "Search a game, venue, or host…"
+            }
             value={search}
             className="h-11 w-full rounded-lg border border-line bg-surface px-3 text-[15px] placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             onChange={(event) => {
@@ -154,8 +177,9 @@ export function GameLibraryControls({
           role="group"
           aria-label="Filter your games"
         >
+          {invitations ? select("response", "Response", responseOptions) : null}
           {select("when", "When", whenOptions)}
-          {select("role", "Your role", roleOptions)}
+          {!invitations ? select("role", "Your role", roleOptions) : null}
           {active.length || search || error ? (
             <button
               type="button"

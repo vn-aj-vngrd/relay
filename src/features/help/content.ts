@@ -518,10 +518,10 @@ export const helpArticles: readonly HelpArticle[] = [
       "Tell a saved response from a confirmed spot, and leave without confusing attendance with RSVP.",
     audience: "Guests and account players",
     prerequisites: [
-      "Access to the game. Account invitations appear on Home and the independent Invites count shortcut in Games, regardless of your game filters.",
+      "Access to the game. Account invitations appear on Home and Games → Invitations. The tab count shows only invitations still waiting for your response.",
     ],
     steps: [
-      "Open your invitation or game. Read the plan and choose Going, Maybe, or Can’t go. An answered account invitation leaves Invites. Find it in Games using Search your games (title, venue, or host), When, and Your role. Date range includes both dates in each game’s local timezone; choose both bounds with Until on or after From. Cancelled games are hidden by default. Filters stay in the URL across list, grid, calendar, and back/forward; remove an active filter or choose Clear filters to reset.",
+      "Open your invitation or game. Read the plan and choose Going, Maybe, or Can’t go. An answered invitation leaves Needs response but remains in Games → Invitations. Search by game, venue, or host, then filter by Response and When. Going, Maybe, Can’t go, Awaiting approval, and Waitlisted match your current response. Completed invitations show Ended; unanswered ones show Not answered, and cancelled invitations cannot be answered. My games separately shows your participation and organizing history. Date range includes both dates in each game’s local timezone; choose both bounds with Until on or after From. Cancelled games are hidden by default. Filters stay in the URL across list, grid, calendar, and back/forward; remove an active filter or choose Clear filters to reset.",
       "Check the result. Going holds roster capacity. Maybe is tentative and reserves no spot. Awaiting approval means the host must decide. Waitlisted means there is no confirmed spot yet.",
       "To change plans, reopen Overview and update your response while responses are allowed. Use Can’t go or the available leave action rather than changing check-in to imply cancellation.",
       "Recheck after a host decision or waitlist movement. Approval is considered before capacity for a new Going request; an approved player can still be waitlisted.",

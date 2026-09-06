@@ -9,6 +9,27 @@ const options = [
 ] as const;
 
 describe("SelectField", () => {
+  it("clears hover highlights without losing the selected style", () => {
+    render(
+      <SelectField
+        id="visibility"
+        label="Visibility"
+        options={options}
+        defaultValue="private"
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Visibility" }));
+    const selected = screen.getByRole("option", { name: "Private" });
+    const other = screen.getByRole("option", { name: "Anyone with the link" });
+    fireEvent.mouseEnter(selected);
+    expect(selected).toHaveClass("bg-primary-soft", "text-primary");
+    fireEvent.mouseEnter(other);
+    expect(other).toHaveClass("bg-surface-strong");
+    fireEvent.mouseLeave(other);
+    expect(other).not.toHaveClass("bg-surface-strong");
+    expect(selected).toHaveClass("bg-primary-soft");
+    expect(selected).toHaveAttribute("aria-selected", "true");
+  });
   it("uses an accessible Relay listbox and submits the selected value", () => {
     const { container } = render(
       <SelectField

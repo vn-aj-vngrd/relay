@@ -503,6 +503,9 @@ export const sessionPlayers = pgTable(
     invitedAt: timestamp("invited_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    invitationReceivedAt: timestamp("invitation_received_at", {
+      withTimezone: true,
+    }),
     respondedAt: timestamp("responded_at", { withTimezone: true }),
     leftAt: timestamp("left_at", { withTimezone: true }),
     ...timestamps,

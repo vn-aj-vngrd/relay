@@ -737,6 +737,10 @@ test("login and account creation have distinct entry routes", async ({
   const authTabs = page.getByRole("group", { name: "Authentication method" });
   const signInPosition = await authTabs.boundingBox();
   await authTabs.getByRole("link", { name: "Create account" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Create your account" })
+  ).toBeVisible();
+  await expect(page.locator("main > div")).toBeVisible();
   const createPosition = await authTabs.boundingBox();
   expect(createPosition?.y).toBe(signInPosition?.y);
   const panelBox = await page.locator("main > div").boundingBox();

@@ -330,6 +330,13 @@
       "when": 1788595458919,
       "tag": "0046_retire_payment_deferral_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788713561488,
+      "tag": "0047_invitation_history",
+      "breakpoints": true
     }
   ]
 }

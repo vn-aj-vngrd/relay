@@ -9,6 +9,7 @@ import { openGamesFilterSchema } from "@/features/sessions/open-games";
 import { OpenGamesCollection } from "@/features/sessions/open-games-collection";
 import { OpenGamesFilters } from "@/features/sessions/open-games-filters";
 import { discoverOpenGames } from "@/features/sessions/open-games-queries";
+import { getInvitationCount } from "@/features/sessions/queries";
 
 export const metadata: Metadata = {
   title: "Open pickleball games",
@@ -68,6 +69,7 @@ export default async function OpenGamesPage({
     ? parsed.data
     : openGamesFilterSchema.parse({});
   const user = await getCurrentUser();
+  const invitationCount = user ? await getInvitationCount(user.id) : 0;
   const page = await discoverOpenGames(user?.id, filters);
   const todayKey = sessionDateKey(new Date());
   const initialMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(params.month ?? "")
@@ -92,7 +94,7 @@ export default async function OpenGamesPage({
         </div>
       </div>
       {user ? (
-        <GamesSectionNav current="open" />
+        <GamesSectionNav current="open" invitationCount={invitationCount} />
       ) : (
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-line py-3 text-sm">
           <p className="text-muted">
@@ -118,7 +120,7 @@ export default async function OpenGamesPage({
       <GameResultsTransition>
         <OpenGamesFilters filters={filters} />
         <div className="mt-6">
-          <GameResults>
+          <GameResults discovery>
             <OpenGamesCollection
               key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}:${filters.price}:${filters.minPrice}:${filters.maxPrice}`}
               initialPage={page}

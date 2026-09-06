@@ -158,6 +158,7 @@ async function addPlayer(
               skillLevel: invitee.skillLevel,
               role: "player",
               rsvp: "invited",
+              invitationReceivedAt: new Date(),
               playState: "unavailable",
               checkedInAt: null,
               waitlistPosition: null,
@@ -172,6 +173,7 @@ async function addPlayer(
             skillLevel: invitee.skillLevel,
             role: "player",
             rsvp: "invited",
+            invitationReceivedAt: new Date(),
             playState: "unavailable",
           });
         }

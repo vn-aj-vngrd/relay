@@ -36,6 +36,7 @@ import {
 } from "./game-library-filters";
 import { GameResults, GameResultsTransition } from "./game-results-transition";
 import { GamesCalendar } from "./games-calendar";
+import { InvitationHistoryItems } from "./invitation-history-items";
 import { playSetupNextAction } from "./readiness";
 
 export type { GameCollectionItem } from "./game-collection-types";
@@ -498,7 +499,9 @@ function CollectionSection({
   past,
   live,
   footer,
+  children,
 }: {
+  children?: React.ReactNode;
   title: string;
   items: GameCollectionItem[];
   mode: Exclude<ViewMode, "calendar">;
@@ -516,15 +519,16 @@ function CollectionSection({
         ) : null}
         {title}
       </h2>
-      {items.length ? (
-        mode === "grid" ? (
-          <GameGrid items={items} past={past} />
+      {children ??
+        (items.length ? (
+          mode === "grid" ? (
+            <GameGrid items={items} past={past} />
+          ) : (
+            <GameList items={items} past={past} />
+          )
         ) : (
-          <GameList items={items} past={past} />
-        )
-      ) : (
-        <EmptyCollection past={past} />
-      )}
+          <EmptyCollection past={past} />
+        ))}
       {footer}
     </section>
   );
@@ -541,6 +545,7 @@ type GameCollectionProps = {
   filters?: GameLibraryFilters;
   options?: GameLibraryOptions;
   filterError?: string;
+  hasInvitationHistory?: boolean;
 };
 
 export function GameCollection(props: GameCollectionProps) {
@@ -555,7 +560,7 @@ export function GameCollection(props: GameCollectionProps) {
         options={props.options}
         error={props.filterError}
       />
-      <GameResults>
+      <GameResults invitations={filters.collection === "invitations"}>
         <GameCollectionResults
           key={`${gameLibrarySearchParams(filters)}:${props.initialFilter === "invites"}:${props.filterError ?? ""}`}
           {...props}
@@ -576,8 +581,15 @@ function GameCollectionResults({
   initialDate = todayKey,
   filters = defaultGameLibraryFilters,
   filterError,
+  hasInvitationHistory = true,
 }: GameCollectionProps) {
   const router = useRouter();
+  const invitationHistory = filters.collection === "invitations";
+  const defaultInvitations =
+    invitationHistory &&
+    filters.response === "invited" &&
+    filters.when === "upcoming" &&
+    !filters.q;
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   const weekStart = useSyncExternalStore(
     subscribe,
@@ -751,6 +763,24 @@ function GameCollectionResults({
       setInvitations((current) =>
         current.filter((item) => item.id !== game.id)
       );
+      if (invitationHistory) {
+        setPages((current) => {
+          const reconcile = (page: GameCollectionPage) => ({
+            ...page,
+            items: page.items.flatMap((item) =>
+              item.id !== game.id
+                ? [item]
+                : filters.response === "any" || filters.response === response
+                  ? [{ ...item, viewerRsvp: response }]
+                  : []
+            ),
+          });
+          return {
+            upcoming: reconcile(current.upcoming),
+            past: reconcile(current.past),
+          };
+        });
+      }
       setResponseAnnouncement(
         response === "declined"
           ? `You declined ${game.title}.`
@@ -765,7 +795,7 @@ function GameCollectionResults({
       setCalendarRetry((value) => value + 1);
       router.refresh();
     },
-    [router]
+    [router, invitationHistory, filters.response]
   );
   const liveGames = pages.upcoming.items.filter(
     (game) => game.status === "live"
@@ -853,21 +883,39 @@ function GameCollectionResults({
           {empty ? (
             <section className="py-9">
               <h2 className="text-lg font-bold">
-                {query
-                  ? "No games match your filters"
-                  : "No upcoming games yet"}
+                {invitationHistory
+                  ? !hasInvitationHistory
+                    ? "No invitations yet"
+                    : defaultInvitations
+                      ? "No invitations waiting"
+                      : "No invitations match these filters"
+                  : query
+                    ? "No games match your filters"
+                    : "No upcoming games yet"}
               </h2>
               <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-                {query
-                  ? "Try another date, role, or search."
-                  : "Create a game or find one in Open games."}
+                {invitationHistory
+                  ? defaultInvitations || !hasInvitationHistory
+                    ? "New invitations will appear here."
+                    : "Try another response, date, or search."
+                  : query
+                    ? "Try another date, role, or search."
+                    : "Create a game or find one in Open games."}
               </p>
-              <ButtonLink
-                href={query ? "/games" : "/games/new"}
-                className="mt-4"
-              >
-                {query ? "Clear filters" : "Create game"}
-              </ButtonLink>
+              {!defaultInvitations ? (
+                <ButtonLink
+                  href={
+                    invitationHistory
+                      ? "/games/invitations"
+                      : query
+                        ? "/games"
+                        : "/games/new"
+                  }
+                  className="mt-4"
+                >
+                  {query ? "Clear filters" : "Create game"}
+                </ButtonLink>
+              ) : null}
             </section>
           ) : null}
           {liveGames.length ? (
@@ -876,7 +924,15 @@ function GameCollectionResults({
               items={liveGames}
               mode={mode}
               live
-            />
+            >
+              {invitationHistory ? (
+                <InvitationHistoryItems
+                  items={liveGames}
+                  mode={mode}
+                  onResponded={handleInviteResponse}
+                />
+              ) : undefined}
+            </CollectionSection>
           ) : null}
           {scheduledGames.length || pages.upcoming.nextCursor ? (
             <CollectionSection
@@ -884,7 +940,15 @@ function GameCollectionResults({
               items={scheduledGames}
               mode={mode}
               footer={footer("upcoming")}
-            />
+            >
+              {invitationHistory ? (
+                <InvitationHistoryItems
+                  items={scheduledGames}
+                  mode={mode}
+                  onResponded={handleInviteResponse}
+                />
+              ) : undefined}
+            </CollectionSection>
           ) : liveGames.length ? (
             footer("upcoming")
           ) : null}
@@ -895,7 +959,15 @@ function GameCollectionResults({
               mode={mode}
               past
               footer={footer("past")}
-            />
+            >
+              {invitationHistory ? (
+                <InvitationHistoryItems
+                  items={pages.past.items}
+                  mode={mode}
+                  onResponded={handleInviteResponse}
+                />
+              ) : undefined}
+            </CollectionSection>
           ) : null}
         </div>
       )}

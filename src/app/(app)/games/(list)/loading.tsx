@@ -1,44 +1,28 @@
 import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
-
-import { RowsSkeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
-import {
-  GameDesktopViewControls,
-  GameViewMenu,
-} from "@/features/sessions/game-view-menu";
+import { GameResultsSkeleton } from "@/features/sessions/game-results-skeleton";
+import { GameViewMenu } from "@/features/sessions/game-view-menu";
 import { GamesLoadingFilterRail } from "@/features/sessions/games-loading-filter-rail";
 import { GamesSectionNav } from "@/features/sessions/games-section-nav";
 
 export default function GamesLoading() {
   return (
-    <div role="status" aria-label="Loading games" aria-busy="true">
+    <div>
       <div className="flex items-center justify-between gap-4">
         <h1 className="app-title">Games</h1>
-        <div className="sm:hidden">
-          <GameViewMenu />
+        <div className="flex items-center gap-3">
+          <div className="sm:hidden">
+            <GameViewMenu />
+          </div>
+          <ButtonLink href="/games/new" className="hidden sm:inline-flex">
+            <CalendarPlus aria-hidden size={17} /> Create game
+          </ButtonLink>
         </div>
       </div>
       <GamesSectionNav current="mine" />
-      <div className="mt-2 sm:mt-3">
-        <div className="mb-6 pb-3">
-          <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <div className="w-full min-w-0">
-              <GamesLoadingFilterRail />
-            </div>
-            <span className="hidden shrink-0 sm:block">
-              <GameDesktopViewControls />
-            </span>
-            <span className="hidden shrink-0 sm:block">
-              <ButtonLink href="/games/new">
-                <CalendarPlus aria-hidden size={17} />
-                Create game
-              </ButtonLink>
-            </span>
-          </div>
-        </div>
-      </div>
+      <GamesLoadingFilterRail />
       <section aria-label="Game results">
-        <RowsSkeleton rows={3} />
+        <GameResultsSkeleton />
       </section>
     </div>
   );

@@ -2,10 +2,19 @@ import { z } from "zod";
 
 export const gameLibraryFilterSchema = z.object({
   q: z.string().trim().max(200).default(""),
+  collection: z.enum(["games", "invitations"]).default("games"),
   when: z.enum(["upcoming", "past", "all", "range"]).default("upcoming"),
   role: z.enum(["any", "player", "host", "cohost"]).default("any"),
   response: z
-    .enum(["any", "going", "maybe", "pending", "waitlisted", "declined"])
+    .enum([
+      "any",
+      "invited",
+      "going",
+      "maybe",
+      "pending",
+      "waitlisted",
+      "declined",
+    ])
     .default("any"),
   group: z
     .union([z.literal("any"), z.literal("none"), z.uuid()])

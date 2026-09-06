@@ -340,6 +340,27 @@ function invitationCondition(userId: string, now = new Date()) {
   );
 }
 
+export async function hasInvitationHistory(userId: string) {
+  const [result] = await db
+    .select({ total: count() })
+    .from(sessionPlayers)
+    .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+    .where(
+      and(
+        eq(sessionPlayers.userId, userId),
+        sql`${sessionPlayers.invitationReceivedAt} is not null`,
+        sql`${sessionPlayers.leftAt} is null`,
+        inArray(sessions.status, [
+          "published",
+          "live",
+          "completed",
+          "cancelled",
+        ])
+      )
+    );
+  return Number(result?.total ?? 0) > 0;
+}
+
 export async function getInvitationCount(userId: string) {
   const [result] = await db
     .select({ total: count() })

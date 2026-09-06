@@ -6,6 +6,10 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+vi.mock("@/features/auth/session", () => ({
+  getCurrentUser: async () => ({ id: "player" }),
+}));
+
 import GamesLoading from "@/app/(app)/games/(list)/loading";
 import GroupsLoading from "@/app/(app)/groups/loading";
 import NotificationsLoading from "@/app/(app)/notifications/loading";
@@ -17,7 +21,6 @@ afterEach(cleanup);
 describe("collection loading boundaries", () => {
   it.each([
     ["Games", GamesLoading],
-    ["Open games", OpenGamesLoading],
     ["Groups", GroupsLoading],
     ["Notifications", NotificationsLoading],
   ] as const)("keeps the %s title as real UI", (title, Loading) => {
@@ -41,8 +44,12 @@ describe("collection loading boundaries", () => {
     ).toHaveTextContent("Step 1 of 4");
   });
 
-  it("keeps collection controls real while game rows load", () => {
-    render(<OpenGamesLoading />);
+  it("keeps collection controls real while game rows load", async () => {
+    render(await OpenGamesLoading());
+    expect(
+      screen.getByRole("heading", { name: "Open games", level: 1 })
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "My games" })).toBeVisible();
     expect(
       screen.getByRole("region", { name: "Open game filters" })
     ).toBeVisible();
@@ -59,6 +66,12 @@ describe("collection loading boundaries", () => {
       "Any role"
     );
     expect(screen.queryByText("Organizing")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "List view" })).toHaveLength(
+      1
+    );
+    expect(screen.getAllByRole("link", { name: "Create game" })).toHaveLength(
+      1
+    );
   });
 
   it("keeps notification filters real while notifications load", () => {

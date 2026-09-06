@@ -57,7 +57,7 @@ export function HomeInvitations({
               Invites
             </h2>
             <Link
-              href="/games?filter=invites"
+              href="/games/invitations"
               className="inline-flex min-h-11 items-center text-sm font-semibold text-primary"
             >
               Review all

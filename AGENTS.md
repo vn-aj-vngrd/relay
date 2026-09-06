@@ -14,6 +14,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **Before committing:** Run the validation gate in `docs/CODE_QUALITY.md`, fix failures, and then commit. Keep Git hooks and CI enabled; never bypass them. A request to edit code is not permission to commit.
 - **Handoff:** State “Validation deferred to pre-commit” when checks have not run; do not imply the change is verified.
 
+## Consistency first
+
+Before designing or implementing a change, search the codebase for the closest existing feature and read its implementation. Reuse its components, helpers, and conventions; extend shared code when multiple surfaces need the same behavior.
+
+Match related surfaces in layout, controls, copy, interactions, loading/empty/error states, responsive behavior, and accessibility. Apply the same discipline to APIs, data access, authorization, and tests. Use documented standards to resolve conflicting patterns rather than copying an existing defect.
+
+**Complete when:** the handoff names the existing implementation used as the reference, identifies what was reused, and explains any intentional differences. A new pattern needs a concrete requirement the existing patterns cannot meet. Validation timing remains governed by the Development loop above.
+
 ## Project runbooks
 
 - **Code quality:** Read `docs/CODE_QUALITY.md` before adding dependencies, changing TypeScript or Ultracite/Biome conventions, or preparing a production change. Follow the Development loop above for validation timing; CI remains authoritative.

@@ -302,6 +302,7 @@ export async function createSessionAction(
           skillLevel: experienceByUser.get(userId) ?? null,
           role: "player" as const,
           rsvp: "invited" as const,
+          invitationReceivedAt: new Date(),
           playState: "unavailable" as const,
         }))
       );

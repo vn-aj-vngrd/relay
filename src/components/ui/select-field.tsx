@@ -137,8 +137,9 @@ export function SelectField({
               aria-selected={value === option.value}
               onMouseDown={(event) => event.preventDefault()}
               onMouseEnter={() => listbox.setActiveIndex(index)}
+              onMouseLeave={() => listbox.setActiveIndex(-1)}
               onClick={() => listbox.choose(index)}
-              className={`pressable flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm ${listbox.activeIndex === index ? "bg-surface-strong" : value === option.value ? "bg-primary-soft font-semibold text-primary" : "hover:bg-surface-strong"}`}
+              className={`pressable flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm ${value === option.value ? "bg-primary-soft font-semibold text-primary" : listbox.activeIndex === index ? "bg-surface-strong" : "hover:bg-surface-strong"}`}
             >
               <span>{option.label}</span>
               {value === option.value ? (

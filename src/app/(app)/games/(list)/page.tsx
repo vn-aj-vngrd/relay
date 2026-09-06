@@ -1,4 +1,5 @@
 import { CalendarPlus } from "@phosphor-icons/react/dist/ssr";
+import { redirect } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
@@ -30,6 +31,7 @@ export default async function GamesPage({
       Array.isArray(value) ? value[0] : value,
     ])
   );
+  if (params.filter === "invites") redirect("/games/invitations");
   const parsed = parseGameLibraryFilters({ get: (key) => params[key] ?? null });
   const filters = parsed.success ? parsed.data : defaultGameLibraryFilters;
   const emptyPage = { items: [], nextCursor: null };
@@ -73,10 +75,9 @@ export default async function GamesPage({
           </ButtonLink>
         </div>
       </div>
-      <GamesSectionNav current="mine" />
+      <GamesSectionNav current="mine" invitationCount={invitationPage.total} />
       <GameCollection
         upcomingPage={upcomingPage}
-        invitationPage={invitationPage}
         pastPage={pastPage}
         filters={filters}
         options={options}
@@ -86,7 +87,7 @@ export default async function GamesPage({
             : "These filters are invalid. Clear filters and try again."
         }
         todayKey={todayKey}
-        initialFilter={params.filter === "invites" ? "invites" : filters.when}
+        initialFilter={filters.when}
         initialMonth={initialMonth}
         initialDate={initialDate}
       />

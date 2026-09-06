@@ -79,7 +79,7 @@ describe("Games library URL contract", () => {
     { group: "other-crew" },
     { q: "x".repeat(201) },
     { cancelled: "yes" },
-    { response: "invited" },
+    { response: "accepted" },
   ])("rejects unsupported filters %j", (values) => {
     expect(gameLibraryFilterSchema.safeParse(values).success).toBe(false);
   });
