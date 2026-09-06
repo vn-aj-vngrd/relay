@@ -1,10 +1,12 @@
 "use client";
 
 import { CheckCircle, X } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 
+import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 
+import { dismissCreatedGameShare } from "./actions";
 import { GameQrShare } from "./game-qr-share";
 import { ShareButton } from "./share-button";
 
@@ -23,8 +25,12 @@ export function CreatedGameShare({
   inviteeCount: number;
   qrEnabled: boolean;
 }) {
-  const [dismissed, setDismissed] = useState(false);
+  const [state, dismissAction, pending] = useActionState(
+    dismissCreatedGameShare,
+    {}
+  );
   const [announcement, setAnnouncement] = useState("");
+  const dismissFormId = useId();
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -37,17 +43,12 @@ export function CreatedGameShare({
     );
   }, []);
 
-  function complete(message: string) {
-    setAnnouncement(message);
-    setDismissed(true);
-  }
-
   return (
     <>
       <p className="sr-only" aria-live="polite">
-        {announcement}
+        {state.success ? "Game created message dismissed" : announcement}
       </p>
-      {!dismissed ? (
+      {!state.success ? (
         <section
           className="mb-5 rounded-xl border border-line bg-surface p-4 sm:mb-6 sm:p-5"
           aria-labelledby="created-game-title"
@@ -78,7 +79,7 @@ export function CreatedGameShare({
                       title={title}
                       sessionId={sessionId}
                       primary
-                      onShared={() => complete("Game shared")}
+                      onShared={() => setAnnouncement("Game shared")}
                     />
                     <GameQrShare
                       url={shareUrl}
@@ -86,7 +87,7 @@ export function CreatedGameShare({
                       details={details}
                       sessionId={sessionId}
                       onShared={(method) =>
-                        complete(
+                        setAnnouncement(
                           method === "copy"
                             ? "Game link copied"
                             : "QR code downloaded"
@@ -103,12 +104,22 @@ export function CreatedGameShare({
                   </ButtonLink>
                 )}
               </div>
+              {state.error ? (
+                <Alert className="mt-3">{state.error}</Alert>
+              ) : null}
+              <form noValidate id={dismissFormId} action={dismissAction}>
+                <input type="hidden" name="sessionId" value={sessionId} />
+              </form>
             </div>
             <Button
-              type="button"
+              type="submit"
+              form={dismissFormId}
               variant="quiet"
-              onClick={() => setDismissed(true)}
-              aria-label="Dismiss game created message"
+              disabled={pending}
+              aria-label={
+                pending ? "Dismissing…" : "Dismiss game created message"
+              }
+              title="Dismiss for this game"
               className="-mr-2 -mt-2 shrink-0"
             >
               <X aria-hidden size={17} />

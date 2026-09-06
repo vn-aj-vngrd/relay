@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   },
   toCanvas: vi.fn().mockResolvedValue(undefined),
   track: vi.fn().mockResolvedValue(undefined),
+  dismiss: vi.fn(),
 }));
 
 vi.mock("qrcode", () => ({ toCanvas: mocks.toCanvas }));
@@ -27,6 +28,9 @@ vi.mock("@/features/analytics/actions", () => ({
   trackSharedSessionEvent: mocks.track,
 }));
 
+vi.mock("./actions", () => ({ dismissCreatedGameShare: mocks.dismiss }));
+
+import { CreatedGameShare } from "./created-game-share";
 import { GameQrShare } from "./game-qr-share";
 
 beforeEach(() => {
@@ -76,6 +80,46 @@ const props = {
 };
 
 describe("GameQrShare", () => {
+  it.each([
+    ["Copy link", "Game link copied"],
+    ["Download PNG", "QR code downloaded"],
+  ])(
+    "keeps the creation handoff and QR dialog open after %s",
+    async (action, announcement) => {
+      render(
+        <CreatedGameShare
+          sessionId={props.sessionId}
+          title={props.title}
+          shareUrl={props.url}
+          details={props.details}
+          inviteeCount={2}
+          qrEnabled
+        />
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Download PNG" })
+        ).toBeEnabled()
+      );
+      fireEvent.click(screen.getByRole("button", { name: action }));
+      await waitFor(() =>
+        expect(
+          screen
+            .getAllByText(announcement)
+            .some((element) => element.classList.contains("sr-only"))
+        ).toBe(true)
+      );
+      expect(
+        screen.getByRole("heading", { name: "Game created" })
+      ).toBeVisible();
+      expect(
+        screen.getByRole("dialog", { name: "Scan to join Friends Night" })
+      ).toBeVisible();
+      expect(mocks.dismiss).not.toHaveBeenCalled();
+    }
+  );
+
   it("generates a scan-safe QR for the canonical shared-game URL only when opened", async () => {
     mocks.toCanvas.mockImplementationOnce(async (canvas: HTMLCanvasElement) => {
       canvas.width = 1024;

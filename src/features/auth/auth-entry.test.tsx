@@ -40,6 +40,9 @@ describe("AuthEntry", () => {
       screen.getByRole("heading", { name: "Check your inbox" })
     ).toBeVisible();
     expect(
+      screen.getByText("Can’t find the email? Check your spam or junk folder.")
+    ).toBeVisible();
+    expect(
       screen.getByRole("link", { name: /Return to sign in/ })
     ).toHaveAttribute("href", "/login");
     expect(

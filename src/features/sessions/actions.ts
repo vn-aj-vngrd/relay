@@ -15,6 +15,7 @@ import {
   messages,
   notifications,
   playerPayments,
+  productEvents,
   profiles,
   sessionPlayers,
   sessionQueue,
@@ -39,6 +40,7 @@ import {
 } from "@/lib/rate-limit";
 
 import { createSessionDestination } from "./create-session-destination";
+import { createdGameDismissalKey } from "./created-game-share-query";
 import {
   canRespondToSession,
   createSessionSchema,
@@ -751,6 +753,35 @@ async function requireSessionManager(sessionId: string, userId: string) {
   });
   const actor = sessionActor({ userId, hostId: session.hostId, membership });
   return can(actor, "manage_roster") ? session : null;
+}
+
+export async function dismissCreatedGameShare(
+  _: SessionActionState,
+  formData: FormData
+): Promise<SessionActionState> {
+  const user = await requireUser();
+  const parsed = z.uuid().safeParse(formData.get("sessionId"));
+  if (!parsed.success) return { error: "This game is unavailable." };
+  const sessionId = parsed.data;
+  try {
+    const session = await requireSessionManager(sessionId, user.id);
+    if (!session) return { error: "This game is unavailable." };
+    await db
+      .insert(productEvents)
+      .values({
+        name: "created_game_dismissed",
+        userId: user.id,
+        sessionId,
+        source: "server",
+        metadata: {},
+        dedupeKey: createdGameDismissalKey(user.id, sessionId),
+      })
+      .onConflictDoNothing({ target: productEvents.dedupeKey });
+  } catch {
+    return { error: "Couldn’t dismiss this message. Try again." };
+  }
+  revalidatePath(`/games/${sessionId}`);
+  return { success: true };
 }
 
 export async function addPlayerAction(

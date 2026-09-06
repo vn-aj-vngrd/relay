@@ -10,6 +10,7 @@ import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { markSessionBookedAction } from "@/features/sessions/actions";
 import { CreatedGameShare } from "@/features/sessions/created-game-share";
+import { shouldShowCreatedGameShare } from "@/features/sessions/created-game-share-query";
 import {
   formatSessionDate,
   formatSessionTime,
@@ -199,9 +200,15 @@ export default async function GameOverviewPage({
     sessionPlayerId: membership?.id ?? "",
     canManage: isHost,
   });
-  const { readiness } = await loadPlayReadiness(session);
-  const showCreated =
-    query.created === "1" && isHost && session.status === "published";
+  const [{ readiness }, showCreated] = await Promise.all([
+    loadPlayReadiness(session),
+    shouldShowCreatedGameShare({
+      userId: user.id,
+      sessionId: session.id,
+      status: session.status,
+      canManage: isHost,
+    }),
+  ]);
   const shareDetails = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)} · ${session.venueName}`;
   const bookingAction =
     isHost &&
@@ -254,6 +261,7 @@ export default async function GameOverviewPage({
       ) : null}
       {showCreated ? (
         <CreatedGameShare
+          key={session.id}
           sessionId={session.id}
           title={session.title}
           shareUrl={`/s/${session.slug}`}

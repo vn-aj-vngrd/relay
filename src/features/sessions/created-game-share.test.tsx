@@ -3,10 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   track: vi.fn().mockResolvedValue(undefined),
+  dismiss: vi.fn(),
 }));
 
 vi.mock("@/features/analytics/actions", () => ({
   trackSharedSessionEvent: mocks.track,
+}));
+
+vi.mock("./actions", () => ({
+  dismissCreatedGameShare: mocks.dismiss,
 }));
 
 import { CreatedGameShare } from "./created-game-share";
@@ -22,6 +27,7 @@ const props = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.dismiss.mockResolvedValue({ success: true });
   window.history.replaceState(
     null,
     "",
@@ -36,7 +42,7 @@ afterEach(() => {
 });
 
 describe("CreatedGameShare", () => {
-  it("shows the first-publish actions once and removes the temporary marker", async () => {
+  it("shows the publish actions and removes only the temporary marker", async () => {
     render(<CreatedGameShare {...props} />);
 
     expect(screen.getByRole("heading", { name: "Game created" })).toBeVisible();
@@ -66,20 +72,61 @@ describe("CreatedGameShare", () => {
     ).toHaveAttribute("href", `/games/${props.sessionId}/players`);
   });
 
-  it("dismisses after a successful native share", async () => {
+  it("stays visible after a successful native share", async () => {
     render(<CreatedGameShare {...props} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Share game" }));
 
+    expect(await screen.findByText("Game shared")).toHaveClass("sr-only");
+    expect(screen.getByRole("heading", { name: "Game created" })).toBeVisible();
+    expect(mocks.dismiss).not.toHaveBeenCalled();
+    expect(mocks.track).toHaveBeenCalledWith({
+      sessionId: props.sessionId,
+      event: "invite_shared",
+    });
+  });
+
+  it("remains visible when remounted after the URL marker is removed", () => {
+    const { unmount } = render(<CreatedGameShare {...props} />);
+    expect(window.location.search).toBe("?source=search");
+    unmount();
+    render(<CreatedGameShare {...props} />);
+    expect(screen.getByRole("heading", { name: "Game created" })).toBeVisible();
+  });
+
+  it("persists an explicit dismissal for this game before hiding", async () => {
+    render(<CreatedGameShare {...props} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss game created message" })
+    );
+    await waitFor(() => expect(mocks.dismiss).toHaveBeenCalledOnce());
+    expect(mocks.dismiss.mock.calls[0][1].get("sessionId")).toBe(
+      props.sessionId
+    );
     await waitFor(() =>
       expect(
         screen.queryByRole("heading", { name: "Game created" })
       ).not.toBeInTheDocument()
     );
-    expect(screen.getByText("Game shared")).toHaveClass("sr-only");
-    expect(mocks.track).toHaveBeenCalledWith({
-      sessionId: props.sessionId,
-      event: "invite_shared",
+  });
+
+  it("keeps the banner available when dismissal fails and allows retry", async () => {
+    mocks.dismiss.mockResolvedValueOnce({
+      error: "Couldn’t dismiss this message. Try again.",
     });
+    render(<CreatedGameShare {...props} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss game created message" })
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent("Try again");
+    expect(screen.getByRole("heading", { name: "Game created" })).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Dismiss game created message" })
+    );
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("heading", { name: "Game created" })
+      ).not.toBeInTheDocument()
+    );
   });
 });

@@ -21,6 +21,9 @@ vi.mock("@/features/sessions/overview", () => ({
 vi.mock("@/features/sessions/readiness-query", () => ({
   loadPlayReadiness: async () => ({ readiness: {} }),
 }));
+vi.mock("@/features/sessions/created-game-share-query", () => ({
+  shouldShowCreatedGameShare: async () => false,
+}));
 vi.mock("@/features/sessions/created-game-share", () => ({
   CreatedGameShare: () => null,
 }));
