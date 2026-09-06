@@ -1,11 +1,13 @@
+import type { StoryRegion } from "./story-scene";
+
 // Canonical 1080×1920 bounds shared by expressive HTML and PNG.
 // Relay composition insets, not official social-platform safe zones.
 export const storyComposition = {
   headerTop: 48,
   headerBottom: 128,
-  artTop: 136,
-  artBottom: 348,
-  factsTop: 384,
+  artTop: 160,
+  artBottom: 640,
+  factsTop: 680,
   factsBottom: 1810,
 } as const;
 
@@ -34,17 +36,17 @@ export const storyThemes: Array<{
   {
     id: "coquette",
     label: "Coquette",
-    description: "A statement ribbon, pearl lace, and blush paddles.",
+    description: "A ribbon-tied paddle, blush pickleball, and scalloped paper.",
   },
   {
     id: "court-pop",
     label: "Court Pop",
-    description: "Bright court geometry, bold paddles, and a pickleball.",
+    description: "A bold perforated ball across a bright court print.",
   },
   {
     id: "retro-rally",
     label: "Retro Rally",
-    description: "Vintage poster stripes and a court-club stamp.",
+    description: "Vintage sporting stripes and a printed paddle.",
   },
 ];
 
@@ -92,184 +94,123 @@ function paddle(
   x: number,
   y: number,
   color: string,
-  ink: string
+  ink: string,
+  scale = 1
 ): Decoration[] {
   return [
-    { path: `M${x + 32} ${y + 86}h24v68h-24Z`, fill: ink },
     {
-      path: `M${x + 25} ${y}h38q25 0 25 26v50q0 27 -25 27h-38q-25 0 -25 -27v-50q0 -26 25 -26Z`,
+      path: `M${x + 32 * scale} ${y + 86 * scale}h${24 * scale}v${68 * scale}h${-24 * scale}Z`,
+      fill: ink,
+    },
+    {
+      path: `M${x + 25 * scale} ${y}h${38 * scale}q${25 * scale} 0 ${25 * scale} ${26 * scale}v${50 * scale}q0 ${27 * scale} ${-25 * scale} ${27 * scale}h${-38 * scale}q${-25 * scale} 0 ${-25 * scale} ${-27 * scale}v${-50 * scale}q0 ${-26 * scale} ${25 * scale} ${-26 * scale}Z`,
       fill: color,
       stroke: ink,
       strokeWidth: 5,
     },
     {
-      path: `M${x + 16} ${y + 26}h56M${x + 16} ${y + 35}h56`,
+      path: `M${x + 16 * scale} ${y + 26 * scale}h${56 * scale}M${x + 16 * scale} ${y + 35 * scale}h${56 * scale}`,
       stroke: ink,
       strokeWidth: 3,
     },
     {
-      path: `M${x + 33} ${y + 119}l22 8M${x + 33} ${y + 134}l22 8`,
+      path: `M${x + 33 * scale} ${y + 119 * scale}l${22 * scale} ${8 * scale}M${x + 33 * scale} ${y + 134 * scale}l${22 * scale} ${8 * scale}`,
       stroke: color,
       strokeWidth: 3,
     },
   ];
 }
 
-function paperFrame(): Decoration[] {
-  return [
-    { path: "M20 20H1060V1900H20Z", stroke: "#eee5d2", strokeWidth: 24 },
-    ...Array.from({ length: 22 }, (_, index) => {
-      const y = 96 + index * 80;
-      return {
-        path: `M12 ${y}l16 3M1052 ${y + 16}l16 -3`,
-        stroke: "#c9b99b",
-        strokeWidth: 2,
-      };
-    }),
-    { path: "M438 1892L644 1898L638 1918L432 1912Z", fill: "#d9c49b" },
-  ];
-}
-
+// Each style is one sporting print, with no detached pseudo-writing or badges.
 function scrapbook(): Decoration[] {
   return [
-    ...paperFrame(),
-    // A single stat-sheet construction connects the keepsake to its facts.
-    { path: "M60 390H1020V1830H60Z", stroke: "#fff8e9", strokeWidth: 8 },
+    { path: "M150 198L866 164L892 598L176 632Z", fill: "#d9c49b" },
+    { path: "M188 180H916V610H188Z", fill: "#fff8e9" },
+    { path: "M214 206H890V554H214Z", fill: "#477462" },
     {
-      path: "M60 460V390H132M948 1830H1020V1760",
-      stroke: "#d9c49b",
-      strokeWidth: 14,
+      path: "M238 230H866V530H238ZM550 230V530M238 380H866M422 230V530M678 230V530",
+      stroke: "#d8e7bd",
+      strokeWidth: 4,
     },
-    // Layered photo-paper panels form one masthead, not scattered stickers.
-    { path: "M152 158L354 142L370 326L168 342Z", fill: "#d9c49b" },
-    { path: "M174 148H356V334H174Z", fill: "#fff8e9" },
-    { path: "M189 163H341V305H189Z", fill: "#477462" },
-    { path: "M228 136L318 143L313 171L223 164Z", fill: "#d9c49b" },
-    ...paddle(221, 172, "#f6d2be", "#263b35"),
-    { path: "M422 186L879 170L884 303L427 319Z", fill: "#fff8e9" },
+    ...paddle(354, 256, "#f6d2be", "#263b35", 1.8),
+    ...pickleball(680, 426, 89, "#d0dd81", "#263b35"),
     {
-      path: "M444 211L727 201M446 236L728 226M448 261L660 254",
-      stroke: "#c9b99b",
-      strokeWidth: 3,
+      path: "M254 164L430 180L424 218L248 202ZM752 568L934 548L940 586L758 606Z",
+      fill: "#d9c49b",
     },
-    { path: "M834 161L918 172L913 205L829 194Z", fill: "#d9c49b" },
-    ...pickleball(808, 251, 39, "#d0dd81", "#477462"),
   ];
 }
 
 function coquette(): Decoration[] {
   return [
-    { path: "M18 18H1062V1902H18Z", stroke: "#f2d5df", strokeWidth: 16 },
-    ...Array.from({ length: 21 }, (_, index) => {
-      const y = 128 + index * 80;
-      return {
-        path: `M26 ${y}C56 ${y + 8} 56 ${y + 32} 26 ${y + 40}M1054 ${y}C1024 ${y + 8} 1024 ${y + 32} 1054 ${y + 40}`,
-        stroke: "#f2d5df",
-        strokeWidth: 3,
-      };
-    }),
     {
-      path: "M60 460Q60 382 138 382H942Q1020 382 1020 460V1760Q1020 1830 942 1830H138Q60 1830 60 1760Z",
+      path: "M156 402C156 124 924 124 924 402V578H156Z",
+      fill: "#fff1f6",
+      stroke: "#a65072",
+      strokeWidth: 4,
+    },
+    // Restrained scallops belong to the print edge, not the factual copy.
+    ...Array.from({ length: 11 }, (_, index) => ({
+      path: `M${188 + index * 64} 592q16 24 32 0`,
       stroke: "#a65072",
       strokeWidth: 3,
-    },
-    // Wide ribbon, folded tails and pearl edging leave the fact region clear.
+    })),
+    ...paddle(462, 192, "#ffe0eb", "#813f5a", 2.2),
+    ...pickleball(344, 450, 82, "#eaa7c0", "#813f5a"),
+    // Bow tied across the paddle's throat; tails follow its handle.
     {
-      path: "M386 204Q540 178 694 204L706 248Q540 226 374 248Z",
-      fill: "#f2d5df",
-    },
-    {
-      path: "M528 216L446 328L480 314L492 340L551 228M552 216L634 328L600 314L588 340L529 228",
-      fill: "#e3a7bc",
-      stroke: "#a65072",
-      strokeWidth: 3,
-    },
-    {
-      path: "M540 216C280 94 284 330 540 216C796 330 800 94 540 216Z",
-      fill: "#f7dce7",
-      stroke: "#a65072",
-      strokeWidth: 5,
-    },
-    {
-      path: "M535 215Q422 162 414 209M545 215Q658 162 666 209",
-      stroke: "#d18aa6",
+      path: "M552 428L500 566L540 546L561 574L590 430M574 428L680 558L641 548L625 578L552 430",
+      fill: "#eaa7c0",
+      stroke: "#813f5a",
       strokeWidth: 4,
     },
     {
-      path: "M525 198Q540 187 555 198L553 235Q540 246 527 235Z",
-      fill: "#c97898",
+      path: "M563 430C328 252 364 568 563 430C776 568 800 252 563 430Z",
+      fill: "#f8c8db",
+      stroke: "#813f5a",
+      strokeWidth: 5,
     },
-    ...Array.from({ length: 9 }, (_, index) => ({
-      path: circle(396 + index * 36, 154, 4),
-      fill: "#fff2f7",
-    })),
-    ...paddle(756, 174, "#f7dce7", "#a65072"),
+    {
+      path: "M549 408Q563 398 581 408L583 446Q563 459 547 446Z",
+      fill: "#a65072",
+    },
   ];
 }
 
 function courtPop(): Decoration[] {
   return [
-    { path: "M22 22H1058V1898H22Z", stroke: "#e1ee66", strokeWidth: 18 },
-    { path: "M14 380H40V960H14ZM1040 1020H1066V1600H1040Z", fill: "#f79bbd" },
-    { path: "M120 152H956V336H120Z", fill: "#dcec69" },
+    { path: "M96 176H984V624H96Z", fill: "#dcec69" },
     {
-      path: "M140 172H936V316H140ZM538 172V316M420 172V316M656 172V316M140 244H420M656 244H936",
-      stroke: "#234f63",
-      strokeWidth: 5,
-    },
-    ...pickleball(538, 245, 86, "#f79bbd", "#234f63"),
-    { path: "M58 392V1830H1022", stroke: "#234f63", strokeWidth: 8 },
-    { path: "M58 392H1018", stroke: "#dcec69", strokeWidth: 16 },
-    {
-      path: "M858 202l30 -12M864 227h35M858 252l30 12",
+      path: "M122 202H958V598H122ZM540 202V598M388 202V598M692 202V598M122 400H388M692 400H958",
       stroke: "#234f63",
       strokeWidth: 6,
     },
+    // Oversized perforated ball anchors a real court diagram.
+    ...pickleball(674, 396, 192, "#f79bbd", "#234f63"),
+    { path: "M150 490H316V520H150ZM150 538H278V568H150Z", fill: "#234f63" },
+    { path: "M96 176H388V194H96Z", fill: "#234f63" },
   ];
 }
 
 function retroRally(): Decoration[] {
   return [
-    { path: "M18 18H1062V1902H18Z", stroke: "#f4dfae", strokeWidth: 20 },
-    { path: "M34 38H1046V1882H34Z", stroke: "#b96236", strokeWidth: 6 },
-    { path: "M14 386H26V1760H14Z", fill: "#df9851" },
-    { path: "M29 386H41V1760H29Z", fill: "#c56d46" },
-    { path: "M44 386H56V1760H44Z", fill: "#f4dfae" },
-    { path: "M1024 386H1036V1760H1024Z", fill: "#f4dfae" },
-    { path: "M1039 386H1051V1760H1039Z", fill: "#c56d46" },
-    { path: "M1054 386H1066V1760H1054Z", fill: "#df9851" },
     {
-      path: "M132 148H948V336H132Z",
+      path: "M108 180H972V618H108Z",
       fill: "#f4dfae",
       stroke: "#683d32",
       strokeWidth: 5,
     },
-    { path: "M150 166H930V318H150Z", stroke: "#683d32", strokeWidth: 2 },
-    {
-      path: "M158 198H427V216H158ZM158 227H403V245H158ZM158 256H427V274H158Z",
-      fill: "#b96236",
-    },
-    {
-      path: "M653 198H922V216H653ZM677 227H922V245H677ZM653 256H922V274H653Z",
-      fill: "#527562",
-    },
-    {
-      path: circle(540, 242, 83),
-      fill: "#527562",
-      stroke: "#683d32",
-      strokeWidth: 4,
-    },
-    ...paddle(496, 168, "#f4dfae", "#683d32"),
-    {
-      path: "M60 376H1020M60 1830H1020M60 1846H1020",
-      stroke: "#683d32",
-      strokeWidth: 4,
-    },
+    { path: "M128 200H952V598H128Z", stroke: "#683d32", strokeWidth: 3 },
+    { path: "M148 268H932V308H148ZM148 324H932V364H148Z", fill: "#b96236" },
+    { path: "M148 420H932V460H148ZM148 476H932V516H148Z", fill: "#527562" },
+    { path: "M396 218H684V580H396Z", fill: "#f4dfae" },
+    ...paddle(434, 226, "#527562", "#683d32", 2.2),
+    ...pickleball(680, 509, 64, "#df9851", "#683d32"),
   ];
 }
 
 // One 1080 × 1920 artwork definition feeds SVG and Canvas. Large motifs occupy
-// the masthead band (y=130–348); poster content starts at y=384 in HTML and
+// the print region (y=160–640); poster content starts at y=680 in HTML and
 // below it in canvas. Side decoration stays outside the 72px content inset.
 // These are Relay's composition choices, not platform-certified safe zones.
 export function storyThemeDecorations(theme: StoryTheme): Decoration[] {
@@ -287,13 +228,86 @@ export function storyThemeDecorations(theme: StoryTheme): Decoration[] {
   }
 }
 
+/** Artwork stays in the photo mat; never over faces or factual copy. */
+export function storyPhotoDecorations(
+  theme: StoryTheme,
+  frame: StoryRegion
+): Decoration[] {
+  if (theme === "minimal") return [];
+  const { x, y, width, height } = frame;
+  const right = x + width;
+  const bottom = y + height;
+  if (theme === "scrapbook")
+    return [
+      {
+        path: `M${x + 12} ${y + 12}H${right - 12}V${bottom - 12}H${x + 12}Z`,
+        stroke: "#c9b99b",
+        strokeWidth: 4,
+      },
+      {
+        path: `M${x + 148} ${y + 8}l180 8 -2 28 -180 -8ZM${right - 256} ${bottom - 34}l180 -8 2 28 -180 8Z`,
+        fill: "#d9c49b",
+      },
+      ...paddle(x + 23, y + height / 2 - 100, "#477462", "#263b35", 0.8),
+      ...pickleball(x + 58, y + height / 2 + 82, 32, "#d0dd81", "#263b35"),
+    ];
+  if (theme === "coquette")
+    return [
+      {
+        path: `M${x + 14} ${y + 14}H${right - 14}V${bottom - 14}H${x + 14}Z`,
+        stroke: "#a65072",
+        strokeWidth: 3,
+      },
+      ...Array.from({ length: 10 }, (_, index) => ({
+        path: `M${x + 128 + index * 72} ${y + 18}q18 22 36 0M${x + 128 + index * 72} ${bottom - 18}q18 -22 36 0`,
+        stroke: "#d18aa6",
+        strokeWidth: 3,
+      })),
+      ...paddle(x + 25, y + height / 2 - 110, "#ffe0eb", "#813f5a", 0.75),
+      {
+        path: `M${x + 58} ${y + height / 2}c-72 -62 -64 58 0 0c72 58 64 -62 0 0m-4 0 -20 70 24 -14 20 14 -16 -70`,
+        fill: "#eaa7c0",
+        stroke: "#813f5a",
+        strokeWidth: 3,
+      },
+    ];
+  if (theme === "court-pop")
+    return [
+      { path: `M${x} ${y}h100v${height}h-100Z`, fill: "#dcec69" },
+      {
+        path: `M${x + 112} ${y + 24}H${right - 24}V${bottom - 24}H${x + 112}Z`,
+        stroke: "#234f63",
+        strokeWidth: 8,
+      },
+      ...[0.2, 0.5, 0.8].flatMap((at) =>
+        pickleball(x + 50, y + height * at, 38, "#f79bbd", "#234f63")
+      ),
+    ];
+  return [
+    {
+      path: `M${x + 12} ${y + 12}H${right - 12}V${bottom - 12}H${x + 12}Z`,
+      stroke: "#683d32",
+      strokeWidth: 4,
+    },
+    {
+      path: `M${x + 20} ${y + 28}h20v${height - 56}h-20ZM${x + 48} ${y + 28}h20v${height - 56}h-20ZM${x + 76} ${y + 28}h20v${height - 56}h-20Z`,
+      fill: "#b96236",
+    },
+    { path: `M${x + 16} ${y + height / 2 - 100}h88v200h-88Z`, fill: "#f4dfae" },
+    ...paddle(x + 25, y + height / 2 - 65, "#527562", "#683d32", 0.8),
+  ];
+}
+
 export function drawStoryTheme(
   context: CanvasRenderingContext2D,
-  theme: StoryTheme
+  theme: StoryTheme,
+  photoFrame?: StoryRegion
 ) {
   if (theme === "minimal") return;
   context.save();
-  for (const decoration of storyThemeDecorations(theme)) {
+  for (const decoration of photoFrame
+    ? storyPhotoDecorations(theme, photoFrame)
+    : storyThemeDecorations(theme)) {
     const path = new Path2D(decoration.path);
     if (decoration.fill) {
       context.fillStyle = decoration.fill;

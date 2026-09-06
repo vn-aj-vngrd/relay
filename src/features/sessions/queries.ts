@@ -7,11 +7,10 @@ import {
   desc,
   eq,
   gt,
-  gte,
   inArray,
+  isNull,
   lt,
   lte,
-  ne,
   or,
   sql,
 } from "drizzle-orm";
@@ -20,6 +19,7 @@ import { cache } from "react";
 import { db } from "@/db/client";
 import {
   expenses,
+  groups,
   matches,
   profiles,
   sessionPlayers,
@@ -34,7 +34,21 @@ import type {
   GameCollectionScope,
   GameInvitationPage,
 } from "./game-collection-types";
-import { encodeGameCursor, type GameCursor } from "./game-pagination";
+import {
+  defaultGameLibraryFilters,
+  type GameLibraryFilters,
+  type GameLibraryOptions,
+} from "./game-library-filters";
+import {
+  gameLibraryConditions,
+  gameLibraryMembership,
+  gameLibraryPhase,
+} from "./game-library-query";
+import {
+  encodeGameCursor,
+  type GameCursor,
+  gameCursorContext,
+} from "./game-pagination";
 import { visibleHomePendingCount } from "./home-presentation";
 import { sessionReadiness } from "./readiness";
 import { eligiblePlayerCount } from "./readiness-query";
@@ -318,6 +332,7 @@ function userSessionCondition(userId: string) {
 
 function invitationCondition(userId: string, now = new Date()) {
   return and(
+    isNull(sessionPlayers.leftAt),
     eq(sessionPlayers.userId, userId),
     eq(sessionPlayers.rsvp, "invited"),
     gt(sessions.endsAt, now),
@@ -349,34 +364,53 @@ export async function getGameInvitations(
   };
 }
 
+export async function getGameLibraryOptions(
+  userId: string
+): Promise<GameLibraryOptions> {
+  const rows = await db
+    .selectDistinct({
+      venue: sessions.venueName,
+      groupId: sessions.groupId,
+      groupName: groups.name,
+    })
+    .from(sessionPlayers)
+    .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
+    .leftJoin(groups, eq(sessions.groupId, groups.id))
+    .where(gameLibraryMembership(userId));
+  return {
+    venues: [...new Set(rows.map((row) => row.venue))]
+      .sort()
+      .map((venue) => ({ value: venue, label: venue })),
+    groups: [
+      ...new Map(
+        rows.flatMap((row) =>
+          row.groupId && row.groupName
+            ? [
+                [
+                  row.groupId,
+                  { value: row.groupId, label: row.groupName },
+                ] as const,
+              ]
+            : []
+        )
+      ).values(),
+    ].sort((a, b) => a.label.localeCompare(b.label)),
+  };
+}
+
 export async function getGameCollectionPage(
   userId: string,
   phase: GameCollectionPhase,
   cursor: GameCursor | null = null,
-  scope: GameCollectionScope = "all"
+  scope: GameCollectionScope = "all",
+  filters: GameLibraryFilters = { ...defaultGameLibraryFilters, when: phase }
 ): Promise<GameCollectionPage> {
-  const now = new Date();
+  const context = gameCursorContext(userId, phase, scope, filters);
+  if (cursor && cursor.context !== context)
+    throw new Error("Game cursor does not match these filters.");
+  const snapshot = cursor?.snapshot ?? new Date().toISOString();
+  const now = new Date(snapshot);
   const ascending = phase === "upcoming";
-  const membershipCondition =
-    scope === "organizing"
-      ? and(
-          eq(sessionPlayers.userId, userId),
-          inArray(sessionPlayers.role, ["host", "cohost"])
-        )
-      : userSessionCondition(userId);
-  const phaseCondition = ascending
-    ? and(
-        gt(sessions.endsAt, now),
-        inArray(sessions.status, ["published", "live"])
-      )
-    : or(
-        eq(sessions.status, "completed"),
-        scope === "organizing" ? eq(sessions.status, "cancelled") : undefined,
-        and(
-          lte(sessions.endsAt, now),
-          inArray(sessions.status, ["published", "live"])
-        )
-      );
   const cursorCondition = cursor
     ? ascending
       ? or(
@@ -394,11 +428,11 @@ export async function getGameCollectionPage(
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
     .where(
       and(
-        membershipCondition,
-        phase === "upcoming" && scope === "all"
-          ? ne(sessionPlayers.rsvp, "invited")
+        gameLibraryConditions(userId, filters, now),
+        scope === "organizing"
+          ? inArray(sessionPlayers.role, ["host", "cohost"])
           : undefined,
-        phaseCondition,
+        gameLibraryPhase(phase, now),
         cursorCondition
       )
     )
@@ -407,15 +441,18 @@ export async function getGameCollectionPage(
       ascending ? asc(sessions.id) : desc(sessions.id)
     )
     .limit(GAME_PAGE_SIZE + 1);
-  const hasMore = rows.length > GAME_PAGE_SIZE;
   const pageRows = rows.slice(0, GAME_PAGE_SIZE);
   const last = pageRows.at(-1)?.session;
-
   return {
     items: await toGameCollectionItems(userId, pageRows),
     nextCursor:
-      hasMore && last
-        ? encodeGameCursor({ at: last.startsAt, id: last.id })
+      rows.length > GAME_PAGE_SIZE && last
+        ? encodeGameCursor({
+            at: last.startsAt,
+            id: last.id,
+            snapshot,
+            context,
+          })
         : null,
   };
 }
@@ -423,55 +460,39 @@ export async function getGameCollectionPage(
 export async function getGameCollectionMonth(
   userId: string,
   monthKey: string,
-  scope: GameCollectionScope = "all"
+  scope: GameCollectionScope = "all",
+  filters: GameLibraryFilters = defaultGameLibraryFilters
 ) {
-  const monthStart = new Date(`${monthKey}-01T00:00:00.000Z`);
-  const membershipCondition =
-    scope === "organizing"
-      ? and(
-          eq(sessionPlayers.userId, userId),
-          inArray(sessionPlayers.role, ["host", "cohost"])
-        )
-      : and(userSessionCondition(userId), ne(sessionPlayers.rsvp, "invited"));
-  const rangeStart = new Date(monthStart);
-  rangeStart.setUTCDate(rangeStart.getUTCDate() - 1);
-  const rangeEnd = new Date(
-    Date.UTC(monthStart.getUTCFullYear(), monthStart.getUTCMonth() + 1, 2)
-  );
+  const now = new Date();
   const rows = await db
     .select({ session: sessions, player: sessionPlayers })
     .from(sessionPlayers)
     .innerJoin(sessions, eq(sessionPlayers.sessionId, sessions.id))
     .where(
       and(
-        membershipCondition,
-        gte(sessions.startsAt, rangeStart),
-        lt(sessions.startsAt, rangeEnd),
-        inArray(
-          sessions.status,
-          scope === "organizing"
-            ? ["published", "live", "completed", "cancelled"]
-            : ["published", "live", "completed"]
-        )
+        gameLibraryConditions(userId, filters, now),
+        scope === "organizing"
+          ? inArray(sessionPlayers.role, ["host", "cohost"])
+          : undefined,
+        sql`to_char(${sessions.startsAt} at time zone ${sessions.timezone}, 'YYYY-MM') = ${monthKey}`
       )
     )
     .orderBy(asc(sessions.startsAt), asc(sessions.id));
-  const items = (await toGameCollectionItems(userId, rows)).filter((item) =>
-    item.dateKey.startsWith(monthKey)
-  );
-  const now = Date.now();
+  const items = await toGameCollectionItems(userId, rows);
   return {
     upcoming: items.filter(
       (item) =>
         ["published", "live"].includes(item.status) &&
-        new Date(item.endsAt).getTime() > now
+        new Date(item.endsAt) > now
     ),
-    past: items.filter(
-      (item) =>
-        item.status === "completed" ||
-        item.status === "cancelled" ||
-        new Date(item.endsAt).getTime() <= now
-    ),
+    past: items
+      .filter(
+        (item) =>
+          item.status === "completed" ||
+          item.status === "cancelled" ||
+          new Date(item.endsAt) <= now
+      )
+      .reverse(),
   };
 }
 

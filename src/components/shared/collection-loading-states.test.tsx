@@ -2,7 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 import GamesLoading from "@/app/(app)/games/(list)/loading";
@@ -48,11 +49,16 @@ describe("collection loading boundaries", () => {
 
     cleanup();
     render(<GamesLoading />);
-    const filters = screen.getByRole("group", { name: "Filter games" });
-    expect(filters).toHaveTextContent("Upcoming");
-    expect(filters).toHaveTextContent("Invites");
-    expect(filters).toHaveTextContent("Past");
-    expect(filters).toHaveTextContent("Organizing");
+    expect(
+      screen.getByRole("searchbox", { name: "Search your games" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "When" })).toHaveTextContent(
+      "Upcoming"
+    );
+    expect(screen.getByRole("button", { name: "Your role" })).toHaveTextContent(
+      "Any role"
+    );
+    expect(screen.queryByText("Organizing")).not.toBeInTheDocument();
   });
 
   it("keeps notification filters real while notifications load", () => {

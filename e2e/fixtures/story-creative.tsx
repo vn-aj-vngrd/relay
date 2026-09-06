@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { buildSessionRecap } from "../../src/features/memories/recap";
 import { RecapShareCard } from "../../src/features/memories/recap-share-card";
 import { RecapStoryCard } from "../../src/features/memories/recap-story-card";
+import { babyPink } from "../../src/features/memories/story-scene";
 import { storyThemes } from "../../src/features/memories/story-theme";
 
 const players = [
@@ -61,12 +62,7 @@ createRoot(root).render(
           <h2>{label}</h2>
           <RecapStoryCard
             {...props}
-            background={{
-              id: "pink",
-              color: "#f6cfdf",
-              light: true,
-              label: "Pink",
-            }}
+            background={babyPink}
             template="standings"
             theme={id}
             layout="center"
@@ -92,12 +88,7 @@ createRoot(root).render(
                 </h2>
                 <RecapStoryCard
                   {...props}
-                  background={{
-                    id: "pink",
-                    color: "#f6cfdf",
-                    light: true,
-                    label: "Pink",
-                  }}
+                  background={babyPink}
                   template={template}
                   invitation={{
                     hostName: "Alexandra dela Cruz",

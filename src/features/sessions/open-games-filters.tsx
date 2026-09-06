@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/date-time-picker";
 import { SelectField } from "@/components/ui/select-field";
 import { usePopoverTransition } from "@/components/ui/use-popover-transition";
+import { useGameResultsTransition } from "./game-results-transition";
 
 import { GameDesktopViewControls } from "./game-view-menu";
 import {
@@ -295,15 +296,17 @@ function PriceFilter({
 
 export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
   const router = useRouter();
+  const [, startTransition] = useGameResultsTransition();
   const [location, setLocation] = useState(filters.location);
   const hasFilters = Boolean(
-    filters.date !== "any" ||
+    filters.location ||
+      location ||
+      filters.date !== "any" ||
       filters.time !== "any" ||
       filters.available ||
       filters.price !== "any"
   );
   const clearFiltersParams = new URLSearchParams();
-  if (filters.location) clearFiltersParams.set("location", filters.location);
   const clearFiltersQuery = clearFiltersParams.toString();
   const clearFiltersHref = clearFiltersQuery
     ? `/games/open?${clearFiltersQuery}`
@@ -348,11 +351,13 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
           params.set("maxPrice", String(values.maxPrice / 100));
       }
       const query = params.toString();
-      router.replace(query ? `/games/open?${query}` : "/games/open", {
-        scroll: false,
+      startTransition(() => {
+        router.replace(query ? `/games/open?${query}` : "/games/open", {
+          scroll: false,
+        });
       });
     },
-    [filters, location, router]
+    [filters, location, router, startTransition]
   );
 
   useEffect(() => setLocation(filters.location), [filters.location]);
@@ -373,10 +378,10 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
           updateFilters({ location });
         }}
       >
-        <label htmlFor="open-location" className="block text-sm font-semibold">
+        <label htmlFor="open-location" className="sr-only">
           Court or location
         </label>
-        <div className="relative mt-1.5">
+        <div className="relative">
           <input
             id="open-location"
             name="location"
@@ -460,7 +465,21 @@ export function OpenGamesFilters({ filters }: { filters: OpenGamesFilters }) {
           {hasFilters ? (
             <Link
               href={clearFiltersHref}
-              className="compact-control pressable inline-flex min-h-9 items-center rounded-full px-3 text-xs font-semibold text-primary hover:bg-primary-soft sm:text-[13px]"
+              onClick={(event) => {
+                if (
+                  event.metaKey ||
+                  event.ctrlKey ||
+                  event.shiftKey ||
+                  event.altKey
+                )
+                  return;
+                event.preventDefault();
+                setLocation("");
+                startTransition(() =>
+                  router.replace(clearFiltersHref, { scroll: false })
+                );
+              }}
+              className="compact-control pressable inline-flex h-9 min-h-9 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-primary hover:bg-primary-soft sm:px-3 sm:text-[13px]"
             >
               Clear filters
             </Link>

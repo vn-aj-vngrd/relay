@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   drawStoryTheme,
+  storyPhotoDecorations,
   storyThemeDecorations,
   storyThemes,
 } from "./story-theme";
@@ -35,7 +36,7 @@ describe("Story themes", () => {
     for (const { id, description } of storyThemes) {
       expect(description.length).toBeGreaterThan(0);
       if (id !== "minimal")
-        expect(storyThemeDecorations(id).length).toBeGreaterThan(10);
+        expect(storyThemeDecorations(id).length).toBeGreaterThan(8);
     }
   });
 
@@ -63,6 +64,36 @@ describe("Story themes", () => {
       );
       expect(context.restore).toHaveBeenCalledOnce();
       expect(context.stroke).toHaveBeenCalled();
+    }
+  );
+  it.each(["scrapbook", "coquette", "court-pop", "retro-rally"] as const)(
+    "shares %s foreground surround paths with Canvas",
+    (theme) => {
+      const frame = { x: 72, y: 160, width: 936, height: 840 };
+      const paths: string[] = [];
+      vi.stubGlobal(
+        "Path2D",
+        class {
+          constructor(path: string) {
+            paths.push(path);
+          }
+        }
+      );
+      const context = {
+        save: vi.fn(),
+        restore: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+      };
+      drawStoryTheme(
+        context as unknown as CanvasRenderingContext2D,
+        theme,
+        frame
+      );
+      expect(paths).toEqual(
+        storyPhotoDecorations(theme, frame).map(({ path }) => path)
+      );
+      expect(storyPhotoDecorations("minimal", frame)).toEqual([]);
     }
   );
 });

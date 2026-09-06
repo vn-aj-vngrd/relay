@@ -2,7 +2,7 @@
 
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 
-import { storyComposition } from "./story-theme";
+import type { StoryRegion } from "./story-scene";
 
 /** Fit complete factual copy inside the expressive artwork's reserved region.
  * No names are removed. Expanded preview provides a larger reading surface. */
@@ -10,10 +10,12 @@ export function StoryFactFrame({
   children,
   position,
   enabled,
+  bounds,
   className,
 }: {
   children: ReactNode;
   enabled: boolean;
+  bounds: StoryRegion;
   className: string;
   position: "top" | "center" | "bottom";
 }) {
@@ -37,17 +39,26 @@ export function StoryFactFrame({
     const observer = new ResizeObserver(fitContent);
     observer.observe(outer);
     observer.observe(inner);
-    return () => observer.disconnect();
-  }, [position, enabled]);
-  if (!enabled) return <div className={className}>{children}</div>;
+    return () => {
+      observer.disconnect();
+      inner.style.removeProperty("transform");
+    };
+  }, [position, enabled, bounds.y, bounds.height]);
+  if (!enabled)
+    return (
+      <div key="natural" className={className}>
+        {children}
+      </div>
+    );
   return (
     <div
+      key="fitted"
       ref={frame}
       data-story-region="facts"
       className="absolute inset-x-0"
       style={{
-        top: `${storyComposition.factsTop / 19.2}%`,
-        bottom: `${(1920 - storyComposition.factsBottom) / 19.2}%`,
+        top: `${bounds.y / 19.2}%`,
+        bottom: `${(1920 - bounds.y - bounds.height) / 19.2}%`,
       }}
     >
       <div

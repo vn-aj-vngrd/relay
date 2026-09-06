@@ -8,6 +8,11 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
+
+import { defaultGameLibraryFilters } from "./game-library-filters";
+
 vi.mock("./actions", () => ({
   rsvpAction: vi.fn(async (_: unknown, formData: FormData) => ({
     success: true,
@@ -70,14 +75,6 @@ const invitation: GameCollectionItem = {
   readiness: undefined,
 };
 
-const cohostedGame: GameCollectionItem = {
-  ...game,
-  id: "game-cohosted",
-  href: "/games/game-cohosted",
-  title: "Co-hosted Open Play",
-  readiness: undefined,
-};
-
 const pastGame: GameCollectionItem = {
   ...game,
   id: "game-2",
@@ -97,15 +94,6 @@ const pastGame: GameCollectionItem = {
   },
 };
 
-const cancelledGame: GameCollectionItem = {
-  ...pastGame,
-  id: "game-cancelled",
-  href: "/games/game-cancelled",
-  title: "Cancelled Host Game",
-  status: "cancelled",
-  canReplay: false,
-};
-
 function page(items: GameCollectionItem[], nextCursor: string | null = null) {
   return { items, nextCursor };
 }
@@ -113,6 +101,7 @@ function page(items: GameCollectionItem[], nextCursor: string | null = null) {
 let observerCallback: IntersectionObserverCallback;
 
 beforeEach(() => {
+  vi.clearAllMocks();
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -157,10 +146,6 @@ describe("GameCollection", () => {
     ).toContain("#bd4545");
     expect(screen.getByText("Confirm court arrangement")).toBeVisible();
     expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
-      "href",
-      "/games/new"
-    );
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
@@ -213,65 +198,109 @@ describe("GameCollection", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("defaults to upcoming while keeping invites and past easy to find", () => {
+  it("keeps invitations independent from every library filter", () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/games?when=past&role=host&q=Friday"
+    );
     render(
       <GameCollection
-        upcomingPage={page([game])}
-        invitationPage={{ items: [invitation], total: 1 }}
+        upcomingPage={page([])}
         pastPage={page([pastGame])}
+        invitationPage={{ items: [invitation], total: 1 }}
         todayKey="2026-08-15"
+        filters={{
+          ...defaultGameLibraryFilters,
+          when: "past",
+          role: "host",
+          q: "Friday",
+        }}
       />
     );
-
-    expect(screen.getByRole("button", { name: "Upcoming" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
-    expect(screen.getByText("Sunday Open Play")).toBeVisible();
-    expect(screen.queryByText("Friday Crew")).not.toBeInTheDocument();
-
+    expect(screen.queryByText(invitation.title)).not.toBeInTheDocument();
+    expect(screen.getByText(pastGame.title)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Invites 1" }));
-    expect(screen.getByText("Sunday Open Play")).toBeVisible();
-    expect(screen.queryByText("Saturday Night Pickle")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Past" }));
-    expect(screen.queryByText("Sunday Open Play")).not.toBeInTheDocument();
-    expect(screen.getByText("Friday Crew")).toBeVisible();
+    expect(screen.getByText(invitation.title)).toBeVisible();
+    expect(screen.queryByText(pastGame.title)).not.toBeInTheDocument();
+    expect(window.location.search).toContain("role=host");
+    expect(window.location.search).toContain("filter=invites");
+    fireEvent.click(screen.getByRole("button", { name: "Back to your games" }));
+    expect(screen.getByText(pastGame.title)).toBeVisible();
     expect(screen.getByText("Ended")).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Play Friday Crew again" })
     ).toHaveAttribute("href", "/games/new?from=game-2");
-    expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
-    expect(screen.queryByText("1 game")).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByText("8 played")).toBeVisible();
-    expect(
-      screen.getByRole("link", { name: "Play Friday Crew again" })
-    ).toHaveAttribute("href", "/games/new?from=game-2");
     expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
   });
 
-  it("shows hosted and co-hosted games together under Organizing", () => {
+  it.each(["upcoming", "invites"] as const)(
+    "reconciles refreshed invitations without leaving the %s view",
+    (initialFilter) => {
+      const props = {
+        upcomingPage: page([game]),
+        pastPage: page([]),
+        todayKey: "2026-08-15",
+        initialFilter,
+      };
+      const { rerender } = render(
+        <GameCollection {...props} invitationPage={{ items: [], total: 0 }} />
+      );
+      expect(screen.queryByText(invitation.title)).not.toBeInTheDocument();
+
+      rerender(
+        <GameCollection
+          {...props}
+          invitationPage={{ items: [invitation], total: 1 }}
+        />
+      );
+      if (initialFilter === "invites")
+        expect(screen.getByText(invitation.title)).toBeVisible();
+      else expect(screen.queryByText(invitation.title)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Invites 1" })).toHaveAttribute(
+        "aria-pressed",
+        initialFilter === "invites" ? "true" : "false"
+      );
+
+      rerender(
+        <GameCollection {...props} invitationPage={{ items: [], total: 0 }} />
+      );
+      expect(screen.queryByText(invitation.title)).not.toBeInTheDocument();
+      if (initialFilter === "invites")
+        expect(screen.getByRole("button", { name: "Invites" })).toHaveAttribute(
+          "aria-pressed",
+          "true"
+        );
+      else
+        expect(
+          screen.queryByRole("button", { name: "Invites" })
+        ).not.toBeInTheDocument();
+    }
+  );
+
+  it("renders the server-filtered host history and exposes separate role and response choices", () => {
     render(
       <GameCollection
         upcomingPage={page([game])}
         pastPage={page([pastGame])}
-        organizingUpcomingPage={page([game, cohostedGame])}
-        organizingPastPage={page([pastGame, cancelledGame])}
+        filters={{ ...defaultGameLibraryFilters, when: "all", role: "host" }}
         todayKey="2026-08-15"
       />
     );
-
-    fireEvent.click(screen.getByRole("button", { name: "Organizing" }));
-
-    expect(screen.getByText("Saturday Night Pickle")).toBeVisible();
-    expect(screen.getByText("Co-hosted Open Play")).toBeVisible();
-    expect(screen.getByText("Friday Crew")).toBeVisible();
-    expect(screen.getByText("Cancelled Host Game")).toBeVisible();
-    expect(screen.getByText("Cancelled")).toBeVisible();
-    expect(window.location.search).toContain("filter=organizing");
+    expect(screen.getByText(game.title)).toBeVisible();
+    expect(screen.getByText(pastGame.title)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Your role" }));
+    expect(screen.getByRole("option", { name: "Co-host" })).toBeVisible();
+    fireEvent.click(screen.getByRole("option", { name: "Co-host" }));
+    expect(router.push).toHaveBeenCalledWith(
+      expect.stringContaining("role=cohost"),
+      { scroll: false }
+    );
+    expect(
+      screen.queryByRole("button", { name: "Organizing" })
+    ).not.toBeInTheDocument();
   });
 
   it("does not expose Play again for another player’s completed game", () => {
@@ -317,7 +346,7 @@ describe("GameCollection", () => {
     render(
       <GameCollection
         upcomingPage={page([game, liveGame])}
-        pastPage={page([pastGame])}
+        pastPage={page([])}
         todayKey="2026-08-15"
       />
     );
@@ -329,9 +358,7 @@ describe("GameCollection", () => {
     ).toEqual(["Live now", "Upcoming"]);
     expect(screen.getByText("Wednesday Night Live")).toBeVisible();
 
-    fireEvent.click(screen.getByRole("button", { name: "Past" }));
-    expect(screen.queryByText("Wednesday Night Live")).not.toBeInTheDocument();
-    expect(screen.getByText("Friday Crew")).toBeVisible();
+    expect(screen.queryByText("Friday Crew")).not.toBeInTheDocument();
   });
 
   it("loads and deduplicates the next page as its sentinel approaches", async () => {

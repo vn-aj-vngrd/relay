@@ -26,6 +26,11 @@ function validDate(value: string | undefined) {
   );
 }
 
+import {
+  GameResults,
+  GameResultsTransition,
+} from "@/features/sessions/game-results-transition";
+
 export default async function OpenGamesPage({
   searchParams,
 }: {
@@ -81,9 +86,6 @@ export default async function OpenGamesPage({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="app-title">Open games</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Find a public game with a clear schedule, court, cost, and roster.
-          </p>
         </div>
         <div className="sm:hidden">
           <GameViewMenu />
@@ -113,18 +115,22 @@ export default async function OpenGamesPage({
           Those filters weren’t valid, so Relay restored the full list.
         </div>
       ) : null}
-      <OpenGamesFilters filters={filters} />
-      <div className="mt-6">
-        <OpenGamesCollection
-          key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}:${filters.price}:${filters.minPrice}:${filters.maxPrice}`}
-          initialPage={page}
-          filters={filters}
-          todayKey={todayKey}
-          initialMonth={initialMonth}
-          initialDate={initialDate}
-          isAuthenticated={Boolean(user)}
-        />
-      </div>
+      <GameResultsTransition>
+        <OpenGamesFilters filters={filters} />
+        <div className="mt-6">
+          <GameResults>
+            <OpenGamesCollection
+              key={`${filters.date}:${filters.dateFrom}:${filters.dateTo}:${filters.time}:${filters.timeFrom}:${filters.timeTo}:${filters.location}:${filters.available}:${filters.price}:${filters.minPrice}:${filters.maxPrice}`}
+              initialPage={page}
+              filters={filters}
+              todayKey={todayKey}
+              initialMonth={initialMonth}
+              initialDate={initialDate}
+              isAuthenticated={Boolean(user)}
+            />
+          </GameResults>
+        </div>
+      </GameResultsTransition>
     </div>
   );
 }

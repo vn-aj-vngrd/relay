@@ -40,10 +40,7 @@ function dateCondition(filters: OpenGamesFilters, now: Date) {
   if (filters.date === "today") {
     const start = new Date(`${manilaDay.format(now)}T00:00:00+08:00`);
     const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-    return and(
-      sql`${sessions.startsAt} >= ${start}`,
-      lt(sessions.startsAt, end)
-    );
+    return and(gte(sessions.startsAt, start), lt(sessions.startsAt, end));
   }
   if (filters.date === "custom") {
     const start = filters.dateFrom
@@ -56,7 +53,7 @@ function dateCondition(filters: OpenGamesFilters, now: Date) {
         )
       : null;
     return and(
-      start ? sql`${sessions.startsAt} >= ${start}` : undefined,
+      start ? gte(sessions.startsAt, start) : undefined,
       end ? lt(sessions.startsAt, end) : undefined
     );
   }

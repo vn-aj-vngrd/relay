@@ -37,6 +37,13 @@ import {
 } from "./recap-story-card";
 import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
 import {
+  babyPink,
+  type StoryPhotoPlacement,
+  type StoryPhotoRole,
+  storyArtTransform,
+  storyScene,
+} from "./story-scene";
+import {
   drawStoryTheme,
   type StoryTheme,
   storyComposition,
@@ -48,9 +55,7 @@ import styles from "./story-workspace.module.css";
 type RecapPhoto = { id: string; url: string; alt: string };
 
 // Story-only colors do not change the game accent or global app palette.
-const storyPalette: RecapBackground[] = [
-  { id: "story:pink", label: "Pink", color: "#f6cfdf", light: true },
-];
+const storyPalette: RecapBackground[] = [babyPink];
 
 const storyLayouts: Array<{
   id: RecapStoryLayout;
@@ -126,14 +131,7 @@ function drawWrappedText(
   if (line && lines.length < maxLines) {
     const consumed = lines.join(" ").split(/\s+/).filter(Boolean).length;
     const remaining = words.slice(consumed).join(" ");
-    let finalLine = remaining || line;
-    while (
-      context.measureText(finalLine).width > maxWidth &&
-      finalLine.length > 1
-    ) {
-      finalLine = `${finalLine.slice(0, -2).trimEnd()}…`;
-    }
-    lines.push(finalLine);
+    lines.push(remaining || line);
   }
   lines.forEach((value, index) =>
     context.fillText(value, x, firstBaseline + index * lineHeight, maxWidth)
@@ -220,6 +218,10 @@ export function RecapShareCard({
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
   const [photoPosition, setPhotoPosition] = useState(50);
+  const [photoRole, setPhotoRole] = useState<StoryPhotoRole>("background");
+  const [photoPlacement, setPhotoPlacement] =
+    useState<StoryPhotoPlacement>("center");
+  const [surfaceId, setSurfaceId] = useState(`accent:${gameAccent.id}`);
   const [customHeadline, setCustomHeadline] = useState("Our kind of game.");
   const [customNote, setCustomNote] = useState("");
   const [pending, setPending] = useState(false);
@@ -238,6 +240,14 @@ export function RecapShareCard({
   const photoSelection = useRef(0);
   const background =
     backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
+  const sceneBackground =
+    backgrounds.find((item) => item.id === surfaceId) ?? backgrounds[0];
+  const scene = storyScene(
+    theme,
+    Boolean(background.imageUrl),
+    photoRole,
+    photoPlacement
+  );
   const templateIndex = templates.findIndex((item) => item.id === template);
   const activeTemplate = templates[templateIndex] ?? templates[0];
 
@@ -252,6 +262,13 @@ export function RecapShareCard({
         URL.revokeObjectURL(customBackground.imageUrl);
     },
     [customBackground]
+  );
+
+  useEffect(
+    () => () => {
+      photoSelection.current += 1;
+    },
+    []
   );
 
   useEffect(() => {
@@ -329,8 +346,18 @@ export function RecapShareCard({
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas unavailable");
 
-    context.fillStyle = background.color ?? "#11131a";
+    const surface = scene.framed ? sceneBackground : background;
+    context.fillStyle = surface.color ?? "#11131a";
     context.fillRect(0, 0, canvas.width, canvas.height);
+    if (scene.frame) {
+      context.fillStyle = "#fff8f0";
+      context.fillRect(
+        scene.frame.x,
+        scene.frame.y,
+        scene.frame.width,
+        scene.frame.height
+      );
+    }
     if (background.imageUrl) {
       try {
         await drawStoryPhoto(
@@ -338,16 +365,20 @@ export function RecapShareCard({
           background.file ?? background.imageUrl,
           canvas.width,
           canvas.height,
-          photoPosition
+          photoPosition,
+          scene.framed ? scene.photo : undefined
         );
       } catch (error) {
         throw new Error("Selected photo unavailable", { cause: error });
       }
-      context.fillStyle = `rgba(8,10,16,${overlay / 100})`;
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      if (!scene.framed) {
+        context.fillStyle = `rgba(8,10,16,${overlay / 100})`;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
     }
 
-    const light = Boolean(background.light) && !background.imageUrl;
+    const light =
+      Boolean(surface.light) && (!background.imageUrl || scene.framed);
     const foreground = light ? "#17181d" : "#ffffff";
     const secondary = light ? "rgba(23,24,29,.62)" : "rgba(255,255,255,.68)";
     const rule = light ? "rgba(23,24,29,.18)" : "rgba(255,255,255,.22)";
@@ -372,20 +403,81 @@ export function RecapShareCard({
 
     const contentOffset =
       layout === "poster" ? -500 : layout === "center" ? -250 : 0;
-    if (layout === "snapshot") {
+    if (layout === "snapshot" && !scene.fitFacts) {
       context.fillStyle = light ? "rgba(255,255,255,.82)" : "rgba(8,10,16,.62)";
       context.fillRect(48, 820, 984, 1020);
       context.strokeStyle = rule;
       context.lineWidth = 2;
       context.strokeRect(48, 820, 984, 1020);
     }
-    context.save();
-    context.translate(
-      0,
+    const noteRuleY =
       theme === "minimal"
-        ? contentOffset
-        : Math.max(storyComposition.factsTop - 884, contentOffset)
-    );
+        ? phase === "published"
+          ? 1730
+          : 1580
+        : Math.min(
+            phase === "published" ? 1730 : 1580,
+            storyComposition.factsBottom - 110
+          );
+    context.save();
+    if (scene.fitFacts) {
+      // Per-template final baselines include both supported wrapped lines.
+      // Font descent belongs inside the region too, not just the baseline.
+      const endings: Record<RecapShareTemplateId, [number, number]> = {
+        invitation: [1675, 27],
+        spots: [1680, 27],
+        live: [1550, 27],
+        "live-pulse": [1650 + 38, 30],
+        overview: [1566, 0], // Final 2px rule at y=1565.
+        personal: [1575, 27],
+        "winning-team": [1480, 31],
+        leader: [1470, 31],
+        standings: [
+          1080 + Math.max(0, Math.min(5, recap.standings.length) - 1) * 115,
+          40,
+        ],
+        closest: [1450, 30],
+        court: [1490, 31],
+        points: [1400, 31],
+        "court-time": [1400, 31],
+        crew: [1390, 31],
+        custom: [1280, 31],
+      };
+      const textBottom = (baseline: number, size: number) => {
+        if (size === 0) return baseline;
+        setFont(context, size);
+        const metrics = context.measureText("gjpqy");
+        return (
+          baseline +
+          Math.max(
+            metrics.actualBoundingBoxDescent ?? 0,
+            metrics.fontBoundingBoxDescent ?? size * 0.3
+          )
+        );
+      };
+      const drawingTop =
+        template === "standings" ? 900 : template === "overview" ? 1100 : 940;
+      const drawingBottom = Math.max(
+        textBottom(...endings[template]),
+        customNote ? textBottom(noteRuleY + 55 + 38, 30) : 0
+      );
+      const drawingHeight = drawingBottom - drawingTop;
+      const scale = Math.min(1, scene.facts.height / drawingHeight);
+      const free = scene.facts.height - drawingHeight * scale;
+      const align =
+        scene.framed || layout === "center"
+          ? free / 2
+          : layout === "poster"
+            ? 0
+            : free;
+      context.translate(
+        (1080 - 1080 * scale) / 2,
+        scene.facts.y + align - drawingTop * scale
+      );
+      context.scale(scale, scale);
+    } else {
+      context.translate(0, contentOffset);
+    }
 
     if (template === "invitation" && invitation) {
       context.fillStyle = foreground;
@@ -719,15 +811,6 @@ export function RecapShareCard({
     }
 
     if (customNote) {
-      const noteRuleY =
-        theme === "minimal"
-          ? phase === "published"
-            ? 1730
-            : 1580
-          : Math.min(
-              phase === "published" ? 1730 : 1580,
-              storyComposition.factsBottom - 110
-            );
       drawRule(context, noteRuleY, rule);
       context.fillStyle = foreground;
       setFont(context, 30, 600);
@@ -743,7 +826,18 @@ export function RecapShareCard({
       1880,
       936
     );
-    drawStoryTheme(context, theme);
+    if (scene.frame) {
+      drawStoryTheme(context, theme, scene.frame);
+    } else if (theme !== "minimal") {
+      const art = storyArtTransform(scene.art);
+      context.save();
+      context.translate(art.x, art.y);
+      context.scale(art.scale, art.scale);
+      drawStoryTheme(context, theme);
+      context.restore();
+    } else {
+      drawStoryTheme(context, theme);
+    }
     return new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
         (blob) =>
@@ -841,6 +935,12 @@ export function RecapShareCard({
         }}
         className={`${styles.carousel} rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25`}
       >
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-bold">Preview</p>
+          <Button type="button" variant="quiet" onClick={openPreview}>
+            Enlarge preview
+          </Button>
+        </div>
         <div
           className="mb-3 grid gap-1"
           style={{
@@ -851,7 +951,7 @@ export function RecapShareCard({
             <span
               key={item.id}
               aria-hidden
-              className={`h-1 rounded-full ${item.id === template ? "bg-primary" : "bg-surface-raised"}`}
+              className={`h-1 rounded-full ${item.id === template ? "bg-primary" : "bg-line"}`}
             />
           ))}
         </div>
@@ -891,6 +991,9 @@ export function RecapShareCard({
             layout={layout}
             overlay={overlay}
             photoPosition={photoPosition}
+            photoRole={photoRole}
+            photoPlacement={photoPlacement}
+            sceneBackground={sceneBackground}
             customHeadline={customHeadline}
             customNote={customNote}
             phase={phase}
@@ -930,10 +1033,11 @@ export function RecapShareCard({
       </div>
       <div className="min-w-0">
         <fieldset className="min-w-0">
-          <legend className="text-sm font-bold">Focus</legend>
+          <legend className="text-sm font-bold">Story focus</legend>
           <div className="mt-3">
             <TabChipRail
-              label="Story focus"
+              label="Story focus options"
+              className={styles.optionRail}
               items={templates.map((item) => ({
                 value: item.id,
                 label: item.label,
@@ -961,16 +1065,19 @@ export function RecapShareCard({
             aria-label="Download PNG"
           >
             <DownloadSimple aria-hidden size={16} />
-            Download
+            Download PNG
           </Button>
         </div>
+        <p className="mt-2 text-xs leading-5 text-muted">
+          9:16 portrait · Ready for stories and sharing
+        </p>
         {message ? (
           <p role="status" className="mt-2 text-sm font-medium text-muted">
             {message}
           </p>
         ) : null}
 
-        <div className="mt-4 border-y border-line">
+        <div className="mt-6 border-y border-line">
           <button
             type="button"
             ref={customizeButton}
@@ -1018,6 +1125,7 @@ export function RecapShareCard({
                     <div className="mt-3">
                       <TabChipRail
                         label="Story theme"
+                        className={styles.optionRail}
                         items={storyThemes.map((item) => ({
                           value: item.id,
                           label: item.label,
@@ -1038,6 +1146,7 @@ export function RecapShareCard({
                     <div className="mt-3">
                       <TabChipRail
                         label="Story look"
+                        className={styles.optionRail}
                         items={storyLayouts.map((item) => ({
                           value: item.id,
                           label: item.label,
@@ -1068,9 +1177,16 @@ export function RecapShareCard({
                               ? item.label
                               : `${item.label} background`
                           }
-                          aria-pressed={backgroundId === item.id}
-                          onClick={() => setBackgroundId(item.id)}
-                          className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-3 focus-visible:ring-primary/25 ${backgroundId === item.id ? "border-primary" : "border-transparent"}`}
+                          aria-pressed={
+                            backgroundId === item.id ||
+                            (scene.framed && surfaceId === item.id)
+                          }
+                          onClick={() => {
+                            if (!item.imageUrl) setSurfaceId(item.id);
+                            if (item.imageUrl || !scene.framed)
+                              setBackgroundId(item.id);
+                          }}
+                          className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-3 focus-visible:ring-primary/25 ${backgroundId === item.id || (scene.framed && surfaceId === item.id) ? "border-primary" : "border-transparent"}`}
                           style={{ backgroundColor: item.color }}
                         >
                           {item.imageUrl ? (
@@ -1083,7 +1199,8 @@ export function RecapShareCard({
                               className="object-cover"
                             />
                           ) : null}
-                          {backgroundId === item.id ? (
+                          {backgroundId === item.id ||
+                          (scene.framed && surfaceId === item.id) ? (
                             <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
                               <Check aria-hidden size={17} weight="bold" />
                             </span>
@@ -1094,14 +1211,14 @@ export function RecapShareCard({
                         type="button"
                         onClick={() => customPhotoInput.current?.click()}
                         className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
-                        aria-label="Add a background photo"
+                        aria-label="Add a story photo"
                       >
                         <ImageSquare aria-hidden size={21} />
                       </button>
                       <input
                         ref={customPhotoInput}
                         type="file"
-                        aria-label="Choose background photo file"
+                        aria-label="Choose story photo file"
                         accept="image/jpeg,image/png,image/webp"
                         className="sr-only"
                         onChange={(event) => {
@@ -1118,41 +1235,79 @@ export function RecapShareCard({
                   </fieldset>
 
                   {background.imageUrl ? (
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                      <label className="text-sm font-semibold">
-                        Photo position
-                        <input
-                          type="range"
-                          aria-label="Photo position"
-                          min="0"
-                          max="100"
-                          value={photoPosition}
-                          onChange={(event) =>
-                            setPhotoPosition(Number(event.target.value))
-                          }
-                          className="mt-1 min-h-11 w-full accent-primary"
+                    <div className="mt-4 grid gap-4">
+                      <fieldset className="min-w-0">
+                        <legend className="mb-2 text-sm font-semibold">
+                          Photo role
+                        </legend>
+                        <TabChipRail
+                          label="Photo role"
+                          items={[
+                            { value: "background", label: "Full background" },
+                            { value: "foreground", label: "Framed foreground" },
+                          ]}
+                          value={photoRole}
+                          onChange={setPhotoRole}
                         />
-                        <span className="mt-1 block text-xs font-normal text-muted">
-                          Move the crop from top to bottom.
-                        </span>
-                      </label>
-                      <label className="text-sm font-semibold">
-                        Text contrast
-                        <input
-                          type="range"
-                          aria-label="Text contrast"
-                          min="20"
-                          max="80"
-                          value={overlay}
-                          onChange={(event) =>
-                            setOverlay(Number(event.target.value))
-                          }
-                          className="mt-1 min-h-11 w-full accent-primary"
-                        />
-                        <span className="mt-1 block text-xs font-normal text-muted">
-                          Darken the photo behind the story.
-                        </span>
-                      </label>
+                      </fieldset>
+                      {scene.framed ? (
+                        <fieldset className="min-w-0">
+                          <legend className="mb-2 text-sm font-semibold">
+                            Photo placement
+                          </legend>
+                          <TabChipRail
+                            label="Photo placement options"
+                            items={[
+                              { value: "top", label: "Top" },
+                              { value: "center", label: "Center" },
+                              { value: "bottom", label: "Bottom" },
+                            ]}
+                            value={photoPlacement}
+                            onChange={setPhotoPlacement}
+                          />
+                          <p className="mt-2 text-xs text-muted">
+                            Color swatches change the paper behind your photo.
+                          </p>
+                        </fieldset>
+                      ) : null}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="text-sm font-semibold">
+                          Photo crop
+                          <input
+                            type="range"
+                            aria-label="Photo crop"
+                            min="0"
+                            max="100"
+                            value={photoPosition}
+                            onChange={(event) =>
+                              setPhotoPosition(Number(event.target.value))
+                            }
+                            className="mt-1 min-h-11 w-full accent-primary"
+                          />
+                          <span className="mt-1 block text-xs font-normal text-muted">
+                            Move the crop from top to bottom.
+                          </span>
+                        </label>
+                        {!scene.framed ? (
+                          <label className="text-sm font-semibold">
+                            Text contrast
+                            <input
+                              type="range"
+                              aria-label="Text contrast"
+                              min="20"
+                              max="80"
+                              value={overlay}
+                              onChange={(event) =>
+                                setOverlay(Number(event.target.value))
+                              }
+                              className="mt-1 min-h-11 w-full accent-primary"
+                            />
+                            <span className="mt-1 block text-xs font-normal text-muted">
+                              Darken the photo behind the story.
+                            </span>
+                          </label>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -1252,6 +1407,9 @@ export function RecapShareCard({
                 layout={layout}
                 overlay={overlay}
                 photoPosition={photoPosition}
+                photoRole={photoRole}
+                photoPlacement={photoPlacement}
+                sceneBackground={sceneBackground}
                 customHeadline={customHeadline}
                 customNote={customNote}
                 phase={phase}

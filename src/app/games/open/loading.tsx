@@ -48,9 +48,6 @@ export default function OpenGamesLoading() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="app-title">Open games</h1>
-          <p className="mt-2 text-sm text-muted">
-            Find a public game with a clear schedule, court, cost, and roster.
-          </p>
         </div>
         <div className="sm:hidden">
           <GameViewMenu />

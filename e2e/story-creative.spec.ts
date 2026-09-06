@@ -130,10 +130,10 @@ test("expressive real Story components fit long facts and export every theme", a
     await page.getByRole("button", { name: "Layout", exact: true }).click();
     await page.getByRole("button", { name: label, exact: true }).click();
     await page.getByRole("button", { name: "Background", exact: true }).click();
-    await page.getByRole("button", { name: "Pink background" }).click();
+    await page.getByRole("button", { name: "Baby Pink background" }).click();
     for (const withPhoto of [false, true]) {
       if (withPhoto) {
-        await page.getByLabel("Choose background photo file").setInputFiles({
+        await page.getByLabel("Choose story photo file").setInputFiles({
           name: "synthetic-court.png",
           mimeType: "image/png",
           buffer: Buffer.from(photo, "base64"),
@@ -157,6 +157,48 @@ test("expressive real Story components fit long facts and export every theme", a
       ]);
       await expect(page.getByRole("status")).toContainText("1080 × 1920");
     }
+    await page.getByRole("button", { name: "Framed foreground" }).click();
+    await page.getByLabel("Photo crop", { exact: true }).press("End");
+    for (const placement of ["Top", "Center", "Bottom"]) {
+      await page
+        .getByRole("group", { name: "Photo placement" })
+        .getByRole("button", { name: placement, exact: true })
+        .click();
+      const card = page.locator("[data-story-theme]");
+      await expect(card).toHaveAttribute(
+        "data-photo-placement",
+        placement.toLowerCase()
+      );
+      await expect
+        .poll(() =>
+          card.evaluate((element) => {
+            const photoBounds = element
+              .querySelector('[data-story-region="photo"]')!
+              .getBoundingClientRect();
+            const facts = element
+              .querySelector('[data-story-region="facts"]')!
+              .getBoundingClientRect();
+            return (
+              photoBounds.bottom <= facts.top || facts.bottom <= photoBounds.top
+            );
+          })
+        )
+        .toBe(true);
+      await card.screenshot({
+        path: testInfo.outputPath(`${label}-${placement}-preview.png`),
+      });
+      const download = page.waitForEvent("download");
+      await page
+        .getByRole("button", { name: "Download PNG", exact: true })
+        .click();
+      const path = testInfo.outputPath(`${label}-${placement}-export.png`);
+      await (await download).saveAs(path);
+      const png = await readFile(path);
+      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([
+        1080, 1920,
+      ]);
+    }
+    await page.getByRole("button", { name: "Full background" }).click();
   }
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth)

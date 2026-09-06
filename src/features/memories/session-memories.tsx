@@ -96,7 +96,7 @@ export function SessionMemories({
   }
 
   return (
-    <div className="space-y-7">
+    <div className="flex min-w-0 flex-col gap-7">
       {showPhotos ? (
         <TabChipRail
           label="Story views"

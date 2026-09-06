@@ -21,8 +21,8 @@ export default function GamesLoading() {
       <GamesSectionNav current="mine" />
       <div className="mt-2 sm:mt-3">
         <div className="mb-6 pb-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-3">
+            <div className="w-full min-w-0">
               <GamesLoadingFilterRail />
             </div>
             <span className="hidden shrink-0 sm:block">
@@ -37,10 +37,7 @@ export default function GamesLoading() {
           </div>
         </div>
       </div>
-      <section aria-labelledby="loading-upcoming-games">
-        <h2 id="loading-upcoming-games" className="mb-3 text-lg font-bold">
-          Upcoming
-        </h2>
+      <section aria-label="Game results">
         <RowsSkeleton rows={3} />
       </section>
     </div>

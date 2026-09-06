@@ -3,11 +3,11 @@
 import {
   ArrowClockwise,
   CalendarBlank,
-  CalendarPlus,
   CaretRight,
   MapPin,
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -17,7 +17,6 @@ import {
 } from "react";
 import { z } from "zod";
 import { ButtonLink } from "@/components/ui/button";
-import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { sessionAccentStyle } from "./accent";
 import type {
   GameCollectionItem,
@@ -27,7 +26,15 @@ import type {
 } from "./game-collection-types";
 import type { ActiveInviteResponse } from "./game-invitation-card";
 import { GameInvitationCard } from "./game-invitation-card";
-import { GameDesktopViewControls } from "./game-view-menu";
+import { GameLibraryControls } from "./game-library-controls";
+import {
+  defaultGameLibraryFilters,
+  type GameLibraryFilters,
+  type GameLibraryOptions,
+  gameLibraryRangeError,
+  gameLibrarySearchParams,
+} from "./game-library-filters";
+import { GameResults, GameResultsTransition } from "./game-results-transition";
 import { GamesCalendar } from "./games-calendar";
 import { playSetupNextAction } from "./readiness";
 
@@ -35,13 +42,8 @@ export type { GameCollectionItem } from "./game-collection-types";
 export { GameViewMenu } from "./game-view-menu";
 
 type ViewMode = "list" | "grid" | "calendar";
-type GameFilter = "upcoming" | "invites" | "past" | "organizing";
-type GameCollectionRequest =
-  | GameCollectionPhase
-  | "organizing-upcoming"
-  | "organizing-past";
+type GameFilter = GameLibraryFilters["when"] | "invites";
 const preferenceKey = "relay-games-view";
-const emptyGamePage: GameCollectionPage = { items: [], nextCursor: null };
 const emptyInvitationPage: GameInvitationPage = { items: [], total: 0 };
 
 const gameItemSchema = z.object({
@@ -105,11 +107,10 @@ function validDate(value: string | null): value is string {
 }
 
 function updateGamesUrl(
-  values: { filter?: GameFilter; month?: string; date?: string },
+  values: { month?: string; date?: string },
   behavior: "push" | "replace" = "replace"
 ) {
   const url = new URL(window.location.href);
-  if (values.filter) url.searchParams.set("filter", values.filter);
   if (values.month) url.searchParams.set("month", values.month);
   if (values.date) url.searchParams.set("date", values.date);
   window.history[behavior === "push" ? "pushState" : "replaceState"](
@@ -258,6 +259,7 @@ function rsvpLabel(rsvp: GameCollectionItem["viewerRsvp"]) {
   if (rsvp === "waitlisted") return "Waitlisted";
   if (rsvp === "maybe") return "Maybe";
   if (rsvp === "going") return "Going";
+  if (rsvp === "declined") return "Declined";
   return null;
 }
 
@@ -528,89 +530,119 @@ function CollectionSection({
   );
 }
 
-export function GameCollection({
-  upcomingPage,
-  invitationPage = emptyInvitationPage,
-  pastPage,
-  organizingUpcomingPage = emptyGamePage,
-  organizingPastPage = emptyGamePage,
-  todayKey,
-  initialFilter = "upcoming",
-  initialMonth = todayKey.slice(0, 7),
-  initialDate = todayKey,
-}: {
+type GameCollectionProps = {
   upcomingPage: GameCollectionPage;
   invitationPage?: GameInvitationPage;
   pastPage: GameCollectionPage;
-  organizingUpcomingPage?: GameCollectionPage;
-  organizingPastPage?: GameCollectionPage;
   todayKey: string;
   initialFilter?: GameFilter;
   initialMonth?: string;
   initialDate?: string;
-}) {
+  filters?: GameLibraryFilters;
+  options?: GameLibraryOptions;
+  filterError?: string;
+};
+
+export function GameCollection(props: GameCollectionProps) {
+  const filters = props.filters ?? {
+    ...defaultGameLibraryFilters,
+    when: props.initialFilter === "past" ? "past" : "upcoming",
+  };
+  return (
+    <GameResultsTransition>
+      <GameLibraryControls
+        filters={filters}
+        options={props.options}
+        error={props.filterError}
+      />
+      <GameResults>
+        <GameCollectionResults
+          key={`${gameLibrarySearchParams(filters)}:${props.initialFilter === "invites"}:${props.filterError ?? ""}`}
+          {...props}
+          filters={filters}
+        />
+      </GameResults>
+    </GameResultsTransition>
+  );
+}
+
+function GameCollectionResults({
+  upcomingPage,
+  invitationPage = emptyInvitationPage,
+  pastPage,
+  todayKey,
+  initialFilter = "upcoming",
+  initialMonth = todayKey.slice(0, 7),
+  initialDate = todayKey,
+  filters = defaultGameLibraryFilters,
+  filterError,
+}: GameCollectionProps) {
+  const router = useRouter();
   const mode = useSyncExternalStore(subscribe, getView, (): ViewMode => "list");
   const weekStart = useSyncExternalStore(
     subscribe,
     getWeekStart,
     (): "sunday" | "monday" => "sunday"
   );
-  const [filter, setFilter] = useState<GameFilter>(initialFilter);
+  const [showInvites, setShowInvites] = useState(initialFilter === "invites");
   const [invitations, setInvitations] = useState(invitationPage.items);
-  const [upcoming, setUpcoming] = useState(upcomingPage.items);
-  const [past, setPast] = useState(pastPage.items);
-  const [organizingUpcoming, setOrganizingUpcoming] = useState(
-    organizingUpcomingPage.items
+  const [previousInvitationItems, setPreviousInvitationItems] = useState(
+    invitationPage.items
   );
-  const [organizingPast, setOrganizingPast] = useState(
-    organizingPastPage.items
-  );
+  // Preserve the refreshed-invitation reconciliation from the existing workspace edits.
+  if (previousInvitationItems !== invitationPage.items) {
+    setPreviousInvitationItems(invitationPage.items);
+    setInvitations(invitationPage.items);
+  }
+  const [pages, setPages] = useState({
+    upcoming: upcomingPage,
+    past: pastPage,
+  });
+  const [previousPages, setPreviousPages] = useState({
+    upcoming: upcomingPage,
+    past: pastPage,
+  });
+  if (
+    previousPages.upcoming !== upcomingPage ||
+    previousPages.past !== pastPage
+  ) {
+    setPreviousPages({ upcoming: upcomingPage, past: pastPage });
+    setPages({ upcoming: upcomingPage, past: pastPage });
+  }
   const [responseAnnouncement, setResponseAnnouncement] = useState("");
-  const [upcomingCursor, setUpcomingCursor] = useState(upcomingPage.nextCursor);
-  const [pastCursor, setPastCursor] = useState(pastPage.nextCursor);
-  const [organizingUpcomingCursor, setOrganizingUpcomingCursor] = useState(
-    organizingUpcomingPage.nextCursor
+  const [loadingPhase, setLoadingPhase] = useState<GameCollectionPhase | null>(
+    null
   );
-  const [organizingPastCursor, setOrganizingPastCursor] = useState(
-    organizingPastPage.nextCursor
-  );
-  const [loadingRequest, setLoadingRequest] =
-    useState<GameCollectionRequest | null>(null);
   const [pageErrors, setPageErrors] = useState<
-    Partial<Record<GameCollectionRequest, string>>
+    Partial<Record<GameCollectionPhase, string>>
   >({});
-  const loadingRequestRef = useRef<GameCollectionRequest | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestRef.current?.abort(), []);
+  const query = gameLibrarySearchParams(filters).toString();
   const [monthKey, setMonthKey] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [calendarData, setCalendarData] = useState<CalendarPage | null>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [calendarRetry, setCalendarRetry] = useState(0);
-  const calendarCache = useRef(new Map<string, CalendarPage>());
-  const calendarEnabled = filter !== "invites";
+  const invalid = Boolean(filterError || gameLibraryRangeError(filters));
 
   const loadMore = useCallback(
-    async (phase: GameCollectionPhase, organizing = false) => {
-      const request: GameCollectionRequest = organizing
-        ? `organizing-${phase}`
-        : phase;
-      const cursor = organizing
-        ? phase === "upcoming"
-          ? organizingUpcomingCursor
-          : organizingPastCursor
-        : phase === "upcoming"
-          ? upcomingCursor
-          : pastCursor;
-      if (!cursor || loadingRequestRef.current) return;
-      loadingRequestRef.current = request;
-      setLoadingRequest(request);
-      setPageErrors((current) => ({ ...current, [request]: undefined }));
+    async (phase: GameCollectionPhase) => {
+      const cursor = pages[phase].nextCursor;
+      if (!cursor || requestRef.current) return;
+      const controller = new AbortController();
+      requestRef.current = controller;
+      setLoadingPhase(phase);
+      setPageErrors((current) => ({ ...current, [phase]: undefined }));
       try {
-        const params = new URLSearchParams({ phase, cursor });
-        if (organizing) params.set("scope", "organizing");
+        const params = new URLSearchParams(query);
+        params.set("phase", phase);
+        params.set("cursor", cursor);
         const response = await fetch(`/api/games?${params}`, {
           credentials: "same-origin",
           headers: { Accept: "application/json" },
+          signal: controller.signal,
         });
         if (!response.ok)
           throw new Error(
@@ -621,80 +653,64 @@ export function GameCollection({
         const parsed = gamePageSchema.safeParse(await response.json());
         if (!parsed.success)
           throw new Error("The server returned an invalid game page.");
-        const append = (current: GameCollectionItem[]) => {
-          const ids = new Set(current.map((item) => item.id));
-          return [
+        if (controller.signal.aborted) return;
+        setPages((current) => {
+          if (current !== pages) return current;
+          const ids = new Set(current[phase].items.map((item) => item.id));
+          return {
             ...current,
-            ...parsed.data.items.filter((item) => !ids.has(item.id)),
-          ];
-        };
-        if (request === "organizing-upcoming") {
-          setOrganizingUpcoming(append);
-          setOrganizingUpcomingCursor(parsed.data.nextCursor);
-        } else if (request === "organizing-past") {
-          setOrganizingPast(append);
-          setOrganizingPastCursor(parsed.data.nextCursor);
-        } else if (phase === "upcoming") {
-          setUpcoming(append);
-          setUpcomingCursor(parsed.data.nextCursor);
-        } else {
-          setPast(append);
-          setPastCursor(parsed.data.nextCursor);
-        }
+            [phase]: {
+              items: [
+                ...current[phase].items,
+                ...parsed.data.items.filter((item) => !ids.has(item.id)),
+              ],
+              nextCursor: parsed.data.nextCursor,
+            },
+          };
+        });
       } catch (cause) {
-        setPageErrors((current) => ({
-          ...current,
-          [request]:
-            cause instanceof Error
-              ? cause.message
-              : "More games could not be loaded.",
-        }));
+        if (!controller.signal.aborted)
+          setPageErrors((current) => ({
+            ...current,
+            [phase]:
+              cause instanceof Error
+                ? cause.message
+                : "More games could not be loaded.",
+          }));
       } finally {
-        loadingRequestRef.current = null;
-        setLoadingRequest(null);
+        if (!controller.signal.aborted) {
+          requestRef.current = null;
+          setLoadingPhase(null);
+        }
       }
     },
-    [organizingPastCursor, organizingUpcomingCursor, pastCursor, upcomingCursor]
+    [pages, query]
   );
 
   useEffect(() => {
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
-      const nextMonth = validMonth(params.get("month"))
-        ? params.get("month")!
-        : todayKey.slice(0, 7);
-      const requestedDate = params.get("date");
-      const nextDate =
-        validDate(requestedDate) && requestedDate.startsWith(nextMonth)
-          ? requestedDate
-          : `${nextMonth}-01`;
-      const requestedFilter = params.get("filter");
-      setFilter(
-        requestedFilter === "invites"
-          ? "invites"
-          : requestedFilter === "past"
-            ? "past"
-            : requestedFilter === "organizing"
-              ? "organizing"
-              : "upcoming"
-      );
+      const month = params.get("month");
+      const nextMonth = validMonth(month) ? month : todayKey.slice(0, 7);
+      const date = params.get("date");
       setMonthKey(nextMonth);
-      setSelectedDate(nextDate);
+      setSelectedDate(
+        validDate(date) && date.startsWith(nextMonth) ? date : `${nextMonth}-01`
+      );
+      setShowInvites(params.get("filter") === "invites");
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [todayKey]);
 
   useEffect(() => {
-    if (mode !== "calendar" || !calendarEnabled) return;
+    if (mode !== "calendar" || showInvites || invalid) return;
     const controller = new AbortController();
-    const calendarKey = `${filter}:${monthKey}`;
-    const cached = calendarCache.current.get(calendarKey);
-    setCalendarData(cached ?? null);
+    setCalendarData(null);
     setCalendarLoading(true);
     setCalendarError(null);
-    const params = new URLSearchParams({ month: monthKey });
-    if (filter === "organizing") params.set("scope", "organizing");
+    const params = new URLSearchParams(query);
+    params.set("month", monthKey);
     void fetch(`/api/games?${params}`, {
       credentials: "same-origin",
       headers: { Accept: "application/json" },
@@ -705,22 +721,30 @@ export function GameCollection({
         const parsed = calendarPageSchema.safeParse(await response.json());
         if (!parsed.success)
           throw new Error("The server returned invalid calendar data.");
-        calendarCache.current.set(calendarKey, parsed.data);
-        setCalendarData(parsed.data);
+        if (!controller.signal.aborted) setCalendarData(parsed.data);
       })
       .catch((cause: unknown) => {
-        if (controller.signal.aborted) return;
-        setCalendarError(
-          cause instanceof Error
-            ? cause.message
-            : "This month could not be loaded."
-        );
+        if (!controller.signal.aborted)
+          setCalendarError(
+            cause instanceof Error
+              ? cause.message
+              : "This month could not be loaded."
+          );
       })
       .finally(() => {
         if (!controller.signal.aborted) setCalendarLoading(false);
       });
     return () => controller.abort();
-  }, [calendarEnabled, calendarRetry, filter, mode, monthKey]);
+  }, [
+    calendarRetry,
+    invalid,
+    mode,
+    monthKey,
+    pastPage,
+    query,
+    showInvites,
+    upcomingPage,
+  ]);
 
   const handleInviteResponse = useCallback(
     (game: GameCollectionItem, response: ActiveInviteResponse) => {
@@ -736,206 +760,145 @@ export function GameCollection({
               ? `You joined the waitlist for ${game.title}.`
               : `Your response to ${game.title} was saved.`
       );
-      if (response !== "declined")
-        setUpcoming((current) => {
-          if (current.some((item) => item.id === game.id)) return current;
-          return [...current, { ...game, viewerRsvp: response }].toSorted(
-            (left, right) =>
-              left.dateKey.localeCompare(right.dateKey) ||
-              left.title.localeCompare(right.title)
-          );
-        });
+      // Never append an answered invitation to a filtered page locally: the server
+      // re-evaluates membership, response, capacity, order, and all library filters.
+      setCalendarRetry((value) => value + 1);
+      router.refresh();
     },
-    []
+    [router]
   );
-
-  const liveGames = upcoming.filter((game) => game.status === "live");
-  const scheduledGames = upcoming.filter((game) => game.status !== "live");
-  const organizingLiveGames = organizingUpcoming.filter(
+  const liveGames = pages.upcoming.items.filter(
     (game) => game.status === "live"
   );
-  const organizingScheduledGames = organizingUpcoming.filter(
+  const scheduledGames = pages.upcoming.items.filter(
     (game) => game.status !== "live"
   );
-  const filterItems = [
-    { value: "upcoming" as const, label: "Upcoming" },
-    {
-      value: "invites" as const,
-      label: invitations.length ? `Invites ${invitations.length}` : "Invites",
-    },
-    { value: "past" as const, label: "Past" },
-    { value: "organizing" as const, label: "Organizing" },
-  ];
-
-  const collectionFooter = (phase: GameCollectionPhase, organizing = false) => {
-    const request: GameCollectionRequest = organizing
-      ? `organizing-${phase}`
-      : phase;
-    const nextCursor = organizing
-      ? phase === "upcoming"
-        ? organizingUpcomingCursor
-        : organizingPastCursor
-      : phase === "upcoming"
-        ? upcomingCursor
-        : pastCursor;
-    return (
-      <GamePageSentinel
-        phase={phase}
-        nextCursor={nextCursor}
-        loading={loadingRequest === request}
-        error={pageErrors[request] ?? null}
-        onLoad={(nextPhase) => loadMore(nextPhase, organizing)}
-      />
-    );
+  const footer = (phase: GameCollectionPhase) => (
+    <GamePageSentinel
+      phase={phase}
+      nextCursor={pages[phase].nextCursor}
+      loading={loadingPhase === phase}
+      error={pageErrors[phase] ?? null}
+      onLoad={loadMore}
+    />
+  );
+  const empty = !pages.upcoming.items.length && !pages.past.items.length;
+  const toggleInvites = () => {
+    const next = !showInvites;
+    setShowInvites(next);
+    const url = new URL(window.location.href);
+    if (next) url.searchParams.set("filter", "invites");
+    else url.searchParams.delete("filter");
+    window.history.pushState(null, "", `${url.pathname}?${url.searchParams}`);
   };
-  const upcomingFooter = collectionFooter("upcoming");
-  const pastFooter = collectionFooter("past");
-  const organizingUpcomingFooter = collectionFooter("upcoming", true);
-  const organizingPastFooter = collectionFooter("past", true);
-  const handleFilterChange = (nextFilter: GameFilter) => {
-    setFilter(nextFilter);
-    updateGamesUrl({ filter: nextFilter }, "push");
-  };
-  const handleMonthChange = (nextMonth: string, nextDate: string) => {
-    setMonthKey(nextMonth);
-    setSelectedDate(nextDate);
-    updateGamesUrl({ month: nextMonth, date: nextDate }, "push");
-  };
-  const handleDateSelect = (nextDate: string) => {
-    setSelectedDate(nextDate);
-    updateGamesUrl({ month: nextDate.slice(0, 7), date: nextDate });
-  };
-
   return (
     <div className="mt-2 sm:mt-3">
-      <div className="mb-6 pb-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <TabChipRail
-              label="Filter games"
-              items={filterItems}
-              value={filter}
-              onChange={handleFilterChange}
-              className="min-w-0"
-            />
-          </div>
-          {filter !== "invites" ? (
-            <span className="hidden shrink-0 sm:block">
-              <GameDesktopViewControls />
-            </span>
-          ) : null}
-          <span className="hidden shrink-0 sm:block">
-            <ButtonLink href="/games/new">
-              <CalendarPlus aria-hidden size={17} />
-              Create game
-            </ButtonLink>
-          </span>
-        </div>
+      <div className="mb-6 flex flex-wrap items-center gap-3 empty:hidden">
+        {invitations.length || showInvites ? (
+          <button
+            type="button"
+            aria-pressed={showInvites}
+            onClick={toggleInvites}
+            className="min-h-9 rounded-full border border-line bg-surface px-3 text-[13px] font-semibold hover:bg-surface-strong"
+          >
+            {invitations.length ? `Invites ${invitations.length}` : "Invites"}
+          </button>
+        ) : null}
+        {showInvites ? (
+          <button
+            type="button"
+            className="min-h-9 px-3 text-sm font-semibold text-primary"
+            onClick={toggleInvites}
+          >
+            Back to your games
+          </button>
+        ) : null}
       </div>
       <p className="sr-only" aria-live="polite">
         {responseAnnouncement}
       </p>
-      <div className="space-y-10 sm:space-y-12">
-        {filter === "invites" ||
-        (filter === "upcoming" && invitations.length) ? (
-          <InvitationSection
-            items={invitations}
-            onResponded={handleInviteResponse}
+      {showInvites ? (
+        <InvitationSection
+          items={invitations}
+          onResponded={handleInviteResponse}
+        />
+      ) : invalid ? null : mode === "calendar" ? (
+        <div data-testid="games-calendar">
+          <GamesCalendar
+            upcoming={calendarData?.upcoming ?? []}
+            past={calendarData?.past ?? []}
+            todayKey={todayKey}
+            weekStart={weekStart}
+            monthKey={monthKey}
+            selectedDate={selectedDate}
+            loading={calendarLoading}
+            error={calendarError}
+            onMonthChange={(month, date) => {
+              setMonthKey(month);
+              setSelectedDate(date);
+              updateGamesUrl({ month, date }, "push");
+            }}
+            onSelectDate={(date) => {
+              setSelectedDate(date);
+              updateGamesUrl({ month: date.slice(0, 7), date });
+            }}
+            onRetry={() => setCalendarRetry((value) => value + 1)}
           />
-        ) : null}
-        {filter !== "invites" ? (
-          mode === "calendar" ? (
-            <div data-testid="games-calendar">
-              <GamesCalendar
-                upcoming={
-                  filter === "past" ? [] : (calendarData?.upcoming ?? [])
-                }
-                past={filter === "upcoming" ? [] : (calendarData?.past ?? [])}
-                todayKey={todayKey}
-                weekStart={weekStart}
-                monthKey={monthKey}
-                selectedDate={selectedDate}
-                loading={calendarLoading}
-                error={calendarError}
-                onMonthChange={handleMonthChange}
-                onSelectDate={handleDateSelect}
-                onRetry={() => setCalendarRetry((value) => value + 1)}
-              />
-            </div>
-          ) : (
-            <div
-              data-testid={mode === "grid" ? "games-grid" : "games-list"}
-              className="space-y-10 sm:space-y-12"
-            >
-              {filter === "upcoming" && liveGames.length ? (
-                <CollectionSection
-                  title="Live now"
-                  items={liveGames}
-                  mode={mode}
-                  live
-                />
-              ) : null}
-              {filter === "upcoming" &&
-              (scheduledGames.length || !liveGames.length || upcomingCursor) ? (
-                <CollectionSection
-                  title="Upcoming"
-                  items={scheduledGames}
-                  mode={mode}
-                  footer={upcomingFooter}
-                />
-              ) : null}
-              {filter === "past" ? (
-                <CollectionSection
-                  title="Past games"
-                  items={past}
-                  mode={mode}
-                  past
-                  footer={pastFooter}
-                />
-              ) : null}
-              {filter === "organizing" &&
-              !organizingUpcoming.length &&
-              !organizingPast.length &&
-              !organizingUpcomingCursor &&
-              !organizingPastCursor ? (
-                <div className="border-y border-line py-5 sm:py-8">
-                  <p className="font-[650]">No games to organize</p>
-                  <p className="mt-1 text-sm text-muted">
-                    Games you host or co-host will appear here.
-                  </p>
-                </div>
-              ) : null}
-              {filter === "organizing" && organizingLiveGames.length ? (
-                <CollectionSection
-                  title="Live now"
-                  items={organizingLiveGames}
-                  mode={mode}
-                  live
-                />
-              ) : null}
-              {filter === "organizing" &&
-              (organizingScheduledGames.length || organizingUpcomingCursor) ? (
-                <CollectionSection
-                  title="Upcoming"
-                  items={organizingScheduledGames}
-                  mode={mode}
-                  footer={organizingUpcomingFooter}
-                />
-              ) : null}
-              {filter === "organizing" &&
-              (organizingPast.length || organizingPastCursor) ? (
-                <CollectionSection
-                  title="Past games"
-                  items={organizingPast}
-                  mode={mode}
-                  past
-                  footer={organizingPastFooter}
-                />
-              ) : null}
-            </div>
-          )
-        ) : null}
-      </div>
+        </div>
+      ) : (
+        <div
+          data-testid={mode === "grid" ? "games-grid" : "games-list"}
+          className="space-y-10 sm:space-y-12"
+        >
+          {empty ? (
+            <section className="py-9">
+              <h2 className="text-lg font-bold">
+                {query
+                  ? "No games match your filters"
+                  : "No upcoming games yet"}
+              </h2>
+              <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
+                {query
+                  ? "Try another date, role, or search."
+                  : "Create a game or find one in Open games."}
+              </p>
+              <ButtonLink
+                href={query ? "/games" : "/games/new"}
+                className="mt-4"
+              >
+                {query ? "Clear filters" : "Create game"}
+              </ButtonLink>
+            </section>
+          ) : null}
+          {liveGames.length ? (
+            <CollectionSection
+              title="Live now"
+              items={liveGames}
+              mode={mode}
+              live
+            />
+          ) : null}
+          {scheduledGames.length || pages.upcoming.nextCursor ? (
+            <CollectionSection
+              title="Upcoming"
+              items={scheduledGames}
+              mode={mode}
+              footer={footer("upcoming")}
+            />
+          ) : liveGames.length ? (
+            footer("upcoming")
+          ) : null}
+          {pages.past.items.length || pages.past.nextCursor ? (
+            <CollectionSection
+              title="Past games"
+              items={pages.past.items}
+              mode={mode}
+              past
+              footer={footer("past")}
+            />
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

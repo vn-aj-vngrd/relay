@@ -27,7 +27,16 @@ export function HomeInvitations({
   initialItems: GameCollectionItem[];
 }) {
   const [items, setItems] = useState(initialItems);
+  const [previousInitialItems, setPreviousInitialItems] =
+    useState(initialItems);
   const [announcement, setAnnouncement] = useState("");
+
+  // Keep local RSVP removal until the server supplies a fresh invite snapshot.
+  if (previousInitialItems !== initialItems) {
+    setPreviousInitialItems(initialItems);
+    setItems(initialItems);
+  }
+
   const handleResponded = useCallback(
     (game: GameCollectionItem, response: ActiveInviteResponse) => {
       setItems((current) => current.filter((item) => item.id !== game.id));

@@ -1,3 +1,5 @@
+import type { StoryRegion } from "./story-scene";
+
 export async function decodeStoryPhoto(source: string | Blob) {
   // Device files must not be fetched through their preview blob: URL:
   // Relay intentionally allows blob: images, not blob: network connections.
@@ -17,21 +19,36 @@ export async function drawStoryPhoto(
   source: string | Blob,
   width: number,
   height: number,
-  photoPosition: number
+  photoPosition: number,
+  bounds?: StoryRegion
 ) {
   const bitmap = await decodeStoryPhoto(source);
   try {
-    const scale = Math.max(width / bitmap.width, height / bitmap.height);
+    const box = bounds ?? { x: 0, y: 0, width, height };
+    const scale = Math.max(
+      box.width / bitmap.width,
+      box.height / bitmap.height
+    );
     const drawWidth = bitmap.width * scale;
     const drawHeight = bitmap.height * scale;
-    const overflow = Math.max(0, drawHeight - height);
-    context.drawImage(
-      bitmap,
-      (width - drawWidth) / 2,
-      -overflow * (photoPosition / 100),
-      drawWidth,
-      drawHeight
-    );
+    const overflow = Math.max(0, drawHeight - box.height);
+    if (bounds) {
+      context.save();
+      context.beginPath();
+      context.rect(box.x, box.y, box.width, box.height);
+      context.clip();
+    }
+    try {
+      context.drawImage(
+        bitmap,
+        box.x + (box.width - drawWidth) / 2,
+        box.y - overflow * (photoPosition / 100),
+        drawWidth,
+        drawHeight
+      );
+    } finally {
+      if (bounds) context.restore();
+    }
   } finally {
     bitmap.close();
   }

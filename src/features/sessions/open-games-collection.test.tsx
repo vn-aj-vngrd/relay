@@ -183,10 +183,29 @@ describe("OpenGamesCollection", () => {
     );
   });
 
-  it("gives an actionable empty state", () => {
+  it("offers creation instead of resetting default filters when empty", () => {
     render(
       <OpenGamesCollection
         filters={filters}
+        initialPage={{ items: [], nextCursor: null }}
+      />
+    );
+    expect(
+      screen.getByRole("heading", { name: "No open games yet" })
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Create game" })).toHaveAttribute(
+      "href",
+      "/games/new"
+    );
+    expect(
+      screen.queryByRole("link", { name: "Clear filters" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers clearing filters for an empty filtered search", () => {
+    render(
+      <OpenGamesCollection
+        filters={{ ...filters, location: "Central" }}
         initialPage={{ items: [], nextCursor: null }}
       />
     );

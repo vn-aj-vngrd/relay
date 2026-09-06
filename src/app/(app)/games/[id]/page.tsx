@@ -58,7 +58,7 @@ export default async function GameOverviewPage({
     "the host";
   const isHost = session.hostId === user.id || membership?.role === "cohost";
   if (
-    session.status !== "cancelled" &&
+    ["published", "live"].includes(session.status) &&
     (["invited", "pending"].includes(membership?.rsvp ?? "") ||
       data.access === "discoverer")
   ) {

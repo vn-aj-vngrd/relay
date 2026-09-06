@@ -1,8 +1,9 @@
 .workspace {
   display: grid;
   min-width: 0;
+  width: 100%;
   align-items: start;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .carousel {
@@ -16,7 +17,7 @@
    svh keeps browser chrome opening/closing from jumping the controls. */
 .portrait {
   position: relative;
-  width: min(100%, 17.5rem, 23.625svh);
+  width: min(100%, 17.5rem, 30svh);
   margin-inline: auto;
 }
 
@@ -63,16 +64,39 @@
 
 @media (min-width: 48rem) {
   .workspace {
-    grid-template-columns: minmax(0, 16.25rem) minmax(0, 35rem);
-    gap: 1.75rem;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    gap: 2rem;
+  }
+
+  .carousel {
+    max-width: 24rem;
   }
 
   .portrait {
-    width: min(100%, 30.9375svh);
+    width: min(100%, 42svh);
+  }
+
+  /* Desktop exposes every choice; phones retain the compact swipe rail.
+     Scope this to Story instead of changing navigation rails elsewhere. */
+  .workspace .optionRail {
+    overflow: visible;
+    mask-image: none;
+  }
+
+  .optionRail > [role="group"] {
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   .actions > button {
     flex: 0 1 auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  .workspace {
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+    gap: 3rem;
   }
 }
 

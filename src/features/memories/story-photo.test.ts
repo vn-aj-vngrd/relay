@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
+import { storyScene } from "./story-scene";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -31,6 +32,53 @@ describe("Story photo export", () => {
     expect(drawImage).toHaveBeenCalledWith(bitmap, 0, -180, 1080, 2160);
     expect(bitmap.close).toHaveBeenCalledOnce();
   });
+
+  it.each(["top", "center", "bottom"] as const)(
+    "clips and crops the original File inside the %s foreground window",
+    async (placement) => {
+      const bitmap = { width: 1000, height: 2000, close: vi.fn() };
+      const decode = vi.fn().mockResolvedValue(bitmap);
+      vi.stubGlobal("createImageBitmap", decode);
+      const fetchPhoto = vi.fn();
+      vi.stubGlobal("fetch", fetchPhoto);
+      const context = {
+        save: vi.fn(),
+        beginPath: vi.fn(),
+        rect: vi.fn(),
+        clip: vi.fn(),
+        drawImage: vi.fn(),
+        restore: vi.fn(),
+      };
+      const box = storyScene("scrapbook", true, "foreground", placement).photo;
+      const file = new File(["photo"], "court.png");
+      await drawStoryPhoto(
+        context as unknown as CanvasRenderingContext2D,
+        file,
+        1080,
+        1920,
+        75,
+        box
+      );
+      expect(context.rect).toHaveBeenCalledWith(
+        box.x,
+        box.y,
+        box.width,
+        box.height
+      );
+      expect(context.clip).toHaveBeenCalledOnce();
+      expect(context.drawImage).toHaveBeenCalledWith(
+        bitmap,
+        box.x,
+        box.y - (box.width * 2 - box.height) * 0.75,
+        box.width,
+        box.width * 2
+      );
+      expect(decode).toHaveBeenCalledWith(file);
+      expect(fetchPhoto).not.toHaveBeenCalled();
+      expect(context.restore).toHaveBeenCalledOnce();
+      expect(bitmap.close).toHaveBeenCalledOnce();
+    }
+  );
 
   it("still fetches session photos and rejects unavailable responses before decoding", async () => {
     const decode = vi.fn();

@@ -46,6 +46,7 @@ describe("TabChipRail", () => {
       .parentElement!;
     expect(rail).toHaveClass(
       "focus-scroll-rail",
+      "relative",
       "tab-chip-fade-right",
       "px-1.5",
       "-mx-1.5"

@@ -17,6 +17,7 @@ import {
 } from "react";
 import { z } from "zod";
 
+import { ButtonLink } from "@/components/ui/button";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 
 import { sessionAccentStyle } from "./accent";
@@ -479,21 +480,33 @@ export function OpenGamesCollection({
     return () => observer.disconnect();
   }, [loadMore, nextCursor]);
 
+  const hasFilters = Boolean(
+    filters.location ||
+      filters.date !== "any" ||
+      filters.time !== "any" ||
+      filters.available ||
+      filters.price !== "any"
+  );
+
   if (!items.length)
     return (
       <section className="py-9">
-        <h2 className="text-lg font-bold">No open games match these filters</h2>
+        <h2 className="text-lg font-bold">
+          {hasFilters
+            ? "No open games match these filters"
+            : "No open games yet"}
+        </h2>
         <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-          Try a wider date range, remove the location, or include games whose
-          roster is full. New public games will appear here when hosts publish
-          them.
+          {hasFilters
+            ? "Try fewer filters or another location."
+            : "Check back later, or host a game."}
         </p>
-        <Link
-          href="/games/open"
-          className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-primary px-3 text-sm font-semibold text-white hover:bg-primary-hover sm:min-h-10"
+        <ButtonLink
+          href={hasFilters ? "/games/open" : "/games/new"}
+          className="mt-4"
         >
-          Clear filters
-        </Link>
+          {hasFilters ? "Clear filters" : "Create game"}
+        </ButtonLink>
       </section>
     );
 

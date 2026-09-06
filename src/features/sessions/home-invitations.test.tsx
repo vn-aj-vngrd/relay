@@ -91,6 +91,23 @@ describe("HomeInvitations", () => {
     ).toHaveClass("sr-only");
   });
 
+  it("reconciles invitations arriving and disappearing on refresh", () => {
+    const { rerender } = render(<HomeInvitations initialItems={[]} />);
+    expect(
+      screen.queryByRole("heading", { name: "Invites" })
+    ).not.toBeInTheDocument();
+
+    rerender(<HomeInvitations initialItems={[invitation]} />);
+    expect(screen.getByText(invitation.title)).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Invites" })).toBeVisible();
+
+    rerender(<HomeInvitations initialItems={[]} />);
+    expect(screen.queryByText(invitation.title)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Invites" })
+    ).not.toBeInTheDocument();
+  });
+
   it("keeps the invite actionable when saving fails", async () => {
     mocks.rsvpAction.mockResolvedValueOnce({
       error: "Your response couldn’t be saved. Try again.",

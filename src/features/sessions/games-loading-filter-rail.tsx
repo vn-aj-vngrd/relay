@@ -1,23 +1,19 @@
 "use client";
 
-import { TabChipRail } from "@/components/ui/tab-chip-rail";
-
-const items = [
-  { value: "upcoming", label: "Upcoming" },
-  { value: "invites", label: "Invites" },
-  { value: "past", label: "Past" },
-  { value: "organizing", label: "Organizing" },
-] as const;
+import { useSearchParams } from "next/navigation";
+import { GameLibraryControls } from "./game-library-controls";
+import {
+  defaultGameLibraryFilters,
+  parseGameLibraryFilters,
+} from "./game-library-filters";
 
 export function GamesLoadingFilterRail() {
+  const params = useSearchParams();
+  const parsed = parseGameLibraryFilters(params);
   return (
-    <TabChipRail
-      label="Filter games"
-      items={items}
-      value="upcoming"
-      hrefFor={(item) =>
-        item.value === "upcoming" ? "/games" : `/games?filter=${item.value}`
-      }
+    <GameLibraryControls
+      filters={parsed.success ? parsed.data : defaultGameLibraryFilters}
+      loadingOptions
     />
   );
 }

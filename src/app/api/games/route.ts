@@ -2,7 +2,14 @@ import type { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/features/auth/session";
-import { parseGameCursor } from "@/features/sessions/game-pagination";
+import {
+  gameLibraryRangeError,
+  parseGameLibraryFilters,
+} from "@/features/sessions/game-library-filters";
+import {
+  gameCursorContext,
+  parseGameCursor,
+} from "@/features/sessions/game-pagination";
 import {
   getGameCollectionMonth,
   getGameCollectionPage,
@@ -37,6 +44,17 @@ export async function GET(request: NextRequest) {
       }
     );
 
+  const filters = parseGameLibraryFilters(request.nextUrl.searchParams);
+  if (!filters.success || gameLibraryRangeError(filters.data))
+    return Response.json(
+      {
+        error: filters.success
+          ? gameLibraryRangeError(filters.data)
+          : "Invalid game filters",
+      },
+      { status: 400, headers: { "Cache-Control": "private, no-store" } }
+    );
+
   const scope = scopeSchema.safeParse(
     request.nextUrl.searchParams.get("scope") ?? "all"
   );
@@ -68,7 +86,12 @@ export async function GET(request: NextRequest) {
       );
     try {
       return Response.json(
-        await getGameCollectionMonth(user.id, month.data, scope.data),
+        await getGameCollectionMonth(
+          user.id,
+          month.data,
+          scope.data,
+          filters.data
+        ),
         {
           headers: {
             ...rateLimitHeaders(limit),
@@ -99,7 +122,14 @@ export async function GET(request: NextRequest) {
   );
   const cursorValue = request.nextUrl.searchParams.get("cursor");
   const cursor = parseGameCursor(cursorValue);
-  if (!phase.success || (cursorValue && !cursor))
+  if (
+    !phase.success ||
+    (cursorValue &&
+      (!cursor ||
+        cursor.context !==
+          gameCursorContext(user.id, phase.data, scope.data, filters.data) ||
+        !cursor.snapshot))
+  )
     return Response.json(
       { error: "Invalid game page request" },
       {
@@ -113,7 +143,13 @@ export async function GET(request: NextRequest) {
 
   try {
     return Response.json(
-      await getGameCollectionPage(user.id, phase.data, cursor, scope.data),
+      await getGameCollectionPage(
+        user.id,
+        phase.data,
+        cursor,
+        scope.data,
+        filters.data
+      ),
       {
         headers: {
           ...rateLimitHeaders(limit),

@@ -31,13 +31,14 @@ function renderRecap(
   status: "published" | "live" | "completed",
   matches: RecapMatch[],
   continuation?: { replayHref: string; saveCrewHref?: string },
-  feedback?: ReactNode
+  feedback?: ReactNode,
+  title = "Saturday Night Pickle"
 ) {
   return render(
     <SessionRecap
       session={{
         id: "session",
-        title: "Saturday Night Pickle",
+        title,
         venueName: "Central Pickle",
         startsAt: new Date("2026-08-19T10:00:00Z"),
         status,
@@ -90,6 +91,15 @@ describe("SessionRecap states", () => {
       "href",
       "/games/session/story"
     );
+  });
+
+  it("shows numeric game titles without turning them into a result claim", () => {
+    renderRecap("completed", [match], undefined, undefined, "123 games");
+
+    const heading = screen.getByRole("heading", { name: "123 games" });
+    expect(heading).toBeInTheDocument();
+    expect(heading).not.toHaveClass("line-clamp-2");
+    expect(screen.queryByText("That was 123 games.")).not.toBeInTheDocument();
   });
 
   it("places optional feedback before the existing continuation actions", () => {

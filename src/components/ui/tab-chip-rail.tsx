@@ -99,7 +99,7 @@ export function TabChipRail<T extends string>({
     <div
       ref={scroller}
       onScroll={updateFade}
-      className={`focus-scroll-rail public-session-scroll -mx-1.5 overflow-x-auto px-1.5 ${fadeClass} ${className}`}
+      className={`focus-scroll-rail public-session-scroll relative -mx-1.5 overflow-x-auto px-1.5 ${fadeClass} ${className}`}
     >
       <div
         role="group"

@@ -142,7 +142,7 @@ describe("OpenGamesFilters", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps location search separate from filter reset", () => {
+  it("includes location search in the shared filter reset", () => {
     render(
       <OpenGamesFilters
         filters={{ ...defaultFilters, location: "Cebu City" }}
@@ -152,9 +152,10 @@ describe("OpenGamesFilters", () => {
     expect(
       screen.getByRole("button", { name: "Clear location search" })
     ).toBeVisible();
-    expect(
-      screen.queryByRole("link", { name: "Clear filters" })
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
+      "href",
+      "/games/open"
+    );
   });
 
   it("toggles available games immediately and exposes clear only when active", () => {
@@ -179,7 +180,7 @@ describe("OpenGamesFilters", () => {
     );
     expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
       "href",
-      "/games/open?location=Cebu+City"
+      "/games/open"
     );
   });
 });

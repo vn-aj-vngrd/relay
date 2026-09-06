@@ -10,6 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
+import * as storyPhoto from "./story-photo";
+import { storyScene } from "./story-scene";
 import * as storyTheme from "./story-theme";
 
 vi.mock("@/features/analytics/actions", () => ({
@@ -123,11 +125,26 @@ describe("RecapShareCard", () => {
     expect(dialog).not.toHaveAttribute("open");
   });
 
+  it("offers an explicit enlarge action and identifies the export format", () => {
+    renderCard();
+
+    expect(
+      screen.getByText("9:16 portrait · Ready for stories and sharing")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Download PNG" })
+    ).toHaveTextContent("Download PNG");
+    fireEvent.click(screen.getByRole("button", { name: "Enlarge preview" }));
+    expect(
+      screen.getByRole("dialog", { name: "Saturday Night Pickle" })
+    ).toBeVisible();
+  });
+
   it("combines layout, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
     expect(
-      screen.getByRole("group", { name: "Story focus" }).parentElement
+      screen.getByRole("group", { name: "Story focus options" }).parentElement
         ?.parentElement
     ).toHaveClass("mt-3");
     fireEvent.click(screen.getByText("Customize story"));
@@ -249,6 +266,7 @@ describe("RecapShareCard", () => {
         save: vi.fn(),
         restore: vi.fn(),
         translate: vi.fn(),
+        scale: vi.fn(),
         drawImage: vi.fn(),
         measureText: vi.fn(() => ({ width: 100 })),
       };
@@ -283,27 +301,24 @@ describe("RecapShareCard", () => {
       if (pink) {
         fireEvent.click(screen.getByRole("button", { name: "Background" }));
         fireEvent.click(
-          screen.getByRole("button", { name: "Pink background" })
+          screen.getByRole("button", { name: "Baby Pink background" })
         );
         expect(
-          screen.getByRole("button", { name: "Pink background" })
+          screen.getByRole("button", { name: "Baby Pink background" })
         ).toHaveAttribute("aria-pressed", "true");
       } else if (id !== "minimal") {
         fireEvent.click(screen.getByRole("button", { name: "Background" }));
-        fireEvent.change(
-          screen.getByLabelText("Choose background photo file"),
-          {
-            target: {
-              files: [
-                new File(
-                  [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
-                  "court.png",
-                  { type: "image/png" }
-                ),
-              ],
-            },
-          }
-        );
+        fireEvent.change(screen.getByLabelText("Choose story photo file"), {
+          target: {
+            files: [
+              new File(
+                [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+                "court.png",
+                { type: "image/png" }
+              ),
+            ],
+          },
+        });
         await waitFor(() =>
           expect(screen.getByRole("status")).toHaveTextContent(
             "hasn’t been uploaded"
@@ -329,12 +344,12 @@ describe("RecapShareCard", () => {
       expect(dimensions).toEqual([[1080, 1920]]);
       expect(decoration).toHaveBeenCalledWith(context, id);
       expect(fillColors[0]).toBe(
-        pink ? "#f6cfdf" : id === "minimal" ? "#635bde" : "#11131a"
+        pink ? "#ffe0eb" : id === "minimal" ? "#635bde" : "#11131a"
       );
       expect(fetchPhoto).not.toHaveBeenCalled();
       if (pink) {
         expect(dialog.querySelector("[data-story-theme]")).toHaveStyle({
-          backgroundColor: "#f6cfdf",
+          backgroundColor: "#ffe0eb",
         });
         expect(dialog.querySelector("[data-story-theme]")).toHaveClass(
           "text-[#17181d]"
@@ -345,12 +360,270 @@ describe("RecapShareCard", () => {
     }
   );
 
+  it.each(
+    storyTheme.storyThemes.flatMap(({ id: theme, label: themeLabel }) =>
+      ["Courtside", "Center court", "Poster", "Snapshot"].flatMap(
+        (layoutLabel) =>
+          (["none", "top", "center", "bottom"] as const)
+            .filter((placement) => theme !== "minimal" || placement !== "none")
+            .map((placement) => ({ theme, themeLabel, layoutLabel, placement }))
+      )
+    )
+  )(
+    "contains transformed Match pulse text for $theme / $layoutLabel / $placement",
+    async ({ theme, themeLabel, layoutLabel, placement }) => {
+      let transform = { scale: 1, y: 0 };
+      const stack: Array<typeof transform> = [];
+      const textBounds: Array<{
+        text: string;
+        baseline: number;
+        top: number;
+        bottom: number;
+      }> = [];
+      const context = {
+        font: "700 30px Arial",
+        fillRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        stroke: vi.fn(),
+        save: () => {
+          stack.push({ ...transform });
+        },
+        restore: () => {
+          transform = stack.pop() ?? { scale: 1, y: 0 };
+        },
+        translate: (_x: number, y: number) => {
+          transform.y += y * transform.scale;
+        },
+        scale: (_x: number, y: number) => {
+          transform.scale *= y;
+        },
+        measureText(text: string) {
+          const size = Number(this.font.match(/(\d+)px/)?.[1] ?? 30);
+          return {
+            width: text.length * size * 0.5,
+            actualBoundingBoxAscent: size * 0.8,
+            actualBoundingBoxDescent: size * 0.25,
+            fontBoundingBoxDescent: size * 0.3,
+          };
+        },
+        fillText(text: string, _x: number, baseline: number) {
+          const metrics = this.measureText(text);
+          textBounds.push({
+            text,
+            baseline,
+            top:
+              transform.y +
+              (baseline - metrics.actualBoundingBoxAscent) * transform.scale,
+            bottom:
+              transform.y +
+              (baseline + metrics.actualBoundingBoxDescent) * transform.scale,
+          });
+        },
+      };
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D
+      );
+      vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+        (callback) => callback(new Blob(["PNG"], { type: "image/png" }))
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined
+      );
+      vi.spyOn(storyPhoto, "drawStoryPhoto").mockResolvedValue(undefined);
+      vi.stubGlobal("Path2D", class {});
+      renderCard({
+        phase: "live",
+        title: "Saturday evening pickleball with all our friends together",
+        venue:
+          "The community pickleball courts beside the riverside recreation pavilion and the neighborhood sporting grounds",
+        photos: [{ id: "court", url: "/court.png", alt: "Our court" }],
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Match pulse" }));
+      fireEvent.click(screen.getByText("Customize story"));
+      fireEvent.click(screen.getByRole("button", { name: themeLabel }));
+      fireEvent.click(screen.getByRole("button", { name: layoutLabel }));
+      if (placement !== "none") {
+        fireEvent.click(screen.getByRole("button", { name: "Background" }));
+        fireEvent.click(screen.getByRole("button", { name: "Our court" }));
+        fireEvent.click(
+          screen.getByRole("button", { name: "Framed foreground" })
+        );
+        fireEvent.click(
+          within(
+            screen.getByRole("group", { name: "Photo placement" })
+          ).getByRole("button", {
+            name: placement[0].toUpperCase() + placement.slice(1),
+          })
+        );
+      }
+      if (placement === "center") {
+        fireEvent.click(screen.getByRole("button", { name: "Message" }));
+        fireEvent.change(screen.getByLabelText(/Personal line/), {
+          target: {
+            value:
+              "Another wonderful evening together with all our pickleball friends again",
+          },
+        });
+      }
+      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      await waitFor(() =>
+        expect(screen.getByRole("status")).toHaveTextContent("1080 × 1920")
+      );
+      const facts = storyScene(
+        theme,
+        placement !== "none",
+        "foreground",
+        placement === "none" ? "center" : placement
+      ).facts;
+      const renderedFacts = textBounds.filter(
+        ({ baseline }) => baseline >= 940 && baseline < 1880
+      );
+      // These are bounds of the renderer's actual fillText calls after its affine
+      // transform, not merely a comparison of the shared scene's rectangles.
+      expect(renderedFacts.some(({ baseline }) => baseline === 1688)).toBe(
+        true
+      );
+      expect(renderedFacts.some(({ baseline }) => baseline === 1562)).toBe(
+        true
+      );
+      if (placement === "center")
+        expect(renderedFacts.some(({ baseline }) => baseline === 1673)).toBe(
+          true
+        );
+      for (const text of renderedFacts) {
+        expect(text.top).toBeGreaterThanOrEqual(facts.y - 0.01);
+        expect(text.bottom).toBeLessThanOrEqual(facts.y + facts.height + 0.01);
+      }
+    }
+  );
+
+  it.each(["top", "center", "bottom"] as const)(
+    "preserves local photo/crop across theme/layout edits and exports %s foreground",
+    async (placement) => {
+      const context = {
+        fillRect: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        fillText: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        stroke: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        scale: vi.fn(),
+        measureText: vi.fn(() => ({ width: 100 })),
+      };
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D
+      );
+      vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+        (callback) => callback(new Blob(["PNG"], { type: "image/png" }))
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:local-photo");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined
+      );
+      vi.stubGlobal("Path2D", class {});
+      const draw = vi
+        .spyOn(storyPhoto, "drawStoryPhoto")
+        .mockResolvedValue(undefined);
+      const { container } = renderCard();
+      fireEvent.click(screen.getByText("Customize story"));
+      fireEvent.click(screen.getByRole("button", { name: "Background" }));
+      expect(
+        screen.queryByRole("group", { name: "Photo role" })
+      ).not.toBeInTheDocument();
+      const file = new File(
+        [new Uint8Array([0x89, 0x50, 0x4e, 0x47])],
+        "court.png",
+        { type: "image/png" }
+      );
+      fireEvent.change(screen.getByLabelText("Choose story photo file"), {
+        target: { files: [file] },
+      });
+      await waitFor(() =>
+        expect(screen.getByLabelText("Photo crop")).toBeVisible()
+      );
+      expect(
+        screen.getByRole("button", { name: "Full background" })
+      ).toHaveAttribute("aria-pressed", "true");
+      fireEvent.change(screen.getByLabelText("Photo crop"), {
+        target: { value: "75" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Framed foreground" })
+      );
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: placement[0].toUpperCase() + placement.slice(1),
+        })
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Baby Pink background" })
+      );
+      expect(screen.queryByLabelText("Text contrast")).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+      fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
+      fireEvent.click(screen.getByRole("button", { name: "Poster" }));
+      const preview = container.querySelector("[data-story-theme]");
+      expect(preview).toHaveAttribute("data-photo-placement", placement);
+      expect(preview).toHaveStyle({ backgroundColor: "#ffe0eb" });
+      expect(
+        preview?.querySelector("[data-story-region=photo] img")
+      ).toHaveStyle({ objectPosition: "center 75%" });
+      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      await waitFor(() =>
+        expect(draw).toHaveBeenCalledWith(
+          context,
+          file,
+          1080,
+          1920,
+          75,
+          storyScene("coquette", true, "foreground", placement).photo
+        )
+      );
+    }
+  );
+
+  it("uses the same foreground placement controls for an existing session photo", () => {
+    const { container } = renderCard({
+      photos: [{ id: "court", url: "/court.png", alt: "Our court" }],
+    });
+    fireEvent.click(screen.getByText("Customize story"));
+    fireEvent.click(screen.getByRole("button", { name: "Background" }));
+    fireEvent.click(screen.getByRole("button", { name: "Our court" }));
+    fireEvent.click(screen.getByRole("button", { name: "Framed foreground" }));
+    fireEvent.click(screen.getByRole("button", { name: "Bottom" }));
+    expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
+      "data-photo-placement",
+      "bottom"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Full background" }));
+    expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
+      "data-photo-role",
+      "background"
+    );
+    expect(
+      screen.queryByRole("group", { name: "Photo placement" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Text contrast")).toBeVisible();
+  });
+
   it("keeps the working background when a supported file cannot be decoded", async () => {
     vi.mocked(createImageBitmap).mockRejectedValue(new Error("Invalid image"));
     renderCard();
     fireEvent.click(screen.getByText("Customize story"));
     fireEvent.click(screen.getByRole("button", { name: "Background" }));
-    fireEvent.change(screen.getByLabelText("Choose background photo file"), {
+    fireEvent.change(screen.getByLabelText("Choose story photo file"), {
       target: {
         files: [
           new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "broken.png", {
@@ -390,7 +663,7 @@ describe("RecapShareCard", () => {
       { type: "image/png" }
     );
 
-    fireEvent.change(screen.getByLabelText("Choose background photo file"), {
+    fireEvent.change(screen.getByLabelText("Choose story photo file"), {
       target: { files: [file] },
     });
 
@@ -398,7 +671,7 @@ describe("RecapShareCard", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "hasn’t been uploaded"
     );
-    expect(screen.getByLabelText(/Photo position/)).toBeVisible();
+    expect(screen.getByLabelText(/Photo crop/)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Layout" }));
     expect(screen.getByRole("button", { name: "Snapshot" })).toHaveAttribute(
       "aria-pressed",

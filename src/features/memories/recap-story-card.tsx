@@ -11,11 +11,18 @@ import {
   type StoryPhase,
   viewerStanding,
 } from "./recap-share";
-
 import { StoryFactFrame } from "./story-fact-frame";
+import {
+  type StoryPhotoPlacement,
+  type StoryPhotoRole,
+  storyArtTransform,
+  storyRegionStyle,
+  storyScene,
+} from "./story-scene";
 import {
   type StoryTheme,
   storyComposition,
+  storyPhotoDecorations,
   storyScoreFont,
   storyThemeDecorations,
 } from "./story-theme";
@@ -52,6 +59,9 @@ export function RecapStoryCard({
   theme = "minimal",
   overlay = 55,
   photoPosition = 50,
+  photoRole = "background",
+  photoPlacement = "center",
+  sceneBackground,
   customHeadline = "Our kind of game.",
   customNote = "",
   storyAsOf,
@@ -72,6 +82,9 @@ export function RecapStoryCard({
   theme?: StoryTheme;
   overlay?: number;
   photoPosition?: number;
+  photoRole?: StoryPhotoRole;
+  photoPlacement?: StoryPhotoPlacement;
+  sceneBackground?: RecapBackground;
   customHeadline?: string;
   customNote?: string;
   storyAsOf?: string;
@@ -82,7 +95,18 @@ export function RecapStoryCard({
 }) {
   const personal = viewerStanding(recap, viewerPlayerId);
   const isInvitation = template === "invitation" || template === "spots";
-  const light = Boolean(background.light) && !background.imageUrl;
+  const scene = storyScene(
+    theme,
+    Boolean(background.imageUrl),
+    photoRole,
+    photoPlacement
+  );
+  const surface = scene.framed
+    ? (sceneBackground ?? { color: "#ffe0eb", light: true })
+    : background;
+  const light =
+    Boolean(surface.light) && (!background.imageUrl || scene.framed);
+  const artTransform = storyArtTransform(scene.art);
   const foreground = light ? "text-[#17181d]" : "text-white";
   const secondary = light ? "text-[#17181d]/70" : "text-white/65";
   const contentPosition =
@@ -92,41 +116,59 @@ export function RecapStoryCard({
         ? "top-1/2 -translate-y-1/2"
         : "bottom-0";
   const contentFrame =
-    layout === "snapshot"
+    layout === "snapshot" && !scene.fitFacts
       ? `m-[5%] rounded-[10px] border p-[6%] ${light ? "border-black/15 bg-white/78" : "border-white/20 bg-black/48"}`
       : "p-[7%]";
 
   return (
     <div
       data-story-theme={theme}
+      data-photo-role={background.imageUrl ? photoRole : undefined}
+      data-photo-placement={scene.framed ? photoPlacement : undefined}
       role="group"
       aria-roledescription="slide"
       aria-label={`${template.replaceAll("-", " ")} social recap preview`}
       className={`relative isolate aspect-[9/16] overflow-hidden rounded-xl [container-type:inline-size] ${foreground} ${className}`}
       style={
         {
-          backgroundColor: background.color ?? "#11131a",
+          backgroundColor: surface.color ?? "#11131a",
           ...(theme !== "minimal" ? { "--score": storyScoreFont(theme) } : {}),
         } as CSSProperties
       }
     >
+      {scene.frame ? (
+        <span
+          aria-hidden
+          className="absolute"
+          style={{
+            ...storyRegionStyle(scene.frame),
+            backgroundColor: "#fff8f0",
+          }}
+        />
+      ) : null}
       {background.imageUrl ? (
-        <>
+        <div
+          data-story-region="photo"
+          className="absolute overflow-hidden"
+          style={storyRegionStyle(scene.photo)}
+        >
           <Image
             src={background.imageUrl}
             alt=""
             fill
             sizes="(max-width: 640px) 90vw, 430px"
-            unoptimized={background.imageUrl.startsWith("blob:")}
-            className="-z-20 object-cover"
+            unoptimized
+            className="object-cover"
             style={{ objectPosition: `center ${photoPosition}%` }}
           />
-          <span
-            className="absolute inset-0 -z-10 bg-black"
-            style={{ opacity: overlay / 100 }}
-            aria-hidden
-          />
-        </>
+          {!scene.framed ? (
+            <span
+              className="absolute inset-0"
+              style={{ backgroundColor: `rgba(8,10,16,${overlay / 100})` }}
+              aria-hidden
+            />
+          ) : null}
+        </div>
       ) : null}
       <div
         data-story-region="header"
@@ -152,20 +194,23 @@ export function RecapStoryCard({
             : "NIGHT MEMORY"}
       </div>
       <StoryFactFrame
-        enabled={theme !== "minimal"}
+        enabled={scene.fitFacts}
+        bounds={scene.facts}
         className={`absolute inset-x-0 ${contentPosition}`}
         position={
-          layout === "poster"
-            ? "top"
-            : layout === "center"
-              ? "center"
-              : "bottom"
+          scene.framed
+            ? "center"
+            : layout === "poster"
+              ? "top"
+              : layout === "center"
+                ? "center"
+                : "bottom"
         }
       >
         <div className={contentFrame}>
           {template === "invitation" && invitation ? (
             <>
-              <p className="line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+              <p className="break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
                 {title}
               </p>
               <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
@@ -248,7 +293,7 @@ export function RecapStoryCard({
               >
                 LIVE · AS OF {storyAsOf ?? "THIS UPDATE"}
               </p>
-              <p className="mt-3 line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+              <p className="mt-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
                 {title}
               </p>
               <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
@@ -309,7 +354,7 @@ export function RecapStoryCard({
 
           {template === "overview" ? (
             <>
-              <p className="line-clamp-3 break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
+              <p className="break-words text-[clamp(20px,9cqw,42px)] font-bold leading-[1.02] tracking-[-0.04em]">
                 {title}
               </p>
               <p className={`mt-2 text-[clamp(9px,3.6cqw,14px)] ${secondary}`}>
@@ -585,15 +630,26 @@ export function RecapStoryCard({
           className="pointer-events-none absolute inset-0 h-full w-full"
           fill="none"
         >
-          {storyThemeDecorations(theme).map((decoration) => (
-            <path
-              key={decoration.path}
-              d={decoration.path}
-              fill={decoration.fill ?? "none"}
-              stroke={decoration.stroke}
-              strokeWidth={decoration.strokeWidth}
-            />
-          ))}
+          <g
+            transform={
+              scene.frame
+                ? undefined
+                : `translate(${artTransform.x} ${artTransform.y}) scale(${artTransform.scale})`
+            }
+          >
+            {(scene.frame
+              ? storyPhotoDecorations(theme, scene.frame)
+              : storyThemeDecorations(theme)
+            ).map((decoration) => (
+              <path
+                key={decoration.path}
+                d={decoration.path}
+                fill={decoration.fill ?? "none"}
+                stroke={decoration.stroke}
+                strokeWidth={decoration.strokeWidth}
+              />
+            ))}
+          </g>
         </svg>
       ) : null}
     </div>
