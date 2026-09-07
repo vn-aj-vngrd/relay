@@ -2,6 +2,7 @@
 
 import {
   ArrowClockwise,
+  CalendarBlank,
   CaretLeft,
   CaretRight,
   MapPin,
@@ -161,44 +162,39 @@ function DayAgenda({
                     aria-hidden
                     className="h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]"
                   />
-                  <span
-                    className={`text-xs font-[680] ${game.phase === "live" ? "text-live" : "text-muted"}`}
-                  >
-                    <GameStatusChip status={game.status} endsAt={game.endsAt} />{" "}
-                    · {shortTime(game.time)}
-                  </span>
+                  <GameStatusChip status={game.status} endsAt={game.endsAt} />
                 </div>
                 <p className="mt-1.5 line-clamp-2 font-[680] text-ink group-hover:text-primary">
                   {game.title}
                 </p>
                 <p className="mt-2 flex min-w-0 items-center gap-2 text-[13px] text-muted">
+                  <CalendarBlank aria-hidden size={15} className="shrink-0" />
+                  <span>{game.time}</span>
+                </p>
+                <p className="mt-1.5 flex min-w-0 items-center gap-2 text-[13px] text-muted">
                   <MapPin aria-hidden size={15} className="shrink-0" />
                   <span className="truncate">{game.venue}</span>
                 </p>
                 <p className="mt-1.5 flex items-center gap-2 text-[13px] text-muted">
                   <Users aria-hidden size={15} className="shrink-0" />
-                  <span className="score">
-                    {game.phase === "past"
-                      ? game.playerCount
-                      : `${game.playerCount} / ${game.capacity}`}
-                  </span>
                   <span>
+                    <span className="score whitespace-nowrap">
+                      {game.phase === "past"
+                        ? game.playerCount
+                        : `${game.playerCount} / ${game.capacity}`}
+                    </span>{" "}
                     {game.phase === "past" ? "Going responses" : "going"}
                   </span>
-                  {game.readiness &&
-                  game.phase !== "past" &&
-                  game.status !== "live" ? (
-                    <span
-                      className={
-                        game.readiness.ready
-                          ? "font-[650] text-success"
-                          : "text-muted"
-                      }
-                    >
-                      · {playSetupNextAction(game.readiness)}
-                    </span>
-                  ) : null}
                 </p>
+                {game.readiness &&
+                game.phase !== "past" &&
+                game.status !== "live" ? (
+                  <p
+                    className={`mt-3 text-xs font-[650] ${game.readiness.ready ? "text-success" : "text-muted"}`}
+                  >
+                    {playSetupNextAction(game.readiness)}
+                  </p>
+                ) : null}
               </Link>
               {game.phase === "past" && game.canReplay ? (
                 <ButtonLink

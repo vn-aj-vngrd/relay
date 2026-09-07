@@ -383,6 +383,7 @@ function parseTypedTime(query: string) {
 
 export function TimeComboboxField({
   id,
+  name = id,
   label,
   value,
   onValueChange,
@@ -396,6 +397,7 @@ export function TimeComboboxField({
   label: string;
   value: string;
   onValueChange: (value: string) => void;
+  name?: string;
   minValue?: string;
   afterValue?: string;
   beforeValue?: string;
@@ -413,7 +415,9 @@ export function TimeComboboxField({
   return (
     <ComboboxField
       id={id}
+      name={name}
       label={label}
+      clearable
       value={value}
       onValueChange={onValueChange}
       options={timeOptions.filter(isAllowed).map((option) => ({

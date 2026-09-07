@@ -1,6 +1,6 @@
 "use client";
 
-import { CaretDown, Check } from "@phosphor-icons/react";
+import { CaretDown, Check, X } from "@phosphor-icons/react";
 import {
   type KeyboardEvent,
   type ReactNode,
@@ -10,6 +10,8 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { Tooltip } from "./tooltip";
 
 type ComboboxOption = { value: string; label: string; description?: string };
 
@@ -36,6 +38,7 @@ export function ComboboxField({
   error,
   describedBy,
   leadingIcon,
+  clearable = false,
 }: {
   id: string;
   name?: string;
@@ -52,6 +55,7 @@ export function ComboboxField({
   error?: string;
   describedBy?: string;
   leadingIcon?: ReactNode;
+  clearable?: boolean;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +68,7 @@ export function ComboboxField({
   const selectedLabel =
     selected?.label ?? (value ? (formatValue?.(value) ?? "") : "");
   const query = editing ? draft.text : selectedLabel;
+  const showClear = clearable && Boolean(value || query);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const normalizedQuery = (editing ? query : "")
@@ -216,8 +221,25 @@ export function ComboboxField({
             onValueChange(nextValue);
           }}
           onKeyDown={handleKeyDown}
-          className={`h-11 w-full rounded-lg border bg-surface px-3 pr-10 text-[15px] text-ink placeholder:text-muted focus:outline-none ${leadingIcon ? "pl-9" : ""} ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`}
+          className={`h-11 w-full rounded-lg border bg-surface px-3 ${showClear ? "pr-20" : "pr-10"} text-[15px] text-ink placeholder:text-muted focus:outline-none ${leadingIcon ? "pl-9" : ""} ${error ? "border-danger ring-2 ring-danger/10" : "border-line focus:border-primary focus:ring-2 focus:ring-primary/15"}`}
         />
+        {showClear ? (
+          <button
+            type="button"
+            aria-label={`Clear ${label.toLowerCase()}`}
+            onClick={() => {
+              setDraft(null);
+              onValueChange("");
+              inputRef.current?.focus();
+              setOpen(false);
+              setActiveIndex(-1);
+            }}
+            className="pressable absolute right-8 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-muted hover:text-ink disabled:cursor-not-allowed"
+          >
+            <X aria-hidden size={14} />
+            <Tooltip content={`Clear ${label.toLowerCase()}`} />
+          </button>
+        ) : null}
         <CaretDown
           aria-hidden
           className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted"

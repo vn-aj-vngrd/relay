@@ -47,6 +47,59 @@ describe("SessionSettingsForm", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("uses the create-game time inputs and clears their submitted values", () => {
+    const { container } = render(<SessionSettingsForm defaults={defaults} />);
+    const start = screen.getByRole("combobox", { name: "Start time" });
+    const end = screen.getByRole("combobox", { name: "End time" });
+    expect(start).toHaveValue("7:00 PM");
+    expect(end).toHaveValue("10:00 PM");
+    fireEvent.change(start, { target: { value: "19:07" } });
+    fireEvent.keyDown(start, { key: "Enter" });
+    expect(start).toHaveValue("7:07 PM");
+    expect(container.querySelector('input[name="start"]')).toHaveValue("19:07");
+    fireEvent.click(screen.getByRole("button", { name: "Clear start time" }));
+    expect(start).toHaveValue("");
+    expect(start).toHaveFocus();
+    expect(container.querySelector('input[name="start"]')).toHaveValue("");
+    expect(end).toHaveValue("10:00 PM");
+    fireEvent.click(screen.getByRole("button", { name: "Clear end time" }));
+    expect(container.querySelector('input[name="end"]')).toHaveValue("");
+  });
+
+  it("bounds the time options using the other time", () => {
+    render(<SessionSettingsForm defaults={defaults} />);
+    const start = screen.getByRole("combobox", { name: "Start time" });
+    const end = screen.getByRole("combobox", { name: "End time" });
+    fireEvent.focus(start);
+    expect(screen.getByRole("option", { name: "9:45 PM" })).toBeVisible();
+    expect(
+      screen.queryByRole("option", { name: "10:00 PM" })
+    ).not.toBeInTheDocument();
+    fireEvent.blur(start);
+    fireEvent.focus(end);
+    expect(
+      screen.queryByRole("option", { name: "7:00 PM" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "7:15 PM" })).toBeVisible();
+  });
+
+  it.each(["live", "completed", "cancelled"] as const)(
+    "keeps %s time inputs and clear buttons disabled",
+    (status) => {
+      render(<SessionSettingsForm defaults={defaults} status={status} />);
+      expect(
+        screen.getByRole("combobox", { name: "Start time" })
+      ).toBeDisabled();
+      expect(screen.getByRole("combobox", { name: "End time" })).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Clear start time" })
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Clear end time" })
+      ).toBeDisabled();
+    }
+  );
+
   it("allows the live player note but locks access rules", () => {
     render(
       <SessionSettingsForm defaults={defaults} status="live" section="invite" />

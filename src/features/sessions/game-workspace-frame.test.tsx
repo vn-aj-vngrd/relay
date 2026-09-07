@@ -53,6 +53,16 @@ describe("GameWorkspaceFrame", () => {
       "href",
       "/games/session-1"
     );
+    const heading = screen.getByRole("heading", {
+      level: 1,
+      name: "Game Settings",
+    });
+    expect(heading).toBeVisible();
+    expect(heading).toHaveClass("text-sm");
+    expect(heading.closest(".session-tab-safe")).toContainElement(
+      screen.getByRole("link", { name: "Back to game" })
+    );
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByText("Game settings")).toBeVisible();
     expect(screen.queryByText("Desktop game tabs")).not.toBeInTheDocument();
     expect(screen.queryByText("Mobile game tabs")).not.toBeInTheDocument();

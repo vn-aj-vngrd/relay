@@ -94,6 +94,30 @@ describe("TimeComboboxField", () => {
     expect(submittedTime()).toBe("");
   });
 
+  it.each(["15:47", "not a time"])(
+    "clears %s and returns focus to the input",
+    (text) => {
+      render(<TimeField />);
+      const input = screen.getByRole("combobox", { name: "Time" });
+      expect(
+        screen.queryByRole("button", { name: "Clear time" })
+      ).not.toBeInTheDocument();
+      fireEvent.change(input, { target: { value: text } });
+      fireEvent.click(screen.getByRole("button", { name: "Clear time" }));
+      expect(input).toHaveValue("");
+      expect(input).toHaveFocus();
+      expect(submittedTime()).toBe("");
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Clear time" })
+      ).not.toBeInTheDocument();
+      fireEvent.keyDown(input, { key: "ArrowDown" });
+      expect(screen.getAllByRole("option")).toHaveLength(96);
+      fireEvent.keyDown(input, { key: "Enter" });
+      expect(submittedTime()).toBe("00:00");
+    }
+  );
+
   it("updates the visible value when the plan resets the time", () => {
     const props = { id: "time", label: "Time", onValueChange: () => undefined };
     const { rerender } = render(<TimeComboboxField {...props} value="19:07" />);

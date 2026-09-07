@@ -15,7 +15,7 @@ import {
 import { getCourtSuggestions } from "@/features/venues/directory";
 
 export const metadata: Metadata = {
-  title: "Plan a pickleball game",
+  title: "Create a game",
   description:
     "Build the court, schedule, player limit, and access plan before creating your Relay account.",
   robots: { index: false, follow: false },
@@ -136,7 +136,7 @@ export default async function NewGamePage({
     ? "Play again"
     : group
       ? `Game for ${group.name}`
-      : "Plan a game";
+      : "Create a game";
   const pageDescription = source
     ? "Reuse the practical plan, then choose a new date."
     : group

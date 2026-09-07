@@ -5,7 +5,7 @@ import { useActionState, useState } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import {
   DatePickerField,
-  TimePickerField,
+  TimeComboboxField,
 } from "@/components/ui/date-time-picker";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -76,6 +76,8 @@ export function SessionSettingsForm({
     {}
   );
   const preserveValues = usePreserveFormValuesOnError(state);
+  const [start, setStart] = useState(defaults.start);
+  const [end, setEnd] = useState(defaults.end);
   const [booked, setBooked] = useState(
     state.values ? state.values.booked === "on" : defaults.booked
   );
@@ -174,8 +176,8 @@ export function SessionSettingsForm({
             />
             <ErrorText id="settings-venue-error" message={error("venue")} />
           </div>
-          <div className="grid gap-5 sm:grid-cols-[1.2fr_1fr_1fr]">
-            <div>
+          <div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
+            <div className="sm:col-span-2">
               <DatePickerField
                 key={value("date")}
                 id="settings-date"
@@ -188,12 +190,13 @@ export function SessionSettingsForm({
               <ErrorText id="settings-date-error" message={error("date")} />
             </div>
             <div>
-              <TimePickerField
-                key={value("start")}
+              <TimeComboboxField
                 id="settings-start"
                 name="start"
-                label="Starts"
-                defaultValue={value("start")}
+                label="Start time"
+                value={start}
+                onValueChange={setStart}
+                beforeValue={end || undefined}
                 error={error("start")}
                 describedBy={
                   error("start") ? "settings-start-error" : undefined
@@ -202,12 +205,13 @@ export function SessionSettingsForm({
               <ErrorText id="settings-start-error" message={error("start")} />
             </div>
             <div>
-              <TimePickerField
-                key={value("end")}
+              <TimeComboboxField
                 id="settings-end"
                 name="end"
-                label="Ends"
-                defaultValue={value("end")}
+                label="End time"
+                value={end}
+                onValueChange={setEnd}
+                afterValue={start || undefined}
                 error={error("end")}
                 describedBy={error("end") ? "settings-end-error" : undefined}
               />

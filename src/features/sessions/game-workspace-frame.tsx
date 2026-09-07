@@ -62,11 +62,12 @@ export function GameWorkspaceFrame({
               href={`/games/${sessionId}`}
               variant="quiet"
               aria-label="Back to game"
-              className="-ml-3 h-11 min-h-11 shrink-0 px-3"
+              className="-ml-3 h-11 min-h-11 w-11 shrink-0 px-0"
             >
               <CaretLeft aria-hidden size={18} />
-              <span>Back to game</span>
+              <Tooltip content="Back to game" />
             </ButtonLink>
+            <h1 className="text-sm font-semibold text-ink">Game Settings</h1>
           </div>
         </div>
       ) : (

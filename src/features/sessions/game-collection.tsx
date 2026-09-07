@@ -424,22 +424,11 @@ function GameGrid({
             prefetch={false}
             className="pressable group flex min-w-0 flex-1 flex-col"
           >
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <time className="score text-xs font-bold text-primary">
                 {game.date}
               </time>
-              <span className="text-right">
-                <GameStatusChip status={game.status} endsAt={game.endsAt} />
-                {!past && rsvpLabel(game.viewerRsvp) ? (
-                  <span className="block text-xs font-[650] text-primary">
-                    {rsvpLabel(game.viewerRsvp)}
-                  </span>
-                ) : null}
-                <span className="score mt-0.5 block text-xs text-muted">
-                  {game.playerCount}{" "}
-                  {past ? "Going responses" : `/ ${game.capacity}`}
-                </span>
-              </span>
+              <GameStatusChip status={game.status} endsAt={game.endsAt} />
             </div>
             <h3 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 group-hover:text-primary sm:mt-5 sm:truncate sm:text-lg sm:leading-normal">
               {game.title}
@@ -453,6 +442,17 @@ function GameGrid({
                 <MapPin aria-hidden size={15} className="shrink-0" />
                 <span className="truncate">{game.venue}</span>
               </p>
+            </div>
+            <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
+              {!past && rsvpLabel(game.viewerRsvp) ? (
+                <span className="font-[650] text-primary">
+                  {rsvpLabel(game.viewerRsvp)}
+                </span>
+              ) : null}
+              <span className="score ml-auto text-right text-muted">
+                {game.playerCount}{" "}
+                {past ? "Going responses" : `/ ${game.capacity} players`}
+              </span>
             </div>
             {game.readiness && !past && game.status !== "live" ? (
               <p className="mt-3 text-xs font-semibold text-muted sm:mt-5">

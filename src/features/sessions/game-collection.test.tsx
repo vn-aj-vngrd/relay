@@ -158,12 +158,25 @@ describe("GameCollection", () => {
     const chip = within(
       screen.getByRole("link", { name: /Saturday Night Pickle/ })
     ).getByText("Upcoming");
-    expect(chip.parentElement?.parentElement).toContainElement(
-      screen.getByText(game.date)
-    );
-    expect(chip.parentElement?.parentElement).not.toContainElement(
+    expect(chip.parentElement).toContainElement(screen.getByText(game.date));
+    expect(chip.parentElement).toHaveClass("items-center", "justify-between");
+    expect(chip.parentElement).not.toContainElement(
       screen.getByRole("heading", { name: game.title })
     );
+    const response = screen.getByText("Going", { exact: true });
+    const capacity = screen.getByText("8 / 10 players");
+    expect(response.parentElement).toContainElement(capacity);
+    expect(chip.parentElement).not.toContainElement(response);
+    expect(chip.parentElement).not.toContainElement(capacity);
+    expect(
+      screen.getByText(game.venue).compareDocumentPosition(response) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      capacity.compareDocumentPosition(
+        screen.getByText("Confirm court arrangement")
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(screen.getByTestId("games-grid").querySelector(".grid")).toHaveClass(
       "min-[380px]:grid-cols-2"
     );
@@ -487,6 +500,35 @@ describe("GameCollection", () => {
         name: /Saturday, August 22, 2026, 1 game/,
       })
     ).toHaveLength(2);
+    fireEvent.click(
+      screen.getAllByRole("button", {
+        name: /Saturday, August 22, 2026, 1 game/,
+      })[0]
+    );
+    const agenda = within(screen.getByRole("complementary"));
+    const agendaTitle = agenda.getByText(game.title);
+    const agendaTime = agenda.getByText(game.time);
+    const agendaStatus = agenda.getByText("Upcoming");
+    expect(agendaTime.closest("p")).not.toContainElement(agendaStatus);
+    expect(
+      agendaStatus.compareDocumentPosition(agendaTitle) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      agendaTitle.compareDocumentPosition(agendaTime) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      agendaTime.compareDocumentPosition(agenda.getByText(game.venue)) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    const nextAction = agenda.getByText("Confirm court arrangement");
+    const roster = agenda.getByText("going", { exact: false }).closest("p");
+    expect(roster).not.toContainElement(nextAction);
+    expect(roster?.querySelector(".score")).toHaveClass("whitespace-nowrap");
+    expect(nextAction.tagName).toBe("P");
+    expect(nextAction).toHaveClass("mt-3");
+    expect(nextAction).toHaveTextContent(/^Confirm court arrangement$/);
     expect(fetch).toHaveBeenCalledWith(
       "/api/games?month=2026-08",
       expect.objectContaining({ credentials: "same-origin" })

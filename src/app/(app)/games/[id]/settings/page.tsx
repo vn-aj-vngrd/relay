@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 
-import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
@@ -114,47 +113,44 @@ export default async function GameSettingsPage({
   };
 
   return (
-    <>
-      <GamePageIntro title="Game settings" showTitle />
-      <div className="mx-auto w-full max-w-6xl">
-        <GameSettingsTabs sessionId={sessionId} active={section} />
-        {section !== "organizers" ? (
-          <div className="mt-7">
-            <SessionSettingsForm
-              key={`${section}-${data.session.status}`}
-              defaults={defaults}
-              section={section}
-              status={data.session.status}
-            />
-            {section === "plan" && data.session.status === "published" ? (
-              <CancelSessionControl
-                sessionId={data.session.id}
-                version={data.session.version}
-                playerCount={data.roster.length}
-              />
-            ) : null}
-          </div>
-        ) : (
-          <>
-            <OrganizerSettings
+    <div className="mx-auto w-full max-w-6xl">
+      <GameSettingsTabs sessionId={sessionId} active={section} />
+      {section !== "organizers" ? (
+        <div className="mt-7">
+          <SessionSettingsForm
+            key={`${section}-${data.session.status}`}
+            defaults={defaults}
+            section={section}
+            status={data.session.status}
+          />
+          {section === "plan" && data.session.status === "published" ? (
+            <CancelSessionControl
               sessionId={data.session.id}
               version={data.session.version}
-              organizers={organizers}
-              canManage={data.session.hostId === user.id && !ended}
+              playerCount={data.roster.length}
             />
-            {data.session.hostId === user.id &&
-            data.session.status !== "completed" &&
-            data.session.status !== "cancelled" ? (
-              <LeadOrganizerControl
-                sessionId={data.session.id}
-                version={data.session.version}
-                currentLeadId={data.session.leadOrganizerId}
-                cohosts={cohosts}
-              />
-            ) : null}
-          </>
-        )}
-      </div>
-    </>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <OrganizerSettings
+            sessionId={data.session.id}
+            version={data.session.version}
+            organizers={organizers}
+            canManage={data.session.hostId === user.id && !ended}
+          />
+          {data.session.hostId === user.id &&
+          data.session.status !== "completed" &&
+          data.session.status !== "cancelled" ? (
+            <LeadOrganizerControl
+              sessionId={data.session.id}
+              version={data.session.version}
+              currentLeadId={data.session.leadOrganizerId}
+              cohosts={cohosts}
+            />
+          ) : null}
+        </>
+      )}
+    </div>
   );
 }
