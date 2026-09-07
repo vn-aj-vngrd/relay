@@ -59,8 +59,9 @@ Run:
 
 ```bash
 pnpm check:full
-pnpm test:e2e
 ```
+
+Follow `AGENTS.md` for validation timing and opt-in E2E. Unit tests are mandatory in the code quality gate; E2E is required only when explicitly requested by the user.
 
 Use Agent Browser at 390px and 1440px in light and dark mode. Check the accessibility tree, console errors, horizontal overflow, focus order, target sizes, reduced motion, long text, empty data, and a realistic end-to-end workflow.
 

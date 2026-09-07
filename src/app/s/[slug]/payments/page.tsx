@@ -166,6 +166,10 @@ export default async function PublicPaymentsPage({
                         <p className="text-sm font-semibold text-muted">
                           You are not included in this split.
                         </p>
+                      ) : payment.amountCents === 0 ? (
+                        <p className="text-sm font-semibold text-muted">
+                          No payment is due for this share.
+                        </p>
                       ) : cancelled ? (
                         <p className="text-sm text-muted">
                           Proof submission is closed.
@@ -204,10 +208,23 @@ export default async function PublicPaymentsPage({
               className="mx-auto text-primary"
               size={24}
             />
-            <h2 className="mt-4 text-xl font-bold">No payment request yet</h2>
+            <h2 className="mt-4 text-xl font-bold">
+              {rows.length
+                ? "No share assigned to you"
+                : data.session.playerPriceCents === 0
+                  ? "Free game"
+                  : "Payment not set up yet"}
+            </h2>
             <p className="mt-2 text-sm text-muted">
-              The host hasn’t created the split. Check again after the roster is
-              settled.
+              {rows.length
+                ? viewer?.player.userId === data.session.hostId
+                  ? "The host paid upfront and does not owe a player share."
+                  : data.session.playerPriceCents == null
+                    ? "Player share will be calculated when players join. Payment collection is set up."
+                    : "You have no assigned share in the current collection. Ask the host if you need to be included."
+                : data.session.playerPriceCents === 0
+                  ? "The host marked this game Free. No payment is needed."
+                  : "The host hasn’t added a repayment amount or payment method yet."}
             </p>
           </section>
         )}

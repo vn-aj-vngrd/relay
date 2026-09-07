@@ -1,6 +1,15 @@
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-
+import { db } from "@/db/client";
+import {
+  expenses,
+  paymentAccounts,
+  playerPayments,
+  profiles,
+  sessionPlayers,
+} from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { PaymentSettings } from "@/features/payments/payment-settings";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
 import {
@@ -45,6 +54,7 @@ export default async function GameSettingsPage({
   const section: GameSettingsSection =
     query.section === "invite" ||
     query.section === "booking" ||
+    query.section === "payments" ||
     query.section === "organizers"
       ? query.section
       : "plan";
@@ -112,10 +122,45 @@ export default async function GameSettingsPage({
     bookingNotes: data.session.bookingNotes ?? "",
   };
 
+  const [collections, payments] =
+    section === "payments"
+      ? await Promise.all([
+          db
+            .select({ expense: expenses, account: paymentAccounts })
+            .from(expenses)
+            .leftJoin(
+              paymentAccounts,
+              eq(expenses.paymentAccountId, paymentAccounts.id)
+            )
+            .where(eq(expenses.sessionId, sessionId)),
+          db
+            .select({
+              payment: playerPayments,
+              player: sessionPlayers,
+              profile: profiles,
+            })
+            .from(playerPayments)
+            .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+            .innerJoin(
+              sessionPlayers,
+              eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+            )
+            .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
+            .where(eq(expenses.sessionId, sessionId)),
+        ])
+      : [[], []];
+
   return (
     <div className="mx-auto w-full max-w-6xl">
       <GameSettingsTabs sessionId={sessionId} active={section} />
-      {section !== "organizers" ? (
+      {section === "payments" ? (
+        <PaymentSettings
+          session={data.session}
+          collections={collections}
+          payments={payments}
+          isHost={data.session.hostId === user.id}
+        />
+      ) : section !== "organizers" ? (
         <div className="mt-7">
           <SessionSettingsForm
             key={`${section}-${data.session.status}`}

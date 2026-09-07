@@ -1,21 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useId } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { ImageFileField } from "@/components/ui/image-file-field";
-import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import {
   createExpenseState,
   requestNewPaymentProofState,
+  updateExpenseState,
+  updatePaymentChoiceState,
   updatePlayerPaymentAmountState,
 } from "./actions";
 
-const input =
-  "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+import {
+  PaymentSetupFields,
+  PlayerPaymentFields,
+} from "./payment-setup-fields";
 
 export function PaymentAmountForm({
   paymentId,
@@ -126,86 +129,104 @@ export function CreateExpenseForm({
     >
       {state.error ? <Alert>{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
-      <div>
-        <label className="text-sm font-semibold" htmlFor="label">
-          Expense
-        </label>
-        <input
-          className={input}
-          id="label"
-          name="label"
-          defaultValue="Court"
-          required
-        />
-      </div>
-      <div>
-        <label className="text-sm font-semibold" htmlFor="total">
-          Total amount
-        </label>
-        <input
-          className={`${input} score`}
-          id="total"
-          name="total"
-          type="number"
-          min="1"
-          step="0.01"
-          required
-          inputMode="decimal"
-          autoComplete="off"
-          defaultValue={
-            bookingTotalCents == null ? undefined : bookingTotalCents / 100
-          }
-          placeholder="2400"
-        />
-        {bookingTotalCents != null ? (
-          <p className="mt-1.5 text-sm text-muted">
-            Prefilled from the court booking. Confirm or change it here.
-          </p>
-        ) : null}
-      </div>
-      <SelectField
-        id="method"
-        name="method"
-        label="Payment method"
-        defaultValue="GCash"
-        options={[
-          { value: "GCash", label: "GCash" },
-          { value: "Maya", label: "Maya" },
-          { value: "Bank transfer", label: "Bank transfer" },
-          { value: "Cash", label: "Cash" },
-          { value: "Custom", label: "Custom" },
-        ]}
+      <PaymentSetupFields bookingTotalCents={bookingTotalCents} />
+      <PaymentUploadFields />
+      <SubmitButton pendingLabel="Creating split…" className="w-full">
+        Create collection
+      </SubmitButton>
+    </form>
+  );
+}
+
+export function PaymentChoiceForm({
+  sessionId,
+  price,
+  bookingTotalCents,
+}: {
+  sessionId: string;
+  price: number | null;
+  bookingTotalCents: number | null;
+}) {
+  const [state, action] = useActionState(updatePaymentChoiceState, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
+  return (
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="flex flex-col gap-4"
+    >
+      <input type="hidden" name="sessionId" value={sessionId} />
+      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.success ? (
+        <Alert variant="success">Payment settings saved.</Alert>
+      ) : null}
+      <PlayerPaymentFields
+        defaults={{ costKind: price === 0 ? "free" : "unspecified" }}
+        bookingTotalCents={bookingTotalCents}
       />
-      <div>
-        <label className="text-sm font-semibold" htmlFor="details">
-          Payment details
-        </label>
-        <textarea
-          className="mt-1.5 min-h-24 w-full rounded-lg border border-line bg-surface p-3.5"
-          id="details"
-          name="details"
-          required
-          autoComplete="off"
-          placeholder="Account name and number…"
-        />
-      </div>
+      <SubmitButton pendingLabel="Saving…">Save payment settings</SubmitButton>
+    </form>
+  );
+}
+
+export function EditExpenseForm({
+  sessionId,
+  expenseId,
+  defaults,
+  totalReadOnly,
+}: {
+  sessionId: string;
+  expenseId: string;
+  defaults: Record<string, string>;
+  totalReadOnly: boolean;
+}) {
+  const [state, action] = useActionState(updateExpenseState, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
+  return (
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="flex flex-col gap-4"
+    >
+      <input type="hidden" name="sessionId" value={sessionId} />
+      <input type="hidden" name="expenseId" value={expenseId} />
+      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.success ? (
+        <Alert variant="success">Payment settings saved.</Alert>
+      ) : null}
+      <PaymentSetupFields defaults={defaults} totalReadOnly={totalReadOnly} />
+      <PaymentUploadFields />
+      <p className="text-sm text-muted">
+        Once any player share exists—even an excluded share—the total is
+        read-only to protect existing amounts. Payment details and images remain
+        editable. Existing receipts and QR images are kept unless you choose a
+        replacement.
+      </p>
+      <SubmitButton pendingLabel="Saving…">Save payment settings</SubmitButton>
+    </form>
+  );
+}
+
+function PaymentUploadFields() {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-4">
       <ImageFileField
-        id="payment-qr"
+        id={`${id}-payment-qr`}
         name="qr"
         label="Payment QR (optional)"
         hint="Players can scan this to repay you."
         buttonLabel="Choose QR image"
       />
       <ImageFileField
-        id="expense-receipt"
+        id={`${id}-expense-receipt`}
         name="receipt"
         label="Receipt (optional)"
         hint="Show players that you already paid for the court or shared expense."
         buttonLabel="Choose receipt"
       />
-      <SubmitButton pendingLabel="Creating split…" className="w-full">
-        Create collection
-      </SubmitButton>
-    </form>
+    </div>
   );
 }

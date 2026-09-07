@@ -672,7 +672,7 @@ export const helpArticles: readonly HelpArticle[] = [
     prerequisites: ["A published saved game with Public visibility."],
     steps: [
       "Check Game settings for Public visibility. Link-only and Private games are not directory listings.",
-      "Before Play, open Game settings → Invite → Player price, select Free if players owe nothing, and save. For a paid game, create a repayment collection in Payments. Unset payment is never treated as Free.",
+      "Choose Free during Create game or in Game settings → Payments if players owe nothing. Choose Collect payment for an expense the host paid upfront. Unset payment is never Free; existing payment records prevent switching to Free or unset.",
       "Check the game is published or live and has not ended. Then open Open games and clear restrictive filters to find it.",
     ],
     outcome:
@@ -1153,7 +1153,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A published game. Know the actual expense and external repayment instructions.",
     ],
     steps: [
-      "For a free game before Play, open Game settings → Invite → Player price, choose Free, and save. For repayment, open Payments and as host create a collection for an expense you covered.",
+      "Choose Free during creation or in Game settings → Payments when no payment is needed. For repayment, choose Collect payment and add an expense you covered upfront. Game settings owns configuration; Payments owns tracking, proof, and review. Existing collections cannot be marked Free.",
       "Enter the amount and external payment instructions. Optionally attach the host receipt and payment QR image in the game.",
       "Review the split. The host is paid upfront and excluded from player shares; amounts are split in integer cents with rounding handled by Relay.",
       "Use organizer controls to adjust individual amounts or exclude eligible shares. Review totals after recalculation, especially when there are multiple collections.",

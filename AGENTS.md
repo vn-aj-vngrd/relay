@@ -11,6 +11,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Development loop
 
 - **Defer validation:** During development, focus on implementation. Do not automatically run linting, formatting checks, typechecking, tests, builds, or hook commands after edits or at ordinary handoff. Run checks earlier only when the user explicitly requests them (including test-first work).
+- **E2E is opt-in:** E2E is not required for agent handoff or pre-commit. Add or run E2E tests, or trigger E2E workflows, only when the user explicitly requests it, even when other documents list E2E as a validation step.
+- **Unit tests are mandatory:** Unit tests are part of the code quality gate, not opt-in. Add or update them for changed behavior and run the full unit suite before committing code via `pnpm check:full`. Validation timing still follows the rules above.
 - **Before committing:** Run the validation gate in `docs/CODE_QUALITY.md`, fix failures, and then commit. Keep Git hooks and CI enabled; never bypass them. A request to edit code is not permission to commit.
 - **Handoff:** State “Validation deferred to pre-commit” when checks have not run; do not imply the change is verified.
 

@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import {
   expenses,
+  messages,
   notifications,
   paymentAccounts,
   playerPayments,
@@ -27,10 +28,13 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import {
   collectFromPlayers,
-  resolvedPlayerPrice,
+  disclosedPlayerTotal,
   splitExpense,
   validatePaymentProof,
 } from "./domain";
+
+import { paymentSetupInput, paymentSetupSchema } from "./setup";
+import { reconcileExpenseSharesInTransaction } from "./sync";
 
 export type PaymentActionState = { error?: string; success?: boolean };
 
@@ -63,11 +67,13 @@ function assertPaymentsOpen(session: { status: string }) {
 
 function revalidatePlayerPriceSurfaces(session: { id: string; slug: string }) {
   revalidatePath("/home");
+  revalidatePath("/games");
   revalidatePath("/games/open");
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/s/${session.slug}`);
+  revalidatePath(`/s/${session.slug}/payments`);
 }
 
 function hasPaymentCapabilityForMembership(
@@ -110,19 +116,7 @@ export async function createExpenseState(
   _: PaymentActionState,
   formData: FormData
 ): Promise<PaymentActionState> {
-  const parsed = z
-    .object({
-      label: z.string().trim().min(2).max(80),
-      total: z.coerce.number().positive(),
-      method: z.string().trim().min(2).max(40),
-      details: z.string().trim().min(2).max(300),
-    })
-    .safeParse({
-      label: formData.get("label"),
-      total: formData.get("total"),
-      method: formData.get("method"),
-      details: formData.get("details"),
-    });
+  const parsed = paymentSetupSchema.safeParse(paymentSetupInput(formData));
   if (!parsed.success)
     return {
       error:
@@ -140,38 +134,11 @@ export async function createExpenseState(
   }
 }
 
-async function createExpense(formData: FormData) {
-  const user = await requireUser();
-  await guardPaymentManagement(user.id);
-  const sessionId = z.uuid().parse(formData.get("sessionId"));
-  const session = await db.query.sessions.findFirst({
-    where: eq(sessions.id, sessionId),
-  });
-  if (
-    !session ||
-    !(await hasPaymentCapability(session, user.id, "create_expense"))
-  )
-    throw new Error("Only the host can request payment");
-  assertPaymentsOpen(session);
-  const limit = await checkRateLimit(
-    { scope: "expense-create", limit: 5, windowSeconds: 86400 },
-    `user:${user.id}`
-  );
-  if (!limit.allowed)
-    throw new Error(
-      "Payment requests are temporarily limited. Try again tomorrow."
-    );
-  const totalCents = Math.round(
-    z.coerce.number().positive().parse(formData.get("total")) * 100
-  );
-  const method = z.string().trim().min(2).max(40).parse(formData.get("method"));
-  const details = z
-    .string()
-    .trim()
-    .min(2)
-    .max(300)
-    .parse(formData.get("details"));
-  const label = z.string().trim().min(2).max(80).parse(formData.get("label"));
+async function uploadPaymentImages(
+  formData: FormData,
+  userId: string,
+  sessionId: string
+) {
   const qr = formData.get("qr");
   const receipt = formData.get("receipt");
   let qrStoragePath: string | null = null;
@@ -190,7 +157,7 @@ async function createExpense(formData: FormData) {
         : qr.type === "image/webp"
           ? "webp"
           : "jpg";
-    qrStoragePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
+    qrStoragePath = `${userId}/${crypto.randomUUID()}.${extension}`;
     const supabase = createSupabaseAdminClient();
     const { error } = await supabase.storage
       .from("payment-qrs")
@@ -223,6 +190,47 @@ async function createExpense(formData: FormData) {
       });
     if (error) throw new Error("The receipt could not be uploaded");
   }
+  return { qrStoragePath, receiptStoragePath };
+}
+
+async function createExpense(formData: FormData) {
+  const user = await requireUser();
+  await guardPaymentManagement(user.id);
+  const sessionId = z.uuid().parse(formData.get("sessionId"));
+  const session = await db.query.sessions.findFirst({
+    where: eq(sessions.id, sessionId),
+  });
+  if (
+    !session ||
+    !(await hasPaymentCapability(session, user.id, "create_expense"))
+  )
+    throw new Error("Only the host can request payment");
+  assertPaymentsOpen(session);
+  const limit = await checkRateLimit(
+    { scope: "expense-create", limit: 5, windowSeconds: 86400 },
+    `user:${user.id}`
+  );
+  if (!limit.allowed)
+    throw new Error(
+      "Payment requests are temporarily limited. Try again tomorrow."
+    );
+  const totalCents = Math.round(
+    z.coerce.number().min(0.01).max(1_000_000).parse(formData.get("total")) *
+      100
+  );
+  const method = z.string().trim().min(2).max(40).parse(formData.get("method"));
+  const details = z
+    .string()
+    .trim()
+    .min(2)
+    .max(300)
+    .parse(formData.get("details"));
+  const label = z.string().trim().min(2).max(80).parse(formData.get("label"));
+  const { qrStoragePath, receiptStoragePath } = await uploadPaymentImages(
+    formData,
+    user.id,
+    sessionId
+  );
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select id from ${sessions} where id = ${sessionId} for update`
@@ -290,10 +298,7 @@ async function createExpense(formData: FormData) {
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: resolvedPlayerPrice(
-          currentPayments,
-          lockedSession.playerPriceCents
-        ),
+        playerPriceCents: disclosedPlayerTotal(currentPayments),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -310,6 +315,28 @@ async function createExpense(formData: FormData) {
           payload: {},
         }))
       );
+    if (
+      lockedSession.playerPriceCents !== disclosedPlayerTotal(currentPayments)
+    ) {
+      const participants = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, sessionId));
+      const notified = participants.filter(
+        (player) => player.userId && player.userId !== user.id && !player.leftAt
+      );
+      const body =
+        "Payment collection updated. Review the current player share in Payments.";
+      if (notified.length)
+        await tx.insert(notifications).values(
+          notified.map((player) => ({
+            userId: player.userId!,
+            sessionId,
+            type: "session_cost_changed",
+            payload: { fields: ["player price"], body },
+          }))
+        );
+    }
   });
   revalidatePlayerPriceSurfaces(session);
 }
@@ -338,6 +365,8 @@ export async function markPaymentSent(
     .limit(1);
   const row = rows[0];
   if (!row) return { error: "This payment could not be found." };
+  if (row.payment.amountCents === 0)
+    return { error: "No payment is due for this share." };
   if (row.session.status === "cancelled")
     return {
       error: "Payment changes are closed because this game was cancelled.",
@@ -365,11 +394,13 @@ export async function markPaymentSent(
         "Payment proof uploads are temporarily limited. Try again tomorrow.",
     };
 
-  const path = `${row.expense.sessionId}/${row.payment.id}`;
+  if (row.payment.status !== "unpaid" && row.payment.status !== "sent")
+    return { error: "This payment no longer accepts proof." };
+  const path = `${row.expense.sessionId}/${row.payment.id}/${crypto.randomUUID()}`;
   const supabase = createSupabaseAdminClient();
   const { error } = await supabase.storage
     .from("payment-proofs")
-    .upload(path, proof, { contentType: proof.type, upsert: true });
+    .upload(path, proof, { contentType: proof.type, upsert: false });
   if (error)
     return {
       error:
@@ -384,6 +415,10 @@ export async function markPaymentSent(
       where: eq(sessions.id, row.session.id),
     });
     if (!lockedSession || lockedSession.status === "cancelled") return false;
+    const currentPayment = await tx.query.playerPayments.findFirst({
+      where: eq(playerPayments.id, row.payment.id),
+    });
+    if (!currentPayment || currentPayment.amountCents === 0) return false;
     const [updated] = await tx
       .update(playerPayments)
       .set({
@@ -565,6 +600,15 @@ async function updatePlayerPaymentAmount(formData: FormData) {
     )
       throw new Error("Only a host or co-host can change payment amounts");
     assertPaymentsOpen(lockedSession);
+    const currentPayment = await tx.query.playerPayments.findFirst({
+      where: eq(playerPayments.id, paymentId),
+    });
+    if (
+      !currentPayment ||
+      currentPayment.status === "sent" ||
+      currentPayment.status === "confirmed"
+    )
+      throw new Error("Sent or confirmed payment amounts cannot be changed");
     await tx
       .update(playerPayments)
       .set({ amountCents, updatedAt: new Date() })
@@ -585,10 +629,7 @@ async function updatePlayerPaymentAmount(formData: FormData) {
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: resolvedPlayerPrice(
-          currentPayments,
-          lockedSession.playerPriceCents
-        ),
+        playerPriceCents: disclosedPlayerTotal(currentPayments),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -679,10 +720,7 @@ export async function togglePaymentExcluded(formData: FormData) {
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: resolvedPlayerPrice(
-          currentPayments,
-          lockedSession.playerPriceCents
-        ),
+        playerPriceCents: disclosedPlayerTotal(currentPayments),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -798,4 +836,187 @@ async function requestNewPaymentProof(formData: FormData) {
       });
   });
   revalidatePath(`/games/${row.session.id}/payments`);
+}
+
+export async function updatePaymentChoiceState(
+  _: PaymentActionState,
+  formData: FormData
+): Promise<PaymentActionState> {
+  if (formData.get("costKind") === "collect")
+    return createExpenseState({}, formData);
+  const user = await requireUser();
+  try {
+    await guardPaymentManagement(user.id);
+    const sessionId = z.uuid().parse(formData.get("sessionId"));
+    const choice = z
+      .enum(["free", "unspecified"])
+      .parse(formData.get("costKind"));
+    const session = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${sessionId} for update`
+      );
+      const current = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (!current || current.hostId !== user.id)
+        throw new Error("Only the host can set up payments");
+      assertPaymentsOpen(current);
+      const record = await tx.query.expenses.findFirst({
+        where: eq(expenses.sessionId, sessionId),
+      });
+      if (record)
+        throw new Error(
+          "This game has payment records. You can edit payment details, but cannot mark it free or unset."
+        );
+      const playerPriceCents = choice === "free" ? 0 : null;
+      if (current.playerPriceCents === playerPriceCents) return current;
+      await tx
+        .update(sessions)
+        .set({
+          playerPriceCents,
+          version: sql`${sessions.version} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(sessions.id, sessionId));
+      const body =
+        playerPriceCents === 0
+          ? "This game is now free."
+          : "The player price was removed.";
+      await tx
+        .insert(messages)
+        .values({ sessionId, authorId: user.id, kind: "system", body });
+      const players = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, sessionId));
+      const recipients = players.filter(
+        (player) => player.userId && player.userId !== user.id && !player.leftAt
+      );
+      if (recipients.length)
+        await tx.insert(notifications).values(
+          recipients.map((player) => ({
+            userId: player.userId!,
+            sessionId,
+            type: "session_cost_changed",
+            payload: { fields: ["player price"], body },
+          }))
+        );
+      return current;
+    });
+    revalidatePlayerPriceSurfaces(session);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return paymentActionError(error, "Payment settings could not be saved.");
+  }
+}
+
+export async function updateExpenseState(
+  _: PaymentActionState,
+  formData: FormData
+): Promise<PaymentActionState> {
+  const user = await requireUser();
+  const parsed = paymentSetupSchema.safeParse(paymentSetupInput(formData));
+  if (!parsed.success)
+    return {
+      error: "Complete the expense, total, method, and payment details.",
+    };
+  try {
+    await guardPaymentManagement(user.id);
+    const sessionId = z.uuid().parse(formData.get("sessionId"));
+    const expenseId = z.uuid().parse(formData.get("expenseId"));
+    const existingSession = await db.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+    });
+    if (!existingSession || existingSession.hostId !== user.id)
+      throw new Error("Only the host can edit payment setup");
+    assertPaymentsOpen(existingSession);
+    const uploads = await uploadPaymentImages(formData, user.id, sessionId);
+    const session = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select id from ${sessions} where id = ${sessionId} for update`
+      );
+      const current = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (!current || current.hostId !== user.id)
+        throw new Error("Only the host can edit payment setup");
+      assertPaymentsOpen(current);
+      const expense = await tx.query.expenses.findFirst({
+        where: and(
+          eq(expenses.id, expenseId),
+          eq(expenses.sessionId, sessionId)
+        ),
+      });
+      if (!expense) throw new Error("This collection could not be found");
+      const totalCents = Math.round(parsed.data.total * 100);
+      const payments = await tx
+        .select()
+        .from(playerPayments)
+        .where(eq(playerPayments.expenseId, expenseId));
+      // The schema does not distinguish automatic shares from manual overrides.
+      // Refuse a new resplit rather than guessing intent from amounts/timestamps.
+      if (totalCents !== expense.totalCents && payments.length > 0)
+        throw new Error(
+          "This collection already has player shares. Its total cannot be changed without replacing existing amounts. Payment details and images can still be corrected."
+        );
+      // Accounts may be shared by older collections: copy rather than changing another game's instructions.
+      const oldAccount = expense.paymentAccountId
+        ? await tx.query.paymentAccounts.findFirst({
+            where: eq(paymentAccounts.id, expense.paymentAccountId),
+          })
+        : null;
+      const [account] = await tx
+        .insert(paymentAccounts)
+        .values({
+          ownerId: user.id,
+          label: parsed.data.method,
+          method: parsed.data.method,
+          details: parsed.data.details,
+          qrStoragePath:
+            uploads.qrStoragePath ?? oldAccount?.qrStoragePath ?? null,
+        })
+        .returning();
+      await tx
+        .update(expenses)
+        .set({
+          label: parsed.data.label,
+          totalCents,
+          paymentAccountId: account.id,
+          receiptStoragePath:
+            uploads.receiptStoragePath ?? expense.receiptStoragePath,
+          updatedAt: new Date(),
+        })
+        .where(eq(expenses.id, expenseId));
+      if (totalCents !== expense.totalCents)
+        await reconcileExpenseSharesInTransaction(tx, sessionId, expenseId);
+      else
+        await tx
+          .update(sessions)
+          .set({ version: sql`${sessions.version} + 1`, updatedAt: new Date() })
+          .where(eq(sessions.id, sessionId));
+      const players = await tx
+        .select()
+        .from(sessionPlayers)
+        .where(eq(sessionPlayers.sessionId, sessionId));
+      const recipients = players.filter(
+        (player) => player.userId && player.userId !== user.id && !player.leftAt
+      );
+      if (recipients.length)
+        await tx.insert(notifications).values(
+          recipients.map((player) => ({
+            userId: player.userId!,
+            sessionId,
+            type: "payment_updated",
+            payload: {},
+          }))
+        );
+      return current;
+    });
+    revalidatePlayerPriceSurfaces(session);
+    return { success: true };
+  } catch (error) {
+    unstable_rethrow(error);
+    return paymentActionError(error, "Payment settings could not be saved.");
+  }
 }

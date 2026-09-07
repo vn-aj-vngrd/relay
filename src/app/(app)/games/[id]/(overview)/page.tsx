@@ -261,6 +261,9 @@ export default async function GameOverviewPage({
             roster.filter(({ player }) => player.rsvp === "invited").length
           }
           qrEnabled={session.visibility !== "private"}
+          pendingPublicPrice={
+            session.visibility === "public" && session.playerPriceCents == null
+          }
         />
       ) : null}
       {isHost &&

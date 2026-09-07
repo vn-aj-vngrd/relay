@@ -287,6 +287,7 @@ describe("CreateSessionForm", () => {
     ).toBeVisible();
     expect(screen.getByText("Saturday Pickle · Central Pickle")).toBeVisible();
     expect(screen.getByText("No optional details added")).toBeVisible();
+    expect(screen.getByText("Free · No payment needed")).toBeVisible();
     expect(screen.queryByDisplayValue("2, 3, Center")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish game" })).toBeVisible();
   });
@@ -317,7 +318,9 @@ describe("CreateSessionForm", () => {
     moveToAccess();
 
     expect(screen.queryByText("Player price")).not.toBeInTheDocument();
-    expect(screen.getByText(/Payment starts unset/)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Payment choice" })
+    ).toHaveTextContent("Decide later");
 
     fireEvent.click(screen.getByRole("radio", { name: /^Public/ }));
     fireEvent.click(
@@ -328,5 +331,66 @@ describe("CreateSessionForm", () => {
     ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
     expect(screen.getByText("Payment not set up yet")).toBeVisible();
+  });
+  it("reveals repayment setup and blocks incomplete collection setup", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToAccess();
+    fireEvent.click(screen.getByRole("button", { name: "Payment choice" }));
+    fireEvent.click(screen.getByRole("option", { name: "Collect payment" }));
+    expect(screen.getByLabelText("Expense")).toBeVisible();
+    expect(screen.getByLabelText("Total amount")).toBeVisible();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
+    expect(
+      screen.getByText(/Complete the expense, total, method/)
+    ).toBeVisible();
+    fireEvent.change(screen.getByLabelText("Total amount"), {
+      target: { value: "2400" },
+    });
+    fireEvent.change(screen.getByLabelText("Payment details"), {
+      target: { value: "Host account 09123456789" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Review game" }));
+    expect(
+      screen.getByText(
+        /Collect payment · Player share will be calculated when players join/
+      )
+    ).toBeVisible();
+  });
+
+  it("restores collect setup and its serializable fields after authentication", async () => {
+    localStorage.setItem(
+      "relay-game-draft-v1",
+      JSON.stringify({
+        version: 1,
+        values: {
+          ...completePlan,
+          capacity: "8",
+          courts: "2",
+          costKind: "collect",
+          label: "Court",
+          total: "2400",
+          method: "Maya",
+          details: "Host account",
+        },
+      })
+    );
+    render(<CreateSessionForm defaults={{}} now={now} resumeAnonymousDraft />);
+    expect(
+      await screen.findByRole("heading", { name: "Review your game" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        /Collect payment · Player share will be calculated when players join/
+      )
+    ).toBeVisible();
+    expect(screen.getByLabelText("Total amount")).toHaveValue(2400);
+    expect(screen.getByLabelText("Payment details")).toHaveValue(
+      "Host account"
+    );
   });
 });

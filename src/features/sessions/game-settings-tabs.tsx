@@ -2,12 +2,18 @@
 
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 
-export type GameSettingsSection = "plan" | "invite" | "booking" | "organizers";
+export type GameSettingsSection =
+  | "plan"
+  | "invite"
+  | "booking"
+  | "payments"
+  | "organizers";
 
 const items = [
   { value: "plan" as const, label: "Plan" },
   { value: "invite" as const, label: "Invite" },
   { value: "booking" as const, label: "Booking" },
+  { value: "payments" as const, label: "Payments" },
   { value: "organizers" as const, label: "Organizers" },
 ];
 

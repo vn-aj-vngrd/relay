@@ -14,7 +14,7 @@ import {
   matches,
   messages,
   notifications,
-  playerPayments,
+  paymentAccounts,
   productEvents,
   profiles,
   sessionPlayers,
@@ -29,7 +29,10 @@ import {
 import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { planPlayAvailability } from "@/features/matches/availability";
-import { disclosedPlayerTotal } from "@/features/payments/domain";
+import {
+  paymentSetupInput,
+  paymentSetupSchema,
+} from "@/features/payments/setup";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
 import { ensureProfile } from "@/features/players/profile";
@@ -116,6 +119,17 @@ export async function createSessionAction(
   );
   if (!limit.allowed)
     return { error: "You’ve created several games today. Try again tomorrow." };
+  const collect = formData.get("costKind") === "collect";
+  const paymentSetup = collect
+    ? paymentSetupSchema.safeParse(paymentSetupInput(formData))
+    : null;
+  if (paymentSetup && !paymentSetup.success)
+    return {
+      error: "Complete the expense, total, method, and payment details.",
+      fieldErrors: {
+        costKind: ["Complete payment setup or choose Decide later."],
+      },
+    };
   const hostProfile = await ensureProfile(user);
   const parsed = createSessionSchema().safeParse({
     title: formData.get("title"),
@@ -129,7 +143,7 @@ export async function createSessionAction(
     courtCount: formData.get("courts"),
     notes: formData.get("notes") || undefined,
     visibility: formData.get("visibility") || "link",
-    costKind: "unspecified",
+    ...costInput(formData),
     ...bookingInput(formData),
   });
   if (!parsed.success) {
@@ -149,6 +163,10 @@ export async function createSessionAction(
           "end",
           "courts",
           "visibility",
+          "label",
+          "total",
+          "method",
+          "details",
           "costKind",
           "cost",
           "notes",
@@ -286,6 +304,26 @@ export async function createSessionAction(
         requiresApproval: formData.get("requiresApproval") === "on",
       })
       .returning();
+    if (paymentSetup?.success) {
+      const setup = paymentSetup.data;
+      const [account] = await tx
+        .insert(paymentAccounts)
+        .values({
+          ownerId: user.id,
+          method: setup.method,
+          label: setup.method,
+          details: setup.details,
+        })
+        .returning();
+      await tx.insert(expenses).values({
+        sessionId: session.id,
+        kind: "court",
+        label: setup.label,
+        totalCents: Math.round(setup.total * 100),
+        paidById: user.id,
+        paymentAccountId: account.id,
+      });
+    }
     await tx.insert(sessionPlayers).values({
       sessionId: session.id,
       userId: user.id,
@@ -353,23 +391,6 @@ export async function createSessionAction(
   revalidatePath("/games");
   revalidatePath("/groups");
   redirect(createSessionDestination(created.id, intent === "published"));
-}
-
-function costLabel(value: number | null | undefined) {
-  if (value === 0) return "free";
-  if (value == null) return "not set";
-  return `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(value / 100)} per player`;
-}
-
-function costChangeMessage(
-  previous: number | null,
-  next: number | null | undefined
-) {
-  if (next === 0)
-    return previous == null ? "This game is free." : "This game is now free.";
-  if (previous == null) return `Player price set to ${costLabel(next)}.`;
-  if (next == null) return "The player price was removed.";
-  return `Player price updated from ${costLabel(previous)} to ${costLabel(next)}.`;
 }
 
 export async function updateSessionAction(
@@ -525,26 +546,6 @@ export async function updateSessionAction(
     }
   }
 
-  const paymentRows = await db
-    .select({
-      sessionPlayerId: playerPayments.sessionPlayerId,
-      amountCents: playerPayments.amountCents,
-    })
-    .from(playerPayments)
-    .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-    .where(
-      and(
-        eq(expenses.sessionId, existing.id),
-        ne(playerPayments.status, "excluded")
-      )
-    );
-  const repaymentPrice = disclosedPlayerTotal(paymentRows);
-  const nextCost =
-    repaymentPrice ?? (parsed.data.costKind === "free" ? 0 : null);
-  const costChanged = existing.playerPriceCents !== nextCost;
-  const costMessage = costChanged
-    ? costChangeMessage(existing.playerPriceCents, nextCost)
-    : null;
   const changedFields = [
     existing.title !== parsed.data.title ? "title" : null,
     existing.accentColor !== parsed.data.accentColor ? "game accent" : null,
@@ -558,7 +559,6 @@ export async function updateSessionAction(
       : null,
     existing.capacity !== parsed.data.capacity ? "player limit" : null,
     existing.courtCount !== parsed.data.courtCount ? "courts" : null,
-    costChanged ? "player price" : null,
     existing.visibility !== parsed.data.visibility ? "visibility" : null,
     existing.notes !== (parsed.data.notes ?? null) ? "notes" : null,
     Boolean(existing.bookedAt) !== parsed.data.booked ||
@@ -615,7 +615,6 @@ export async function updateSessionAction(
           capacity: parsed.data.capacity,
           courtCount: parsed.data.courtCount,
           notes: parsed.data.notes ?? null,
-          playerPriceCents: nextCost,
           visibility: parsed.data.visibility,
           requiresApproval: parsed.data.requiresApproval,
           bookedAt: parsed.data.booked
@@ -674,8 +673,7 @@ export async function updateSessionAction(
           sessionId: existing.id,
           authorId: user.id,
           kind: "system",
-          body:
-            costMessage ?? `Game details updated: ${changedFields.join(", ")}.`,
+          body: `Game details updated: ${changedFields.join(", ")}.`,
         });
         const participants = await tx
           .select({ userId: sessionPlayers.userId })
@@ -693,10 +691,8 @@ export async function updateSessionAction(
             recipients.map((userId) => ({
               userId,
               sessionId: existing.id,
-              type: costMessage
-                ? "session_cost_changed"
-                : "session_details_changed",
-              payload: { fields: changedFields, body: costMessage },
+              type: "session_details_changed",
+              payload: { fields: changedFields },
             }))
           );
       }

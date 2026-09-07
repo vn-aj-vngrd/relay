@@ -456,6 +456,11 @@ test("an authenticated host and guest can complete the core session flow", async
         await page.getByRole("option", { name: "7:00 PM" }).click();
         await page.getByRole("combobox", { name: "End time" }).fill("21:00");
         await page.getByRole("combobox", { name: "End time" }).press("Tab");
+        const clearEndTime = page.getByRole("button", {
+          name: "Clear end time",
+        });
+        await check(clearEndTime).toBeFocused();
+        await clearEndTime.press("Tab");
         await check(
           page.getByRole("combobox", { name: "End time" })
         ).toHaveValue("9:00 PM");
@@ -573,6 +578,11 @@ test("an authenticated host and guest can complete the core session flow", async
         ).toEqual([]);
         for (const path of ["", "/players", "/play", "/chat", "/payments"]) {
           await page.goto(`/games/${sessionId}${path}`);
+          await check(page).toHaveURL(
+            new RegExp(
+              `/games/${sessionId}${path === "/players" ? "/play\\?panel=players" : path}$`
+            )
+          );
           await page
             .getByRole("button", { name: "More game actions", exact: true })
             .click();
@@ -691,12 +701,38 @@ test("an authenticated host and guest can complete the core session flow", async
       ).toBeVisible({ timeout: 15_000 });
 
       await page.goto(`/games/${sessionId}/payments`);
-      await page.locator("#total").fill("300");
-      await page.locator("#details").fill("0917 123 4567 · Relay host");
+      const setupPayments = page.getByRole("link", { name: "Set up payments" });
+      await check(setupPayments).toHaveAttribute(
+        "href",
+        `/games/${sessionId}/settings?section=payments#player-payment`
+      );
+      await setupPayments.click();
+      await page.getByRole("button", { name: "Payment choice" }).click();
+      await page.getByRole("option", { name: "Collect payment" }).click();
+      await page.getByLabel("Total amount").fill("300");
       await page
-        .locator("#expense-receipt")
+        .getByLabel("Payment details")
+        .fill("0917 123 4567 · Relay host");
+      await page.getByRole("button", { name: "Save payment settings" }).click();
+      const paymentSettings = page
+        .locator("#player-payment")
+        .getByRole("article");
+      await check(paymentSettings.getByLabel("Total amount")).toHaveAttribute(
+        "readonly",
+        ""
+      );
+      await paymentSettings
+        .getByLabel("Receipt (optional)", { exact: true })
         .setInputFiles("e2e/fixtures/payment-proof.png");
-      await page.getByRole("button", { name: "Create collection" }).click();
+      await paymentSettings
+        .getByRole("button", { name: "Save payment settings" })
+        .click();
+      await check(
+        paymentSettings.getByText("Payment settings saved.")
+      ).toBeVisible();
+      await page
+        .getByRole("link", { name: "View payments", exact: true })
+        .click();
       await check(
         page.getByText("Host · paid the full amount upfront")
       ).toBeVisible({ timeout: 15_000 });

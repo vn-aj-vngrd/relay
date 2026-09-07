@@ -182,10 +182,10 @@ describe("SessionSettingsForm", () => {
     expect(
       screen.getByText(/Sets the cover, active tabs, and actions/)
     ).toBeVisible();
-    expect(screen.getByText("₱300.00 per player")).toBeVisible();
-    expect(container.querySelector('input[name="costKind"]')).toHaveValue(
-      "unspecified"
-    );
+    expect(screen.queryByText("₱300.00 per player")).not.toBeInTheDocument();
+    expect(
+      container.querySelector('input[name="costKind"]')
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("spinbutton", { name: /player price/i })
     ).not.toBeInTheDocument();

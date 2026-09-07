@@ -12,7 +12,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 
 1. A visitor selects **Plan a game** from the landing page or public product shell; authentication is not required yet.
 2. Completes **Plan**: name, court, date, and time.
-3. Completes **Players and access**: capacity, court count, visibility, and approval behavior. Payment starts unset.
+3. Completes **Players and access**: capacity, court count, visibility, and approval behavior. Optional Player payment defaults to Decide later (unset), or the host chooses Free or Collect payment and adds the expense, total, method, and details.
 4. Optionally completes **Details**: color, player note, booking status, reference, total, and booking notes. Relay states that these can be added later.
 5. Uses the read-only **Review** stage, with Edit actions returning to each earlier stage.
 6. From Review, a signed-out visitor authenticates to establish ownership; Relay restores the local draft, publishes once, and lands on the session overview with a share link.
@@ -25,7 +25,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 
 1. Host follows the venue's external booking link.
 2. Returns and marks the session booked with optional courts, reference, screenshot, total, and notes.
-3. When the host creates a payment collection, Relay pre-fills its total from the recorded booking total; the host can confirm or change it before submission.
+3. In Game settings → Payments, when the host adds another payment collection, Relay pre-fills its total from the recorded booking total; the host can confirm or change it before submission.
 4. Relay divides included expenses among included players, preserving explicit overrides. Relay totals each player’s assigned shares across collections; the highest current total becomes the public per-player amount so the listing never understates payment.
 5. Player marks payment sent; host confirms it.
 
@@ -162,3 +162,9 @@ Every mutation authenticates or validates a scoped guest token, loads the target
 - Expense splits use currently included payers when recalculated; confirmed amounts never change silently.
 - Winner-stays and king-of-court rules are session configuration with visible plain-language summaries.
 - A host cannot leave until ownership transfers or the session is cancelled.
+
+### Payment configuration boundary
+
+Creation and Game settings → Payments share repayment setup fields. A creation collection is persisted with its payment account atomically with the game; the host paid upfront and is excluded. With no eligible players, the share remains pending and the listing price stays unset, not Free. Joining reconciles shares and public discovery waits for a stated price. Signed-out drafts retain only serializable fields; QR and receipt images are added in settings and never saved locally.
+
+Settings is the ongoing configuration home, including Free corrections and collection/share changes. Payments tracks repayments, accepts proof, and lets organizers review and confirm, with direct setup/edit links. Existing collections block switching to Free or Decide later because Relay has no cancellation/refund workflow. No records are erased. Any existing player share, including unpaid or excluded shares, prevents collection-total edits; payment instructions remain correctable. This conservative limit avoids replacing manual amounts without override provenance. Payment follow-up stays available after completion and closes on cancellation.

@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle, X } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useActionState, useEffect, useId, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -18,6 +19,7 @@ export function CreatedGameShare({
   details,
   inviteeCount,
   qrEnabled,
+  pendingPublicPrice = false,
 }: {
   sessionId: string;
   title: string;
@@ -25,6 +27,7 @@ export function CreatedGameShare({
   details: string;
   inviteeCount: number;
   qrEnabled: boolean;
+  pendingPublicPrice?: boolean;
 }) {
   const [state, dismissAction, pending] = useActionState(
     dismissCreatedGameShare,
@@ -72,6 +75,19 @@ export function CreatedGameShare({
                     ? "Share the link or show the QR so players can view the plan and RSVP."
                     : "This private game is visible only to Relay players you invite."}
               </p>
+              {pendingPublicPrice ? (
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Your public game can be shared now. It will appear in Open
+                  games once a player price is available. Collecting payment?
+                  The player share is calculated when players join.{" "}
+                  <Link
+                    href={`/games/${sessionId}/settings?section=payments#player-payment`}
+                    className="font-semibold text-primary"
+                  >
+                    Edit payment settings
+                  </Link>
+                </p>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 {qrEnabled ? (
                   <>

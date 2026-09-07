@@ -128,6 +128,32 @@ describe("ComboboxField", () => {
     );
   });
 
+  it("closes and formats a typed value when focus leaves through Clear", () => {
+    render(
+      <ComboboxField
+        id="end"
+        label="End time"
+        options={[{ value: "21:00", label: "9:00 PM" }]}
+        value="21:00"
+        onValueChange={vi.fn()}
+        resolveOption={() => ({ value: "21:00", label: "9:00 PM" })}
+        clearable
+      />
+    );
+    const input = screen.getByRole("combobox", { name: "End time" });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "21:00" } });
+    const clear = screen.getByRole("button", { name: "Clear end time" });
+    fireEvent.blur(input, { relatedTarget: clear });
+    expect(input).toHaveValue("21:00");
+    expect(screen.getByRole("listbox")).toBeInTheDocument();
+
+    fireEvent.blur(clear, { relatedTarget: document.body });
+    expect(input).toHaveValue("9:00 PM");
+    expect(input).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
   it("shows a useful empty state and restores the selected label on Escape", () => {
     render(<ControlledCombobox />);
     const input = screen.getByRole("combobox", { name: "Court" });

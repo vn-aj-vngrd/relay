@@ -8,7 +8,7 @@ Read this before adding dependencies, changing TypeScript or Ultracite/Biome con
 - Biome owns formatting, linting, import organization, and other safe source assists.
 - TypeScript runs in strict mode through `tsconfig.json`; it remains the type-aware gate so Biome can keep its subsecond repository scan.
 - Vitest uses a Node project for logic tests and a jsdom project for component tests.
-- Playwright validates complete browser workflows manually.
+- Playwright validates complete browser workflows only when explicitly requested by the user.
 
 Generated SQL, Drizzle snapshots, the lockfile, build output, reports, public assets, and binary assets are excluded from Biome. Review generated migrations directly instead of rewriting them mechanically.
 
@@ -34,7 +34,9 @@ At handoff, report which validation ran and which checks remain deferred to pre-
 
 `pnpm check:full` runs the complete Ultracite/Biome check, strict typecheck, full test suite, and production build. CI independently runs this coverage.
 
-At pre-commit, also run `pnpm test:e2e` when a route, form, authorization rule, responsive workflow, or browser interaction changes. If required credentials or services are unavailable, report the blocker rather than claiming verification.
+Unit tests are a mandatory part of the code quality gate. Add or update unit tests for changed behavior; the full unit suite must pass before committing code.
+
+E2E is excluded from the required pre-commit gate. Follow the opt-in E2E rule in `AGENTS.md`: add or run E2E only when explicitly requested by the user. Otherwise, missing E2E results or credentials do not block agent handoff or committing.
 
 **Complete when:** validation is proportional to risk, changed behavior has useful targeted tests, no suppression hides a fixable problem, and the handoff names any checks deferred to CI.
 

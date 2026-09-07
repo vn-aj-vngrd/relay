@@ -2,6 +2,7 @@
 
 import { CaretDown, Check, X } from "@phosphor-icons/react";
 import {
+  type FocusEvent,
   type KeyboardEvent,
   type ReactNode,
   useEffect,
@@ -165,6 +166,13 @@ export function ComboboxField({
     }
   }
 
+  function handleBlur(event: FocusEvent<HTMLElement>) {
+    if (!rootRef.current?.contains(event.relatedTarget)) {
+      setOpen(false);
+      if (value) setDraft(null);
+    }
+  }
+
   return (
     <div ref={rootRef} className={`relative min-w-0 ${className}`}>
       <label htmlFor={id} className="block text-sm font-[650]">
@@ -206,12 +214,7 @@ export function ComboboxField({
             );
           }}
           onClick={() => setOpen(true)}
-          onBlur={(event) => {
-            if (!rootRef.current?.contains(event.relatedTarget)) {
-              setOpen(false);
-              if (value) setDraft(null);
-            }
-          }}
+          onBlur={handleBlur}
           onChange={(event) => {
             const text = event.target.value;
             const nextValue = resolveOption?.(text)?.value ?? "";
@@ -227,6 +230,7 @@ export function ComboboxField({
           <button
             type="button"
             aria-label={`Clear ${label.toLowerCase()}`}
+            onBlur={handleBlur}
             onClick={() => {
               setDraft(null);
               onValueChange("");

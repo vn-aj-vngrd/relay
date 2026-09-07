@@ -21,25 +21,19 @@ import {
 } from "@/db/schema";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
-import {
-  confirmPayment,
-  togglePaymentExcluded,
-} from "@/features/payments/actions";
-import {
-  CreateExpenseForm,
-  PaymentAmountForm,
-  PaymentProofRequestForm,
-} from "@/features/payments/payment-management-forms";
+import { confirmPayment } from "@/features/payments/actions";
+import { PaymentProofRequestForm } from "@/features/payments/payment-management-forms";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { peso } from "@/features/sessions/format";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-function paymentLabel(status: string, requested: boolean) {
+function paymentLabel(status: string, requested: boolean, amountCents: number) {
   if (status === "confirmed") return "Paid";
   if (status === "sent") return "Proof sent";
   if (status === "excluded") return "Not included";
+  if (amountCents === 0) return "No payment due";
   return requested ? "New proof requested" : "Unpaid";
 }
 
@@ -164,6 +158,23 @@ export default async function PaymentsPage({
   return (
     <>
       <GamePageIntro title={canManagePayments ? "Payments" : "Your payment"} />
+      {canManagePayments || canCreateExpense ? (
+        <ButtonLink
+          href={`/games/${sessionId}/settings?section=payments#player-payment`}
+          variant="secondary"
+          className="mb-6"
+        >
+          {sessionExpenses.length || data.session.playerPriceCents === 0
+            ? "Edit payment settings"
+            : "Set up payments"}
+        </ButtonLink>
+      ) : null}
+      {sessionExpenses.length && data.session.playerPriceCents == null ? (
+        <p className="mb-6 text-sm text-muted">
+          Player share will be calculated when players join. Payment collection
+          is set up; the public listing waits for a player price.
+        </p>
+      ) : null}
       {cancelled ? (
         <p
           role="status"
@@ -174,12 +185,16 @@ export default async function PaymentsPage({
         </p>
       ) : null}
       {sessionExpenses.length ? (
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="max-w-3xl">
           <section className="min-w-0 space-y-10">
-            {sessionExpenses.map(({ expense }) => {
+            {sessionExpenses.map(({ expense, account }) => {
               const expensePayments = visiblePayments.filter(
                 (row) => row.expense.id === expense.id
               );
+              const unassigned =
+                !canManagePayments &&
+                user.id !== data.session.hostId &&
+                expensePayments.length === 0;
               const confirmed = expensePayments.filter(
                 (row) => row.payment.status === "confirmed"
               ).length;
@@ -188,7 +203,7 @@ export default async function PaymentsPage({
                   <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
                     <div>
                       <p className="text-sm capitalize text-muted">
-                        {expense.kind.replaceAll("_", " ")}
+                        {expense.label}
                       </p>
                       <p className="score mt-1 text-3xl font-bold">
                         {peso(expense.totalCents)}{" "}
@@ -197,9 +212,11 @@ export default async function PaymentsPage({
                         </span>
                       </p>
                     </div>
-                    <p className="text-sm text-muted">
-                      {confirmed} of {expensePayments.length} paid
-                    </p>
+                    {!unassigned ? (
+                      <p className="text-sm text-muted">
+                        {confirmed} of {expensePayments.length} paid
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex min-h-16 items-center gap-3 border-b border-line py-3">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-sm font-bold text-primary">
@@ -239,46 +256,16 @@ export default async function PaymentsPage({
                                 ) : (
                                   <CircleDashed aria-hidden size={16} />
                                 )}
-                                {paymentLabel(payment.status, requested)}
+                                {paymentLabel(
+                                  payment.status,
+                                  requested,
+                                  payment.amountCents
+                                )}
                               </span>
                             </div>
-                            {canManagePayments &&
-                            payment.status !== "sent" &&
-                            payment.status !== "confirmed" ? (
-                              <details className="mt-2">
-                                <summary className="pressable inline-flex min-h-9 cursor-pointer items-center rounded-lg px-3 text-[13px] font-[600] leading-none text-muted hover:bg-surface-strong hover:text-ink">
-                                  Adjust player share
-                                </summary>
-                                <div className="mt-2 flex flex-wrap items-center gap-2">
-                                  <PaymentAmountForm
-                                    paymentId={payment.id}
-                                    name={name}
-                                    amount={payment.amountCents / 100}
-                                  />
-                                  <form
-                                    noValidate
-                                    action={togglePaymentExcluded}
-                                  >
-                                    <input
-                                      type="hidden"
-                                      name="paymentId"
-                                      value={payment.id}
-                                    />
-                                    <SubmitButton
-                                      pendingLabel="Updating…"
-                                      variant="quiet"
-                                      className="min-h-9"
-                                    >
-                                      {payment.status === "excluded"
-                                        ? "Include"
-                                        : "Exclude"}
-                                    </SubmitButton>
-                                  </form>
-                                </div>
-                              </details>
-                            ) : null}
                             {!cancelled &&
                             own &&
+                            payment.amountCents > 0 &&
                             payment.status === "unpaid" ? (
                               <PaymentProofForm
                                 paymentId={payment.id}
@@ -345,75 +332,80 @@ export default async function PaymentsPage({
                       }
                     )}
                   </ul>
+                  {unassigned ? (
+                    <section className="mt-5 border-t border-line py-5">
+                      <h2 className="font-bold">No share assigned to you</h2>
+                      <p className="mt-2 text-sm text-muted">
+                        {data.session.playerPriceCents == null
+                          ? "Player share will be calculated when players join. Payment collection is set up."
+                          : "You have no assigned share in the current collection. Ask the host if you need to be included."}
+                      </p>
+                    </section>
+                  ) : (
+                    <section className="mt-5 border-t border-line py-5">
+                      <CurrencyCircleDollar
+                        className="text-primary"
+                        size={20}
+                      />
+                      <h2 className="mt-4 font-bold">Repay the host</h2>
+                      <p className="mt-2 text-sm font-medium">
+                        {account?.method}
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-muted">
+                        {account?.details}
+                      </p>
+                      {account && qrUrls.get(account.id) ? (
+                        <Image
+                          src={qrUrls.get(account.id)!}
+                          alt={`${account.method} payment QR`}
+                          width={240}
+                          height={240}
+                          className="mt-4 aspect-square w-full max-w-60 rounded-lg border border-line object-contain"
+                        />
+                      ) : null}
+                      {receiptUrls.get(expense.id) ? (
+                        <a
+                          href={receiptUrls.get(expense.id)!}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-5 flex items-center gap-3 border-t border-line pt-4"
+                        >
+                          <Image
+                            src={receiptUrls.get(expense.id)!}
+                            alt="Receipt uploaded by the host"
+                            width={48}
+                            height={48}
+                            className="h-12 w-12 rounded-md border border-line object-cover"
+                          />
+                          <span>
+                            <strong className="block text-sm">
+                              View host receipt
+                            </strong>
+                            <span className="mt-0.5 block text-xs text-muted">
+                              Proof the expense was paid upfront
+                            </span>
+                          </span>
+                        </a>
+                      ) : null}
+                      <p className="mt-5 border-t border-line pt-4 text-xs leading-5 text-muted">
+                        {user.id === data.session.hostId
+                          ? "Players send their shares and upload proof. Review each screenshot before confirming payment."
+                          : "Send your share to the host, then upload one screenshot. The host reviews it before Relay marks you paid."}
+                      </p>
+                    </section>
+                  )}
                 </article>
               );
             })}
           </section>
-          <aside className="self-start rounded-lg border border-line bg-surface p-5 lg:sticky lg:top-6">
-            <CurrencyCircleDollar className="text-primary" size={20} />
-            <h2 className="mt-4 font-bold">Repay the host</h2>
-            <p className="mt-2 text-sm font-medium">
-              {sessionExpenses[0].account?.method}
-            </p>
-            <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-muted">
-              {sessionExpenses[0].account?.details}
-            </p>
-            {sessionExpenses[0].account &&
-            qrUrls.get(sessionExpenses[0].account.id) ? (
-              <Image
-                src={qrUrls.get(sessionExpenses[0].account.id)!}
-                alt={`${sessionExpenses[0].account.method} payment QR`}
-                width={240}
-                height={240}
-                className="mt-4 aspect-square w-full rounded-lg border border-line object-contain"
-              />
-            ) : null}
-            {receiptUrls.get(sessionExpenses[0].expense.id) ? (
-              <a
-                href={receiptUrls.get(sessionExpenses[0].expense.id)!}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 flex items-center gap-3 border-t border-line pt-4"
-              >
-                <Image
-                  src={receiptUrls.get(sessionExpenses[0].expense.id)!}
-                  alt="Receipt uploaded by the host"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12 rounded-md border border-line object-cover"
-                />
-                <span>
-                  <strong className="block text-sm">View host receipt</strong>
-                  <span className="mt-0.5 block text-xs text-muted">
-                    Proof the expense was paid upfront
-                  </span>
-                </span>
-              </a>
-            ) : null}
-            <p className="mt-5 border-t border-line pt-4 text-xs leading-5 text-muted">
-              Send your share to the host, then upload one screenshot. The host
-              reviews it before Relay marks you paid.
-            </p>
-          </aside>
         </div>
-      ) : canCreateExpense ? (
-        <section className="mx-auto max-w-xl py-4 sm:py-10">
-          <CurrencyCircleDollar className="text-primary" size={20} />
-          <h2 className="mt-4 text-xl font-bold">Collect player shares</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            You paid the expense upfront. Relay divides it among the other
-            players, then helps you review repayments.
-          </p>
-          <CreateExpenseForm
-            sessionId={sessionId}
-            bookingTotalCents={data.session.bookingTotalCents}
-          />
-        </section>
       ) : (
         <section className="mx-auto max-w-xl py-4 sm:py-14">
           <CircleDashed className="text-primary" />
           <h2 className="mt-4 text-xl font-bold">
-            Payment details aren’t set up
+            {data.session.playerPriceCents === 0
+              ? "Free game"
+              : "Payment details aren’t set up"}
           </h2>
           <p className="mt-2 text-pretty text-muted">
             {data.session.playerPriceCents === 0

@@ -11,6 +11,13 @@ import {
   TimeComboboxField,
 } from "@/components/ui/date-time-picker";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
+import { PlayerPaymentFields } from "@/features/payments/payment-setup-fields";
+import {
+  paymentChoiceSummary,
+  paymentSetupInput,
+  paymentSetupSchema,
+  serializableCreationValues,
+} from "@/features/payments/setup";
 import {
   type CourtSuggestion,
   VenueCombobox,
@@ -34,7 +41,7 @@ const anonymousDraftStorageKey = "relay-game-draft-v1";
 
 const stepFields: Record<number, string[]> = {
   1: ["title", "venue", "date", "start", "end"],
-  2: ["capacity", "courts", "visibility"],
+  2: ["capacity", "courts", "visibility", "costKind"],
   3: ["notes", "booked", "bookingReference", "bookingTotal", "bookingNotes"],
 };
 
@@ -225,7 +232,11 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
         : values.visibility === "private"
           ? "Private · Invited players only"
           : "Anyone with the link",
-    cost: "Payment not set up yet",
+    cost:
+      paymentChoiceSummary(values.costKind) +
+      (values.costKind === "collect"
+        ? ` · ${values.label} · ₱${values.total} total · ${values.method} · ${values.details}`
+        : ""),
     details:
       values.notes || (values.accentColor && values.accentColor !== "violet")
         ? "Optional game details added"
@@ -299,9 +310,11 @@ function CreateSessionFormContent({
 
   function focusField(field: string) {
     window.requestAnimationFrame(() => {
-      const target = formRef.current?.querySelector<HTMLElement>(
-        `[name="${field}"], #${field}`
-      );
+      const target =
+        document.getElementById(field) ??
+        formRef.current?.querySelector<HTMLElement>(
+          `[name="${field}"]:not([type="hidden"])`
+        );
       target?.focus();
     });
   }
@@ -309,12 +322,7 @@ function CreateSessionFormContent({
   function continueAfterAuthentication(destination: "login" | "signup") {
     const form = formRef.current;
     if (!form) return;
-    const values = Object.fromEntries(
-      Array.from(new FormData(form).entries(), ([key, entry]) => [
-        key,
-        String(entry),
-      ])
-    );
+    const values = serializableCreationValues(new FormData(form));
     localStorage.setItem(
       anonymousDraftStorageKey,
       JSON.stringify({ version: 1, values })
@@ -374,6 +382,12 @@ function CreateSessionFormContent({
   function continueFromAccess() {
     const data = new FormData(formRef.current!);
     const errors = validateAccess(data);
+    if (
+      data.get("costKind") === "collect" &&
+      !paymentSetupSchema.safeParse(paymentSetupInput(data)).success
+    )
+      errors.costKind =
+        "Complete the expense, total, method, and payment details, or choose Decide later.";
     setClientErrors(errors);
     const first = Object.keys(errors)[0];
     if (first) return focusField(first);
@@ -390,7 +404,11 @@ function CreateSessionFormContent({
           : visibility === "link"
             ? "Anyone with the link"
             : "Private · Invited players only",
-      cost: "Payment not set up yet",
+      cost:
+        paymentChoiceSummary(String(data.get("costKind"))) +
+        (data.get("costKind") === "collect"
+          ? ` · ${data.get("label")} · ₱${data.get("total")} total · ${data.get("method")} · ${data.get("details")}`
+          : ""),
       details: "No optional details added",
       booking: "Booking details not added",
     });
@@ -787,10 +805,14 @@ function CreateSessionFormContent({
             ))}
           </div>
         </fieldset>
-        <input type="hidden" name="costKind" value="unspecified" />
-        <p className="text-sm leading-6 text-muted">
-          Payment starts unset. After publishing, add a repayment collection or
-          mark the game Free from game settings.
+        <PlayerPaymentFields defaults={state.values ?? initialValues} />
+        <FieldError
+          id="costKind-error"
+          message={errorFor(state, clientErrors, "costKind")}
+        />
+        <p className="text-sm text-muted">
+          Manage payments later in Game settings. Add optional QR images and
+          receipts there; uploads are never saved in this browser draft.
         </p>
         <label className="flex min-h-12 cursor-pointer items-start gap-3">
           <input
@@ -1048,11 +1070,11 @@ function CreateSessionFormContent({
               </button>
             </div>
             <div className="flex items-start justify-between gap-4 py-4">
-              <div>
+              <div className="min-w-0">
                 <h3 className="font-semibold">Players and access</h3>
                 <p className="mt-1 text-sm text-muted">{review.setup}</p>
                 <p className="mt-1 text-sm text-muted">{review.access}</p>
-                <p className="mt-1 text-sm font-medium text-ink">
+                <p className="mt-1 break-words text-sm font-medium text-ink">
                   {review.cost}
                 </p>
               </div>
