@@ -164,14 +164,15 @@ export default async function GroupPage({
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-semibold">
-                        {session.title}
-                      </h3>
-                      <GameStatusChip
-                        status={session.status}
-                        endsAt={session.endsAt}
-                        className="mt-1"
-                      />
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h3 className="min-w-0 truncate font-semibold">
+                          {session.title}
+                        </h3>
+                        <GameStatusChip
+                          status={session.status}
+                          endsAt={session.endsAt}
+                        />
+                      </div>
                       <p className="mt-1 truncate text-sm text-muted">
                         {formatSessionDate(session.startsAt)} ·{" "}
                         {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
@@ -240,15 +241,15 @@ export default async function GroupPage({
                         </div>
                       )}
                       <div className="p-4">
+                        <GameStatusChip
+                          status={session.status}
+                          endsAt={session.endsAt}
+                          className="mb-2"
+                        />
                         <p className="truncate font-semibold">
                           {session.title}
                           <Tooltip content={session.title} />
                         </p>
-                        <GameStatusChip
-                          status={session.status}
-                          endsAt={session.endsAt}
-                          className="mt-1"
-                        />
                         <p className="mt-1 text-sm text-muted">
                           {session.venueName}
                         </p>

@@ -353,12 +353,10 @@ function GameList({
               {game.date}
             </time>
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-[650]">{game.title}</h3>
-              <GameStatusChip
-                status={game.status}
-                endsAt={game.endsAt}
-                className="mt-1"
-              />
+              <div className="flex min-w-0 items-center gap-2">
+                <h3 className="min-w-0 truncate font-[650]">{game.title}</h3>
+                <GameStatusChip status={game.status} endsAt={game.endsAt} />
+              </div>
               <p className="mt-1 truncate text-[13px] text-muted sm:text-sm">
                 <time className="score font-bold text-primary sm:hidden">
                   {game.date}

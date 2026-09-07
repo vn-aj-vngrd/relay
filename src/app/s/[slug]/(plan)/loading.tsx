@@ -92,6 +92,7 @@ export default function PublicPlanLoading() {
                 <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
                 <Skeleton className="h-3 w-36 bg-white/15" />
                 <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
+                <Skeleton className="mt-3 h-6 w-20 rounded-full bg-white/15" />
                 <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
               </div>
               <div className="border-b border-line px-4 py-3 lg:hidden">

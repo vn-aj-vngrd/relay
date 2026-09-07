@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  sessionHero: vi.fn(),
   getSessionForWorkspace: vi.fn(),
 }));
 
@@ -28,7 +29,10 @@ vi.mock("@/features/sessions/created-game-share", () => ({
   CreatedGameShare: () => null,
 }));
 vi.mock("@/features/sessions/session-summary", () => ({
-  SessionHero: () => <h2>Ended game</h2>,
+  SessionHero: (props: unknown) => {
+    mocks.sessionHero(props);
+    return <h2>Ended game</h2>;
+  },
   SessionPlanDetails: () => null,
 }));
 vi.mock("@/features/sessions/session-overview", () => ({
@@ -75,6 +79,11 @@ describe("Game overview lifecycle", () => {
       );
 
       expect(screen.getByRole("heading", { name: "Overview" })).toBeVisible();
+      expect(mocks.sessionHero).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lifecycle: { status: "completed", endsAt: expect.any(Date) },
+        })
+      );
       expect(
         screen.getAllByRole("region", { name: "Game ended" })
       ).toHaveLength(1);

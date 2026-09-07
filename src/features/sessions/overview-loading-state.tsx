@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 import { useGameLifecycle } from "./game-lifecycle-context";
+import { GameStatusChip } from "./game-status";
 import { SessionAtAGlanceSkeleton } from "./session-overview";
 
 function FinalRosterSkeleton({ shared }: { shared: boolean }) {
@@ -88,6 +89,9 @@ export function OverviewLoadingState({
             <div className="public-session-hero relative min-h-44 overflow-hidden bg-[var(--session-cover,var(--court))] px-4 pb-6 pt-5 sm:min-h-48 sm:px-8 sm:pb-10 sm:pt-7">
               <Skeleton className="h-3 w-40 bg-white/15" />
               <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
+              <div className="relative mt-3">
+                <GameStatusChip status={status} />
+              </div>
               <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
             </div>
             <div

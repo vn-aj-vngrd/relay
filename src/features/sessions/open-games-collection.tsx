@@ -161,12 +161,10 @@ function OpenGameRow({
             className="h-7 w-1 shrink-0 rounded-full bg-primary"
           />
           <div className="min-w-0">
-            <h2 className="truncate font-[680]">{game.title}</h2>
-            <GameStatusChip
-              status={game.status}
-              endsAt={game.endsAt}
-              className="mt-1"
-            />
+            <div className="flex min-w-0 items-center gap-2">
+              <h2 className="min-w-0 truncate font-[680]">{game.title}</h2>
+              <GameStatusChip status={game.status} endsAt={game.endsAt} />
+            </div>
             <p className="mt-1 truncate text-sm text-muted">
               Hosted by {game.hostName}
             </p>
@@ -231,18 +229,14 @@ function OpenGameCard({
           <time className="score text-xs font-bold text-primary">
             {game.date}
           </time>
-          <span className="score text-right text-xs text-muted">
-            {game.playerCount} / {game.capacity}
-          </span>
+          <GameStatusChip status={game.status} endsAt={game.endsAt} />
         </div>
         <h2 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 group-hover:text-primary sm:mt-5 sm:text-lg sm:leading-normal">
           {game.title}
         </h2>
-        <GameStatusChip
-          status={game.status}
-          endsAt={game.endsAt}
-          className="mt-2"
-        />
+        <p className="score mt-2 text-xs text-muted">
+          {game.playerCount} / {game.capacity}
+        </p>
         <p className="mt-1 text-xs text-muted">Hosted by {game.hostName}</p>
         <div className="mt-3 space-y-1.5 text-[13px] text-muted sm:space-y-2 sm:text-sm">
           <p className="flex min-w-0 items-center gap-2">

@@ -5,6 +5,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -139,6 +140,10 @@ describe("GameCollection", () => {
       />
     );
     expect(screen.getByTestId("games-list")).toBeVisible();
+    const title = screen.getByRole("heading", { name: game.title });
+    expect(within(title.parentElement!).getByText("Upcoming")).toBeVisible();
+    expect(title.parentElement).toHaveClass("flex", "gap-2");
+    expect(title).not.toHaveClass("flex-1");
     expect(
       screen
         .getByRole("link", { name: /Saturday Night Pickle/ })
@@ -150,6 +155,15 @@ describe("GameCollection", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
+    const chip = within(
+      screen.getByRole("link", { name: /Saturday Night Pickle/ })
+    ).getByText("Upcoming");
+    expect(chip.parentElement?.parentElement).toContainElement(
+      screen.getByText(game.date)
+    );
+    expect(chip.parentElement?.parentElement).not.toContainElement(
+      screen.getByRole("heading", { name: game.title })
+    );
     expect(screen.getByTestId("games-grid").querySelector(".grid")).toHaveClass(
       "min-[380px]:grid-cols-2"
     );

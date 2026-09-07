@@ -1,10 +1,6 @@
 import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import {
-  type GameLifecycleStatus,
-  GameStatusChip,
-} from "@/features/sessions/game-status";
 
 import { Brand } from "./brand";
 import { PublicSessionNav } from "./public-session-nav";
@@ -15,14 +11,12 @@ export function PublicSessionHeader({
   gameHref,
   accentColor,
   gameTitle,
-  lifecycle,
 }: {
   slug: string;
   signedIn: boolean;
   gameHref?: string;
   accentColor?: string | null;
   gameTitle?: string;
-  lifecycle?: { status: GameLifecycleStatus; endsAt: string };
 }) {
   const destination =
     gameHref ?? (signedIn ? "/home" : `/login?next=/s/${slug}`);
@@ -43,7 +37,6 @@ export function PublicSessionHeader({
               </p>
             ) : null}
           </div>
-          {lifecycle ? <GameStatusChip {...lifecycle} /> : null}
           <ButtonLink
             href={destination}
             variant={signedIn ? "primary" : "secondary"}

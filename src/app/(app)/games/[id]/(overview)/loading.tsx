@@ -21,6 +21,7 @@ export default function SessionLoading() {
             <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
             <Skeleton className="h-3 w-40 bg-white/15" />
             <Skeleton className="mt-3 h-8 w-3/4 bg-white/15 sm:mt-4 sm:h-10" />
+            <Skeleton className="mt-3 h-6 w-20 rounded-full bg-white/15" />
             <Skeleton className="mt-2 h-5 w-32 bg-white/15 sm:mt-3 sm:h-6" />
           </div>
           <div className="border-b border-line px-4 py-5 lg:hidden">

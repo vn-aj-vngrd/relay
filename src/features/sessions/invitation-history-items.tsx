@@ -65,7 +65,7 @@ export function InvitationHistoryItems({
             className={
               compact
                 ? "flex min-h-[4.5rem] flex-wrap items-center gap-4 py-3.5 sm:min-h-20 sm:px-3 sm:py-4"
-                : "rounded-xl border border-line bg-surface p-4 sm:p-5"
+                : "min-w-0 rounded-xl border border-line bg-surface p-4 sm:p-5"
             }
           >
             {compact ? (
@@ -73,12 +73,27 @@ export function InvitationHistoryItems({
                 {game.date}
               </time>
             ) : null}
+            {!compact ? (
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <time className="score text-xs font-bold text-primary">
+                  {game.date}
+                </time>
+                <GameStatusChip status={game.status} endsAt={game.endsAt} />
+              </div>
+            ) : null}
             <div className="min-w-0 flex-1">
-              <h3 className="font-[650]">
-                <Link href={game.href} className="hover:text-primary">
-                  {game.title}
-                </Link>
-              </h3>
+              <div className="flex min-w-0 items-center gap-2">
+                <h3
+                  className={`min-w-0 font-[650] ${compact ? "truncate" : "break-words"}`}
+                >
+                  <Link href={game.href} className="hover:text-primary">
+                    {game.title}
+                  </Link>
+                </h3>
+                {compact ? (
+                  <GameStatusChip status={game.status} endsAt={game.endsAt} />
+                ) : null}
+              </div>
               <p className="mt-1 text-sm text-muted">
                 {game.date} · {game.time} · {game.venue}
               </p>
@@ -93,9 +108,8 @@ export function InvitationHistoryItems({
                   : "mt-4 text-sm font-semibold text-muted"
               }
             >
-              <GameStatusChip status={game.status} endsAt={game.endsAt} />
               {invitationHistoryLabel(game) ? (
-                <span className="ml-2">{invitationHistoryLabel(game)}</span>
+                <span>{invitationHistoryLabel(game)}</span>
               ) : null}
             </p>
             {game.status === "completed" ? (

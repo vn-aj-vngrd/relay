@@ -217,6 +217,7 @@ export default async function PublicSessionPage({
           <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
             <SessionHero
               session={session}
+              lifecycle={{ status: session.status, endsAt: session.endsAt }}
               hostLabel={`Hosted by ${hostProfile?.name ?? "the host"}`}
               headingLevel="h2"
             />

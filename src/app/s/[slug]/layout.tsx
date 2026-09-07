@@ -47,14 +47,6 @@ export default async function PublicSessionLayout({
           }
           accentColor={data?.session.accentColor}
           gameTitle={data?.session.title}
-          lifecycle={
-            data
-              ? {
-                  status: data.session.status,
-                  endsAt: data.session.endsAt.toISOString(),
-                }
-              : undefined
-          }
         />
         <div className="public-session-tab-content min-h-0 flex-1 bg-surface">
           {children}

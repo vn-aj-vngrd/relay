@@ -10,6 +10,7 @@ import { Tooltip } from "@/components/ui/tooltip";
 import type { sessions } from "@/db/schema";
 
 import { formatSessionDateLong, formatSessionTime, peso } from "./format";
+import { type GameLifecycleStatus, GameStatusChip } from "./game-status";
 
 type SessionSummary = typeof sessions.$inferSelect;
 type SessionHeroData = Pick<SessionSummary, "startsAt" | "title">;
@@ -28,10 +29,12 @@ type SessionPlanData = Pick<
 export function SessionHero({
   session,
   hostLabel,
+  lifecycle,
   headingLevel = "h1",
 }: {
   session: SessionHeroData;
   hostLabel: string;
+  lifecycle?: { status: GameLifecycleStatus; endsAt: Date | string };
   headingLevel?: "h1" | "h2";
 }) {
   const Heading = headingLevel;
@@ -50,6 +53,11 @@ export function SessionHero({
         {session.title}
         <Tooltip content={session.title} />
       </Heading>
+      {lifecycle ? (
+        <div className="relative mt-3">
+          <GameStatusChip {...lifecycle} />
+        </div>
+      ) : null}
       <p className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base">
         {hostLabel}
         <Tooltip content={hostLabel} />

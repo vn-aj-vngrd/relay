@@ -24,6 +24,9 @@ describe("OverviewLoadingState", () => {
         screen.getByText("Joining is closed. View the recap for this game.")
       ).toBeVisible();
       const card = screen.getByRole("article");
+      expect(card.querySelector(".public-session-hero")).toContainElement(
+        screen.getByText("Ended")
+      );
       const roster = screen.getByRole("region", { name: "Final roster" });
       expect(card.contains(roster)).toBe(shared);
       if (!shared)

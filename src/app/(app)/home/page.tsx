@@ -131,22 +131,6 @@ export default async function HomePage() {
                     status={next.session.status}
                     endsAt={next.session.endsAt}
                   />
-                  {!nextIsLive ? (
-                    <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
-                      <span
-                        className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
-                      />
-                      {nextIsLive
-                        ? "Live now"
-                        : nextReadiness
-                          ? playSetupNextAction(nextReadiness)
-                          : next.session.bookedAt
-                            ? "Court confirmed"
-                            : next.session.bookingNotRequired
-                              ? "No booking needed"
-                              : "Booking pending"}
-                    </span>
-                  ) : null}
                 </div>
                 <h3 className="max-w-xl truncate text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl">
                   {next.session.title}
@@ -159,6 +143,22 @@ export default async function HomePage() {
                     next.session.endsAt
                   )}
                 </p>
+                {!nextIsLive ? (
+                  <span className="mt-3 inline-flex items-center gap-2 text-sm font-[650] text-white/75">
+                    <span
+                      className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
+                    />
+                    {nextIsLive
+                      ? "Live now"
+                      : nextReadiness
+                        ? playSetupNextAction(nextReadiness)
+                        : next.session.bookedAt
+                          ? "Court confirmed"
+                          : next.session.bookingNotRequired
+                            ? "No booking needed"
+                            : "Booking pending"}
+                  </span>
+                ) : null}
                 <div className="court-rule mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t pt-5">
                   <span className="inline-flex items-center gap-2 text-sm text-white/75">
                     <Users size={16} />
@@ -341,14 +341,15 @@ export default async function HomePage() {
                       size={20}
                     />
                     <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-semibold">
-                        {session.title}
-                      </h3>
-                      <GameStatusChip
-                        status={session.status}
-                        endsAt={session.endsAt}
-                        className="mt-1"
-                      />
+                      <div className="flex min-w-0 items-center gap-2">
+                        <h3 className="min-w-0 truncate font-semibold">
+                          {session.title}
+                        </h3>
+                        <GameStatusChip
+                          status={session.status}
+                          endsAt={session.endsAt}
+                        />
+                      </div>
                       <p className="mt-1 truncate text-sm text-muted">
                         <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
                         {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
@@ -406,15 +407,16 @@ export default async function HomePage() {
               >
                 <MapPin className="shrink-0 text-primary" size={19} />
                 <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold">
-                    {session.title}
-                    <Tooltip content={session.title} />
-                  </h3>
-                  <GameStatusChip
-                    status={session.status}
-                    endsAt={session.endsAt}
-                    className="mt-1"
-                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="min-w-0 truncate font-semibold">
+                      {session.title}
+                      <Tooltip content={session.title} />
+                    </h3>
+                    <GameStatusChip
+                      status={session.status}
+                      endsAt={session.endsAt}
+                    />
+                  </div>
                   <p className="mt-1 text-sm text-muted">
                     {formatSessionDate(session.startsAt)} · {session.venueName}{" "}
                     · {playerCount} players

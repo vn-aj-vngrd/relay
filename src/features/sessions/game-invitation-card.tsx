@@ -95,29 +95,39 @@ export function GameInvitationCard({
       className={
         compact
           ? "py-4 sm:px-3 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(18rem,auto)] lg:items-center lg:gap-6"
-          : "rounded-xl border border-line bg-surface p-4 sm:p-5"
+          : "min-w-0 rounded-xl border border-line bg-surface p-4 sm:p-5"
       }
     >
       <div className="min-w-0">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <Link
-              href={game.href}
-              prefetch={false}
-              className="line-clamp-2 font-[680] text-ink underline-offset-4 hover:text-primary hover:underline"
-            >
-              {game.title}
-            </Link>
-            <GameStatusChip
-              status={game.status}
-              endsAt={game.endsAt}
-              className="mt-1"
-            />
+        {!compact ? (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <time className="score text-xs font-bold text-primary">
+              {game.date}
+            </time>
+            <GameStatusChip status={game.status} endsAt={game.endsAt} />
+          </div>
+        ) : null}
+        <div className="flex min-w-0 flex-wrap items-start gap-3">
+          <div className="min-w-0 flex-[1_1_12rem]">
+            <div className="flex min-w-0 items-center gap-2">
+              <Link
+                href={game.href}
+                prefetch={false}
+                className={`${compact ? "truncate" : "line-clamp-2 break-words"} min-w-0 font-[680] text-ink underline-offset-4 hover:text-primary hover:underline`}
+              >
+                {game.title}
+              </Link>
+              {compact ? (
+                <GameStatusChip status={game.status} endsAt={game.endsAt} />
+              ) : null}
+            </div>
             <p className="mt-1 text-sm text-muted">Hosted by {game.hostName}</p>
           </div>
-          <time className="score shrink-0 text-xs font-bold text-primary">
-            {game.date}
-          </time>
+          {compact ? (
+            <time className="score shrink-0 text-xs font-bold text-primary">
+              {game.date}
+            </time>
+          ) : null}
         </div>
         <ul className="mt-4 grid gap-2 text-sm text-muted sm:grid-cols-2">
           <li className="flex min-w-0 items-center gap-2">

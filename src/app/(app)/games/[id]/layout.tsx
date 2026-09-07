@@ -39,10 +39,6 @@ export default async function GameWorkspaceLayout({
         <GameWorkspaceFrame
           sessionId={id}
           sessionTitle={data.session.title}
-          lifecycle={{
-            status: data.session.status,
-            endsAt: data.session.endsAt.toISOString(),
-          }}
           sessionSlug={data.session.slug}
           canManage={canManage}
           qrEnabled={data.session.visibility !== "private"}

@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  sessionHero: vi.fn(),
   getPublicSession: vi.fn(),
   getCurrentUser: vi.fn(),
   getSessionViewer: vi.fn(),
@@ -27,7 +28,10 @@ vi.mock("@/features/sessions/overview", () => ({
   }),
 }));
 vi.mock("@/features/sessions/session-summary", () => ({
-  SessionHero: () => <h2>Friends</h2>,
+  SessionHero: (props: unknown) => {
+    mocks.sessionHero(props);
+    return <h2>Friends</h2>;
+  },
   SessionPlanDetails: () => null,
 }));
 vi.mock("@/features/sessions/session-overview", () => ({
@@ -137,6 +141,11 @@ describe("shared completed Overview", () => {
         await PublicSessionPage({
           params: Promise.resolve({ slug: "friends" }),
           searchParams: Promise.resolve({}),
+        })
+      );
+      expect(mocks.sessionHero).toHaveBeenCalledWith(
+        expect.objectContaining({
+          lifecycle: { status: "completed", endsAt: expect.any(Date) },
         })
       );
       expect(

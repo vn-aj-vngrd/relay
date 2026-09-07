@@ -10,6 +10,9 @@ vi.mock("@/components/shared/authenticated-session-nav", () => ({
   AuthenticatedSessionNav: () => <div>Desktop game tabs</div>,
   MobileAuthenticatedSessionNav: () => <div>Mobile game tabs</div>,
 }));
+vi.mock("./game-status", () => ({
+  GameStatusChip: () => <span>Unexpected toolbar chip</span>,
+}));
 vi.mock("./game-workspace-actions", () => ({
   GameWorkspaceActions: () => <div>Game actions</div>,
 }));
@@ -63,6 +66,9 @@ describe("GameWorkspaceFrame", () => {
     expect(screen.getByText("Desktop game tabs")).toBeInTheDocument();
     expect(screen.getByText("Mobile game tabs")).toBeInTheDocument();
     expect(screen.getAllByText("Game actions")).toHaveLength(2);
+    expect(
+      screen.queryByText("Unexpected toolbar chip")
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Play status")).toBeInTheDocument();
   });
 

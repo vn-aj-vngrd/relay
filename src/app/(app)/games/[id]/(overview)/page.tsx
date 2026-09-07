@@ -84,6 +84,7 @@ export default async function GameOverviewPage({
           <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
             <SessionHero
               session={session}
+              lifecycle={{ status: session.status, endsAt: session.endsAt }}
               hostLabel={`Hosted by ${hostName}`}
               headingLevel="h2"
             />
@@ -296,6 +297,7 @@ export default async function GameOverviewPage({
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <SessionHero
             session={session}
+            lifecycle={{ status: session.status, endsAt: session.endsAt }}
             hostLabel={
               session.hostId === user.id
                 ? "Hosted by you"

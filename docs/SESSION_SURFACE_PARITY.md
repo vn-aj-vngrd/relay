@@ -70,7 +70,7 @@ Before Play, hosts confirm an unresolved court booking in a compact dialog, then
 
 Completed Overview has one non-dismissible **Game ended** action banner above details on both access paths, not a repeated notice on every tab. View recap stays in the current route family; only the original host receives Play again. Payment follow-up requires the destination’s existing participant capability. Authorized nonparticipants may browse Open games. The final roster labels Going responses without asserting attendance; completed and cancelled shared previews have no joining or availability invitations.
 
-The persistent game identity uses the shared lifecycle chip; Overview does not repeat it in its hero or completion banner. Published schedules that have elapsed say Published, not Ended; live games remain Live until the persisted lifecycle changes. Layout-provided authorized lifecycle context lets Overview’s loading state use completion geometry without an RSVP placeholder or an additional subscription.
+The Overview hero uses one shared lifecycle chip directly below the game name and before the host label on both access paths. Game navigation, Share/Edit chrome, and the completion banner do not repeat it. Published schedules that have elapsed say Published, not Ended; live games remain Live until the persisted lifecycle changes. Layout-provided authorized lifecycle context lets Overview’s loading state use completion geometry without an RSVP placeholder or an additional subscription.
 
 ## Loading and realtime
 
