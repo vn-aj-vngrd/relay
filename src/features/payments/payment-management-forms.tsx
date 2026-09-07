@@ -8,7 +8,6 @@ import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import {
-  createExpenseState,
   requestNewPaymentProofState,
   updateExpenseState,
   updatePaymentChoiceState,
@@ -87,8 +86,7 @@ export function PaymentAmountForm({
         Save adjustment
       </SubmitButton>
       <p className="basis-full text-xs text-muted">
-        Discounts and waivers apply immediately. Increases need the player’s
-        agreement before the amount changes.
+        Reductions apply now. Increases need the player’s agreement.
       </p>
       {state.success ? (
         <div className="basis-full">
@@ -143,39 +141,6 @@ export function PaymentProofRequestForm({ paymentId }: { paymentId: string }) {
   );
 }
 
-export function CreateExpenseForm({
-  sessionId,
-  bookingTotalCents,
-  contributionMode,
-}: {
-  sessionId: string;
-  bookingTotalCents: number | null;
-  contributionMode?: "split" | "fixed";
-}) {
-  const [state, action] = useActionState(createExpenseState, {});
-  const preserveValues = usePreserveFormValuesOnError(state);
-  return (
-    <form
-      noValidate
-      action={action}
-      onSubmitCapture={preserveValues}
-      className="mt-7 space-y-4"
-    >
-      {state.error ? <Alert>{state.error}</Alert> : null}
-      <input type="hidden" name="sessionId" value={sessionId} />
-      <PaymentSetupFields
-        bookingTotalCents={bookingTotalCents}
-        defaults={contributionMode ? { contributionMode } : {}}
-        contributionReadOnly={Boolean(contributionMode)}
-      />
-      <PaymentUploadFields />
-      <SubmitButton pendingLabel="Creating collection…" className="w-full">
-        Create collection
-      </SubmitButton>
-    </form>
-  );
-}
-
 export function PaymentChoiceForm({
   sessionId,
   price,
@@ -200,10 +165,16 @@ export function PaymentChoiceForm({
         <Alert variant="success">Payment settings saved.</Alert>
       ) : null}
       <PlayerPaymentFields
+        expanded
         defaults={{ costKind: price === 0 ? "free" : "unspecified" }}
         bookingTotalCents={bookingTotalCents}
       />
-      <SubmitButton pendingLabel="Saving…">Save payment settings</SubmitButton>
+      <SubmitButton
+        pendingLabel="Saving…"
+        className="w-full sm:w-auto sm:self-start"
+      >
+        Save payment settings
+      </SubmitButton>
     </form>
   );
 }
@@ -236,19 +207,36 @@ export function EditExpenseForm({
       {state.success ? (
         <Alert variant="success">Payment settings saved.</Alert>
       ) : null}
+      {totalReadOnly || contributionReadOnly ? (
+        <p className="max-w-prose text-sm text-muted">
+          {totalReadOnly
+            ? "Player shares are already assigned. Adjust individual amounts in the Payments tab."
+            : "The split type is locked to match this game’s existing payment setup."}
+        </p>
+      ) : null}
       <PaymentSetupFields
+        expanded
         defaults={defaults}
         totalReadOnly={totalReadOnly}
         contributionReadOnly={contributionReadOnly}
       />
-      <PaymentUploadFields />
-      <p className="text-sm text-muted">
-        Once player shares exist, the expense breakdown, contribution method,
-        and fixed rate are read-only to protect the agreed price. Payment
-        details and images remain editable. Existing receipts and QR images are
-        kept unless you choose a replacement.
-      </p>
-      <SubmitButton pendingLabel="Saving…">Save payment settings</SubmitButton>
+      <details className="border-t border-line pt-3">
+        <summary className="min-h-9 cursor-pointer py-2 text-sm font-medium">
+          QR code and receipt (optional)
+        </summary>
+        <div className="space-y-3 pt-3">
+          <PaymentUploadFields />
+          <p className="text-xs text-muted">
+            Existing images are kept unless replaced.
+          </p>
+        </div>
+      </details>
+      <SubmitButton
+        pendingLabel="Saving…"
+        className="w-full sm:w-auto sm:self-start"
+      >
+        Save payment settings
+      </SubmitButton>
     </form>
   );
 }
@@ -352,19 +340,19 @@ export function PaymentAdjustmentResponse({
 function PaymentUploadFields() {
   const id = useId();
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-2 lg:gap-8">
       <ImageFileField
         id={`${id}-payment-qr`}
         name="qr"
         label="Payment QR (optional)"
-        hint="Players can scan this to repay you."
+        hint="Players scan this to pay."
         buttonLabel="Choose QR image"
       />
       <ImageFileField
         id={`${id}-expense-receipt`}
         name="receipt"
         label="Receipt (optional)"
-        hint="Show players that you already paid for the court or shared expense."
+        hint="Proof of the upfront expense."
         buttonLabel="Choose receipt"
       />
     </div>

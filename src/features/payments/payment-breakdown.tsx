@@ -11,6 +11,23 @@ export function paymentMoney(cents: number) {
   return currency.format(cents / 100);
 }
 
+export function PaymentSplitType({
+  expense,
+}: {
+  expense: Pick<
+    typeof expenses.$inferSelect,
+    "contributionMode" | "fixedRateCents"
+  >;
+}) {
+  return (
+    <p className="text-sm text-muted">
+      {expense.contributionMode === "fixed"
+        ? `${paymentMoney(expense.fixedRateCents ?? 0)} per player · Fixed amount`
+        : "Split equally"}
+    </p>
+  );
+}
+
 export function PaymentBreakdown({
   expense,
 }: {
@@ -23,7 +40,7 @@ export function PaymentBreakdown({
     ? expense.items
     : [{ label: expense.label, amountCents: expense.totalCents }];
   return (
-    <div className="flex flex-col gap-2 py-3 text-sm">
+    <div className="flex flex-col gap-2 text-sm">
       <p className="font-semibold">Expense breakdown</p>
       <ul className="flex flex-col gap-2">
         {items.map((item, index) => (
@@ -38,33 +55,67 @@ export function PaymentBreakdown({
           </li>
         ))}
       </ul>
-      <p className="text-muted">
-        {expense.contributionMode === "fixed"
-          ? `${paymentMoney(expense.fixedRateCents ?? 0)} per player · Fixed contribution, independent of expense total.`
-          : "Split expenses · Automatic shares can change with the roster until payment review begins."}
-      </p>
     </div>
   );
 }
 
-export function CollectionBalance({
+export function PaymentCollectionProgress({
   expenseTotalCents,
-  expectedCents,
+  payments,
 }: {
   expenseTotalCents: number;
-  expectedCents: number;
+  payments: Pick<
+    typeof playerPayments.$inferSelect,
+    "amountCents" | "status"
+  >[];
 }) {
-  const difference = expectedCents - expenseTotalCents;
+  const included = payments.filter((payment) => payment.status !== "excluded");
+  const assigned = included.reduce(
+    (sum, payment) => sum + payment.amountCents,
+    0
+  );
+  const paid = included.reduce(
+    (sum, payment) =>
+      sum + (payment.status === "confirmed" ? payment.amountCents : 0),
+    0
+  );
+  const remaining = assigned - paid;
+  const difference = assigned - expenseTotalCents;
   return (
-    <p className="text-sm text-muted">
-      Expected from assigned players: {paymentMoney(expectedCents)}.{" "}
-      {difference < 0
-        ? `Host shortfall: ${paymentMoney(-difference)}.`
-        : difference > 0
-          ? `Surplus above expenses: ${paymentMoney(difference)}.`
-          : "Matches the expense total."}{" "}
-      This is not a paid balance.
-    </p>
+    <section aria-label="Payment progress" className="space-y-3 text-sm">
+      <dl className="space-y-2">
+        <div className="flex justify-between gap-4 text-muted">
+          <dt>Player total</dt>
+          <dd className="score shrink-0">{paymentMoney(assigned)}</dd>
+        </div>
+        <div className="flex justify-between gap-4 text-muted">
+          <dt>Paid</dt>
+          <dd className="score shrink-0">{paymentMoney(paid)}</dd>
+        </div>
+        <div
+          className={`flex justify-between gap-4 border-t border-line pt-3 font-semibold ${remaining === 0 && assigned > 0 ? "text-success" : ""}`}
+        >
+          <dt>Left to pay</dt>
+          <dd className="score shrink-0">{paymentMoney(remaining)}</dd>
+        </div>
+      </dl>
+      <p className="text-xs text-muted">
+        {!included.length
+          ? "No player shares assigned yet."
+          : assigned === 0
+            ? "No payment due."
+            : remaining === 0
+              ? "All player payments confirmed."
+              : "Only confirmed payments count as paid."}
+      </p>
+      {included.length > 0 && difference !== 0 ? (
+        <p className="text-xs text-muted">
+          {difference < 0
+            ? `Host covers ${paymentMoney(-difference)} beyond player shares.`
+            : `Player shares are ${paymentMoney(difference)} above expenses.`}
+        </p>
+      ) : null}
+    </section>
   );
 }
 

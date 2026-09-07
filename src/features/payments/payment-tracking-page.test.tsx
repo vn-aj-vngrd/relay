@@ -10,9 +10,14 @@ vi.mock("@/features/auth/session", () => ({ requireUser: mocks.user }));
 vi.mock("@/features/sessions/queries", () => ({
   getSessionForWorkspace: mocks.workspace,
 }));
-vi.mock("@/features/payments/actions", () => ({ confirmPayment: vi.fn() }));
+vi.mock("@/features/payments/actions", () => ({
+  confirmPayment: vi.fn(),
+  togglePaymentExcluded: vi.fn(),
+}));
 vi.mock("@/features/payments/payment-management-forms", () => ({
   PaymentProofRequestForm: () => null,
+  PaymentAmountForm: () => <p>Amount editor</p>,
+  AssignPlayerShareForm: () => <p>Assign share</p>,
 }));
 vi.mock("@/features/payments/payment-proof-form", () => ({
   PaymentProofForm: () => <p>Payment screenshot</p>,
@@ -70,6 +75,37 @@ function collections(assigned: boolean) {
 }
 
 describe("authenticated collection tracking", () => {
+  it("renders the host profile photo using the roster avatar", async () => {
+    mocks.workspace.mockResolvedValue({
+      ...workspace,
+      roster: [
+        {
+          player: { role: "host" },
+          profile: {
+            name: "Host",
+            avatarPath:
+              "https://relay.supabase.co/storage/v1/object/public/avatars/host-avatar.png",
+          },
+        },
+      ],
+    });
+    collections(true);
+    render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+    const avatar = screen.getByRole("img", { name: "Host" });
+    expect(avatar.querySelector("img")).toHaveAttribute(
+      "src",
+      expect.stringContaining("host-avatar.png")
+    );
+  });
+
+  it("falls back to initials when the host has no profile photo", async () => {
+    collections(true);
+    render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+    const avatar = screen.getByRole("img", { name: "Host" });
+    expect(avatar).toHaveTextContent("H");
+    expect(avatar.querySelector("img")).toBeNull();
+  });
+
   it("places the host's primary setup action inside the empty state", async () => {
     mocks.user.mockResolvedValue({ id: "host" });
     mocks.workspace.mockResolvedValue({
@@ -90,7 +126,7 @@ describe("authenticated collection tracking", () => {
       "/games/game/settings?section=payments#player-payment"
     );
     expect(
-      screen.getByText("Add your expenses and choose how players contribute.")
+      screen.getByText("Add expenses and choose how players split the cost.")
     ).toBeVisible();
     expect(
       screen.getAllByRole("link", { name: "Set up payments" })
@@ -114,7 +150,7 @@ describe("authenticated collection tracking", () => {
     });
     mocks.rows.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
     render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
-    const action = screen.getByRole("link", { name: "Edit payment settings" });
+    const action = screen.getByRole("link", { name: "Edit payment" });
     expect(
       screen.getByRole("heading", { name: "Free game" }).closest("section")
     ).toContainElement(action);
@@ -140,10 +176,10 @@ describe("authenticated collection tracking", () => {
       ).toBeVisible();
       expect(screen.queryByText("0 of 0 paid")).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("heading", { name: "Repay the host" })
+        screen.queryByRole("heading", { name: "Payment details" })
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByText(/Send your share to the host/)
+        screen.queryByText("Pay the host, then upload proof.")
       ).not.toBeInTheDocument();
       expect(screen.queryByText("Host account")).not.toBeInTheDocument();
     }
@@ -162,7 +198,7 @@ describe("authenticated collection tracking", () => {
       )
     ).toBeVisible();
     expect(
-      screen.queryByText(/Send your share to the host/)
+      screen.queryByText("Pay the host, then upload proof.")
     ).not.toBeInTheDocument();
   });
 
@@ -170,7 +206,7 @@ describe("authenticated collection tracking", () => {
     collections(true);
     render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
     expect(
-      screen.getByRole("heading", { name: "Repay the host" })
+      screen.getByRole("heading", { name: "Payment details" })
     ).toBeVisible();
     expect(screen.getByText("0 of 1 paid")).toBeVisible();
     expect(screen.getByText("Payment screenshot")).toBeVisible();
@@ -185,9 +221,27 @@ describe("authenticated collection tracking", () => {
     collections(false);
     render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
     expect(screen.getByText("0 of 1 paid")).toBeVisible();
+    const collectionHeading = screen.getByRole("heading", { name: "Court" });
+    expect(collectionHeading).toBeVisible();
+    const settingsLink = screen.getByRole("link", { name: "Edit payment" });
+    expect(collectionHeading.closest("header")).toContainElement(settingsLink);
+    expect(settingsLink).toHaveAttribute(
+      "href",
+      "/games/game/settings?section=payments#player-payment"
+    );
     expect(
-      screen.getByText(/Players send their shares and upload proof/)
+      screen.getByRole("heading", { name: "Player payments" })
     ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Payment details" })
+    ).toBeVisible();
+    expect(screen.getByText("Split equally")).toBeVisible();
+    const adjustment = screen.getByText("Adjust amount").closest("details");
+    expect(adjustment).not.toHaveAttribute("open");
+    expect(adjustment).toContainElement(screen.getByText("Amount editor"));
+    expect(
+      screen.queryByText("Pay the host, then upload proof.")
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "No share assigned to you" })
     ).not.toBeInTheDocument();

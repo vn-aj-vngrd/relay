@@ -9,10 +9,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db/client";
-import { expenses, paymentAccounts, playerPayments } from "@/db/schema";
+import {
+  expenses,
+  paymentAccounts,
+  playerPayments,
+  sessionPlayers,
+} from "@/db/schema";
 import {
   PaymentAdjustmentDetails,
   PaymentBreakdown,
+  PaymentCollectionProgress,
+  PaymentSplitType,
   paymentMoney as peso,
 } from "@/features/payments/payment-breakdown";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
@@ -65,6 +72,7 @@ export default async function PublicPaymentsPage({
       expense: expenses,
       account: paymentAccounts,
       payment: playerPayments,
+      playerUserId: sessionPlayers.userId,
     })
     .from(expenses)
     .leftJoin(
@@ -72,6 +80,10 @@ export default async function PublicPaymentsPage({
       eq(expenses.paymentAccountId, paymentAccounts.id)
     )
     .leftJoin(playerPayments, eq(playerPayments.expenseId, expenses.id))
+    .leftJoin(
+      sessionPlayers,
+      eq(playerPayments.sessionPlayerId, sessionPlayers.id)
+    )
     .where(eq(expenses.sessionId, data.session.id));
   const ownRows = rows.filter(
     ({ payment }) => payment?.sessionPlayerId === viewer!.player.id
@@ -119,48 +131,29 @@ export default async function PublicPaymentsPage({
               payment ? (
                 <section
                   key={payment.id}
-                  className="public-session-section grid min-w-0 gap-6 border-y border-line sm:grid-cols-[minmax(0,1fr)_220px]"
+                  className="public-session-section grid min-w-0 gap-6 border-y border-line lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8"
                 >
-                  <div className="min-w-0">
-                    <p className="text-sm capitalize text-muted">
+                  <header className="min-w-0 border-b border-line pb-5 lg:col-span-2">
+                    <h2 className="break-words text-lg font-semibold">
                       {expense.label}
+                    </h2>
+                    <p className="score mt-1 text-2xl font-bold">
+                      {peso(expense.totalCents)}{" "}
+                      <span className="text-base font-medium text-muted">
+                        total
+                      </span>
                     </p>
-                    <p className="score mt-1 text-3xl font-bold">
+                    <PaymentSplitType expense={expense} />
+                  </header>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold">Your payment</h3>
+                    <p className="score mt-2 text-xl font-semibold">
                       {peso(payment.amountCents)}
                     </p>
-                    <PaymentBreakdown expense={expense} />
                     <PaymentAdjustmentDetails
                       payment={payment}
                       canRespond={!cancelled}
                     />
-                    {payment.amountCents > 0 &&
-                    payment.status !== "excluded" &&
-                    !payment.pendingAdjustment ? (
-                      <div className="mt-5 border-t border-line pt-4">
-                        <p className="text-sm font-semibold">
-                          {account?.method ?? "Payment method"}
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
-                          {account?.details ??
-                            "Ask the host for payment details."}
-                        </p>
-                        <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-                          Pay the amount shown through the host’s listed app or
-                          bank, then upload one screenshot. Relay never moves
-                          the money.
-                        </p>
-                        {receiptUrl ? (
-                          <a
-                            href={receiptUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-primary"
-                          >
-                            View host receipt
-                          </a>
-                        ) : null}
-                      </div>
-                    ) : null}
                     <div className="mt-5">
                       {payment.status === "confirmed" ? (
                         <p className="inline-flex items-center gap-2 text-sm font-semibold text-success">
@@ -198,23 +191,63 @@ export default async function PublicPaymentsPage({
                       )}
                     </div>
                   </div>
-                  {qrUrl &&
-                  payment.amountCents > 0 &&
-                  payment.status !== "excluded" &&
-                  !payment.pendingAdjustment ? (
-                    <div>
-                      <Image
-                        src={qrUrl}
-                        alt={`${account?.method ?? "Payment"} QR`}
-                        width={220}
-                        height={220}
-                        className="aspect-square w-full rounded-lg bg-white object-contain"
-                      />
-                      <p className="mt-2 text-center text-xs text-muted">
-                        Scan to pay
-                      </p>
-                    </div>
-                  ) : null}
+                  <div className="min-w-0 space-y-6 border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                    <PaymentBreakdown expense={expense} />
+                    <PaymentCollectionProgress
+                      expenseTotalCents={expense.totalCents}
+                      payments={rows.flatMap((row) =>
+                        row.expense.id === expense.id &&
+                        row.payment &&
+                        row.playerUserId !== data.session.hostId
+                          ? [row.payment]
+                          : []
+                      )}
+                    />
+                    {payment.amountCents > 0 &&
+                    payment.status !== "excluded" &&
+                    !payment.pendingAdjustment ? (
+                      <section className="border-t border-line pt-5">
+                        <h3 className="font-semibold">Payment details</h3>
+                        <p className="mt-2 text-sm font-medium">
+                          {account?.method ?? "Payment method"}
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-muted">
+                          {account?.details ??
+                            "Ask the host for payment details."}
+                        </p>
+                        <p className="mt-3 text-xs leading-5 text-muted">
+                          Pay the host, then upload proof.
+                        </p>
+                        {receiptUrl ? (
+                          <a
+                            href={receiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-primary"
+                          >
+                            View host receipt
+                          </a>
+                        ) : null}
+                      </section>
+                    ) : null}
+                    {qrUrl &&
+                    payment.amountCents > 0 &&
+                    payment.status !== "excluded" &&
+                    !payment.pendingAdjustment ? (
+                      <div>
+                        <Image
+                          src={qrUrl}
+                          alt={`${account?.method ?? "Payment"} QR`}
+                          width={220}
+                          height={220}
+                          className="aspect-square w-full max-w-60 rounded-lg bg-white object-contain"
+                        />
+                        <p className="mt-2 max-w-60 text-center text-xs text-muted">
+                          Scan to pay
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
                 </section>
               ) : null
             )}

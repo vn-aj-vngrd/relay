@@ -42,11 +42,27 @@ describe("collection setup fields", () => {
       JSON.stringify(parsed.items)
     );
   });
+  it("submits one complete collection from the expanded settings layout", () => {
+    const { container } = render(
+      <form>
+        <PaymentSetupFields expanded defaults={defaults} />
+      </form>
+    );
+    fireEvent.change(screen.getByLabelText("Payment details"), {
+      target: { value: "Updated host account" },
+    });
+    const data = new FormData(container.querySelector("form")!);
+    expect(screen.queryByLabelText("Collection name")).not.toBeInTheDocument();
+    expect(data.get("label")).toBe("Game expenses");
+    expect(data.getAll("total")).toEqual(["1200"]);
+    expect(data.getAll("details")).toEqual(["Updated host account"]);
+    expect(paymentSetupSchema.parse(paymentSetupInput(data)).items).toEqual([
+      { label: "Game expenses", amountCents: 120000 },
+    ]);
+  });
   it("reveals a fixed rate without using roster capacity as an estimate", () => {
     render(<PaymentSetupFields defaults={defaults} />);
-    fireEvent.click(
-      screen.getByRole("button", { name: "How players contribute" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Split type" }));
     fireEvent.click(
       screen.getByRole("option", { name: "Fixed amount per player" })
     );
@@ -54,7 +70,7 @@ describe("collection setup fields", () => {
       null
     );
     expect(
-      screen.getByText(/advertised price before players join/)
+      screen.getByText("Same price for each player. You cover any shortfall.")
     ).toBeVisible();
   });
   it("restores fixed pricing and expense items", () => {
@@ -87,20 +103,21 @@ describe("collection setup fields", () => {
     expect(data.get("costKind")).toBe("unspecified");
     expect(data.has("items")).toBe(false);
   });
-  it("locks amounts and method without hiding instructions", () => {
+  it("allows breakdown edits while keeping the fixed player rate locked", () => {
     render(
       <PaymentSetupFields
         defaults={{ ...defaults, contributionMode: "fixed", fixedRate: "300" }}
         totalReadOnly
       />
     );
-    expect(screen.getByLabelText("Amount (₱)")).toHaveAttribute("readonly");
+    expect(screen.getByLabelText("Amount (₱)")).not.toHaveAttribute("readonly");
     expect(
       screen.getByLabelText("Fixed amount per player (₱)")
     ).toHaveAttribute("readonly");
-    expect(
-      screen.queryByRole("button", { name: "Add expense" })
-    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Add expense" }));
+    expect(screen.getByLabelText("Expense 2")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Remove expense 2" }));
+    expect(screen.queryByLabelText("Expense 2")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Payment details")).not.toHaveAttribute(
       "readonly"
     );

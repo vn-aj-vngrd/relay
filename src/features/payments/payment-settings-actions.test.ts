@@ -59,6 +59,7 @@ vi.mock("@/db/client", () => ({
 }));
 
 import {
+  createExpenseState,
   updateExpenseState,
   updatePaymentChoiceState,
   updatePlayerPaymentAmountState,
@@ -84,6 +85,35 @@ beforeEach(() => {
   mocks.expense.mockResolvedValue(null);
   mocks.set.mockReturnValue({ where: vi.fn() });
   mocks.rows.mockResolvedValue([{ userId: "player", leftAt: null }]);
+});
+
+describe("single payment setup", () => {
+  it.each(["split", "fixed"])(
+    "rejects another %s payment under the session lock",
+    async (contributionMode) => {
+      mocks.rows.mockResolvedValue([
+        { id: "existing-payment", contributionMode },
+      ]);
+      const data = form("collect");
+      data.set("label", "Game expenses");
+      data.set("total", "1200");
+      data.set(
+        "items",
+        JSON.stringify([{ label: "Court", amountCents: 120000 }])
+      );
+      data.set("contributionMode", contributionMode);
+      data.set("fixedRate", "300");
+      data.set("method", "GCash");
+      data.set("details", "Host account");
+      expect(await createExpenseState({}, data)).toEqual({
+        error:
+          "Payment is already set up. Edit the existing payment settings instead.",
+      });
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(mocks.set).not.toHaveBeenCalled();
+      expect(mocks.reconcile).not.toHaveBeenCalled();
+    }
+  );
 });
 
 describe("payment choice persistence", () => {
@@ -312,6 +342,34 @@ describe("collection total safeguards", () => {
       session.id,
       "93cc7e69-556d-4476-b0a8-a66d77ef6a7c"
     );
+  });
+
+  it("allows itemizing an agreed total without changing existing paid shares", async () => {
+    mocks.expense.mockResolvedValue({
+      id: "expense",
+      label: "Court",
+      totalCents: 240000,
+      contributionMode: "split",
+      fixedRateCents: null,
+      items: [],
+    });
+    mocks.rows
+      .mockResolvedValue([])
+      .mockResolvedValueOnce([{ status: "confirmed", amountCents: 240000 }]);
+    mocks.insert.mockReturnValue({
+      returning: async () => [{ id: "account" }],
+    });
+    const data = expenseForm("2400");
+    const items = [
+      { label: "Court", amountCents: 200000 },
+      { label: "Equipment", amountCents: 40000 },
+    ];
+    data.set("items", JSON.stringify(items));
+    expect(await updateExpenseState({}, data)).toEqual({ success: true });
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({ items, totalCents: 240000 })
+    );
+    expect(mocks.reconcile).not.toHaveBeenCalled();
   });
 
   it("still corrects payment instructions without resplitting existing waived shares", async () => {

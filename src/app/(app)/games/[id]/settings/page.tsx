@@ -158,15 +158,6 @@ export default async function GameSettingsPage({
           session={data.session}
           collections={collections}
           payments={payments}
-          roster={activeRoster
-            .filter(
-              ({ player }) =>
-                player.rsvp === "going" && player.userId !== data.session.hostId
-            )
-            .map(({ player, profile }) => ({
-              id: player.id,
-              name: profile?.name ?? player.guestName ?? "Guest",
-            }))}
           isHost={data.session.hostId === user.id}
         />
       ) : section !== "organizers" ? (

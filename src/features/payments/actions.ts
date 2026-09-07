@@ -249,28 +249,10 @@ async function createExpense(formData: FormData) {
       .select()
       .from(expenses)
       .where(eq(expenses.sessionId, sessionId));
-    if (existingCollections.length >= 20)
-      throw new Error("A game can have at most 20 collections.");
-    if (
-      existingCollections.some(
-        (collection) =>
-          collection.contributionMode !== contribution.contributionMode
-      )
-    )
+    if (existingCollections.length)
       throw new Error(
-        "Use the same contribution method for every collection in this game."
+        "Payment is already set up. Edit the existing payment settings instead."
       );
-    if (contribution.contributionMode === "fixed") {
-      const existingShares = await tx
-        .select({ id: playerPayments.id })
-        .from(playerPayments)
-        .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-        .where(eq(expenses.sessionId, sessionId));
-      if (existingShares.length)
-        throw new Error(
-          "The fixed player price is already in use. Additional required collections cannot be added."
-        );
-    }
     const [account] = await tx
       .insert(paymentAccounts)
       .values({
@@ -1110,13 +1092,6 @@ export async function updateExpenseState(
         : [{ label: expense.label, amountCents: expense.totalCents }];
       if (!parsed.data.items && totalCents === expense.totalCents)
         contribution.items = oldItems;
-      if (
-        payments.length &&
-        JSON.stringify(contribution.items) !== JSON.stringify(oldItems)
-      )
-        throw new Error(
-          "The expense breakdown cannot change after player shares exist."
-        );
       // Accounts may be shared by older collections: copy rather than changing another game's instructions.
       const oldAccount = expense.paymentAccountId
         ? await tx.query.paymentAccounts.findFirst({
