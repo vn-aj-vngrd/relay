@@ -9,7 +9,6 @@ import {
   UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-
 import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { requireUser } from "@/features/auth/session";
@@ -22,6 +21,7 @@ import {
   sessionDateKey,
 } from "@/features/sessions/format";
 import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
+import { GameStatusChip } from "@/features/sessions/game-status";
 import { HomeInvitations } from "@/features/sessions/home-invitations";
 import {
   homeHeading,
@@ -123,24 +123,30 @@ export default async function HomePage() {
           <article className="overflow-hidden rounded-xl bg-[var(--session-cover)] text-white ring-1 ring-black/5">
             <div className="grid md:grid-cols-[1fr_260px]">
               <div className="p-5 sm:p-7">
-                <div className="mb-7 flex items-center justify-between">
+                <div className="mb-7 flex flex-wrap items-center justify-between gap-2">
                   <span className="sport-label text-white/65">
                     {formatSessionDate(next.session.startsAt)}
                   </span>
-                  <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
-                    <span
-                      className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
-                    />
-                    {nextIsLive
-                      ? "Live now"
-                      : nextReadiness
-                        ? playSetupNextAction(nextReadiness)
-                        : next.session.bookedAt
-                          ? "Court confirmed"
-                          : next.session.bookingNotRequired
-                            ? "No booking needed"
-                            : "Booking pending"}
-                  </span>
+                  <GameStatusChip
+                    status={next.session.status}
+                    endsAt={next.session.endsAt}
+                  />
+                  {!nextIsLive ? (
+                    <span className="inline-flex items-center gap-2 text-sm font-[650] text-white/75">
+                      <span
+                        className={`h-2 w-2 rounded-full ${nextIsLive ? "bg-live" : next.session.bookedAt ? "bg-signal" : "bg-white/35"}`}
+                      />
+                      {nextIsLive
+                        ? "Live now"
+                        : nextReadiness
+                          ? playSetupNextAction(nextReadiness)
+                          : next.session.bookedAt
+                            ? "Court confirmed"
+                            : next.session.bookingNotRequired
+                              ? "No booking needed"
+                              : "Booking pending"}
+                    </span>
+                  ) : null}
                 </div>
                 <h3 className="max-w-xl truncate text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl">
                   {next.session.title}
@@ -338,6 +344,11 @@ export default async function HomePage() {
                       <h3 className="truncate font-semibold">
                         {session.title}
                       </h3>
+                      <GameStatusChip
+                        status={session.status}
+                        endsAt={session.endsAt}
+                        className="mt-1"
+                      />
                       <p className="mt-1 truncate text-sm text-muted">
                         <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
                         {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
@@ -399,6 +410,11 @@ export default async function HomePage() {
                     {session.title}
                     <Tooltip content={session.title} />
                   </h3>
+                  <GameStatusChip
+                    status={session.status}
+                    endsAt={session.endsAt}
+                    className="mt-1"
+                  />
                   <p className="mt-1 text-sm text-muted">
                     {formatSessionDate(session.startsAt)} · {session.venueName}{" "}
                     · {playerCount} players

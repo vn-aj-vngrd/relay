@@ -22,10 +22,7 @@ describe("SessionOverviewStatus", () => {
       <SessionOverviewStatus {...base} status="completed" isHost canReplay />
     );
 
-    expect(screen.getByText("Game complete")).toBeVisible();
-    expect(
-      screen.getByRole("heading", { name: "Results are saved" })
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Game ended" })).toBeVisible();
     expect(screen.getByRole("link", { name: "View recap" })).toHaveAttribute(
       "href",
       `/games/${base.sessionId}/play`

@@ -75,11 +75,22 @@ describe("Game overview lifecycle", () => {
       );
 
       expect(screen.getByRole("heading", { name: "Overview" })).toBeVisible();
-      expect(screen.getAllByText("Game complete").length).toBeGreaterThan(0);
       expect(
-        screen.getAllByRole("link", { name: "View recap" })[0]
-      ).toHaveAttribute("href", "/games/game-1/play");
-      expect(screen.getByRole("heading", { name: "Who played" })).toBeVisible();
+        screen.getAllByRole("region", { name: "Game ended" })
+      ).toHaveLength(1);
+      expect(
+        screen.getByRole("link", { name: "Browse open games" })
+      ).toHaveAttribute("href", "/games/open");
+      expect(
+        screen.queryByRole("link", { name: "Play again" })
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "View recap" })).toHaveAttribute(
+        "href",
+        "/games/game-1/play"
+      );
+      expect(
+        screen.getByRole("heading", { name: "Final roster" })
+      ).toBeVisible();
       expect(screen.queryByText("Can you make it?")).not.toBeInTheDocument();
       expect(screen.queryByText("Awaiting approval")).not.toBeInTheDocument();
       expect(

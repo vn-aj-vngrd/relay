@@ -59,6 +59,8 @@ async function findGames(
       id: sessions.id,
       title: sessions.title,
       startsAt: sessions.startsAt,
+      endsAt: sessions.endsAt,
+      status: sessions.status,
       venueName: sessions.venueName,
       accentColor: sessions.accentColor,
       membershipId: sessionPlayers.id,
@@ -141,13 +143,19 @@ async function findGames(
       return {
         id: session.id,
         type: "games",
+        lifecycle: {
+          status: session.status,
+          endsAt: session.endsAt.toISOString(),
+        },
         title: session.title,
         subtitle: [
           formatSessionDate(session.startsAt),
           session.venueName,
           cost,
-          state,
-          session.requiresApproval && !session.membershipId
+          session.status === "completed" ? null : state,
+          session.status !== "completed" &&
+          session.requiresApproval &&
+          !session.membershipId
             ? "Approval required"
             : null,
         ]

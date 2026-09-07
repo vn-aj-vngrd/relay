@@ -35,6 +35,7 @@ import {
   gameLibrarySearchParams,
 } from "./game-library-filters";
 import { GameResults, GameResultsTransition } from "./game-results-transition";
+import { GameStatusChip } from "./game-status";
 import { GamesCalendar } from "./games-calendar";
 import { InvitationHistoryItems } from "./invitation-history-items";
 import { playSetupNextAction } from "./readiness";
@@ -264,10 +265,6 @@ function rsvpLabel(rsvp: GameCollectionItem["viewerRsvp"]) {
   return null;
 }
 
-function finishedLabel(game: GameCollectionItem) {
-  return game.status === "cancelled" ? "Cancelled" : "Ended";
-}
-
 function InvitationSection({
   items,
   onResponded,
@@ -357,15 +354,18 @@ function GameList({
             </time>
             <div className="min-w-0 flex-1">
               <h3 className="truncate font-[650]">{game.title}</h3>
+              <GameStatusChip
+                status={game.status}
+                endsAt={game.endsAt}
+                className="mt-1"
+              />
               <p className="mt-1 truncate text-[13px] text-muted sm:text-sm">
                 <time className="score font-bold text-primary sm:hidden">
                   {game.date}
                 </time>
                 <span className="sm:hidden"> · </span>
                 {game.time} · {game.venue}
-                {past ? (
-                  <span className="sm:hidden"> · {finishedLabel(game)}</span>
-                ) : rsvpLabel(game.viewerRsvp) ? (
+                {!past && rsvpLabel(game.viewerRsvp) ? (
                   <span className="sm:hidden">
                     {" "}
                     · {rsvpLabel(game.viewerRsvp)}
@@ -373,11 +373,7 @@ function GameList({
                 ) : null}
               </p>
             </div>
-            {past ? (
-              <span className="hidden text-xs font-[650] text-muted sm:block">
-                {finishedLabel(game)}
-              </span>
-            ) : game.readiness && game.status !== "live" ? (
+            {past ? null : game.readiness && game.status !== "live" ? (
               <span
                 className={`hidden text-xs font-[650] sm:block ${game.readiness.ready ? "text-success" : "text-muted"}`}
               >
@@ -435,22 +431,15 @@ function GameGrid({
                 {game.date}
               </time>
               <span className="text-right">
-                {past ? (
-                  <span className="block text-xs font-[650] text-muted">
-                    {finishedLabel(game)}
-                  </span>
-                ) : rsvpLabel(game.viewerRsvp) ? (
+                <GameStatusChip status={game.status} endsAt={game.endsAt} />
+                {!past && rsvpLabel(game.viewerRsvp) ? (
                   <span className="block text-xs font-[650] text-primary">
                     {rsvpLabel(game.viewerRsvp)}
                   </span>
                 ) : null}
                 <span className="score mt-0.5 block text-xs text-muted">
                   {game.playerCount}{" "}
-                  {past
-                    ? game.status === "cancelled"
-                      ? "players"
-                      : "played"
-                    : `/ ${game.capacity}`}
+                  {past ? "Going responses" : `/ ${game.capacity}`}
                 </span>
               </span>
             </div>

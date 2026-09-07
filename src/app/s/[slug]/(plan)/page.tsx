@@ -1,20 +1,19 @@
-import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { getCurrentUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { CompletedGameBanner } from "@/features/sessions/completed-game-banner";
 import {
   formatSessionDateLong,
   formatSessionTime,
   spotsRemainingLabel,
 } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
+import { OverviewRosterPreview } from "@/features/sessions/overview-roster-preview";
 import { getPublicSession } from "@/features/sessions/queries";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
@@ -24,88 +23,6 @@ import {
 } from "@/features/sessions/session-summary";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { getPublicEnv } from "@/lib/env";
-
-function RosterPreview({
-  id,
-  slug,
-  names,
-  imageUrls,
-  roles,
-  capacity,
-  waitlistCount,
-  className = "",
-}: {
-  id: string;
-  slug: string;
-  names: string[];
-  imageUrls: Array<string | undefined>;
-  roles: string[];
-  capacity: number;
-  waitlistCount: number;
-  className?: string;
-}) {
-  const spots = Math.max(0, capacity - names.length);
-  return (
-    <section aria-labelledby={id} className={className}>
-      <div className="mb-3 flex items-end justify-between gap-3">
-        <div>
-          <h2 id={id} className="text-lg font-bold">
-            Who’s playing
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {names.length} of {capacity} going ·{" "}
-            <strong className="text-primary">
-              {spots
-                ? spotsRemainingLabel(spots)
-                : waitlistCount
-                  ? `${waitlistCount} waitlisted`
-                  : "Waitlist open"}
-            </strong>
-          </p>
-        </div>
-        <AvatarStack
-          names={names.slice(0, 3)}
-          imageUrls={imageUrls.slice(0, 3)}
-          total={names.length}
-        />
-      </div>
-      {names.length ? (
-        <ul className="divide-y divide-line border-y border-line">
-          {names.slice(0, 5).map((name, index) => (
-            <li
-              key={`${name}-${index}`}
-              className="flex min-h-14 items-center gap-3 py-2"
-            >
-              <Avatar
-                name={name}
-                imageUrl={imageUrls[index]}
-                index={index}
-                size="sm"
-              />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                {name}
-              </span>
-              <span className="text-xs text-muted">
-                {roles[index] === "host" ? "Host" : "Going"}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="border-y border-line py-6 text-sm text-muted">
-          Be the first to join.
-        </p>
-      )}
-      <ButtonLink
-        href={`/s/${slug}/play?panel=players`}
-        variant="quiet"
-        className="mt-2 w-full"
-      >
-        View all players <CaretRight aria-hidden size={14} />
-      </ButtonLink>
-    </section>
-  );
-}
 
 export async function generateMetadata({
   params,
@@ -119,12 +36,14 @@ export async function generateMetadata({
   ).length;
   const spots = Math.max(0, data.session.capacity - going);
   const availability =
-    data.session.status === "completed"
-      ? `${data.matchCount} ${data.matchCount === 1 ? "match" : "matches"} played`
-      : spots
-        ? spotsRemainingLabel(spots)
-        : "Waitlist open";
-  const description = `${formatSessionDateLong(data.session.startsAt)}, ${formatSessionTime(data.session.startsAt, data.session.endsAt)} at ${data.session.venueName}. ${going} of ${data.session.capacity} going · ${availability}.`;
+    data.session.status === "cancelled"
+      ? "Game cancelled"
+      : data.session.status === "completed"
+        ? `${data.matchCount} ${data.matchCount === 1 ? "match" : "matches"} played`
+        : spots
+          ? spotsRemainingLabel(spots)
+          : "Waitlist open";
+  const description = `${formatSessionDateLong(data.session.startsAt)}, ${formatSessionTime(data.session.startsAt, data.session.endsAt)} at ${data.session.venueName}. ${["completed", "cancelled"].includes(data.session.status) ? availability : `${going} of ${data.session.capacity} going · ${availability}`}.`;
   return {
     title: data.session.title,
     description,
@@ -146,7 +65,7 @@ export async function generateMetadata({
           url: `/s/${data.session.slug}/opengraph-image`,
           width: 1200,
           height: 630,
-          alt: `${data.session.title} pickleball game invitation`,
+          alt: `${data.session.title} pickleball game`,
         },
       ],
       locale: "en_PH",
@@ -226,7 +145,9 @@ export default async function PublicSessionPage({
     },
     organizer: { "@type": "Person", name: hostProfile?.name ?? "Relay host" },
     maximumAttendeeCapacity: session.capacity,
-    remainingAttendeeCapacity: spots,
+    ...(["published", "live"].includes(session.status)
+      ? { remainingAttendeeCapacity: spots }
+      : {}),
   };
   const overview = await getSessionOverview(
     session.id,
@@ -273,6 +194,23 @@ export default async function PublicSessionPage({
         <div className="px-4 sm:px-0">
           <GamePageIntro title="Overview" />
         </div>
+        {session.status === "completed" ? (
+          <div className="mb-5 px-4 sm:mb-6 sm:px-0">
+            <CompletedGameBanner
+              sessionId={session.id}
+              hrefBase={`/s/${session.slug}`}
+              canReplay={Boolean(user && user.id === session.hostId)}
+              canBrowse={
+                !canManage && !(viewer && canParticipate(viewer.player.rsvp))
+              }
+              payment={
+                viewer && canParticipate(viewer.player.rsvp)
+                  ? overview.payment
+                  : { view: "hidden" }
+              }
+            />
+          </div>
+        ) : null}
         <div
           className={`grid gap-6 ${session.status === "completed" ? "" : "lg:grid-cols-[1fr_350px]"}`}
         >
@@ -350,9 +288,10 @@ export default async function PublicSessionPage({
                   />
                 </section>
               ) : null}
-              <RosterPreview
+              <OverviewRosterPreview
+                terminal={!activePlan}
                 id="mobile-roster-title"
-                slug={session.slug}
+                hrefBase={`/s/${session.slug}`}
                 names={names}
                 imageUrls={playerAvatarUrls}
                 roles={playerRoles}
@@ -402,9 +341,9 @@ export default async function PublicSessionPage({
                   discoverySource={discoverySource}
                 />
               </section>
-              <RosterPreview
+              <OverviewRosterPreview
                 id="desktop-roster-title"
-                slug={session.slug}
+                hrefBase={`/s/${session.slug}`}
                 names={names}
                 imageUrls={playerAvatarUrls}
                 roles={playerRoles}

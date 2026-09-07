@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { ButtonLink } from "@/components/ui/button";
 import { sessionAccentStyle } from "./accent";
 import type { GameCollectionItem } from "./game-collection-types";
+import { GameStatusChip, useGameStatusLabel } from "./game-status";
 import { playSetupNextAction } from "./readiness";
 
 type CalendarPhase = "live" | "upcoming" | "past";
@@ -86,16 +87,33 @@ function shortTime(time: string) {
   return period ? `${start} ${period}` : start;
 }
 
-function phaseLabel(phase: CalendarPhase) {
-  if (phase === "live") return "Live";
-  if (phase === "past") return "Ended";
-  return "Upcoming";
-}
-
 function gameTone(phase: CalendarPhase) {
   if (phase === "live") return "bg-live/12 text-live hover:bg-live/18";
   if (phase === "past") return "bg-surface-strong text-muted hover:text-ink";
   return "bg-primary-soft text-primary hover:bg-primary-soft/75";
+}
+
+function CalendarGameLink({ game }: { game: CalendarGame }) {
+  const label = useGameStatusLabel(game.status, game.endsAt);
+  return (
+    <Link
+      href={game.href}
+      prefetch={false}
+      style={sessionAccentStyle(game.accentColor)}
+      aria-label={`${label}: ${game.title}, ${game.time}`}
+      className={`pressable flex min-h-7 min-w-0 items-center gap-1 rounded-md px-1.5 text-[11px] font-[650] ${gameTone(game.phase)}`}
+    >
+      <span
+        aria-hidden
+        className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--primary)]"
+      />
+      <span className="score shrink-0 text-[10px]">{shortTime(game.time)}</span>
+      <span className="truncate">
+        {game.phase === "live" ? "Live · " : ""}
+        {game.title}
+      </span>
+    </Link>
+  );
 }
 
 function DayAgenda({
@@ -146,9 +164,7 @@ function DayAgenda({
                   <span
                     className={`text-xs font-[680] ${game.phase === "live" ? "text-live" : "text-muted"}`}
                   >
-                    {game.status === "cancelled"
-                      ? "Cancelled"
-                      : phaseLabel(game.phase)}{" "}
+                    <GameStatusChip status={game.status} endsAt={game.endsAt} />{" "}
                     · {shortTime(game.time)}
                   </span>
                 </div>
@@ -167,11 +183,7 @@ function DayAgenda({
                       : `${game.playerCount} / ${game.capacity}`}
                   </span>
                   <span>
-                    {game.phase === "past"
-                      ? game.status === "cancelled"
-                        ? "players"
-                        : "played"
-                      : "going"}
+                    {game.phase === "past" ? "Going responses" : "going"}
                   </span>
                   {game.readiness &&
                   game.phase !== "past" &&
@@ -329,26 +341,7 @@ function DesktopCalendar({
               </button>
               <div className="mt-0.5 space-y-1">
                 {dayGames.slice(0, 2).map((game) => (
-                  <Link
-                    key={game.id}
-                    href={game.href}
-                    prefetch={false}
-                    style={sessionAccentStyle(game.accentColor)}
-                    aria-label={`${phaseLabel(game.phase)}: ${game.title}, ${game.time}`}
-                    className={`pressable flex min-h-7 min-w-0 items-center gap-1 rounded-md px-1.5 text-[11px] font-[650] ${gameTone(game.phase)}`}
-                  >
-                    <span
-                      aria-hidden
-                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--primary)]"
-                    />
-                    <span className="score shrink-0 text-[10px]">
-                      {shortTime(game.time)}
-                    </span>
-                    <span className="truncate">
-                      {game.phase === "live" ? "Live · " : ""}
-                      {game.title}
-                    </span>
-                  </Link>
+                  <CalendarGameLink key={game.id} game={game} />
                 ))}
                 {dayGames.length > 2 ? (
                   <button

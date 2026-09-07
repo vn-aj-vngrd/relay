@@ -10,12 +10,12 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ButtonSpinner } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { GameStatusChip } from "@/features/sessions/game-status";
 
 import {
   mergeRecentSearches,
@@ -130,6 +130,9 @@ function SearchResultRow({
         <strong className="block truncate text-sm font-semibold">
           {result.title}
         </strong>
+        {result.type === "games" && result.lifecycle ? (
+          <GameStatusChip {...result.lifecycle} className="mt-1" />
+        ) : null}
         <span className="mt-1 block truncate text-sm text-muted">
           {result.subtitle}
         </span>

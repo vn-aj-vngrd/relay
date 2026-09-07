@@ -142,7 +142,7 @@ describe("Invitations library", () => {
   });
   it("renders completed and cancelled invitations without RSVP actions", () => {
     const completed = { ...game, status: "completed" as const };
-    expect(invitationHistoryLabel(completed)).toBe("Ended · Not answered");
+    expect(invitationHistoryLabel(completed)).toBe("Not answered");
     render(
       <InvitationsCollection
         filters={{ ...filters, response: "any", when: "past" }}
@@ -154,7 +154,8 @@ describe("Invitations library", () => {
         }}
       />
     );
-    expect(screen.getByText("Ended · Not answered")).toBeVisible();
+    expect(screen.getByText("Ended")).toBeVisible();
+    expect(screen.getByText("Not answered")).toBeVisible();
     expect(screen.getByText("Cancelled")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "Going" })

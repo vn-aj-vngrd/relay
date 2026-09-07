@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { GameLifecycleStatus } from "@/features/sessions/game-status";
 
 export const minimumSearchLength = 2;
 export const searchFilters = [
@@ -24,6 +25,7 @@ export type SearchResult = {
   href: string;
   accentColor?: string;
   imageUrl?: string | null;
+  lifecycle?: { status: GameLifecycleStatus; endsAt: string };
 };
 
 export type SearchResponse = {

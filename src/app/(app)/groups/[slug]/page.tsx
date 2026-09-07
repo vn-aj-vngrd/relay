@@ -8,7 +8,6 @@ import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -24,6 +23,7 @@ import {
   formatSessionDate,
   formatSessionTime,
 } from "@/features/sessions/format";
+import { GameStatusChip } from "@/features/sessions/game-status";
 
 export default async function GroupPage({
   params,
@@ -167,6 +167,11 @@ export default async function GroupPage({
                       <h3 className="truncate font-semibold">
                         {session.title}
                       </h3>
+                      <GameStatusChip
+                        status={session.status}
+                        endsAt={session.endsAt}
+                        className="mt-1"
+                      />
                       <p className="mt-1 truncate text-sm text-muted">
                         {formatSessionDate(session.startsAt)} ·{" "}
                         {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
@@ -239,6 +244,11 @@ export default async function GroupPage({
                           {session.title}
                           <Tooltip content={session.title} />
                         </p>
+                        <GameStatusChip
+                          status={session.status}
+                          endsAt={session.endsAt}
+                          className="mt-1"
+                        />
                         <p className="mt-1 text-sm text-muted">
                           {session.venueName}
                         </p>

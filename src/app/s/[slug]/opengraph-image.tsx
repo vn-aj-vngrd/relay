@@ -8,7 +8,7 @@ import {
 } from "@/features/sessions/format";
 import { getPublicSession } from "@/features/sessions/queries";
 
-export const alt = "Relay pickleball game invitation";
+export const alt = "Relay pickleball game";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -50,13 +50,15 @@ export default async function OpenGraphImage({
   const spots = Math.max(0, session.capacity - going);
   const accent = sessionAccent(session.accentColor);
   const availability =
-    session.status === "completed"
-      ? `${matchCount} ${matchCount === 1 ? "match" : "matches"} played`
-      : spots
-        ? spotsRemainingLabel(spots)
-        : waitlisted
-          ? `${waitlisted} on the waitlist`
-          : "Waitlist open";
+    session.status === "cancelled"
+      ? "Game cancelled"
+      : session.status === "completed"
+        ? `${matchCount} ${matchCount === 1 ? "match" : "matches"} played`
+        : spots
+          ? spotsRemainingLabel(spots)
+          : waitlisted
+            ? `${waitlisted} on the waitlist`
+            : "Waitlist open";
 
   return new ImageResponse(
     <div
@@ -197,7 +199,9 @@ export default async function OpenGraphImage({
               fontSize: 22,
             }}
           >
-            {going} of {session.capacity} going · Hosted by{" "}
+            {["completed", "cancelled"].includes(session.status)
+              ? "Hosted by "
+              : `${going} of ${session.capacity} going · Hosted by `}
             {hostProfile?.name ?? "the host"}
           </div>
         </div>
@@ -219,7 +223,11 @@ export default async function OpenGraphImage({
             }}
           />
           <div style={{ display: "flex", color: "#b9c2d4", fontSize: 20 }}>
-            Open the link to view the plan and respond
+            {session.status === "completed"
+              ? "Open the link to view the recap"
+              : session.status === "cancelled"
+                ? "Open the link to view cancellation details"
+                : "Open the link to view the plan and respond"}
           </div>
         </div>
       </div>

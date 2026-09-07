@@ -1,6 +1,5 @@
 import { CalendarCheck, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
-
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { requireUser } from "@/features/auth/session";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { ensureProfile } from "@/features/players/profile";
 import { markSessionBookedAction } from "@/features/sessions/actions";
+import { CompletedGameBanner } from "@/features/sessions/completed-game-banner";
 import { CreatedGameShare } from "@/features/sessions/created-game-share";
 import { shouldShowCreatedGameShare } from "@/features/sessions/created-game-share-query";
 import {
@@ -16,9 +16,11 @@ import {
   formatSessionTime,
 } from "@/features/sessions/format";
 import { getSessionOverview } from "@/features/sessions/overview";
+import { OverviewRosterPreview } from "@/features/sessions/overview-roster-preview";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { loadPlayReadiness } from "@/features/sessions/readiness-query";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
+import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionOverviewStatus } from "@/features/sessions/session-overview-status";
 import {
@@ -216,6 +218,20 @@ export default async function GameOverviewPage({
   return (
     <>
       <GamePageIntro title="Overview" />
+      {session.status === "completed" ? (
+        <CompletedGameBanner
+          sessionId={session.id}
+          hrefBase={`/games/${session.id}`}
+          canReplay={session.hostId === user.id}
+          canBrowse={!canParticipateInWorkspace(data.access)}
+          payment={
+            canParticipateInWorkspace(data.access)
+              ? overview.payment
+              : { view: "hidden" }
+          }
+          className="mb-5 sm:mb-6"
+        />
+      ) : null}
       {session.status === "cancelled" ? (
         <section
           aria-labelledby="cancelled-game-title"
@@ -280,21 +296,27 @@ export default async function GameOverviewPage({
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <SessionHero
             session={session}
-            hostLabel={isHost ? "Hosted by you" : `Hosted by ${hostName}`}
+            hostLabel={
+              session.hostId === user.id
+                ? "Hosted by you"
+                : `Hosted by ${hostName}`
+            }
             headingLevel="h2"
           />
-          <div className="border-b border-line px-4 lg:hidden">
-            <SessionOverviewStatus
-              sessionId={session.id}
-              status={session.status}
-              isHost={isHost}
-              canReplay={session.hostId === user.id}
-              rsvp={membership?.rsvp}
-              payment={overview.payment}
-              readiness={readiness}
-              embedded
-            />
-          </div>
+          {session.status !== "completed" ? (
+            <div className="border-b border-line px-4 lg:hidden">
+              <SessionOverviewStatus
+                sessionId={session.id}
+                status={session.status}
+                isHost={isHost}
+                canReplay={session.hostId === user.id}
+                rsvp={membership?.rsvp}
+                payment={overview.payment}
+                readiness={readiness}
+                embedded
+              />
+            </div>
+          ) : null}
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <SessionPlanDetails
               session={session}
@@ -317,74 +339,79 @@ export default async function GameOverviewPage({
         </article>
 
         <aside className="space-y-7 lg:sticky lg:top-6 lg:self-start">
-          <div className="hidden lg:block">
-            <SessionOverviewStatus
-              sessionId={session.id}
-              status={session.status}
-              isHost={isHost}
-              canReplay={session.hostId === user.id}
-              rsvp={membership?.rsvp}
-              payment={overview.payment}
-              readiness={readiness}
-            />
-          </div>
-
-          <section>
-            <div className="mb-3 flex items-end justify-between">
-              <div>
-                <h2 className="text-lg font-bold">
-                  {session.status === "completed"
-                    ? "Who played"
-                    : "Who’s playing"}
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  {session.status === "completed"
-                    ? `${going.length} players`
-                    : `${going.length} of ${session.capacity} going${isHost && pending.length ? ` · ${pending.length} to approve` : ""}`}
-                </p>
-              </div>
-              <AvatarStack
-                names={names.slice(0, 3)}
-                imageUrls={playerAvatarUrls.slice(0, 3)}
-                total={going.length}
+          {session.status !== "completed" ? (
+            <div className="hidden lg:block">
+              <SessionOverviewStatus
+                sessionId={session.id}
+                status={session.status}
+                isHost={isHost}
+                canReplay={session.hostId === user.id}
+                rsvp={membership?.rsvp}
+                payment={overview.payment}
+                readiness={readiness}
               />
             </div>
-            <ul className="divide-y divide-line border-y border-line">
-              {going.slice(0, 5).map(({ player, profile }, index) => {
-                const name = profile?.name ?? player.guestName ?? "Guest";
-                return (
-                  <li
-                    className="flex min-h-14 items-center gap-3 py-2"
-                    key={player.id}
-                  >
-                    <Avatar
-                      name={name}
-                      imageUrl={profileAvatarUrl(profile?.avatarPath)}
-                      index={index}
-                      size="sm"
-                    />
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {name}
-                    </span>
-                    <span className="text-xs text-muted">
-                      {player.role === "host"
-                        ? "Host"
-                        : session.status === "completed"
-                          ? "Played"
-                          : "Going"}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-            <ButtonLink
-              href={`/games/${session.id}/play?panel=players`}
-              variant="quiet"
-              className="mt-2 w-full"
-            >
-              View all players <CaretRight aria-hidden size={14} />
-            </ButtonLink>
-          </section>
+          ) : null}
+
+          {session.status === "completed" || session.status === "cancelled" ? (
+            <OverviewRosterPreview
+              id="final-roster-title"
+              hrefBase={`/games/${session.id}`}
+              names={names}
+              imageUrls={playerAvatarUrls}
+              roles={going.map(({ player }) => player.role)}
+              capacity={session.capacity}
+              waitlistCount={0}
+              terminal
+            />
+          ) : (
+            <section>
+              <div className="mb-3 flex items-end justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">Who’s playing</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    {`${going.length} of ${session.capacity} going${isHost && pending.length ? ` · ${pending.length} to approve` : ""}`}
+                  </p>
+                </div>
+                <AvatarStack
+                  names={names.slice(0, 3)}
+                  imageUrls={playerAvatarUrls.slice(0, 3)}
+                  total={going.length}
+                />
+              </div>
+              <ul className="divide-y divide-line border-y border-line">
+                {going.slice(0, 5).map(({ player, profile }, index) => {
+                  const name = profile?.name ?? player.guestName ?? "Guest";
+                  return (
+                    <li
+                      className="flex min-h-14 items-center gap-3 py-2"
+                      key={player.id}
+                    >
+                      <Avatar
+                        name={name}
+                        imageUrl={profileAvatarUrl(profile?.avatarPath)}
+                        index={index}
+                        size="sm"
+                      />
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {name}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {player.role === "host" ? "Host" : "Going"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <ButtonLink
+                href={`/games/${session.id}/play?panel=players`}
+                variant="quiet"
+                className="mt-2 w-full"
+              >
+                View all players <CaretRight aria-hidden size={14} />
+              </ButtonLink>
+            </section>
+          )}
         </aside>
       </div>
     </>

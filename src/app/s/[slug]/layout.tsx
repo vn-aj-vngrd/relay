@@ -1,5 +1,6 @@
 import { PublicSessionHeader } from "@/components/shared/public-session-header";
 import { getCurrentUser } from "@/features/auth/session";
+import { GameLifecycleProvider } from "@/features/sessions/game-lifecycle-context";
 import {
   getPublicSession,
   getSessionMembership,
@@ -35,18 +36,30 @@ export default async function PublicSessionLayout({
       })
   );
   return (
-    <div className="public-session-layout flex min-h-dvh flex-col bg-surface">
-      {data ? <RealtimeRefresh sessionId={data.session.id} silent /> : null}
-      <PublicSessionHeader
-        slug={slug}
-        signedIn={Boolean(user)}
-        gameHref={canOpenGame && data ? `/games/${data.session.id}` : undefined}
-        accentColor={data?.session.accentColor}
-        gameTitle={data?.session.title}
-      />
-      <div className="public-session-tab-content min-h-0 flex-1 bg-surface">
-        {children}
+    <GameLifecycleProvider value={data?.session.status ?? null}>
+      <div className="public-session-layout flex min-h-dvh flex-col bg-surface">
+        {data ? <RealtimeRefresh sessionId={data.session.id} silent /> : null}
+        <PublicSessionHeader
+          slug={slug}
+          signedIn={Boolean(user)}
+          gameHref={
+            canOpenGame && data ? `/games/${data.session.id}` : undefined
+          }
+          accentColor={data?.session.accentColor}
+          gameTitle={data?.session.title}
+          lifecycle={
+            data
+              ? {
+                  status: data.session.status,
+                  endsAt: data.session.endsAt.toISOString(),
+                }
+              : undefined
+          }
+        />
+        <div className="public-session-tab-content min-h-0 flex-1 bg-surface">
+          {children}
+        </div>
       </div>
-    </div>
+    </GameLifecycleProvider>
   );
 }

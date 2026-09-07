@@ -1,10 +1,11 @@
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
+import { OverviewLoadingState } from "@/features/sessions/overview-loading-state";
 import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 
 export default function SessionLoading() {
   return (
-    <>
+    <OverviewLoadingState>
       <GamePageIntro title="Overview" />
       <div
         role="status"
@@ -68,6 +69,6 @@ export default function SessionLoading() {
           </div>
         </aside>
       </div>
-    </>
+    </OverviewLoadingState>
   );
 }

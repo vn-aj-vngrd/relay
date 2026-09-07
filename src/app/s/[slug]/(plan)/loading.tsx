@@ -1,5 +1,6 @@
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
+import { OverviewLoadingState } from "@/features/sessions/overview-loading-state";
 import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 
 function JoinPanelSkeleton({ mobile = false }: { mobile?: boolean }) {
@@ -68,59 +69,61 @@ function RosterSkeleton({ mobile = false }: { mobile?: boolean }) {
 
 export default function PublicPlanLoading() {
   return (
-    <main
-      id="main-content"
-      className="public-session-page min-h-screen bg-surface"
-    >
-      <div
-        role="status"
-        aria-label="Loading game plan"
-        aria-busy="true"
-        className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8"
+    <OverviewLoadingState shared>
+      <main
+        id="main-content"
+        className="public-session-page min-h-screen bg-surface"
       >
-        <div className="px-4 sm:px-0">
-          <GamePageIntro title="Overview" />
-        </div>
-        <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-          <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
-            <div
-              className="public-session-hero relative min-h-44 overflow-hidden px-4 pb-6 pt-5 sm:min-h-48 sm:px-8 sm:pb-10 sm:pt-7"
-              style={{ backgroundColor: "var(--court)" }}
-            >
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
-              <Skeleton className="h-3 w-36 bg-white/15" />
-              <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
-              <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
-            </div>
-            <div className="border-b border-line px-4 py-3 lg:hidden">
-              <Skeleton className="h-11 w-full rounded-lg" />
-            </div>
-            <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
-              <div className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line">
-                {Array.from({ length: 4 }, (_, index) => (
-                  <div
-                    key={index}
-                    className={`flex gap-3 ${index < 2 ? "col-span-2 sm:col-span-1" : "col-span-2 min-[360px]:col-span-1"}`}
-                  >
-                    <Skeleton className="h-5 w-5 shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3.5 w-1/2" />
-                    </div>
-                  </div>
-                ))}
+        <div
+          role="status"
+          aria-label="Loading game plan"
+          aria-busy="true"
+          className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8"
+        >
+          <div className="px-4 sm:px-0">
+            <GamePageIntro title="Overview" />
+          </div>
+          <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
+            <article className="public-session-panel public-session-overview-card min-w-0 overflow-hidden border-y border-line bg-surface sm:rounded-xl sm:border">
+              <div
+                className="public-session-hero relative min-h-44 overflow-hidden px-4 pb-6 pt-5 sm:min-h-48 sm:px-8 sm:pb-10 sm:pt-7"
+                style={{ backgroundColor: "var(--court)" }}
+              >
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-primary" />
+                <Skeleton className="h-3 w-36 bg-white/15" />
+                <Skeleton className="mt-8 h-10 w-3/4 bg-white/15" />
+                <Skeleton className="mt-3 h-4 w-32 bg-white/15" />
               </div>
-              <SessionAtAGlanceSkeleton />
-              <JoinPanelSkeleton mobile />
-              <RosterSkeleton mobile />
-            </div>
-          </article>
-          <aside className="hidden space-y-7 self-start lg:sticky lg:top-6 lg:block">
-            <JoinPanelSkeleton />
-            <RosterSkeleton />
-          </aside>
+              <div className="border-b border-line px-4 py-3 lg:hidden">
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
+                <div className="public-session-plan grid grid-cols-2 gap-x-4 gap-y-6 border-b border-line">
+                  {Array.from({ length: 4 }, (_, index) => (
+                    <div
+                      key={index}
+                      className={`flex gap-3 ${index < 2 ? "col-span-2 sm:col-span-1" : "col-span-2 min-[360px]:col-span-1"}`}
+                    >
+                      <Skeleton className="h-5 w-5 shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3.5 w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <SessionAtAGlanceSkeleton />
+                <JoinPanelSkeleton mobile />
+                <RosterSkeleton mobile />
+              </div>
+            </article>
+            <aside className="hidden space-y-7 self-start lg:sticky lg:top-6 lg:block">
+              <JoinPanelSkeleton />
+              <RosterSkeleton />
+            </aside>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </OverviewLoadingState>
   );
 }

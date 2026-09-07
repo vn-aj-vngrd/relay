@@ -1,12 +1,8 @@
-import {
-  ArrowClockwise,
-  CheckCircle,
-  Play,
-} from "@phosphor-icons/react/dist/ssr";
+import { Play } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";
 
-import { peso } from "./format";
+import { CompletedGameBanner, paymentAction } from "./completed-game-banner";
 import type { SessionOverview } from "./overview";
 import { playSetupNextAction, type SessionReadiness } from "./readiness";
 
@@ -22,19 +18,6 @@ function responseDetail(rsvp?: string) {
   if (rsvp === "maybe")
     return "Update your response when you know whether you can play.";
   return "You’re confirmed for this game.";
-}
-
-function paymentAction(payment: SessionOverview["payment"]) {
-  if (
-    payment.view !== "player" ||
-    payment.status === "confirmed" ||
-    payment.status === "excluded"
-  )
-    return null;
-  if (payment.reviewRequested)
-    return `Upload new proof · ${peso(payment.amountCents)}`;
-  if (payment.status === "sent") return "View payment · Proof sent";
-  return `View payment · ${peso(payment.amountCents)} due`;
 }
 
 export function SessionOverviewStatus({
@@ -88,38 +71,13 @@ export function SessionOverviewStatus({
 
   if (completed)
     return (
-      <section className={`${shellClass} ${className}`}>
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-success">
-          <CheckCircle aria-hidden weight="fill" size={16} /> Game complete
-        </p>
-        <h2 className="mt-1 text-lg font-bold">Results are saved</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Scores, standings, payments, chat, and photos stay here.
-        </p>
-        <div className="mt-5 space-y-2">
-          <ButtonLink href={`/games/${sessionId}/play`} className="w-full">
-            View recap
-          </ButtonLink>
-          {playerPaymentAction ? (
-            <ButtonLink
-              href={`/games/${sessionId}/payments`}
-              variant="secondary"
-              className="w-full"
-            >
-              {playerPaymentAction}
-            </ButtonLink>
-          ) : null}
-          {canReplay ? (
-            <ButtonLink
-              href={`/games/new?from=${sessionId}`}
-              variant="secondary"
-              className="w-full"
-            >
-              <ArrowClockwise aria-hidden size={16} /> Play again
-            </ButtonLink>
-          ) : null}
-        </div>
-      </section>
+      <CompletedGameBanner
+        sessionId={sessionId}
+        hrefBase={`/games/${sessionId}`}
+        canReplay={canReplay}
+        payment={payment}
+        className={className}
+      />
     );
 
   return (

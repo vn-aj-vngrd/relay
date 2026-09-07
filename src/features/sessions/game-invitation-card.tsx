@@ -12,11 +12,11 @@ import {
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
-
 import { sessionAccentStyle } from "./accent";
 import { rsvpAction } from "./actions";
 import { peso } from "./format";
 import type { GameCollectionItem } from "./game-collection-types";
+import { GameStatusChip } from "./game-status";
 
 export type ActiveInviteResponse =
   | "going"
@@ -108,6 +108,11 @@ export function GameInvitationCard({
             >
               {game.title}
             </Link>
+            <GameStatusChip
+              status={game.status}
+              endsAt={game.endsAt}
+              className="mt-1"
+            />
             <p className="mt-1 text-sm text-muted">Hosted by {game.hostName}</p>
           </div>
           <time className="score shrink-0 text-xs font-bold text-primary">

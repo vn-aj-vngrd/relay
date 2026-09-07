@@ -7,14 +7,16 @@ import {
   type ActiveInviteResponse,
   GameInvitationCard,
 } from "./game-invitation-card";
+import { GameStatusChip } from "./game-status";
 
 export function invitationHistoryLabel(game: GameCollectionItem) {
-  if (game.status === "cancelled") return "Cancelled";
+  if (game.status === "cancelled") return null;
   if (
-    game.status === "completed" ||
-    new Date(game.endsAt).getTime() <= Date.now()
+    game.viewerRsvp === "invited" &&
+    (game.status === "completed" ||
+      new Date(game.endsAt).getTime() <= Date.now())
   )
-    return game.viewerRsvp === "invited" ? "Ended · Not answered" : "Ended";
+    return "Not answered";
   return (
     {
       invited: "Needs response",
@@ -91,7 +93,10 @@ export function InvitationHistoryItems({
                   : "mt-4 text-sm font-semibold text-muted"
               }
             >
-              {invitationHistoryLabel(game)}
+              <GameStatusChip status={game.status} endsAt={game.endsAt} />
+              {invitationHistoryLabel(game) ? (
+                <span className="ml-2">{invitationHistoryLabel(game)}</span>
+              ) : null}
             </p>
             {game.status === "completed" ? (
               <ButtonLink

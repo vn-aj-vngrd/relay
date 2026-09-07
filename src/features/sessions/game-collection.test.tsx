@@ -198,6 +198,35 @@ describe("GameCollection", () => {
     ).not.toBeInTheDocument();
   });
 
+  it.each(["published", "live"] as const)(
+    "does not label a past-grouped %s game Ended",
+    (status) => {
+      window.history.replaceState(null, "", "/games?when=past");
+      render(
+        <GameCollection
+          upcomingPage={page([])}
+          pastPage={page([
+            {
+              ...pastGame,
+              status,
+              endsAt: "2000-01-01T00:00:00Z",
+              canReplay: false,
+            },
+          ])}
+          todayKey="2026-08-15"
+          filters={{ ...defaultGameLibraryFilters, when: "past" }}
+        />
+      );
+      expect(
+        screen.getByText(status === "live" ? "Live" : "Published")
+      ).toBeVisible();
+      expect(screen.queryByText("Ended")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /again/ })
+      ).not.toBeInTheDocument();
+    }
+  );
+
   it("keeps invitations independent from every library filter", () => {
     window.history.replaceState(
       null,
@@ -232,7 +261,7 @@ describe("GameCollection", () => {
       screen.getByRole("link", { name: "Play Friday Crew again" })
     ).toHaveAttribute("href", "/games/new?from=game-2");
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
-    expect(screen.getByText("8 played")).toBeVisible();
+    expect(screen.getByText("8 Going responses")).toBeVisible();
     expect(screen.queryByText("Game setup")).not.toBeInTheDocument();
   });
 

@@ -19,9 +19,9 @@ import { z } from "zod";
 
 import { ButtonLink } from "@/components/ui/button";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
-
 import { sessionAccentStyle } from "./accent";
 import type { GameCollectionItem } from "./game-collection-types";
+import { GameStatusChip } from "./game-status";
 import { useGameViewMode } from "./game-view-menu";
 import { GamesCalendar } from "./games-calendar";
 import type {
@@ -162,6 +162,11 @@ function OpenGameRow({
           />
           <div className="min-w-0">
             <h2 className="truncate font-[680]">{game.title}</h2>
+            <GameStatusChip
+              status={game.status}
+              endsAt={game.endsAt}
+              className="mt-1"
+            />
             <p className="mt-1 truncate text-sm text-muted">
               Hosted by {game.hostName}
             </p>
@@ -233,6 +238,11 @@ function OpenGameCard({
         <h2 className="mt-3 line-clamp-2 text-[15px] font-[680] leading-5 group-hover:text-primary sm:mt-5 sm:text-lg sm:leading-normal">
           {game.title}
         </h2>
+        <GameStatusChip
+          status={game.status}
+          endsAt={game.endsAt}
+          className="mt-2"
+        />
         <p className="mt-1 text-xs text-muted">Hosted by {game.hostName}</p>
         <div className="mt-3 space-y-1.5 text-[13px] text-muted sm:space-y-2 sm:text-sm">
           <p className="flex min-w-0 items-center gap-2">

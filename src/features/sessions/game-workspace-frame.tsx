@@ -12,6 +12,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { CompactPlayStatus } from "@/features/matches/compact-play-status";
 
+import { type GameLifecycleStatus, GameStatusChip } from "./game-status";
 import { GameWorkspaceActions } from "./game-workspace-actions";
 
 export function GameWorkspaceFrame({
@@ -23,6 +24,7 @@ export function GameWorkspaceFrame({
   qrEnabled,
   qrDetails,
   playStatus,
+  lifecycle,
 }: {
   children: React.ReactNode;
   sessionId: string;
@@ -31,6 +33,7 @@ export function GameWorkspaceFrame({
   canManage: boolean;
   qrEnabled: boolean;
   qrDetails: string;
+  lifecycle?: { status: GameLifecycleStatus; endsAt: string };
   playStatus?: { label: string; urgent: boolean } | null;
 }) {
   const pathname = usePathname();
@@ -85,6 +88,7 @@ export function GameWorkspaceFrame({
                 {sessionTitle}
                 <Tooltip content={sessionTitle} />
               </p>
+              {lifecycle ? <GameStatusChip {...lifecycle} /> : null}
               <GameWorkspaceActions
                 mode="mobile"
                 canManage={canManage}
@@ -100,6 +104,9 @@ export function GameWorkspaceFrame({
           </div>
           <div className="hidden items-center pr-8 sm:flex lg:pr-0">
             <AuthenticatedSessionNav id={sessionId} />
+            {lifecycle ? (
+              <GameStatusChip {...lifecycle} className="mr-2" />
+            ) : null}
             <GameWorkspaceActions
               mode="desktop"
               canManage={canManage}
