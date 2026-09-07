@@ -4,6 +4,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { Tooltip } from "@/components/ui/tooltip";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function RealtimeRefresh({
@@ -77,17 +78,15 @@ export function RealtimeRefresh({
   return (
     <span
       aria-live="polite"
-      title={
-        compact && status === "error"
-          ? "Live updates paused—refresh to retry"
-          : undefined
-      }
       className={`inline-flex min-h-9 items-center gap-2 text-[13px] font-medium ${status === "error" ? "text-danger" : "text-muted"}`}
     >
       <span
         className={`h-2 w-2 rounded-full ${status === "error" ? "bg-danger" : "bg-warning"}`}
       />
       {text}
+      {compact && status === "error" ? (
+        <Tooltip content="Live updates paused—refresh to retry" />
+      ) : null}
     </span>
   );
 }

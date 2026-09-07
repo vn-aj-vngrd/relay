@@ -69,7 +69,7 @@ describe("CreatedGameShare", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Invite players" })
-    ).toHaveAttribute("href", `/games/${props.sessionId}/players`);
+    ).toHaveAttribute("href", `/games/${props.sessionId}/play?panel=players`);
   });
 
   it("stays visible after a successful native share", async () => {

@@ -26,12 +26,6 @@ import {
   SessionPlanDetails,
 } from "@/features/sessions/session-summary";
 
-function responseLabel(rsvp?: string) {
-  if (rsvp === "waitlisted") return "You’re on the waitlist";
-  if (rsvp === "maybe") return "You responded maybe";
-  return "You’re going";
-}
-
 export default async function GameOverviewPage({
   params,
   searchParams,
@@ -83,16 +77,7 @@ export default async function GameOverviewPage({
     const responseOverview = await getSessionOverview(session.id);
     return (
       <>
-        <GamePageIntro
-          title={isInvitation ? "Invitation" : "Overview"}
-          description={
-            isInvitation
-              ? "Review the plan and respond without leaving the Relay app."
-              : isPending
-                ? "Your request is with the host. You can keep reviewing the game here."
-                : "Review the plan, availability, and cost before you join."
-          }
-        />
+        <GamePageIntro title={isInvitation ? "Invitation" : "Overview"} />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
             <SessionHero
@@ -183,7 +168,7 @@ export default async function GameOverviewPage({
                 />
               </div>
               <ButtonLink
-                href={`/games/${session.id}/players`}
+                href={`/games/${session.id}/play?panel=players`}
                 variant="quiet"
                 className="w-full"
               >
@@ -230,18 +215,7 @@ export default async function GameOverviewPage({
 
   return (
     <>
-      <GamePageIntro
-        title="Overview"
-        description={
-          session.status === "completed"
-            ? "The final plan, roster, results, and saved activity from this game."
-            : session.status === "cancelled"
-              ? "The saved plan and cancellation details for this game."
-              : isHost
-                ? "The plan, roster, setup progress, and next action for this game."
-                : `${responseLabel(membership?.rsvp)} · review the plan and what needs you next.`
-        }
-      />
+      <GamePageIntro title="Overview" />
       {session.status === "cancelled" ? (
         <section
           aria-labelledby="cancelled-game-title"
@@ -404,7 +378,7 @@ export default async function GameOverviewPage({
               })}
             </ul>
             <ButtonLink
-              href={`/games/${session.id}/players`}
+              href={`/games/${session.id}/play?panel=players`}
               variant="quiet"
               className="mt-2 w-full"
             >

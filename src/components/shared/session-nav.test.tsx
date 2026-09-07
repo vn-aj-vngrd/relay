@@ -9,7 +9,7 @@ describe("SessionNav", () => {
       <SessionNav id="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" active="Payments" />
     );
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual(
-      ["Overview", "Players", "Play", "Chat", "Payments", "Story"]
+      ["Overview", "Play", "Chat", "Payments", "Story"]
     );
     expect(screen.getByRole("link", { name: "Payments" })).toHaveAttribute(
       "aria-current",
@@ -34,7 +34,7 @@ describe("SessionNav", () => {
       "text-ink",
       "after:bg-primary"
     );
-    expect(screen.getByRole("link", { name: "Players" })).toHaveClass(
+    expect(screen.getByRole("link", { name: "Play" })).toHaveClass(
       "text-muted",
       "hover:text-ink"
     );

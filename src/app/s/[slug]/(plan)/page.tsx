@@ -97,7 +97,7 @@ function RosterPreview({
         </p>
       )}
       <ButtonLink
-        href={`/s/${slug}/players`}
+        href={`/s/${slug}/play?panel=players`}
         variant="quiet"
         className="mt-2 w-full"
       >
@@ -271,10 +271,7 @@ export default async function PublicSessionPage({
       />
       <div className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8">
         <div className="px-4 sm:px-0">
-          <GamePageIntro
-            title="Overview"
-            description="The plan, roster, availability, and what you need before the game."
-          />
+          <GamePageIntro title="Overview" />
         </div>
         <div
           className={`grid gap-6 ${session.status === "completed" ? "" : "lg:grid-cols-[1fr_350px]"}`}

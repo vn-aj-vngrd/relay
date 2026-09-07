@@ -3,6 +3,8 @@ import { type ComponentPropsWithoutRef, forwardRef } from "react";
 const dialogVariants = {
   standard:
     "m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-line bg-surface p-0 text-ink shadow-[0_8px_8px_oklch(0.1_0.01_275/.18)] backdrop:bg-black/45",
+  drawer:
+    "ml-auto mr-0 mt-auto mb-0 h-[90dvh] max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-xl border border-line bg-surface p-0 text-ink backdrop:bg-black/45 sm:mt-0 sm:h-dvh sm:max-h-none sm:max-w-xl sm:rounded-none",
   media:
     "m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-6xl overflow-visible border-0 bg-transparent p-0 text-white backdrop:bg-black/75",
   fullscreen:

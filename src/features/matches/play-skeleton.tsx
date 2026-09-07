@@ -11,6 +11,9 @@ export function PlaySkeleton({
 }) {
   return (
     <div role="status" aria-label={label} aria-busy="true">
+      <div className="mb-5 flex justify-end">
+        <Skeleton className="h-9 w-28" />
+      </div>
       <div className="mb-7 flex gap-2 overflow-hidden sm:mb-8">
         {["w-20", "w-18", "w-20", "w-24"].map((width, index) => (
           <Skeleton

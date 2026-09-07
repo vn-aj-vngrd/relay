@@ -53,7 +53,7 @@ const highlights: readonly MarketingHighlight[] = [
     stage: "Play",
     title: "Run the courts from one phone.",
     detail:
-      "Check players in, choose a format, run a timer, and record scores.",
+      "Manage the roster, check players in, choose a format, and record scores—all in Play.",
     visual: "play",
     dark: true,
   },

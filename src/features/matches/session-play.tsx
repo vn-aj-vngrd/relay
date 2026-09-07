@@ -9,10 +9,7 @@ import type { getLiveSession } from "@/features/matches/queries";
 import { getSessionRecapData } from "@/features/memories/queries";
 import { SessionRecap } from "@/features/memories/session-recap";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import {
-  AttendanceToggle,
-  PlayAvailabilityControl,
-} from "@/features/sessions/attendance-toggle";
+import { PlayAvailabilityControl } from "@/features/sessions/attendance-toggle";
 import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
@@ -143,21 +140,8 @@ export async function SessionPlay({
         </p>
         {viewer.canManagePlay && setupHref ? (
           <ButtonLink href={setupHref} className="mt-6">
-            Start Play
+            Set up Play
           </ButtonLink>
-        ) : viewer.rsvp === "going" && viewer.playerId ? (
-          <div className="mx-auto mt-6 max-w-xs border-t border-line pt-5 text-center">
-            <p className="mb-2 text-center text-sm text-muted">
-              At the court? Mark yourself here.
-            </p>
-            <AttendanceToggle
-              sessionId={data.session.id}
-              sessionPlayerId={viewer.playerId}
-              name="yourself"
-              present={Boolean(viewer.checkedInAt)}
-              compact
-            />
-          </div>
         ) : null}
       </section>
     );

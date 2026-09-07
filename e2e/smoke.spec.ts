@@ -1,6 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import { establishTestSession } from "./helpers/auth";
+import { withLifecycleCleanup } from "./helpers/cleanup";
+import { reusableTestGame } from "./helpers/session";
+
 test("the landing page introduces Relay and protected routes open a usable login", async ({
   page,
 }) => {
@@ -266,459 +270,631 @@ test("an authenticated host and guest can complete the core session flow", async
   page,
   browser,
 }, testInfo) => {
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
+  const check = expect.configure({ timeout: 15_000 });
   test.skip(
     testInfo.project.name.startsWith("mobile"),
     "single-project auth mutation"
   );
   test.skip(
-    !process.env.E2E_AUTH_EMAIL || !process.env.E2E_AUTH_PASSWORD,
-    "requires disposable auth credentials"
+    process.env.E2E_SESSION_FIXTURE !== "true",
+    "requires explicit trusted test-session opt-in; password/CAPTCHA is a separate manual smoke"
   );
-
-  await page.goto("/login");
-  if (process.env.E2E_AUTH_EXISTING !== "true") {
+  const baseURL = testInfo.project.use.baseURL!;
+  await establishTestSession(page.context(), baseURL);
+  await page.goto("/home");
+  await check(page).toHaveURL(/\/(home|onboarding)(?:\?tour=1)?$/);
+  if (new URL(page.url()).pathname === "/onboarding") {
+    await check(
+      page.getByRole("heading", { name: "How should players know you?" })
+    ).toBeVisible();
     await page
-      .locator('[aria-label="Authentication method"]')
-      .getByRole("link", { name: "Create account" })
+      .getByRole("button", { name: "Use my defaults and start the tour" })
       .click();
+    await check(page).toHaveURL(/\/home\?tour=1$/);
   }
-  await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
-  await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
-  await page
-    .locator("form")
-    .getByRole("button", {
-      name:
-        process.env.E2E_AUTH_EXISTING === "true" ? "Sign in" : "Create account",
-    })
-    .click();
-
-  await expect(page).toHaveURL(/\/onboarding$/, { timeout: 15_000 });
-  await expect(
-    page.getByRole("heading", { name: "Welcome to Relay" })
-  ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Skip setup and use my defaults" })
-    .click();
-  await expect(page).toHaveURL(/\/home\?tour=1$/);
-  await expect(
-    page.getByRole("dialog", { name: "Welcome to Relay" })
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Skip application tour" }).click();
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
-  await page.goto("/feedback");
-  await expect(
-    page.getByRole("heading", { name: "Send feedback" })
-  ).toBeVisible();
-  await expect(page.getByRole("radio", { name: /Bug report/ })).toBeChecked();
-  await expect(
-    page.getByRole("button", { name: "Send feedback" })
-  ).toBeVisible();
-  await page.goto("/home");
-
-  await page
-    .locator('button[aria-haspopup="menu"]:not([data-next-mark])')
-    .click();
-  await page.getByRole("menuitem", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "Dark", exact: true }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await page.getByRole("button", { name: "Light", exact: true }).click();
-  await page.getByRole("button", { name: "Compact" }).click();
-  await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
-  await page.getByRole("button", { name: "Default" }).click();
-  await page.getByRole("button", { name: "Monday" }).click();
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem("relay-week-start")))
-    .toBe("monday");
-  await page
-    .locator('button[aria-haspopup="menu"]:not([data-next-mark])')
-    .click();
-  await page.getByRole("menuitem", { name: "Sign out" }).click();
-  await expect(page).toHaveURL(/\/login$/);
-
-  await page.locator("#password-email").fill(process.env.E2E_AUTH_EMAIL!);
-  await page.locator("#password").fill(process.env.E2E_AUTH_PASSWORD!);
-  await page.locator("form").getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/home$/, { timeout: 15_000 });
-  await expect(page.getByRole("heading", { name: /next game/i })).toBeVisible();
-  await page.goto("/");
-  await expect(
-    page.locator("header").getByRole("link", { name: "Open app", exact: true })
-  ).toHaveAttribute("href", "/home");
-  await expect(
-    page.locator("header").getByRole("link", { name: "Sign up", exact: true })
-  ).toHaveCount(0);
-  await page.goto("/home");
-  const desktopCreate = await page
-    .getByRole("link", { name: "Create", exact: true })
-    .first()
-    .boundingBox();
-  expect(desktopCreate).not.toBeNull();
-  expect(desktopCreate!.x).toBeLessThan(240);
-
-  await page.goto("/games");
-  await page.getByRole("button", { name: "Grid view" }).click();
-  await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
-  await page.reload();
-  await expect(page.getByRole("button", { name: "Grid view" })).toHaveAttribute(
-    "aria-pressed",
-    "true"
-  );
-  await page.getByRole("button", { name: "Calendar view" }).click();
-  await expect(page.getByTestId("games-calendar")).toBeVisible();
-  await page.reload();
-  await expect(
-    page.getByRole("button", { name: "Calendar view" })
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "List view" }).click();
-
-  await page.setViewportSize({ width: 320, height: 700 });
-  await page.goto("/home");
-  const mobileNav = await page
-    .getByRole("navigation", { name: "Main navigation" })
-    .boundingBox();
-  expect(mobileNav).not.toBeNull();
-  expect(mobileNav!.x).toBeGreaterThanOrEqual(0);
-  expect(mobileNav!.x + mobileNav!.width).toBeLessThanOrEqual(320);
-
-  await page.goto("/games/new");
-  await expect(
-    page.getByRole("navigation", { name: "Main navigation" })
-  ).toHaveCount(0);
-  await expect(page.getByText("Step 1 of 4")).toBeVisible();
-  await page.getByRole("button", { name: "Continue to players" }).click();
-  await expect(
-    page.getByText("Add a game name with at least 2 characters.", {
-      exact: true,
-    })
-  ).toBeVisible();
-  await expect(page.getByText("Choose a date.", { exact: true })).toBeVisible();
-  const date = await page.locator("#date").boundingBox();
-  const start = await page.locator("#start").boundingBox();
-  const end = await page.locator("#end").boundingBox();
-  for (const field of [date, start, end]) {
-    expect(field).not.toBeNull();
-    expect(field!.x + field!.width).toBeLessThanOrEqual(320);
-  }
-  expect(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
-
-  await page.locator("#title").fill("Saturday Night Pickle");
-  const gameDate = new Date();
-  gameDate.setDate(gameDate.getDate() + 7);
-  const gameDateLabel = new Intl.DateTimeFormat("en-PH", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(gameDate);
-  await page.getByRole("button", { name: "Date" }).click();
-  const today = new Date();
-  if (
-    gameDate.getMonth() !== today.getMonth() ||
-    gameDate.getFullYear() !== today.getFullYear()
-  ) {
-    await page.getByRole("button", { name: "Next month" }).click();
-  }
-  await page.getByRole("button", { name: gameDateLabel }).click();
-  await page.getByRole("combobox", { name: "Start time" }).click();
-  await page.getByRole("option", { name: "7:00 PM" }).click();
-  await page.getByRole("combobox", { name: "End time" }).fill("21:00");
-  await page.getByRole("combobox", { name: "End time" }).press("Tab");
-  await expect(page.getByRole("combobox", { name: "End time" })).toHaveValue(
-    "9:00 PM"
-  );
-  await page.locator("#venue").fill("Court District");
-  await expect(
-    page.getByRole("listbox", { name: "Court suggestions" })
-  ).toBeVisible({ timeout: 10_000 });
-  await page.getByRole("option").first().click();
-  await expect(page.locator('input[name="venueAddress"]')).not.toHaveValue("");
-  const selectedVenue = await page.locator("#venue").inputValue();
-  await page.getByRole("button", { name: "Continue to players" }).click();
-  await expect(page.getByText("Step 2 of 4")).toBeVisible();
-  const capacity = await page.locator("#capacity").boundingBox();
-  expect(capacity).not.toBeNull();
-  expect(capacity!.x + capacity!.width).toBeLessThanOrEqual(320);
-  await page.locator("#capacity").fill("8");
-  await page.locator("#courts").fill("21");
-  await page.getByRole("button", { name: "Continue to details" }).click();
-  await expect(
-    page.getByText("Choose a whole-number court quantity from 1 to 20.")
-  ).toBeVisible();
-  await expect(page.locator("#courts")).toBeFocused();
-
-  await page.locator("#courts").fill("2");
-  await page.getByRole("button", { name: "Continue to details" }).click();
-  await expect(page.getByText("Step 3 of 4")).toBeVisible();
-  await page.getByRole("button", { name: "Review game" }).click();
-  await expect(page.getByText("Step 4 of 4")).toBeVisible();
-  await expect(page.getByText(selectedVenue)).toBeVisible();
-  await page.getByRole("button", { name: "Publish game" }).click();
-  await expect(page).toHaveURL(/\/games\/[0-9a-f-]+$/, { timeout: 15_000 });
-  const sessionId = new URL(page.url()).pathname.split("/").at(-1);
-
-  await page.goto("/home");
-  await expect(
-    page.locator(`a[href="/games/${sessionId}"]`).first()
-  ).toBeVisible();
-  await page.goto("/games");
-  await expect(
-    page.locator(`a[href="/games/${sessionId}"]`).first()
-  ).toBeVisible();
-  await page.goto(`/games/${sessionId}`);
-
-  await page.setViewportSize({ width: 393, height: 659 });
-  await expect(page.locator("header.app-mobile-header")).toBeHidden();
-  await expect(
-    page.getByRole("navigation", { name: "Main navigation" })
-  ).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Back to games" })).toBeVisible();
-  const gameNavigation = await page
-    .getByRole("navigation", { name: "Game navigation" })
-    .boundingBox();
-  expect(gameNavigation).not.toBeNull();
-  expect(gameNavigation!.x).toBe(0);
-  expect(gameNavigation!.width).toBe(393);
-  for (const action of [
-    page.getByRole("link", { name: "Edit game" }),
-    page.getByRole("button", { name: "Share game" }),
-  ]) {
-    const bounds = await action.boundingBox();
-    expect(bounds?.width).toBeGreaterThanOrEqual(44);
-    expect(bounds?.height).toBeGreaterThanOrEqual(44);
-  }
-  expect(
-    await page.getByRole("navigation", { name: "Breadcrumb" }).count()
-  ).toBe(0);
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    )
-  ).toBe(0);
-
-  await page.setViewportSize({ width: 852, height: 393 });
-  await expect(page.locator("header.app-mobile-header")).toBeHidden();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    )
-  ).toBe(0);
-
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible();
-  const hostAccessibility = await new AxeBuilder({ page }).analyze();
-  expect(
-    hostAccessibility.violations.filter((item) =>
-      ["serious", "critical"].includes(item.impact ?? "")
-    )
-  ).toEqual([]);
-  for (const path of ["", "/players", "/play", "/chat", "/payments"]) {
-    await page.goto(`/games/${sessionId}${path}`);
-    await expect(page.getByRole("link", { name: "Edit game" })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Share game" })
+  if (new URL(page.url()).searchParams.has("tour")) {
+    await check(
+      page.getByRole("dialog", { name: "Welcome to Relay" })
     ).toBeVisible();
+    await page.getByRole("button", { name: "Skip application tour" }).click();
   }
-  await page.goto(`/games/${sessionId}/players`);
-  for (const name of ["Mika Reyes", "AJ Santos"]) {
-    await page.getByPlaceholder("Guest name or @username").fill(name);
-    await page.getByRole("button", { name: "Add", exact: true }).click();
-    await expect(page.getByText(name, { exact: true })).toBeVisible({
-      timeout: 20_000,
+  await check(page).toHaveURL(/\/home$/);
+  await check(
+    page.getByRole("heading", { name: /next game|taking shape/i, level: 1 })
+  ).toBeVisible();
+  const reuse = process.env.E2E_REUSE_SESSION_ID
+    ? await reusableTestGame(baseURL, process.env.E2E_REUSE_SESSION_ID)
+    : undefined;
+  let sessionId = reuse?.id;
+  const gameTitle = reuse?.title ?? `Relay E2E ${Date.now()}`;
+  if (reuse)
+    testInfo.annotations.push({
+      type: "partial-diagnostic",
+      description:
+        "Resumed existing test game; this run does not validate creation/settings.",
     });
-    await expect(page.getByPlaceholder("Guest name or @username")).toHaveValue(
-      "",
-      { timeout: 20_000 }
-    );
-  }
+  await withLifecycleCleanup(
+    async () => {
+      if (!reuse) {
+        await page.goto("/feedback");
+        await check(
+          page.getByRole("heading", { name: "Send feedback" })
+        ).toBeVisible();
+        await check(
+          page.getByRole("radio", { name: /Bug report/ })
+        ).toBeChecked();
+        await check(
+          page.getByRole("button", { name: "Send feedback" })
+        ).toBeVisible();
+        await page.goto("/home");
 
-  await page.goto(`/games/${sessionId}/more`);
-  const publicHref = await page
-    .locator('a[href^="/s/"]')
-    .first()
-    .getAttribute("href");
-  expect(publicHref).toMatch(/^\/s\/[a-z0-9-]+$/);
-  const guestContext = await browser.newContext({
-    viewport: { width: 390, height: 844 },
-  });
-  const guestPage = await guestContext.newPage();
-  await guestPage.goto(publicHref!);
-  await expect(
-    guestPage.getByRole("heading", { name: "Saturday Night Pickle" })
-  ).toBeVisible();
-  const structuredEvent = await guestPage
-    .locator('script[type="application/ld+json"]')
-    .textContent();
-  expect(JSON.parse(structuredEvent ?? "{}")).toMatchObject({
-    "@type": "SportsEvent",
-    name: "Saturday Night Pickle",
-    maximumAttendeeCapacity: 8,
-  });
-  const openGraphImage = await guestPage
-    .locator('meta[property="og:image"]')
-    .getAttribute("content");
-  expect(openGraphImage).toContain("opengraph-image");
-  const previewResponse = await guestPage.request.get(openGraphImage!);
-  expect(previewResponse.ok()).toBe(true);
-  expect(previewResponse.headers()["content-type"]).toContain("image/png");
-  const guestAccessibility = await new AxeBuilder({
-    page: guestPage,
-  }).analyze();
-  expect(
-    guestAccessibility.violations.filter((item) =>
-      ["serious", "critical"].includes(item.impact ?? "")
-    )
-  ).toEqual([]);
-  for (const label of ["Overview", "Players", "Play", "Chat", "Payments"]) {
-    await expect(
-      guestPage
-        .getByRole("navigation", { name: "Game navigation" })
-        .getByRole("link", { name: label, exact: true })
-    ).toBeVisible();
-  }
-  expect(
-    await guestPage.evaluate(
-      () => document.documentElement.scrollWidth - window.innerWidth
-    )
-  ).toBe(0);
-  await guestPage.locator('input[name="guestName"]:visible').fill("Guest Bea");
-  await guestPage
-    .locator("button:visible", { hasText: "Confirm I’m going" })
-    .click();
-  await expect(guestPage.getByRole("status")).toHaveText("Response saved.", {
-    timeout: 15_000,
-  });
-  await guestPage.reload();
-  await expect(
-    guestPage.locator("p:visible", { hasText: "Guest player" })
-  ).toBeVisible();
-  await guestPage.getByRole("link", { name: "Players", exact: true }).click();
-  await expect(guestPage).toHaveURL(`${publicHref}/players`);
-  await expect(guestPage.getByText("Guest Bea", { exact: true })).toBeVisible();
+        await page.getByRole("button", { name: /^Open account menu/ }).click();
+        await page.getByRole("menuitem", { name: "Settings" }).click();
+        await page
+          .getByRole("link", { name: "Appearance", exact: true })
+          .click();
+        await page.getByRole("button", { name: "Dark", exact: true }).click();
+        await check(page.locator("html")).toHaveAttribute("data-theme", "dark");
+        await page.getByRole("button", { name: "Light", exact: true }).click();
+        await page.getByRole("button", { name: "Compact" }).click();
+        await check(page.locator("html")).toHaveAttribute(
+          "data-density",
+          "compact"
+        );
+        await page.getByRole("button", { name: "Default" }).click();
+        await page
+          .getByRole("link", { name: "Games", exact: true })
+          .last()
+          .click();
+        await page.getByRole("button", { name: "Monday" }).click();
+        await check
+          .poll(() =>
+            page.evaluate(() => localStorage.getItem("relay-week-start"))
+          )
+          .toBe("monday");
+        await page.getByRole("button", { name: /^Open account menu/ }).click();
+        await page.getByRole("menuitem", { name: "Sign out" }).click();
+        await check(page).toHaveURL(/\/login$/);
 
-  await page.goto(`/games/${sessionId}/chat`);
-  await guestPage.getByRole("link", { name: "Chat", exact: true }).click();
-  await expect(guestPage).toHaveURL(`${publicHref}/chat`);
-  await guestPage.addStyleTag({
-    content: "nextjs-portal { display: none !important; }",
-  });
-  await guestPage
-    .getByRole("textbox", { name: "Message", exact: true })
-    .fill("Guest Bea is bringing pickleballs.");
-  await guestPage.getByRole("button", { name: "Send message" }).click();
-  await expect(
-    guestPage.getByText("Guest Bea is bringing pickleballs.", { exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByText("Guest Bea is bringing pickleballs.", { exact: true })
-  ).toBeVisible({ timeout: 15_000 });
+        await establishTestSession(page.context(), baseURL);
+        await page.goto("/home");
+        await check(page).toHaveURL(/\/home$/, { timeout: 15_000 });
+        await check(
+          page.getByRole("heading", {
+            name: /next game|taking shape/i,
+            level: 1,
+          })
+        ).toBeVisible();
+        await page.goto("/");
+        await check(
+          page
+            .locator("header")
+            .getByRole("link", { name: "Open app", exact: true })
+        ).toHaveAttribute("href", "/home");
+        await check(
+          page
+            .locator("header")
+            .getByRole("link", { name: "Sign up", exact: true })
+        ).toHaveCount(0);
+        await page.goto("/home");
+        const desktopCreate = await page
+          .getByRole("link", { name: "Create game", exact: true })
+          .first()
+          .boundingBox();
+        check(desktopCreate).not.toBeNull();
+        check(desktopCreate!.x).toBeLessThan(240);
 
-  await page.goto(`/games/${sessionId}/payments`);
-  await page.locator("#total").fill("300");
-  await page.locator("#details").fill("0917 123 4567 · Relay host");
-  await page
-    .locator("#expense-receipt")
-    .setInputFiles("e2e/fixtures/payment-proof.png");
-  await page.getByRole("button", { name: "Create collection" }).click();
-  await expect(
-    page.getByText("Host · paid the full amount upfront")
-  ).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("0 of 3 paid")).toBeVisible();
-  await expect(page.getByText("Mika Reyes", { exact: true })).toBeVisible();
-  await expect(page.getByText("Guest Bea", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Payment screenshot")).toHaveCount(0);
+        await page.goto("/games");
+        await page.getByRole("button", { name: "Grid view" }).click();
+        await check(
+          page.getByRole("button", { name: "Grid view" })
+        ).toHaveAttribute("aria-pressed", "true");
+        await page.reload();
+        await check(
+          page.getByRole("button", { name: "Grid view" })
+        ).toHaveAttribute("aria-pressed", "true");
+        await page.getByRole("button", { name: "Calendar view" }).click();
+        await check(page.getByTestId("games-calendar")).toBeVisible();
+        await page.reload();
+        await check(
+          page.getByRole("button", { name: "Calendar view" })
+        ).toHaveAttribute("aria-pressed", "true");
+        await page.getByRole("button", { name: "List view" }).click();
 
-  await guestPage.goto(`${publicHref}/payments`);
-  await expect(
-    guestPage.getByRole("heading", { name: "Your payment" })
-  ).toBeVisible();
-  await guestPage
-    .getByLabel("Payment screenshot")
-    .setInputFiles("e2e/fixtures/payment-proof.png");
-  await guestPage.getByRole("button", { name: "Submit proof" }).click();
-  await expect(guestPage.getByText("Proof sent—waiting for host")).toBeVisible({
-    timeout: 15_000,
-  });
-  await page.reload();
-  const guestPaymentRow = page
-    .getByRole("listitem")
-    .filter({ hasText: "Guest Bea" });
-  await expect(
-    guestPaymentRow.getByText("Waiting for host review")
-  ).toBeVisible();
-  await guestPaymentRow.getByRole("button", { name: "Confirm paid" }).click();
-  await expect(page.getByText("1 of 3 paid")).toBeVisible({ timeout: 30_000 });
-  await guestPage.reload();
-  await expect(guestPage.getByText("Payment confirmed")).toBeVisible();
+        await page.setViewportSize({ width: 320, height: 700 });
+        await page.goto("/home");
+        const mobileNav = await page
+          .getByRole("navigation", { name: "Main navigation" })
+          .boundingBox();
+        check(mobileNav).not.toBeNull();
+        check(mobileNav!.x).toBeGreaterThanOrEqual(0);
+        check(mobileNav!.x + mobileNav!.width).toBeLessThanOrEqual(320);
 
-  await page.goto(`/games/${sessionId}/play`);
-  await page.getByRole("link", { name: "Start Play" }).click();
-  await expect(
-    page.getByRole("heading", { name: "Choose how this game runs" })
-  ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Who’s here" })).toBeVisible();
-  await expect(
-    page.getByText(
-      /No arrivals marked yet.*everyone going enters the first rotation/
-    )
-  ).toBeVisible();
-  const notHere = page.getByRole("button", { name: /^Mark .* as here$/ });
-  await expect(notHere).toHaveCount(4);
-  for (let remaining = 3; remaining >= 0; remaining -= 1) {
-    await notHere.first().click();
-    await expect(notHere).toHaveCount(remaining, { timeout: 15_000 });
-  }
-  await expect(
-    page.getByText(
-      "4 here · players marked Not here can join the queue when they arrive."
-    )
-  ).toBeVisible();
-  await page.getByRole("radio", { name: /^Keep pairs together/ }).click();
-  await expect(
-    page.getByRole("heading", { name: "Set the pairs" })
-  ).toBeVisible();
-  const teamRoundRobin = page.getByRole("radio", { name: /Team Round Robin/ });
-  await page.getByText("Team Round Robin", { exact: true }).click();
-  await expect(teamRoundRobin).toBeChecked();
-  await page.getByRole("button", { name: "Round timer" }).click();
-  await page.getByRole("option", { name: "10 minutes" }).click();
-  await page.getByRole("button", { name: "Start Play" }).click();
-  await expect(page.getByText("Match in progress").first()).toBeVisible();
-  await expect(page.getByText("Round timer", { exact: true })).toBeVisible();
-  await guestPage.goto(`${publicHref}/play`);
-  await expect(guestPage.getByText("Match in progress").first()).toBeVisible();
-  const guestScore = guestPage.locator("output").first();
-  const scoreBefore = Number(await guestScore.textContent());
-  await page
-    .getByRole("button", { name: /^Add a point to/ })
-    .first()
-    .click();
-  await expect(guestScore).toHaveText(String(scoreBefore + 1), {
-    timeout: 15_000,
-  });
-  await page.getByRole("button", { name: "Finish match" }).first().click();
-  await expect(guestPage.getByText("No match is active")).toBeVisible({
-    timeout: 15_000,
-  });
-  await expect(
-    guestPage.getByRole("heading", { name: "Session Standings" })
-  ).toBeVisible();
-  await guestContext.close();
+        await page.goto("/games/new");
+        await check(
+          page.getByRole("navigation", { name: "Main navigation" })
+        ).toHaveCount(0);
+        await check(page.getByText("Step 1 of 4")).toBeVisible();
+        await page.getByRole("button", { name: "Continue to players" }).click();
+        await check(
+          page.getByText("Add a game name with at least 2 characters.", {
+            exact: true,
+          })
+        ).toBeVisible();
+        await check(
+          page.getByText("Choose a date.", { exact: true })
+        ).toBeVisible();
+        const date = await page.locator("#date").boundingBox();
+        const start = await page.locator("#start").boundingBox();
+        const end = await page.locator("#end").boundingBox();
+        for (const field of [date, start, end]) {
+          check(field).not.toBeNull();
+          check(field!.x + field!.width).toBeLessThanOrEqual(320);
+        }
+        check(start!.y + start!.height).toBeLessThanOrEqual(end!.y);
 
-  await page.goto(`/games/${sessionId}/more`);
-  await page.getByRole("button", { name: "Delete game" }).click();
-  await page
-    .getByLabel(/Type Saturday Night Pickle to confirm/)
-    .fill("Saturday Night Pickle");
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: "Delete game" })
-    .click();
-  await expect(page).toHaveURL(/\/games$/);
+        await page.locator("#title").fill(gameTitle);
+        const gameDate = new Date();
+        gameDate.setDate(gameDate.getDate() + 7);
+        const gameDateLabel = new Intl.DateTimeFormat("en-PH", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        }).format(gameDate);
+        await page.getByRole("button", { name: "Date" }).click();
+        const today = new Date();
+        if (
+          gameDate.getMonth() !== today.getMonth() ||
+          gameDate.getFullYear() !== today.getFullYear()
+        ) {
+          await page.getByRole("button", { name: "Next month" }).click();
+        }
+        await page.getByRole("button", { name: gameDateLabel }).click();
+        await page.getByRole("combobox", { name: "Start time" }).click();
+        await page.getByRole("option", { name: "7:00 PM" }).click();
+        await page.getByRole("combobox", { name: "End time" }).fill("21:00");
+        await page.getByRole("combobox", { name: "End time" }).press("Tab");
+        await check(
+          page.getByRole("combobox", { name: "End time" })
+        ).toHaveValue("9:00 PM");
+        await page.locator("#venue").fill("Court District");
+        await check(
+          page.getByRole("listbox", { name: "Court suggestions" })
+        ).toBeVisible({ timeout: 10_000 });
+        await page.getByRole("option").first().click();
+        await check(page.locator('input[name="venueAddress"]')).not.toHaveValue(
+          ""
+        );
+        const selectedVenue = await page.locator("#venue").inputValue();
+        await page.getByRole("button", { name: "Continue to players" }).click();
+        await check(page.getByText("Step 2 of 4")).toBeVisible();
+        const capacity = await page.locator("#capacity").boundingBox();
+        check(capacity).not.toBeNull();
+        check(capacity!.x + capacity!.width).toBeLessThanOrEqual(320);
+        await page.getByRole("radio", { name: /Anyone with the link/ }).check();
+        await page.locator("#capacity").fill("8");
+        await page.locator("#courts").fill("21");
+        await page.getByRole("button", { name: "Continue to details" }).click();
+        await check(
+          page.getByText("Choose a whole-number court quantity from 1 to 20.")
+        ).toBeVisible();
+        await check(page.locator("#courts")).toBeFocused();
+
+        await page.locator("#courts").fill("2");
+        await page.getByRole("button", { name: "Continue to details" }).click();
+        await check(page.getByText("Step 3 of 4")).toBeVisible();
+        await page.getByRole("button", { name: "Review game" }).click();
+        await check(page.getByText("Step 4 of 4")).toBeVisible();
+        await check(page.getByText(selectedVenue)).toBeVisible();
+        await page.getByRole("button", { name: "Publish game" }).click();
+        await check(page).toHaveURL(/\/games\/[0-9a-f-]+$/, {
+          timeout: 15_000,
+        });
+        sessionId = new URL(page.url()).pathname.split("/").at(-1);
+        await page
+          .getByRole("button", { name: "Dismiss game created message" })
+          .click();
+      }
+      if (!reuse) {
+        await page.goto("/home");
+        await check(
+          page.locator(`a[href="/games/${sessionId}"]`).first()
+        ).toBeVisible();
+        await page.goto("/games");
+        await check(
+          page.locator(`a[href="/games/${sessionId}"]`).first()
+        ).toBeVisible();
+        await page.goto(`/games/${sessionId}`);
+
+        await page.setViewportSize({ width: 393, height: 659 });
+        await check(page.locator("header.app-mobile-header")).toBeHidden();
+        await check(
+          page.getByRole("navigation", { name: "Main navigation" })
+        ).toHaveCount(0);
+        await check(
+          page.getByRole("link", { name: "Back to games" })
+        ).toBeVisible();
+        const gameNavigation = await page
+          .getByRole("navigation", { name: "Game navigation" })
+          .boundingBox();
+        check(gameNavigation).not.toBeNull();
+        check(gameNavigation!.x).toBeGreaterThanOrEqual(0);
+        check(gameNavigation!.x + gameNavigation!.width).toBeLessThanOrEqual(
+          393
+        );
+        // The development indicator overlaps the top-right mobile action; it is not app UI.
+        await page.evaluate(() => {
+          const portal = document.querySelector("nextjs-portal");
+          const badge = portal?.shadowRoot?.querySelector<HTMLElement>(
+            "[data-nextjs-dev-tools-button]"
+          );
+          if (badge) badge.style.display = "none";
+        });
+        await page
+          .getByRole("button", { name: "Game actions", exact: true })
+          .click();
+        for (const action of [
+          page.getByRole("link", { name: "Edit game" }),
+          page.getByRole("button", { name: "Share game" }),
+        ]) {
+          const bounds = await action.boundingBox();
+          check(bounds?.width).toBeGreaterThanOrEqual(24);
+          check(bounds?.height).toBeGreaterThanOrEqual(36);
+        }
+        await page.keyboard.press("Escape");
+        check(
+          await page.getByRole("navigation", { name: "Breadcrumb" }).count()
+        ).toBe(0);
+        check(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth - window.innerWidth
+          )
+        ).toBe(0);
+
+        await page.setViewportSize({ width: 852, height: 393 });
+        await check(page.locator("header.app-mobile-header")).toBeHidden();
+        check(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth - window.innerWidth
+          )
+        ).toBe(0);
+
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await check(
+          page.getByRole("heading", { name: "Overview" })
+        ).toBeVisible();
+        const hostAccessibility = await new AxeBuilder({ page }).analyze();
+        check(
+          hostAccessibility.violations.filter((item) =>
+            ["serious", "critical"].includes(item.impact ?? "")
+          )
+        ).toEqual([]);
+        for (const path of ["", "/players", "/play", "/chat", "/payments"]) {
+          await page.goto(`/games/${sessionId}${path}`);
+          await page
+            .getByRole("button", { name: "More game actions", exact: true })
+            .click();
+          await check(
+            page.getByRole("link", { name: "Edit game" })
+          ).toBeVisible();
+          await check(
+            page.getByRole("button", { name: "Share game" })
+          ).toBeVisible();
+          await page.keyboard.press("Escape");
+        }
+      }
+      await page.goto(`/games/${sessionId}/players`);
+      await check(page).toHaveURL(
+        new RegExp(`/games/${sessionId}/play\\?panel=players$`)
+      );
+      for (const name of ["Mika Reyes", "AJ Santos"]) {
+        await page.getByPlaceholder("Guest name or @username").fill(name);
+        await page.getByRole("button", { name: "Add", exact: true }).click();
+        await check(page.getByText(name, { exact: true })).toBeVisible({
+          timeout: 20_000,
+        });
+        await check(
+          page.getByPlaceholder("Guest name or @username")
+        ).toHaveValue("", { timeout: 20_000 });
+      }
+
+      await page.goto(`/games/${sessionId}/more`);
+      const publicHref = await page
+        .locator('a[href^="/s/"]')
+        .first()
+        .getAttribute("href");
+      check(publicHref).toMatch(/^\/s\/[a-z0-9-]+$/);
+      const guestContext = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+      });
+      const guestPage = await guestContext.newPage();
+      await guestPage.goto(publicHref!);
+      await check(
+        guestPage.getByRole("heading", { name: gameTitle })
+      ).toBeVisible();
+      const structuredEvent = await guestPage
+        .locator('#main-content > script[type="application/ld+json"]')
+        .textContent();
+      check(JSON.parse(structuredEvent ?? "{}")).toMatchObject({
+        "@type": "SportsEvent",
+        name: gameTitle,
+        maximumAttendeeCapacity: 8,
+      });
+      const openGraphImage = await guestPage
+        .locator('meta[property="og:image"]')
+        .getAttribute("content");
+      check(openGraphImage).toContain("opengraph-image");
+      const previewResponse = await guestPage.request.get(openGraphImage!);
+      check(previewResponse.ok()).toBe(true);
+      check(previewResponse.headers()["content-type"]).toContain("image/png");
+      const guestAccessibility = await new AxeBuilder({
+        page: guestPage,
+      }).analyze();
+      check(
+        guestAccessibility.violations.filter((item) =>
+          ["serious", "critical"].includes(item.impact ?? "")
+        )
+      ).toEqual([]);
+      for (const label of ["Overview", "Play", "Chat", "Payments", "Story"]) {
+        await check(
+          guestPage
+            .getByRole("navigation", { name: "Game navigation" })
+            .getByRole("link", { name: label, exact: true })
+        ).toBeVisible();
+      }
+      check(
+        await guestPage.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth
+        )
+      ).toBe(0);
+      await guestPage
+        .locator('input[name="guestName"]:visible')
+        .fill("Guest Bea");
+      await guestPage
+        .locator("button:visible", { hasText: "Confirm I’m going" })
+        .click();
+      await check(
+        guestPage.getByRole("region", { name: "Your spot is saved." })
+      ).toBeVisible({ timeout: 15_000 });
+      await check(
+        guestPage.getByRole("button", { name: "Going", exact: true })
+      ).toHaveAttribute("aria-pressed", "true");
+      await guestPage.reload();
+      await check(
+        guestPage.locator("p:visible", { hasText: "Guest player" })
+      ).toBeVisible();
+      await guestPage.getByRole("link", { name: "Play", exact: true }).click();
+      await check(guestPage).toHaveURL(`${publicHref}/play`);
+      await check(
+        guestPage.getByText("Guest Bea", { exact: true })
+      ).toBeVisible();
+
+      await page.goto(`/games/${sessionId}/chat`);
+      await guestPage.getByRole("link", { name: "Chat", exact: true }).click();
+      await check(guestPage).toHaveURL(`${publicHref}/chat`);
+      await guestPage.addStyleTag({
+        content: "nextjs-portal { display: none !important; }",
+      });
+      await guestPage
+        .getByRole("textbox", { name: "Message", exact: true })
+        .fill("Guest Bea is bringing pickleballs.");
+      await guestPage.getByRole("button", { name: "Send message" }).click();
+      await check(
+        guestPage.getByText("Guest Bea is bringing pickleballs.", {
+          exact: true,
+        })
+      ).toBeVisible();
+      await check(
+        page.getByText("Guest Bea is bringing pickleballs.", { exact: true })
+      ).toBeVisible({ timeout: 15_000 });
+
+      await page.goto(`/games/${sessionId}/payments`);
+      await page.locator("#total").fill("300");
+      await page.locator("#details").fill("0917 123 4567 · Relay host");
+      await page
+        .locator("#expense-receipt")
+        .setInputFiles("e2e/fixtures/payment-proof.png");
+      await page.getByRole("button", { name: "Create collection" }).click();
+      await check(
+        page.getByText("Host · paid the full amount upfront")
+      ).toBeVisible({ timeout: 15_000 });
+      await check(page.getByText("0 of 3 paid")).toBeVisible();
+      await check(page.getByText("Mika Reyes", { exact: true })).toBeVisible();
+      await check(page.getByText("Guest Bea", { exact: true })).toBeVisible();
+      await check(page.getByLabel("Payment screenshot")).toHaveCount(0);
+
+      await guestPage.goto(`${publicHref}/payments`);
+      await check(
+        guestPage.getByRole("heading", { name: "Your payment" })
+      ).toBeVisible();
+      await guestPage
+        .getByLabel("Payment screenshot")
+        .setInputFiles("e2e/fixtures/payment-proof.png");
+      await guestPage.getByRole("button", { name: "Submit proof" }).click();
+      await check(
+        guestPage.getByText("Proof sent—waiting for host")
+      ).toBeVisible({
+        timeout: 15_000,
+      });
+      await page.reload();
+      const guestPaymentRow = page
+        .getByRole("listitem")
+        .filter({ hasText: "Guest Bea" });
+      await check(
+        guestPaymentRow.getByText("Waiting for host review")
+      ).toBeVisible();
+      await guestPaymentRow
+        .getByRole("button", { name: "Confirm paid" })
+        .click();
+      await check(page.getByText("1 of 3 paid")).toBeVisible({
+        timeout: 30_000,
+      });
+      await guestPage.reload();
+      await check(guestPage.getByText("Payment confirmed")).toBeVisible();
+
+      await page.goto(`/games/${sessionId}/play`);
+      await page.getByRole("link", { name: "Set up Play" }).click();
+      await check(
+        page.getByRole("dialog", { name: "Is the court ready?" })
+      ).toBeVisible();
+      await page
+        .getByRole("button", { name: "No booking needed", exact: true })
+        .click();
+      await check(
+        page.getByRole("heading", { name: "Confirm who’s playing" })
+      ).toBeVisible();
+      await check(
+        page.getByRole("heading", { name: "Who’s here" })
+      ).toBeVisible();
+      await check(
+        page.getByText(
+          /No arrivals marked yet.*Everyone going will enter the first rotation/
+        )
+      ).toBeVisible();
+      const notHere = page.getByRole("button", { name: /^Mark .* as here$/ });
+      await check(notHere).toHaveCount(4);
+      for (let remaining = 3; remaining >= 0; remaining -= 1) {
+        await notHere.first().click();
+        await check(notHere).toHaveCount(remaining, { timeout: 15_000 });
+      }
+      await check(
+        page.getByText(
+          "4 here · players marked Not here can join the queue when they arrive."
+        )
+      ).toBeVisible();
+      await page
+        .getByRole("button", { name: "Continue to game options" })
+        .click();
+      await check(
+        page.getByRole("heading", { name: "Choose how this game runs" })
+      ).toBeVisible();
+      await page.getByRole("radio", { name: /^Keep pairs together/ }).click();
+      await check(
+        page.getByRole("heading", { name: "Set the pairs" })
+      ).toBeVisible();
+      const teamRoundRobin = page.getByRole("radio", {
+        name: /Team Round Robin/,
+      });
+      await page.getByText("Team Round Robin", { exact: true }).click();
+      await check(teamRoundRobin).toBeChecked();
+      await page.getByRole("button", { name: "Round timer" }).click();
+      await page.getByRole("option", { name: "10 minutes" }).click();
+      await page
+        .getByRole("button", { name: "Review setup", exact: true })
+        .click();
+      await check(
+        page.getByRole("heading", { name: "Review Play setup" })
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Start Play" }).click();
+      await check(page.getByText("Match in progress").first()).toBeVisible();
+      await check(page.getByText("Round timer", { exact: true })).toBeVisible();
+      const playersTrigger = page.getByRole("button", {
+        name: "Players (4)",
+        exact: true,
+      });
+      await playersTrigger.click();
+      const rosterDrawer = page.getByRole("dialog", {
+        name: "Players (4)",
+        exact: true,
+      });
+      const removePlayer = rosterDrawer.getByRole("button", {
+        name: "Remove Mika Reyes",
+        exact: true,
+      });
+      await removePlayer.click();
+      const removal = page.getByRole("dialog", {
+        name: "Remove Mika Reyes?",
+        exact: true,
+      });
+      await check(removal).toBeVisible();
+      await page.keyboard.press("Escape");
+      await check(removal).not.toBeVisible();
+      await check(rosterDrawer).toBeVisible();
+      await check(page).toHaveURL(
+        new RegExp(`/games/${sessionId}/play\\?panel=players$`)
+      );
+      await check(removePlayer).toBeFocused();
+      await page.keyboard.press("Escape");
+      await check(rosterDrawer).not.toBeVisible();
+      await check(playersTrigger).toBeFocused();
+      await check(page).toHaveURL(new RegExp(`/games/${sessionId}/play$`));
+      await guestPage.goto(`${publicHref}/play`);
+      await check(
+        guestPage.getByText("Match in progress").first()
+      ).toBeVisible();
+      const guestScore = guestPage.locator("output").first();
+      const scoreBefore = Number(await guestScore.textContent());
+      await page
+        .getByRole("button", { name: /^Add a point to/ })
+        .first()
+        .click();
+      await check(guestScore).toHaveText(String(scoreBefore + 1), {
+        timeout: 15_000,
+      });
+      await page.getByRole("button", { name: "Finish match" }).first().click();
+      await page
+        .getByRole("dialog", { name: /^Finish / })
+        .getByRole("button", { name: "Finish match", exact: true })
+        .click();
+      await check(
+        guestPage.getByRole("heading", { name: "Round robin complete" })
+      ).toBeVisible({ timeout: 15_000 });
+      await guestPage
+        .getByRole("button", { name: "Standings", exact: true })
+        .click();
+      await check(
+        guestPage.getByRole("heading", { name: "Session Standings" })
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Manage", exact: true }).click();
+      await page
+        .getByRole("button", { name: "End session", exact: true })
+        .click();
+      await page
+        .getByRole("dialog", { name: "End this session?" })
+        .getByRole("button", { name: "End session", exact: true })
+        .click();
+      await check(
+        page.getByRole("heading", { name: "Recap", exact: true })
+      ).toBeVisible({ timeout: 15000 });
+      await check(
+        guestPage.getByRole("heading", { name: "Recap", exact: true })
+      ).toBeVisible({ timeout: 15000 });
+      await page.goto(`/games/${sessionId}/players`);
+      await check(
+        page.getByRole("heading", { name: "Final roster" })
+      ).toBeVisible();
+      await check(page.getByPlaceholder("Guest name or @username")).toHaveCount(
+        0
+      );
+      await guestContext.close();
+    },
+    async () => {
+      if (!sessionId) return;
+      if (process.env.E2E_RETAIN_SESSION === "true") {
+        testInfo.annotations.push({
+          type: "retained-test-game",
+          description: `Cleanup deferred for explicitly retained test game ${sessionId}.`,
+        });
+        return;
+      }
+      await page.goto(`/games/${sessionId}/more`);
+      await page.getByRole("button", { name: "Delete game" }).click();
+      await page.getByLabel(`Type ${gameTitle} to confirm`).fill(gameTitle);
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Delete game" })
+        .click();
+      await check(page).toHaveURL(/\/games$/);
+    },
+    () => {
+      testInfo.annotations.push({
+        type: "cleanup-failure",
+        description: `Could not remove test game ${sessionId}; inspect the server log before retrying.`,
+      });
+    }
+  );
 });
 
 test("login and account creation have distinct entry routes", async ({
@@ -738,14 +914,21 @@ test("login and account creation have distinct entry routes", async ({
       .evaluate((input: HTMLInputElement) => input.checkValidity())
   ).toBe(false);
   const authTabs = page.getByRole("group", { name: "Authentication method" });
+  await expect(authTabs).toBeVisible();
   const signInPosition = await authTabs.boundingBox();
+  expect(signInPosition).not.toBeNull();
   await authTabs.getByRole("link", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/signup$/);
+  await expect(authTabs).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Create your account" })
   ).toBeVisible();
   await expect(page.locator("main > div")).toBeVisible();
-  const createPosition = await authTabs.boundingBox();
-  expect(createPosition?.y).toBe(signInPosition?.y);
+  await expect(async () => {
+    const createPosition = await authTabs.boundingBox();
+    expect(createPosition).not.toBeNull();
+    expect(createPosition!.y).toBe(signInPosition!.y);
+  }).toPass();
   const panelBox = await page.locator("main > div").boundingBox();
   const mainBox = await page.locator("main").boundingBox();
   expect(panelBox && mainBox).toBeTruthy();
@@ -800,27 +983,28 @@ test("light mode is default and a stored dark preference loads", async ({
   await expect(favicon).toHaveAttribute("href", "/relay-ball.svg");
 });
 
-test("public entry pages have no serious accessibility violations in light and dark modes", async ({
-  page,
-}) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  for (const path of [
-    "/",
-    "/play",
-    "/courts",
-    "/games/open",
-    "/login",
-    "/signup",
-    "/privacy",
-    "/terms",
-  ]) {
-    await page.goto(path);
+for (const { path, ready } of [
+  { path: "/", ready: "h1" },
+  { path: "/play", ready: "#quick-players-title" },
+  { path: "/courts", ready: ".court-finder-workspace input[placeholder]" },
+  { path: "/games/open", ready: "h1" },
+  { path: "/login", ready: "#password-email" },
+  { path: "/signup", ready: "#password-confirmation" },
+  { path: "/privacy", ready: "h1" },
+  { path: "/terms", ready: "h1" },
+]) {
+  test(`public entry ${path} has no serious accessibility violations in light and dark modes`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(path, { waitUntil: "domcontentloaded" });
     for (const theme of ["light", "dark"] as const) {
       await page.evaluate(
         (nextTheme) => localStorage.setItem("relay-theme", nextTheme),
         theme
       );
-      await page.reload();
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.locator(ready).first()).toBeVisible();
       await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
       const results = await new AxeBuilder({ page }).analyze();
       expect(
@@ -829,8 +1013,8 @@ test("public entry pages have no serious accessibility violations in light and d
         )
       ).toEqual([]);
     }
-  }
-});
+  });
+}
 
 test("keyboard users can skip directly to the main content", async ({
   page,

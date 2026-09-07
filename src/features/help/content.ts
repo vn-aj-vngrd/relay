@@ -94,7 +94,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Plan — captured. Open Create game and enter a recognizable name, court, date, and times. The example uses a manual Demo court, not a directory reservation. Complete Players and access with capacity and court count; choose link-only for a directly shared game. Add or skip optional Details.",
       "Review and account handoff — captured. Check the plan, access, price state, and details before publishing. Create account and publish opens signup with a return to the stored draft. Finish signup/verification and onboarding, then review and explicitly publish. This capture stops at signup: it does not show a created account or published game.",
-      "Publish and share — source instructions; not captured. After publishing, use Share game or Show QR for public/link-only games. For account invitations, open Players, enter @username, select the correct account, and Invite. Do not distribute a private game's link as a public invitation.",
+      "Publish and share — source instructions; not captured. After publishing, use Share game or Show QR for public/link-only games. For account invitations, open Play’s roster (use Players during live play), enter @username, select the correct account, and Invite. Do not distribute a private game's link as a public invitation.",
       "Join — source instructions; not captured. A guest opens the shared link, reads the plan and price, enters a recognizable name, and responds. Read the actual result: Going is confirmed roster capacity; Maybe reserves no spot; Pending waits for a host decision; Waitlisted is not confirmed attendance.",
       "Prepare the court and roster — source instructions; not captured. Confirm the external court arrangement. In Set up Play, review Players, Game options, and Review. At least four eligible players, resolved booking, and an open court are required; fix mode-specific constraints before Start Play. Repayment does not block Play.",
       "Score and finish — source instructions; not captured. Read the assigned teams, enter points or the final score using an authorized account, and choose Finish match. Review teams and the winning score before confirming. Resolve conflicts using the latest saved score; finish every active court before a synchronized next round.",
@@ -159,7 +159,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Open the link and read Overview: date, time, court, booking arrangement, price, and approval policy.",
       "Choose Going, Maybe, or Can’t go. If you are a guest, enter a recognizable name. Read the saved status before making travel plans.",
-      "Use Players for the roster, Chat for coordination, and Payments for any external repayment instructions. Check in when you arrive, then open Play for assignments.",
+      "Use Play for the roster, arrival, and assignments; Chat for coordination; and Payments for any external repayment instructions. Before play, the roster is inline. During live play, open Players to view the roster without leaving the courts.",
       "After the host ends the game, return to Play for Recap and Story for sharing. To keep a guest response in account history, use Keep this game in Relay from the original browser.",
     ],
     outcome:
@@ -188,7 +188,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Find a court or enter one manually in Create game. Confirm availability and book externally if the venue requires it.",
       "Complete Plan, Players and access, optional Details, and Review. Sign in or create an account from Review, then review and publish the restored draft.",
-      "Share the link or invite account players. Watch requests and waitlists in Players. In Game settings → Invite, explicitly set Player price to Free if true, or arrange repayment in Payments; Public visibility alone does not put a game in Open games.",
+      "Share the link or invite account players. Watch requests and waitlists in Play. During live play, open Players. In Game settings → Invite, explicitly set Player price to Free if true, or arrange repayment in Payments; Public visibility alone does not put a game in Open games.",
       "Confirm the court arrangement, choose Set up Play, check arrivals, choose a rotation, and start from Review. Finish active matches before ending the game.",
       "Use Recap to review results, Story to share, and Play again to start a fresh game with a new date.",
     ],
@@ -222,7 +222,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Choose a saved game for a durable shared plan and account history. Choose Quick Play only for temporary play on one browser.",
       "Read a public or link-only shared game without an account. RSVP by name to participate as a guest; use an account for cross-game history and account invitations. Private games need authorized access.",
-      "Inside a game, use Overview for the plan; Players for roster and arrival; Play (later Recap) for courts and results; Chat for coordination; Payments for repayment; Story for images and memories.",
+      "Inside a game, use Overview for the plan; Play for roster, arrival, courts, and results (later Recap); Chat for coordination; Payments for repayment; Story for images and memories.",
       "Use Home and Games for account invitations and saved games. Game settings changes a game; account Settings changes your own preferences. Replay the app tour after signing in if you need orientation.",
     ],
     outcome:
@@ -645,7 +645,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Choose Public for potential Open games discovery, Link-only for a game shared directly, or Private for invited/authorized account access.",
       "For Public or Link-only, choose Share game to share or copy the canonical link. Show QR supports scanning and a downloadable image; keep the plain code readable when printing.",
-      "To invite account players, open Players, type @username in Guest name or Relay username, select the matching account, and choose Invite. Plain names add guests instead. For Private games, use account invitations rather than distributing a public link or QR.",
+      "To invite account players, open Play’s roster (use Players during live play), type @username in Guest name or Relay username, select the matching account, and choose Invite. Plain names add guests instead. For Private games, use account invitations rather than distributing a public link or QR.",
       "Ask players to respond to the invitation; being invited or being made co-host is not the same as Going.",
     ],
     outcome:
@@ -693,16 +693,16 @@ export const helpArticles: readonly HelpArticle[] = [
     category: "hosting",
     title: "Manage requests, capacity, and the waitlist",
     summary:
-      "Keep participation decisions in Players, separate from organizer authority.",
+      "Keep participation decisions in Play’s roster, separate from organizer authority in Game settings → Organizers.",
     audience: "Hosts and co-hosts",
     prerequisites: [
       "Organizer access to the saved game. Some roster changes are restricted once Play begins or responses are locked.",
     ],
     steps: [
-      "Open Players and inspect join requests alongside current Going players and the ordered waitlist.",
+      "Open Play (then Players during live play) and inspect join requests alongside current Going players and the ordered waitlist.",
       "Approve or decline requests with roster context. An approval fills an available spot or becomes Waitlisted if capacity is full.",
       "Use @username and select an account to Invite, or enter a plain name to Add a guest. Use the removal controls carefully and review the ordered waitlist. Adjust capacity in the game’s settings before Play; it cannot drop below the Going count.",
-      "Close/lock responses when appropriate and tell the crew why. Check Players again after changes rather than assuming a notification alone proves attendance.",
+      "Close/lock responses when appropriate and tell the crew why. Check the roster in Play again after changes rather than assuming a notification alone proves attendance.",
     ],
     outcome:
       "The roster states reflect actual decisions, with capacity and waitlist promotion handled by Relay. Becoming an organizer is a separate action.",
@@ -1332,7 +1332,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A signed-in account. Push needs a supported browser and permission on each device.",
     ],
     steps: [
-      "Open Notifications and follow a row to its game/action. Resolve requests in Players rather than assuming that reading a notification approves them.",
+      "Open Notifications and follow a row to its game/action. Resolve requests in Play’s roster rather than assuming that reading a notification approves them.",
       "Open Settings → Notifications and choose email/push categories, reminder timing, time zone, and quiet hours.",
       "Choose to enable push on this device, then respond to the browser permission prompt. Repeat on each device you want to register.",
       "Review registered devices and disable a device when no longer needed. Check delivery preferences after changing browsers.",

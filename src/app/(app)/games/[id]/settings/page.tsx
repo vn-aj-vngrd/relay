@@ -115,7 +115,7 @@ export default async function GameSettingsPage({
 
   return (
     <>
-      <GamePageIntro title="Game settings" />
+      <GamePageIntro title="Game settings" showTitle />
       <div className="mx-auto w-full max-w-6xl">
         <GameSettingsTabs sessionId={sessionId} active={section} />
         {section !== "organizers" ? (

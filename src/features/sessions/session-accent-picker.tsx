@@ -3,6 +3,8 @@
 import { Check } from "@phosphor-icons/react";
 import { useState } from "react";
 
+import { Tooltip } from "@/components/ui/tooltip";
+
 import { type SessionAccent, sessionAccents } from "./accent";
 
 export function SessionAccentPicker({
@@ -27,8 +29,8 @@ export function SessionAccentPicker({
             key={accent.id}
             className={`relative grid h-11 w-11 cursor-pointer place-items-center rounded-lg border transition-colors focus-within:outline focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-primary ${selected === accent.id ? "border-ink" : "border-line hover:border-muted"}`}
             style={{ backgroundColor: accent.soft }}
-            title={accent.label}
           >
+            <Tooltip content={accent.label} />
             <input
               aria-label={accent.label}
               type="radio"

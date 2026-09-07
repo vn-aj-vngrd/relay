@@ -11,6 +11,7 @@ import { notFound } from "next/navigation";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
 import { ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { db } from "@/db/client";
 import { groupMembers, groups, profiles, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -234,11 +235,9 @@ export default async function GroupPage({
                         </div>
                       )}
                       <div className="p-4">
-                        <p
-                          title={session.title}
-                          className="truncate font-semibold"
-                        >
+                        <p className="truncate font-semibold">
                           {session.title}
+                          <Tooltip content={session.title} />
                         </p>
                         <p className="mt-1 text-sm text-muted">
                           {session.venueName}

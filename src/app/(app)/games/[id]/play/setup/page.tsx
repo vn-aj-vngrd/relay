@@ -54,10 +54,7 @@ export default async function PlaySetupPage({
 
   return (
     <>
-      <GamePageIntro
-        title="Set up Play"
-        description="Confirm players, choose game options, and review before starting."
-      />
+      <GamePageIntro title="Set up Play" showTitle />
       <div className="mx-auto w-full max-w-2xl pb-8 sm:pt-6">
         <CourtBookingGate
           sessionId={data.session.id}

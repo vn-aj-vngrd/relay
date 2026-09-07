@@ -78,7 +78,7 @@ export function PlaySetupWizard({
         {arrivals}
         {(play.players?.length ?? play.playerCount) < 4 ? (
           <Link
-            href={`/games/${play.sessionId}/players`}
+            href={`/games/${play.sessionId}/play?panel=players`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary"

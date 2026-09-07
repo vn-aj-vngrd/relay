@@ -4,6 +4,8 @@ import { CaretLeft, CaretRight, Pause, Play } from "@phosphor-icons/react";
 import type { PointerEvent, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 
+import { PlayersPreview } from "./players-preview";
+
 const AUTOPLAY_DELAY_MS = 6500;
 
 type HeroSessionSlide = {
@@ -12,6 +14,7 @@ type HeroSessionSlide = {
   moment: string;
   summary: string;
   content: ReactNode;
+  roster?: ReactNode;
 };
 
 export function HeroSessionCarousel({
@@ -21,6 +24,7 @@ export function HeroSessionCarousel({
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [activityVersion, setActivityVersion] = useState(0);
+  const [isRosterOpen, setIsRosterOpen] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
   const pointerStart = useRef<number | null>(null);
@@ -55,15 +59,30 @@ export function HeroSessionCarousel({
   useEffect(() => {
     const reducedMotion =
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-    if (reducedMotion || isPaused || !isInViewport || slides.length < 2) return;
+    if (
+      reducedMotion ||
+      isPaused ||
+      isRosterOpen ||
+      !isInViewport ||
+      slides.length < 2
+    )
+      return;
 
     const timer = window.setTimeout(() => {
       setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
     }, AUTOPLAY_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [activeIndex, activityVersion, isInViewport, isPaused, slides.length]);
+  }, [
+    activeIndex,
+    activityVersion,
+    isInViewport,
+    isPaused,
+    isRosterOpen,
+    slides.length,
+  ]);
 
   function selectSlide(index: number) {
+    if (isRosterOpen) return;
     setActiveIndex((index + slides.length) % slides.length);
     setActivityVersion((version) => version + 1);
   }
@@ -92,6 +111,13 @@ export function HeroSessionCarousel({
         aria-label="A Relay game from overview to story"
         className="overflow-hidden rounded-xl border border-line bg-surface text-left text-ink [--session-cover:#18233b]"
       >
+        {activeSlide.roster ? (
+          <div className="px-4 pt-5 sm:px-6">
+            <PlayersPreview onOpenChange={setIsRosterOpen}>
+              {activeSlide.roster}
+            </PlayersPreview>
+          </div>
+        ) : null}
         <div
           id="hero-session-panel"
           role="group"
@@ -132,14 +158,16 @@ export function HeroSessionCarousel({
                   className="h-1 w-full overflow-hidden rounded-full bg-line"
                 >
                   <span
-                    key={`${activeIndex}-${activityVersion}-${isInViewport}-${isPaused}`}
+                    key={`${activeIndex}-${activityVersion}-${isInViewport}-${isPaused}-${isRosterOpen}`}
                     className={`block h-full origin-left rounded-full bg-primary ${index === activeIndex ? "marketing-hero-progress" : index < activeIndex ? "scale-x-100" : "scale-x-0"}`}
                     style={
                       index === activeIndex
                         ? {
                             animationDuration: `${AUTOPLAY_DELAY_MS}ms`,
                             animationPlayState:
-                              isPaused || !isInViewport ? "paused" : "running",
+                              isPaused || isRosterOpen || !isInViewport
+                                ? "paused"
+                                : "running",
                           }
                         : undefined
                     }

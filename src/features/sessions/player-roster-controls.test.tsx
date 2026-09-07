@@ -119,6 +119,7 @@ describe("RemovePlayerButton", () => {
       />
     );
     const remove = screen.getByRole("button", { name: "Remove Mika" });
+    fireEvent.focus(remove);
     expect(screen.getByRole("tooltip")).toHaveTextContent("Remove Mika");
     fireEvent.click(remove);
     expect(screen.getByRole("dialog")).toHaveAttribute("open");

@@ -55,10 +55,7 @@ export default async function PaymentsPage({
   if (!canParticipateInWorkspace(data.access))
     return (
       <>
-        <GamePageIntro
-          title="Payments"
-          description="Payment details stay private to players in this game."
-        />
+        <GamePageIntro title="Payments" />
         <section className="mx-auto w-full max-w-xl border-y border-line py-10 text-center">
           <CurrencyCircleDollar
             aria-hidden
@@ -166,10 +163,7 @@ export default async function PaymentsPage({
 
   return (
     <>
-      <GamePageIntro
-        title={canManagePayments ? "Payments" : "Your payment"}
-        description={`${canManagePayments ? "Collect player shares and review proof." : "Repay the host, then upload one screenshot."} Relay tracks status only.`}
-      />
+      <GamePageIntro title={canManagePayments ? "Payments" : "Your payment"} />
       {cancelled ? (
         <p
           role="status"
@@ -180,7 +174,7 @@ export default async function PaymentsPage({
         </p>
       ) : null}
       {sessionExpenses.length ? (
-        <div className="grid gap-8 sm:pt-7 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
           <section className="min-w-0 space-y-10">
             {sessionExpenses.map(({ expense }) => {
               const expensePayments = visiblePayments.filter(

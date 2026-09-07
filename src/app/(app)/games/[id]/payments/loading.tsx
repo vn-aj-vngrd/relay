@@ -4,15 +4,12 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function PaymentsLoading() {
   return (
     <>
-      <GamePageIntro
-        title="Payments"
-        description="Collect player shares and review proof. Relay tracks status only."
-      />
+      <GamePageIntro title="Payments" />
       <div
         role="status"
         aria-label="Loading payments"
         aria-busy="true"
-        className="grid gap-8 sm:pt-7 lg:grid-cols-[minmax(0,1fr)_340px]"
+        className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
         <section>
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">

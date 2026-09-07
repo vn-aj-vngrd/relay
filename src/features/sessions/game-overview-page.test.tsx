@@ -38,7 +38,7 @@ vi.mock("@/features/sessions/rsvp-control", () => ({
   RsvpControl: () => <button type="button">Update response</button>,
 }));
 
-import GameOverviewPage from "@/app/(app)/games/[id]/page";
+import GameOverviewPage from "@/app/(app)/games/[id]/(overview)/page";
 
 afterEach(() => {
   cleanup();

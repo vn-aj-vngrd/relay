@@ -26,12 +26,9 @@ export default async function PublicChatPage({
     >
       <div className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8">
         <div className="min-w-0">
-          <h1 className="public-tab-title app-title">Chat</h1>
-          <p className="public-tab-description mt-2 text-sm text-muted">
-            The session conversation for players and guests.
-          </p>
+          <h1 className="sr-only">Chat</h1>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden sm:mt-5 sm:rounded-xl sm:border sm:border-line">
+        <div className="min-h-0 flex-1 overflow-hidden sm:rounded-xl sm:border sm:border-line">
           <SessionChatView
             sessionId={data.session.id}
             timezone={data.session.timezone}

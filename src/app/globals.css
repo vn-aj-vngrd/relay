@@ -429,28 +429,6 @@ p:not(.truncate) {
   .game-workspace-content:has(.authenticated-chat-page) {
     padding-top: 0;
   }
-  .game-workspace .game-page-intro,
-  .public-session-tab-content .game-page-intro {
-    padding-bottom: 0;
-  }
-  .game-workspace .game-page-intro-title,
-  .public-session-tab-content .game-page-intro-title,
-  .public-session-tab-content .public-tab-title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-  .game-workspace .game-page-intro-description,
-  .public-session-tab-content .game-page-intro-description,
-  .public-session-tab-content .public-tab-description {
-    display: none;
-  }
 }
 @media (orientation: landscape) and (max-height: 31.25rem) and (
     max-width: 63.999rem
@@ -901,10 +879,15 @@ html.lenis.lenis-smooth iframe {
 .menu-popover[data-align="stretch"] {
   transform-origin: top center;
 }
-.menu-popover[data-state="open"] {
+.menu-popover[data-state="open"],
+.relay-tooltip[data-state="open"] {
   animation: menu-popover-enter 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.menu-popover[data-state="closed"] {
+.tooltip-positioner[data-state="closed"] {
+  pointer-events: none;
+}
+.menu-popover[data-state="closed"],
+.relay-tooltip[data-state="closed"] {
   pointer-events: none;
   animation: menu-popover-exit 120ms ease-in both;
 }
@@ -925,10 +908,12 @@ html.lenis.lenis-smooth iframe {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .menu-popover[data-state="open"] {
+  .menu-popover[data-state="open"],
+  .relay-tooltip[data-state="open"] {
     animation: menu-popover-fade-in 80ms ease-out both;
   }
-  .menu-popover[data-state="closed"] {
+  .menu-popover[data-state="closed"],
+  .relay-tooltip[data-state="closed"] {
     animation: menu-popover-fade-out 60ms ease-in both;
   }
 }
@@ -1029,6 +1014,17 @@ html[data-density="compact"] .public-session-chat-thread {
 @media (min-width: 1024px) {
   .app-content:has(.authenticated-chat-page) {
     padding-bottom: 1.5rem;
+  }
+}
+
+/* Chat keeps a single focused border instead of the global halo plus a ring. */
+.chat-composer-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+@media (forced-colors: active) {
+  .chat-composer-input:focus {
+    border-color: Highlight;
   }
 }
 

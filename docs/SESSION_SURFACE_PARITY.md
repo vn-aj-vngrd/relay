@@ -24,11 +24,14 @@ Both paths represent the same session and use the same vocabulary, information o
 Keep these destinations and labels in this order:
 
 1. Overview
-2. Players
-3. Play, which becomes the factual Recap after the host ends the session
-4. Chat
-5. Payments
-6. Story, usable throughout the session for invitations, safe live updates, completed stories, and available game photos
+2. Play, which becomes the factual Recap after the host ends the session
+3. Chat
+4. Payments
+5. Story, usable throughout the session for invitations, safe live updates, completed stories, and available game photos
+
+Play owns participation as well as courts: before play, roster/requests/waitlist/arrival are inline above Set up Play; live play exposes a Players (Going count) drawer alongside the existing live section controls, not another roster tab. Completed recap leads with an expandable final roster below; cancelled games retain a read-only roster below cancellation. Final Going responses do not prove participation. Requests and other responses remain organizer-only and are excluded from rendered output for other viewers, including shared links.
+
+`/play?panel=players` reveals and focuses the inline roster before play, opens the live drawer, or expands the final roster. Both legacy `/players` routes retain authorization before redirecting and preserve query values. Native history changes only this panel, preserving unrelated query values, hash, and mounted scoring state. Back/Forward and refresh restore roster intent. Lifecycle changes render current permitted controls; mutations recheck terminal status under the session lock. Roster, RSVP, and organizer mutations invalidate Play and setup on the appropriate access paths. One existing session realtime subscription remains authoritative.
 
 A shared route and its authenticated counterpart must expose the same session facts. The public link may add RSVP and sign-in prompts. The authenticated workspace may add host controls and personal history.
 
@@ -48,7 +51,7 @@ A shared route and its authenticated counterpart must expose the same session fa
 | Score an assigned active match                    | Yes             | Yes              | No           | No                 |
 | Keep account history                              | Yes             | Yes              | No           | No                 |
 
-Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls. Organizer authority and participation are separate: a host or co-host may manage without occupying capacity, entering rotations, appearing in standings, or owing a player share. Organizer authority is managed only in the Organizers tab of Game settings rather than Players; before and during Play, only the original Host may add a Relay member by username or remove Co-host access. A newly added organizer does not participate unless they separately RSVP. Players remains participation-focused and shows a Host or Co-host indicator whenever an organizer appears in a roster state. A host may delegate live-session completion to one lead co-host without delegating ownership or deletion.
+Render actions only when the viewer can complete them. Explain the next step instead of showing disabled host controls. Organizer authority and participation are separate: a host or co-host may manage without occupying capacity, entering rotations, appearing in standings, or owing a player share. Organizer authority is managed only in the Organizers tab of Game settings rather than the Play roster; before and during Play, only the original Host may add a Relay member by username or remove Co-host access. A newly added organizer does not participate unless they separately RSVP. The roster in Play remains participation-focused and shows a Host or Co-host indicator whenever an organizer appears in a roster state. A host may delegate live-session completion to one lead co-host without delegating ownership or deletion.
 
 Hosts and co-hosts may view Game settings in every session state. During Play, structural plan and access controls are disabled, but player notes and booking details remain editable. Organizer role changes never change participation or active assignments. Completed and cancelled games expose view-only settings.
 
@@ -57,7 +60,7 @@ Hosts and co-hosts may view Game settings in every session state. During Play, s
 - Reuse domain components for session hero, plan details, at-a-glance status, scoreboard, queue rows, standings, and chat.
 - Use the same game accent, labels, status language, score values, player price, approval requirement, capacity state, and player ordering on both paths.
 - Free is an explicit payment state, not missing data. Newly created games may say payment is not set up yet. Public games appear in Open games only after the host marks them Free or adds a per-player amount, so discoverers always see price context before the RSVP action.
-- Keep one `h1` per destination. Session heroes below a destination heading use `h2`.
+- Keep one `h1` per destination. On game tabs it is screen-reader-only because the active tab already labels the view; no visible title, subtitle, or empty header row remains. Loading states use the same accessible heading and start skeletons at the content position, without heading/description placeholders. Game settings and Set up Play retain visible headings. Session heroes use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.
 - A scoreboard is the digital court: neutral outer shell, deep court field, complete player names, tabular scores, and explicit Live text. It must remain readable in its column and in the expanded view.
 - While Play is live, authenticated game routes outside Play retain a compact link to the participant’s current Playing, Waiting, Resting, or Not here state. The Play page itself does not repeat that status in a personalized banner; current assignments and waiting order live in Courts and Queue.
@@ -67,6 +70,7 @@ Before Play, hosts confirm an unresolved court booking in a compact dialog, then
 
 ## Loading and realtime
 
+- Overview’s page and loading state live in a leaf route group (`/games/[id]/(overview)` and `/s/[slug]/(plan)`), preserving the public URLs. Never place an Overview-specific `loading.tsx` at the shared `[id]` or `[slug]` segment: Next.js would let sibling tabs inherit that fallback. The workspace layout and navigation remain shared; each tab owns its content loading state.
 - A route loading state must match that route’s final structure. Scoreboard skeletons preserve the header, two score sides, controls when applicable, and adjacent queue.
 - Subscribe once per mounted session to the session Broadcast invalidation topic. Roster, courts, matches, scores, queue, chat, payments, and memories refresh from authoritative server queries.
 - Reconnect language and concurrency errors must match across access paths.

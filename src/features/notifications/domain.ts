@@ -169,7 +169,7 @@ export function notificationPresentation({
       return {
         title: customTitle ?? "New join request",
         body: customBody ?? `${guest} wants to join ${game}.`,
-        href: `${gameHref}/players`,
+        href: `${gameHref}/play?panel=players`,
         tone: "players",
       };
     }
@@ -179,7 +179,7 @@ export function notificationPresentation({
       return {
         title: customTitle ?? "Player joined",
         body: customBody ?? `${player} joined ${game}.`,
-        href: `${gameHref}/players`,
+        href: `${gameHref}/play?panel=players`,
         tone: "players",
       };
     }
@@ -189,7 +189,7 @@ export function notificationPresentation({
       return {
         title: customTitle ?? "Player left",
         body: customBody ?? `${player} left ${game}.`,
-        href: `${gameHref}/players`,
+        href: `${gameHref}/play?panel=players`,
         tone: "players",
       };
     }
@@ -206,14 +206,14 @@ export function notificationPresentation({
         body:
           customBody ??
           `${game} is currently full. We’ll let you know when a spot opens.`,
-        href: `${gameHref}/players`,
+        href: `${gameHref}/play?panel=players`,
         tone: "players",
       };
     case "moved_from_waitlist":
       return {
         title: customTitle ?? "A spot opened up",
         body: customBody ?? `You’re now going to ${game}.`,
-        href: `${gameHref}/players`,
+        href: `${gameHref}/play?panel=players`,
         tone: "players",
       };
     case "removed_from_session":

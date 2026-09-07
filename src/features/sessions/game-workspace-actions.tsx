@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { usePopoverTransition } from "@/components/ui/use-popover-transition";
 
 import { GameQrShare } from "./game-qr-share";
@@ -93,18 +94,20 @@ export function GameWorkspaceActions({
       <div ref={root} className="relative flex shrink-0 items-center gap-2">
         <ShareButton url={shareUrl} title={title} sessionId={sessionId} />
         {canManage || qrEnabled ? (
-          <Button
-            ref={trigger}
-            type="button"
-            variant="secondary"
-            aria-label="More game actions"
-            aria-expanded={open}
-            aria-controls={popoverId}
-            onClick={toggle}
-          >
-            <DotsThree aria-hidden size={18} weight="bold" />
-            More
-          </Button>
+          <IconTooltip label="More game actions" side="bottom" disabled={open}>
+            <Button
+              ref={trigger}
+              type="button"
+              variant="secondary"
+              aria-label="More game actions"
+              aria-expanded={open}
+              aria-controls={popoverId}
+              onClick={toggle}
+              className="h-9 w-9 shrink-0 px-0"
+            >
+              <DotsThree aria-hidden size={18} weight="bold" />
+            </Button>
+          </IconTooltip>
         ) : null}
         {rendered ? (
           <div

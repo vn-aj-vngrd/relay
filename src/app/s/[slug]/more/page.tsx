@@ -20,11 +20,8 @@ export default async function PublicMorePage({
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
-        <h1 className="public-tab-title app-title">More</h1>
-        <p className="public-tab-description mt-2 text-sm text-muted">
-          Appearance and information for this shared game.
-        </p>
-        <div className="sm:mt-8">
+        <h1 className="sr-only">More</h1>
+        <div>
           <PreferenceControls appearanceOnly />
         </div>
         <section aria-labelledby="device-preferences-title" className="mt-9">

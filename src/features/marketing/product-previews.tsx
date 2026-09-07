@@ -87,10 +87,7 @@ function ProductComponentFrame({
 function HeroOverviewPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro
-        title="Overview"
-        description="The plan, roster, setup progress, and next action for this game."
-      />
+      <GamePageIntro title="Overview" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
           <SessionHero
@@ -171,10 +168,6 @@ function HeroPlayerRows({ limit = 5 }: { limit?: number }) {
 function HeroPlayersPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro
-        title="Players"
-        description="See who’s going, who is waiting, and who has arrived."
-      />
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section>
           <div className="mb-3 flex items-end justify-between gap-4">
@@ -216,10 +209,7 @@ function HeroPlayersPanel() {
 function HeroPlayPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro
-        title="Play"
-        description="Run the courts, scores, and next rotation from one phone."
-      />
+      <GamePageIntro title="Play" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
         <LiveCourt
           sessionId="00000000-0000-4000-8000-000000000001"
@@ -260,10 +250,7 @@ function HeroPlayPanel() {
 function HeroChatPanel() {
   return (
     <div className="flex h-full flex-col px-4 pt-5 sm:px-6 sm:pt-6">
-      <GamePageIntro
-        title="Chat"
-        description="Keep arrival updates, court notes, and photos with the game."
-      />
+      <GamePageIntro title="Chat" />
       <ChatThread messageCount={4}>
         <div className="space-y-5">
           <p className="text-center text-xs text-muted">AJ joined the game</p>
@@ -297,10 +284,7 @@ function HeroPaymentsPanel() {
   ];
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro
-        title="Payments"
-        description="Track repayment to the host without moving money through Relay."
-      />
+      <GamePageIntro title="Payments" />
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section>
           <div className="flex items-end justify-between gap-4 border-y border-line py-5">
@@ -353,10 +337,7 @@ function HeroPaymentsPanel() {
 function HeroStoryPanel() {
   return (
     <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro
-        title="Story"
-        description="Turn the saved scores and photos into a shareable memory."
-      />
+      <GamePageIntro title="Story" />
       <div className="mx-auto max-w-4xl">
         <RecapTemplatePreview cardsOnly />
       </div>
@@ -374,18 +355,12 @@ export function HeroProductShot() {
       content: <HeroOverviewPanel />,
     },
     {
-      id: "players",
-      label: "Players",
-      moment: "The crew fills up.",
-      summary: "Capacity, waitlist, and courtside check-in stay in sync.",
-      content: <HeroPlayersPanel />,
-    },
-    {
       id: "play",
       label: "Play",
       moment: "The first games go live.",
-      summary: "Court 1 is 8–6 · three teams are waiting in order.",
+      summary: "Court 1 is 8–6 · open Players for the roster and waitlist.",
       content: <HeroPlayPanel />,
+      roster: <HeroPlayersPanel />,
     },
     {
       id: "chat",
@@ -420,10 +395,7 @@ export function CreateProductPreview() {
       detail="Focused on the plan and schedule"
     >
       <div className="bg-surface p-5 sm:p-8">
-        <GamePageIntro
-          title="Create a game"
-          description="Add the details, then share the game link."
-        />
+        <GamePageIntro title="Create a game" showTitle />
         <CreateSessionForm
           defaults={{
             title: "Saturday Night Pickle",
@@ -477,10 +449,7 @@ export function PlaySetupProductPreview() {
       detail="Five formats, partner style, timer, and start action"
     >
       <div className="bg-surface p-5 sm:p-8">
-        <GamePageIntro
-          title="Set up Play"
-          description="Choose how players rotate through the courts."
-        />
+        <GamePageIntro title="Set up Play" showTitle />
         <PlaySetupForm
           sessionId="00000000-0000-4000-8000-000000000001"
           playerCount={8}
@@ -514,11 +483,7 @@ export function LivePlayProductPreview({
       >
         <GamePageIntro
           title={expanded ? "Court 1" : "Active courts"}
-          description={
-            expanded
-              ? "Focused scoreboard"
-              : "Balanced Mix · scores update for everyone"
-          }
+          showTitle
         />
         <LiveCourt
           sessionId="00000000-0000-4000-8000-000000000001"
@@ -542,10 +507,7 @@ export function PaymentsProductPreview() {
     >
       <div className="grid gap-7 bg-surface p-5 sm:p-8 lg:grid-cols-[1fr_340px]">
         <div>
-          <GamePageIntro
-            title="Your payment"
-            description="Pay the host directly, then attach one clear screenshot."
-          />
+          <GamePageIntro title="Your payment" />
           <section className="border-y border-line py-5">
             <p className="text-sm text-muted">
               Court rental · paid upfront by Van
@@ -578,10 +540,7 @@ export function ChatProductPreview() {
       detail="Messages and photos for this game"
     >
       <div className="flex h-[620px] flex-col bg-surface px-5 pt-5 sm:px-8 sm:pt-7">
-        <GamePageIntro
-          title="Chat"
-          description="Share arrival updates, court notes, and photos."
-        />
+        <GamePageIntro title="Chat" />
         <ChatThread messageCount={3}>
           <div className="space-y-5">
             <p className="text-center text-xs text-muted">AJ joined the game</p>
@@ -602,6 +561,20 @@ export function ChatProductPreview() {
           </div>
         </ChatThread>
         <ChatComposer sessionId="00000000-0000-4000-8000-000000000001" />
+      </div>
+    </ProductComponentFrame>
+  );
+}
+
+export function RosterProductPreview() {
+  return (
+    <ProductComponentFrame
+      caption="Players in Play"
+      detail="Before Play: roster, waitlist, and arrival together"
+    >
+      <HeroPlayersPanel />
+      <div className="px-4 pb-5 sm:px-6">
+        <ButtonLink href="/play">Try Play setup</ButtonLink>
       </div>
     </ProductComponentFrame>
   );

@@ -4,10 +4,7 @@ import { Skeleton } from "@/components/shared/skeleton";
 export default function PlaySetupLoading() {
   return (
     <>
-      <GamePageIntro
-        title="Set up Play"
-        description="Confirm arrivals, choose the court flow, and begin the first rotation."
-      />
+      <GamePageIntro title="Set up Play" showTitle />
       <div
         role="status"
         aria-label="Loading Play setup"

@@ -13,7 +13,7 @@ describe("PublicSessionNav", () => {
     render(<PublicSessionNav slug="saturday-night-pickle" />);
 
     expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual(
-      ["Overview", "Players", "Play", "Chat", "Payments", "Story"]
+      ["Overview", "Play", "Chat", "Payments", "Story"]
     );
     expect(screen.getByRole("link", { name: "Play" })).toHaveAttribute(
       "aria-current",

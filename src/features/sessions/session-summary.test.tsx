@@ -25,7 +25,7 @@ describe("SessionHero", () => {
       "sm:text-4xl"
     );
     expect(heading).not.toHaveClass("truncate");
-    expect(heading).toHaveAttribute("title", longTitle);
+    expect(heading).not.toHaveAttribute("title");
     expect(screen.getByText("Hosted by you")).toHaveClass("truncate");
   });
 });

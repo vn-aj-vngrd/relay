@@ -27,14 +27,6 @@ export default async function PublicStoryPage({
       viewerPlayer?.role === "cohost" ||
       viewerPlayer?.rsvp === "going"
   );
-  const description =
-    data.session.status === "completed"
-      ? "Make a shareable story or revisit photos from the game."
-      : data.session.status === "live"
-        ? "Share a safe live update while play continues."
-        : data.session.status === "cancelled"
-          ? "This game ended before a story could be made."
-          : "Share the invitation before everyone reaches the court.";
   const goingCount = data.roster.filter(
     ({ player }) => player.rsvp === "going"
   ).length;
@@ -52,11 +44,8 @@ export default async function PublicStoryPage({
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
-        <h1 className="public-tab-title app-title">Story</h1>
-        <p className="public-tab-description mt-2 text-sm text-muted">
-          {description}
-        </p>
-        <div className="mt-4">
+        <h1 className="sr-only">Story</h1>
+        <div>
           <SessionMemories
             session={data.session}
             recap={recap}

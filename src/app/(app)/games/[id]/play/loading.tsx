@@ -4,10 +4,7 @@ import { PlaySkeleton } from "@/features/matches/play-skeleton";
 export default function PlayLoading() {
   return (
     <>
-      <GamePageIntro
-        title="Play"
-        description="Court assignments, scores, partner rotations, and who plays next."
-      />
+      <GamePageIntro title="Play" />
       <PlaySkeleton label="Loading Play" />
     </>
   );

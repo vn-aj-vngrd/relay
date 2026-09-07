@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 
 import { Brand } from "./brand";
@@ -30,11 +31,9 @@ export function PublicSessionHeader({
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <Brand showLabel={false} />
             {gameTitle ? (
-              <p
-                title={gameTitle}
-                className="min-w-0 truncate text-sm font-semibold text-primary"
-              >
+              <p className="min-w-0 truncate text-sm font-semibold text-primary">
                 {gameTitle}
+                <Tooltip content={gameTitle} />
               </p>
             ) : null}
           </div>

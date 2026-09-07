@@ -9,6 +9,7 @@ import {
   MobileAuthenticatedSessionNav,
 } from "@/components/shared/authenticated-session-nav";
 import { ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { CompactPlayStatus } from "@/features/matches/compact-play-status";
 
 import { GameWorkspaceActions } from "./game-workspace-actions";
@@ -80,11 +81,9 @@ export function GameWorkspaceFrame({
               >
                 <CaretLeft aria-hidden size={18} />
               </ButtonLink>
-              <p
-                title={sessionTitle}
-                className="min-w-0 flex-1 truncate text-sm font-semibold text-ink"
-              >
+              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">
                 {sessionTitle}
+                <Tooltip content={sessionTitle} />
               </p>
               <GameWorkspaceActions
                 mode="mobile"

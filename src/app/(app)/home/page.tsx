@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { requireUser } from "@/features/auth/session";
 import { ensureProfile } from "@/features/players/profile";
 import { sessionAccentStyle } from "@/features/sessions/accent";
@@ -141,11 +142,9 @@ export default async function HomePage() {
                             : "Booking pending"}
                   </span>
                 </div>
-                <h3
-                  title={next.session.title}
-                  className="max-w-xl truncate text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl"
-                >
+                <h3 className="max-w-xl truncate text-[28px] font-[680] tracking-[-0.025em] sm:text-4xl">
                   {next.session.title}
+                  <Tooltip content={next.session.title} />
                 </h3>
                 <p className="mt-2 text-base text-white/70">
                   {next.session.venueName} ·{" "}
@@ -189,7 +188,7 @@ export default async function HomePage() {
           </article>
           <div className="mt-4 grid divide-y divide-line border-y border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             <Link
-              href={`${nextHref}/players`}
+              href={`${nextHref}/play?panel=players`}
               prefetch={false}
               className="pressable flex min-h-14 items-center gap-3 py-3 hover:bg-surface-strong sm:px-3"
             >
@@ -396,8 +395,9 @@ export default async function HomePage() {
               >
                 <MapPin className="shrink-0 text-primary" size={19} />
                 <div className="min-w-0 flex-1">
-                  <h3 title={session.title} className="truncate font-semibold">
+                  <h3 className="truncate font-semibold">
                     {session.title}
+                    <Tooltip content={session.title} />
                   </h3>
                   <p className="mt-1 text-sm text-muted">
                     {formatSessionDate(session.startsAt)} · {session.venueName}{" "}

@@ -1,5 +1,6 @@
 import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { getPublicLiveSession } from "@/features/matches/queries";
 import {
@@ -7,6 +8,8 @@ import {
   type SessionPlayViewer,
 } from "@/features/matches/session-play";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { PlayRosterSurface } from "@/features/sessions/play-roster-surface";
+import { SessionRoster } from "@/features/sessions/session-roster";
 import { getSessionViewer } from "@/features/sessions/viewer";
 
 export default async function PublicPlayPage({
@@ -38,6 +41,30 @@ export default async function PublicPlayPage({
   };
   const completed = data.session.status === "completed";
 
+  const ended = completed || data.session.status === "cancelled";
+  const roster = (
+    <Suspense fallback={<p role="status">Loading players…</p>}>
+      <PlayRosterSurface
+        status={data.session.status}
+        count={
+          data.roster.filter(({ player }) => player.rsvp === "going").length
+        }
+        pendingCount={
+          viewer.canManagePlay
+            ? data.roster.filter(({ player }) => player.rsvp === "pending")
+                .length
+            : 0
+        }
+      >
+        <SessionRoster
+          data={data}
+          canManage={viewer.canManagePlay}
+          viewerPlayerId={viewer.playerId}
+        />
+      </PlayRosterSurface>
+    </Suspense>
+  );
+
   return (
     <main
       id="main-content"
@@ -47,14 +74,7 @@ export default async function PublicPlayPage({
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="public-tab-title app-title">
-              {completed ? "Recap" : "Play"}
-            </h1>
-            <p className="public-tab-description mt-2 text-sm text-muted">
-              {completed
-                ? "The final scores, pairings, highlights, and standings from this game."
-                : "Court assignments, scores, partner rotations, and who plays next."}
-            </p>
+            <h1 className="sr-only">{completed ? "Recap" : "Play"}</h1>
           </div>
           {data.session.status === "live" ? (
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
@@ -63,13 +83,13 @@ export default async function PublicPlayPage({
             </span>
           ) : null}
         </div>
-        <div className={completed ? "sm:mt-7" : undefined}>
-          <SessionPlay
-            data={data}
-            viewer={viewer}
-            storyHref={`/s/${slug}/story`}
-          />
-        </div>
+        {!ended ? roster : null}
+        <SessionPlay
+          data={data}
+          viewer={viewer}
+          storyHref={`/s/${slug}/story`}
+        />
+        {ended ? roster : null}
       </div>
     </main>
   );

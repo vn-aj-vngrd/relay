@@ -1,21 +1,29 @@
 export function GamePageIntro({
   title,
-  description,
   action,
+  showTitle = false,
 }: {
   title: string;
-  description?: string;
   action?: React.ReactNode;
+  showTitle?: boolean;
 }) {
+  if (!showTitle) {
+    return (
+      <>
+        <h1 className="sr-only">{title}</h1>
+        {action ? (
+          <div className="game-page-intro flex shrink-0 justify-end pb-3 sm:pb-5">
+            {action}
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
   return (
     <header className="game-page-intro flex shrink-0 items-start justify-between gap-3 pb-3 sm:pb-5 sm:pt-1">
       <div className="min-w-0 flex-1">
         <h1 className="game-page-intro-title app-title">{title}</h1>
-        {description ? (
-          <p className="game-page-intro-description mt-1.5 max-w-2xl text-sm leading-6 text-muted">
-            {description}
-          </p>
-        ) : null}
       </div>
       {action}
     </header>

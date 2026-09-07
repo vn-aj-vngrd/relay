@@ -2,9 +2,9 @@
 
 import { Camera } from "@phosphor-icons/react";
 import { useActionState, useEffect, useState } from "react";
-
 import { Avatar } from "@/components/shared/avatar-stack";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { type AvatarActionState, uploadAvatarAction } from "./actions";
@@ -55,9 +55,9 @@ export function ProfileAvatarEditor({
         <label
           htmlFor="profile-avatar"
           className="pressable absolute bottom-0 right-0 grid h-8 w-8 cursor-pointer place-items-center rounded-full border-2 border-surface bg-ink text-surface hover:bg-primary"
-          title="Change profile photo"
         >
           <Camera aria-hidden size={15} weight="bold" />
+          <Tooltip content="Change profile photo" />
           <span className="sr-only">Choose profile photo</span>
         </label>
       </div>

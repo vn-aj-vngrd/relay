@@ -1,5 +1,6 @@
 import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { can, sessionActor } from "@/features/auth/permissions";
@@ -10,7 +11,9 @@ import {
   SessionPlay,
   type SessionPlayViewer,
 } from "@/features/matches/session-play";
+import { PlayRosterSurface } from "@/features/sessions/play-roster-surface";
 import { postGameContinuation } from "@/features/sessions/post-game";
+import { SessionRoster } from "@/features/sessions/session-roster";
 
 export default async function PlayPage({
   params,
@@ -48,15 +51,34 @@ export default async function PlayPage({
       ? await shouldShowPostGameFeedback(user.id, data.session.id)
       : false;
 
+  const ended = completed || data.session.status === "cancelled";
+  const roster = (
+    <Suspense fallback={<p role="status">Loading players…</p>}>
+      <PlayRosterSurface
+        status={data.session.status}
+        count={
+          data.roster.filter(({ player }) => player.rsvp === "going").length
+        }
+        pendingCount={
+          viewer.canManagePlay
+            ? data.roster.filter(({ player }) => player.rsvp === "pending")
+                .length
+            : 0
+        }
+      >
+        <SessionRoster
+          data={data}
+          canManage={viewer.canManagePlay}
+          viewerPlayerId={viewer.playerId}
+        />
+      </PlayRosterSurface>
+    </Suspense>
+  );
+
   return (
     <>
       <GamePageIntro
         title={completed ? "Recap" : "Play"}
-        description={
-          completed
-            ? "The final scores, pairings, highlights, and standings from this game."
-            : "Court assignments, scores, partner rotations, and who plays next."
-        }
         action={
           data.session.status === "live" ? (
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
@@ -66,9 +88,8 @@ export default async function PlayPage({
           ) : undefined
         }
       />
-      <div
-        className={completed ? "mx-auto w-full max-w-6xl sm:pt-6" : undefined}
-      >
+      <div className={completed ? "mx-auto w-full max-w-6xl" : undefined}>
+        {!ended ? roster : null}
         <SessionPlay
           data={data}
           viewer={viewer}
@@ -77,6 +98,7 @@ export default async function PlayPage({
           continuation={continuation}
           showPostGameFeedback={showPostGameFeedback}
         />
+        {ended ? roster : null}
       </div>
     </>
   );

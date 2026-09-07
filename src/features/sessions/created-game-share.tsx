@@ -5,6 +5,7 @@ import { useActionState, useEffect, useId, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 
 import { dismissCreatedGameShare } from "./actions";
 import { GameQrShare } from "./game-qr-share";
@@ -99,7 +100,7 @@ export function CreatedGameShare({
                     </ButtonLink>
                   </>
                 ) : (
-                  <ButtonLink href={`/games/${sessionId}/players`}>
+                  <ButtonLink href={`/games/${sessionId}/play?panel=players`}>
                     Invite players
                   </ButtonLink>
                 )}
@@ -119,10 +120,10 @@ export function CreatedGameShare({
               aria-label={
                 pending ? "Dismissing…" : "Dismiss game created message"
               }
-              title="Dismiss for this game"
               className="-mr-2 -mt-2 shrink-0"
             >
               <X aria-hidden size={17} />
+              <Tooltip content="Dismiss for this game" />
             </Button>
           </div>
         </section>

@@ -18,16 +18,6 @@ export default async function GameStoryPage({
   const { recap, memory } = await getSessionRecap(data.session.id);
   const canContribute =
     canManageSessionWorkspace(data.access) || data.membership?.rsvp === "going";
-  const description =
-    data.session.status === "completed"
-      ? "Make a shareable story or revisit photos from the game."
-      : data.session.status === "live"
-        ? "Share a safe live update while play continues."
-        : data.session.status === "cancelled"
-          ? "This game ended before a story could be made."
-          : data.session.status === "draft"
-            ? "Publish the game before sharing its invitation."
-            : "Share the invitation before everyone reaches the court.";
   const goingCount = data.roster.filter(
     ({ player }) => player.rsvp === "going"
   ).length;
@@ -41,7 +31,7 @@ export default async function GameStoryPage({
 
   return (
     <>
-      <GamePageIntro title="Story" description={description} />
+      <GamePageIntro title="Story" />
       <div className="mx-auto w-full max-w-6xl">
         <SessionMemories
           session={data.session}

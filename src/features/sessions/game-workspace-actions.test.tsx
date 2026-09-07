@@ -60,7 +60,12 @@ describe("GameWorkspaceActions", () => {
 
     expect(screen.getByRole("button", { name: "Share game" })).toBeVisible();
     const more = screen.getByRole("button", { name: "More game actions" });
+    expect(more).toHaveClass("h-9", "w-9", "px-0");
+    expect(more).not.toHaveTextContent("More");
+    fireEvent.focus(more);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("More game actions");
     fireEvent.click(more);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: "Edit game" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Show QR" })).toBeVisible();

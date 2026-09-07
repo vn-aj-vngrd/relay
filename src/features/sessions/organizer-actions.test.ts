@@ -225,10 +225,11 @@ describe("setCohostRoleAction", () => {
       "/games/open",
       "/notifications",
       `/games/${session.id}`,
-      `/games/${session.id}/players`,
+      `/games/${session.id}/play`,
+      `/games/${session.id}/play/setup`,
+      `/s/${session.slug}/play`,
       `/games/${session.id}/settings`,
       `/s/${session.slug}`,
-      `/s/${session.slug}/players`,
     ]);
   });
 

@@ -3,6 +3,7 @@ import {
   LivePlayProductPreview,
   PaymentsProductPreview,
   PlaySetupProductPreview,
+  RosterProductPreview,
 } from "@/features/marketing/product-previews";
 import { CourtFinder } from "@/features/venues/court-finder";
 import type { CourtListing } from "@/features/venues/directory";
@@ -49,6 +50,11 @@ export function HelpProductPreview({
       {guideId === "create-a-game" ? <CreateProductPreview /> : null}
       {guideId === "payments" ? <PaymentsProductPreview /> : null}
       {guideId === "choose-a-play-mode" ? <PlaySetupProductPreview /> : null}
+      {guideId === "manage-players" ||
+      guideId === "invites-and-players" ||
+      guideId === "arrival" ? (
+        <RosterProductPreview />
+      ) : null}
       {guideId === "run-live-play" ? <LivePlayProductPreview /> : null}
     </div>
   );

@@ -8,6 +8,8 @@ import type {
 } from "maplibre-gl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { DomTooltips } from "@/components/ui/dom-tooltips";
+
 import { courtDirectoryCoverage } from "./coverage";
 import type { CourtListing } from "./directory";
 
@@ -421,6 +423,7 @@ export function CourtMap({
         </div>
       ) : null}
       {children}
+      <DomTooltips rootRef={shellRef} />
     </div>
   );
 }

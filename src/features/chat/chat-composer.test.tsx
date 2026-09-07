@@ -14,12 +14,30 @@ describe("ChatComposer", () => {
     expect(composer).toHaveAttribute("maxlength", "1000");
     expect(composer.tagName).toBe("TEXTAREA");
     expect(composer).toHaveAttribute("enterkeyhint", "send");
+    expect(composer).toHaveClass("chat-composer-input");
+    expect(composer).not.toHaveClass("focus:ring-2", "focus:ring-primary/15");
     const image = new File(["image"], "arrival.jpg", { type: "image/jpeg" });
     fireEvent.change(screen.getByLabelText(/Attach a photo/), {
       target: { files: [image] },
     });
     expect(screen.getByText(/arrival.jpg/)).toBeVisible();
     expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled();
+  });
+
+  it("matches the initial textarea height with fixed square actions", () => {
+    render(<ChatComposer sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveClass(
+      "h-12",
+      "min-h-12"
+    );
+    expect(screen.getByRole("button", { name: "Send message" })).toHaveClass(
+      "h-12",
+      "min-h-12",
+      "w-12"
+    );
+    expect(
+      screen.getByLabelText(/Attach a photo/).closest("label")
+    ).toHaveClass("h-12", "w-12");
   });
 
   it("grows with the message and keeps long drafts internally scrollable", () => {
@@ -33,6 +51,11 @@ describe("ChatComposer", () => {
     fireEvent.input(composer);
 
     expect(composer).toHaveStyle({ height: "128px", overflowY: "auto" });
+    expect(composer.parentElement).toHaveClass("items-end");
+    expect(screen.getByRole("button", { name: "Send message" })).toHaveClass(
+      "h-12",
+      "w-12"
+    );
   });
 
   it("sends with Enter and keeps Shift+Enter for a new line", () => {

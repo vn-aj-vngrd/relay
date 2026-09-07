@@ -25,13 +25,13 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
 import { WizardProgress } from "@/components/shared/wizard-progress";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
+import { Tooltip } from "@/components/ui/tooltip";
 import {
   type PlayingExperience,
   playingExperienceOptions,
@@ -1278,7 +1278,6 @@ function QuickPlayLive({
                           variant="quiet"
                           className="h-11 min-h-11 w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9"
                           aria-label={`${label as string}: ${player.name}`}
-                          title={label as string}
                           onClick={() =>
                             onChange(
                               reorderQuickPlayQueue(
@@ -1290,6 +1289,7 @@ function QuickPlayLive({
                           }
                         >
                           <Icon aria-hidden size={16} />
+                          <Tooltip content={label as string} />
                         </Button>
                       ))}
                     </span>

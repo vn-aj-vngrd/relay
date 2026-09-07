@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 const soundPreferenceKey = "relay-play-alert-sound";
 
@@ -89,7 +90,6 @@ export function CompactPlayStatus({
               ? "Mute Play alerts"
               : "Enable sound and vibration for Play alerts"
           }
-          title={soundEnabled ? "Mute Play alerts" : "Enable Play alerts"}
           onClick={() => {
             const next = !soundEnabled;
             setSoundEnabled(next);
@@ -98,6 +98,9 @@ export function CompactPlayStatus({
           }}
           className="pressable grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
         >
+          <Tooltip
+            content={soundEnabled ? "Mute Play alerts" : "Enable Play alerts"}
+          />
           {soundEnabled ? (
             <SpeakerHigh aria-hidden size={16} />
           ) : (

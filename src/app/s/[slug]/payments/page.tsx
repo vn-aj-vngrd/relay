@@ -99,11 +99,7 @@ export default async function PublicPaymentsPage({
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
-        <h1 className="public-tab-title app-title">Your payment</h1>
-        <p className="public-tab-description mt-2 max-w-xl text-sm leading-6 text-muted">
-          The host paid upfront. Repay your share through their listed app or
-          bank, then upload one screenshot. Relay never moves the money.
-        </p>
+        <h1 className="sr-only">Your payment</h1>
         {cancelled ? (
           <p
             role="status"
@@ -114,7 +110,7 @@ export default async function PublicPaymentsPage({
           </p>
         ) : null}
         {items.length ? (
-          <div className="space-y-10 sm:mt-8">
+          <div className={cancelled ? "mt-5 space-y-10" : "space-y-10"}>
             {items.map(({ expense, account, payment, qrUrl, receiptUrl }) =>
               payment ? (
                 <section
@@ -138,6 +134,11 @@ export default async function PublicPaymentsPage({
                       <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
                         {account?.details ??
                           "Ask the host for payment details."}
+                      </p>
+                      <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+                        The host paid upfront. Repay your share through their
+                        listed app or bank, then upload one screenshot. Relay
+                        never moves the money.
                       </p>
                       {receiptUrl ? (
                         <a
@@ -197,7 +198,7 @@ export default async function PublicPaymentsPage({
             )}
           </div>
         ) : (
-          <section className="border-y border-line py-4 text-center sm:mt-10 sm:py-12">
+          <section className="border-y border-line py-4 text-center sm:py-12">
             <CircleDashed
               aria-hidden
               className="mx-auto text-primary"

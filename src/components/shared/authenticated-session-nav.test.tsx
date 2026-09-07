@@ -31,7 +31,7 @@ describe("AuthenticatedSessionNav", () => {
     render(<MobileAuthenticatedSessionNav id="session-1" />);
 
     expect(screen.getAllByRole("link").map((item) => item.textContent)).toEqual(
-      ["Overview", "Players", "Play", "Chat", "Payments", "Story"]
+      ["Overview", "Play", "Chat", "Payments", "Story"]
     );
     expect(screen.getByRole("link", { name: "Chat" })).toHaveAttribute(
       "aria-current",

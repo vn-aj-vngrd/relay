@@ -1,8 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-
+import OverviewLoading from "@/app/(app)/games/[id]/(overview)/loading";
 import ChatLoading from "@/app/(app)/games/[id]/chat/loading";
-import OverviewLoading from "@/app/(app)/games/[id]/loading";
 import PaymentsLoading from "@/app/(app)/games/[id]/payments/loading";
 import PlayLoading from "@/app/(app)/games/[id]/play/loading";
 import PlayersLoading from "@/app/(app)/games/[id]/players/loading";
@@ -19,7 +18,7 @@ afterEach(cleanup);
 describe("authenticated game loading states", () => {
   const states = [
     ["Overview", "Loading game overview", OverviewLoading],
-    ["Players", "Loading players", PlayersLoading],
+    ["Play", "Loading Play", PlayersLoading],
     ["Play", "Loading Play", PlayLoading],
     ["Chat", "Loading chat", ChatLoading],
     ["Payments", "Loading payments", PaymentsLoading],
@@ -27,10 +26,13 @@ describe("authenticated game loading states", () => {
   ] as const;
 
   it.each(states)(
-    "keeps the %s title readable while only content is busy",
+    "keeps %s accessible without a visible loading header or subtitle",
     (title, loadingLabel, Loading) => {
-      render(<Loading />);
-      expect(screen.getByRole("heading", { name: title })).toBeVisible();
+      const { container } = render(<Loading />);
+      expect(screen.getByRole("heading", { name: title })).toHaveClass(
+        "sr-only"
+      );
+      expect(container.querySelector(".game-page-intro")).toBeNull();
       expect(
         screen.getByRole("status", { name: loadingLabel })
       ).toHaveAttribute("aria-busy", "true");
@@ -44,18 +46,24 @@ describe("authenticated game loading states", () => {
 describe("public game loading states", () => {
   const states = [
     ["Overview", "Loading game plan", PublicOverviewLoading],
-    ["Players", "Loading players", PublicPlayersLoading],
+    ["Play", "Loading play and scores", PublicPlayersLoading],
     ["Play", "Loading play and scores", PublicPlayLoading],
     ["Chat", "Loading session chat", PublicChatLoading],
-    ["Payments", "Loading payment details", PublicPaymentsLoading],
+    ["Your payment", "Loading payment details", PublicPaymentsLoading],
     ["Story", "Loading session story", PublicStoryLoading],
   ] as const;
 
   it.each(states)(
     "keeps the public %s shell and marks only its content busy",
-    (_tab, loadingLabel, Loading) => {
-      render(<Loading />);
+    (tab, loadingLabel, Loading) => {
+      const { container } = render(<Loading />);
       expect(screen.getByRole("main")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: tab })).toHaveClass("sr-only");
+      expect(
+        container.querySelector(
+          ".public-tab-title, .public-tab-description, .game-page-intro"
+        )
+      ).toBeNull();
       expect(
         screen.getByRole("status", { name: loadingLabel })
       ).toHaveAttribute("aria-busy", "true");

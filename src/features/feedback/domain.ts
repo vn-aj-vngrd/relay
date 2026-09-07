@@ -42,7 +42,7 @@ export const feedbackAreaLabels: Record<FeedbackArea, string> = {
   general: "Relay overall",
   create: "Creating a game",
   invite: "Shared link and RSVP",
-  players: "Players and waitlist",
+  players: "Play: players and waitlist",
   play: "Play, courts, and scoring",
   chat: "Session chat",
   payments: "Payments",

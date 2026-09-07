@@ -4,6 +4,7 @@ import { ImageSquare, PaperPlaneRight, X } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import { sendMessage } from "./actions";
@@ -67,13 +68,13 @@ export function ChatComposer({
         </div>
       ) : null}
       <div className="flex items-end gap-2">
-        <label
-          className="pressable grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink has-focus-visible:outline-3 has-focus-visible:outline-primary"
-          title={`Attach a photo up to ${formatChatImageLimit(maxImageBytes)}`}
-        >
+        <label className="pressable grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink has-focus-visible:outline-3 has-focus-visible:outline-primary">
           <span className="sr-only">
             Attach a photo, up to {formatChatImageLimit(maxImageBytes)}
           </span>
+          <Tooltip
+            content={`Attach a photo up to ${formatChatImageLimit(maxImageBytes)}`}
+          />
           <ImageSquare aria-hidden size={20} />
           <input
             ref={fileRef}
@@ -126,13 +127,13 @@ export function ChatComposer({
             event.preventDefault();
             if (!pending) event.currentTarget.form?.requestSubmit();
           }}
-          className="max-h-32 min-h-12 min-w-0 flex-1 resize-none overflow-y-hidden rounded-[14px] border border-line bg-canvas px-3.5 py-3 text-base sm:text-[15px] leading-6 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+          className="chat-composer-input h-12 max-h-32 min-h-12 min-w-0 flex-1 resize-none overflow-y-hidden rounded-[14px] border border-line bg-canvas px-3.5 py-2.5 text-base sm:text-[15px] leading-6 placeholder:text-muted"
         />
         <Button
           type="submit"
           aria-label="Send message"
           disabled={pending}
-          className="h-11 min-h-11 w-11 shrink-0 px-0"
+          className="h-12 min-h-12 w-12 shrink-0 px-0"
         >
           {pending ? (
             <ButtonSpinner />

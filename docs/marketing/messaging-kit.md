@@ -108,3 +108,7 @@ New going responses join an ordered waitlist. If a spot opens, Relay promotes th
 - Describe a concrete outcome before a feature name.
 - Never claim automatic reminders, payment transfer, bookings, or competitive ratings beyond what production actually delivers.
 - Use real product screens and real test data. Do not invent testimonials, player counts, venue partners, or usage statistics.
+
+## Game workspace vocabulary
+
+Use Overview → Play → Chat → Payments → Story when depicting game navigation. Play unites roster, waitlist, arrival, and courts: roster inline before play; Players drawer during live scoring; final roster beneath Recap afterward. Organize and Play may remain distinct story chapters, but never depict Players as a separate game tab. The setup wizard still uses Players → Game options → Review. Shared-link guests retain account-free RSVP; organizer actions remain permission-gated.

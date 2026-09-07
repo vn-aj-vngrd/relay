@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
   findSession: vi.fn(),
+  lockedSession: vi.fn(),
   findMembership: vi.fn(),
   findProfile: vi.fn(),
   transaction: vi.fn(),
@@ -55,6 +56,7 @@ const session = {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.findSession.mockResolvedValue(session);
+  mocks.lockedSession.mockResolvedValue(session);
   mocks.findMembership.mockResolvedValue({
     role: "host",
     rsvp: "going",
@@ -69,6 +71,7 @@ beforeEach(() => {
     async (work: (tx: unknown) => Promise<unknown>) =>
       work({
         execute: mocks.execute,
+        query: { sessions: { findFirst: mocks.lockedSession } },
         select: () => ({ from: () => ({ where: mocks.selectWhere }) }),
         insert: () => ({ values: mocks.insertValues }),
         update: () => ({ set: mocks.updateSet }),
@@ -77,6 +80,66 @@ beforeEach(() => {
 });
 
 describe("manageRoster", () => {
+  it.each(["completed", "cancelled"])(
+    "rejects every roster mutation when the session becomes %s under lock",
+    async (status) => {
+      mocks.lockedSession.mockResolvedValue({ ...session, status });
+      for (const type of ["add", "approve", "remove"] as const) {
+        const result = await manageRoster(
+          type === "add"
+            ? {
+                type,
+                actorUserId: "host-1",
+                sessionId: session.id,
+                playerEntry: "Guest Player",
+              }
+            : {
+                type,
+                actorUserId: "host-1",
+                sessionId: session.id,
+                sessionPlayerId: "player-1",
+              }
+        );
+        expect(result).toEqual({
+          error: "This game has ended. Its roster is read-only.",
+        });
+      }
+      expect(mocks.execute).toHaveBeenCalledTimes(3);
+      expect(mocks.insertValues).not.toHaveBeenCalled();
+      expect(mocks.updateSet).not.toHaveBeenCalled();
+      expect(mocks.reconcile).not.toHaveBeenCalled();
+    }
+  );
+
+  it("rechecks a newly locked roster before adding a guest", async () => {
+    mocks.lockedSession.mockResolvedValue({ ...session, rosterLocked: true });
+    expect(
+      await manageRoster({
+        type: "add",
+        actorUserId: "host-1",
+        sessionId: session.id,
+        playerEntry: "Guest Player",
+      })
+    ).toEqual({
+      error: "Unlock the roster before adding or accepting players.",
+    });
+    expect(mocks.insertValues).not.toHaveBeenCalled();
+  });
+
+  it("rechecks a newly locked roster before accepting a request", async () => {
+    mocks.lockedSession.mockResolvedValue({ ...session, rosterLocked: true });
+    expect(
+      await manageRoster({
+        type: "approve",
+        actorUserId: "host-1",
+        sessionId: session.id,
+        sessionPlayerId: "player-1",
+      })
+    ).toEqual({
+      error: "Unlock the roster before adding or accepting players.",
+    });
+    expect(mocks.updateSet).not.toHaveBeenCalled();
+  });
   it("keeps authorization and locked-roster rules behind the interface", async () => {
     mocks.can.mockReturnValue(false);
 
@@ -127,9 +190,12 @@ describe("manageRoster", () => {
     expect(mocks.reconcile).toHaveBeenCalledWith(session.id);
     expect(mocks.revalidatePath.mock.calls.map(([path]) => path)).toEqual([
       "/home",
+      "/games",
       "/games/open",
       "/notifications",
-      `/games/${session.id}/players`,
+      `/games/${session.id}/play`,
+      `/games/${session.id}/play/setup`,
+      `/s/${session.slug}/play`,
       `/games/${session.id}/payments`,
       `/games/${session.id}/settings`,
       `/games/${session.id}`,
@@ -168,7 +234,9 @@ describe("manageRoster", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/notifications");
   });
 
-  it("marks a host join-request notification read after rejection", async () => {
+  it("permits rejection while locked and marks the host notification read", async () => {
+    mocks.findSession.mockResolvedValue({ ...session, rosterLocked: true });
+    mocks.lockedSession.mockResolvedValue({ ...session, rosterLocked: true });
     mocks.selectWhere.mockResolvedValue([
       {
         id: "pending-1",

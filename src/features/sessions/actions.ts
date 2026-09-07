@@ -901,17 +901,28 @@ export async function toggleRosterLockAction(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const session = await requireSessionManager(sessionId, user.id);
   if (!session) throw new Error("Only a host or co-host can lock the roster");
-  await db
-    .update(sessions)
-    .set({
-      rosterLocked: !session.rosterLocked,
-      version: session.version + 1,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(eq(sessions.id, session.id), eq(sessions.version, session.version))
+  await db.transaction(async (tx) => {
+    await tx.execute(
+      sql`select id from ${sessions} where id = ${session.id} for update`
     );
-  revalidatePath(`/games/${session.id}/players`);
+    const current = await tx.query.sessions.findFirst({
+      where: eq(sessions.id, session.id),
+    });
+    if (!current || ["completed", "cancelled"].includes(current.status))
+      throw new Error("This game has ended. Its roster is read-only.");
+    await tx
+      .update(sessions)
+      .set({
+        rosterLocked: !current.rosterLocked,
+        version: current.version + 1,
+        updatedAt: new Date(),
+      })
+      .where(eq(sessions.id, session.id));
+  });
+  revalidatePath(`/games/${session.id}`);
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/games/${session.id}/play/setup`);
+  revalidatePath(`/s/${session.slug}/play`);
   revalidatePath(`/s/${session.slug}`);
 }
 
@@ -1740,5 +1751,8 @@ export async function rsvpAction(
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/s/${session.slug}`);
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/games/${session.id}/play/setup`);
+  revalidatePath(`/s/${session.slug}/play`);
   return { success: true, rsvp: resolvedRsvp };
 }

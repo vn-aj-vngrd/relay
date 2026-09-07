@@ -9,8 +9,10 @@ export function PublicSessionNav({ slug }: { slug: string }) {
   const pathname = usePathname();
   const hrefBase = `/s/${slug}`;
   const active =
-    sessionTabs().find((tab) => pathname === `${hrefBase}${tab.path}`)?.label ??
-    null;
+    pathname === `${hrefBase}/players`
+      ? "Play"
+      : (sessionTabs().find((tab) => pathname === `${hrefBase}${tab.path}`)
+          ?.label ?? null);
 
   return (
     <nav

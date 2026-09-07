@@ -12,6 +12,7 @@ import type { KeyboardEvent } from "react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
@@ -449,8 +450,26 @@ export function RosterLockButton({
   sessionId: string;
   locked: boolean;
 }) {
+  const [state, action] = useActionState(
+    async (
+      _: SessionActionState,
+      formData: FormData
+    ): Promise<SessionActionState> => {
+      try {
+        await toggleRosterLockAction(formData);
+        return {};
+      } catch {
+        return {
+          error:
+            "The roster change couldn’t be saved. The game may have ended. Refresh and try again.",
+        };
+      }
+    },
+    {}
+  );
   return (
-    <form noValidate action={toggleRosterLockAction}>
+    <form noValidate action={action}>
+      {state.error ? <Alert className="mb-3">{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <SubmitButton
         pendingLabel={locked ? "Unlocking…" : "Locking…"}

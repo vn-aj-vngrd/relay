@@ -26,10 +26,7 @@ export default async function MorePage({
     data.session.hostId === user.id || data.membership?.role === "cohost";
   return (
     <>
-      <GamePageIntro
-        title="More"
-        description="Session access, public link, current setup, and account controls."
-      />
+      <GamePageIntro title="More" />
       <div className="mx-auto w-full max-w-6xl">
         <section className="divide-y divide-line border-y border-line">
           {isHost ? (

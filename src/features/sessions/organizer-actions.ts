@@ -272,10 +272,11 @@ export async function addCohostAction(
   revalidatePath("/games");
   revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}`);
-  revalidatePath(`/games/${session.id}/players`);
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/games/${session.id}/play/setup`);
+  revalidatePath(`/s/${session.slug}/play`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/s/${session.slug}`);
-  revalidatePath(`/s/${session.slug}/players`);
   return { message: `@${parsed.data.username} added as a co-host.` };
 }
 
@@ -420,10 +421,11 @@ export async function setCohostRoleAction(
   revalidatePath("/games/open");
   revalidatePath("/notifications");
   revalidatePath(`/games/${session.id}`);
-  revalidatePath(`/games/${session.id}/players`);
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/games/${session.id}/play/setup`);
+  revalidatePath(`/s/${session.slug}/play`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/s/${session.slug}`);
-  revalidatePath(`/s/${session.slug}/players`);
   return {
     message:
       desiredRole === "cohost"

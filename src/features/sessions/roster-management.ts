@@ -77,9 +77,12 @@ async function requireSessionManager(sessionId: string, userId: string) {
 
 function invalidateRoster(session: { id: string; slug: string }) {
   revalidatePath("/home");
+  revalidatePath("/games");
   revalidatePath("/games/open");
   revalidatePath("/notifications");
-  revalidatePath(`/games/${session.id}/players`);
+  revalidatePath(`/games/${session.id}/play`);
+  revalidatePath(`/games/${session.id}/play/setup`);
+  revalidatePath(`/s/${session.slug}/play`);
   revalidatePath(`/games/${session.id}/payments`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/games/${session.id}`);
@@ -136,10 +139,17 @@ async function addPlayer(
   let reachedFourthPlayer = false;
 
   try {
+    const sessionId = session.id;
     await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select id from ${sessions} where id = ${session.id} for update`
+        sql`select id from ${sessions} where id = ${sessionId} for update`
       );
+      const session = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (!session || ["completed", "cancelled"].includes(session.status))
+        throw new Error("ROSTER_ENDED");
+      if (session.rosterLocked) throw new Error("ROSTER_LOCKED");
       const roster = await tx
         .select()
         .from(sessionPlayers)
@@ -247,6 +257,10 @@ async function addPlayer(
       });
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "ROSTER_ENDED")
+      return { error: "This game has ended. Its roster is read-only." };
+    if (error instanceof Error && error.message === "ROSTER_LOCKED")
+      return { error: "Unlock the roster before adding or accepting players." };
     if (
       (error instanceof Error &&
         error.message === "ACCOUNT_ALREADY_ON_ROSTER") ||
@@ -298,10 +312,17 @@ async function approvePlayer(
   let result: "going" | "waitlisted" = "going";
   let reachedFourthPlayer = false;
   try {
+    const sessionId = session.id;
     await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select id from ${sessions} where id = ${session.id} for update`
+        sql`select id from ${sessions} where id = ${sessionId} for update`
       );
+      const session = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (!session || ["completed", "cancelled"].includes(session.status))
+        throw new Error("ROSTER_ENDED");
+      if (session.rosterLocked) throw new Error("ROSTER_LOCKED");
       const roster = await tx
         .select()
         .from(sessionPlayers)
@@ -365,6 +386,10 @@ async function approvePlayer(
         });
     });
   } catch (error) {
+    if (error instanceof Error && error.message === "ROSTER_ENDED")
+      return { error: "This game has ended. Its roster is read-only." };
+    if (error instanceof Error && error.message === "ROSTER_LOCKED")
+      return { error: "Unlock the roster before adding or accepting players." };
     if (error instanceof Error && error.message === "REQUEST_GONE")
       return { error: "This join request was already handled." };
     return { error: "The join request couldn’t be approved. Try again." };
@@ -397,10 +422,16 @@ async function removePlayer(
   if (!session) return { error: "Only a host or co-host can remove players." };
 
   try {
+    const sessionId = session.id;
     await db.transaction(async (tx) => {
       await tx.execute(
-        sql`select id from ${sessions} where id = ${session.id} for update`
+        sql`select id from ${sessions} where id = ${sessionId} for update`
       );
+      const session = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      if (!session || ["completed", "cancelled"].includes(session.status))
+        throw new Error("ROSTER_ENDED");
       const roster = await tx
         .select()
         .from(sessionPlayers)
@@ -499,7 +530,9 @@ async function removePlayer(
           .set({ readAt: new Date() })
           .where(unresolvedJoinRequest(session.id, session.hostId, player.id));
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "ROSTER_ENDED")
+      return { error: "This game has ended. Its roster is read-only." };
     return { error: "This player can’t be removed from the roster." };
   }
 

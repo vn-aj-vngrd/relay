@@ -81,7 +81,7 @@ describe("notificationPresentation", () => {
     ).toEqual({
       title: "New join request",
       body: "Mika wants to join Saturday Pickle.",
-      href: "/games/session-1/players",
+      href: "/games/session-1/play?panel=players",
       tone: "players",
     });
   });

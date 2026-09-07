@@ -10,10 +10,10 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Tooltip } from "@/components/ui/tooltip";
 
 import {
   cancelMatchAction,
@@ -124,9 +124,9 @@ export function QueueOrderControls({
           variant="quiet"
           className="h-11 min-h-11 w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9"
           aria-label={`${label as string}: ${name}`}
-          title={label as string}
         >
           <Icon aria-hidden size={16} />
+          <Tooltip content={label as string} />
         </Button>
       ))}
       {state.error ? (

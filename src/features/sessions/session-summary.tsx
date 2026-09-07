@@ -6,7 +6,7 @@ import {
   MapPin,
 } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
-
+import { Tooltip } from "@/components/ui/tooltip";
 import type { sessions } from "@/db/schema";
 
 import { formatSessionDateLong, formatSessionTime, peso } from "./format";
@@ -46,17 +46,13 @@ export function SessionHero({
       <p className="sport-label text-white/65">
         {formatSessionDateLong(session.startsAt).toUpperCase()}
       </p>
-      <Heading
-        title={session.title}
-        className="relative mt-3 max-w-xl break-words text-[1.625rem] font-[720] leading-8 tracking-[-0.025em] sm:mt-4 sm:text-4xl sm:leading-[2.5rem]"
-      >
+      <Heading className="relative mt-3 max-w-xl break-words text-[1.625rem] font-[720] leading-8 tracking-[-0.025em] sm:mt-4 sm:text-4xl sm:leading-[2.5rem]">
         {session.title}
+        <Tooltip content={session.title} />
       </Heading>
-      <p
-        title={hostLabel}
-        className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base"
-      >
+      <p className="relative mt-2 truncate text-sm text-white/70 sm:mt-3 sm:text-base">
         {hostLabel}
+        <Tooltip content={hostLabel} />
       </p>
     </div>
   );

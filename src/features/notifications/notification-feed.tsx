@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Tooltip } from "@/components/ui/tooltip";
 
 import { markNotificationRead, openNotification } from "./actions";
 import {
@@ -255,9 +256,9 @@ export function NotificationFeed({
                           type="submit"
                           className="pressable grid min-h-11 min-w-11 place-items-center rounded-lg text-muted hover:bg-primary-soft hover:text-primary"
                           aria-label={markReadLabel}
-                          title="Mark as read"
                         >
                           <Check aria-hidden size={17} />
+                          <Tooltip content="Mark as read" />
                         </button>
                       </form>
                     ) : null}

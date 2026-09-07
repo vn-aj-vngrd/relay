@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+import { Tooltip } from "@/components/ui/tooltip";
+
 const colors = [
   "bg-primary",
   "bg-[oklch(.42_.09_245)]",
@@ -33,9 +35,9 @@ export function Avatar({
     <span
       role="img"
       aria-label={name}
-      title={name}
       className={`${dimensions} ${colors[index % colors.length]} relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-canvas font-bold text-white`}
     >
+      <Tooltip content={name} />
       {imageUrl ? (
         <Image
           src={imageUrl}

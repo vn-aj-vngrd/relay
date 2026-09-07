@@ -11,6 +11,7 @@ import { AppNav } from "./app-nav";
 import { PublicProductNav } from "./public-product-nav";
 import { PublicProductShell } from "./public-product-shell";
 import { SidebarAccount } from "./sidebar-account";
+import { SidebarCollapseToggle } from "./sidebar-collapse-toggle";
 import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 import { SidebarSupportNav } from "./sidebar-support-nav";
 import { SidebarUtilityNav } from "./sidebar-utility-nav";
@@ -32,7 +33,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
   delete document.documentElement.dataset.sidebar;
 });
-
+function advance(ms: number) {
+  act(() => vi.advanceTimersByTime(ms));
+}
 function Fixture() {
   return (
     <aside style={{ overflow: "auto", position: "fixed", zIndex: 30 }}>
@@ -49,40 +52,48 @@ function Fixture() {
 }
 
 describe("SidebarItemTooltip", () => {
-  it("escapes the scrolling sidebar into a fixed body portal without losing the trigger label", () => {
+  it("shares the 300ms delay, body portal, animation and description ownership", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Open example" });
-    fireEvent.mouseEnter(trigger);
+    fireEvent.pointerEnter(trigger);
+    advance(299);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    advance(1);
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.parentElement).toBe(document.body);
     expect(tooltip.closest("aside")).toBeNull();
-    expect(tooltip).toHaveClass("fixed", "z-[100]");
+    expect(tooltip).toHaveClass("fixed", "z-[100]", "pl-2");
+    expect(tooltip.firstElementChild).toHaveClass("relay-tooltip");
+    expect(tooltip.firstElementChild).toHaveAttribute("data-state", "open");
     expect(trigger).toHaveAttribute("aria-label", "Open example");
     expect(trigger.getAttribute("aria-describedby")).toContain(tooltip.id);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect(trigger).toHaveAttribute("aria-describedby", "existing-description");
-    fireEvent.focus(trigger);
-    fireEvent.click(trigger);
-    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(tooltip.firstElementChild).toHaveAttribute("data-state", "closed");
+    advance(120);
+    expect(tooltip).not.toBeInTheDocument();
   });
 
-  it("supports focus/blur and a hoverable tooltip with delayed pointer dismissal", () => {
+  it("opens on focus immediately and lets the pointer cross onto the tooltip", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Open example" });
     fireEvent.focus(trigger);
     expect(screen.getByRole("tooltip")).toBeVisible();
-    fireEvent.mouseLeave(trigger);
-    act(() => vi.advanceTimersByTime(150));
+    fireEvent.pointerLeave(trigger);
+    advance(300);
     expect(screen.getByRole("tooltip")).toBeVisible();
     fireEvent.blur(trigger);
+    advance(270);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
-    fireEvent.mouseEnter(trigger);
-    fireEvent.mouseLeave(trigger);
-    fireEvent.mouseEnter(screen.getByRole("tooltip"));
-    act(() => vi.advanceTimersByTime(150));
+    fireEvent.pointerEnter(trigger);
+    advance(300);
+    fireEvent.pointerLeave(trigger);
+    fireEvent.pointerEnter(screen.getByRole("tooltip"));
+    advance(5000);
     expect(screen.getByRole("tooltip")).toBeVisible();
-    fireEvent.mouseLeave(screen.getByRole("tooltip"));
+    fireEvent.pointerLeave(screen.getByRole("tooltip"));
+    advance(270);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
@@ -90,19 +101,18 @@ describe("SidebarItemTooltip", () => {
     "dismisses stale coordinates on %s",
     (event) => {
       render(<Fixture />);
-      fireEvent.mouseEnter(
-        screen.getByRole("button", { name: "Open example" })
-      );
+      fireEvent.focus(screen.getByRole("button", { name: "Open example" }));
       fireEvent(window, new Event(event));
       expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     }
   );
 
-  it("does not show compact tooltips on expanded or mobile rails", () => {
+  it("does not show compact item tooltips on expanded or mobile rails", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Open example" });
     delete document.documentElement.dataset.sidebar;
-    fireEvent.mouseEnter(trigger);
+    fireEvent.pointerEnter(trigger);
+    advance(300);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     document.documentElement.dataset.sidebar = "compact";
     vi.stubGlobal(
@@ -115,12 +125,13 @@ describe("SidebarItemTooltip", () => {
 
   it("removes portals and pending timers on unmount", () => {
     const { unmount } = render(<Fixture />);
-    const trigger = screen.getByRole("button", { name: "Open example" });
-    fireEvent.mouseEnter(trigger);
-    fireEvent.mouseLeave(trigger);
+    fireEvent.pointerEnter(
+      screen.getByRole("button", { name: "Open example" })
+    );
     unmount();
-    act(() => vi.advanceTimersByTime(150));
+    advance(500);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it.each([
@@ -166,11 +177,25 @@ describe("SidebarItemTooltip", () => {
       label: "Log in to Relay",
       text: "Log in",
     },
-  ])("uses the shared portal for $name", ({ content, role, label, text }) => {
-    render(content);
-    fireEvent.mouseEnter(screen.getByRole(role, { name: label }));
-    const tooltip = screen.getByRole("tooltip");
-    expect(tooltip).toHaveTextContent(text);
-    expect(tooltip.parentElement).toBe(document.body);
-  });
+    {
+      name: "sidebar toggle",
+      content: <SidebarCollapseToggle />,
+      role: "button",
+      label: "Open sidebar",
+      text: "Open sidebar",
+    },
+  ])(
+    "uses the same delayed animated portal for $name",
+    ({ content, role, label, text }) => {
+      render(content);
+      fireEvent.pointerEnter(screen.getByRole(role, { name: label }));
+      expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+      advance(300);
+      const tooltip = screen.getByRole("tooltip");
+      expect(tooltip).toHaveTextContent(text);
+      expect(tooltip.parentElement).toBe(document.body);
+      expect(tooltip.firstElementChild).toHaveClass("relay-tooltip");
+      expect(tooltip.firstElementChild).toHaveAttribute("data-state", "open");
+    }
+  );
 });

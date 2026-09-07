@@ -13,12 +13,9 @@ export default function PublicChatLoading() {
         className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8"
       >
         <div className="min-w-0">
-          <h1 className="public-tab-title app-title">Chat</h1>
-          <p className="public-tab-description mt-2 text-sm text-muted">
-            The session conversation for players and guests.
-          </p>
+          <h1 className="sr-only">Chat</h1>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:mt-5 sm:rounded-xl sm:border sm:border-line">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden sm:rounded-xl sm:border sm:border-line">
           <div className="min-h-0 flex-1 overflow-hidden py-5 sm:px-3">
             <div className="mx-auto mb-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-line" />
@@ -44,9 +41,9 @@ export default function PublicChatLoading() {
           </div>
           <div className="shrink-0 border-t border-line pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-3">
             <div className="flex items-end gap-2">
-              <Skeleton className="h-11 w-11" />
-              <Skeleton className="h-11 flex-1" />
-              <Skeleton className="h-11 w-11" />
+              <Skeleton className="h-12 w-12" />
+              <Skeleton className="h-12 flex-1" />
+              <Skeleton className="h-12 w-12" />
             </div>
           </div>
         </div>

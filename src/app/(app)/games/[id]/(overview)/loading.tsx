@@ -5,10 +5,7 @@ import { SessionAtAGlanceSkeleton } from "@/features/sessions/session-overview";
 export default function SessionLoading() {
   return (
     <>
-      <GamePageIntro
-        title="Overview"
-        description="The plan, roster, setup progress, and next action for this game."
-      />
+      <GamePageIntro title="Overview" />
       <div
         role="status"
         aria-label="Loading game overview"

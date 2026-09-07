@@ -53,7 +53,10 @@ Relay coordinates everything around a recreational pickleball session; it does n
 /games/open               public game discovery; account identity is requested when joining
 /games/new                account-optional local Plan → Players and access → optional Details → Review; authentication required to publish
 /games/[id]               authenticated session workspace with capability-based controls
-/games/[id]/players       roster and waitlist
+/games/[id]/players       authorized legacy redirect to /play?panel=players
+/games/[id]/play          roster/setup → live courts with Players drawer → recap and final roster
+/s/[slug]/players         shared-link legacy redirect to /play?panel=players
+/s/[slug]/play            same lifecycle; guest participation, no management controls
 /games/[id]/payments      expenses and payment status
 /games/[id]/live          legacy courts-first redirect
 /games/[id]/chat          contextual session chat
@@ -73,7 +76,7 @@ Relay coordinates everything around a recreational pickleball session; it does n
 ## 4. Information architecture
 
 - **Global mobile navigation:** Home, Games, Create, Groups, Profile.
-- **Session workspace:** Overview, Players, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
+- **Session workspace:** Overview, Play, Chat, Payments, and Story; Play runs the courts and becomes the factual Recap after completion, while Story owns social scenes and crew media.
 - **Public session:** identity and status → time/place → RSVP → roster → cost/booking → notes.
 - **Home:** unanswered invites → next confirmed or active game → upcoming games → recent games. An unanswered invite never replaces the player’s next accepted game. No generic analytics.
 - **Games:** My games uses search (title, venue, host), When and Your role dropdowns, matching the Open games search-above-chips layout and right-aligned desktop view switch. More filters is deferred; response, group, Venue, and Include cancelled controls are not exposed. Upcoming/Any role are defaults; date ranges include both local game dates. URL-owned filters apply server-side to the full authorized history and the calendar, with stable cursor pages, nearest-first upcoming and newest-first past. Cancelled games are archived and hidden by default. The independent Invites count shortcut opens unanswered actionable invitations regardless of filters and preserves `/games?filter=invites` links. Responses refresh authoritative filtered results. Open games is publicly browsable for public, unended sessions with a stated price; signed-out visitors open `/s/[slug]`, while signed-in players stay in `/games/[id]`. Date, location, available-spots, and one Free-or-paid-range Price filter reset stable cursor pagination.

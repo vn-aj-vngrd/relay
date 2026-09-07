@@ -82,3 +82,7 @@ Existing identity assets include the Relay ball mark and PWA icons in `public/re
 ## Accessibility & Inclusion
 
 Target WCAG 2.2 AA with semantic structure, keyboard operation, visible focus, 44px minimum touch targets, screen-reader-friendly score controls, non-color status cues, sufficient contrast, reduced-motion support, and clear offline or reconnecting feedback. Public links and guest RSVP must remain usable without an account. Experience and balancing inputs are self-described rather than presented as authoritative player ratings.
+
+## Unified game workspace
+
+Session navigation is Overview, Play, Chat, Payments, and Story on both signed-in and shared links. Play includes roster, arrival, and setup before play; live courts and queue with a Players drawer; and recap with an expandable final roster after completion. Cancelled rosters are read-only. RSVP and live availability remain independent, and organizer authority stays in Game settings → Organizers. Legacy Players links retain roster intent in Play. Quick Play and player search are unchanged.
