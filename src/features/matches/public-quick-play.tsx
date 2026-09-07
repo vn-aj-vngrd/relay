@@ -505,16 +505,16 @@ function QuickPlaySetup({
       aria-labelledby="quick-play-setup"
       className="mx-auto w-full max-w-[1180px]"
     >
-      <header className="mb-10 border-b border-line pb-7">
+      <header className="sr-only lg:not-sr-only lg:mb-10 lg:border-b lg:border-line lg:pb-7">
         <h1 id="quick-play-setup" className="app-title">
           Quick Play
         </h1>
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-2 hidden text-sm text-muted lg:block">
           Add players, choose a game format, and start the first rotation.
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl pb-24 sm:pb-8">
+      <div className="mx-auto w-full max-w-2xl pb-8">
         <div className="mb-7 flex items-center justify-between gap-4 border-y border-line py-3 text-sm">
           <p className="text-muted">Want to save and share the game?</p>
           <Link
@@ -1423,8 +1423,8 @@ export function PublicQuickPlay() {
       role="status"
       className="mx-auto w-full max-w-[1180px]"
     >
-      <div className="h-9 w-44 animate-pulse rounded-md bg-surface-strong motion-reduce:animate-none" />
-      <div className="mx-auto mt-10 h-80 w-full max-w-2xl animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none" />
+      <div className="hidden h-9 w-44 animate-pulse rounded-md bg-surface-strong motion-reduce:animate-none lg:block" />
+      <div className="mx-auto h-80 w-full max-w-2xl animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none lg:mt-10" />
       <span className="sr-only">Restoring Quick Play…</span>
     </section>
   );

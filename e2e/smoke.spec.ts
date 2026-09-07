@@ -1135,6 +1135,13 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
   expect(
     await button.evaluate((element) => getComputedStyle(element).cursor)
   ).toBe("pointer");
-  const brand = page.getByRole("link", { name: "Relay home" });
-  expect((await brand.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  const back = page.getByRole("link", { name: "Back to Relay" });
+  await expect(back).toHaveAttribute("href", "/");
+  expect((await back.boundingBox())?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.getByRole("link", { name: "Relay home" })).toBeHidden();
+  await expect(
+    page.getByText(
+      "Add players, choose a game format, and start the first rotation."
+    )
+  ).toBeHidden();
 });

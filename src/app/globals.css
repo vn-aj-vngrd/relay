@@ -411,11 +411,17 @@ p:not(.truncate) {
 }
 @media (max-width: 63.999rem) {
   .app-shell:has(.game-workspace) > .app-mobile-header,
-  .app-shell:has(.create-game-page) > .app-mobile-header {
+  .app-shell:has(.create-game-page) > .app-mobile-header,
+  .app-shell:has(.quick-play-page) > .app-mobile-header,
+  .app-shell:has(.quick-play-page) > .app-bottom-nav {
     display: none;
   }
-  .app-content:has(.create-game-page) {
+  .app-content:has(.create-game-page),
+  .app-content:has(.quick-play-page) {
     padding-top: env(safe-area-inset-top);
+  }
+  .app-content:has(.quick-play-page) {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
   .game-workspace {
     padding-top: env(safe-area-inset-top);

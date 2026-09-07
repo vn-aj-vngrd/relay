@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { FocusedMobileHeader } from "@/components/shared/focused-mobile-header";
 import { db } from "@/db/client";
 import { groupMembers, groups, sessionPlayers, sessions } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
@@ -143,16 +144,7 @@ export default async function NewGamePage({
       : "Set the court, schedule, players, and access in one place.";
   return (
     <div className="create-game-page w-full">
-      <div className="create-game-mobile-header -mx-4 mb-6 flex h-14 items-center gap-1 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:hidden">
-        <Link
-          href={user ? "/home" : "/"}
-          aria-label={user ? "Back to Home" : "Back to Relay"}
-          className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-        >
-          <ArrowLeft aria-hidden size={18} />
-        </Link>
-        <p className="text-sm font-semibold text-ink">{pageTitle}</p>
-      </div>
+      <FocusedMobileHeader title={pageTitle} isAuthenticated={Boolean(user)} />
       <Link
         href={user ? "/home" : "/"}
         className="compact-sidebar-back pressable mb-5 hidden min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-semibold text-muted hover:bg-surface-strong hover:text-ink lg:inline-flex"
