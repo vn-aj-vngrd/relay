@@ -7,9 +7,16 @@ import type {
   profiles,
   sessionPlayers,
 } from "@/db/schema";
-import { peso } from "@/features/sessions/format";
 import { togglePaymentExcluded } from "./actions";
+import { hasPaymentHistory } from "./domain";
 import {
+  CollectionBalance,
+  PaymentAdjustmentDetails,
+  PaymentBreakdown,
+  paymentMoney as peso,
+} from "./payment-breakdown";
+import {
+  AssignPlayerShareForm,
   CreateExpenseForm,
   EditExpenseForm,
   PaymentAmountForm,
@@ -21,6 +28,7 @@ export function PaymentSettings({
   collections,
   payments,
   isHost,
+  roster = [],
 }: {
   session: {
     id: string;
@@ -39,6 +47,7 @@ export function PaymentSettings({
     profile: typeof profiles.$inferSelect | null;
   }[];
   isHost: boolean;
+  roster?: Array<{ id: string; name: string }>;
 }) {
   const open = session.status !== "cancelled";
   return (
@@ -52,8 +61,9 @@ export function PaymentSettings({
           Player payment
         </h2>
         <p className="mt-2 text-sm text-muted">
-          Set up repayment for expenses the host already paid. The host is
-          excluded from player shares. Price changes notify signed-in players.
+          Break down your expenses, then split them or set a fixed contribution.
+          The host is excluded from player shares. Price changes notify
+          signed-in players.
         </p>
       </div>
       <ButtonLink href={`/games/${session.id}/payments`} variant="secondary">
@@ -106,16 +116,47 @@ export function PaymentSettings({
           <h3 className="font-semibold">
             {expense.label} · {peso(expense.totalCents)}
           </h3>
+          <PaymentBreakdown expense={expense} />
+          <CollectionBalance
+            expenseTotalCents={expense.totalCents}
+            expectedCents={payments
+              .filter(
+                ({ payment }) =>
+                  payment.expenseId === expense.id &&
+                  payment.status !== "excluded"
+              )
+              .reduce((sum, { payment }) => sum + payment.amountCents, 0)}
+          />
+          {payments.some(
+            ({ payment }) =>
+              payment.expenseId === expense.id &&
+              (payment.amountSource === "legacy" || hasPaymentHistory(payment))
+          ) && expense.contributionMode !== "fixed" ? (
+            <p className="text-sm text-muted">
+              This split contains historical or reviewed shares. Automatic
+              recalculation is paused to protect them; ask the host to review
+              any unassigned players.
+            </p>
+          ) : null}
           {open && isHost ? (
             <EditExpenseForm
               sessionId={session.id}
               expenseId={expense.id}
+              contributionReadOnly={
+                collections.length > 1 || payments.length > 0
+              }
               totalReadOnly={payments.some(
                 ({ payment }) => payment.expenseId === expense.id
               )}
               defaults={{
                 label: expense.label,
                 total: String(expense.totalCents / 100),
+                items: JSON.stringify(expense.items ?? []),
+                contributionMode: expense.contributionMode ?? "split",
+                fixedRate:
+                  expense.fixedRateCents == null
+                    ? ""
+                    : String(expense.fixedRateCents / 100),
                 method: account?.method ?? "GCash",
                 details: account?.details ?? "",
               }}
@@ -143,15 +184,18 @@ export function PaymentSettings({
                       ? "Not included"
                       : payment.status}
                   </p>
+                  <PaymentAdjustmentDetails payment={payment} />
                   {open &&
-                  payment.status !== "sent" &&
-                  payment.status !== "confirmed" ? (
+                  !hasPaymentHistory(payment) &&
+                  !payment.pendingAdjustment ? (
                     <div className="flex flex-wrap gap-3">
-                      <PaymentAmountForm
-                        paymentId={payment.id}
-                        name={profile?.name ?? player.guestName ?? "Guest"}
-                        amount={payment.amountCents / 100}
-                      />
+                      {payment.status !== "excluded" ? (
+                        <PaymentAmountForm
+                          paymentId={payment.id}
+                          name={profile?.name ?? player.guestName ?? "Guest"}
+                          amount={payment.amountCents / 100}
+                        />
+                      ) : null}
                       <form noValidate action={togglePaymentExcluded}>
                         <input
                           type="hidden"
@@ -172,9 +216,43 @@ export function PaymentSettings({
                 </li>
               ))}
           </ul>
+          {open &&
+          roster.some(
+            (player) =>
+              !payments.some(
+                ({ payment }) =>
+                  payment.expenseId === expense.id &&
+                  payment.sessionPlayerId === player.id
+              )
+          ) ? (
+            <details className="border-t border-line pt-3">
+              <summary className="cursor-pointer py-2 text-sm font-semibold">
+                Assign a missing share
+              </summary>
+              <AssignPlayerShareForm
+                sessionId={session.id}
+                expenseId={expense.id}
+                players={roster.filter(
+                  (player) =>
+                    !payments.some(
+                      ({ payment }) =>
+                        payment.expenseId === expense.id &&
+                        payment.sessionPlayerId === player.id
+                    )
+                )}
+              />
+            </details>
+          ) : null}
         </article>
       ))}
-      {open && isHost && collections.length ? (
+      {open &&
+      isHost &&
+      collections.length &&
+      !(
+        collections.some(
+          ({ expense }) => expense.contributionMode === "fixed"
+        ) && payments.length
+      ) ? (
         <details className="border-t border-line pt-5">
           <summary className="cursor-pointer py-2 text-sm font-semibold">
             Add another collection
@@ -182,6 +260,7 @@ export function PaymentSettings({
           <CreateExpenseForm
             sessionId={session.id}
             bookingTotalCents={session.bookingTotalCents}
+            contributionMode={collections[0].expense.contributionMode}
           />
         </details>
       ) : null}

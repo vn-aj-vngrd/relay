@@ -63,7 +63,7 @@ describe("OpenGamesCollection", () => {
     expect(
       screen.getByRole("link", { name: /Saturday Pickle/ })
     ).toHaveAttribute("href", "/s/saturday-pickle?source=open-games");
-    expect(screen.getByText("₱300.00 per player")).toBeVisible();
+    expect(screen.getByText("₱300 per player")).toBeVisible();
     expect(screen.getByText(/2 spots left/)).toBeVisible();
     expect(screen.getByText("Host approval required")).toBeVisible();
   });

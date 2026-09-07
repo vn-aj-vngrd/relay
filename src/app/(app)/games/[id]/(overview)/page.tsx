@@ -21,6 +21,7 @@ import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { loadPlayReadiness } from "@/features/sessions/readiness-query";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
 import { canParticipateInWorkspace } from "@/features/sessions/session-access";
+import { SessionListingStatus } from "@/features/sessions/session-listing-status";
 import { SessionAtAGlance } from "@/features/sessions/session-overview";
 import { SessionOverviewStatus } from "@/features/sessions/session-overview-status";
 import {
@@ -89,7 +90,11 @@ export default async function GameOverviewPage({
               headingLevel="h2"
             />
             <div className="px-5 py-6 sm:px-8 sm:py-8">
-              <SessionPlanDetails session={session} />
+              <SessionPlanDetails
+                session={session}
+                hasExpense={responseOverview.hasExpense}
+                priceIsFixed={responseOverview.priceIsFixed}
+              />
               <SessionAtAGlance
                 overview={responseOverview}
                 hrefBase={`/games/${session.id}`}
@@ -261,6 +266,7 @@ export default async function GameOverviewPage({
             roster.filter(({ player }) => player.rsvp === "invited").length
           }
           qrEnabled={session.visibility !== "private"}
+          canConfigurePayment={session.hostId === user.id}
           pendingPublicPrice={
             session.visibility === "public" && session.playerPriceCents == null
           }
@@ -325,8 +331,18 @@ export default async function GameOverviewPage({
           <div className="px-4 py-5 sm:px-8 sm:py-8">
             <SessionPlanDetails
               session={session}
+              hasExpense={overview.hasExpense}
+              priceIsFixed={overview.priceIsFixed}
               bookingAction={bookingAction}
             />
+            {isHost ? (
+              <SessionListingStatus
+                session={session}
+                hasExpense={Boolean(overview.hasExpense)}
+                isOriginalHost={session.hostId === user.id}
+                now={new Date()}
+              />
+            ) : null}
             <SessionAtAGlance
               overview={overview}
               hrefBase={`/games/${session.id}`}

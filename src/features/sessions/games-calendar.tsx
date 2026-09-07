@@ -14,6 +14,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { sessionAccentStyle } from "./accent";
 import type { GameCollectionItem } from "./game-collection-types";
 import { GameStatusChip, useGameStatusLabel } from "./game-status";
+import { playerPriceText } from "./player-price";
 import { playSetupNextAction } from "./readiness";
 
 type CalendarPhase = "live" | "upcoming" | "past";
@@ -185,6 +186,9 @@ function DayAgenda({
                     </span>{" "}
                     {game.phase === "past" ? "Going responses" : "going"}
                   </span>
+                </p>
+                <p className="mt-1.5 text-[13px] text-muted">
+                  {playerPriceText(game)}
                 </p>
                 {game.readiness &&
                 game.phase !== "past" &&

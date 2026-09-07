@@ -5,7 +5,6 @@ import {
   asc,
   desc,
   eq,
-  gt,
   ilike,
   inArray,
   isNotNull,
@@ -27,6 +26,12 @@ import {
 import { groupImageUrl } from "@/features/groups/image";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { formatSessionDate } from "@/features/sessions/format";
+import { playerPriceText } from "@/features/sessions/player-price";
+import {
+  sessionHasExpense,
+  sessionPriceIsFixed,
+} from "@/features/sessions/player-price-query";
+import { publicDiscoveryCondition } from "@/features/sessions/public-discovery-query";
 
 import type { SearchFilter, SearchResponse, SearchResult } from "./domain";
 
@@ -67,6 +72,8 @@ async function findGames(
       membershipRsvp: sessionPlayers.rsvp,
       capacity: sessions.capacity,
       playerPriceCents: sessions.playerPriceCents,
+      hasExpense: sessionHasExpense,
+      priceIsFixed: sessionPriceIsFixed,
       requiresApproval: sessions.requiresApproval,
       playerCount: goingCount,
     })
@@ -89,12 +96,7 @@ async function findGames(
       and(
         inArray(sessions.status, ["published", "live", "completed"]),
         or(
-          and(
-            eq(sessions.visibility, "public"),
-            inArray(sessions.status, ["published", "live"]),
-            gt(sessions.endsAt, now),
-            isNotNull(sessions.playerPriceCents)
-          ),
+          publicDiscoveryCondition(now),
           eq(sessions.hostId, userId),
           isNotNull(sessionPlayers.id)
         ),
@@ -126,12 +128,7 @@ async function findGames(
     more: result.more,
     items: result.rows.map((session): SearchResult => {
       const spots = Math.max(0, session.capacity - Number(session.playerCount));
-      const cost =
-        session.playerPriceCents === 0
-          ? "Free"
-          : session.playerPriceCents
-            ? `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(session.playerPriceCents / 100)} per player`
-            : null;
+      const cost = playerPriceText(session);
       const state = session.membershipRsvp
         ? session.membershipRsvp === "pending"
           ? "Pending approval"

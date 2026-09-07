@@ -84,6 +84,7 @@ export function GameResultsSkeleton({
                   <Skeleton className="mt-3 h-5 w-4/5 sm:mt-5 sm:h-7" />
                   <Skeleton className="mt-2 h-4 w-3/5 sm:mt-3 sm:h-5" />
                   <Skeleton className="mt-1.5 h-4 w-4/5 sm:mt-2 sm:h-5" />
+                  <Skeleton className="mt-2 h-4 w-32" />
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                     <Skeleton className="h-4 w-12" />
                     <Skeleton className="h-4 w-24" />
@@ -128,6 +129,7 @@ export function GameResultsSkeleton({
                 <div className="min-w-0 flex-1">
                   <Skeleton className="h-4 w-2/5" />
                   <Skeleton className="mt-2 h-3.5 w-3/5" />
+                  <Skeleton className="mt-1 h-4 w-32" />
                 </div>
                 <Skeleton className="hidden h-4 w-20 sm:block" />
               </div>

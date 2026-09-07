@@ -9,8 +9,9 @@ import type { ReactNode } from "react";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { sessions } from "@/db/schema";
 
-import { formatSessionDateLong, formatSessionTime, peso } from "./format";
+import { formatSessionDateLong, formatSessionTime } from "./format";
 import { type GameLifecycleStatus, GameStatusChip } from "./game-status";
+import { playerPriceDisclosure } from "./player-price";
 
 type SessionSummary = typeof sessions.$inferSelect;
 type SessionHeroData = Pick<SessionSummary, "startsAt" | "title">;
@@ -69,10 +70,15 @@ export function SessionHero({
 export function SessionPlanDetails({
   session,
   bookingAction,
+  hasExpense = false,
+  priceIsFixed = false,
 }: {
   session: SessionPlanData;
   bookingAction?: ReactNode;
+  hasExpense?: boolean;
+  priceIsFixed?: boolean;
 }) {
+  const price = playerPriceDisclosure({ ...session, hasExpense, priceIsFixed });
   const durationMinutes = Math.round(
     (session.endsAt.getTime() - session.startsAt.getTime()) / 60000
   );
@@ -146,13 +152,10 @@ export function SessionPlanDetails({
                 ? "No booking needed"
                 : "Booking pending"}
           </p>
-          <p className="mt-1 text-sm text-muted">
-            {session.playerPriceCents === 0
-              ? "Free"
-              : session.playerPriceCents
-                ? `${peso(session.playerPriceCents)} per player`
-                : "Payment not set up yet"}
-          </p>
+          <p className="mt-1 text-sm text-muted">{price.label}</p>
+          {price.context ? (
+            <p className="mt-1 text-sm text-muted">{price.context}</p>
+          ) : null}
           {bookingAction ? <div className="mt-2">{bookingAction}</div> : null}
         </div>
       </div>

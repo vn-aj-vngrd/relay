@@ -8,7 +8,6 @@ import {
   gte,
   ilike,
   inArray,
-  isNotNull,
   lt,
   lte,
   or,
@@ -26,6 +25,8 @@ import {
   type OpenGamesFilters,
   type OpenGamesPage,
 } from "./open-games";
+import { sessionHasExpense, sessionPriceIsFixed } from "./player-price-query";
+import { publicDiscoveryCondition } from "./public-discovery-query";
 
 const OPEN_GAME_PAGE_SIZE = 20;
 const manilaDay = new Intl.DateTimeFormat("en-CA", {
@@ -124,6 +125,8 @@ export async function discoverOpenGames(
       hostName: profiles.name,
       capacity: sessions.capacity,
       playerPriceCents: sessions.playerPriceCents,
+      hasExpense: sessionHasExpense,
+      priceIsFixed: sessionPriceIsFixed,
       requiresApproval: sessions.requiresApproval,
       status: sessions.status,
       accentColor: sessions.accentColor,
@@ -133,10 +136,7 @@ export async function discoverOpenGames(
     .leftJoin(profiles, eq(profiles.userId, sessions.hostId))
     .where(
       and(
-        eq(sessions.visibility, "public"),
-        inArray(sessions.status, ["published", "live"]),
-        gt(sessions.endsAt, now),
-        isNotNull(sessions.playerPriceCents),
+        publicDiscoveryCondition(now),
         dateCondition(filters, now),
         timeCondition(filters),
         priceCondition(filters),
@@ -202,6 +202,8 @@ export async function discoverOpenGames(
         playerCount: Number(row.playerCount),
         capacity: row.capacity,
         playerPriceCents: row.playerPriceCents ?? 0,
+        hasExpense: row.hasExpense,
+        priceIsFixed: row.priceIsFixed,
         requiresApproval: row.requiresApproval,
         status: row.status as "published" | "live",
         accentColor: row.accentColor,

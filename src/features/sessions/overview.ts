@@ -12,6 +12,8 @@ import {
 } from "@/db/schema";
 
 export type SessionOverview = {
+  hasExpense?: boolean;
+  priceIsFixed?: boolean;
   messageCount: number;
   play: {
     activeMatchCount: number;
@@ -56,7 +58,10 @@ export async function getSessionOverview(
         .from(sessionQueue)
         .where(eq(sessionQueue.sessionId, sessionId)),
       db
-        .select({ id: expenses.id })
+        .select({
+          id: expenses.id,
+          contributionMode: expenses.contributionMode,
+        })
         .from(expenses)
         .where(eq(expenses.sessionId, sessionId)),
       db.$count(
@@ -76,11 +81,24 @@ export async function getSessionOverview(
     featuredMatch: activeMatches[0] ?? null,
   };
 
-  if (!viewer) return { play, messageCount, payment: { view: "hidden" } };
+  const hasExpense = sessionExpenses.length > 0;
+  const priceIsFixed =
+    hasExpense &&
+    sessionExpenses.every((expense) => expense.contributionMode === "fixed");
+  if (!viewer)
+    return {
+      play,
+      messageCount,
+      hasExpense,
+      priceIsFixed,
+      payment: { view: "hidden" },
+    };
   if (!sessionExpenses.length)
     return {
       play,
       messageCount,
+      hasExpense,
+      priceIsFixed,
       payment: { view: "none", canManage: viewer.canManage },
     };
 
@@ -92,6 +110,8 @@ export async function getSessionOverview(
     return {
       play,
       messageCount,
+      hasExpense,
+      priceIsFixed,
       payment: {
         view: "host",
         proofCount: payments.filter((payment) => payment.status === "sent")
@@ -111,7 +131,13 @@ export async function getSessionOverview(
       expenseIds.includes(payment.expenseId) && payment.status !== "excluded"
   );
   if (!ownPayments.length)
-    return { play, messageCount, payment: { view: "none", canManage: false } };
+    return {
+      play,
+      messageCount,
+      hasExpense,
+      priceIsFixed,
+      payment: { view: "none", canManage: false },
+    };
   const priority = { sent: 0, unpaid: 1, confirmed: 2, excluded: 3 } as const;
   const current = [...ownPayments].sort(
     (a, b) => priority[a.status] - priority[b.status]
@@ -119,6 +145,8 @@ export async function getSessionOverview(
   return {
     play,
     messageCount,
+    hasExpense,
+    priceIsFixed,
     payment: {
       view: "player",
       amountCents: ownPayments.reduce(

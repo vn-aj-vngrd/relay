@@ -17,7 +17,6 @@ import { sessionAccentStyle } from "@/features/sessions/accent";
 import {
   formatSessionDate,
   formatSessionTime,
-  peso,
   sessionDateKey,
 } from "@/features/sessions/format";
 import type { GameCollectionItem } from "@/features/sessions/game-collection-types";
@@ -28,6 +27,7 @@ import {
   homeParticipationLabel,
   homePendingRequestLabel,
 } from "@/features/sessions/home-presentation";
+import { playerPriceText } from "@/features/sessions/player-price";
 import { getHomeSessions } from "@/features/sessions/queries";
 import {
   playSetupNextAction,
@@ -58,7 +58,7 @@ export default async function HomePage() {
         })
       : null;
   const invitations: GameCollectionItem[] = data.invitations.map(
-    ({ session, player, playerCount, hostName }) => ({
+    ({ session, player, playerCount, hostName, hasExpense, priceIsFixed }) => ({
       id: session.id,
       href: `/games/${session.id}`,
       title: session.title,
@@ -79,6 +79,8 @@ export default async function HomePage() {
       invitedAt: player.invitedAt.toISOString(),
       hostName,
       playerPriceCents: session.playerPriceCents,
+      hasExpense,
+      priceIsFixed,
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
       canReplay: false,
@@ -164,13 +166,13 @@ export default async function HomePage() {
                     <Users size={16} />
                     {next.playerCount} / {next.session.capacity} players
                   </span>
-                  {next.session.playerPriceCents !== null ? (
-                    <span className="score text-sm font-semibold">
-                      {next.session.playerPriceCents === 0
-                        ? "Free"
-                        : `${peso(next.session.playerPriceCents)} per player`}
-                    </span>
-                  ) : null}
+                  <span className="score text-sm font-semibold">
+                    {playerPriceText({
+                      ...next.session,
+                      hasExpense: next.hasExpense,
+                      priceIsFixed: next.priceIsFixed,
+                    })}
+                  </span>
                 </div>
               </div>
               <Link
@@ -319,64 +321,80 @@ export default async function HomePage() {
           <div className="divide-y divide-line border-y border-line">
             {upcoming
               .slice(0, 3)
-              .map(({ session, player, playerCount, pendingCount }) => {
-                const participation = homeParticipationLabel(
-                  player.rsvp,
-                  player.role
-                );
-                const requestLabel = pendingCount
-                  ? homePendingRequestLabel(pendingCount)
-                  : null;
-                return (
-                  <Link
-                    href={`/games/${session.id}`}
-                    prefetch={false}
-                    key={session.id}
-                    style={sessionAccentStyle(session.accentColor)}
-                    className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
-                  >
-                    <CalendarBlank
-                      aria-hidden
-                      className="shrink-0 text-primary"
-                      size={20}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <h3 className="min-w-0 truncate font-semibold">
-                          {session.title}
-                        </h3>
-                        <GameStatusChip
-                          status={session.status}
-                          endsAt={session.endsAt}
-                        />
+              .map(
+                ({
+                  session,
+                  player,
+                  playerCount,
+                  pendingCount,
+                  hasExpense,
+                  priceIsFixed,
+                }) => {
+                  const participation = homeParticipationLabel(
+                    player.rsvp,
+                    player.role
+                  );
+                  const requestLabel = pendingCount
+                    ? homePendingRequestLabel(pendingCount)
+                    : null;
+                  return (
+                    <Link
+                      href={`/games/${session.id}`}
+                      prefetch={false}
+                      key={session.id}
+                      style={sessionAccentStyle(session.accentColor)}
+                      className="collection-row pressable group flex min-h-20 items-center gap-3 py-4 hover:bg-surface-strong sm:gap-4 sm:px-2"
+                    >
+                      <CalendarBlank
+                        aria-hidden
+                        className="shrink-0 text-primary"
+                        size={20}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <h3 className="min-w-0 truncate font-semibold">
+                            {session.title}
+                          </h3>
+                          <GameStatusChip
+                            status={session.status}
+                            endsAt={session.endsAt}
+                          />
+                        </div>
+                        <p className="mt-1 truncate text-sm text-muted">
+                          <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
+                          {formatSessionTime(session.startsAt, session.endsAt)}{" "}
+                          · {session.venueName}
+                          <span className="sm:hidden">
+                            {participation ? ` · ${participation}` : ""}
+                            {requestLabel ? ` · ${requestLabel}` : ""}
+                          </span>
+                        </p>
+                        <p className="mt-1 text-sm text-muted">
+                          {playerPriceText({
+                            ...session,
+                            hasExpense,
+                            priceIsFixed,
+                          })}
+                        </p>
                       </div>
-                      <p className="mt-1 truncate text-sm text-muted">
-                        <time>{formatSessionDate(session.startsAt)}</time> ·{" "}
-                        {formatSessionTime(session.startsAt, session.endsAt)} ·{" "}
-                        {session.venueName}
-                        <span className="sm:hidden">
-                          {participation ? ` · ${participation}` : ""}
+                      <span className="hidden shrink-0 text-right sm:block">
+                        <span className="block text-sm font-[650] text-primary">
+                          {participation}
                           {requestLabel ? ` · ${requestLabel}` : ""}
                         </span>
-                      </p>
-                    </div>
-                    <span className="hidden shrink-0 text-right sm:block">
-                      <span className="block text-sm font-[650] text-primary">
-                        {participation}
-                        {requestLabel ? ` · ${requestLabel}` : ""}
+                        <span className="score mt-1 block text-xs text-muted">
+                          {playerCount} / {session.capacity} players
+                        </span>
                       </span>
-                      <span className="score mt-1 block text-xs text-muted">
-                        {playerCount} / {session.capacity} players
-                      </span>
-                    </span>
-                    <CaretRight
-                      aria-hidden
-                      className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
-                      size={16}
-                    />
-                  </Link>
-                );
-              })}
+                      <CaretRight
+                        aria-hidden
+                        className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+                        size={16}
+                      />
+                    </Link>
+                  );
+                }
+              )}
           </div>
         </section>
       ) : null}
@@ -397,34 +415,43 @@ export default async function HomePage() {
             ) : null}
           </div>
           <div className="mt-3 divide-y divide-line border-y border-line">
-            {data.recent.slice(0, 4).map(({ session, playerCount }) => (
-              <Link
-                href={`/games/${session.id}`}
-                prefetch={false}
-                key={session.id}
-                style={sessionAccentStyle(session.accentColor)}
-                className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
-              >
-                <MapPin className="shrink-0 text-primary" size={19} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <h3 className="min-w-0 truncate font-semibold">
-                      {session.title}
-                      <Tooltip content={session.title} />
-                    </h3>
-                    <GameStatusChip
-                      status={session.status}
-                      endsAt={session.endsAt}
-                    />
+            {data.recent
+              .slice(0, 4)
+              .map(({ session, playerCount, hasExpense, priceIsFixed }) => (
+                <Link
+                  href={`/games/${session.id}`}
+                  prefetch={false}
+                  key={session.id}
+                  style={sessionAccentStyle(session.accentColor)}
+                  className="pressable flex min-h-20 items-center gap-4 py-4 hover:bg-surface-strong sm:px-2"
+                >
+                  <MapPin className="shrink-0 text-primary" size={19} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h3 className="min-w-0 truncate font-semibold">
+                        {session.title}
+                        <Tooltip content={session.title} />
+                      </h3>
+                      <GameStatusChip
+                        status={session.status}
+                        endsAt={session.endsAt}
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-muted">
+                      {formatSessionDate(session.startsAt)} ·{" "}
+                      {session.venueName} · {playerCount} players
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      {playerPriceText({
+                        ...session,
+                        hasExpense,
+                        priceIsFixed,
+                      })}
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-muted">
-                    {formatSessionDate(session.startsAt)} · {session.venueName}{" "}
-                    · {playerCount} players
-                  </p>
-                </div>
-                <CaretRight className="text-muted" size={16} />
-              </Link>
-            ))}
+                  <CaretRight className="text-muted" size={16} />
+                </Link>
+              ))}
           </div>
         </section>
       ) : null}

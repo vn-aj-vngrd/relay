@@ -4,9 +4,9 @@ import { useActionState, useId } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { ImageFileField } from "@/components/ui/image-file-field";
+import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
-
 import {
   createExpenseState,
   requestNewPaymentProofState,
@@ -14,6 +14,8 @@ import {
   updatePaymentChoiceState,
   updatePlayerPaymentAmountState,
 } from "./actions";
+import { respondToPaymentAdjustment } from "./adjustment-actions";
+import { assignPlayerShare } from "./assign-share-action";
 
 import {
   PaymentSetupFields,
@@ -39,6 +41,11 @@ export function PaymentAmountForm({
       className="flex flex-wrap items-start gap-2"
     >
       <input type="hidden" name="paymentId" value={paymentId} />
+      <input
+        type="hidden"
+        name="expectedAmountCents"
+        value={Math.round(amount * 100)}
+      />
       <label className="sr-only" htmlFor={`amount-${paymentId}`}>
         Amount for {name}
       </label>
@@ -58,13 +65,38 @@ export function PaymentAmountForm({
           className="score h-9 w-28 rounded-md border border-line bg-surface pl-6 pr-2 text-sm"
         />
       </div>
+      <div className="min-w-0 flex-1 basis-40">
+        <label className="sr-only" htmlFor={`reason-${paymentId}`}>
+          Reason for adjusting {name}
+        </label>
+        <input
+          id={`reason-${paymentId}`}
+          name="reason"
+          required
+          minLength={2}
+          maxLength={240}
+          placeholder="Reason for this adjustment"
+          className="h-9 w-full rounded-md border border-line bg-surface px-3 text-sm"
+        />
+      </div>
       <SubmitButton
         pendingLabel="Saving…"
         variant="secondary"
         className="min-h-9"
       >
-        Save
+        Save adjustment
       </SubmitButton>
+      <p className="basis-full text-xs text-muted">
+        Discounts and waivers apply immediately. Increases need the player’s
+        agreement before the amount changes.
+      </p>
+      {state.success ? (
+        <div className="basis-full">
+          <Alert variant="success">
+            Adjustment saved. Any increase awaits the player’s response.
+          </Alert>
+        </div>
+      ) : null}
       {state.error ? (
         <div id={`amount-${paymentId}-error`} className="basis-full">
           <Alert>{state.error}</Alert>
@@ -114,9 +146,11 @@ export function PaymentProofRequestForm({ paymentId }: { paymentId: string }) {
 export function CreateExpenseForm({
   sessionId,
   bookingTotalCents,
+  contributionMode,
 }: {
   sessionId: string;
   bookingTotalCents: number | null;
+  contributionMode?: "split" | "fixed";
 }) {
   const [state, action] = useActionState(createExpenseState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -129,9 +163,13 @@ export function CreateExpenseForm({
     >
       {state.error ? <Alert>{state.error}</Alert> : null}
       <input type="hidden" name="sessionId" value={sessionId} />
-      <PaymentSetupFields bookingTotalCents={bookingTotalCents} />
+      <PaymentSetupFields
+        bookingTotalCents={bookingTotalCents}
+        defaults={contributionMode ? { contributionMode } : {}}
+        contributionReadOnly={Boolean(contributionMode)}
+      />
       <PaymentUploadFields />
-      <SubmitButton pendingLabel="Creating split…" className="w-full">
+      <SubmitButton pendingLabel="Creating collection…" className="w-full">
         Create collection
       </SubmitButton>
     </form>
@@ -175,11 +213,13 @@ export function EditExpenseForm({
   expenseId,
   defaults,
   totalReadOnly,
+  contributionReadOnly = false,
 }: {
   sessionId: string;
   expenseId: string;
   defaults: Record<string, string>;
   totalReadOnly: boolean;
+  contributionReadOnly?: boolean;
 }) {
   const [state, action] = useActionState(updateExpenseState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
@@ -196,15 +236,115 @@ export function EditExpenseForm({
       {state.success ? (
         <Alert variant="success">Payment settings saved.</Alert>
       ) : null}
-      <PaymentSetupFields defaults={defaults} totalReadOnly={totalReadOnly} />
+      <PaymentSetupFields
+        defaults={defaults}
+        totalReadOnly={totalReadOnly}
+        contributionReadOnly={contributionReadOnly}
+      />
       <PaymentUploadFields />
       <p className="text-sm text-muted">
-        Once any player share exists—even an excluded share—the total is
-        read-only to protect existing amounts. Payment details and images remain
-        editable. Existing receipts and QR images are kept unless you choose a
-        replacement.
+        Once player shares exist, the expense breakdown, contribution method,
+        and fixed rate are read-only to protect the agreed price. Payment
+        details and images remain editable. Existing receipts and QR images are
+        kept unless you choose a replacement.
       </p>
       <SubmitButton pendingLabel="Saving…">Save payment settings</SubmitButton>
+    </form>
+  );
+}
+
+export function AssignPlayerShareForm({
+  sessionId,
+  expenseId,
+  players,
+}: {
+  sessionId: string;
+  expenseId: string;
+  players: Array<{ id: string; name: string }>;
+}) {
+  const [state, action] = useActionState(assignPlayerShare, {});
+  const preserveValues = usePreserveFormValuesOnError(state);
+  const id = useId();
+  if (!players.length) return null;
+  return (
+    <form
+      noValidate
+      action={action}
+      onSubmitCapture={preserveValues}
+      className="flex flex-col gap-3"
+    >
+      <input type="hidden" name="sessionId" value={sessionId} />
+      <input type="hidden" name="expenseId" value={expenseId} />
+      {state.error ? <Alert>{state.error}</Alert> : null}
+      <SelectField
+        id={`${id}-player`}
+        name="sessionPlayerId"
+        label="Player without a share"
+        defaultValue={players[0].id}
+        options={players.map((player) => ({
+          value: player.id,
+          label: player.name,
+        }))}
+      />
+      <label htmlFor={`${id}-amount`} className="text-sm font-semibold">
+        Proposed amount (₱)
+      </label>
+      <input
+        id={`${id}-amount`}
+        name="amount"
+        type="number"
+        min="0"
+        max="1000000"
+        step="0.01"
+        required
+        className="h-11 rounded-lg border border-line bg-surface px-3"
+      />
+      <label htmlFor={`${id}-reason`} className="text-sm font-semibold">
+        Reason
+      </label>
+      <input
+        id={`${id}-reason`}
+        name="reason"
+        minLength={2}
+        maxLength={240}
+        required
+        className="h-11 rounded-lg border border-line bg-surface px-3"
+      />
+      <p className="text-sm text-muted">
+        A positive amount needs the player’s agreement. Zero records a waiver.
+        Other players’ shares stay unchanged.
+      </p>
+      <SubmitButton pendingLabel="Saving…">Assign share</SubmitButton>
+    </form>
+  );
+}
+
+export function PaymentAdjustmentResponse({
+  paymentId,
+  proposalId,
+}: {
+  paymentId: string;
+  proposalId: string;
+}) {
+  const [state, action] = useActionState(respondToPaymentAdjustment, {});
+  return (
+    <form noValidate action={action} className="mt-3 flex flex-col gap-3">
+      <input type="hidden" name="paymentId" value={paymentId} />
+      <input type="hidden" name="proposalId" value={proposalId} />
+      {state.error ? <Alert>{state.error}</Alert> : null}
+      <div className="flex flex-wrap gap-2">
+        <SubmitButton name="decision" value="accept" pendingLabel="Saving…">
+          Agree to new amount
+        </SubmitButton>
+        <SubmitButton
+          name="decision"
+          value="decline"
+          variant="secondary"
+          pendingLabel="Saving…"
+        >
+          Keep current amount
+        </SubmitButton>
+      </div>
     </form>
   );
 }

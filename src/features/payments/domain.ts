@@ -36,6 +36,59 @@ export function resolvedPlayerPrice(
   return disclosedPlayerTotal(payments) ?? (currentPriceCents === 0 ? 0 : null);
 }
 
+export type Contribution = {
+  contributionMode?: "split" | "fixed";
+  fixedRateCents?: number | null;
+  totalCents: number;
+};
+
+function fixedContributionRate(collection: Contribution) {
+  if (
+    !Number.isInteger(collection.fixedRateCents) ||
+    (collection.fixedRateCents ?? 0) <= 0
+  )
+    throw new Error("A fixed contribution needs a positive rate");
+  return collection.fixedRateCents!;
+}
+
+export function collectionShares(
+  collection: Contribution,
+  playerIds: string[]
+) {
+  if (collection.contributionMode === "fixed") {
+    const rate = fixedContributionRate(collection);
+    return Object.fromEntries([...new Set(playerIds)].map((id) => [id, rate]));
+  }
+  return splitExpense(collection.totalCents, playerIds);
+}
+
+export function collectionPlayerPrice(
+  collections: Contribution[],
+  payments: Array<{ sessionPlayerId: string; amountCents: number }>
+) {
+  if (
+    collections.length &&
+    collections.every((collection) => collection.contributionMode === "fixed")
+  )
+    return collections.reduce(
+      (sum, collection) => sum + fixedContributionRate(collection),
+      0
+    );
+  return disclosedPlayerTotal(payments);
+}
+
+export function hasPaymentHistory(payment: {
+  status: string;
+  proofStoragePath?: string | null;
+  reviewNote?: string | null;
+}) {
+  return (
+    payment.status === "sent" ||
+    payment.status === "confirmed" ||
+    Boolean(payment.proofStoragePath || payment.reviewNote)
+  );
+}
+
 export function splitExpense(
   totalCents: number,
   playerIds: string[],

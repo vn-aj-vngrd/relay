@@ -28,6 +28,7 @@ describe("payment setup", () => {
     expect(paymentSetupSchema.parse(paymentSetupInput(data))).toEqual({
       ...valid,
       total: 2400,
+      contributionMode: "split",
     });
   });
   it("distinguishes Free, unset, and pending collection shares", () => {

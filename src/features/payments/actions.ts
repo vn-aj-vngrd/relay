@@ -28,12 +28,18 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import {
   collectFromPlayers,
-  disclosedPlayerTotal,
-  splitExpense,
+  collectionPlayerPrice,
+  collectionShares,
+  hasPaymentHistory,
   validatePaymentProof,
 } from "./domain";
 
-import { paymentSetupInput, paymentSetupSchema } from "./setup";
+import {
+  collectionSetupValues,
+  paymentAmountSchema,
+  paymentSetupInput,
+  paymentSetupSchema,
+} from "./setup";
 import { reconcileExpenseSharesInTransaction } from "./sync";
 
 export type PaymentActionState = { error?: string; success?: boolean };
@@ -214,10 +220,8 @@ async function createExpense(formData: FormData) {
     throw new Error(
       "Payment requests are temporarily limited. Try again tomorrow."
     );
-  const totalCents = Math.round(
-    z.coerce.number().min(0.01).max(1_000_000).parse(formData.get("total")) *
-      100
-  );
+  const setup = paymentSetupSchema.parse(paymentSetupInput(formData));
+  const contribution = collectionSetupValues(setup);
   const method = z.string().trim().min(2).max(40).parse(formData.get("method"));
   const details = z
     .string()
@@ -241,6 +245,32 @@ async function createExpense(formData: FormData) {
     if (!lockedSession || lockedSession.hostId !== user.id)
       throw new Error("Only the host can request payment");
     assertPaymentsOpen(lockedSession);
+    const existingCollections = await tx
+      .select()
+      .from(expenses)
+      .where(eq(expenses.sessionId, sessionId));
+    if (existingCollections.length >= 20)
+      throw new Error("A game can have at most 20 collections.");
+    if (
+      existingCollections.some(
+        (collection) =>
+          collection.contributionMode !== contribution.contributionMode
+      )
+    )
+      throw new Error(
+        "Use the same contribution method for every collection in this game."
+      );
+    if (contribution.contributionMode === "fixed") {
+      const existingShares = await tx
+        .select({ id: playerPayments.id })
+        .from(playerPayments)
+        .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+        .where(eq(expenses.sessionId, sessionId));
+      if (existingShares.length)
+        throw new Error(
+          "The fixed player price is already in use. Additional required collections cannot be added."
+        );
+    }
     const [account] = await tx
       .insert(paymentAccounts)
       .values({
@@ -257,7 +287,8 @@ async function createExpense(formData: FormData) {
         sessionId,
         kind: "court",
         label,
-        totalCents,
+        ...contribution,
+        consentBefore: lockedSession.playerPriceCents === 0 ? new Date() : null,
         paidById: user.id,
         paymentAccountId: account.id,
         receiptStoragePath,
@@ -273,13 +304,25 @@ async function createExpense(formData: FormData) {
         )
       );
     const payingIds = collectFromPlayers(players, user.id);
-    const shares = splitExpense(totalCents, payingIds);
+    const shares = collectionShares(contribution, payingIds);
     if (payingIds.length)
       await tx.insert(playerPayments).values(
         payingIds.map((sessionPlayerId) => ({
           expenseId: expense.id,
           sessionPlayerId,
-          amountCents: shares[sessionPlayerId],
+          amountCents:
+            lockedSession.playerPriceCents === 0 ? 0 : shares[sessionPlayerId],
+          amountSource: "automatic" as const,
+          pendingAdjustment:
+            lockedSession.playerPriceCents === 0
+              ? {
+                  id: crypto.randomUUID(),
+                  amountCents: shares[sessionPlayerId],
+                  previousCents: 0,
+                  reason: `Payment requested for ${label}; this game was previously free.`,
+                  proposedBy: user.id,
+                }
+              : null,
         }))
       );
     const currentPayments = await tx
@@ -298,7 +341,10 @@ async function createExpense(formData: FormData) {
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: disclosedPlayerTotal(currentPayments),
+        playerPriceCents: collectionPlayerPrice(
+          [...existingCollections, expense],
+          currentPayments
+        ),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -316,7 +362,8 @@ async function createExpense(formData: FormData) {
         }))
       );
     if (
-      lockedSession.playerPriceCents !== disclosedPlayerTotal(currentPayments)
+      lockedSession.playerPriceCents !==
+      collectionPlayerPrice([...existingCollections, expense], currentPayments)
     ) {
       const participants = await tx
         .select()
@@ -365,6 +412,10 @@ export async function markPaymentSent(
     .limit(1);
   const row = rows[0];
   if (!row) return { error: "This payment could not be found." };
+  if (row.payment.pendingAdjustment)
+    return {
+      error: "Respond to the proposed amount change before sending proof.",
+    };
   if (row.payment.amountCents === 0)
     return { error: "No payment is due for this share." };
   if (row.session.status === "cancelled")
@@ -418,7 +469,13 @@ export async function markPaymentSent(
     const currentPayment = await tx.query.playerPayments.findFirst({
       where: eq(playerPayments.id, row.payment.id),
     });
-    if (!currentPayment || currentPayment.amountCents === 0) return false;
+    if (
+      !currentPayment ||
+      currentPayment.amountCents === 0 ||
+      currentPayment.amountCents !== row.payment.amountCents ||
+      currentPayment.pendingAdjustment
+    )
+      return false;
     const [updated] = await tx
       .update(playerPayments)
       .set({
@@ -534,11 +591,12 @@ export async function updatePlayerPaymentAmountState(
   _: PaymentActionState,
   formData: FormData
 ): Promise<PaymentActionState> {
-  const amount = z.coerce
-    .number()
-    .nonnegative()
-    .safeParse(formData.get("amount"));
+  const amount = paymentAmountSchema.safeParse(formData.get("amount"));
   if (!amount.success) return { error: "Enter an amount of zero or more." };
+  if (
+    !z.string().trim().min(2).max(240).safeParse(formData.get("reason")).success
+  )
+    return { error: "Add a short reason for the player’s adjustment." };
   try {
     await updatePlayerPaymentAmount(formData);
     return { success: true };
@@ -556,8 +614,19 @@ async function updatePlayerPaymentAmount(formData: FormData) {
   await guardPaymentManagement(user.id);
   const paymentId = z.uuid().parse(formData.get("paymentId"));
   const amountCents = Math.round(
-    z.coerce.number().nonnegative().parse(formData.get("amount")) * 100
+    paymentAmountSchema.parse(formData.get("amount")) * 100
   );
+  const reason = z
+    .string()
+    .trim()
+    .min(2)
+    .max(240)
+    .parse(formData.get("reason"));
+  const expectedAmountCents = z
+    .string()
+    .min(1)
+    .pipe(z.coerce.number<string>().int().nonnegative())
+    .parse(formData.get("expectedAmountCents"));
   const rows = await db
     .select({ player: sessionPlayers, session: sessions })
     .from(playerPayments)
@@ -605,13 +674,53 @@ async function updatePlayerPaymentAmount(formData: FormData) {
     });
     if (
       !currentPayment ||
-      currentPayment.status === "sent" ||
-      currentPayment.status === "confirmed"
+      hasPaymentHistory(currentPayment) ||
+      currentPayment.status === "excluded"
     )
-      throw new Error("Sent or confirmed payment amounts cannot be changed");
+      throw new Error(
+        "Submitted, reviewed, or excluded amounts cannot be changed"
+      );
+    if (currentPayment.amountCents !== expectedAmountCents)
+      throw new Error(
+        "This amount changed while you were editing. Reload before trying again."
+      );
+    if (currentPayment.pendingAdjustment)
+      throw new Error(
+        "Wait for the player to respond to the current proposal."
+      );
+    const increase = amountCents > currentPayment.amountCents;
     await tx
       .update(playerPayments)
-      .set({ amountCents, updatedAt: new Date() })
+      .set(
+        increase
+          ? {
+              pendingAdjustment: {
+                id: crypto.randomUUID(),
+                amountCents,
+                previousCents: currentPayment.amountCents,
+                reason,
+                proposedBy: user.id,
+              },
+              updatedAt: new Date(),
+            }
+          : {
+              amountCents,
+              amountSource: "manual",
+              adjustmentReason: reason,
+              adjustmentHistory: [
+                ...currentPayment.adjustmentHistory,
+                {
+                  amountCents,
+                  previousCents: currentPayment.amountCents,
+                  reason,
+                  changedBy: user.id,
+                  changedAt: new Date().toISOString(),
+                  decision: "applied" as const,
+                },
+              ],
+              updatedAt: new Date(),
+            }
+      )
       .where(eq(playerPayments.id, paymentId));
     const currentPayments = await tx
       .select({
@@ -626,10 +735,14 @@ async function updatePlayerPaymentAmount(formData: FormData) {
           ne(playerPayments.status, "excluded")
         )
       );
+    const collections = await tx
+      .select()
+      .from(expenses)
+      .where(eq(expenses.sessionId, row.session.id));
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: disclosedPlayerTotal(currentPayments),
+        playerPriceCents: collectionPlayerPrice(collections, currentPayments),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -695,8 +808,10 @@ export async function togglePaymentExcluded(formData: FormData) {
       where: eq(playerPayments.id, paymentId),
     });
     if (!current) throw new Error("This payment could not be found");
-    if (current.status === "sent" || current.status === "confirmed")
-      throw new Error("Reviewed payments cannot be excluded");
+    if (hasPaymentHistory(current) || current.pendingAdjustment)
+      throw new Error(
+        "Reviewed payments or pending proposals cannot be excluded"
+      );
     await tx
       .update(playerPayments)
       .set({
@@ -717,10 +832,14 @@ export async function togglePaymentExcluded(formData: FormData) {
           ne(playerPayments.status, "excluded")
         )
       );
+    const collections = await tx
+      .select()
+      .from(expenses)
+      .where(eq(expenses.sessionId, row.session.id));
     await tx
       .update(sessions)
       .set({
-        playerPriceCents: disclosedPlayerTotal(currentPayments),
+        playerPriceCents: collectionPlayerPrice(collections, currentPayments),
         version: sql`${sessions.version} + 1`,
         updatedAt: new Date(),
       })
@@ -954,11 +1073,49 @@ export async function updateExpenseState(
         .select()
         .from(playerPayments)
         .where(eq(playerPayments.expenseId, expenseId));
-      // The schema does not distinguish automatic shares from manual overrides.
-      // Refuse a new resplit rather than guessing intent from amounts/timestamps.
+      const contribution = collectionSetupValues(parsed.data);
+      const methodChanged =
+        contribution.contributionMode !== expense.contributionMode ||
+        contribution.fixedRateCents !== expense.fixedRateCents;
+      const siblings = await tx
+        .select()
+        .from(expenses)
+        .where(eq(expenses.sessionId, sessionId));
+      if (
+        methodChanged &&
+        siblings.some(
+          (sibling) =>
+            sibling.id !== expenseId &&
+            sibling.contributionMode !== contribution.contributionMode
+        )
+      )
+        throw new Error(
+          "Use the same contribution method for every collection."
+        );
+      const gameShares = await tx
+        .select({ id: playerPayments.id })
+        .from(playerPayments)
+        .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
+        .where(eq(expenses.sessionId, sessionId));
+      if (methodChanged && gameShares.length)
+        throw new Error(
+          "The contribution method and fixed price cannot change after player shares exist."
+        );
       if (totalCents !== expense.totalCents && payments.length > 0)
         throw new Error(
           "This collection already has player shares. Its total cannot be changed without replacing existing amounts. Payment details and images can still be corrected."
+        );
+      const oldItems = expense.items?.length
+        ? expense.items
+        : [{ label: expense.label, amountCents: expense.totalCents }];
+      if (!parsed.data.items && totalCents === expense.totalCents)
+        contribution.items = oldItems;
+      if (
+        payments.length &&
+        JSON.stringify(contribution.items) !== JSON.stringify(oldItems)
+      )
+        throw new Error(
+          "The expense breakdown cannot change after player shares exist."
         );
       // Accounts may be shared by older collections: copy rather than changing another game's instructions.
       const oldAccount = expense.paymentAccountId
@@ -981,14 +1138,14 @@ export async function updateExpenseState(
         .update(expenses)
         .set({
           label: parsed.data.label,
-          totalCents,
+          ...contribution,
           paymentAccountId: account.id,
           receiptStoragePath:
             uploads.receiptStoragePath ?? expense.receiptStoragePath,
           updatedAt: new Date(),
         })
         .where(eq(expenses.id, expenseId));
-      if (totalCents !== expense.totalCents)
+      if (totalCents !== expense.totalCents || methodChanged)
         await reconcileExpenseSharesInTransaction(tx, sessionId, expenseId);
       else
         await tx

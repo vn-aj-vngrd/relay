@@ -70,6 +70,57 @@ function collections(assigned: boolean) {
 }
 
 describe("authenticated collection tracking", () => {
+  it("places the host's primary setup action inside the empty state", async () => {
+    mocks.user.mockResolvedValue({ id: "host" });
+    mocks.workspace.mockResolvedValue({
+      ...workspace,
+      access: "host",
+      session: { ...workspace.session, playerPriceCents: null },
+    });
+    mocks.rows.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+    const heading = screen.getByRole("heading", {
+      name: "Payment details aren’t set up",
+    });
+    const action = screen.getByRole("link", { name: "Set up payments" });
+    expect(heading.closest("section")).toContainElement(action);
+    expect(action).toHaveClass("bg-primary");
+    expect(action).toHaveAttribute(
+      "href",
+      "/games/game/settings?section=payments#player-payment"
+    );
+    expect(
+      screen.getByText("Add your expenses and choose how players contribute.")
+    ).toBeVisible();
+    expect(
+      screen.getAllByRole("link", { name: "Set up payments" })
+    ).toHaveLength(1);
+  });
+
+  it("does not offer setup to an ordinary player in the empty state", async () => {
+    mocks.rows.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+    expect(
+      screen.queryByRole("link", { name: "Set up payments" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps a free game's edit action secondary and inside its state", async () => {
+    mocks.user.mockResolvedValue({ id: "host" });
+    mocks.workspace.mockResolvedValue({
+      ...workspace,
+      access: "host",
+      session: { ...workspace.session, playerPriceCents: 0 },
+    });
+    mocks.rows.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+    render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+    const action = screen.getByRole("link", { name: "Edit payment settings" });
+    expect(
+      screen.getByRole("heading", { name: "Free game" }).closest("section")
+    ).toContainElement(action);
+    expect(action).not.toHaveClass("bg-primary");
+  });
+
   it.each(["waitlisted", "going"])(
     "does not direct an unassigned %s player to pay another player's collection",
     async (rsvp) => {

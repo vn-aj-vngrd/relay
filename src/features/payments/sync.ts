@@ -13,8 +13,9 @@ import {
 
 import {
   collectFromPlayers,
-  disclosedPlayerTotal,
-  splitExpense,
+  collectionPlayerPrice,
+  collectionShares,
+  hasPaymentHistory,
 } from "./domain";
 
 export type PaymentTransaction = Parameters<
@@ -49,12 +50,10 @@ export async function reconcileExpenseSharesInTransaction(
       .from(playerPayments)
       .where(eq(playerPayments.expenseId, expense.id));
     if (
+      expense.contributionMode !== "fixed" &&
       payments.some(
         (payment) =>
-          payment.status === "sent" ||
-          payment.status === "confirmed" ||
-          payment.proofStoragePath ||
-          payment.reviewNote
+          hasPaymentHistory(payment) || payment.amountSource === "legacy"
       )
     )
       continue;
@@ -66,9 +65,16 @@ export async function reconcileExpenseSharesInTransaction(
     const payingIds = collectFromPlayers(players, session.hostId).filter(
       (id) => !excluded.has(id)
     );
-    const shares = splitExpense(expense.totalCents, payingIds);
+    const shares = collectionShares(expense, payingIds);
     for (const payment of payments) {
-      if (payment.status === "excluded") continue;
+      if (
+        payment.status === "excluded" ||
+        hasPaymentHistory(payment) ||
+        payment.amountSource === "manual" ||
+        payment.amountSource === "legacy" ||
+        payment.pendingAdjustment
+      )
+        continue;
       // Leaving the roster does not erase the financial record.
       const amountCents = shares[payment.sessionPlayerId] ?? 0;
       if (payment.amountCents === amountCents) continue;
@@ -93,11 +99,28 @@ export async function reconcileExpenseSharesInTransaction(
     const added = payingIds.filter((id) => !existing.has(id));
     if (added.length) {
       await tx.insert(playerPayments).values(
-        added.map((sessionPlayerId) => ({
-          expenseId: expense.id,
-          sessionPlayerId,
-          amountCents: shares[sessionPlayerId],
-        }))
+        added.map((sessionPlayerId) => {
+          const player = players.find(
+            (candidate) => candidate.id === sessionPlayerId
+          )!;
+          const needsAgreement =
+            expense.consentBefore && player.createdAt <= expense.consentBefore;
+          return {
+            expenseId: expense.id,
+            sessionPlayerId,
+            amountCents: needsAgreement ? 0 : shares[sessionPlayerId],
+            amountSource: "automatic" as const,
+            pendingAdjustment: needsAgreement
+              ? {
+                  id: crypto.randomUUID(),
+                  amountCents: shares[sessionPlayerId],
+                  previousCents: 0,
+                  reason: `Payment requested for ${expense.label}; this game was previously free.`,
+                  proposedBy: session.hostId,
+                }
+              : null,
+          };
+        })
       );
       const recipients = players.filter(
         (player) => added.includes(player.id) && player.userId
@@ -113,6 +136,18 @@ export async function reconcileExpenseSharesInTransaction(
         );
     }
   }
+  await refreshPlayerPriceInTransaction(tx, sessionId, sessionExpenses);
+}
+
+export async function refreshPlayerPriceInTransaction(
+  tx: PaymentTransaction,
+  sessionId: string,
+  knownCollections?: Array<typeof expenses.$inferSelect>
+) {
+  const collections =
+    knownCollections ??
+    (await tx.select().from(expenses).where(eq(expenses.sessionId, sessionId)));
+  if (!collections.length) return;
   const currentPayments = await tx
     .select({
       sessionPlayerId: playerPayments.sessionPlayerId,
@@ -129,7 +164,7 @@ export async function reconcileExpenseSharesInTransaction(
   await tx
     .update(sessions)
     .set({
-      playerPriceCents: disclosedPlayerTotal(currentPayments),
+      playerPriceCents: collectionPlayerPrice(collections, currentPayments),
       version: sql`${sessions.version} + 1`,
       updatedAt: new Date(),
     })

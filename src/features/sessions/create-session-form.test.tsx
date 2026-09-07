@@ -337,7 +337,7 @@ describe("CreateSessionForm", () => {
     moveToAccess();
     fireEvent.click(screen.getByRole("button", { name: "Payment choice" }));
     fireEvent.click(screen.getByRole("option", { name: "Collect payment" }));
-    expect(screen.getByLabelText("Expense")).toBeVisible();
+    expect(screen.getByLabelText("Expense 1")).toBeVisible();
     expect(screen.getByLabelText("Total amount")).toBeVisible();
     fireEvent.click(
       screen.getByRole("button", { name: "Continue to details" })
@@ -345,7 +345,7 @@ describe("CreateSessionForm", () => {
     expect(
       screen.getByText(/Complete the expense, total, method/)
     ).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Total amount"), {
+    fireEvent.change(screen.getByLabelText("Amount (₱)"), {
       target: { value: "2400" },
     });
     fireEvent.change(screen.getByLabelText("Payment details"), {

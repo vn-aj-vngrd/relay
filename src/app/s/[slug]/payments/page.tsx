@@ -10,9 +10,13 @@ import { notFound } from "next/navigation";
 
 import { db } from "@/db/client";
 import { expenses, paymentAccounts, playerPayments } from "@/db/schema";
+import {
+  PaymentAdjustmentDetails,
+  PaymentBreakdown,
+  paymentMoney as peso,
+} from "@/features/payments/payment-breakdown";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { sessionAccentStyle } from "@/features/sessions/accent";
-import { peso } from "@/features/sessions/format";
 import { getPublicSession } from "@/features/sessions/queries";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -119,38 +123,44 @@ export default async function PublicPaymentsPage({
                 >
                   <div className="min-w-0">
                     <p className="text-sm capitalize text-muted">
-                      {expense.kind.replaceAll("_", " ")}
+                      {expense.label}
                     </p>
                     <p className="score mt-1 text-3xl font-bold">
                       {peso(payment.amountCents)}
                     </p>
-                    <p className="mt-1 text-sm text-muted">
-                      Your share of the {peso(expense.totalCents)} total
-                    </p>
-                    <div className="mt-5 border-t border-line pt-4">
-                      <p className="text-sm font-semibold">
-                        {account?.method ?? "Payment method"}
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
-                        {account?.details ??
-                          "Ask the host for payment details."}
-                      </p>
-                      <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-                        The host paid upfront. Repay your share through their
-                        listed app or bank, then upload one screenshot. Relay
-                        never moves the money.
-                      </p>
-                      {receiptUrl ? (
-                        <a
-                          href={receiptUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-primary"
-                        >
-                          View host receipt
-                        </a>
-                      ) : null}
-                    </div>
+                    <PaymentBreakdown expense={expense} />
+                    <PaymentAdjustmentDetails
+                      payment={payment}
+                      canRespond={!cancelled}
+                    />
+                    {payment.amountCents > 0 &&
+                    payment.status !== "excluded" &&
+                    !payment.pendingAdjustment ? (
+                      <div className="mt-5 border-t border-line pt-4">
+                        <p className="text-sm font-semibold">
+                          {account?.method ?? "Payment method"}
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-muted">
+                          {account?.details ??
+                            "Ask the host for payment details."}
+                        </p>
+                        <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
+                          Pay the amount shown through the host’s listed app or
+                          bank, then upload one screenshot. Relay never moves
+                          the money.
+                        </p>
+                        {receiptUrl ? (
+                          <a
+                            href={receiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-3 inline-flex min-h-9 items-center text-sm font-semibold text-primary"
+                          >
+                            View host receipt
+                          </a>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="mt-5">
                       {payment.status === "confirmed" ? (
                         <p className="inline-flex items-center gap-2 text-sm font-semibold text-success">
@@ -165,6 +175,11 @@ export default async function PublicPaymentsPage({
                       ) : payment.status === "excluded" ? (
                         <p className="text-sm font-semibold text-muted">
                           You are not included in this split.
+                        </p>
+                      ) : payment.pendingAdjustment ? (
+                        <p className="text-sm text-muted">
+                          Respond to the proposed change before sending payment
+                          proof.
                         </p>
                       ) : payment.amountCents === 0 ? (
                         <p className="text-sm font-semibold text-muted">
@@ -183,7 +198,10 @@ export default async function PublicPaymentsPage({
                       )}
                     </div>
                   </div>
-                  {qrUrl ? (
+                  {qrUrl &&
+                  payment.amountCents > 0 &&
+                  payment.status !== "excluded" &&
+                  !payment.pendingAdjustment ? (
                     <div>
                       <Image
                         src={qrUrl}

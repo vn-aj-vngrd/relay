@@ -13,6 +13,7 @@ import {
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { PlayerPaymentFields } from "@/features/payments/payment-setup-fields";
 import {
+  paymentBreakdownSummary,
   paymentChoiceSummary,
   paymentSetupInput,
   paymentSetupSchema,
@@ -233,9 +234,13 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
           ? "Private · Invited players only"
           : "Anyone with the link",
     cost:
-      paymentChoiceSummary(values.costKind) +
+      paymentChoiceSummary(
+        values.costKind,
+        values.contributionMode,
+        values.fixedRate
+      ) +
       (values.costKind === "collect"
-        ? ` · ${values.label} · ₱${values.total} total · ${values.method} · ${values.details}`
+        ? ` · ${values.label} · ${paymentBreakdownSummary(values.items) || "One expense"} · ₱${values.total} total · ${values.method} · ${values.details}`
         : ""),
     details:
       values.notes || (values.accentColor && values.accentColor !== "violet")
@@ -405,9 +410,13 @@ function CreateSessionFormContent({
             ? "Anyone with the link"
             : "Private · Invited players only",
       cost:
-        paymentChoiceSummary(String(data.get("costKind"))) +
+        paymentChoiceSummary(
+          String(data.get("costKind")),
+          String(data.get("contributionMode")),
+          String(data.get("fixedRate") ?? "")
+        ) +
         (data.get("costKind") === "collect"
-          ? ` · ${data.get("label")} · ₱${data.get("total")} total · ${data.get("method")} · ${data.get("details")}`
+          ? ` · ${data.get("label")} · ${paymentBreakdownSummary(String(data.get("items") ?? "")) || "One expense"} · ₱${data.get("total")} total · ${data.get("method")} · ${data.get("details")}`
           : ""),
       details: "No optional details added",
       booking: "Booking details not added",

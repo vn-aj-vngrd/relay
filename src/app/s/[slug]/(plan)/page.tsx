@@ -233,7 +233,11 @@ export default async function PublicSessionPage({
               </div>
             ) : null}
             <div className="public-session-content px-5 py-6 sm:px-8 sm:py-8">
-              <SessionPlanDetails session={session} />
+              <SessionPlanDetails
+                session={session}
+                hasExpense={overview.hasExpense}
+                priceIsFixed={overview.priceIsFixed}
+              />
               {session.status === "cancelled" ? (
                 <section
                   aria-labelledby="cancellation-title"

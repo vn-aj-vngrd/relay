@@ -587,6 +587,16 @@ export const expenses = pgTable(
     kind: expenseKind("kind").notNull(),
     label: text("label").notNull(),
     totalCents: integer("total_cents").notNull(),
+    contributionMode: text("contribution_mode")
+      .$type<"split" | "fixed">()
+      .notNull()
+      .default("split"),
+    fixedRateCents: integer("fixed_rate_cents"),
+    consentBefore: timestamp("consent_before", { withTimezone: true }),
+    items: jsonb("items")
+      .$type<Array<{ label: string; amountCents: number }>>()
+      .notNull()
+      .default([]),
     paidById: uuid("paid_by_id").references(() => users.id, {
       onDelete: "restrict",
     }),
@@ -597,7 +607,13 @@ export const expenses = pgTable(
     receiptStoragePath: text("receipt_storage_path"),
     ...timestamps,
   },
-  (table) => [check("expense_total_nonnegative", sql`${table.totalCents} >= 0`)]
+  (table) => [
+    check("expense_total_nonnegative", sql`${table.totalCents} >= 0`),
+    check(
+      "expense_contribution_rate",
+      sql`(${table.contributionMode} = 'split' and ${table.fixedRateCents} is null) or (${table.contributionMode} = 'fixed' and ${table.fixedRateCents} is not null and ${table.fixedRateCents} > 0)`
+    ),
+  ]
 );
 
 export const playerPayments = pgTable(
@@ -611,6 +627,31 @@ export const playerPayments = pgTable(
       .notNull()
       .references(() => sessionPlayers.id, { onDelete: "restrict" }),
     amountCents: integer("amount_cents").notNull(),
+    amountSource: text("amount_source")
+      .$type<"automatic" | "manual" | "legacy">()
+      .notNull()
+      .default("legacy"),
+    adjustmentReason: text("adjustment_reason"),
+    pendingAdjustment: jsonb("pending_adjustment").$type<{
+      id: string;
+      amountCents: number;
+      previousCents: number;
+      reason: string;
+      proposedBy: string;
+    }>(),
+    adjustmentHistory: jsonb("adjustment_history")
+      .$type<
+        Array<{
+          amountCents: number;
+          previousCents: number;
+          reason: string;
+          changedBy: string;
+          changedAt: string;
+          decision: "applied" | "accepted" | "declined";
+        }>
+      >()
+      .notNull()
+      .default([]),
     status: paymentStatus("status").notNull().default("unpaid"),
     sentAt: timestamp("sent_at", { withTimezone: true }),
     proofStoragePath: text("proof_storage_path"),
@@ -624,6 +665,10 @@ export const playerPayments = pgTable(
   (table) => [
     unique("expense_player_unique").on(table.expenseId, table.sessionPlayerId),
     check("payment_amount_nonnegative", sql`${table.amountCents} >= 0`),
+    check(
+      "payment_amount_source",
+      sql`${table.amountSource} in ('automatic', 'manual', 'legacy')`
+    ),
   ]
 );
 

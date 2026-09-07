@@ -14,9 +14,9 @@ import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
 import { sessionAccentStyle } from "./accent";
 import { rsvpAction } from "./actions";
-import { peso } from "./format";
 import type { GameCollectionItem } from "./game-collection-types";
 import { GameStatusChip } from "./game-status";
+import { playerPriceText } from "./player-price";
 
 export type ActiveInviteResponse =
   | "going"
@@ -79,12 +79,7 @@ export function GameInvitationCard({
     if (state.success && state.rsvp) onResponded(game, state.rsvp);
   }, [game, onResponded, state.rsvp, state.success]);
 
-  const cost =
-    game.playerPriceCents === 0
-      ? "Free"
-      : game.playerPriceCents
-        ? `${peso(game.playerPriceCents)} per player`
-        : "Payment not set yet";
+  const cost = playerPriceText(game);
   const availability = game.spotsRemaining
     ? `${game.spotsRemaining} spots open`
     : "Waitlist available";

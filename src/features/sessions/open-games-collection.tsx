@@ -29,6 +29,7 @@ import type {
   OpenGamesFilters,
   OpenGamesPage,
 } from "./open-games";
+import { playerPriceText } from "./player-price";
 
 const itemSchema = z.object({
   id: z.string(),
@@ -44,6 +45,8 @@ const itemSchema = z.object({
   playerCount: z.number(),
   capacity: z.number(),
   playerPriceCents: z.number(),
+  priceIsFixed: z.boolean().optional(),
+  hasExpense: z.boolean().optional(),
   requiresApproval: z.boolean(),
   status: z.enum(["published", "live"]),
   accentColor: z.string(),
@@ -55,11 +58,6 @@ const pageSchema = z.object({
   items: z.array(itemSchema),
   nextCursor: z.string().nullable(),
 });
-
-function peso(cents: number) {
-  if (cents === 0) return "Free";
-  return `${new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP", maximumFractionDigits: 2 }).format(cents / 100)} per player`;
-}
 
 function rosterState(game: OpenGameItem) {
   if (game.viewerRsvp === "going") return "Going";
@@ -118,6 +116,8 @@ function toCalendarGame(
     invitedAt: game.startsAt,
     hostName: game.hostName,
     playerPriceCents: game.playerPriceCents,
+    hasExpense: game.hasExpense,
+    priceIsFixed: game.priceIsFixed,
     requiresApproval: game.requiresApproval,
     spotsRemaining: Math.max(0, game.capacity - game.playerCount),
     canReplay: false,
@@ -187,7 +187,7 @@ function OpenGameRow({
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3 sm:mt-0 sm:justify-end sm:border-0 sm:pt-0">
         <div className="text-left sm:text-right">
           <p className="score text-sm font-bold text-ink">
-            {peso(game.playerPriceCents)}
+            {playerPriceText(game)}
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-muted sm:justify-end">
             <UsersThree aria-hidden size={14} /> {game.playerCount}/
@@ -255,7 +255,7 @@ function OpenGameCard({
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div>
             <p className="score text-sm font-bold text-ink">
-              {peso(game.playerPriceCents)}
+              {playerPriceText(game)}
             </p>
             {game.requiresApproval && !game.viewerRsvp ? (
               <p className="mt-1 text-xs text-muted">Approval required</p>

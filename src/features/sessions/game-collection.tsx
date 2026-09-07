@@ -38,6 +38,7 @@ import { GameResults, GameResultsTransition } from "./game-results-transition";
 import { GameStatusChip } from "./game-status";
 import { GamesCalendar } from "./games-calendar";
 import { InvitationHistoryItems } from "./invitation-history-items";
+import { playerPriceText } from "./player-price";
 import { playSetupNextAction } from "./readiness";
 
 export type { GameCollectionItem } from "./game-collection-types";
@@ -72,6 +73,8 @@ const gameItemSchema = z.object({
   invitedAt: z.string(),
   hostName: z.string(),
   playerPriceCents: z.number().nullable(),
+  hasExpense: z.boolean().optional(),
+  priceIsFixed: z.boolean().optional(),
   requiresApproval: z.boolean(),
   spotsRemaining: z.number(),
   canReplay: z.boolean(),
@@ -370,6 +373,7 @@ function GameList({
                   </span>
                 ) : null}
               </p>
+              <p className="mt-1 text-sm text-muted">{playerPriceText(game)}</p>
             </div>
             {past ? null : game.readiness && game.status !== "live" ? (
               <span
@@ -443,6 +447,7 @@ function GameGrid({
                 <span className="truncate">{game.venue}</span>
               </p>
             </div>
+            <p className="mt-2 text-sm text-muted">{playerPriceText(game)}</p>
             <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
               {!past && rsvpLabel(game.viewerRsvp) ? (
                 <span className="font-[650] text-primary">

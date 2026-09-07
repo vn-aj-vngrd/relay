@@ -175,7 +175,10 @@ export async function getHomeSessions(userId: string) {
           .where(inArray(sessionPlayers.sessionId, sessionIds))
           .groupBy(sessionPlayers.sessionId),
         db
-          .select({ sessionId: expenses.sessionId })
+          .select({
+            sessionId: expenses.sessionId,
+            contributionMode: expenses.contributionMode,
+          })
           .from(expenses)
           .where(inArray(expenses.sessionId, sessionIds)),
         db
@@ -210,6 +213,13 @@ export async function getHomeSessions(userId: string) {
         row.session.hostId === userId
       ),
       hasExpense: sessionsWithExpense.has(row.session.id),
+      priceIsFixed:
+        sessionsWithExpense.has(row.session.id) &&
+        !expenseRows.some(
+          (expense) =>
+            expense.sessionId === row.session.id &&
+            expense.contributionMode !== "fixed"
+        ),
       eligiblePlayerCount: Number(
         counts.find((count) => count.sessionId === row.session.id)
           ?.eligibleTotal ?? 0
@@ -238,7 +248,7 @@ async function toGameCollectionItems(
   const now = new Date();
   const sessionIds = rows.map(({ session }) => session.id);
   const hostIds = [...new Set(rows.map(({ session }) => session.hostId))];
-  const [counts, hostProfiles] = await Promise.all([
+  const [counts, hostProfiles, expenseRows] = await Promise.all([
     db
       .select({
         sessionId: sessionPlayers.sessionId,
@@ -257,7 +267,17 @@ async function toGameCollectionItems(
       .select({ userId: profiles.userId, name: profiles.name })
       .from(profiles)
       .where(inArray(profiles.userId, hostIds)),
+    db
+      .select({
+        sessionId: expenses.sessionId,
+        contributionMode: expenses.contributionMode,
+      })
+      .from(expenses)
+      .where(inArray(expenses.sessionId, sessionIds)),
   ]);
+  const sessionsWithExpense = new Set(
+    expenseRows.map(({ sessionId }) => sessionId)
+  );
   const playerCounts = new Map(
     counts.map(({ sessionId, total }) => [sessionId, Number(total)])
   );
@@ -288,6 +308,14 @@ async function toGameCollectionItems(
       invitedAt: player.invitedAt.toISOString(),
       hostName: hostNames.get(session.hostId) ?? "Relay host",
       playerPriceCents: session.playerPriceCents,
+      hasExpense: sessionsWithExpense.has(session.id),
+      priceIsFixed:
+        sessionsWithExpense.has(session.id) &&
+        !expenseRows.some(
+          (expense) =>
+            expense.sessionId === session.id &&
+            expense.contributionMode !== "fixed"
+        ),
       requiresApproval: session.requiresApproval,
       spotsRemaining: Math.max(0, session.capacity - playerCount),
       canReplay: session.hostId === userId && session.status === "completed",

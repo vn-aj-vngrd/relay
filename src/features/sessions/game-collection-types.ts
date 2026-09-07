@@ -21,6 +21,8 @@ export type GameCollectionItem = {
   invitedAt: string;
   hostName: string;
   playerPriceCents: number | null;
+  hasExpense?: boolean;
+  priceIsFixed?: boolean;
   requiresApproval: boolean;
   spotsRemaining: number;
   canReplay: boolean;

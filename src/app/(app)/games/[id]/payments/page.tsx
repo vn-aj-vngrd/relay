@@ -22,9 +22,13 @@ import {
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { confirmPayment } from "@/features/payments/actions";
+import {
+  PaymentAdjustmentDetails,
+  PaymentBreakdown,
+  paymentMoney as peso,
+} from "@/features/payments/payment-breakdown";
 import { PaymentProofRequestForm } from "@/features/payments/payment-management-forms";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
-import { peso } from "@/features/sessions/format";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canParticipateInWorkspace } from "@/features/sessions/session-access";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -158,15 +162,13 @@ export default async function PaymentsPage({
   return (
     <>
       <GamePageIntro title={canManagePayments ? "Payments" : "Your payment"} />
-      {canManagePayments || canCreateExpense ? (
+      {sessionExpenses.length > 0 && (canManagePayments || canCreateExpense) ? (
         <ButtonLink
           href={`/games/${sessionId}/settings?section=payments#player-payment`}
           variant="secondary"
           className="mb-6"
         >
-          {sessionExpenses.length || data.session.playerPriceCents === 0
-            ? "Edit payment settings"
-            : "Set up payments"}
+          Edit payment settings
         </ButtonLink>
       ) : null}
       {sessionExpenses.length && data.session.playerPriceCents == null ? (
@@ -200,6 +202,7 @@ export default async function PaymentsPage({
               ).length;
               return (
                 <article key={expense.id}>
+                  <PaymentBreakdown expense={expense} />
                   <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5">
                     <div>
                       <p className="text-sm capitalize text-muted">
@@ -263,7 +266,12 @@ export default async function PaymentsPage({
                                 )}
                               </span>
                             </div>
+                            <PaymentAdjustmentDetails
+                              payment={payment}
+                              canRespond={!cancelled && own}
+                            />
                             {!cancelled &&
+                            !payment.pendingAdjustment &&
                             own &&
                             payment.amountCents > 0 &&
                             payment.status === "unpaid" ? (
@@ -341,13 +349,23 @@ export default async function PaymentsPage({
                           : "You have no assigned share in the current collection. Ask the host if you need to be included."}
                       </p>
                     </section>
-                  ) : (
+                  ) : canManagePayments ||
+                    expensePayments.some(
+                      ({ payment }) =>
+                        payment.amountCents > 0 &&
+                        payment.status !== "excluded" &&
+                        !payment.pendingAdjustment
+                    ) ? (
                     <section className="mt-5 border-t border-line py-5">
                       <CurrencyCircleDollar
                         className="text-primary"
                         size={20}
                       />
-                      <h2 className="mt-4 font-bold">Repay the host</h2>
+                      <h2 className="mt-4 font-bold">
+                        {expense.contributionMode === "fixed"
+                          ? "Pay your contribution"
+                          : "Repay the host"}
+                      </h2>
                       <p className="mt-2 text-sm font-medium">
                         {account?.method}
                       </p>
@@ -393,7 +411,7 @@ export default async function PaymentsPage({
                           : "Send your share to the host, then upload one screenshot. The host reviews it before Relay marks you paid."}
                       </p>
                     </section>
-                  )}
+                  ) : null}
                 </article>
               );
             })}
@@ -412,8 +430,23 @@ export default async function PaymentsPage({
               ? "The host marked this game Free. No repayment is needed."
               : data.session.playerPriceCents
                 ? `The current player price is ${peso(data.session.playerPriceCents)}. The host hasn’t requested payment yet.`
-                : "The host hasn’t added a repayment amount or payment method yet."}
+                : canCreateExpense
+                  ? "Add your expenses and choose how players contribute."
+                  : "The host hasn’t added a repayment amount or payment method yet."}
           </p>
+          {canCreateExpense ? (
+            <ButtonLink
+              href={`/games/${sessionId}/settings?section=payments#player-payment`}
+              variant={
+                data.session.playerPriceCents === 0 ? "secondary" : "primary"
+              }
+              className="mt-6"
+            >
+              {data.session.playerPriceCents === 0
+                ? "Edit payment settings"
+                : "Set up payments"}
+            </ButtonLink>
+          ) : null}
         </section>
       )}
     </>

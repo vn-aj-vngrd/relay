@@ -1,3 +1,5 @@
+import { isPubliclyDiscoverable } from "./public-discovery";
+
 export type SessionWorkspaceAccess =
   | "host"
   | "cohost"
@@ -34,10 +36,10 @@ export function resolveSessionWorkspaceAccess({
   if (membership && ["going", "maybe", "waitlisted"].includes(membership.rsvp))
     return "participant";
   if (
-    visibility === "public" &&
-    ["published", "live"].includes(status) &&
-    endsAt > now &&
-    playerPriceCents !== null
+    isPubliclyDiscoverable(
+      { visibility, status, endsAt, playerPriceCents },
+      now
+    )
   )
     return "discoverer";
   return null;

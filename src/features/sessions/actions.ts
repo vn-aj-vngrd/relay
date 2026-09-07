@@ -30,6 +30,7 @@ import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { planPlayAvailability } from "@/features/matches/availability";
 import {
+  collectionSetupValues,
   paymentSetupInput,
   paymentSetupSchema,
 } from "@/features/payments/setup";
@@ -286,7 +287,11 @@ export async function createSessionAction(
         capacity: parsed.data.capacity,
         courtCount: parsed.data.courtCount,
         notes: parsed.data.notes,
-        playerPriceCents: parsed.data.playerPriceCents,
+        playerPriceCents:
+          paymentSetup?.success &&
+          paymentSetup.data.contributionMode === "fixed"
+            ? Math.round(paymentSetup.data.fixedRate! * 100)
+            : parsed.data.playerPriceCents,
         visibility: parsed.data.visibility,
         status: intent,
         publishedAt: intent === "published" ? new Date() : null,
@@ -319,7 +324,7 @@ export async function createSessionAction(
         sessionId: session.id,
         kind: "court",
         label: setup.label,
-        totalCents: Math.round(setup.total * 100),
+        ...collectionSetupValues(setup),
         paidById: user.id,
         paymentAccountId: account.id,
       });

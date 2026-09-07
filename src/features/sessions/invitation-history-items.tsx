@@ -8,6 +8,7 @@ import {
   GameInvitationCard,
 } from "./game-invitation-card";
 import { GameStatusChip } from "./game-status";
+import { playerPriceText } from "./player-price";
 
 export function invitationHistoryLabel(game: GameCollectionItem) {
   if (game.status === "cancelled") return null;
@@ -100,6 +101,7 @@ export function InvitationHistoryItems({
               <p className="mt-1 text-sm text-muted">
                 Hosted by {game.hostName}
               </p>
+              <p className="mt-1 text-sm text-muted">{playerPriceText(game)}</p>
             </div>
             <p
               className={
