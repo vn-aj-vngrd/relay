@@ -244,8 +244,16 @@ export async function dispatchNotificationDeliveries(limit = 50) {
             ),
           })
         ));
+    const collectionRequest = [
+      "payment_requested",
+      "payment_updated",
+      "payment_proof_requested",
+    ].includes(row.notification.type);
     const allowed = Boolean(
-      row.preference &&
+      row.delivery.status === "sending" &&
+        (!collectionRequest ||
+          (row.session && row.session.playerPriceCents !== 0)) &&
+        row.preference &&
         enabled &&
         category &&
         categories &&

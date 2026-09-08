@@ -22,6 +22,7 @@ export function SelectField({
   density = "default",
   leadingIcon,
   className = "",
+  error,
 }: {
   id: string;
   name?: string;
@@ -35,6 +36,7 @@ export function SelectField({
   density?: "default" | "compact";
   leadingIcon?: ReactNode;
   className?: string;
+  error?: string;
 }) {
   const [localValue, setLocalValue] = useState(defaultValue);
   const root = useRef<HTMLDivElement>(null);
@@ -86,6 +88,8 @@ export function SelectField({
         ref={trigger}
         id={id}
         type="button"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
         aria-haspopup="listbox"
         aria-expanded={open && !disabled}
         aria-controls={listbox.listboxId}
@@ -100,7 +104,7 @@ export function SelectField({
           else listbox.show();
         }}
         onKeyDown={listbox.handleKeyDown}
-        className={`${hideLabel ? "mt-0" : "mt-1.5"} flex w-full items-center justify-between rounded-lg border border-line bg-surface text-left text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${density === "compact" ? "compact-control h-9 min-h-9 gap-2 px-3 text-[13px]" : "h-11 gap-3 px-3 text-sm"} ${className}`}
+        className={`${hideLabel ? "mt-0" : "mt-1.5"} flex w-full items-center justify-between rounded-lg border bg-surface text-left text-ink focus:outline-none focus:ring-2 ${error ? "border-danger focus:border-danger focus:ring-danger/15" : "border-line focus:border-primary focus:ring-primary/15"} disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted ${density === "compact" ? "compact-control h-9 min-h-9 gap-2 px-3 text-[13px]" : "h-11 gap-3 px-3 text-sm"} ${className}`}
       >
         <span className="flex min-w-0 items-center gap-1.5">
           {leadingIcon ? (
@@ -116,6 +120,15 @@ export function SelectField({
           className={`shrink-0 text-muted transition-transform ${open && !disabled ? "rotate-180" : ""}`}
         />
       </button>
+      {error ? (
+        <p
+          id={`${id}-error`}
+          role="alert"
+          className="mt-1.5 text-sm font-medium text-danger"
+        >
+          {error}
+        </p>
+      ) : null}
       {rendered && !disabled ? (
         <div
           id={listbox.listboxId}

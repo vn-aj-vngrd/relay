@@ -344,6 +344,20 @@
       "when": 1788789217590,
       "tag": "0048_collection_contributions",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1788851723859,
+      "tag": "0049_payment_collection_intent",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1788857282249,
+      "tag": "0050_archived_payment_collections",
+      "breakpoints": true
     }
   ]
 }

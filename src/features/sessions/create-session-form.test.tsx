@@ -122,6 +122,32 @@ describe("CreateSessionForm", () => {
     expect(screen.getByDisplayValue("21:12")).toHaveAttribute("name", "end");
   });
 
+  it("defaults missing quantities to two players and one court", () => {
+    render(
+      <CreateSessionForm
+        defaults={{ ...completePlan, capacity: undefined, courts: undefined }}
+        now={now}
+      />
+    );
+    moveToAccess();
+    const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
+    const courts = screen.getByRole("spinbutton", { name: "Court quantity" });
+    expect(capacity).toHaveValue(2);
+    expect(courts).toHaveValue(1);
+    expect(
+      screen.getByRole("button", { name: "Decrease player limit" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Decrease court quantity" })
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Continue to details" })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Optional details" })
+    ).toBeVisible();
+  });
+
   it("uses accessible quantity controls instead of limiting courts to presets", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToAccess();
@@ -330,36 +356,60 @@ describe("CreateSessionForm", () => {
       screen.getByRole("heading", { name: "Optional details" })
     ).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
-    expect(screen.getByText("Payment not set up yet")).toBeVisible();
+    expect(screen.getByText(/Payment not set up yet/)).toBeVisible();
+    expect(
+      screen.getByText(/Payment not set up yet.*It won’t appear in Open games/)
+    ).toBeVisible();
   });
-  it("reveals repayment setup and blocks incomplete collection setup", () => {
+  it("records collection intent without revealing or requiring setup", () => {
     render(<CreateSessionForm defaults={completePlan} now={now} />);
     moveToAccess();
     fireEvent.click(screen.getByRole("button", { name: "Payment choice" }));
     fireEvent.click(screen.getByRole("option", { name: "Collect payment" }));
-    expect(screen.getByLabelText("Expense 1")).toBeVisible();
-    expect(screen.getByLabelText("Total amount")).toBeVisible();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Continue to details" })
-    );
+    expect(screen.queryByLabelText("Expense 1")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Total amount")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Payment details")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Complete the expense, total, method/)
+      screen.getByText(/Set the price and payment instructions/)
     ).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Amount (₱)"), {
-      target: { value: "2400" },
-    });
-    fireEvent.change(screen.getByLabelText("Payment details"), {
-      target: { value: "Host account 09123456789" },
-    });
     fireEvent.click(
       screen.getByRole("button", { name: "Continue to details" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Review game" }));
     expect(
-      screen.getByText(
-        /Collect payment · Player share will be calculated when players join/
-      )
+      screen.getByText(/Collect payment · Set the price and instructions/)
     ).toBeVisible();
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[1]);
+    expect(
+      screen.getByRole("button", { name: "Payment choice" })
+    ).toHaveTextContent("Collect payment");
+  });
+
+  it("restores intent-only drafts at Review without payment fields", async () => {
+    localStorage.setItem(
+      "relay-game-draft-v1",
+      JSON.stringify({
+        version: 1,
+        values: {
+          ...completePlan,
+          capacity: "8",
+          courts: "2",
+          costKind: "collect",
+        },
+      })
+    );
+    render(<CreateSessionForm defaults={{}} now={now} resumeAnonymousDraft />);
+    expect(
+      await screen.findByRole("heading", { name: "Review your game" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Collect payment · Set the price and instructions/)
+    ).toBeVisible();
+    expect(screen.queryByLabelText("Payment details")).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Edit" })[1]);
+    expect(
+      screen.getByRole("button", { name: "Payment choice" })
+    ).toHaveTextContent("Collect payment");
   });
 
   it("restores collect setup and its serializable fields after authentication", async () => {

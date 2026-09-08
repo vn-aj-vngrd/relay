@@ -138,9 +138,14 @@ export async function SessionPlay({
         <h2 className="mt-4 text-2xl font-bold">Play hasn’t started</h2>
         <p className="mx-auto mt-2 max-w-lg text-pretty text-sm leading-6 text-muted sm:text-base">
           {viewer.canManagePlay
-            ? "Confirm who’s here, choose the court flow, and start the first rotation."
-            : "The host will start courts and the queue when the group is ready."}
+            ? "Confirm players and available courts, choose game options, then review and start Play."
+            : "Courts, scores, and player rotations appear here after an organizer starts Play."}
         </p>
+        {viewer.canManagePlay ? (
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted">
+            Play needs at least four eligible players and one available court.
+          </p>
+        ) : null}
         {viewer.canManagePlay && setupHref ? (
           <ButtonLink href={setupHref} className="mt-6">
             Set up Play

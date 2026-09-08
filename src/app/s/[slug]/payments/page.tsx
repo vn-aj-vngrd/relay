@@ -15,6 +15,7 @@ import {
   playerPayments,
   sessionPlayers,
 } from "@/db/schema";
+import { isActiveCollection } from "@/features/payments/collection-lifecycle";
 import {
   PaymentAdjustmentDetails,
   PaymentBreakdown,
@@ -22,6 +23,7 @@ import {
   PaymentSplitType,
   paymentMoney as peso,
 } from "@/features/payments/payment-breakdown";
+import { PaymentHistory } from "@/features/payments/payment-history";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
@@ -67,7 +69,7 @@ export default async function PublicPaymentsPage({
       </main>
     );
 
-  const rows = await db
+  const allRows = await db
     .select({
       expense: expenses,
       account: paymentAccounts,
@@ -85,20 +87,30 @@ export default async function PublicPaymentsPage({
       eq(playerPayments.sessionPlayerId, sessionPlayers.id)
     )
     .where(eq(expenses.sessionId, data.session.id));
-  const ownRows = rows.filter(
+  const rows = allRows.filter(({ expense }) => isActiveCollection(expense));
+  const ownRows = allRows.filter(
     ({ payment }) => payment?.sessionPlayerId === viewer!.player.id
   );
   const supabase = createSupabaseAdminClient();
-  const items = await Promise.all(
+  const allItems = await Promise.all(
     ownRows.map(async (row) => ({
       ...row,
-      qrUrl: row.account?.qrStoragePath
-        ? ((
-            await supabase.storage
-              .from("payment-qrs")
-              .createSignedUrl(row.account.qrStoragePath, 3600)
-          ).data?.signedUrl ?? null)
-        : null,
+      proofUrl:
+        row.expense.archivedAt && row.payment?.proofStoragePath
+          ? ((
+              await supabase.storage
+                .from("payment-proofs")
+                .createSignedUrl(row.payment.proofStoragePath, 3600)
+            ).data?.signedUrl ?? null)
+          : null,
+      qrUrl:
+        !row.expense.archivedAt && row.account?.qrStoragePath
+          ? ((
+              await supabase.storage
+                .from("payment-qrs")
+                .createSignedUrl(row.account.qrStoragePath, 3600)
+            ).data?.signedUrl ?? null)
+          : null,
       receiptUrl: row.expense.receiptStoragePath
         ? ((
             await supabase.storage
@@ -108,6 +120,7 @@ export default async function PublicPaymentsPage({
         : null,
     }))
   );
+  const items = allItems.filter(({ expense }) => isActiveCollection(expense));
   return (
     <main
       id="main-content"
@@ -279,6 +292,21 @@ export default async function PublicPaymentsPage({
             </p>
           </section>
         )}
+        <PaymentHistory
+          collections={[
+            ...new Map(
+              allItems
+                .filter(({ expense }) => !isActiveCollection(expense))
+                .map(({ expense, receiptUrl }) => [
+                  expense.id,
+                  { expense, receiptUrl },
+                ])
+            ).values(),
+          ]}
+          payments={allItems.flatMap(({ payment, proofUrl }) =>
+            payment ? [{ payment, proofUrl }] : []
+          )}
+        />
       </div>
     </main>
   );

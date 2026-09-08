@@ -9,6 +9,26 @@ const options = [
 ] as const;
 
 describe("SelectField", () => {
+  it("associates inline validation with its trigger and removes danger styling on recovery", () => {
+    const { rerender } = render(
+      <SelectField
+        id="visibility"
+        label="Visibility"
+        options={options}
+        error="Choose visibility."
+      />
+    );
+    const trigger = screen.getByRole("button", { name: "Visibility" });
+    expect(trigger).toHaveAttribute("aria-invalid", "true");
+    expect(trigger).toHaveClass("border-danger");
+    expect(trigger).toHaveAccessibleDescription("Choose visibility.");
+    rerender(
+      <SelectField id="visibility" label="Visibility" options={options} />
+    );
+    expect(trigger).toHaveAttribute("aria-invalid", "false");
+    expect(trigger).not.toHaveClass("border-danger");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
   it("clears hover highlights without losing the selected style", () => {
     render(
       <SelectField

@@ -4,11 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   workspace: vi.fn(),
+  publicSession: vi.fn(),
+  viewer: vi.fn(),
   rows: vi.fn(),
 }));
 vi.mock("@/features/auth/session", () => ({ requireUser: mocks.user }));
 vi.mock("@/features/sessions/queries", () => ({
   getSessionForWorkspace: mocks.workspace,
+  getPublicSession: mocks.publicSession,
+}));
+vi.mock("@/features/sessions/viewer", () => ({
+  getSessionViewer: mocks.viewer,
+  canParticipate: (rsvp: string) => rsvp === "going",
 }));
 vi.mock("@/features/payments/actions", () => ({
   confirmPayment: vi.fn(),
@@ -40,6 +47,7 @@ vi.mock("@/db/client", () => ({
 }));
 
 import PaymentsPage from "@/app/(app)/games/[id]/payments/page";
+import PublicPaymentsPage from "@/app/s/[slug]/payments/page";
 
 const expense = { id: "expense", label: "Court", totalCents: 240000 };
 const account = { id: "account", method: "Maya", details: "Host account" };
@@ -75,6 +83,63 @@ function collections(assigned: boolean) {
 }
 
 describe("authenticated collection tracking", () => {
+  it.each([false, true])(
+    "shows Free and retained history without payable controls (shared: %s)",
+    async (shared) => {
+      const archived = { ...expense, archivedAt: new Date() };
+      const payment = {
+        id: "old-payment",
+        expenseId: expense.id,
+        sessionPlayerId: "player-id",
+        status: "unpaid",
+        amountCents: 120000,
+        pendingAdjustment: null,
+        adjustmentHistory: [],
+      };
+      const data = {
+        ...workspace,
+        session: { ...workspace.session, playerPriceCents: 0 },
+      };
+      if (shared) {
+        mocks.publicSession.mockResolvedValue(data);
+        mocks.viewer.mockResolvedValue({
+          player: { id: "player-id", userId: "player", rsvp: "going" },
+        });
+        mocks.rows.mockResolvedValueOnce([
+          { expense: archived, account, payment, playerUserId: "player" },
+        ]);
+        render(
+          await PublicPaymentsPage({
+            params: Promise.resolve({ slug: "shared" }),
+          })
+        );
+      } else {
+        mocks.workspace.mockResolvedValue(data);
+        mocks.rows
+          .mockResolvedValueOnce([{ expense: archived, account }])
+          .mockResolvedValueOnce([
+            {
+              expense: archived,
+              payment,
+              player: { userId: "player" },
+              profile: { name: "Player" },
+            },
+          ]);
+        render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+      }
+      expect(screen.getByRole("heading", { name: "Free game" })).toBeVisible();
+      expect(
+        screen.getByRole("heading", { name: "Payment history" })
+      ).toBeVisible();
+      expect(
+        screen.getByText("Request cancelled · No payment due")
+      ).toBeInTheDocument();
+      expect(screen.queryByText("Payment screenshot")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Pay the host, then upload proof.")
+      ).not.toBeInTheDocument();
+    }
+  );
   it("renders the host profile photo using the roster avatar", async () => {
     mocks.workspace.mockResolvedValue({
       ...workspace,

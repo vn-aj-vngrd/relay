@@ -70,6 +70,20 @@ function rows(
 }
 
 describe("repayment reconciliation", () => {
+  it("never revives an archived collection or replaces an explicit Free price", async () => {
+    mocks.rows.mockResolvedValueOnce([
+      {
+        id: "old",
+        archivedAt: new Date(),
+        totalCents: 1000,
+        contributionMode: "split",
+      },
+    ]);
+    await reconcileUnpaidExpenseShares("game");
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.set).not.toHaveBeenCalled();
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
   it("preserves a manual waiver without passing the discount to another player", async () => {
     rows(
       [

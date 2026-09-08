@@ -180,7 +180,12 @@ export async function getHomeSessions(userId: string) {
             contributionMode: expenses.contributionMode,
           })
           .from(expenses)
-          .where(inArray(expenses.sessionId, sessionIds)),
+          .where(
+            and(
+              inArray(expenses.sessionId, sessionIds),
+              isNull(expenses.archivedAt)
+            )
+          ),
         db
           .select({ userId: profiles.userId, name: profiles.name })
           .from(profiles)
@@ -273,7 +278,12 @@ async function toGameCollectionItems(
         contributionMode: expenses.contributionMode,
       })
       .from(expenses)
-      .where(inArray(expenses.sessionId, sessionIds)),
+      .where(
+        and(
+          inArray(expenses.sessionId, sessionIds),
+          isNull(expenses.archivedAt)
+        )
+      ),
   ]);
   const sessionsWithExpense = new Set(
     expenseRows.map(({ sessionId }) => sessionId)

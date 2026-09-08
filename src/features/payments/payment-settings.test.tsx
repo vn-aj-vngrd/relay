@@ -3,6 +3,9 @@ import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ togglePaymentExcluded: vi.fn() }));
+vi.mock("./payment-switch-form", () => ({
+  PaymentSwitchForm: () => <p>Switch payment choice</p>,
+}));
 vi.mock("./payment-management-forms", () => ({
   EditExpenseForm: ({ expenseId }: { expenseId: string }) => (
     <p>Edit {expenseId}</p>
@@ -52,6 +55,38 @@ const share = {
 } as SettingsProps["payments"][number];
 
 describe("simplified payment settings", () => {
+  it("keeps the choice available after collection setup", () => {
+    render(
+      <PaymentSettings
+        session={session}
+        isHost
+        revision="current"
+        collections={[collection("first")]}
+        payments={[share]}
+      />
+    );
+    expect(screen.getByText("Switch payment choice")).toBeVisible();
+    expect(screen.getByText("Edit first")).toBeVisible();
+  });
+  it("keeps archived collections out of current editors and allows fresh setup", () => {
+    const previous = collection("first");
+    previous.expense.archivedAt = new Date();
+    render(
+      <PaymentSettings
+        session={{ ...session, playerPriceCents: 0 }}
+        isHost
+        revision="current"
+        collections={[previous]}
+        payments={[share]}
+      />
+    );
+    expect(screen.getByText("Choose payment")).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Previous collections" })
+    ).toBeVisible();
+    expect(screen.queryByText("Edit first")).not.toBeInTheDocument();
+    expect(screen.queryByText("Switch payment choice")).not.toBeInTheDocument();
+  });
   it("keeps individual shares out of general payment settings", () => {
     render(
       <PaymentSettings

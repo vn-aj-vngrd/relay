@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "payment_collection_requested" boolean DEFAULT false NOT NULL;

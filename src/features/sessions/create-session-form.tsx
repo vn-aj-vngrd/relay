@@ -13,8 +13,8 @@ import {
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 import { PlayerPaymentFields } from "@/features/payments/payment-setup-fields";
 import {
-  paymentBreakdownSummary,
-  paymentChoiceSummary,
+  creationPaymentSummary,
+  hasSavedPaymentSetup,
   paymentSetupInput,
   paymentSetupSchema,
   serializableCreationValues,
@@ -233,15 +233,7 @@ function reviewFromDraft(values: Record<string, string>): ReviewValues | null {
         : values.visibility === "private"
           ? "Private · Invited players only"
           : "Anyone with the link",
-    cost:
-      paymentChoiceSummary(
-        values.costKind,
-        values.contributionMode,
-        values.fixedRate
-      ) +
-      (values.costKind === "collect"
-        ? ` · ${values.label} · ${paymentBreakdownSummary(values.items) || "One expense"} · ₱${values.total} total · ${values.method} · ${values.details}`
-        : ""),
+    cost: creationPaymentSummary(values),
     details:
       values.notes || (values.accentColor && values.accentColor !== "violet")
         ? "Optional game details added"
@@ -389,6 +381,7 @@ function CreateSessionFormContent({
     const errors = validateAccess(data);
     if (
       data.get("costKind") === "collect" &&
+      hasSavedPaymentSetup(initialValues) &&
       !paymentSetupSchema.safeParse(paymentSetupInput(data)).success
     )
       errors.costKind =
@@ -409,15 +402,7 @@ function CreateSessionFormContent({
           : visibility === "link"
             ? "Anyone with the link"
             : "Private · Invited players only",
-      cost:
-        paymentChoiceSummary(
-          String(data.get("costKind")),
-          String(data.get("contributionMode")),
-          String(data.get("fixedRate") ?? "")
-        ) +
-        (data.get("costKind") === "collect"
-          ? ` · ${data.get("label")} · ${paymentBreakdownSummary(String(data.get("items") ?? "")) || "One expense"} · ₱${data.get("total")} total · ${data.get("method")} · ${data.get("details")}`
-          : ""),
+      cost: creationPaymentSummary(serializableCreationValues(data)),
       details: "No optional details added",
       booking: "Booking details not added",
     });
@@ -754,7 +739,7 @@ function CreateSessionFormContent({
             initialValue={
               value("capacity", defaults.capacity)
                 ? Number(value("capacity", defaults.capacity))
-                : undefined
+                : 2
             }
             error={errorFor(state, clientErrors, "capacity")}
           />
@@ -767,7 +752,7 @@ function CreateSessionFormContent({
             initialValue={
               value("courts", defaults.courts)
                 ? Number(value("courts", defaults.courts))
-                : undefined
+                : 1
             }
             error={errorFor(state, clientErrors, "courts")}
           />
@@ -779,7 +764,7 @@ function CreateSessionFormContent({
               [
                 "public",
                 "Public",
-                "Share it now. It appears in Open games after it is marked Free or a repayment split is created.",
+                "Players can discover and join once a player price is stated.",
               ],
               [
                 "link",
@@ -814,15 +799,21 @@ function CreateSessionFormContent({
             ))}
           </div>
         </fieldset>
-        <PlayerPaymentFields defaults={state.values ?? initialValues} />
+        {hasSavedPaymentSetup(initialValues) ? (
+          <p className="text-sm text-muted">
+            Your saved payment setup is kept below. Review it before publishing,
+            or choose Decide later to configure payment in Game settings.
+          </p>
+        ) : null}
+        <PlayerPaymentFields
+          defaults={state.values ?? initialValues}
+          choiceOnly={!hasSavedPaymentSetup(initialValues)}
+          isPublic={visibility === "public"}
+        />
         <FieldError
           id="costKind-error"
           message={errorFor(state, clientErrors, "costKind")}
         />
-        <p className="text-sm text-muted">
-          Manage payments later in Game settings. Add optional QR images and
-          receipts there; uploads are never saved in this browser draft.
-        </p>
         <label className="flex min-h-12 cursor-pointer items-start gap-3">
           <input
             type="checkbox"

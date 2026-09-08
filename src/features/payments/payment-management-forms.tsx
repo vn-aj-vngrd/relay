@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useId } from "react";
-
+import { useActionState, useId, useState } from "react";
+import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -15,11 +16,11 @@ import {
 } from "./actions";
 import { respondToPaymentAdjustment } from "./adjustment-actions";
 import { assignPlayerShare } from "./assign-share-action";
-
 import {
   PaymentSetupFields,
   PlayerPaymentFields,
 } from "./payment-setup-fields";
+import { creationPaymentSummary, serializableCreationValues } from "./setup";
 
 export function PaymentAmountForm({
   paymentId,
@@ -145,11 +146,30 @@ export function PaymentChoiceForm({
   sessionId,
   price,
   bookingTotalCents,
+  collectionRequested = false,
+  revision,
+  hasHistory = false,
+  completed = false,
+  previousDefaults,
 }: {
   sessionId: string;
   price: number | null;
   bookingTotalCents: number | null;
+  collectionRequested?: boolean;
+  revision?: string;
+  hasHistory?: boolean;
+  completed?: boolean;
+  previousDefaults?: Record<string, string>;
 }) {
+  const initialChoice =
+    price === 0
+      ? "free"
+      : collectionRequested && !completed
+        ? "collect"
+        : "unspecified";
+  const [choice, setChoice] = useState(initialChoice);
+  const [reusePrevious, setReusePrevious] = useState(false);
+  const [review, setReview] = useState("");
   const [state, action] = useActionState(updatePaymentChoiceState, {});
   const preserveValues = usePreserveFormValuesOnError(state);
   return (
@@ -161,20 +181,77 @@ export function PaymentChoiceForm({
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       {state.error ? <Alert>{state.error}</Alert> : null}
+      <input type="hidden" name="paymentRevision" value={revision ?? ""} />
       {state.success ? (
         <Alert variant="success">Payment settings saved.</Alert>
       ) : null}
-      <PlayerPaymentFields
-        expanded
-        defaults={{ costKind: price === 0 ? "free" : "unspecified" }}
-        bookingTotalCents={bookingTotalCents}
-      />
-      <SubmitButton
-        pendingLabel="Saving…"
-        className="w-full sm:w-auto sm:self-start"
+      {previousDefaults && choice === "collect" && !reusePrevious ? (
+        <Button
+          type="button"
+          variant="quiet"
+          onClick={() => setReusePrevious(true)}
+        >
+          Use previous setup values
+        </Button>
+      ) : null}
+      <div
+        onInput={(event) => {
+          const form = event.currentTarget.closest("form");
+          if (form)
+            setReview(
+              creationPaymentSummary(
+                serializableCreationValues(new FormData(form))
+              )
+            );
+        }}
       >
-        Save payment settings
-      </SubmitButton>
+        <PlayerPaymentFields
+          fieldErrors={state.fieldErrors}
+          expanded
+          key={String(reusePrevious)}
+          defaults={{
+            ...(reusePrevious ? previousDefaults : {}),
+            costKind: choice,
+          }}
+          bookingTotalCents={bookingTotalCents}
+          allowDecideLater={!hasHistory}
+          allowCollect={!completed}
+          onChoiceChange={setChoice}
+        />
+      </div>
+      {completed ? (
+        <p className="text-sm text-muted">
+          This game has ended. Existing payments can be followed up, but new
+          collections cannot be started.
+        </p>
+      ) : null}
+      {price === 0 && choice === "collect" ? (
+        <ConfirmSubmitButton
+          confirmTitle="Start collecting payment?"
+          confirmText={`${review || "Review the price and payment instructions above."} Existing players must agree to new charges. Previous requests stay cancelled; payment history is not a credit or refund.`}
+          confirmLabel="Start collecting"
+          cancelLabel="Keep game free"
+          pendingLabel="Saving…"
+          onClick={(event) => {
+            const form = event.currentTarget.form;
+            if (form)
+              setReview(
+                creationPaymentSummary(
+                  serializableCreationValues(new FormData(form))
+                )
+              );
+          }}
+        >
+          Save payment settings
+        </ConfirmSubmitButton>
+      ) : (
+        <SubmitButton
+          pendingLabel="Saving…"
+          className="w-full sm:w-auto sm:self-start"
+        >
+          Save payment settings
+        </SubmitButton>
+      )}
     </form>
   );
 }
@@ -215,6 +292,7 @@ export function EditExpenseForm({
         </p>
       ) : null}
       <PaymentSetupFields
+        fieldErrors={state.fieldErrors}
         expanded
         defaults={defaults}
         totalReadOnly={totalReadOnly}

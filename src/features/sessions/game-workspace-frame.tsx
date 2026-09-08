@@ -56,8 +56,8 @@ export function GameWorkspaceFrame({
       </div>
 
       {settingsFocused ? (
-        <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0">
-          <div className="mx-auto flex h-13 w-full max-w-6xl items-center gap-2 px-1 sm:px-5 lg:px-0">
+        <div className="session-tab-safe sticky top-0 z-20 -mx-4 shrink-0 border-b border-line bg-surface sm:-mx-8 lg:mx-0 lg:border-b-0">
+          <div className="mx-auto flex h-13 w-full max-w-6xl items-center gap-2 px-1 sm:px-5 lg:h-11 lg:px-0">
             <ButtonLink
               href={`/games/${sessionId}`}
               variant="quiet"

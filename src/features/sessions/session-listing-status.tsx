@@ -11,24 +11,40 @@ export function SessionListingStatus({
   isOriginalHost,
   now,
 }: {
-  session: PublicDiscoveryInput & { id: string; slug: string };
+  session: PublicDiscoveryInput & {
+    id: string;
+    slug: string;
+    paymentCollectionRequested?: boolean;
+  };
   hasExpense: boolean;
   isOriginalHost: boolean;
   now: Date;
 }) {
+  const terminal =
+    session.status === "completed" || session.status === "cancelled";
+  const needsPaymentSetup = !hasExpense && session.playerPriceCents == null;
+  const paymentActionLabel = needsPaymentSetup
+    ? session.paymentCollectionRequested
+      ? "Set up payment"
+      : "Set player payment"
+    : "Payment settings";
+  const paymentHref = `/games/${session.id}/settings?section=payments#player-payment`;
   if (session.visibility !== "public") {
     return (
       <section
         aria-label="Game access"
-        className="border-b border-line py-4 text-sm font-semibold"
+        className="flex flex-col items-start gap-2 border-b border-line py-4 text-sm font-semibold"
       >
         {session.visibility === "private" ? "Invite only" : "Anyone with link"}
+        {needsPaymentSetup && !terminal && isOriginalHost ? (
+          <ButtonLink href={paymentHref} variant="quiet">
+            {paymentActionLabel}
+          </ButtonLink>
+        ) : null}
       </section>
     );
   }
   const reasons = publicDiscoveryReasons(session, now);
-  const terminal =
-    session.status === "completed" || session.status === "cancelled";
   const price = playerPriceDisclosure({ ...session, hasExpense });
   const explanations = terminal
     ? [session.status === "completed" ? "Game ended." : "Game cancelled."]
@@ -83,11 +99,8 @@ export function SessionListingStatus({
           </ButtonLink>
         ) : null}
         {canConfigurePrice ? (
-          <ButtonLink
-            href={`/games/${session.id}/settings?section=payments#player-payment`}
-            variant="quiet"
-          >
-            Payment settings
+          <ButtonLink href={paymentHref} variant="quiet">
+            {paymentActionLabel}
           </ButtonLink>
         ) : null}
       </div>

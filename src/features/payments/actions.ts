@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
@@ -25,7 +25,11 @@ import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature } from "@/lib/image-file";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-
+import { activePaymentCondition } from "./active-collection-query";
+import {
+  cancelPendingProposal,
+  isActiveCollection,
+} from "./collection-lifecycle";
 import {
   collectFromPlayers,
   collectionPlayerPrice,
@@ -33,16 +37,25 @@ import {
   hasPaymentHistory,
   validatePaymentProof,
 } from "./domain";
-
+import { assertPaymentRevision, paymentSnapshot } from "./payment-revision";
 import {
   collectionSetupValues,
+  type PaymentFieldErrors,
   paymentAmountSchema,
   paymentSetupInput,
   paymentSetupSchema,
+  paymentSetupValidationError,
 } from "./setup";
-import { reconcileExpenseSharesInTransaction } from "./sync";
+import {
+  reconcileExpenseSharesInTransaction,
+  refreshPlayerPriceInTransaction,
+} from "./sync";
 
-export type PaymentActionState = { error?: string; success?: boolean };
+export type PaymentActionState = {
+  error?: string;
+  success?: boolean;
+  fieldErrors?: PaymentFieldErrors;
+};
 
 function paymentActionError(
   error: unknown,
@@ -123,11 +136,7 @@ export async function createExpenseState(
   formData: FormData
 ): Promise<PaymentActionState> {
   const parsed = paymentSetupSchema.safeParse(paymentSetupInput(formData));
-  if (!parsed.success)
-    return {
-      error:
-        "Complete the expense, amount, payment method, and payment details.",
-    };
+  if (!parsed.success) return paymentSetupValidationError(parsed.error);
   try {
     await createExpense(formData);
     return { success: true };
@@ -245,10 +254,22 @@ async function createExpense(formData: FormData) {
     if (!lockedSession || lockedSession.hostId !== user.id)
       throw new Error("Only the host can request payment");
     assertPaymentsOpen(lockedSession);
+    if (lockedSession.status === "completed")
+      throw new Error(
+        "New collections cannot be started after the game has ended."
+      );
+    if (lockedSession.playerPriceCents === 0)
+      assertPaymentRevision(
+        formData,
+        lockedSession,
+        await paymentSnapshot(tx, sessionId)
+      );
     const existingCollections = await tx
       .select()
       .from(expenses)
-      .where(eq(expenses.sessionId, sessionId));
+      .where(
+        and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+      );
     if (existingCollections.length)
       throw new Error(
         "Payment is already set up. Edit the existing payment settings instead."
@@ -317,12 +338,14 @@ async function createExpense(formData: FormData) {
       .where(
         and(
           eq(expenses.sessionId, sessionId),
+          isNull(expenses.archivedAt),
           ne(playerPayments.status, "excluded")
         )
       );
     await tx
       .update(sessions)
       .set({
+        paymentCollectionRequested: true,
         playerPriceCents: collectionPlayerPrice(
           [...existingCollections, expense],
           currentPayments
@@ -352,7 +375,11 @@ async function createExpense(formData: FormData) {
         .from(sessionPlayers)
         .where(eq(sessionPlayers.sessionId, sessionId));
       const notified = participants.filter(
-        (player) => player.userId && player.userId !== user.id && !player.leftAt
+        (player) =>
+          player.userId &&
+          player.userId !== user.id &&
+          !player.leftAt &&
+          !recipients.includes(player.userId)
       );
       const body =
         "Payment collection updated. Review the current player share in Payments.";
@@ -394,6 +421,11 @@ export async function markPaymentSent(
     .limit(1);
   const row = rows[0];
   if (!row) return { error: "This payment could not be found." };
+  if (row.expense.archivedAt)
+    return {
+      error:
+        "This collection is closed. No payment is due; proof is kept in history.",
+    };
   if (row.payment.pendingAdjustment)
     return {
       error: "Respond to the proposed amount change before sending proof.",
@@ -449,7 +481,7 @@ export async function markPaymentSent(
     });
     if (!lockedSession || lockedSession.status === "cancelled") return false;
     const currentPayment = await tx.query.playerPayments.findFirst({
-      where: eq(playerPayments.id, row.payment.id),
+      where: and(eq(playerPayments.id, row.payment.id), activePaymentCondition),
     });
     if (
       !currentPayment ||
@@ -484,11 +516,14 @@ export async function markPaymentSent(
     });
     return true;
   });
-  if (!saved)
+  if (!saved) {
+    // Only the unattached upload is removed; retained historical proof is untouched.
+    await supabase.storage.from("payment-proofs").remove([path]);
     return {
       error:
         "This payment changed while you were uploading. Reload and try again.",
     };
+  }
   revalidatePath(`/games/${row.expense.sessionId}/payments`);
   const slug = formData.get("slug");
   if (typeof slug === "string" && slug) revalidatePath(`/s/${slug}/payments`);
@@ -554,7 +589,11 @@ export async function confirmPayment(formData: FormData) {
         confirmedById: user.id,
       })
       .where(
-        and(eq(playerPayments.id, paymentId), eq(playerPayments.status, "sent"))
+        and(
+          eq(playerPayments.id, paymentId),
+          eq(playerPayments.status, "sent"),
+          activePaymentCondition
+        )
       )
       .returning({ id: playerPayments.id });
     if (!updated) throw new Error("Only a sent payment can be confirmed");
@@ -652,7 +691,7 @@ async function updatePlayerPaymentAmount(formData: FormData) {
       throw new Error("Only a host or co-host can change payment amounts");
     assertPaymentsOpen(lockedSession);
     const currentPayment = await tx.query.playerPayments.findFirst({
-      where: eq(playerPayments.id, paymentId),
+      where: and(eq(playerPayments.id, paymentId), activePaymentCondition),
     });
     if (
       !currentPayment ||
@@ -704,31 +743,7 @@ async function updatePlayerPaymentAmount(formData: FormData) {
             }
       )
       .where(eq(playerPayments.id, paymentId));
-    const currentPayments = await tx
-      .select({
-        sessionPlayerId: playerPayments.sessionPlayerId,
-        amountCents: playerPayments.amountCents,
-      })
-      .from(playerPayments)
-      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-      .where(
-        and(
-          eq(expenses.sessionId, row.session.id),
-          ne(playerPayments.status, "excluded")
-        )
-      );
-    const collections = await tx
-      .select()
-      .from(expenses)
-      .where(eq(expenses.sessionId, row.session.id));
-    await tx
-      .update(sessions)
-      .set({
-        playerPriceCents: collectionPlayerPrice(collections, currentPayments),
-        version: sql`${sessions.version} + 1`,
-        updatedAt: new Date(),
-      })
-      .where(eq(sessions.id, row.session.id));
+    await refreshPlayerPriceInTransaction(tx, row.session.id);
     if (row.player.userId)
       await tx.insert(notifications).values({
         userId: row.player.userId,
@@ -787,7 +802,7 @@ export async function togglePaymentExcluded(formData: FormData) {
       );
     assertPaymentsOpen(lockedSession);
     const current = await tx.query.playerPayments.findFirst({
-      where: eq(playerPayments.id, paymentId),
+      where: and(eq(playerPayments.id, paymentId), activePaymentCondition),
     });
     if (!current) throw new Error("This payment could not be found");
     if (hasPaymentHistory(current) || current.pendingAdjustment)
@@ -801,31 +816,7 @@ export async function togglePaymentExcluded(formData: FormData) {
         updatedAt: new Date(),
       })
       .where(eq(playerPayments.id, paymentId));
-    const currentPayments = await tx
-      .select({
-        sessionPlayerId: playerPayments.sessionPlayerId,
-        amountCents: playerPayments.amountCents,
-      })
-      .from(playerPayments)
-      .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-      .where(
-        and(
-          eq(expenses.sessionId, row.session.id),
-          ne(playerPayments.status, "excluded")
-        )
-      );
-    const collections = await tx
-      .select()
-      .from(expenses)
-      .where(eq(expenses.sessionId, row.session.id));
-    await tx
-      .update(sessions)
-      .set({
-        playerPriceCents: collectionPlayerPrice(collections, currentPayments),
-        version: sql`${sessions.version} + 1`,
-        updatedAt: new Date(),
-      })
-      .where(eq(sessions.id, row.session.id));
+    await refreshPlayerPriceInTransaction(tx, row.session.id);
     const player = await tx.query.sessionPlayers.findFirst({
       where: eq(sessionPlayers.id, row.payment.sessionPlayerId),
     });
@@ -922,7 +913,8 @@ async function requestNewPaymentProof(formData: FormData) {
       .where(
         and(
           eq(playerPayments.id, paymentId),
-          inArray(playerPayments.status, ["sent", "confirmed"])
+          inArray(playerPayments.status, ["sent", "confirmed"]),
+          activePaymentCondition
         )
       )
       .returning({ id: playerPayments.id });
@@ -965,23 +957,64 @@ export async function updatePaymentChoiceState(
       const record = await tx.query.expenses.findFirst({
         where: eq(expenses.sessionId, sessionId),
       });
-      if (record)
+      if (record && choice === "unspecified")
         throw new Error(
-          "This game has payment records. You can edit payment details, but cannot mark it free or unset."
+          "Payment history is retained. Choose Free or Collect payment instead of Decide later."
         );
+      let closedCollections = false;
+      const affectedPlayerIds = new Set<string>();
+      if (record && choice === "free") {
+        const snapshot = await paymentSnapshot(tx, sessionId);
+        const active = snapshot.collections.filter(isActiveCollection);
+        if (!active.length && current.playerPriceCents === 0) return current;
+        assertPaymentRevision(formData, current, snapshot);
+        closedCollections = active.length > 0;
+        const activeIds = new Set(active.map(({ id }) => id));
+        const now = new Date();
+        for (const payment of snapshot.payments) {
+          if (!activeIds.has(payment.expenseId)) continue;
+          affectedPlayerIds.add(payment.sessionPlayerId);
+          const changes = cancelPendingProposal(payment, user.id, now);
+          if (changes)
+            await tx
+              .update(playerPayments)
+              .set(changes)
+              .where(eq(playerPayments.id, payment.id));
+        }
+        await tx
+          .update(expenses)
+          .set({ archivedAt: now, archivedById: user.id, updatedAt: now })
+          .where(
+            and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+          );
+        // Retain inbox history, but suppress undelivered collection requests.
+        await tx.execute(sql`update public.notification_deliveries d set status = 'suppressed', updated_at = now()
+          from public.notifications n where d.notification_id = n.id and n.session_id = ${sessionId}
+          and n.type in ('payment_requested', 'payment_updated', 'payment_proof_requested')
+          and d.status in ('pending', 'failed', 'sending')`);
+      }
       const playerPriceCents = choice === "free" ? 0 : null;
-      if (current.playerPriceCents === playerPriceCents) return current;
+      if (
+        current.playerPriceCents === playerPriceCents &&
+        !current.paymentCollectionRequested &&
+        !closedCollections
+      )
+        return current;
       await tx
         .update(sessions)
         .set({
           playerPriceCents,
+          paymentCollectionRequested: false,
           version: sql`${sessions.version} + 1`,
           updatedAt: new Date(),
         })
         .where(eq(sessions.id, sessionId));
+      // Changing intent alone creates no obligation or player price notification.
+      if (current.playerPriceCents === playerPriceCents && !closedCollections)
+        return current;
       const body =
         playerPriceCents === 0
-          ? "This game is now free."
+          ? "This game is now free. Outstanding payment requests are cancelled. Payment records and proof are retained; coordinate any refund with the host. Relay does not issue refunds."
           : "The player price was removed.";
       await tx
         .insert(messages)
@@ -991,7 +1024,10 @@ export async function updatePaymentChoiceState(
         .from(sessionPlayers)
         .where(eq(sessionPlayers.sessionId, sessionId));
       const recipients = players.filter(
-        (player) => player.userId && player.userId !== user.id && !player.leftAt
+        (player) =>
+          player.userId &&
+          player.userId !== user.id &&
+          (!player.leftAt || affectedPlayerIds.has(player.id))
       );
       if (recipients.length)
         await tx.insert(notifications).values(
@@ -1018,10 +1054,7 @@ export async function updateExpenseState(
 ): Promise<PaymentActionState> {
   const user = await requireUser();
   const parsed = paymentSetupSchema.safeParse(paymentSetupInput(formData));
-  if (!parsed.success)
-    return {
-      error: "Complete the expense, total, method, and payment details.",
-    };
+  if (!parsed.success) return paymentSetupValidationError(parsed.error);
   try {
     await guardPaymentManagement(user.id);
     const sessionId = z.uuid().parse(formData.get("sessionId"));
@@ -1050,6 +1083,10 @@ export async function updateExpenseState(
         ),
       });
       if (!expense) throw new Error("This collection could not be found");
+      if (expense.archivedAt)
+        throw new Error(
+          "Archived collections are read-only. Start a new collection instead."
+        );
       const totalCents = Math.round(parsed.data.total * 100);
       const payments = await tx
         .select()
@@ -1062,7 +1099,9 @@ export async function updateExpenseState(
       const siblings = await tx
         .select()
         .from(expenses)
-        .where(eq(expenses.sessionId, sessionId));
+        .where(
+          and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+        );
       if (
         methodChanged &&
         siblings.some(
@@ -1078,7 +1117,9 @@ export async function updateExpenseState(
         .select({ id: playerPayments.id })
         .from(playerPayments)
         .innerJoin(expenses, eq(playerPayments.expenseId, expenses.id))
-        .where(eq(expenses.sessionId, sessionId));
+        .where(
+          and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+        );
       if (methodChanged && gameShares.length)
         throw new Error(
           "The contribution method and fixed price cannot change after player shares exist."

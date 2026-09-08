@@ -130,6 +130,58 @@ export function paymentChoiceSummary(
   return "Payment not set up yet";
 }
 
+export type PaymentFieldErrors = Record<string, string>;
+
+export function paymentSetupValidationError(error: z.ZodError) {
+  const fieldErrors: PaymentFieldErrors = {};
+  for (const issue of error.issues) {
+    const path = issue.path.join(".");
+    const key = path === "label" ? "items" : path;
+    if (fieldErrors[key]) continue;
+    fieldErrors[key] = key.endsWith(".label")
+      ? "Enter an expense name with 2–80 characters."
+      : key.endsWith(".amountCents")
+        ? "Enter an amount from ₱0.01 to ₱1,000,000, with at most two decimal places."
+        : key === "details"
+          ? "Enter payment instructions with 2–300 characters."
+          : key === "method"
+            ? "Choose a payment method."
+            : key === "fixedRate"
+              ? "Enter a per-player amount from ₱0.01 to ₱1,000,000, with at most two decimal places."
+              : key === "contributionMode"
+                ? "Choose how players contribute."
+                : key === "total"
+                  ? "Check the expense amounts. The total must be between ₱0.01 and ₱1,000,000 and match the breakdown."
+                  : "Check the expense breakdown. Add 1–20 expenses totaling no more than ₱1,000,000.";
+  }
+  return {
+    error:
+      "A few payment details need attention. Check the highlighted fields below.",
+    fieldErrors,
+  };
+}
+
+export const paymentChoiceSchema = z.enum(["unspecified", "free", "collect"]);
+
+// Old browser drafts retain their editable setup instead of losing payment data.
+export function hasSavedPaymentSetup(values: Record<string, string> = {}) {
+  return ["total", "items", "fixedRate", "details"].some((key) =>
+    Boolean(values[key])
+  );
+}
+
+export function creationPaymentSummary(values: Record<string, string>) {
+  if (values.costKind === "collect" && hasSavedPaymentSetup(values))
+    return `${paymentChoiceSummary(values.costKind, values.contributionMode, values.fixedRate)} · ${values.label ?? "Game expenses"} · ${paymentBreakdownSummary(values.items) || "One expense"} · ₱${values.total} total · ${values.method} · ${values.details}`;
+  const summary =
+    values.costKind === "collect"
+      ? "Collect payment · Set the price and instructions in Game settings after creation"
+      : paymentChoiceSummary(values.costKind);
+  return values.visibility === "public" && values.costKind !== "free"
+    ? `${summary}. You can share your game immediately. It won’t appear in Open games until you set a player price.`
+    : summary;
+}
+
 export function serializableCreationValues(data: FormData) {
   return Object.fromEntries(
     Array.from(data.entries()).filter(

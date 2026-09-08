@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("server-only", () => ({}));
+
 const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   expense: vi.fn(),
@@ -22,6 +24,7 @@ vi.mock("@/lib/rate-limit", () => ({
 }));
 vi.mock("./sync", () => ({
   reconcileExpenseSharesInTransaction: mocks.reconcile,
+  refreshPlayerPriceInTransaction: vi.fn(),
 }));
 vi.mock("@/db/client", () => ({
   db: {
@@ -88,6 +91,23 @@ beforeEach(() => {
 });
 
 describe("single payment setup", () => {
+  it.each([createExpenseState, updateExpenseState])(
+    "returns field errors for missing instructions without writing",
+    async (action) => {
+      const data = form("collect");
+      data.set("label", "Court");
+      data.set("total", "2000");
+      data.set("method", "GCash");
+      data.set("details", "");
+      const result = await action({}, data);
+      expect(result.fieldErrors).toEqual({
+        details: "Enter payment instructions with 2–300 characters.",
+      });
+      expect(result.error).toContain("highlighted fields");
+      expect(mocks.set).not.toHaveBeenCalled();
+      expect(mocks.insert).not.toHaveBeenCalled();
+    }
+  );
   it.each(["split", "fixed"])(
     "rejects another %s payment under the session lock",
     async (contributionMode) => {
@@ -117,6 +137,25 @@ describe("single payment setup", () => {
 });
 
 describe("payment choice persistence", () => {
+  it.each(["free", "unspecified"])(
+    "clears unconfigured collection intent when choosing %s",
+    async (choice) => {
+      mocks.session.mockResolvedValue({
+        ...session,
+        paymentCollectionRequested: true,
+      });
+      expect(await updatePaymentChoiceState({}, form(choice))).toEqual({
+        success: true,
+      });
+      expect(mocks.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          playerPriceCents: choice === "free" ? 0 : null,
+          paymentCollectionRequested: false,
+        })
+      );
+      if (choice === "unspecified") expect(mocks.insert).not.toHaveBeenCalled();
+    }
+  );
   it("persists explicit zero and notifies players using the price-change pattern", async () => {
     expect(await updatePaymentChoiceState({}, form())).toEqual({
       success: true,
@@ -144,13 +183,13 @@ describe("payment choice persistence", () => {
       expect.objectContaining({ playerPriceCents: null })
     );
   });
-  it.each(["free", "unspecified"])(
-    "blocks %s when any collection exists, including one without shares",
+  it.each(["unspecified"])(
+    "blocks %s when payment history exists",
     async (choice) => {
       mocks.expense.mockResolvedValue({ id: "collection" });
       expect(await updatePaymentChoiceState({}, form(choice))).toEqual({
         error:
-          "This game has payment records. You can edit payment details, but cannot mark it free or unset.",
+          "Payment history is retained. Choose Free or Collect payment instead of Decide later.",
       });
       expect(mocks.set).not.toHaveBeenCalled();
       expect(mocks.insert).not.toHaveBeenCalled();

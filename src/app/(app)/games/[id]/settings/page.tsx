@@ -9,6 +9,7 @@ import {
   sessionPlayers,
 } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { paymentRevision } from "@/features/payments/payment-revision";
 import { PaymentSettings } from "@/features/payments/payment-settings";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { CancelSessionControl } from "@/features/sessions/cancel-session-control";
@@ -156,6 +157,11 @@ export default async function GameSettingsPage({
       {section === "payments" ? (
         <PaymentSettings
           session={data.session}
+          revision={paymentRevision(
+            data.session,
+            collections.map(({ expense }) => expense),
+            payments.map(({ payment }) => payment)
+          )}
           collections={collections}
           payments={payments}
           isHost={data.session.hostId === user.id}

@@ -9,6 +9,7 @@ import { expenses, notifications, playerPayments, sessions } from "@/db/schema";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { assertRateLimit } from "@/lib/rate-limit";
 import type { PaymentActionState } from "./actions";
+import { activePaymentCondition } from "./active-collection-query";
 import { hasPaymentHistory } from "./domain";
 import { refreshPlayerPriceInTransaction } from "./sync";
 
@@ -47,7 +48,8 @@ export async function respondToPaymentAdjustment(
       const payment = await tx.query.playerPayments.findFirst({
         where: and(
           eq(playerPayments.id, paymentId),
-          eq(playerPayments.sessionPlayerId, viewer.player.id)
+          eq(playerPayments.sessionPlayerId, viewer.player.id),
+          activePaymentCondition
         ),
       });
       const proposal = payment?.pendingAdjustment;

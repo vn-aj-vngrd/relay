@@ -59,6 +59,11 @@ describe("GameWorkspaceFrame", () => {
     });
     expect(heading).toBeVisible();
     expect(heading).toHaveClass("text-sm");
+    expect(heading.closest(".session-tab-safe")).toHaveClass(
+      "border-b",
+      "lg:border-b-0"
+    );
+    expect(heading.parentElement).toHaveClass("h-13", "lg:h-11");
     expect(heading.closest(".session-tab-safe")).toContainElement(
       screen.getByRole("link", { name: "Back to game" })
     );

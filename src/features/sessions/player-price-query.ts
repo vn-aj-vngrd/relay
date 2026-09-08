@@ -3,11 +3,11 @@ import { expenses, sessions } from "@/db/schema";
 
 // One boolean per selected session, in the existing batched query. No financial data.
 export const sessionHasExpense = sql<boolean>`exists (
-  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id}
+  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id} and ${expenses.archivedAt} is null
 )`;
 
 export const sessionPriceIsFixed = sql<boolean>`exists (
-  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id}
+  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id} and ${expenses.archivedAt} is null
 ) and not exists (
-  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id} and ${expenses.contributionMode} <> 'fixed'
+  select 1 from ${expenses} where ${expenses.sessionId} = ${sessions.id} and ${expenses.archivedAt} is null and ${expenses.contributionMode} <> 'fixed'
 )`;

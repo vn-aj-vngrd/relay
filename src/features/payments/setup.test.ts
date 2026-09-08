@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  creationPaymentSummary,
+  hasSavedPaymentSetup,
   paymentChoiceSummary,
   paymentSetupInput,
   paymentSetupSchema,
+  paymentSetupValidationError,
   serializableCreationValues,
 } from "./setup";
 
@@ -14,6 +17,50 @@ const valid = {
 };
 
 describe("payment setup", () => {
+  it("returns only the invalid field rather than blaming every payment detail", () => {
+    const parsed = paymentSetupSchema.safeParse({ ...valid, details: "" });
+    if (parsed.success) throw new Error("Expected invalid instructions");
+    expect(paymentSetupValidationError(parsed.error)).toEqual({
+      error:
+        "A few payment details need attention. Check the highlighted fields below.",
+      fieldErrors: {
+        details: "Enter payment instructions with 2–300 characters.",
+      },
+    });
+  });
+  it("preserves array indexes for expense validation", () => {
+    const parsed = paymentSetupSchema.safeParse({
+      ...valid,
+      items: [
+        { label: "Court", amountCents: 240000 },
+        { label: "", amountCents: -1 },
+      ],
+    });
+    if (parsed.success) throw new Error("Expected invalid expense");
+    const { fieldErrors } = paymentSetupValidationError(parsed.error);
+    expect(fieldErrors["items.1.label"]).toBeDefined();
+    expect(Object.keys(fieldErrors)).toContain("items.1.amountCents");
+    expect(Object.keys(fieldErrors)).not.toContain("items.0.label");
+  });
+  it("distinguishes collection intent from a configured split in Review", () => {
+    const summary = creationPaymentSummary({
+      costKind: "collect",
+      visibility: "public",
+    });
+    expect(summary).toContain(
+      "Set the price and instructions in Game settings"
+    );
+    expect(summary).toContain("It won’t appear in Open games");
+    expect(summary).not.toContain("calculated when players join");
+    expect(summary).not.toContain("₱");
+    expect(hasSavedPaymentSetup({ costKind: "collect" })).toBe(false);
+  });
+  it("retains the details of an older collection draft in Review", () => {
+    expect(hasSavedPaymentSetup(valid)).toBe(true);
+    const summary = creationPaymentSummary({ ...valid, costKind: "collect" });
+    expect(summary).toContain("₱2400 total");
+    expect(summary).toContain("GCash · Host account");
+  });
   it.each(["0", "-1", "Infinity", "1000001", ""])(
     "rejects invalid collection total %s",
     (total) => {

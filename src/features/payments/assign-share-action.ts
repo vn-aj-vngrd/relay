@@ -79,6 +79,7 @@ export async function assignPlayerShare(
       });
       if (
         !expense ||
+        expense.archivedAt ||
         !player ||
         player.rsvp !== "going" ||
         player.leftAt ||

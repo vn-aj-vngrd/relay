@@ -583,8 +583,8 @@ export const helpArticles: readonly HelpArticle[] = [
     ],
     steps: [
       "Open Create game. In Plan, enter the game name, court/address, date, and start/end times.",
-      "In Players and access, set player capacity, court count, visibility, and approval policy. The form supports 2–40 players and 1–20 courts; actual Play has additional eligibility requirements.",
-      "Use optional Details for color, player notes, and booking information, or continue without them. Payment starts unset.",
+      "In Players and access, set player capacity, court count, visibility, and approval policy. Choose Decide later, Free, or Collect payment; Collect payment records intent only, with price and instructions set afterward in Game settings → Payments. The form supports 2–40 players and 1–20 courts; actual Play has additional eligibility requirements.",
+      "Use optional Details for color, player notes, and booking information, or continue without them.",
       "Read Review and use Edit to correct an earlier stage. Signed-out hosts choose the authentication option here; return to the restored Review and explicitly publish.",
       "After publication, use Share game, Show QR, or Preview shared link for public/link-only games. Private games direct you to account invitations instead.",
     ],
@@ -672,7 +672,7 @@ export const helpArticles: readonly HelpArticle[] = [
     prerequisites: ["A published saved game with Public visibility."],
     steps: [
       "Check Game settings for Public visibility. Link-only and Private games are not directory listings.",
-      "Choose Free during Create game or in Game settings → Payments if players owe nothing. Choose Collect payment for an expense the host paid upfront. Unset payment is never Free; existing payment records prevent switching to Free or unset.",
+      "Choose Free during Create game or in Game settings → Payments if players owe nothing. Collect payment during creation records intent, not a price or balance due. Use Set up payment in Overview to configure expenses, price, and instructions in Game settings → Payments. Unset payment is never Free. The original host can confirm switching a collection to Free: outstanding requests are cancelled, while proof and payment history are retained for follow-up. Relay does not issue refunds. Decide later is unavailable after a collection exists.",
       "Check the game is published or live and has not ended. Then open Open games and clear restrictive filters to find it.",
     ],
     outcome:
@@ -1153,7 +1153,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A published game. Know the actual expense and external repayment instructions.",
     ],
     steps: [
-      "Choose Free during creation or in Game settings → Payments when no payment is needed. For repayment, choose Collect payment and add an expense you covered upfront. Game settings owns configuration; Payments owns tracking, proof, and review. Existing collections cannot be marked Free.",
+      "Choose Free during creation or in Game settings → Payments when no payment is needed. Collect payment during creation records intent only. After creation, use Set up payment in Overview to add expenses, price, and payment instructions in settings. Game settings owns configuration; Payments owns tracking, proof, and review. Confirming Make game free closes current collections and preserves history. To collect again before the game ends, confirm a new setup; existing players must agree to new charges and old requests stay cancelled.",
       "Enter the amount and external payment instructions. Optionally attach the host receipt and payment QR image in the game.",
       "Review the split. The host is paid upfront and excluded from player shares; amounts are split in integer cents with rounding handled by Relay.",
       "Use organizer controls to adjust individual amounts or exclude eligible shares. Review totals after recalculation, especially when there are multiple collections.",
@@ -1162,7 +1162,7 @@ export const helpArticles: readonly HelpArticle[] = [
     outcome:
       "Relay records repayment obligations. For discovery, it sums each player’s collections and shows the highest player total; the amount advertised can differ from an individual’s share.",
     troubleshooting: [
-      "Reviewed payments cannot simply be excluded. Correct invalid totals using the allowed share controls, not by silently marking a real expense Free.",
+      "Reviewed payments cannot simply be excluded. Use share controls for individual corrections. Making the whole game Free requires host confirmation, retains payment records, and leaves any refund coordination with the host.",
       "Payments never block Play. Completion allows repayment to continue; cancellation closes changes and any refund must be coordinated externally.",
     ],
     related: [

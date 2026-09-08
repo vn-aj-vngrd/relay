@@ -13,6 +13,91 @@ const session = {
 };
 
 describe("host listing status", () => {
+  it.each(["public", "link", "private"])(
+    "offers collection setup for %s intent without claiming a price",
+    (visibility) => {
+      render(
+        <SessionListingStatus
+          session={{
+            ...session,
+            visibility,
+            playerPriceCents: null,
+            paymentCollectionRequested: true,
+          }}
+          hasExpense={false}
+          isOriginalHost
+          now={now}
+        />
+      );
+      expect(
+        screen.getByRole("link", { name: "Set up payment" })
+      ).toHaveAttribute(
+        "href",
+        "/games/game/settings?section=payments#player-payment"
+      );
+      expect(
+        screen.queryByText("Listed in Open games")
+      ).not.toBeInTheDocument();
+    }
+  );
+  it.each(["public", "link", "private"])(
+    "does not expose original-host setup to other viewers of a %s game",
+    (visibility) => {
+      render(
+        <SessionListingStatus
+          session={{
+            ...session,
+            visibility,
+            playerPriceCents: null,
+            paymentCollectionRequested: true,
+          }}
+          hasExpense={false}
+          isOriginalHost={false}
+          now={now}
+        />
+      );
+      expect(
+        screen.queryByRole("link", { name: "Set up payment" })
+      ).not.toBeInTheDocument();
+    }
+  );
+  it("removes setup once a collection exists even before split shares exist", () => {
+    render(
+      <SessionListingStatus
+        session={{
+          ...session,
+          playerPriceCents: null,
+          paymentCollectionRequested: true,
+        }}
+        hasExpense
+        isOriginalHost
+        now={now}
+      />
+    );
+    expect(
+      screen.queryByRole("link", { name: "Set up payment" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Player share pending/)).toBeVisible();
+  });
+  it.each(["completed", "cancelled"])(
+    "does not prompt new setup for a %s game",
+    (status) => {
+      render(
+        <SessionListingStatus
+          session={{
+            ...session,
+            status,
+            playerPriceCents: null,
+            paymentCollectionRequested: true,
+          }}
+          hasExpense={false}
+          isOriginalHost
+          now={now}
+        />
+      );
+      expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    }
+  );
   it("shows the actual listing and canonical shared preview", () => {
     render(
       <SessionListingStatus
@@ -40,7 +125,7 @@ describe("host listing status", () => {
     expect(screen.getByText("Not listed in Open games")).toBeVisible();
     expect(screen.getByText(/Price not set/)).toBeVisible();
     expect(
-      screen.getByRole("link", { name: "Payment settings" })
+      screen.getByRole("link", { name: "Set player payment" })
     ).toHaveAttribute(
       "href",
       "/games/game/settings?section=payments#player-payment"

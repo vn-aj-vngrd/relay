@@ -31,8 +31,11 @@ import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { planPlayAvailability } from "@/features/matches/availability";
 import {
   collectionSetupValues,
+  hasSavedPaymentSetup,
+  paymentChoiceSchema,
   paymentSetupInput,
   paymentSetupSchema,
+  serializableCreationValues,
 } from "@/features/payments/setup";
 import { reconcileUnpaidExpenseShares } from "@/features/payments/sync";
 import { playingExperienceValues } from "@/features/players/playing-experience";
@@ -120,10 +123,19 @@ export async function createSessionAction(
   );
   if (!limit.allowed)
     return { error: "You’ve created several games today. Try again tomorrow." };
-  const collect = formData.get("costKind") === "collect";
-  const paymentSetup = collect
-    ? paymentSetupSchema.safeParse(paymentSetupInput(formData))
-    : null;
+  const choice = paymentChoiceSchema.safeParse(
+    formData.get("costKind") ?? "unspecified"
+  );
+  if (!choice.success)
+    return {
+      error: "Choose Decide later, Free, or Collect payment.",
+      fieldErrors: { costKind: ["Choose a payment option."] },
+    };
+  const collect = choice.data === "collect";
+  const paymentSetup =
+    collect && hasSavedPaymentSetup(serializableCreationValues(formData))
+      ? paymentSetupSchema.safeParse(paymentSetupInput(formData))
+      : null;
   if (paymentSetup && !paymentSetup.success)
     return {
       error: "Complete the expense, total, method, and payment details.",
@@ -166,6 +178,9 @@ export async function createSessionAction(
           "visibility",
           "label",
           "total",
+          "items",
+          "contributionMode",
+          "fixedRate",
           "method",
           "details",
           "costKind",
@@ -287,6 +302,7 @@ export async function createSessionAction(
         capacity: parsed.data.capacity,
         courtCount: parsed.data.courtCount,
         notes: parsed.data.notes,
+        paymentCollectionRequested: collect,
         playerPriceCents:
           paymentSetup?.success &&
           paymentSetup.data.contributionMode === "fixed"

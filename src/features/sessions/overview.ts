@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -63,7 +63,9 @@ export async function getSessionOverview(
           contributionMode: expenses.contributionMode,
         })
         .from(expenses)
-        .where(eq(expenses.sessionId, sessionId)),
+        .where(
+          and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+        ),
       db.$count(
         messages,
         and(eq(messages.sessionId, sessionId), eq(messages.kind, "text"))

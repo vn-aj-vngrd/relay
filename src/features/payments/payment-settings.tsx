@@ -1,18 +1,22 @@
 import { ButtonLink } from "@/components/ui/button";
 import type { expenses, paymentAccounts, playerPayments } from "@/db/schema";
+import { isActiveCollection } from "./collection-lifecycle";
 import { PaymentBreakdown, PaymentSplitType } from "./payment-breakdown";
 import { EditExpenseForm, PaymentChoiceForm } from "./payment-management-forms";
+import { PaymentSwitchForm } from "./payment-switch-form";
 
 export function PaymentSettings({
   session,
-  collections,
+  collections: allCollections,
   payments,
   isHost,
+  revision,
 }: {
   session: {
     id: string;
     status: string;
     playerPriceCents: number | null;
+    paymentCollectionRequested?: boolean;
     bookingTotalCents: number | null;
     hostId: string;
   };
@@ -24,7 +28,17 @@ export function PaymentSettings({
     payment: Pick<typeof playerPayments.$inferSelect, "expenseId">;
   }[];
   isHost: boolean;
+  revision?: string;
 }) {
+  const collections = allCollections.filter(({ expense }) =>
+    isActiveCollection(expense)
+  );
+  const history = allCollections.filter(
+    ({ expense }) => !isActiveCollection(expense)
+  );
+  const previous = history.toSorted(
+    (a, b) => Number(b.expense.archivedAt) - Number(a.expense.archivedAt)
+  )[0];
   const open = session.status !== "cancelled";
   return (
     <section
@@ -51,12 +65,35 @@ export function PaymentSettings({
           proof.
         </p>
       ) : null}
+      {open && isHost && collections.length && revision ? (
+        <PaymentSwitchForm sessionId={session.id} revision={revision} />
+      ) : null}
       {!collections.length ? (
         open && isHost ? (
           <PaymentChoiceForm
             sessionId={session.id}
             price={session.playerPriceCents}
+            collectionRequested={session.paymentCollectionRequested}
             bookingTotalCents={session.bookingTotalCents}
+            revision={revision}
+            hasHistory={history.length > 0}
+            completed={session.status === "completed"}
+            previousDefaults={
+              previous
+                ? {
+                    label: previous.expense.label,
+                    total: String(previous.expense.totalCents / 100),
+                    items: JSON.stringify(previous.expense.items),
+                    contributionMode: previous.expense.contributionMode,
+                    fixedRate:
+                      previous.expense.fixedRateCents == null
+                        ? ""
+                        : String(previous.expense.fixedRateCents / 100),
+                    method: previous.account?.method ?? "GCash",
+                    details: previous.account?.details ?? "",
+                  }
+                : undefined
+            }
           />
         ) : (
           <p className="text-sm text-muted">
@@ -65,6 +102,16 @@ export function PaymentSettings({
               : "The host hasn’t set up payment yet."}
           </p>
         )
+      ) : null}
+      {history.length ? (
+        <section className="border-t border-line pt-4">
+          <h3 className="font-semibold">Previous collections</h3>
+          <p className="mt-2 text-sm text-muted">
+            {history.length} closed. Expenses, payment records, and proof are
+            retained in Payments. Outstanding requests are cancelled; Relay does
+            not issue refunds.
+          </p>
+        </section>
       ) : null}
       {collections.map(({ expense, account }) => (
         <article key={expense.id} className="flex min-w-0 flex-col gap-6">
@@ -78,7 +125,12 @@ export function PaymentSettings({
               sessionId={session.id}
               expenseId={expense.id}
               contributionReadOnly={
-                collections.length > 1 || payments.length > 0
+                collections.length > 1 ||
+                payments.some(({ payment }) =>
+                  collections.some(
+                    ({ expense }) => expense.id === payment.expenseId
+                  )
+                )
               }
               totalReadOnly={payments.some(
                 ({ payment }) => payment.expenseId === expense.id

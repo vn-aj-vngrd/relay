@@ -23,6 +23,7 @@ import {
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
 import { confirmPayment } from "@/features/payments/actions";
+import { isActiveCollection } from "@/features/payments/collection-lifecycle";
 import {
   PaymentAdjustmentDetails,
   PaymentBreakdown,
@@ -30,6 +31,7 @@ import {
   PaymentSplitType,
   paymentMoney as peso,
 } from "@/features/payments/payment-breakdown";
+import { PaymentHistory } from "@/features/payments/payment-history";
 import {
   AssignPlayerShareForm,
   PaymentProofRequestForm,
@@ -102,7 +104,7 @@ export default async function PaymentsPage({
     ({ player }) => player.role === "host"
   )?.profile;
   const hostName = hostProfile?.name ?? "The host";
-  const sessionExpenses = await db
+  const allExpenses = await db
     .select({ expense: expenses, account: paymentAccounts })
     .from(expenses)
     .leftJoin(
@@ -110,6 +112,9 @@ export default async function PaymentsPage({
       eq(expenses.paymentAccountId, paymentAccounts.id)
     )
     .where(eq(expenses.sessionId, sessionId));
+  const sessionExpenses = allExpenses.filter(({ expense }) =>
+    isActiveCollection(expense)
+  );
   const rows = await db
     .select({
       payment: playerPayments,
@@ -129,7 +134,7 @@ export default async function PaymentsPage({
   const collectibleRows = rows.filter(
     ({ player }) => player.userId !== data.session.hostId
   );
-  const visibleRows = canManagePayments
+  const visibleRows = can(actor, "confirm_payment")
     ? collectibleRows
     : collectibleRows.filter(({ player }) => player.userId === user.id);
   const visiblePayments = await Promise.all(
@@ -147,8 +152,8 @@ export default async function PaymentsPage({
   const qrUrls = new Map<string, string>();
   const receiptUrls = new Map<string, string>();
   await Promise.all(
-    sessionExpenses.flatMap(({ expense, account }) => [
-      account?.qrStoragePath
+    allExpenses.flatMap(({ expense, account }) => [
+      account?.qrStoragePath && isActiveCollection(expense)
         ? supabase.storage
             .from("payment-qrs")
             .createSignedUrl(account.qrStoragePath, 3600)
@@ -505,6 +510,21 @@ export default async function PaymentsPage({
           ) : null}
         </section>
       )}
+      <PaymentHistory
+        collections={allExpenses
+          .filter(({ expense }) => !isActiveCollection(expense))
+          .map(({ expense }) => ({
+            expense,
+            receiptUrl: receiptUrls.get(expense.id),
+          }))}
+        payments={visiblePayments.map(
+          ({ payment, player, profile, proofUrl }) => ({
+            payment,
+            name: profile?.name ?? player.guestName ?? "Guest",
+            proofUrl,
+          })
+        )}
+      />
     </>
   );
 }

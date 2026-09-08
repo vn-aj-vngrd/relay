@@ -425,6 +425,9 @@ export const sessions = pgTable(
     courtCount: integer("court_count").notNull().default(1),
     notes: text("notes"),
     playerPriceCents: integer("player_price_cents"),
+    paymentCollectionRequested: boolean("payment_collection_requested")
+      .notNull()
+      .default(false),
     status: sessionStatus("status").notNull().default("draft"),
     visibility: visibility("visibility").notNull().default("link"),
     rotationMode: rotationMode("rotation_mode").notNull().default("queue"),
@@ -593,6 +596,10 @@ export const expenses = pgTable(
       .default("split"),
     fixedRateCents: integer("fixed_rate_cents"),
     consentBefore: timestamp("consent_before", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedById: uuid("archived_by_id").references(() => users.id, {
+      onDelete: "restrict",
+    }),
     items: jsonb("items")
       .$type<Array<{ label: string; amountCents: number }>>()
       .notNull()
@@ -647,7 +654,7 @@ export const playerPayments = pgTable(
           reason: string;
           changedBy: string;
           changedAt: string;
-          decision: "applied" | "accepted" | "declined";
+          decision: "applied" | "accepted" | "declined" | "cancelled";
         }>
       >()
       .notNull()

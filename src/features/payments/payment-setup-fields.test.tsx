@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
   PaymentSetupFields,
@@ -18,6 +18,116 @@ const defaults = {
 };
 
 describe("collection setup fields", () => {
+  it("highlights and focuses only the invalid payment instructions", async () => {
+    render(
+      <PaymentSetupFields
+        defaults={defaults}
+        fieldErrors={{ details: "Enter payment instructions." }}
+      />
+    );
+    const details = screen.getByLabelText("Payment details");
+    expect(details).toHaveAttribute("aria-invalid", "true");
+    expect(details).toHaveClass("border-danger");
+    expect(details).toHaveAccessibleDescription("Enter payment instructions.");
+    expect(screen.getByLabelText("Expense 1")).toHaveAttribute(
+      "aria-invalid",
+      "false"
+    );
+    await waitFor(() => expect(details).toHaveFocus());
+    fireEvent.change(details, { target: { value: "Updated account details" } });
+    expect(details).toHaveAttribute("aria-invalid", "false");
+    expect(
+      screen.queryByText("Enter payment instructions.")
+    ).not.toBeInTheDocument();
+  });
+  it("associates expense errors with the correct row and keeps other errors on edit", () => {
+    render(
+      <PaymentSetupFields
+        defaults={{
+          ...defaults,
+          items: JSON.stringify([
+            { label: "Court", amountCents: 100000 },
+            { label: "Balls", amountCents: 20000 },
+          ]),
+        }}
+        fieldErrors={{
+          "items.1.amountCents": "Check this amount.",
+          details: "Add instructions.",
+        }}
+      />
+    );
+    const amounts = screen.getAllByLabelText("Amount (₱)");
+    expect(amounts[0]).toHaveAttribute("aria-invalid", "false");
+    expect(amounts[1]).toHaveAccessibleDescription("Check this amount.");
+    fireEvent.change(amounts[1], { target: { value: "250" } });
+    expect(amounts[1]).toHaveAttribute("aria-invalid", "false");
+    expect(screen.getByLabelText("Payment details")).toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
+  });
+  it("does not move a removed row’s error to another expense", () => {
+    render(
+      <PaymentSetupFields
+        defaults={{
+          ...defaults,
+          items: JSON.stringify([
+            { label: "Court", amountCents: 100000 },
+            { label: "Balls", amountCents: 20000 },
+          ]),
+        }}
+        fieldErrors={{ "items.1.label": "Check the expense name." }}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remove expense 1" }));
+    expect(screen.getByLabelText("Expense 1")).toHaveValue("Balls");
+    expect(
+      screen.queryByText("Check the expense name.")
+    ).not.toBeInTheDocument();
+  });
+  it("highlights the fixed rate and payment method when invalid", () => {
+    render(
+      <PaymentSetupFields
+        defaults={{ ...defaults, contributionMode: "fixed", fixedRate: "300" }}
+        fieldErrors={{
+          fixedRate: "Check the rate.",
+          method: "Choose a method.",
+        }}
+      />
+    );
+    expect(
+      screen.getByLabelText("Fixed amount per player (₱)")
+    ).toHaveAccessibleDescription("Check the rate.");
+    expect(
+      screen.getByRole("button", { name: "Payment method" })
+    ).toHaveAccessibleDescription("Choose a method.");
+    fireEvent.click(screen.getByRole("button", { name: "Payment method" }));
+    fireEvent.click(screen.getByRole("option", { name: "Cash" }));
+    expect(screen.queryByText("Choose a method.")).not.toBeInTheDocument();
+  });
+  it("submits only intent when creation chooses Collect payment", () => {
+    const { container } = render(
+      <form>
+        <PlayerPaymentFields choiceOnly defaults={{ costKind: "collect" }} />
+      </form>
+    );
+    expect(
+      serializableCreationValues(new FormData(container.querySelector("form")!))
+    ).toEqual({ costKind: "collect" });
+    expect(screen.queryByLabelText("Total amount")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Open games/)).not.toBeInTheDocument();
+    expect(screen.getByText(/after creating your game/)).toBeVisible();
+  });
+  it("removes the public pricing caveat when choosing Free", () => {
+    render(<PlayerPaymentFields choiceOnly isPublic />);
+    expect(screen.getByText(/It won’t appear in Open games/)).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Payment choice" }));
+    fireEvent.click(screen.getByRole("option", { name: "Free" }));
+    expect(
+      screen.queryByText(/It won’t appear in Open games/)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Payment details")).not.toBeInTheDocument();
+  });
   it("totals multiple expenses and serializes them for the creation draft", () => {
     const { container } = render(
       <form>

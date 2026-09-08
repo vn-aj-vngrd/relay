@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -10,7 +10,7 @@ import {
   sessionPlayers,
   sessions,
 } from "@/db/schema";
-
+import { isActiveCollection } from "./collection-lifecycle";
 import {
   collectFromPlayers,
   collectionPlayerPrice,
@@ -28,10 +28,16 @@ export async function reconcileExpenseSharesInTransaction(
   sessionId: string,
   expenseId?: string
 ) {
-  const [sessionExpenses, session] = await Promise.all([
-    tx.select().from(expenses).where(eq(expenses.sessionId, sessionId)),
+  const [collections, session] = await Promise.all([
+    tx
+      .select()
+      .from(expenses)
+      .where(
+        and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+      ),
     tx.query.sessions.findFirst({ where: eq(sessions.id, sessionId) }),
   ]);
+  const sessionExpenses = collections.filter(isActiveCollection);
   if (!sessionExpenses.length || !session || session.status === "cancelled")
     return;
   const players = await tx
@@ -144,9 +150,15 @@ export async function refreshPlayerPriceInTransaction(
   sessionId: string,
   knownCollections?: Array<typeof expenses.$inferSelect>
 ) {
-  const collections =
+  const collections = (
     knownCollections ??
-    (await tx.select().from(expenses).where(eq(expenses.sessionId, sessionId)));
+    (await tx
+      .select()
+      .from(expenses)
+      .where(
+        and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt))
+      ))
+  ).filter(isActiveCollection);
   if (!collections.length) return;
   const currentPayments = await tx
     .select({
@@ -158,6 +170,7 @@ export async function refreshPlayerPriceInTransaction(
     .where(
       and(
         eq(expenses.sessionId, sessionId),
+        isNull(expenses.archivedAt),
         ne(playerPayments.status, "excluded")
       )
     );
@@ -184,7 +197,7 @@ export async function hasLockedPaymentSplit(sessionId: string) {
   const sessionExpenses = await db
     .select({ id: expenses.id })
     .from(expenses)
-    .where(eq(expenses.sessionId, sessionId));
+    .where(and(eq(expenses.sessionId, sessionId), isNull(expenses.archivedAt)));
   if (!sessionExpenses.length) return false;
   return Boolean(
     await db.query.playerPayments.findFirst({
