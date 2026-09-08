@@ -61,7 +61,7 @@ describe("SessionRecap states", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("No completed matches yet")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Share story" })
+      screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
   });
 
@@ -75,7 +75,7 @@ describe("SessionRecap states", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Highlights so far")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Share story" })
+      screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
   });
 
@@ -85,7 +85,7 @@ describe("SessionRecap states", () => {
     expect(screen.getByText("Final recap")).toBeInTheDocument();
     expect(screen.getByText("Session highlights")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Share story" })
+      screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Open story/ })).toHaveAttribute(
       "href",

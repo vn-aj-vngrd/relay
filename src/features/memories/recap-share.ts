@@ -43,7 +43,7 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   spots: {
     id: "spots",
     label: "Who’s in?",
-    description: "Open spots and the plan",
+    description: "Open spots, Going count, and how to join",
   },
   live: {
     id: "live",
@@ -112,6 +112,25 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   },
 };
 
+export function invitationJoinCaption(
+  template: "invitation" | "spots",
+  facts: StoryInvitationFacts,
+  mode: "qr" | "link"
+) {
+  const prefix = mode === "qr" ? "Scan to " : "";
+  let action = "view game and RSVP";
+  if (template === "spots") {
+    action =
+      facts.goingCount < facts.capacity
+        ? "view game and join"
+        : facts.waitlistOpen
+          ? "join the waitlist"
+          : "view game";
+  }
+  const caption = prefix + action;
+  return caption[0].toUpperCase() + caption.slice(1);
+}
+
 export function invitationStateLabel(facts: StoryInvitationFacts) {
   if (facts.requiresApproval && facts.waitlistOpen)
     return "Host approval required · Waitlist open";
@@ -128,14 +147,9 @@ export function recapShareTemplates(
   viewerPlayerId?: string | null,
   phase: StoryPhase = "completed"
 ) {
-  if (phase === "published") return [templates.invitation, templates.spots];
+  if (phase === "published") return [templates.invitation];
   if (phase === "live")
-    return [
-      templates.live,
-      templates["live-pulse"],
-      templates.invitation,
-      templates.spots,
-    ];
+    return [templates.live, templates["live-pulse"], templates.invitation];
   if (recap.matchCount === 0) return [templates.custom];
   return [
     templates.overview,

@@ -71,15 +71,13 @@ describe("SessionMemories", () => {
         "Turn the current plan, price, and roster availability into a clear invitation."
       )
     ).not.toBeInTheDocument();
-    expect(screen.getByText("₱350")).toBeVisible();
-    expect(screen.getByText("6/8")).toBeVisible();
+    expect(screen.getByText("₱350 · per player")).toBeVisible();
+    expect(screen.getByText("6/8 Going")).toBeVisible();
     expect(screen.getByText("Hosted by Van")).toBeVisible();
     expect(
       screen.getByText("2 spots open · Host approval required")
     ).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Share invitation" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
     expect(
       screen.queryByRole("button", { name: "Copy link" })
     ).not.toBeInTheDocument();
@@ -146,11 +144,9 @@ describe("SessionMemories", () => {
     expect(
       screen.getByRole("region", { name: "Create a story" })
     ).toBeVisible();
-    expect(screen.getByText("completed matches")).toBeVisible();
-    expect(screen.getByText("2")).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Share live update" })
-    ).toBeEnabled();
+    expect(screen.getByText("1 completed match")).toBeVisible();
+    expect(screen.getByText("2 planned courts")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
     expect(screen.queryByText("Van")).not.toBeInTheDocument();
     expect(screen.queryByText("₱350")).not.toBeInTheDocument();
   });
@@ -172,9 +168,9 @@ describe("SessionMemories", () => {
       screen.getByRole("heading", { name: "Photos from the game" })
     ).toBeVisible();
     expect(
-      screen.queryByRole("button", { name: "Share story" })
+      screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
-    expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
   });
 });

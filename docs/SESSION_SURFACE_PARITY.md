@@ -64,6 +64,7 @@ Hosts and co-hosts may view Game settings in every session state. During Play, s
 - Keep one `h1` per destination. On game tabs it is screen-reader-only because the active tab already labels the view; no visible title, subtitle, or empty header row remains. Loading states use the same accessible heading and start skeletons at the content position, without heading/description placeholders. Game settings and Set up Play retain visible headings. Session heroes use `h2`.
 - Use the shared 1152px product canvas and the spacing rules in `DESIGN.md`.
 - A scoreboard is the digital court: neutral outer shell, deep court field, complete player names, tabular scores, and explicit Live text. It must remain readable in its column and in the expanded view.
+- On live Play, desktop uses one compact toolbar: Courts/Queue and other available section tabs align left; **Play in progress** and **Players (Going count)** align right on the same row. On mobile, roster actions stack above the section tabs. Both access paths share this toolbar; the tab rail can scroll without squeezing or remounting the roster drawer or active courts.
 - While Play is live, authenticated game routes outside Play retain a compact link to the participant’s current Playing, Waiting, Resting, or Not here state. The Play page itself does not repeat that status in a personalized banner; current assignments and waiting order live in Courts and Queue.
 - Expanded scoreboards preserve the same score state and permissions. Public viewers can expand but cannot score.
 

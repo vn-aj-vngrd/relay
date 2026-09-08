@@ -27,7 +27,9 @@ export function storyScene(
   theme: StoryTheme,
   hasPhoto: boolean,
   role: StoryPhotoRole = "background",
-  placement: StoryPhotoPlacement = "center"
+  placement: StoryPhotoPlacement = "center",
+  fitCompleteContent = false,
+  allocation?: { bottom: number; factsHeight?: number; headingHeight?: number }
 ) {
   const framed = hasPhoto && role === "foreground";
   let art = region(
@@ -39,25 +41,56 @@ export function storyScene(
     storyComposition.factsBottom - storyComposition.factsTop
   );
   let photo: StoryRegion = { x: 0, y: 0, width: 1080, height: 1920 };
+  const bottom = Math.min(1810, allocation?.bottom ?? 1810);
+  const headingHeight = allocation?.headingHeight ?? 0;
+  let heading: StoryRegion | null = null;
   if (framed) {
-    if (placement === "top") {
-      photo = region(160, 840);
-      facts = region(1032, 778);
-    } else if (placement === "center") {
-      photo = region(440, 840);
-      facts = region(1312, 498);
+    // Reclaim Center's former 280px dead zone. Framed scenes allocate against
+    // the footer directly, never through a whole-scene scale.
+    const top = 160;
+    const gap = 32;
+    const available = bottom - top;
+    const factsHeight =
+      allocation?.factsHeight ?? Math.min(778, available * 0.48);
+    const headingSpace = headingHeight
+      ? headingHeight + gap
+      : placement === "center"
+        ? 80
+        : 0;
+    const photoHeight = Math.min(
+      840,
+      available - factsHeight - gap - headingSpace
+    );
+    if (placement === "bottom") {
+      facts = region(top, factsHeight);
+      photo = region(bottom - photoHeight, photoHeight);
     } else {
-      facts = region(160, 778);
-      photo = region(970, 840);
+      if (headingHeight) heading = region(top, headingHeight);
+      // Center reads title → photograph → practical details. Recap Center
+      // balances spare space above its photograph without starving the facts.
+      const spare = available - photoHeight - factsHeight - gap - headingSpace;
+      photo = region(
+        top + headingSpace + (placement === "center" ? spare / 2 : 0),
+        photoHeight
+      );
+      facts = region(photo.y + photo.height + gap, factsHeight);
     }
     // With a real photo, the art becomes its surround, not a second picture.
     art = photo;
+  }
+  if (!framed && (fitCompleteContent || allocation)) {
+    const top =
+      theme === "minimal" && fitCompleteContent
+        ? 160
+        : storyComposition.factsTop;
+    facts = region(top, bottom - top);
   }
   const frame = framed ? photo : null;
   const leftInset = theme === "minimal" ? 20 : 116;
   const inset = theme === "minimal" ? 20 : 40;
   return {
     framed,
+    heading,
     art,
     facts,
     frame,
@@ -69,7 +102,7 @@ export function storyScene(
           height: photo.height - inset * 2,
         }
       : photo,
-    fitFacts: framed || theme !== "minimal",
+    fitFacts: fitCompleteContent || framed || theme !== "minimal",
   };
 }
 

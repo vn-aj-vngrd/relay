@@ -23,19 +23,31 @@ import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
 import type { SessionRecap } from "./recap";
 import {
-  invitationStateLabel,
+  invitationJoinCaption,
   type RecapShareTemplateId,
   recapShareTemplates,
   type StoryInvitationFacts,
   type StoryPhase,
-  viewerStanding,
 } from "./recap-share";
+import { type RecapBackground, RecapStoryCard } from "./recap-story-card";
 import {
-  type RecapBackground,
-  RecapStoryCard,
-  type RecapStoryLayout,
-} from "./recap-story-card";
+  drawFramedInvitation,
+  framedInvitationLayout,
+} from "./story-framed-invitation";
+import {
+  storyInvitationHeader,
+  storyInvitationLayout,
+} from "./story-invitation-layout";
+import {
+  drawStoryJoin,
+  type StoryJoinDetails,
+  type StoryJoinMode,
+  storyJoinGeometry,
+  storyJoinPalette,
+} from "./story-join";
+import { StoryJoinHelp } from "./story-join-help";
 import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
+import { drawStoryRecap, storyRecapLayout } from "./story-recap-layout";
 import {
   babyPink,
   type StoryPhotoPlacement,
@@ -43,101 +55,14 @@ import {
   storyArtTransform,
   storyScene,
 } from "./story-scene";
-import {
-  drawStoryTheme,
-  type StoryTheme,
-  storyComposition,
-  storyScoreFont,
-  storyThemes,
-} from "./story-theme";
+import { drawStoryTheme, type StoryTheme, storyThemes } from "./story-theme";
 import styles from "./story-workspace.module.css";
+import { useStoryQr } from "./use-story-qr";
 
 type RecapPhoto = { id: string; url: string; alt: string };
 
 // Story-only colors do not change the game accent or global app palette.
 const storyPalette: RecapBackground[] = [babyPink];
-
-const storyLayouts: Array<{
-  id: RecapStoryLayout;
-  label: string;
-  description: string;
-}> = [
-  { id: "courtside", label: "Courtside", description: "Low and bold" },
-  { id: "center", label: "Center court", description: "Balanced focus" },
-  { id: "poster", label: "Poster", description: "Headline first" },
-  { id: "snapshot", label: "Snapshot", description: "Framed over a photo" },
-];
-
-function setFont(
-  context: CanvasRenderingContext2D,
-  size: number,
-  weight = 700,
-  mono = false
-) {
-  context.font = `${weight} ${size}px ${mono ? "ui-monospace, SFMono-Regular, monospace" : "Inter, Arial, sans-serif"}`;
-}
-
-function fitText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  startSize: number,
-  minimum = 38
-) {
-  let size = startSize;
-  while (size > minimum) {
-    setFont(context, size);
-    if (context.measureText(text).width <= maxWidth) break;
-    size -= 4;
-  }
-  return size;
-}
-
-function signed(value: number) {
-  return `${value > 0 ? "+" : ""}${value}`;
-}
-
-function drawRule(context: CanvasRenderingContext2D, y: number, color: string) {
-  context.strokeStyle = color;
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(72, y);
-  context.lineTo(1008, y);
-  context.stroke();
-}
-
-function drawWrappedText(
-  context: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  firstBaseline: number,
-  maxWidth: number,
-  lineHeight: number,
-  maxLines = 2
-) {
-  const words = text.trim().split(/\s+/);
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (line && context.measureText(candidate).width > maxWidth) {
-      lines.push(line);
-      line = word;
-      if (lines.length === maxLines - 1) break;
-    } else {
-      line = candidate;
-    }
-  }
-  if (line && lines.length < maxLines) {
-    const consumed = lines.join(" ").split(/\s+/).filter(Boolean).length;
-    const remaining = words.slice(consumed).join(" ");
-    lines.push(remaining || line);
-  }
-  lines.forEach((value, index) =>
-    context.fillText(value, x, firstBaseline + index * lineHeight, maxWidth)
-  );
-  return firstBaseline + (lines.length - 1) * lineHeight;
-}
 
 function trackStoryShare(
   sessionId: string | undefined,
@@ -166,6 +91,7 @@ export function RecapShareCard({
   invitation,
   courtCount = 0,
   storyAsOf,
+  joinUrl,
 }: {
   sessionId?: string;
   title: string;
@@ -179,6 +105,7 @@ export function RecapShareCard({
   invitation?: StoryInvitationFacts;
   courtCount?: number;
   storyAsOf?: string;
+  joinUrl?: string | null;
 }) {
   const templates = useMemo(
     () => recapShareTemplates(recap, viewerPlayerId, phase),
@@ -213,24 +140,24 @@ export function RecapShareCard({
   const [template, setTemplate] = useState<RecapShareTemplateId>(
     templates[0].id
   );
-  const [layout, setLayout] = useState<RecapStoryLayout>("courtside");
   const [theme, setTheme] = useState<StoryTheme>("minimal");
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
   const [photoPosition, setPhotoPosition] = useState(50);
-  const [photoRole, setPhotoRole] = useState<StoryPhotoRole>("background");
+  const [photoRole, setPhotoRole] = useState<StoryPhotoRole>("foreground");
   const [photoPlacement, setPhotoPlacement] =
     useState<StoryPhotoPlacement>("center");
   const [surfaceId, setSurfaceId] = useState(`accent:${gameAccent.id}`);
   const [customHeadline, setCustomHeadline] = useState("Our kind of game.");
   const [customNote, setCustomNote] = useState("");
+  const [joinMode, setJoinMode] = useState<StoryJoinMode>("qr");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [customizeSection, setCustomizeSection] = useState<
-    "layout" | "background" | "message"
-  >("layout");
+    "theme" | "background" | "message"
+  >("theme");
   const customizeButton = useRef<HTMLButtonElement>(null);
   const customizationId = useId();
   const previewTitleId = useId();
@@ -242,14 +169,53 @@ export function RecapShareCard({
     backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
   const sceneBackground =
     backgrounds.find((item) => item.id === surfaceId) ?? backgrounds[0];
+  const templateIndex = templates.findIndex((item) => item.id === template);
+  const activeTemplate = templates[templateIndex] ?? templates[0];
+  const eligibleJoinUrl =
+    phase === "published" &&
+    (activeTemplate.id === "invitation" || activeTemplate.id === "spots")
+      ? (joinUrl ?? null)
+      : null;
+  const qr = useStoryQr(
+    eligibleJoinUrl && joinMode === "qr" ? eligibleJoinUrl : null
+  );
+  const join: StoryJoinDetails | null =
+    eligibleJoinUrl && joinMode !== "off"
+      ? {
+          url: eligibleJoinUrl,
+          mode: joinMode,
+          captions:
+            invitation &&
+            (activeTemplate.id === "invitation" ||
+              activeTemplate.id === "spots")
+              ? {
+                  qr: invitationJoinCaption(
+                    activeTemplate.id,
+                    invitation,
+                    "qr"
+                  ),
+                  link: invitationJoinCaption(
+                    activeTemplate.id,
+                    invitation,
+                    "link"
+                  ),
+                }
+              : undefined,
+          qrImageUrl: qr?.status === "ready" ? qr.imageUrl : undefined,
+          qrStatus: qr?.status ?? "loading",
+        }
+      : null;
+  const qrBlocked = join?.mode === "qr" && qr?.status !== "ready";
+  const joinKey = `${eligibleJoinUrl ?? ""}|${joinMode}|${activeTemplate.id}`;
+  const currentJoinKey = useRef(joinKey);
+  currentJoinKey.current = joinKey;
   const scene = storyScene(
     theme,
     Boolean(background.imageUrl),
     photoRole,
-    photoPlacement
+    photoPlacement,
+    Boolean(join)
   );
-  const templateIndex = templates.findIndex((item) => item.id === template);
-  const activeTemplate = templates[templateIndex] ?? templates[0];
 
   useEffect(() => {
     if (!templates.some((item) => item.id === template))
@@ -307,7 +273,6 @@ export function RecapShareCard({
       file,
     });
     setBackgroundId("custom-photo");
-    setLayout("snapshot");
     setMessage("Photo added to this story only. It hasn’t been uploaded.");
   }
 
@@ -331,14 +296,11 @@ export function RecapShareCard({
     setPreviewOpen(false);
   }
 
-  async function createCard() {
-    function setFont(
-      context: CanvasRenderingContext2D,
-      size: number,
-      weight = 700,
-      mono = false
-    ) {
-      context.font = `${weight} ${size}px ${mono ? storyScoreFont(theme) : "Inter, Arial, sans-serif"}`;
+  async function createCard(linkOnly = false) {
+    const exportJoin =
+      join && linkOnly ? { ...join, mode: "link" as const } : join;
+    if (exportJoin?.mode === "qr" && qr?.status !== "ready") {
+      throw new Error("Story QR is not ready");
     }
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
@@ -346,9 +308,70 @@ export function RecapShareCard({
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas unavailable");
 
+    const framedCopy =
+      background.imageUrl &&
+      photoRole === "foreground" &&
+      (template === "invitation" || template === "spots") &&
+      invitation
+        ? framedInvitationLayout({
+            title,
+            date,
+            venue,
+            invitation,
+            template,
+            customNote,
+            theme,
+            placement: photoPlacement,
+            joinMode: exportJoin?.mode ?? "off",
+          })
+        : null;
+    const nonframedCopy =
+      !framedCopy &&
+      (template === "invitation" || template === "spots") &&
+      invitation
+        ? storyInvitationLayout({
+            title,
+            date,
+            venue,
+            invitation,
+            template,
+            customNote,
+            theme,
+            placement: photoPlacement,
+            joinMode: exportJoin?.mode ?? "off",
+          })
+        : null;
+    const invitationCopy = framedCopy ?? nonframedCopy;
+    const recapCopy = storyRecapLayout({
+      title,
+      date,
+      venue,
+      recap,
+      template,
+      viewerPlayerId,
+      courtCount,
+      customHeadline,
+      customNote,
+      theme,
+      hasPhoto: Boolean(background.imageUrl),
+      photoRole,
+      photoPlacement,
+    });
+    const scene =
+      invitationCopy?.scene ??
+      recapCopy?.scene ??
+      storyScene(
+        theme,
+        Boolean(background.imageUrl),
+        photoRole,
+        photoPlacement,
+        Boolean(exportJoin),
+        { bottom: storyJoinGeometry(exportJoin?.mode ?? "off").footer.y - 32 }
+      );
     const surface = scene.framed ? sceneBackground : background;
     context.fillStyle = surface.color ?? "#11131a";
     context.fillRect(0, 0, canvas.width, canvas.height);
+    context.save();
     if (scene.frame) {
       context.fillStyle = "#fff8f0";
       context.fillRect(
@@ -392,440 +415,27 @@ export function RecapShareCard({
     context.arc(80, 82, 10, 0, Math.PI * 2);
     context.fill();
     context.fillStyle = foreground;
-    setFont(context, 30);
+    context.font = `700 ${storyInvitationHeader.size}px Inter, Arial, sans-serif`;
+    context.textBaseline = "alphabetic";
     const isInvitation = template === "invitation" || template === "spots";
     context.fillText(
       `RELAY · ${isInvitation ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`,
-      112,
-      theme === "minimal" ? 94 : storyComposition.headerBottom - 34,
-      ...(theme === "minimal" ? [] : [896])
+      storyInvitationHeader.x,
+      storyInvitationHeader.baseline
     );
 
-    const contentOffset =
-      layout === "poster" ? -500 : layout === "center" ? -250 : 0;
-    if (layout === "snapshot" && !scene.fitFacts) {
-      context.fillStyle = light ? "rgba(255,255,255,.82)" : "rgba(8,10,16,.62)";
-      context.fillRect(48, 820, 984, 1020);
-      context.strokeStyle = rule;
-      context.lineWidth = 2;
-      context.strokeRect(48, 820, 984, 1020);
-    }
-    const noteRuleY =
-      theme === "minimal"
-        ? phase === "published"
-          ? 1730
-          : 1580
-        : Math.min(
-            phase === "published" ? 1730 : 1580,
-            storyComposition.factsBottom - 110
-          );
-    context.save();
-    if (scene.fitFacts) {
-      // Per-template final baselines include both supported wrapped lines.
-      // Font descent belongs inside the region too, not just the baseline.
-      const endings: Record<RecapShareTemplateId, [number, number]> = {
-        invitation: [1675, 27],
-        spots: [1680, 27],
-        live: [1550, 27],
-        "live-pulse": [1650 + 38, 30],
-        overview: [1566, 0], // Final 2px rule at y=1565.
-        personal: [1575, 27],
-        "winning-team": [1480, 31],
-        leader: [1470, 31],
-        standings: [
-          1080 + Math.max(0, Math.min(5, recap.standings.length) - 1) * 115,
-          40,
-        ],
-        closest: [1450, 30],
-        court: [1490, 31],
-        points: [1400, 31],
-        "court-time": [1400, 31],
-        crew: [1390, 31],
-        custom: [1280, 31],
-      };
-      const textBottom = (baseline: number, size: number) => {
-        if (size === 0) return baseline;
-        setFont(context, size);
-        const metrics = context.measureText("gjpqy");
-        return (
-          baseline +
-          Math.max(
-            metrics.actualBoundingBoxDescent ?? 0,
-            metrics.fontBoundingBoxDescent ?? size * 0.3
-          )
-        );
-      };
-      const drawingTop =
-        template === "standings" ? 900 : template === "overview" ? 1100 : 940;
-      const drawingBottom = Math.max(
-        textBottom(...endings[template]),
-        customNote ? textBottom(noteRuleY + 55 + 38, 30) : 0
-      );
-      const drawingHeight = drawingBottom - drawingTop;
-      const scale = Math.min(1, scene.facts.height / drawingHeight);
-      const free = scene.facts.height - drawingHeight * scale;
-      const align =
-        scene.framed || layout === "center"
-          ? free / 2
-          : layout === "poster"
-            ? 0
-            : free;
-      context.translate(
-        (1080 - 1080 * scale) / 2,
-        scene.facts.y + align - drawingTop * scale
-      );
-      context.scale(scale, scale);
-    } else {
-      context.translate(0, contentOffset);
-    }
-
-    if (template === "invitation" && invitation) {
-      context.fillStyle = foreground;
-      setFont(context, 72);
-      drawWrappedText(context, title, 72, 1080, 936, 82, 2);
-      context.fillStyle = secondary;
-      setFont(context, 29, 500);
-      drawWrappedText(context, `${date} · ${venue}`, 72, 1265, 936, 38, 2);
-      setFont(context, 27, 600);
-      context.fillText(`Hosted by ${invitation.hostName}`, 72, 1365, 936);
-      drawRule(context, 1415, rule);
-      context.fillStyle = foreground;
-      setFont(context, 62, 700, true);
-      context.fillText(invitation.priceLabel, 72, 1515);
-      context.textAlign = "right";
-      context.fillText(
-        `${invitation.goingCount}/${invitation.capacity}`,
-        1008,
-        1515
-      );
-      context.textAlign = "left";
-      context.fillStyle = secondary;
-      setFont(context, 27, 500);
-      context.fillText("per player", 72, 1565);
-      context.textAlign = "right";
-      context.fillText("Going", 1008, 1565);
-      context.textAlign = "left";
-      drawRule(context, 1615, rule);
-      context.fillText(invitationStateLabel(invitation), 72, 1675, 936);
-    }
-
-    if (template === "spots" && invitation) {
-      const spots = Math.max(0, invitation.capacity - invitation.goingCount);
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("WHO’S IN?", 72, 1020);
-      context.fillStyle = foreground;
-      setFont(context, invitation.waitlistOpen ? 132 : 190, 700, true);
-      context.fillText(
-        invitation.waitlistOpen ? "FULL" : String(spots),
-        72,
-        1250
-      );
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        invitation.waitlistOpen
-          ? "Waitlist open"
-          : `${spots} ${spots === 1 ? "spot" : "spots"} open`,
-        72,
-        1320
-      );
-      drawRule(context, 1390, rule);
-      context.fillStyle = foreground;
-      setFont(context, 54, 700);
-      drawWrappedText(context, title, 72, 1470, 936, 62, 2);
-      context.fillStyle = secondary;
-      setFont(context, 28, 500);
-      drawWrappedText(context, `${date} · ${venue}`, 72, 1615, 936, 36, 2);
-      setFont(context, 27, 600);
-      context.fillText(`Hosted by ${invitation.hostName}`, 72, 1680, 936);
-    }
-
-    if (template === "live") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText(`LIVE · AS OF ${storyAsOf ?? "THIS UPDATE"}`, 72, 1020);
-      context.fillStyle = foreground;
-      setFont(context, 72);
-      drawWrappedText(context, title, 72, 1120, 936, 82, 2);
-      context.fillStyle = secondary;
-      setFont(context, 30, 500);
-      drawWrappedText(context, venue, 72, 1290, 936, 38, 2);
-      drawRule(context, 1380, rule);
-      context.fillStyle = foreground;
-      setFont(context, 68, 700, true);
-      context.fillText(String(recap.matchCount), 72, 1500);
-      context.textAlign = "right";
-      context.fillText(String(courtCount), 1008, 1500);
-      context.textAlign = "left";
-      context.fillStyle = secondary;
-      setFont(context, 27, 500);
-      context.fillText("completed matches", 72, 1550);
-      context.textAlign = "right";
-      context.fillText(
-        courtCount === 1 ? "planned court" : "planned courts",
-        1008,
-        1550
-      );
-      context.textAlign = "left";
-    }
-
-    if (template === "live-pulse") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("MATCH PULSE", 72, 1030);
-      context.fillStyle = foreground;
-      setFont(context, 190, 700, true);
-      context.fillText(String(recap.matchCount), 72, 1280);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        recap.matchCount === 1
-          ? "match complete at this snapshot"
-          : "matches complete at this snapshot",
-        72,
-        1350
-      );
-      drawRule(context, 1420, rule);
-      context.fillStyle = foreground;
-      setFont(context, 54, 700);
-      drawWrappedText(context, title, 72, 1500, 936, 62, 2);
-      context.fillStyle = secondary;
-      setFont(context, 30, 500);
-      drawWrappedText(context, `Live at ${venue}`, 72, 1650, 936, 38, 2);
-    }
-
-    if (template === "overview") {
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, title, 936, 84));
-      context.fillText(title, 72, 1200, 936);
-      context.fillStyle = secondary;
-      setFont(context, 32, 500);
-      context.fillText(`${date} · ${venue}`, 72, 1260, 936);
-      drawRule(context, 1350, rule);
-      const stats = [
-        [String(recap.matchCount), "matches"],
-        [String(recap.totalPoints), "points"],
-        [recap.playMinutes ? String(recap.playMinutes) : "—", "minutes"],
-      ];
-      stats.forEach(([value, label], index) => {
-        const x = 72 + index * 312;
-        context.fillStyle = foreground;
-        setFont(context, 68, 700, true);
-        context.fillText(value, x, 1450);
-        context.fillStyle = secondary;
-        setFont(context, 27, 500);
-        context.fillText(label, x, 1495);
-      });
-      drawRule(context, 1565, rule);
-    }
-
-    if (template === "personal") {
-      const personal = viewerStanding(recap, viewerPlayerId);
-      if (personal) {
-        context.fillStyle = secondary;
-        setFont(context, 28);
-        context.fillText("MY GAME", 72, 1080);
-        context.fillStyle = foreground;
-        setFont(context, 150, 700, true);
-        context.fillText(`${personal.wins}–${personal.losses}`, 72, 1250);
-        setFont(context, fitText(context, personal.name, 936, 72));
-        context.fillText(personal.name, 72, 1340, 936);
-        drawRule(context, 1420, rule);
-        const stats = [
-          [`#${personal.rank}`, "standing"],
-          [signed(personal.differential), "point diff"],
-          [`${Math.round(personal.winPercentage * 100)}%`, "wins"],
-        ];
-        stats.forEach(([value, label], index) => {
-          const x = 72 + index * 312;
-          context.fillStyle = foreground;
-          setFont(context, 60, 700, true);
-          context.fillText(value, x, 1530);
-          context.fillStyle = secondary;
-          setFont(context, 27, 500);
-          context.fillText(label, x, 1575);
-        });
-      }
-    }
-
-    if (template === "winning-team" && recap.topPair) {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("WINNING TEAM", 72, 1080);
-      const names = recap.topPair.names.join(" + ");
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, names, 936, 82));
-      context.fillText(names, 72, 1190, 936);
-      setFont(context, 170, 700, true);
-      context.fillText(String(recap.topPair.wins), 72, 1420);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        `${recap.topPair.wins === 1 ? "win" : "wins"} together · ${recap.topPair.played} played`,
-        72,
-        1480
+    if (invitationCopy) {
+      drawFramedInvitation(
+        context,
+        invitationCopy,
+        foreground,
+        secondary,
+        rule
       );
     }
-
-    if (template === "leader" && recap.standout) {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("TOP OF THE TABLE", 72, 1080);
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, recap.standout.name, 936, 82));
-      context.fillText(recap.standout.name, 72, 1190, 936);
-      setFont(context, 160, 700, true);
-      context.fillText(
-        `${recap.standout.wins}–${recap.standout.losses}`,
-        72,
-        1400
-      );
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        `${signed(recap.standout.differential)} point difference · ${Math.round(recap.standout.winPercentage * 100)}% wins`,
-        72,
-        1470
-      );
+    if (recapCopy) {
+      drawStoryRecap(context, recapCopy, foreground, secondary, rule);
     }
-
-    if (template === "standings") {
-      context.fillStyle = foreground;
-      setFont(context, 68);
-      context.fillText("Session Standings", 72, 980);
-      recap.standings.slice(0, 5).forEach((row, index) => {
-        const y = 1080 + index * 115;
-        drawRule(context, y - 46, rule);
-        context.fillStyle = secondary;
-        setFont(context, 30, 600, true);
-        context.fillText(String(index + 1), 72, y);
-        context.fillStyle = foreground;
-        setFont(context, fitText(context, row.name, 540, 40, 30));
-        context.fillText(row.name, 135, y, 540);
-        context.textAlign = "right";
-        setFont(context, 34, 700, true);
-        context.fillText(
-          `${row.wins}–${row.losses} · ${signed(row.differential)}`,
-          1008,
-          y
-        );
-        context.textAlign = "left";
-      });
-    }
-
-    if (template === "closest" && recap.closestMatch) {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("CLOSEST FINISH", 72, 1060);
-      context.fillStyle = foreground;
-      setFont(context, 172, 700, true);
-      context.fillText(recap.closestMatch.score, 72, 1270);
-      const teams = `${recap.closestMatch.teamA.join(" + ")}  vs  ${recap.closestMatch.teamB.join(" + ")}`;
-      setFont(context, fitText(context, teams, 936, 46, 30));
-      context.fillText(teams, 72, 1380, 936);
-      context.fillStyle = secondary;
-      setFont(context, 30, 500);
-      context.fillText(
-        `${recap.closestMatch.courtLabel} · ${recap.closestMatch.margin}-point margin`,
-        72,
-        1450
-      );
-    }
-
-    if (template === "court" && recap.busiestCourt) {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("BUSIEST COURT", 72, 1080);
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, recap.busiestCourt.label, 936, 86));
-      context.fillText(recap.busiestCourt.label, 72, 1190, 936);
-      setFont(context, 180, 700, true);
-      context.fillText(String(recap.busiestCourt.matches), 72, 1430);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        recap.busiestCourt.matches === 1
-          ? "match played here"
-          : "matches played here",
-        72,
-        1490
-      );
-    }
-
-    if (template === "points") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("POINTS PLAYED", 72, 1080);
-      context.fillStyle = foreground;
-      setFont(context, 190, 700, true);
-      context.fillText(String(recap.totalPoints), 72, 1330);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        `across ${recap.matchCount} ${recap.matchCount === 1 ? "match" : "matches"}`,
-        72,
-        1400
-      );
-    }
-
-    if (template === "court-time") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("COURT TIME", 72, 1080);
-      context.fillStyle = foreground;
-      setFont(context, 190, 700, true);
-      context.fillText(String(recap.playMinutes), 72, 1330);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText("minutes of play together", 72, 1400);
-    }
-
-    if (template === "crew") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("THE CREW", 72, 1060);
-      const names = recap.standings.map((row) => row.name).join(" · ");
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, names, 936, 76, 34));
-      context.fillText(names, 72, 1190, 936);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(
-        `${recap.standings.length} players · one game`,
-        72,
-        1390
-      );
-    }
-
-    if (template === "custom") {
-      context.fillStyle = secondary;
-      setFont(context, 28);
-      context.fillText("OUR NIGHT", 72, 1060);
-      context.fillStyle = foreground;
-      setFont(context, fitText(context, customHeadline || title, 936, 88, 42));
-      context.fillText(customHeadline || title, 72, 1190, 936);
-      context.fillStyle = secondary;
-      setFont(context, 31, 500);
-      context.fillText(`${date} · ${venue}`, 72, 1280, 936);
-    }
-
-    if (customNote) {
-      drawRule(context, noteRuleY, rule);
-      context.fillStyle = foreground;
-      setFont(context, 30, 600);
-      drawWrappedText(context, customNote, 72, noteRuleY + 55, 936, 38, 2);
-    }
-    context.restore();
-
-    context.fillStyle = secondary;
-    setFont(context, 26, 500);
-    context.fillText(
-      "Pickleball with friends, kept together in Relay.",
-      72,
-      1880,
-      936
-    );
     if (scene.frame) {
       drawStoryTheme(context, theme, scene.frame);
     } else if (theme !== "minimal") {
@@ -837,6 +447,17 @@ export function RecapShareCard({
       context.restore();
     } else {
       drawStoryTheme(context, theme);
+    }
+    context.restore();
+    if (currentJoinKey.current !== joinKey)
+      throw new Error("Join details changed");
+    if (exportJoin) {
+      drawStoryJoin(
+        context,
+        exportJoin,
+        qr?.status === "ready" ? qr.canvas : undefined,
+        storyJoinPalette(surface)
+      );
     }
     return new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
@@ -866,16 +487,28 @@ export function RecapShareCard({
     URL.revokeObjectURL(url);
   }
 
-  async function download() {
+  async function download(linkOnly = false) {
+    if (pending || (qrBlocked && !linkOnly)) return;
     setPending(true);
     setMessage("");
     try {
-      const file = storyFile(await createCard());
+      const file = storyFile(await createCard(linkOnly));
+      if (currentJoinKey.current !== joinKey) {
+        setMessage("Join details changed. Export the current story again.");
+        return;
+      }
       saveFile(file);
-      setMessage("Story downloaded at 1080 × 1920.");
+      if (linkOnly) setJoinMode("link");
+      setMessage(
+        linkOnly
+          ? "Story downloaded with link only at 1080 × 1920."
+          : "Story downloaded at 1080 × 1920."
+      );
     } catch {
       setMessage(
-        "The story image couldn’t be created. Try another photo or background."
+        currentJoinKey.current !== joinKey
+          ? "Join details changed. Export the current story again."
+          : "The story image couldn’t be created. Try another photo or background."
       );
     } finally {
       setPending(false);
@@ -883,10 +516,15 @@ export function RecapShareCard({
   }
 
   async function share() {
+    if (pending || qrBlocked) return;
     setPending(true);
     setMessage("");
     try {
       const file = storyFile(await createCard());
+      if (currentJoinKey.current !== joinKey) {
+        setMessage("Join details changed. Export the current story again.");
+        return;
+      }
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           title: `${title} · ${phase === "published" ? "Game invitation" : phase === "live" ? "Live update" : "Game story"}`,
@@ -906,19 +544,16 @@ export function RecapShareCard({
     } catch (error) {
       if (!(error instanceof DOMException && error.name === "AbortError"))
         setMessage(
-          "The story image couldn’t be created. Try another photo or background."
+          currentJoinKey.current !== joinKey
+            ? "Join details changed. Export the current story again."
+            : "The story image couldn’t be created. Try another photo or background."
         );
     } finally {
       setPending(false);
     }
   }
 
-  const actionLabel =
-    template === "invitation" || template === "spots"
-      ? "Share invitation"
-      : phase === "live"
-        ? "Share live update"
-        : "Share story";
+  const actionLabel = "Share Story";
 
   return (
     <div className={styles.workspace}>
@@ -935,8 +570,7 @@ export function RecapShareCard({
         }}
         className={`${styles.carousel} rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25`}
       >
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <p className="text-sm font-bold">Preview</p>
+        <div className="mb-3 flex items-center justify-end gap-3">
           <Button type="button" variant="quiet" onClick={openPreview}>
             Enlarge preview
           </Button>
@@ -980,6 +614,7 @@ export function RecapShareCard({
         >
           <RecapStoryCard
             title={title}
+            join={join}
             venue={venue}
             date={date}
             accent={accent}
@@ -988,7 +623,6 @@ export function RecapShareCard({
             background={background}
             viewerPlayerId={viewerPlayerId}
             theme={theme}
-            layout={layout}
             overlay={overlay}
             photoPosition={photoPosition}
             photoRole={photoRole}
@@ -1033,7 +667,7 @@ export function RecapShareCard({
       </div>
       <div className="min-w-0">
         <fieldset className="min-w-0">
-          <legend className="text-sm font-bold">Story focus</legend>
+          <legend className="sr-only">Story focus</legend>
           <div className="mt-3">
             <TabChipRail
               label="Story focus options"
@@ -1047,35 +681,6 @@ export function RecapShareCard({
             />
           </div>
         </fieldset>
-
-        <div className={styles.actions}>
-          <Button type="button" onClick={share} disabled={pending}>
-            {pending ? (
-              <ButtonSpinner />
-            ) : (
-              <ShareNetwork aria-hidden size={16} />
-            )}
-            {pending ? "Creating story…" : actionLabel}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={download}
-            disabled={pending}
-            aria-label="Download PNG"
-          >
-            <DownloadSimple aria-hidden size={16} />
-            Download PNG
-          </Button>
-        </div>
-        <p className="mt-2 text-xs leading-5 text-muted">
-          9:16 portrait · Ready for stories and sharing
-        </p>
-        {message ? (
-          <p role="status" className="mt-2 text-sm font-medium text-muted">
-            {message}
-          </p>
-        ) : null}
 
         <div className="mt-6 border-y border-line">
           <button
@@ -1095,7 +700,6 @@ export function RecapShareCard({
               <span className="block text-sm font-bold">Customize story</span>
               <span className="mt-0.5 block truncate text-xs font-normal text-muted">
                 {storyThemes.find((item) => item.id === theme)?.label} ·{" "}
-                {storyLayouts.find((item) => item.id === layout)?.label} ·{" "}
                 {background.label}
               </span>
             </span>
@@ -1107,10 +711,28 @@ export function RecapShareCard({
           </button>
           {customizeOpen ? (
             <div id={customizationId} className="min-w-0 pb-4 pt-2">
+              {eligibleJoinUrl ? (
+                <fieldset className="mb-4 min-w-0">
+                  <legend className="text-sm font-bold">Join details</legend>
+                  <div className="mt-3">
+                    <TabChipRail
+                      label="Join details options"
+                      className={styles.optionRail}
+                      items={[
+                        { value: "qr", label: "QR + link" },
+                        { value: "link", label: "Link only" },
+                        { value: "off", label: "Off" },
+                      ]}
+                      value={joinMode}
+                      onChange={setJoinMode}
+                    />
+                  </div>
+                </fieldset>
+              ) : null}
               <TabChipRail
                 label="Customize options"
                 items={[
-                  { value: "layout", label: "Layout" },
+                  { value: "theme", label: "Theme" },
                   { value: "background", label: "Background" },
                   { value: "message", label: "Message" },
                 ]}
@@ -1118,7 +740,7 @@ export function RecapShareCard({
                 onChange={setCustomizeSection}
                 variant="underline"
               />
-              {customizeSection === "layout" ? (
+              {customizeSection === "theme" ? (
                 <div>
                   <fieldset className="mt-4 min-w-0">
                     <legend className="text-sm font-bold">Theme</legend>
@@ -1140,21 +762,6 @@ export function RecapShareCard({
                           ?.description
                       }
                     </p>
-                  </fieldset>
-                  <fieldset className="mt-4 min-w-0">
-                    <legend className="text-sm font-bold">Layout</legend>
-                    <div className="mt-3">
-                      <TabChipRail
-                        label="Story look"
-                        className={styles.optionRail}
-                        items={storyLayouts.map((item) => ({
-                          value: item.id,
-                          label: item.label,
-                        }))}
-                        value={layout}
-                        onChange={setLayout}
-                      />
-                    </div>
                   </fieldset>
                 </div>
               ) : null}
@@ -1266,7 +873,8 @@ export function RecapShareCard({
                             onChange={setPhotoPlacement}
                           />
                           <p className="mt-2 text-xs text-muted">
-                            Color swatches change the paper behind your photo.
+                            Moves the framed photo; game details fit in a
+                            separate space. Color swatches change the paper.
                           </p>
                         </fieldset>
                       ) : null}
@@ -1357,6 +965,36 @@ export function RecapShareCard({
             </div>
           ) : null}
         </div>
+        <div className={styles.actions}>
+          <Button type="button" onClick={share} disabled={pending || qrBlocked}>
+            {pending ? (
+              <ButtonSpinner />
+            ) : (
+              <ShareNetwork aria-hidden size={16} />
+            )}
+            {pending ? "Creating story…" : actionLabel}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void download()}
+            disabled={pending || qrBlocked}
+          >
+            <DownloadSimple aria-hidden size={16} />
+            Download PNG
+          </Button>
+        </div>
+        <StoryJoinHelp
+          blocked={qrBlocked}
+          failed={qr?.status === "error"}
+          pending={pending}
+          onLinkOnly={() => void download(true)}
+        />
+        {message ? (
+          <p role="status" className="mt-2 text-sm font-medium text-muted">
+            {message}
+          </p>
+        ) : null}
       </div>
 
       {previewOpen ? (
@@ -1396,6 +1034,7 @@ export function RecapShareCard({
             <div className={styles.expandedPortrait}>
               <RecapStoryCard
                 title={title}
+                join={join}
                 venue={venue}
                 date={date}
                 accent={accent}
@@ -1404,7 +1043,6 @@ export function RecapShareCard({
                 background={background}
                 viewerPlayerId={viewerPlayerId}
                 theme={theme}
-                layout={layout}
                 overlay={overlay}
                 photoPosition={photoPosition}
                 photoRole={photoRole}
@@ -1445,7 +1083,11 @@ export function RecapShareCard({
               </button>
             </div>
             <div className={`${styles.actions} w-full max-w-md`}>
-              <Button type="button" onClick={share} disabled={pending}>
+              <Button
+                type="button"
+                onClick={share}
+                disabled={pending || qrBlocked}
+              >
                 {pending ? (
                   <ButtonSpinner />
                 ) : (
@@ -1456,14 +1098,25 @@ export function RecapShareCard({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={download}
-                disabled={pending}
+                onClick={() => void download()}
+                disabled={pending || qrBlocked}
                 aria-label="Download PNG"
               >
                 <DownloadSimple aria-hidden size={16} />
-                Download
+                Download PNG
               </Button>
             </div>
+            {eligibleJoinUrl ? (
+              <div className="w-full max-w-md">
+                <StoryJoinHelp
+                  blocked={qrBlocked}
+                  failed={qr?.status === "error"}
+                  pending={pending}
+                  onLinkOnly={() => void download(true)}
+                  className="text-white/70"
+                />
+              </div>
+            ) : null}
             {message ? (
               <p
                 role="status"

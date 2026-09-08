@@ -72,7 +72,6 @@ export function RecapTemplatePreview({
         <RecapStoryCard
           {...common}
           template="personal"
-          layout="snapshot"
           overlay={46}
           photoPosition={58}
           customNote="Same time next Saturday?"
@@ -87,7 +86,6 @@ export function RecapTemplatePreview({
         <RecapStoryCard
           {...common}
           template="winning-team"
-          layout="snapshot"
           overlay={62}
           photoPosition={45}
           background={{
@@ -100,7 +98,6 @@ export function RecapTemplatePreview({
         <RecapStoryCard
           {...common}
           template="standings"
-          layout="snapshot"
           background={{ id: "ink", label: "Ink", color: "#11131a" }}
           className="w-full min-w-[190px] snap-center border border-white/10 shadow-[0_4px_8px_rgb(20_24_34_/_0.1)] sm:min-w-0 sm:rotate-2"
         />

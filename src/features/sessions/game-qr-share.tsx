@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
 
+import { drawGameQr } from "./game-qr";
+
 const subscribeToBrowser = () => () => undefined;
 
 function trackQrShare(
@@ -86,16 +88,40 @@ function drawWrappedText(
   return y + visible.length * lineHeight;
 }
 
+type QrCardPalette = {
+  surface: string;
+  ink: string;
+  muted: string;
+  line: string;
+};
+
+// Read the rendered semantic roles at download time, including theme changes
+// made while the dialog is open. The scan field itself is always white.
+function readQrCardPalette(
+  card: HTMLElement,
+  details: HTMLElement
+): QrCardPalette {
+  const style = window.getComputedStyle(card);
+  return {
+    surface: style.backgroundColor,
+    ink: style.color,
+    muted: window.getComputedStyle(details).color,
+    line: style.borderTopColor,
+  };
+}
+
 function createBrandedQrCanvas({
   qr,
   title,
   details,
   scanLabel,
+  palette,
 }: {
   qr: HTMLCanvasElement;
   title: string;
   details: string;
   scanLabel: string;
+  palette: QrCardPalette;
 }) {
   const canvas = document.createElement("canvas");
   canvas.width = 1080;
@@ -103,7 +129,7 @@ function createBrandedQrCanvas({
   const context = canvas.getContext("2d");
   if (!context) return null;
 
-  context.fillStyle = "#172033";
+  context.fillStyle = palette.surface;
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   context.fillStyle = "#91aa1e";
@@ -115,21 +141,20 @@ function createBrandedQrCanvas({
   context.arc(76, 78, 26, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = "#ffffff";
+  context.fillStyle = palette.ink;
   context.font = "700 38px Inter, system-ui, sans-serif";
   context.textBaseline = "middle";
   context.fillText("Relay", 128, 82);
-  context.font = "500 22px Inter, system-ui, sans-serif";
-  context.fillStyle = "#bfd4df";
-  context.fillText("Pickleball plans in one link", 128, 122);
 
   context.textBaseline = "alphabetic";
-  context.fillStyle = "#ffffff";
   context.font = "700 58px Inter, system-ui, sans-serif";
   const titleBottom = drawWrappedText(context, title, 80, 220, 920, 66, 2);
   context.font = "500 28px Inter, system-ui, sans-serif";
-  context.fillStyle = "#bfd4df";
+  context.fillStyle = palette.muted;
   drawWrappedText(context, details, 80, titleBottom + 18, 920, 38, 2);
+
+  context.fillStyle = palette.line;
+  context.fillRect(0, 432, canvas.width, 2);
 
   roundedRect(context, 120, 460, 840, 840, 28);
   context.fillStyle = "#ffffff";
@@ -137,7 +162,7 @@ function createBrandedQrCanvas({
   context.imageSmoothingEnabled = false;
   context.drawImage(qr, 156, 496, 768, 768);
 
-  context.fillStyle = "#ffffff";
+  context.fillStyle = palette.ink;
   context.font = "700 28px Inter, system-ui, sans-serif";
   context.textAlign = "center";
   context.fillText(scanLabel, 540, 1410);
@@ -173,6 +198,9 @@ export function GameQrShare({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLParagraphElement>(null);
+  const headerDescription = description?.trim();
   const titleId = useId();
   const descriptionId = useId();
   const mounted = useSyncExternalStore(
@@ -193,15 +221,9 @@ export function GameQrShare({
     try {
       const absolute = new URL(url, window.location.origin).toString();
       absoluteUrlRef.current = absolute;
-      const { toCanvas } = await import("qrcode");
       const canvas = canvasRef.current;
       if (!canvas) return;
-      await toCanvas(canvas, absolute, {
-        width: 1024,
-        margin: 4,
-        errorCorrectionLevel: "M",
-        color: { dark: "#111827", light: "#ffffff" },
-      });
+      await drawGameQr(canvas, absolute);
       // qrcode writes its output size as inline CSS. Keep the 1024px bitmap for download,
       // but constrain its displayed size to the dialog frame.
       canvas.style.width = "100%";
@@ -232,12 +254,15 @@ export function GameQrShare({
 
   async function downloadQr() {
     const canvas = canvasRef.current;
-    if (!canvas || status !== "ready") return;
+    const card = cardRef.current;
+    const cardDetails = detailsRef.current;
+    if (!canvas || !card || !cardDetails || status !== "ready") return;
     const brandedCanvas = createBrandedQrCanvas({
       qr: canvas,
       title,
       details,
       scanLabel,
+      palette: readQrCardPalette(card, cardDetails),
     });
     if (!brandedCanvas) {
       setMessage("The QR code couldn’t be downloaded. Try copying the link.");
@@ -292,7 +317,7 @@ export function GameQrShare({
               onClose={onClose}
               aria-labelledby={titleId}
               className="max-h-[calc(100dvh-2rem)] overflow-y-auto"
-              aria-describedby={descriptionId}
+              aria-describedby={headerDescription ? descriptionId : undefined}
             >
               <div className="p-5 sm:p-6">
                 <div className="flex items-start justify-between gap-4">
@@ -300,13 +325,14 @@ export function GameQrShare({
                     <h2 id={titleId} className="text-lg font-[680]">
                       {heading ?? `Scan to join ${title}`}
                     </h2>
-                    <p
-                      id={descriptionId}
-                      className="mt-1 text-sm leading-6 text-muted"
-                    >
-                      {description ??
-                        `${details}. Players can scan this with their phone camera to view the plan and RSVP.`}
-                    </p>
+                    {headerDescription ? (
+                      <p
+                        id={descriptionId}
+                        className="mt-1 text-sm leading-6 text-muted"
+                      >
+                        {headerDescription}
+                      </p>
+                    ) : null}
                   </div>
                   <Button
                     type="button"
@@ -319,8 +345,11 @@ export function GameQrShare({
                   </Button>
                 </div>
 
-                <div className="mx-auto mt-5 w-full max-w-80 overflow-hidden rounded-2xl bg-court text-white ring-1 ring-black/10">
-                  <div className="border-b border-white/10 px-5 pb-5 pt-4">
+                <div
+                  ref={cardRef}
+                  className="mx-auto mt-5 w-full max-w-80 overflow-hidden rounded-2xl border border-line bg-surface text-ink"
+                >
+                  <div className="border-b border-line px-5 pb-5 pt-4">
                     <div
                       aria-hidden="true"
                       className="flex items-center gap-2 text-sm font-bold tracking-[-0.025em]"
@@ -328,10 +357,13 @@ export function GameQrShare({
                       <RelayMark className="h-5 w-5" />
                       <span>Relay</span>
                     </div>
-                    <p className="mt-4 break-words text-xl font-bold leading-6 text-white">
+                    <p className="mt-4 break-words text-xl font-bold leading-6 text-ink">
                       {title}
                     </p>
-                    <p className="mt-1.5 break-words text-xs leading-5 text-court-line">
+                    <p
+                      ref={detailsRef}
+                      className="mt-1.5 break-words text-xs leading-5 text-muted"
+                    >
                       {details}
                     </p>
                   </div>
@@ -354,7 +386,7 @@ export function GameQrShare({
                         </p>
                       ) : null}
                     </div>
-                    <p className="mt-4 text-center text-sm font-semibold text-white">
+                    <p className="mt-4 text-center text-sm font-semibold text-ink">
                       {scanLabel}
                     </p>
                   </div>

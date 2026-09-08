@@ -65,7 +65,6 @@ createRoot(root).render(
             background={babyPink}
             template="standings"
             theme={id}
-            layout="center"
           />
         </section>
       ))}
@@ -99,7 +98,6 @@ createRoot(root).render(
                     waitlistOpen: false,
                   }}
                   theme={id}
-                  layout={layout}
                   phase="live"
                   storyAsOf="September 5 · 10:45 PM · current update"
                 />

@@ -1,4 +1,5 @@
 import { Broadcast } from "@phosphor-icons/react/dist/ssr";
+import type { ReactNode } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
@@ -47,6 +48,7 @@ type SessionPlayProps = {
   storyHref: string;
   continuation?: PostGameContinuation;
   showPostGameFeedback?: boolean;
+  headerActions?: ReactNode;
 };
 
 function playerName(
@@ -74,6 +76,7 @@ export async function SessionPlay({
   storyHref,
   continuation,
   showPostGameFeedback = false,
+  headerActions,
 }: SessionPlayProps) {
   if (data.session.status === "completed") {
     const recap = await getSessionRecapData(data.session.id);
@@ -150,6 +153,7 @@ export async function SessionPlay({
   return (
     <div>
       <PlaySectionTabs
+        headerActions={headerActions}
         courts={
           <section>
             <div className="mb-4 flex items-center justify-between gap-4">

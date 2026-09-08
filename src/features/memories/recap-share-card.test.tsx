@@ -9,9 +9,10 @@ import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
+import { recapShareTemplates } from "./recap-share";
 import { RecapShareCard } from "./recap-share-card";
 import * as storyPhoto from "./story-photo";
-import { storyScene } from "./story-scene";
+import { storyRecapLayout } from "./story-recap-layout";
 import * as storyTheme from "./story-theme";
 
 vi.mock("@/features/analytics/actions", () => ({
@@ -80,6 +81,81 @@ afterEach(() => {
 });
 
 describe("RecapShareCard", () => {
+  it.each([
+    ...recapShareTemplates(recap, "a").map((item) => ({
+      ...item,
+      phase: "completed" as const,
+    })),
+    ...recapShareTemplates(recap, "a", "live")
+      .filter((item) => item.id !== "invitation")
+      .map((item) => ({ ...item, phase: "live" as const })),
+  ])(
+    "uses matching preview/export hierarchy for $label",
+    async ({ id, label, phase }) => {
+      const context = {
+        fillRect: vi.fn(),
+        fillText: vi.fn(),
+        beginPath: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        save: vi.fn(),
+        restore: vi.fn(),
+        translate: vi.fn(),
+        scale: vi.fn(),
+      };
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+        context as unknown as CanvasRenderingContext2D
+      );
+      vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+        (callback) => callback(new Blob(["png"], { type: "image/png" }))
+      );
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:recap");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined
+      );
+      const { container } = renderCard({ phase });
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      const layout = storyRecapLayout({
+        ...baseProps,
+        template: id,
+        theme: "minimal",
+        courtCount: 0,
+        customHeadline: "Our kind of game.",
+        customNote: "",
+        hasPhoto: false,
+        photoRole: "foreground",
+        photoPlacement: "center",
+      })!;
+      const facts = container.querySelector(
+        '[data-story-region="recap-facts"]'
+      )!;
+      expect(container.querySelector("[data-story-fitted-content]")).toBeNull();
+      for (const block of layout.blocks) {
+        const element = facts.querySelector(`[data-story-fact="${block.id}"]`);
+        expect(element).toHaveAttribute("font-size", String(block.size));
+        expect(element).toHaveAttribute("x", String(block.x));
+        expect(element).toHaveAttribute("y", String(block.baseline));
+        expect(element).toHaveTextContent(block.lines.join(" "));
+      }
+      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      await waitFor(() =>
+        expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledOnce()
+      );
+      for (const block of layout.blocks) {
+        block.lines.forEach((line, index) =>
+          expect(context.fillText).toHaveBeenCalledWith(
+            line,
+            block.x,
+            block.baseline + index * block.size * 1.25
+          )
+        );
+      }
+      expect(context.scale).not.toHaveBeenCalled();
+      expect(context.translate).not.toHaveBeenCalled();
+    }
+  );
+
   it("offers many truthful portrait stories", () => {
     renderCard();
 
@@ -112,7 +188,7 @@ describe("RecapShareCard", () => {
     expect(
       screen.getByRole("button", { name: "Previous expanded story" })
     ).toBeEnabled();
-    expect(screen.getAllByRole("button", { name: "Share story" })).toHaveLength(
+    expect(screen.getAllByRole("button", { name: "Share Story" })).toHaveLength(
       2
     );
     expect(
@@ -129,8 +205,8 @@ describe("RecapShareCard", () => {
     renderCard();
 
     expect(
-      screen.getByText("9:16 portrait · Ready for stories and sharing")
-    ).toBeInTheDocument();
+      screen.queryByText("9:16 portrait · Ready for stories and sharing")
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Download PNG" })
     ).toHaveTextContent("Download PNG");
@@ -140,7 +216,7 @@ describe("RecapShareCard", () => {
     ).toBeVisible();
   });
 
-  it("combines layout, palette, personal copy, and explicit export controls", () => {
+  it("combines theme, palette, personal copy, and explicit export controls", () => {
     renderCard();
 
     expect(
@@ -148,11 +224,9 @@ describe("RecapShareCard", () => {
         ?.parentElement
     ).toHaveClass("mt-3");
     fireEvent.click(screen.getByText("Customize story"));
-    expect(screen.getByRole("button", { name: "Snapshot" })).toBeEnabled();
     expect(
-      screen.getByRole("group", { name: "Story look" }).parentElement
-        ?.parentElement
-    ).toHaveClass("mt-3");
+      screen.queryByRole("group", { name: "Story look" })
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Background" }));
     expect(
       screen.getByRole("button", { name: "Violet background" })
@@ -165,7 +239,7 @@ describe("RecapShareCard", () => {
       "maxlength",
       "72"
     );
-    expect(screen.getByRole("button", { name: "Share story" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
     expect(
       screen.queryByRole("button", { name: "Copy link" })
@@ -173,17 +247,50 @@ describe("RecapShareCard", () => {
     expect(
       screen.queryByRole("button", { name: "Show QR" })
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Layout" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Theme" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Background" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Message" })).toBeVisible();
   });
 
-  it("keeps exports before progressive tools and retains edits when tools close", () => {
+  it.each(["Minimal", "Scrapbook", "Coquette", "Court Pop", "Retro Rally"])(
+    "has no structural Layout controls or summary for %s",
+    (theme) => {
+      renderCard();
+      const customize = screen.getByRole("button", { name: /Customize story/ });
+      fireEvent.click(customize);
+      fireEvent.click(screen.getByRole("button", { name: theme }));
+      expect(
+        screen.queryByRole("group", { name: "Story look" })
+      ).not.toBeInTheDocument();
+      for (const name of [
+        "Layout",
+        "Courtside",
+        "Center court",
+        "Poster",
+        "Snapshot",
+      ]) {
+        expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+        expect(customize).not.toHaveTextContent(name);
+      }
+      expect(customize).toHaveTextContent(`${theme} · Violet`);
+      fireEvent.click(screen.getByRole("button", { name: "Done customizing" }));
+      fireEvent.click(customize);
+      fireEvent.click(screen.getByRole("button", { name: "Minimal" }));
+      expect(customize).toHaveTextContent("Minimal · Violet");
+      expect(screen.queryByText("Layout")).not.toBeInTheDocument();
+    }
+  );
+
+  it("keeps exports after progressive tools and retains edits when tools close", () => {
     renderCard();
     const customize = screen.getByRole("button", { name: /Customize story/ });
     const download = screen.getByRole("button", { name: "Download PNG" });
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeVisible();
+    expect(screen.queryByText("Preview")).not.toBeInTheDocument();
+    expect(screen.queryByText(/9:16 portrait/)).not.toBeInTheDocument();
+    expect(screen.getByText("Story focus")).toHaveClass("sr-only");
     expect(
-      download.compareDocumentPosition(customize) &
+      customize.compareDocumentPosition(download) &
         Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     fireEvent.click(customize);
@@ -324,6 +431,9 @@ describe("RecapShareCard", () => {
             "hasn’t been uploaded"
           )
         );
+        fireEvent.click(
+          screen.getByRole("button", { name: "Full background" })
+        );
       }
       fireEvent.click(
         screen.getByRole("button", { name: "Expand story preview" })
@@ -362,16 +472,13 @@ describe("RecapShareCard", () => {
 
   it.each(
     storyTheme.storyThemes.flatMap(({ id: theme, label: themeLabel }) =>
-      ["Courtside", "Center court", "Poster", "Snapshot"].flatMap(
-        (layoutLabel) =>
-          (["none", "top", "center", "bottom"] as const)
-            .filter((placement) => theme !== "minimal" || placement !== "none")
-            .map((placement) => ({ theme, themeLabel, layoutLabel, placement }))
-      )
+      (["none", "top", "center", "bottom"] as const)
+        .filter((placement) => theme !== "minimal" || placement !== "none")
+        .map((placement) => ({ theme, themeLabel, placement }))
     )
   )(
-    "contains transformed Match pulse text for $theme / $layoutLabel / $placement",
-    async ({ theme, themeLabel, layoutLabel, placement }) => {
+    "contains full-width Match pulse text for $theme / $placement",
+    async ({ theme, themeLabel, placement }) => {
       let transform = { scale: 1, y: 0 };
       const stack: Array<typeof transform> = [];
       const textBounds: Array<{
@@ -402,7 +509,7 @@ describe("RecapShareCard", () => {
           transform.scale *= y;
         },
         measureText(text: string) {
-          const size = Number(this.font.match(/(\d+)px/)?.[1] ?? 30);
+          const size = Number(this.font.match(/([\d.]+)px/)?.[1] ?? 30);
           return {
             width: text.length * size * 0.5,
             actualBoundingBoxAscent: size * 0.8,
@@ -447,7 +554,6 @@ describe("RecapShareCard", () => {
       fireEvent.click(screen.getByRole("button", { name: "Match pulse" }));
       fireEvent.click(screen.getByText("Customize story"));
       fireEvent.click(screen.getByRole("button", { name: themeLabel }));
-      fireEvent.click(screen.getByRole("button", { name: layoutLabel }));
       if (placement !== "none") {
         fireEvent.click(screen.getByRole("button", { name: "Background" }));
         fireEvent.click(screen.getByRole("button", { name: "Our court" }));
@@ -456,7 +562,7 @@ describe("RecapShareCard", () => {
         );
         fireEvent.click(
           within(
-            screen.getByRole("group", { name: "Photo placement" })
+            screen.getByRole("group", { name: "Photo placement options" })
           ).getByRole("button", {
             name: placement[0].toUpperCase() + placement.slice(1),
           })
@@ -475,36 +581,44 @@ describe("RecapShareCard", () => {
       await waitFor(() =>
         expect(screen.getByRole("status")).toHaveTextContent("1080 × 1920")
       );
-      const facts = storyScene(
+      const layout = storyRecapLayout({
+        ...baseProps,
+        template: "live-pulse",
         theme,
-        placement !== "none",
-        "foreground",
-        placement === "none" ? "center" : placement
-      ).facts;
+        courtCount: 0,
+        title: "Saturday evening pickleball with all our friends together",
+        venue:
+          "The community pickleball courts beside the riverside recreation pavilion and the neighborhood sporting grounds",
+        hasPhoto: placement !== "none",
+        photoRole: "foreground",
+        photoPlacement: placement === "none" ? "center" : placement,
+        customHeadline: "",
+        customNote:
+          placement === "center"
+            ? "Another wonderful evening together with all our pickleball friends again"
+            : "",
+      })!;
       const renderedFacts = textBounds.filter(
-        ({ baseline }) => baseline >= 940 && baseline < 1880
+        ({ baseline }) => baseline >= 160
       );
-      // These are bounds of the renderer's actual fillText calls after its affine
-      // transform, not merely a comparison of the shared scene's rectangles.
-      expect(renderedFacts.some(({ baseline }) => baseline === 1688)).toBe(
-        true
+      expect(renderedFacts).toHaveLength(
+        layout.blocks.reduce((sum, block) => sum + block.lines.length, 0)
       );
-      expect(renderedFacts.some(({ baseline }) => baseline === 1562)).toBe(
-        true
-      );
-      if (placement === "center")
-        expect(renderedFacts.some(({ baseline }) => baseline === 1673)).toBe(
-          true
-        );
       for (const text of renderedFacts) {
-        expect(text.top).toBeGreaterThanOrEqual(facts.y - 0.01);
-        expect(text.bottom).toBeLessThanOrEqual(facts.y + facts.height + 0.01);
+        const bounds =
+          layout.scene.heading && text.baseline < layout.scene.facts.y
+            ? layout.scene.heading
+            : layout.scene.facts;
+        expect(text.top).toBeGreaterThanOrEqual(bounds.y - 0.01);
+        expect(text.bottom).toBeLessThanOrEqual(
+          bounds.y + bounds.height + 0.01
+        );
       }
     }
   );
 
   it.each(["top", "center", "bottom"] as const)(
-    "preserves local photo/crop across theme/layout edits and exports %s foreground",
+    "preserves local photo/crop across theme edits and exports %s foreground",
     async (placement) => {
       const context = {
         fillRect: vi.fn(),
@@ -554,7 +668,7 @@ describe("RecapShareCard", () => {
         expect(screen.getByLabelText("Photo crop")).toBeVisible()
       );
       expect(
-        screen.getByRole("button", { name: "Full background" })
+        screen.getByRole("button", { name: "Framed foreground" })
       ).toHaveAttribute("aria-pressed", "true");
       fireEvent.change(screen.getByLabelText("Photo crop"), {
         target: { value: "75" },
@@ -571,9 +685,8 @@ describe("RecapShareCard", () => {
         screen.getByRole("button", { name: "Baby Pink background" })
       );
       expect(screen.queryByLabelText("Text contrast")).not.toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+      fireEvent.click(screen.getByRole("button", { name: "Theme" }));
       fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
-      fireEvent.click(screen.getByRole("button", { name: "Poster" }));
       const preview = container.querySelector("[data-story-theme]");
       expect(preview).toHaveAttribute("data-photo-placement", placement);
       expect(preview).toHaveStyle({ backgroundColor: "#ffe0eb" });
@@ -588,20 +701,36 @@ describe("RecapShareCard", () => {
           1080,
           1920,
           75,
-          storyScene("coquette", true, "foreground", placement).photo
+          storyRecapLayout({
+            ...baseProps,
+            template: "overview",
+            theme: "coquette",
+            courtCount: 0,
+            hasPhoto: true,
+            photoRole: "foreground",
+            photoPlacement: placement,
+            customHeadline: "",
+            customNote: "",
+          })!.scene.photo
         )
       );
     }
   );
 
-  it("uses the same foreground placement controls for an existing session photo", () => {
+  it("defaults an existing session photo to framed foreground and allows full background", () => {
     const { container } = renderCard({
       photos: [{ id: "court", url: "/court.png", alt: "Our court" }],
     });
     fireEvent.click(screen.getByText("Customize story"));
     fireEvent.click(screen.getByRole("button", { name: "Background" }));
     fireEvent.click(screen.getByRole("button", { name: "Our court" }));
-    fireEvent.click(screen.getByRole("button", { name: "Framed foreground" }));
+    expect(
+      screen.getByRole("button", { name: "Framed foreground" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
+      "data-photo-role",
+      "foreground"
+    );
     fireEvent.click(screen.getByRole("button", { name: "Bottom" }));
     expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
       "data-photo-placement",
@@ -613,7 +742,7 @@ describe("RecapShareCard", () => {
       "background"
     );
     expect(
-      screen.queryByRole("group", { name: "Photo placement" })
+      screen.queryByRole("group", { name: "Photo placement options" })
     ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Text contrast")).toBeVisible();
   });
@@ -672,8 +801,11 @@ describe("RecapShareCard", () => {
       "hasn’t been uploaded"
     );
     expect(screen.getByLabelText(/Photo crop/)).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
-    expect(screen.getByRole("button", { name: "Snapshot" })).toHaveAttribute(
+    fireEvent.click(screen.getByRole("button", { name: "Theme" }));
+    expect(
+      screen.queryByRole("button", { name: "Snapshot" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Minimal" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
@@ -692,22 +824,20 @@ describe("RecapShareCard", () => {
       },
       courtCount: 3,
     });
-    expect(screen.getByText("Free")).toBeVisible();
-    expect(screen.getByText("8/8")).toBeVisible();
+    expect(screen.getByText("Free · per player")).toBeVisible();
+    expect(screen.getByText("8/8 Going")).toBeVisible();
     expect(screen.getByText("Full · waitlist open")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Who’s in?" })).toBeEnabled();
     expect(
-      screen.getByRole("button", { name: "Share invitation" })
-    ).toBeEnabled();
+      screen.queryByRole("button", { name: "Who’s in?" })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
 
     rerender(<RecapShareCard {...baseProps} phase="live" courtCount={3} />);
     fireEvent.click(screen.getByRole("button", { name: "We’re playing" }));
-    expect(screen.getByText("completed matches")).toBeVisible();
-    expect(screen.getByText("3")).toBeVisible();
+    expect(screen.getByText("1 completed match")).toBeVisible();
+    expect(screen.getByText("3 planned courts")).toBeVisible();
     expect(screen.getByRole("button", { name: "Match pulse" })).toBeEnabled();
-    expect(
-      screen.getByRole("button", { name: "Share live update" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
     expect(screen.queryByText("Van")).not.toBeInTheDocument();
   });
 });

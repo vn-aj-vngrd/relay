@@ -1,5 +1,6 @@
 "use client";
 
+import { Broadcast } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 
@@ -49,9 +50,13 @@ export function PlayRosterSurface({
   if (live) {
     return (
       <section
-        className="mb-5 flex flex-wrap items-center justify-end gap-3"
+        className="flex flex-wrap items-center justify-end gap-3"
         aria-label="Play roster access"
       >
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
+          <Broadcast aria-hidden size={17} />
+          Play in progress
+        </span>
         <Button
           ref={trigger}
           type="button"

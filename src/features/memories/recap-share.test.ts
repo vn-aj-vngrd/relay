@@ -26,9 +26,9 @@ describe("recap share templates", () => {
     const recap = buildSessionRecap([match], players);
     expect(
       recapShareTemplates(recap, "a", "published").map(({ id }) => id)
-    ).toEqual(["invitation", "spots"]);
+    ).toEqual(["invitation"]);
     expect(recapShareTemplates(recap, "a", "live").map(({ id }) => id)).toEqual(
-      ["live", "live-pulse", "invitation", "spots"]
+      ["live", "live-pulse", "invitation"]
     );
   });
 

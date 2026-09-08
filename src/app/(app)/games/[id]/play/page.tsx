@@ -1,4 +1,3 @@
-import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -77,20 +76,11 @@ export default async function PlayPage({
 
   return (
     <>
-      <GamePageIntro
-        title={completed ? "Recap" : "Play"}
-        action={
-          data.session.status === "live" ? (
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
-              <Broadcast aria-hidden size={17} />
-              Play in progress
-            </span>
-          ) : undefined
-        }
-      />
+      <GamePageIntro title={completed ? "Recap" : "Play"} />
       <div className={completed ? "mx-auto w-full max-w-6xl" : undefined}>
-        {!ended ? roster : null}
+        {!ended && data.session.status !== "live" ? roster : null}
         <SessionPlay
+          headerActions={data.session.status === "live" ? roster : undefined}
           data={data}
           viewer={viewer}
           setupHref={`/games/${data.session.id}/play/setup`}

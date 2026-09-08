@@ -1,4 +1,3 @@
-import { Broadcast } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -72,19 +71,10 @@ export default async function PublicPlayPage({
       style={sessionAccentStyle(data.session.accentColor)}
     >
       <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="sr-only">{completed ? "Recap" : "Play"}</h1>
-          </div>
-          {data.session.status === "live" ? (
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
-              <Broadcast aria-hidden size={17} />
-              Play in progress
-            </span>
-          ) : null}
-        </div>
-        {!ended ? roster : null}
+        <h1 className="sr-only">{completed ? "Recap" : "Play"}</h1>
+        {!ended && data.session.status !== "live" ? roster : null}
         <SessionPlay
+          headerActions={data.session.status === "live" ? roster : undefined}
           data={data}
           viewer={viewer}
           storyHref={`/s/${slug}/story`}

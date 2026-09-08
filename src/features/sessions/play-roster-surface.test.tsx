@@ -50,6 +50,30 @@ function Roster({ status = "live" }: { status?: string }) {
 }
 
 describe("Play roster surface", () => {
+  it("places live status and Players in the same wrapping header row", () => {
+    render(<Roster />);
+    const status = screen.getByText("Play in progress");
+    const players = screen.getByRole("button", { name: "Players (4)" });
+    expect(status.parentElement).toBe(players.parentElement);
+    expect(players.parentElement).toHaveClass(
+      "flex",
+      "flex-wrap",
+      "items-center",
+      "gap-3"
+    );
+    expect(
+      status.compareDocumentPosition(players) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it.each(["published", "completed", "cancelled"])(
+    "omits live header status for %s games",
+    (status) => {
+      render(<Roster status={status} />);
+      expect(screen.queryByText("Play in progress")).not.toBeInTheDocument();
+    }
+  );
+
   it("opens and closes through URL intent without stripping unrelated state or resetting roster input", () => {
     const { rerender } = render(<Roster />);
     fireEvent.click(screen.getByRole("button", { name: "Players (4)" }));

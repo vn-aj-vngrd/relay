@@ -26,6 +26,42 @@ describe("Story scene geometry", () => {
     expect(storyScene("minimal", false, "foreground").framed).toBe(false);
   });
 
+  it("reclaims Center whitespace for recap facts while retaining distinct placements", () => {
+    for (const { id } of storyThemes) {
+      const top = storyScene(id, true, "foreground", "top");
+      const center = storyScene(id, true, "foreground", "center");
+      const bottom = storyScene(id, true, "foreground", "bottom");
+      expect(center.facts.height).toBe(778); // Previously only 498px.
+      expect(center.facts.width).toBe(936);
+      expect(center.frame!.height).toBeGreaterThanOrEqual(740);
+      expect(center.frame!.y).toBeGreaterThan(top.frame!.y);
+      expect(bottom.frame!.y).toBeGreaterThan(center.frame!.y);
+      expect(center.facts.y + center.facts.height).toBeLessThanOrEqual(1810);
+    }
+  });
+
+  it.each(storyThemes)(
+    "$id reserves footer space without resizing background photography or art",
+    ({ id }) => {
+      const off = storyScene(id, true, "background", "center", true, {
+        bottom: 1810,
+      });
+      for (const bottom of [1504, 1696, 1810]) {
+        const scene = storyScene(id, true, "background", "center", true, {
+          bottom,
+        });
+        expect(scene.photo).toEqual(off.photo);
+        expect(scene.art).toEqual(off.art);
+        expect(scene.facts.x).toBe(off.facts.x);
+        expect(scene.facts.width).toBe(off.facts.width);
+        expect(scene.facts.y).toBe(id === "minimal" ? 160 : 680);
+        expect(scene.facts.y + scene.facts.height).toBe(bottom);
+        if (id !== "minimal")
+          expect(overlaps(scene.art, scene.facts)).toBe(false);
+      }
+    }
+  );
+
   it("keeps the Pink ID with a brighter Story-only palette", () => {
     expect(babyPink).toEqual({
       id: "story:pink",

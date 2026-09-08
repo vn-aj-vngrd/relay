@@ -33,6 +33,7 @@ export function SessionMemories({
   goingCount,
   hostName,
   storyAsOf,
+  joinUrl,
 }: {
   session: {
     id: string;
@@ -57,6 +58,7 @@ export function SessionMemories({
   goingCount: number;
   hostName: string;
   storyAsOf: string;
+  joinUrl?: string | null;
 }) {
   const photos = (memory?.media ?? []).flatMap((item) =>
     item.url
@@ -115,6 +117,7 @@ export function SessionMemories({
         <section aria-label="Create a story">
           <RecapShareCard
             sessionId={session.id}
+            joinUrl={joinUrl}
             title={session.title}
             venue={session.venueName}
             date={date}

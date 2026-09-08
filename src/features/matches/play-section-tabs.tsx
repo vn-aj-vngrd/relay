@@ -12,6 +12,7 @@ type PlaySectionTabsProps = {
   results?: ReactNode;
   standings?: ReactNode;
   manage?: ReactNode;
+  headerActions?: ReactNode;
 };
 
 export function PlaySectionTabs({
@@ -20,6 +21,7 @@ export function PlaySectionTabs({
   results,
   standings,
   manage,
+  headerActions,
 }: PlaySectionTabsProps) {
   const [activeSection, setActiveSection] = useState<PlaySection>("courts");
   const sections = [
@@ -44,13 +46,18 @@ export function PlaySectionTabs({
 
   return (
     <div>
-      <div className="mb-7 sm:mb-8">
-        <TabChipRail
-          label="Live Play sections"
-          items={sections}
-          value={activeSection}
-          onChange={setActiveSection}
-        />
+      <div className="mb-7 flex min-w-0 flex-col gap-4 sm:mb-8 md:flex-row md:items-center md:justify-between">
+        {headerActions ? (
+          <div className="md:order-2 md:shrink-0">{headerActions}</div>
+        ) : null}
+        <div className="min-w-0 md:order-1 md:flex-1">
+          <TabChipRail
+            label="Live Play sections"
+            items={sections}
+            value={activeSection}
+            onChange={setActiveSection}
+          />
+        </div>
       </div>
       {sections.map((section) => (
         <div

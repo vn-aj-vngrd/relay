@@ -4,6 +4,31 @@ import { describe, expect, it } from "vitest";
 import { PlaySectionTabs } from "./play-section-tabs";
 
 describe("PlaySectionTabs", () => {
+  it("shares one desktop toolbar with stable right-side roster actions", () => {
+    render(
+      <PlaySectionTabs
+        courts={<p>Active courts</p>}
+        queue={<p>Waiting players</p>}
+        headerActions={<button type="button">Players (8)</button>}
+      />
+    );
+    const players = screen.getByRole("button", { name: "Players (8)" });
+    const actions = players.parentElement;
+    const tabs = screen.getByRole("group", { name: "Live Play sections" })
+      .parentElement?.parentElement;
+    expect(actions).toHaveClass("md:order-2", "md:shrink-0");
+    expect(tabs).toHaveClass("min-w-0", "md:order-1", "md:flex-1");
+    expect(actions?.parentElement).toBe(tabs?.parentElement);
+    expect(actions?.parentElement).toHaveClass(
+      "flex-col",
+      "md:flex-row",
+      "md:items-center"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Queue" }));
+    expect(screen.getByRole("button", { name: "Players (8)" })).toBe(players);
+    expect(players).toBeVisible();
+  });
+
   it("defaults to Courts and switches sections with pressed-state controls", () => {
     render(
       <PlaySectionTabs

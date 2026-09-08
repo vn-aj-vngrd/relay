@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/session";
 import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
+import { storyJoinUrl } from "@/features/memories/story-join-url";
 import { sessionAccentStyle } from "@/features/sessions/accent";
 import { getPublicSession } from "@/features/sessions/queries";
 import { getSessionViewer } from "@/features/sessions/viewer";
@@ -48,6 +49,7 @@ export default async function PublicStoryPage({
         <div>
           <SessionMemories
             session={data.session}
+            joinUrl={storyJoinUrl(data.session)}
             recap={recap}
             memory={memory}
             canContribute={canContribute}

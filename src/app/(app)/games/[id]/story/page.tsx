@@ -4,6 +4,7 @@ import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { requireUser } from "@/features/auth/session";
 import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
+import { storyJoinUrl } from "@/features/memories/story-join-url";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canManageSessionWorkspace } from "@/features/sessions/session-access";
 
@@ -35,6 +36,7 @@ export default async function GameStoryPage({
       <div className="mx-auto w-full max-w-6xl">
         <SessionMemories
           session={data.session}
+          joinUrl={storyJoinUrl(data.session)}
           recap={recap}
           memory={memory}
           canContribute={canContribute}

@@ -143,6 +143,7 @@ describe("GameQrShare", () => {
         width: 1024,
         margin: 4,
         errorCorrectionLevel: "M",
+        color: { dark: "#111827", light: "#ffffff" },
       })
     );
     const qr = screen.getByRole("img", { name: "QR code for Friends Night" });
@@ -184,6 +185,103 @@ describe("GameQrShare", () => {
     expect(mocks.track).toHaveBeenCalledTimes(2);
   });
 
+  it.each([undefined, "", "   "])(
+    "omits empty header descriptions (%s) and keeps details only in the themed card",
+    async (description) => {
+      render(<GameQrShare {...props} description={description} />);
+      fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+      const dialog = await screen.findByRole("dialog");
+
+      expect(dialog).not.toHaveAttribute("aria-describedby");
+      expect(dialog).not.toHaveTextContent("Players can scan this");
+      expect(screen.getAllByText(props.details)).toHaveLength(1);
+      const details = screen.getByText(props.details);
+      const card = details.parentElement?.parentElement;
+      expect(card).toHaveClass("bg-surface", "text-ink", "border-line");
+      expect(card).not.toHaveClass("bg-court", "text-white");
+      expect(details).toHaveClass("text-muted");
+      expect(details.parentElement).toHaveClass("border-line");
+      expect(screen.getByText("Scan to view and RSVP")).toHaveClass("text-ink");
+      expect(
+        screen.getByRole("img", { name: "QR code for Friends Night" })
+          .parentElement
+      ).toHaveClass("bg-white", "p-3");
+    }
+  );
+
+  it.each([
+    [
+      "light",
+      "rgb(252, 252, 251)",
+      "rgb(26, 26, 30)",
+      "rgb(92, 93, 101)",
+      "rgb(214, 214, 211)",
+    ],
+    [
+      "dark",
+      "rgb(24, 24, 28)",
+      "rgb(236, 236, 239)",
+      "rgb(162, 163, 172)",
+      "rgb(54, 54, 62)",
+    ],
+  ])(
+    "resolves the current %s card palette at download and preserves the white scan field",
+    async (_theme, surface, ink, muted, line) => {
+      const fillStyle = vi.spyOn(mocks.canvasContext, "fillStyle", "set");
+      render(<GameQrShare {...props} />);
+      fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Download PNG" })
+        ).toBeEnabled()
+      );
+      const details = screen.getByText(props.details);
+      const card = details.parentElement?.parentElement;
+      if (!card) throw new Error("QR card missing");
+      // jsdom does not load Tailwind. Supply resolved semantic colors after open
+      // to also catch palettes cached before a user's appearance change.
+      Object.assign(card.style, {
+        backgroundColor: surface,
+        color: ink,
+        borderTopColor: line,
+      });
+      details.style.color = muted;
+
+      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      await waitFor(() =>
+        expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled()
+      );
+      expect(fillStyle.mock.calls.map(([color]) => color)).toEqual([
+        surface,
+        "#91aa1e",
+        "#b7d62e",
+        ink,
+        muted,
+        line,
+        "#ffffff",
+        ink,
+      ]);
+      expect(mocks.canvasContext.fillRect).toHaveBeenCalledWith(
+        0,
+        0,
+        1080,
+        1500
+      );
+      expect(mocks.canvasContext.drawImage).toHaveBeenCalledWith(
+        screen.getByRole("img", { name: "QR code for Friends Night" }),
+        156,
+        496,
+        768,
+        768
+      );
+      expect(mocks.canvasContext.fillText).not.toHaveBeenCalledWith(
+        "Pickleball plans in one link",
+        expect.any(Number),
+        expect.any(Number)
+      );
+    }
+  );
+
   it("supports contextual story copy while preserving the default scan copy", async () => {
     const { unmount } = render(<GameQrShare {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
@@ -202,9 +300,13 @@ describe("GameQrShare", () => {
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Show QR" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Scan to open Friends Night",
+    });
+    expect(dialog).toHaveAccessibleDescription("Open this game in Relay.");
     expect(
-      await screen.findByRole("dialog", { name: "Scan to open Friends Night" })
-    ).toHaveTextContent("Open this game in Relay.");
+      document.getElementById(dialog.getAttribute("aria-describedby") ?? "")
+    ).toBe(screen.getByText("Open this game in Relay."));
     expect(screen.getByText("Scan to open game")).toBeVisible();
   });
 

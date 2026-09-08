@@ -186,9 +186,13 @@ describe("LiveCourt", () => {
       name: "Court 2 full-screen scoreboard",
     });
     expect(dialog).toHaveAttribute("open");
-    fireEvent.click(
-      screen.getByRole("button", { name: "Close expanded scoreboard" })
-    );
+    const close = screen.getByRole("button", {
+      name: "Close expanded scoreboard",
+    });
+    expect(close).toHaveClass("h-10", "w-10");
+    expect(close.closest("header")).toHaveClass("pr-2", "pl-5", "sm:pl-8");
+    expect(close.closest("header")).not.toHaveClass("sm:px-8");
+    fireEvent.click(close);
     expect(dialog).not.toHaveAttribute("open");
   });
 

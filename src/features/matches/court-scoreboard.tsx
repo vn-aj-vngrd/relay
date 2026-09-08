@@ -93,7 +93,7 @@ function CourtScoreboard({
       className={`border border-line bg-surface ${expanded ? "flex h-full flex-col overflow-y-auto overscroll-contain rounded-none border-0 [padding:env(safe-area-inset-top)_env(safe-area-inset-right)_env(safe-area-inset-bottom)_env(safe-area-inset-left)]" : "overflow-hidden rounded-xl"}`}
     >
       <header
-        className={`flex shrink-0 items-center justify-between gap-3 border-b border-line ${expanded ? "min-h-16 px-5 sm:px-8" : "min-h-14 px-4"}`}
+        className={`flex shrink-0 items-center justify-between gap-3 border-b border-line ${expanded ? "min-h-16 pl-5 pr-2 sm:pl-8" : "min-h-14 px-4"}`}
       >
         <div className="min-w-0">
           <p className="sport-label truncate text-primary">

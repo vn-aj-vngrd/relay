@@ -2,6 +2,8 @@
   display: grid;
   min-width: 0;
   width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
   align-items: start;
   gap: 1.5rem;
 }
@@ -64,7 +66,8 @@
 
 @media (min-width: 48rem) {
   .workspace {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    max-width: 56rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
     gap: 2rem;
   }
 
@@ -87,28 +90,12 @@
     min-width: 0;
     flex-wrap: wrap;
   }
-
-  .actions > button {
-    flex: 0 1 auto;
-  }
 }
 
-@media (min-width: 64rem) {
-  .workspace {
-    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
-    gap: 3rem;
-  }
-}
-
-/* Short landscapes benefit from adjacency, not a sticky portrait that can
-   cover the game tabs or leave its own navigation below the viewport. */
+/* Keep the centered story canvas bounded on short landscapes. */
 @media (min-width: 36rem) and (max-height: 31.25rem) and (
     orientation: landscape
   ) {
-  .workspace {
-    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
-  }
-
   .portrait {
     width: min(100%, 28.125svh);
   }
