@@ -143,8 +143,10 @@ export async function assignPlayerShare(
       `/games/${session.id}`,
       `/games/${session.id}/settings`,
       `/games/${session.id}/payments`,
+      `/games/${session.id}/story`,
       `/s/${session.slug}`,
       `/s/${session.slug}/payments`,
+      `/s/${session.slug}/story`,
     ])
       revalidatePath(path);
     return { success: true };

@@ -6,10 +6,13 @@ import { useState } from "react";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { sessionAccent } from "@/features/sessions/accent";
 import {
-  formatSessionDateLong,
+  formatSessionDate,
   formatSessionTime,
-  peso,
 } from "@/features/sessions/format";
+import {
+  type PlayerPriceInput,
+  playerPriceText,
+} from "@/features/sessions/player-price";
 
 import { MemoryPhotoForm } from "./memory-photo-form";
 import type { SessionRecap as SessionRecapData } from "./recap";
@@ -34,6 +37,7 @@ export function SessionMemories({
   hostName,
   storyAsOf,
   joinUrl,
+  price,
 }: {
   session: {
     id: string;
@@ -59,6 +63,7 @@ export function SessionMemories({
   hostName: string;
   storyAsOf: string;
   joinUrl?: string | null;
+  price?: PlayerPriceInput;
 }) {
   const photos = (memory?.media ?? []).flatMap((item) =>
     item.url
@@ -71,7 +76,7 @@ export function SessionMemories({
         ]
       : []
   );
-  const date = `${formatSessionDateLong(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)}`;
+  const date = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)}`;
   const accent = sessionAccent(session.accentColor);
   const completed = session.status === "completed";
   const showPhotos = completed || photos.length > 0;
@@ -128,12 +133,7 @@ export function SessionMemories({
             phase={session.status as "published" | "live" | "completed"}
             invitation={{
               hostName,
-              priceLabel:
-                session.playerPriceCents === null
-                  ? "Price not set"
-                  : session.playerPriceCents === 0
-                    ? "Free"
-                    : (peso(session.playerPriceCents) ?? "Price not set"),
+              priceLabel: playerPriceText(price ?? session),
               goingCount,
               capacity: session.capacity,
               requiresApproval: session.requiresApproval,

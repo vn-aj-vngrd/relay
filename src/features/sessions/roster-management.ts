@@ -84,6 +84,8 @@ function invalidateRoster(session: { id: string; slug: string }) {
   revalidatePath(`/games/${session.id}/play/setup`);
   revalidatePath(`/s/${session.slug}/play`);
   revalidatePath(`/games/${session.id}/payments`);
+  revalidatePath(`/games/${session.id}/story`);
+  revalidatePath(`/s/${session.slug}/story`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/s/${session.slug}`);

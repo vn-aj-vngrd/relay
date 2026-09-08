@@ -91,8 +91,10 @@ function revalidatePlayerPriceSurfaces(session: { id: string; slug: string }) {
   revalidatePath(`/games/${session.id}`);
   revalidatePath(`/games/${session.id}/settings`);
   revalidatePath(`/games/${session.id}/payments`);
+  revalidatePath(`/games/${session.id}/story`);
   revalidatePath(`/s/${session.slug}`);
   revalidatePath(`/s/${session.slug}/payments`);
+  revalidatePath(`/s/${session.slug}/story`);
 }
 
 function hasPaymentCapabilityForMembership(

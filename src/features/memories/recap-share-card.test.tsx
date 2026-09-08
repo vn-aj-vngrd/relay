@@ -824,7 +824,7 @@ describe("RecapShareCard", () => {
       },
       courtCount: 3,
     });
-    expect(screen.getByText("Free · per player")).toBeVisible();
+    expect(screen.getByText("Free")).toBeVisible();
     expect(screen.getByText("8/8 Going")).toBeVisible();
     expect(screen.getByText("Full · waitlist open")).toBeVisible();
     expect(

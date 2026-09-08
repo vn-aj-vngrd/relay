@@ -109,8 +109,10 @@ export async function respondToPaymentAdjustment(
       `/games/${row.session.id}`,
       `/games/${row.session.id}/payments`,
       `/games/${row.session.id}/settings`,
+      `/games/${row.session.id}/story`,
       `/s/${row.session.slug}`,
       `/s/${row.session.slug}/payments`,
+      `/s/${row.session.slug}/story`,
     ])
       revalidatePath(path);
     return { success: true };

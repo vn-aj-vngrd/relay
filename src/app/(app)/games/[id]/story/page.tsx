@@ -5,6 +5,7 @@ import { requireUser } from "@/features/auth/session";
 import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
 import { storyJoinUrl } from "@/features/memories/story-join-url";
+import { getSessionPlayerPrice } from "@/features/sessions/player-price-summary-query";
 import { getSessionForWorkspace } from "@/features/sessions/queries";
 import { canManageSessionWorkspace } from "@/features/sessions/session-access";
 
@@ -16,7 +17,11 @@ export default async function GameStoryPage({
   const user = await requireUser();
   const data = await getSessionForWorkspace((await params).id, user.id);
   if (!data) notFound();
-  const { recap, memory } = await getSessionRecap(data.session.id);
+  const [{ recap, memory }, price] = await Promise.all([
+    getSessionRecap(data.session.id),
+    getSessionPlayerPrice(data.session.id),
+  ]);
+  if (!price) notFound();
   const canContribute =
     canManageSessionWorkspace(data.access) || data.membership?.rsvp === "going";
   const goingCount = data.roster.filter(
@@ -36,6 +41,7 @@ export default async function GameStoryPage({
       <div className="mx-auto w-full max-w-6xl">
         <SessionMemories
           session={data.session}
+          price={price}
           joinUrl={storyJoinUrl(data.session)}
           recap={recap}
           memory={memory}

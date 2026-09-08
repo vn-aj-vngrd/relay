@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -153,6 +154,8 @@ describe("payment choice persistence", () => {
           paymentCollectionRequested: false,
         })
       );
+      expect(revalidatePath).toHaveBeenCalledWith(`/games/${session.id}/story`);
+      expect(revalidatePath).toHaveBeenCalledWith(`/s/${session.slug}/story`);
       if (choice === "unspecified") expect(mocks.insert).not.toHaveBeenCalled();
     }
   );

@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { drawFramedInvitation } from "./story-framed-invitation";
+import {
+  formatSessionDate,
+  formatSessionTime,
+} from "@/features/sessions/format";
+import {
+  drawFramedInvitation,
+  framedInvitationLayout,
+} from "./story-framed-invitation";
 import { storyInvitationLayout } from "./story-invitation-layout";
 import { storyJoinGeometry } from "./story-join";
 import { storyThemes } from "./story-theme";
@@ -22,6 +29,36 @@ const copy = {
 };
 
 describe("nonframed footer-aware invitation rows", () => {
+  it.each([
+    ["2026-09-08T16:00:00Z", "2026-09-08T16:45:00Z"],
+    ["2026-09-30T03:30:00Z", "2026-09-30T04:45:00Z"],
+    ["2026-09-30T15:30:00Z", "2026-09-30T16:45:00Z"],
+  ])(
+    "keeps compact schedules on one line without shrinking: %s",
+    (start, end) => {
+      const date = `${formatSessionDate(new Date(start))} · ${formatSessionTime(new Date(start), new Date(end))}`;
+      for (const { id: theme } of storyThemes) {
+        for (const layoutFor of [
+          storyInvitationLayout,
+          framedInvitationLayout,
+        ]) {
+          const layout = layoutFor({
+            ...copy,
+            date,
+            theme,
+            template: "invitation",
+            joinMode: "qr",
+          });
+          const schedule = layout.blocks.find(
+            (block) => block.id === "schedule"
+          )!;
+          expect(schedule.lines).toEqual([date]);
+          expect(schedule.size).toBe(36);
+          expect(layout.factor).toBe(1);
+        }
+      }
+    }
+  );
   for (const { id: theme } of storyThemes) {
     it.each(["invitation", "spots"] as const)(
       `${theme}/%s translates ordinary copy without scaling type, width or artwork`,

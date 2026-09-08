@@ -25,6 +25,25 @@ const copy = {
 const preview = 384 / 1080;
 
 describe("framed invitation readable allocation", () => {
+  it.each([
+    "Free",
+    "Price not set",
+    "Player share pending",
+    "₱125.25 per player",
+    "₱125.25 per player · Current player share",
+  ])("preserves the complete price disclosure: %s", (priceLabel) => {
+    const layout = framedInvitationLayout({
+      ...copy,
+      invitation: { ...copy.invitation, priceLabel },
+      theme: "minimal",
+      placement: "center",
+      joinMode: "qr",
+      template: "invitation",
+    });
+    expect(
+      layout.blocks.find((block) => block.id === "price")!.lines.join(" ")
+    ).toBe(priceLabel);
+  });
   for (const { id: theme } of storyThemes) {
     for (const placement of ["top", "center", "bottom"] as const) {
       for (const joinMode of ["qr", "link", "off"] as const) {

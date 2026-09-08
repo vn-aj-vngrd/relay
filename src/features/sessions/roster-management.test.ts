@@ -197,6 +197,8 @@ describe("manageRoster", () => {
       `/games/${session.id}/play/setup`,
       `/s/${session.slug}/play`,
       `/games/${session.id}/payments`,
+      `/games/${session.id}/story`,
+      `/s/${session.slug}/story`,
       `/games/${session.id}/settings`,
       `/games/${session.id}`,
       `/s/${session.slug}`,

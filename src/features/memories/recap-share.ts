@@ -4,6 +4,7 @@ export type StoryPhase = "published" | "live" | "completed";
 
 export type StoryInvitationFacts = {
   hostName: string;
+  /** Complete player-price disclosure, including units when applicable. */
   priceLabel: string;
   goingCount: number;
   capacity: number;

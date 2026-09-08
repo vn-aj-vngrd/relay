@@ -94,7 +94,7 @@ export function invitationCopyBlocks(
   };
   const price = {
     id: "price",
-    text: `${invitation.priceLabel} · per player`,
+    text: invitation.priceLabel,
     size: 36,
     weight: 500,
     gapAfter: 32,

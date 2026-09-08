@@ -8,6 +8,7 @@ vi.mock("@/features/analytics/actions", () => ({
   trackSharedSessionEvent: vi.fn(),
 }));
 
+import type { PlayerPriceInput } from "@/features/sessions/player-price";
 import { buildSessionRecap, type RecapMatch } from "./recap";
 import { SessionMemories } from "./session-memories";
 
@@ -31,10 +32,12 @@ const match: RecapMatch = {
 
 function renderMemories(
   status: "draft" | "published" | "live" | "completed" | "cancelled",
-  visibility: "public" | "link" | "private" = "link"
+  visibility: "public" | "link" | "private" = "link",
+  price?: PlayerPriceInput
 ) {
   return render(
     <SessionMemories
+      price={price}
       session={{
         id: "session",
         title: "Saturday Night Pickle",
@@ -63,6 +66,41 @@ function renderMemories(
 }
 
 describe("SessionMemories", () => {
+  it.each([
+    [{ playerPriceCents: null, hasExpense: false }, "Price not set"],
+    [{ playerPriceCents: null, hasExpense: true }, "Player share pending"],
+    [{ playerPriceCents: 0, hasExpense: false }, "Free"],
+    [
+      { playerPriceCents: 12525, hasExpense: true, priceIsFixed: true },
+      "₱125.25 per player",
+    ],
+    [
+      { playerPriceCents: 12525, hasExpense: true, priceIsFixed: false },
+      "₱125.25 per player · Current player share",
+    ],
+  ] as const)(
+    "uses current shared pricing facts in the invitation: %j",
+    (price, label) => {
+      renderMemories("published", "link", price);
+      expect(
+        screen.getByText((_, element) => {
+          if (element?.tagName.toLowerCase() !== "text") return false;
+          const lines = Array.from(element.querySelectorAll("tspan"));
+          return (
+            (lines.length
+              ? lines.map((line) => line.textContent?.trim()).join(" ")
+              : element.textContent) === label
+          );
+        })
+      ).toBeVisible();
+      if (label !== "Price not set")
+        expect(screen.queryByText("Price not set")).not.toBeInTheDocument();
+      expect(screen.queryByText("Free · per player")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Player share pending · per player")
+      ).not.toBeInTheDocument();
+    }
+  );
   it("makes a scheduled invitation with truthful plan and roster facts", () => {
     renderMemories("published");
     expect(screen.queryByText("Invite the crew")).not.toBeInTheDocument();
@@ -71,7 +109,8 @@ describe("SessionMemories", () => {
         "Turn the current plan, price, and roster availability into a clear invitation."
       )
     ).not.toBeInTheDocument();
-    expect(screen.getByText("₱350 · per player")).toBeVisible();
+    expect(screen.getByText("Wed, Aug 19 · 6:00 PM–8:00 PM")).toBeVisible();
+    expect(screen.getByText("₱350 per player")).toBeVisible();
     expect(screen.getByText("6/8 Going")).toBeVisible();
     expect(screen.getByText("Hosted by Van")).toBeVisible();
     expect(

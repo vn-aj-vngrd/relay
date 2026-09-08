@@ -5,6 +5,7 @@ import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
 import { storyJoinUrl } from "@/features/memories/story-join-url";
 import { sessionAccentStyle } from "@/features/sessions/accent";
+import { getSessionPlayerPrice } from "@/features/sessions/player-price-summary-query";
 import { getPublicSession } from "@/features/sessions/queries";
 import { getSessionViewer } from "@/features/sessions/viewer";
 
@@ -16,11 +17,13 @@ export default async function PublicStoryPage({
   const slug = (await params).slug;
   const data = await getPublicSession(slug);
   if (!data) notFound();
-  const [{ recap, memory }, viewer, user] = await Promise.all([
+  const [{ recap, memory }, viewer, user, price] = await Promise.all([
     getSessionRecap(data.session.id),
     getSessionViewer(data.session.id, data.session.slug),
     getCurrentUser(),
+    getSessionPlayerPrice(data.session.id),
   ]);
+  if (!price) notFound();
   const viewerPlayer = viewer?.player;
   const canContribute = Boolean(
     (user && data.session.hostId === user.id) ||
@@ -49,6 +52,7 @@ export default async function PublicStoryPage({
         <div>
           <SessionMemories
             session={data.session}
+            price={price}
             joinUrl={storyJoinUrl(data.session)}
             recap={recap}
             memory={memory}
