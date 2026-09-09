@@ -25,6 +25,7 @@ import {
 } from "@/db/schema";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { requireUser } from "@/features/auth/session";
+import { cleanupDeletedSessionMedia } from "@/features/billing/media";
 import { assertRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -68,6 +69,17 @@ export async function deleteSessionAction(
   let memoryPaths: string[] = [];
   try {
     await db.transaction(async (tx) => {
+      const [current] = await tx
+        .select()
+        .from(sessions)
+        .where(eq(sessions.id, session.id))
+        .for("update");
+      if (
+        !current ||
+        current.hostId !== user.id ||
+        current.title !== parsed.data.confirmation.trim()
+      )
+        throw new Error("Session changed before deletion");
       const [expenseRows, matchRows, memoryRows] = await Promise.all([
         tx
           .select({ id: expenses.id, receiptPath: expenses.receiptStoragePath })
@@ -158,6 +170,10 @@ export async function deleteSessionAction(
     console.error("Deleted session storage cleanup failed", error)
   );
 
+  await cleanupDeletedSessionMedia(session.id).catch(() =>
+    console.error("Deleted game still has media requiring cleanup", session.id)
+  );
+  revalidatePath("/settings/plan", "layout");
   revalidatePath("/home");
   revalidatePath("/games");
   redirect("/games");

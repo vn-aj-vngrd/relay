@@ -99,6 +99,8 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 
 ### Marketing highlights
 
+The main hero is one read-only game-day composition, not a carousel: a shared plan anchors the roster and chat, a dominant dark court with live-score and queue examples, and payment tracking beside a real Story preview. All core capabilities remain present without navigation or automatic replacement. Compact marketing snapshots reuse product avatars, semantic colors, score typography and the Story renderer; they intentionally omit mutation controls and disclose their illustrative lifecycle data. Desktop places the court between supporting columns; smaller screens reflow the same content without horizontal clipping. Product preview frames use the surface background throughout, including the gutters around width-bounded scoreboards.
+
 The landing page explains Relay twice: first as a concise promise, then as an early lifecycle highlight rail before the detailed chapters. The rail follows Find → Plan → Invite → Organize → Play → Repay → Stay in sync → Remember. Find is the optional Court Finder branch and clearly states that coverage is limited to the Philippines and that the reviewed inventory is still growing. Each large horizontal card makes one claim, names the concrete capability set, and uses a crisp component snapshot of the real Relay interface rather than a scaled screenshot. Touch users swipe; keyboard and pointer users receive explicit previous/next controls. The rail never auto-advances. Detailed sections below provide evidence rather than repeating the card copy.
 
 ## Session surfaces
@@ -244,7 +246,7 @@ Use 72px canonical subject headings (88px custom headlines), 144px focal numbers
 Product motion communicates state in 140–220ms using ease-out-quart. Modal dialogs share one restrained reveal: the backdrop fades as the surface settles into focus, then both reverse more quickly on dismissal; reduced-motion removes the spatial movement while retaining brief state feedback. Marketing motion has a separate editorial pace: native touch scrolling, gently eased wheel input, and one 650–900ms reveal as each major chapter enters.
 
 - Product: score change, queue reorder, RSVP confirmation, payment confirmation, sheet transition, and match completion.
-- Marketing: small rise-and-mask, paired horizontal entrances, or short child sequences chosen to match the section’s composition. A section animates once; nearby elements move as one orchestrated moment.
+- Marketing: Roleway-inspired eased opacity, rise-and-mask and paired entrances, adapted to Relay without blur, animated shadows or bounce. The hero message stays readable while the product scene assembles plan → crew → court → follow-through with a bounded 230ms stagger. Long chapters observe copy and product surfaces independently so a phone never consumes the demo reveal before reaching it. Initial in-view targets receive a painted start frame; reveals run once, keyboard focus immediately exposes content, and preference changes reveal pending content and stop smooth scrolling. Native touch scrolling and visible no-script/no-observer fallbacks remain intact.
 - Navigation and button feedback may use subtle color and 1–2px press movement.
 - Avoid ambient motion, bounce, decorative loops, scroll hijacking on touch devices, and identical effects repeated down an entire page.
 - `prefers-reduced-motion` restores native scrolling, removes transforms, and shortens feedback to near-instant.

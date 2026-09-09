@@ -46,6 +46,10 @@ export default async function GameStoryPage({
           recap={recap}
           memory={memory}
           canContribute={canContribute}
+          uploadsDisabled={
+            !data.session.participantImagesEnabled &&
+            data.session.hostId !== user.id
+          }
           viewerPlayerId={data.membership?.id}
           goingCount={goingCount}
           hostName={hostName}

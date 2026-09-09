@@ -4,6 +4,7 @@ import {
   ChartBar,
   ChatText,
   ClockCounterClockwise,
+  CreditCard,
   Gauge,
   MapPin,
   Users,
@@ -15,6 +16,7 @@ import { usePathname } from "next/navigation";
 const items = [
   { href: "/admin", label: "Overview", icon: Gauge },
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/billing", label: "Billing", icon: CreditCard },
   { href: "/admin/insights", label: "Insights", icon: ChartBar },
   { href: "/admin/sessions", label: "Games", icon: Volleyball },
   { href: "/admin/courts", label: "Courts", icon: MapPin },

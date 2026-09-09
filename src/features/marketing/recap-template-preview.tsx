@@ -56,6 +56,18 @@ const common = {
   recap,
 };
 
+export function HeroStoryPreview() {
+  return (
+    <RecapStoryCard
+      {...common}
+      date="Aug 22, 2026"
+      template="winning-team"
+      background={{ id: "ink", label: "Ink", color: "#11131a" }}
+      className="w-full"
+    />
+  );
+}
+
 export function RecapTemplatePreview({
   cardsOnly = false,
 }: {

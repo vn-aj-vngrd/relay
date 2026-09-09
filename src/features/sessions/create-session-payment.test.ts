@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   values: vi.fn(),
   source: vi.fn(),
   requireUser: vi.fn(),
+  checkCreation: vi.fn(),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -20,6 +21,9 @@ vi.mock("@/features/players/profile", () => ({
 vi.mock("@/features/analytics/events", () => ({
   trackSessionMilestone: vi.fn(),
 }));
+vi.mock("@/features/billing/usage", () => ({
+  checkGameCreation: mocks.checkCreation,
+}));
 vi.mock("@/features/payments/sync", () => ({
   reconcileUnpaidExpenseShares: vi.fn(),
 }));
@@ -32,6 +36,7 @@ vi.mock("@/db/client", () => ({
     select: () => ({ from: () => ({ where: async () => [] }) }),
     transaction: async (work: (tx: unknown) => Promise<unknown>) =>
       work({
+        query: { sessions: { findFirst: mocks.source } },
         insert: (table: unknown) => ({
           values: (values: Record<string, unknown>) => {
             mocks.values(table, values);
@@ -42,12 +47,19 @@ vi.mock("@/db/client", () => ({
   },
 }));
 
-import { expenses, paymentAccounts, sessions } from "@/db/schema";
+import {
+  billingGameUsage,
+  expenses,
+  paymentAccounts,
+  sessions,
+} from "@/db/schema";
+import { BillingError } from "@/features/billing/domain";
 import { createSessionAction } from "./actions";
 
 function form(choice: string) {
   const data = new FormData();
   for (const [key, value] of Object.entries({
+    creationKey: "11111111-1111-4111-8111-111111111111",
     title: "Saturday pickle",
     venue: "Central court",
     date: new Date(Date.now() + 86_400_000 * 2).toISOString().slice(0, 10),
@@ -65,9 +77,56 @@ function form(choice: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.requireUser.mockResolvedValue({ id: "host" });
+  mocks.checkCreation.mockResolvedValue({
+    existingSessionId: null,
+    createdAt: new Date(),
+  });
 });
 
 describe("creation payment intent", () => {
+  it("does not consume quota when validation fails", async () => {
+    const data = form("free");
+    data.set("title", "");
+    expect(await createSessionAction({}, data)).toHaveProperty("error");
+    expect(mocks.checkCreation).not.toHaveBeenCalled();
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("does not create records when monthly usage is exhausted", async () => {
+    mocks.checkCreation.mockRejectedValue(
+      new BillingError("Monthly allowance reached")
+    );
+    expect(await createSessionAction({}, form("free"))).toEqual({
+      error: "Monthly allowance reached",
+    });
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("returns the existing game on a successful creation retry", async () => {
+    mocks.checkCreation.mockResolvedValue({
+      existingSessionId: "existing-game",
+      createdAt: new Date(),
+    });
+    mocks.source.mockResolvedValue({
+      id: "existing-game",
+      courtCount: 2,
+      capacity: 8,
+      groupId: null,
+    });
+    await expect(createSessionAction({}, form("free"))).rejects.toThrow(
+      "existing-game"
+    );
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("records usage in the same transaction as a successful game", async () => {
+    await expect(createSessionAction({}, form("free"))).rejects.toThrow(
+      "redirect:"
+    );
+    expect(mocks.values).toHaveBeenCalledWith(billingGameUsage, {
+      userId: "host",
+      requestKey: "11111111-1111-4111-8111-111111111111",
+      sessionId: "new-game",
+      createdAt: expect.any(Date),
+    });
+  });
   it.each(["collect", "free", "unspecified"])(
     "publishes %s without creating payment records",
     async (choice) => {

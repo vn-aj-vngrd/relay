@@ -3,6 +3,19 @@ import { describe, expect, it } from "vitest";
 import { buildBreadcrumbItems } from "./app-breadcrumbs";
 
 describe("buildBreadcrumbItems", () => {
+  it("labels subscription requests without displaying IDs or linking to a missing collection route", () => {
+    expect(
+      buildBreadcrumbItems(
+        "/settings/plan/requests/859aab56-17cd-44fc-bd52-716d15c8d93f"
+      )
+    ).toEqual([
+      { href: "/home", label: "Home" },
+      { href: "/settings", label: "Settings" },
+      { href: "/settings/plan", label: "Plan & usage" },
+      { href: undefined, label: "Payment requests" },
+      { href: undefined, label: "Payment request" },
+    ]);
+  });
   it("builds an authenticated collection trail", () => {
     expect(buildBreadcrumbItems("/games")).toEqual([
       { href: "/home", label: "Home" },

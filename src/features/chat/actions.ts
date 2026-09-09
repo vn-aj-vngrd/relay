@@ -6,10 +6,10 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { messageReactions, messages, sessions } from "@/db/schema";
+import { BillingError, mediaPolicy } from "@/features/billing/domain";
+import { storeGameMedia } from "@/features/billing/media";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
-import { getServerEnv } from "@/lib/env";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { validateChatImageFile } from "./config";
 
@@ -30,7 +30,7 @@ export async function sendMessage(
   if (body.length > 1000)
     return { error: "Keep messages under 1,000 characters." };
   const imageValidation = hasImage
-    ? await validateChatImageFile(image, getServerEnv().CHAT_IMAGE_MAX_BYTES)
+    ? await validateChatImageFile(image, mediaPolicy.chat.maxBytes)
     : null;
   if (imageValidation && "error" in imageValidation)
     return { error: imageValidation.error };
@@ -42,7 +42,7 @@ export async function sendMessage(
   if (!viewer || !canParticipate(viewer.player.rsvp))
     return { error: "Join this session before sending messages." };
   const session = await db.query.sessions.findFirst({
-    columns: { status: true },
+    columns: { status: true, hostId: true, participantImagesEnabled: true },
     where: eq(sessions.id, sessionId.data),
   });
   if (session?.status === "cancelled")
@@ -55,44 +55,48 @@ export async function sendMessage(
     return {
       error: "Messages are sending too quickly. Wait a moment and try again.",
     };
-  if (hasImage) {
-    const uploadLimit = await checkRateLimit(
-      { scope: "chat-image-upload", limit: 10, windowSeconds: 86400 },
-      `player:${viewer.player.id}`
-    );
-    if (!uploadLimit.allowed)
-      return {
-        error: "Photo uploads are temporarily limited. Try again tomorrow.",
-      };
-  }
-
-  const [message] = await db
-    .insert(messages)
-    .values({
-      sessionId: sessionId.data,
-      authorId: viewer.user?.id ?? null,
-      sessionPlayerId: viewer.player.id,
-      body: body || null,
-      kind: hasImage ? "image" : "text",
-    })
-    .returning();
+  if (!session) return { error: "This game could not be found." };
+  const message = {
+    id: crypto.randomUUID(),
+    sessionId: sessionId.data,
+    authorId: viewer.user?.id ?? null,
+    sessionPlayerId: viewer.player.id,
+    body: body || null,
+    kind: hasImage ? ("image" as const) : ("text" as const),
+  };
   if (hasImage && imageValidation && "file" in imageValidation) {
-    const path = `${sessionId.data}/${message.id}/${crypto.randomUUID()}.${imageValidation.extension}`;
-    const supabase = createSupabaseAdminClient();
-    const { error } = await supabase.storage
-      .from("chat-images")
-      .upload(path, image, { contentType: image.type, upsert: false });
-    if (error) {
-      await db.delete(messages).where(eq(messages.id, message.id));
+    if (!session.participantImagesEnabled && viewer.user?.id !== session.hostId)
       return {
         error:
-          "The photo could not be uploaded. Check your connection and try again.",
+          "The host has turned off participant image uploads. You can still send text.",
+      };
+    const path = `${sessionId.data}/${message.id}/${crypto.randomUUID()}.${imageValidation.extension}`;
+    try {
+      await storeGameMedia(
+        {
+          hostId: session.hostId,
+          sessionId: sessionId.data,
+          actorKey: viewer.user
+            ? `user:${viewer.user.id}`
+            : `guest:${viewer.player.id}`,
+          kind: "chat",
+          path,
+          file: image,
+        },
+        async (tx) => {
+          await tx.insert(messages).values({ ...message, imagePath: path });
+        }
+      );
+    } catch (error) {
+      return {
+        error:
+          error instanceof BillingError
+            ? error.message
+            : "The photo could not be saved. Please try again.",
       };
     }
-    await db
-      .update(messages)
-      .set({ imagePath: path, updatedAt: new Date() })
-      .where(eq(messages.id, message.id));
+  } else {
+    await db.insert(messages).values(message);
   }
   revalidatePath(`/games/${sessionId.data}/chat`);
   const slug = formData.get("slug");

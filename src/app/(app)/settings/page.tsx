@@ -63,6 +63,20 @@ export default async function SettingsPage({
             >
               Change password
             </ButtonLink>
+            <div className="mt-8 border-t border-line pt-6">
+              <h2 className="text-lg font-semibold">Plan & usage</h2>
+              <p className="mt-2 text-sm text-muted">
+                View your hosting allowance, photo storage and personal
+                subscription.
+              </p>
+              <ButtonLink
+                href="/settings/plan"
+                variant="secondary"
+                className="mt-4"
+              >
+                Manage plan & usage
+              </ButtonLink>
+            </div>
           </section>
         )}
       </div>

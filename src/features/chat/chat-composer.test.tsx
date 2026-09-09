@@ -8,6 +8,20 @@ import { ChatComposer } from "./chat-composer";
 afterEach(cleanup);
 
 describe("ChatComposer", () => {
+  it("keeps text messaging available when the host disables participant photos", () => {
+    render(
+      <ChatComposer
+        sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7"
+        canUploadImages={false}
+      />
+    );
+    expect(screen.queryByLabelText(/Attach a photo/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/host has turned off participant photo uploads/)
+    ).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Message" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Send message" })).toBeEnabled();
+  });
   it("supports text and one visible image attachment", () => {
     render(<ChatComposer sessionId="59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7" />);
     const composer = screen.getByPlaceholderText("Message the group…");

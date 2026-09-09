@@ -67,6 +67,27 @@ export function notificationPresentation({
   };
 
   switch (type) {
+    case "subscription_renewal":
+      return {
+        title: "Your Pro access ends soon",
+        body: "Renew manually to keep your hosting and photo-storage allowance. No automatic charge will be made.",
+        href: "/settings/plan",
+        tone: "system",
+      };
+    case "subscription_review":
+      return {
+        title: "Subscription payment reviewed",
+        body: "Open Plan & usage to see the decision and any next steps.",
+        href: "/settings/plan",
+        tone: "system",
+      };
+    case "subscription_grant":
+      return {
+        title: "Complimentary Pro access granted",
+        body: "Your account has one complimentary month of Pro. Open Plan & usage for the expiry date.",
+        href: "/settings/plan",
+        tone: "system",
+      };
     case "court_suggestion_approved":
       return {
         title: customTitle ?? "Court suggestion applied",

@@ -12,6 +12,10 @@ export type BreadcrumbItem = {
 const labels: Record<string, string> = {
   admin: "Admin Console",
   audit: "Audit log",
+  billing: "Billing",
+  plan: "Plan & usage",
+  media: "Hosted-game photos",
+  requests: "Payment requests",
   chat: "Chat",
   court: "Court",
   courts: "Courts",
@@ -65,6 +69,10 @@ function segmentLabel(segments: string[], index: number) {
   const segment = segments[index];
   if (segments[0] === "admin" && (segment === "courts" || segment === "venues"))
     return "Courts";
+  if (segments[index - 1] === "requests" && segments.includes("billing"))
+    return "Payment request";
+  if (segments[index - 1] === "requests" && segments.includes("plan"))
+    return "Payment request";
   if (isGameId(segments, index)) return "Game";
   if (isAdminRecord(segments, index)) {
     if (segments[index - 1] === "users") return "User";
@@ -96,7 +104,7 @@ export function buildBreadcrumbItems(pathname: string): BreadcrumbItem[] {
     if (segment === "profile" && index < segments.length - 1) return;
     const current = index === segments.length - 1;
     const path = `/${segments.slice(0, index + 1).join("/")}`;
-    const href = current ? undefined : path;
+    const href = current || segment === "requests" ? undefined : path;
     items.push({ href, label: segmentLabel(segments, index) });
   });
 

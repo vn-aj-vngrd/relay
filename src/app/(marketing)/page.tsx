@@ -126,7 +126,11 @@ export default async function MarketingPage() {
                 : "Plan a game, explore open games, use Quick Play, or find a court before signing up. Log in when you want Relay to keep your game."}
             </p>
           </div>
-          <div id="product" className="marketing-hero-product mt-16 sm:mt-20">
+          <div
+            id="product"
+            data-marketing-reveal="hero"
+            className="marketing-hero-product mt-12 sm:mt-16"
+          >
             <HeroProductShot />
           </div>
         </div>

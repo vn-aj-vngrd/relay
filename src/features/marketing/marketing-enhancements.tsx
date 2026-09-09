@@ -14,9 +14,10 @@ export function MarketingEnhancements() {
     const elements = [
       ...document.querySelectorAll<HTMLElement>("[data-marketing-reveal]"),
     ];
-    const reduceMotion = window.matchMedia(
+    const motionPreference = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
-    ).matches;
+    );
+    const reduceMotion = motionPreference.matches;
     const lenis = reduceMotion
       ? null
       : new Lenis({
@@ -30,7 +31,7 @@ export function MarketingEnhancements() {
     lenisRef.current = lenis;
     const onAnchorClick = (event: MouseEvent) => {
       if (
-        !lenis ||
+        !lenisRef.current ||
         event.defaultPrevented ||
         event.button !== 0 ||
         event.metaKey ||
@@ -48,7 +49,7 @@ export function MarketingEnhancements() {
       if (!target) return;
       event.preventDefault();
       window.history.pushState(null, "", hash);
-      lenis.scrollTo(target, { offset: -72 });
+      lenisRef.current?.scrollTo(target, { offset: -72 });
     };
     document.addEventListener("click", onAnchorClick);
 
@@ -64,29 +65,73 @@ export function MarketingEnhancements() {
       };
     }
 
+    // Observe long chapters in pieces so mobile does not reveal the demo early.
+    const targets = elements.flatMap((element) =>
+      element.dataset.marketingReveal === "sequence"
+        ? Array.from(element.children).filter(
+            (child): child is HTMLElement => child instanceof HTMLElement
+          )
+        : [element]
+    );
+    const reveal = (element: HTMLElement) => {
+      element.classList.add("marketing-reveal-visible");
+      observer.unobserve(element);
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const element = entry.target as HTMLElement;
-          element.classList.add("marketing-reveal-visible");
-          observer.unobserve(element);
+          if (entry.isIntersecting) reveal(entry.target as HTMLElement);
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+      { rootMargin: "0px 0px -8% 0px", threshold: 0 }
     );
-
-    for (const element of elements) {
+    const initiallyVisible: HTMLElement[] = [];
+    for (const element of targets) {
       element.classList.add("marketing-reveal-ready");
-      if (element.getBoundingClientRect().top < window.innerHeight * 0.92)
-        element.classList.add("marketing-reveal-visible");
+      const bounds = element.getBoundingClientRect();
+      if (bounds.top < window.innerHeight * 0.92 && bounds.bottom > 0)
+        initiallyVisible.push(element);
       else observer.observe(element);
     }
+    // Roleway's painted start frame makes above-the-fold entrances visible too.
+    let revealFrame = 0;
+    const paintFrame = window.requestAnimationFrame(() => {
+      revealFrame = window.requestAnimationFrame(() =>
+        initiallyVisible.forEach(reveal)
+      );
+    });
+    const onFocus = (event: FocusEvent) => {
+      if (!(event.target instanceof Node)) return;
+      for (const element of targets) {
+        if (element.contains(event.target)) reveal(element);
+      }
+    };
+    const onMotionChange = () => {
+      if (!motionPreference.matches) return;
+      window.cancelAnimationFrame(paintFrame);
+      window.cancelAnimationFrame(revealFrame);
+      targets.forEach(reveal);
+      observer.disconnect();
+      lenisRef.current?.destroy();
+      lenisRef.current = null;
+    };
+    document.addEventListener("focusin", onFocus);
+    motionPreference.addEventListener("change", onMotionChange);
 
     return () => {
+      window.cancelAnimationFrame(paintFrame);
+      window.cancelAnimationFrame(revealFrame);
+      document.removeEventListener("focusin", onFocus);
+      motionPreference.removeEventListener("change", onMotionChange);
+      targets.forEach((element) =>
+        element.classList.remove(
+          "marketing-reveal-ready",
+          "marketing-reveal-visible"
+        )
+      );
       observer.disconnect();
       document.removeEventListener("click", onAnchorClick);
-      lenis?.destroy();
+      lenisRef.current?.destroy();
       lenisRef.current = null;
       document.documentElement.classList.remove("marketing-scroll-active");
     };

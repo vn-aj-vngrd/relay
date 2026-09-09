@@ -54,6 +54,32 @@ const second = {
 };
 
 describe("AdminInfiniteRecords", () => {
+  it("uses the same paginated list for subscription requests without exposing payment proof", () => {
+    render(
+      <AdminInfiniteRecords
+        resource="billing"
+        initialPage={{
+          items: [
+            {
+              id: first.id,
+              email: first.email,
+              createdAt: first.createdAt,
+              status: "submitted",
+              amountCents: 29900,
+            },
+          ],
+          nextCursor: null,
+        }}
+        emptyMessage="No payment requests"
+      />
+    );
+    expect(
+      screen.getByRole("link", { name: /one@example.com/ })
+    ).toHaveAttribute("href", `/admin/billing/requests/${first.id}`);
+    expect(screen.getByText(/Awaiting verification/)).toBeVisible();
+    expect(screen.getByText("All 1 matching records loaded.")).toBeVisible();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
   it("renders an exhausted first page without a fixed record cap", () => {
     render(
       <AdminInfiniteRecords

@@ -223,14 +223,6 @@ async function createExpense(formData: FormData) {
   )
     throw new Error("Only the host can request payment");
   assertPaymentsOpen(session);
-  const limit = await checkRateLimit(
-    { scope: "expense-create", limit: 5, windowSeconds: 86400 },
-    `user:${user.id}`
-  );
-  if (!limit.allowed)
-    throw new Error(
-      "Payment requests are temporarily limited. Try again tomorrow."
-    );
   const setup = paymentSetupSchema.parse(paymentSetupInput(formData));
   const contribution = collectionSetupValues(setup);
   const method = z.string().trim().min(2).max(40).parse(formData.get("method"));

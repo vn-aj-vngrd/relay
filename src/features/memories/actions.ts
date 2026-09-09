@@ -7,10 +7,10 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { memories, memoryMedia, sessions } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
+import { mediaPolicy } from "@/features/billing/domain";
+import { storeGameMedia } from "@/features/billing/media";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
-import { checkRateLimit } from "@/lib/rate-limit";
-import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { canContributeMemory } from "./permissions";
 
@@ -89,18 +89,14 @@ async function uploadMemoryPhoto(formData: FormData) {
     !(file instanceof File) ||
     !isSupportedImageType(file.type) ||
     file.size === 0 ||
-    file.size > 10 * 1024 * 1024
+    file.size > mediaPolicy.memory.maxBytes
   )
-    throw new Error("Choose a JPG, PNG, or WebP image under 10 MB");
+    throw new Error("Choose a JPG, PNG, or WebP image no larger than 2 MiB.");
   if (!(await hasValidImageSignature(file)))
     throw new Error("That file doesn’t appear to be a valid image.");
-  const limit = await checkRateLimit(
-    { scope: "memory-photo", limit: 20, windowSeconds: 86400 },
-    actorKey
-  );
-  if (!limit.allowed)
+  if (!session.participantImagesEnabled && uploaderId !== session.hostId)
     throw new Error(
-      "Photo uploads are temporarily limited. Try again tomorrow."
+      "The host has turned off participant image uploads for this game."
     );
   const caption = z
     .string()
@@ -109,27 +105,19 @@ async function uploadMemoryPhoto(formData: FormData) {
     .parse(formData.get("caption") ?? "");
   const extension = file.type.split("/")[1].replace("jpeg", "jpg");
   const path = `${sessionId}/${actorKey.replace(":", "-")}/${crypto.randomUUID()}.${extension}`;
-  const supabase = createSupabaseAdminClient();
-  const { error } = await supabase.storage
-    .from("session-memories")
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (error) throw new Error("The photo could not be uploaded");
-  try {
-    await db.insert(memoryMedia).values({
-      memoryId: memory.id,
-      uploaderId,
-      storagePath: path,
-      mediaType: "image",
-      caption: caption || null,
-      altText: caption || `Photo from ${session.title}`,
-    });
-  } catch (uploadRecordError) {
-    await supabase.storage.from("session-memories").remove([path]);
-    console.error("Memory photo record failed", uploadRecordError);
-    throw new Error("The photo could not be saved. Try again.", {
-      cause: uploadRecordError,
-    });
-  }
+  await storeGameMedia(
+    { hostId: session.hostId, sessionId, actorKey, kind: "memory", path, file },
+    async (tx) => {
+      await tx.insert(memoryMedia).values({
+        memoryId: memory.id,
+        uploaderId,
+        storagePath: path,
+        mediaType: "image",
+        caption: caption || null,
+        altText: caption || `Photo from ${session.title}`,
+      });
+    }
+  );
   revalidatePath(`/games/${session.id}/story`);
   revalidatePath(`/s/${session.slug}/story`);
   revalidatePath(`/s/${session.slug}`);

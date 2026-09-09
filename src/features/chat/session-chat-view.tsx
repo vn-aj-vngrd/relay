@@ -8,9 +8,10 @@ import {
   messages,
   profiles,
   sessionPlayers,
+  sessions,
 } from "@/db/schema";
+import { mediaPolicy } from "@/features/billing/domain";
 import { profileAvatarUrl } from "@/features/players/avatar";
-import { getServerEnv } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { ChatComposer } from "./chat-composer";
@@ -33,17 +34,27 @@ export async function SessionChatView({
   readOnlyMessage?: string;
   className?: string;
 }) {
-  const maxImageBytes = getServerEnv().CHAT_IMAGE_MAX_BYTES;
-  const rows = (
-    await db
+  const maxImageBytes = mediaPolicy.chat.maxBytes;
+  const [imageSession, messageRows] = await Promise.all([
+    db.query.sessions.findFirst({
+      where: eq(sessions.id, sessionId),
+      columns: { hostId: true, participantImagesEnabled: true },
+    }),
+    db
       .select({ message: messages, player: sessionPlayers, profile: profiles })
       .from(messages)
       .leftJoin(sessionPlayers, eq(messages.sessionPlayerId, sessionPlayers.id))
       .leftJoin(profiles, eq(sessionPlayers.userId, profiles.userId))
       .where(eq(messages.sessionId, sessionId))
       .orderBy(desc(messages.createdAt), desc(messages.id))
-      .limit(200)
-  ).reverse();
+      .limit(200),
+  ]);
+  const rows = messageRows.reverse();
+  const canUploadImages = Boolean(
+    imageSession &&
+      (imageSession.participantImagesEnabled ||
+        imageSession.hostId === viewer.userId)
+  );
   const reactionRows = rows.length
     ? await db
         .select()
@@ -220,6 +231,7 @@ export async function SessionChatView({
           sessionId={sessionId}
           slug={slug}
           maxImageBytes={maxImageBytes}
+          canUploadImages={canUploadImages}
         />
       ) : readOnlyMessage ? (
         <p className="shrink-0 px-4 py-3 text-center text-sm leading-5 text-muted">

@@ -53,7 +53,6 @@ Keep the button disabled until Google and Supabase are both configured. Google c
 | `TURNSTILE_SECRET_KEY`                 | Cloudflare Turnstile widget                    | Secret, setup-only        | Local only    |
 | `HEALTHCHECK_SECRET`                   | `openssl rand -base64 32`                      | Secret, server-only       | Local, Vercel |
 | `ADMIN_EMAILS`                         | Relay owner                                    | Secret, server-only       | Local, Vercel |
-| `CHAT_IMAGE_MAX_BYTES`                 | Relay upload policy                            | Server-only configuration | Local, Vercel |
 
 `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. `SMTP_FROM_EMAIL` is expanded when `supabase config push` applies Auth SMTP settings; `RESEND_API_KEY` is also available to Relay at runtime only for opted-in application notifications. The production sender is `Relay <relay@vanajvanguardia.tech>` for both paths. A verified `vanajvanguardia.tech` domain covers that address, so a separately verified `relay.vanajvanguardia.tech` subdomain is unnecessary unless mail should originate from that subdomain.
 
@@ -88,10 +87,10 @@ The Supabase **Before User Created** hook enforces the singleton `public.signup_
 ## Storage contract
 
 - Public: `avatars`, `venue-photos`.
-- Private: `payment-qrs`, `payment-proofs`, `booking-screenshots`, `session-memories`.
+- Private: `payment-qrs`, `payment-proofs`, `booking-screenshots`, `session-memories`, `chat-images`, `subscription-files`.
 - Avatar objects use `<user-id>/<filename>` so the baseline ownership policy can authorize them.
 - Payment proof objects use `<session-id>/<payment-id>` and are replaced in place so each payment has one current proof.
-- Chat photos default to a 1 MiB limit through `CHAT_IMAGE_MAX_BYTES`; increase it only after reviewing Supabase Storage usage and upload latency.
+- Chat photos use the shared 1 MiB policy in `src/features/billing/domain.ts` / `src/lib/upload-config.ts`; the former `CHAT_IMAGE_MAX_BYTES` environment override is retired. Game-memory photos require files no larger than 2 MiB. Both charge host-owned storage through reservations; do not raise file limits without reviewing Storage usage, egress and upload latency.
 - Private media stays inaccessible through the Data API until its feature adds participant/host path policies. Server-generated signed URLs must be short-lived.
 
 **Complete when:** anonymous users can read a public test asset, cannot read a private test asset, and an authenticated user can only mutate avatar objects under their own ID prefix.
@@ -155,6 +154,14 @@ After changing the allowlist, redeploy the affected Vercel environment. Every al
 Password recovery preserves MFA. A recovery email creates an `aal1` session; accounts with a verified TOTP factor must enter the current six-digit authenticator code before Relay exposes the new-password form. An AAL2 administrator may create a one-time temporary password from the user detail page after recording a reason. This does not delete the user’s factors: after signing in with the temporary password, the user verifies the existing authenticator before choosing a permanent password. Use this only after verifying the account owner through an established support channel, and share the generated credential privately.
 
 Verify an allowlisted account can complete MFA and open `/admin`, a normal account reaches `/admin-access-denied`, an MFA account can complete both email and administrator-assisted password recovery, and all user suspension, restoration, password reset, and game cancellation events appear in the audit log.
+
+## Personal subscriptions
+
+Read [`SUBSCRIPTIONS.md`](./SUBSCRIPTIONS.md) and the migration companion [`0051_personal_subscriptions.md`](../drizzle/0051_personal_subscriptions.md) before enabling billing. The migration requires a coordinated write pause for legacy usage/media backfill and grants existing beta accounts one complimentary month. Source changes do not apply the migration or enable sales.
+
+Admin → Billing → Payment settings owns business QR uploads, recipient/account details, enabled payment methods, support contact, verification timeframe and published refund/dispute/retention policy. Payment requests snapshot these settings. `subscription-files` is private and has no client access policy; authenticated owners and AAL2 admins receive short-lived signed URLs. Verify actual received funds before approval, never just a screenshot. Account overrides and complimentary grants remain audited and separate from paid transactions.
+
+`relay-subscription-reminders` creates deduplicated in-app renewal notices hourly. Subscription expiry is enforced at read/mutation time and does not depend on Cron. There is no recurring debit, provider webhook or automatic renewal email in this initial implementation.
 
 ## Health monitoring
 

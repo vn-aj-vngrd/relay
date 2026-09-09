@@ -16,6 +16,10 @@ describe("AdminNav", () => {
       "href",
       "/admin/insights"
     );
+    expect(screen.getByRole("link", { name: "Billing" })).toHaveAttribute(
+      "href",
+      "/admin/billing"
+    );
     expect(
       screen.queryByRole("link", { name: "Venues" })
     ).not.toBeInTheDocument();

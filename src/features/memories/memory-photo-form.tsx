@@ -26,7 +26,7 @@ export function MemoryPhotoForm({ sessionId }: { sessionId: string }) {
         id="memory-photo"
         name="photo"
         label="Add a photo from the game"
-        hint="One JPG, PNG, or WebP image under 10 MB. It becomes part of this session memory."
+        hint="One JPG, PNG, or WebP image up to 2 MiB. Uses the host’s photo storage. Resize larger photos before uploading."
         buttonLabel="Choose a game photo"
         required
       />

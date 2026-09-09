@@ -32,6 +32,7 @@ export function SessionMemories({
   recap,
   memory,
   canContribute,
+  uploadsDisabled = false,
   viewerPlayerId,
   goingCount,
   hostName,
@@ -58,6 +59,7 @@ export function SessionMemories({
   recap: SessionRecapData;
   memory: SessionMemoryData;
   canContribute: boolean;
+  uploadsDisabled?: boolean;
   viewerPlayerId?: string | null;
   goingCount: number;
   hostName: string;
@@ -179,10 +181,18 @@ export function SessionMemories({
             </div>
           ) : (
             <p className="mt-4 border-y border-line py-7 text-sm text-muted">
-              No photos yet. Add the first moment from the game.
+              {canContribute && !uploadsDisabled
+                ? "No photos yet. Add the first moment from the game."
+                : "No photos have been added to this game yet."}
             </p>
           )}
-          {canContribute ? (
+          {canContribute && uploadsDisabled ? (
+            <p className="mt-5 text-sm text-muted">
+              The host has turned off participant photo uploads. Existing photos
+              remain available.
+            </p>
+          ) : null}
+          {canContribute && !uploadsDisabled ? (
             <div className="mt-5">
               <MemoryPhotoForm sessionId={session.id} />
             </div>

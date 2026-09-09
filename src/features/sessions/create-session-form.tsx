@@ -256,7 +256,18 @@ function CreateSessionFormContent({
   isAuthenticated: boolean;
   initialValues?: Record<string, string>;
 }) {
-  const [state, action] = useActionState(createSessionAction, {});
+  const creationKey = useRef<string | null>(null);
+  const [state, action] = useActionState(
+    async (
+      previous: Parameters<typeof createSessionAction>[0],
+      data: FormData
+    ) => {
+      creationKey.current ??= crypto.randomUUID();
+      data.set("creationKey", creationKey.current);
+      return createSessionAction(previous, data);
+    },
+    {}
+  );
   const [step, setStep] = useState(initialValues ? 4 : 1);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const [visibility, setVisibility] = useState<"public" | "link" | "private">(

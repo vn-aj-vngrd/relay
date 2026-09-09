@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import {
+  billingGameUsage,
   courts,
   expenses,
   groupMembers,
@@ -28,6 +29,8 @@ import {
 } from "@/features/analytics/events";
 import { can, sessionActor } from "@/features/auth/permissions";
 import { getCurrentUser, requireUser } from "@/features/auth/session";
+import { BillingError } from "@/features/billing/domain";
+import { checkGameCreation } from "@/features/billing/usage";
 import { planPlayAvailability } from "@/features/matches/availability";
 import {
   collectionSetupValues,
@@ -118,11 +121,17 @@ export async function createSessionAction(
 ): Promise<SessionActionState> {
   const user = await requireUser();
   const limit = await checkRateLimit(
-    { scope: "session-create", limit: 5, windowSeconds: 86400 },
+    { scope: "session-create-attempt", limit: 20, windowSeconds: 60 },
     `user:${user.id}`
   );
   if (!limit.allowed)
-    return { error: "You’ve created several games today. Try again tomorrow." };
+    return {
+      error:
+        "Game creation is happening too quickly. Wait a minute and try again.",
+    };
+  const requestKey = z.uuid().safeParse(formData.get("creationKey"));
+  if (!requestKey.success)
+    return { error: "Reload this form before creating the game." };
   const choice = paymentChoiceSchema.safeParse(
     formData.get("costKind") ?? "unspecified"
   );
@@ -284,112 +293,135 @@ export async function createSessionAction(
     inviteeExperience.map((profile) => [profile.userId, profile.skillLevel])
   );
   const hostPlaying = formData.get("hostPlaying") !== "no";
-  const created = await db.transaction(async (tx) => {
-    const [session] = await tx
-      .insert(sessions)
-      .values({
-        slug: sessionSlug(parsed.data.title),
-        hostId: user.id,
-        groupId: groupMembership?.groupId ?? null,
-        title: parsed.data.title,
-        accentColor: parsed.data.accentColor,
-        venueId: selectedVenue?.id ?? null,
-        venueName: selectedVenue?.name ?? parsed.data.venueName,
-        venueAddress:
-          selectedVenue?.address ?? parsed.data.venueAddress ?? null,
-        startsAt: parsed.data.startsAt,
-        endsAt: parsed.data.endsAt,
-        capacity: parsed.data.capacity,
-        courtCount: parsed.data.courtCount,
-        notes: parsed.data.notes,
-        paymentCollectionRequested: collect,
-        playerPriceCents:
-          paymentSetup?.success &&
-          paymentSetup.data.contributionMode === "fixed"
-            ? Math.round(paymentSetup.data.fixedRate! * 100)
-            : parsed.data.playerPriceCents,
-        visibility: parsed.data.visibility,
-        status: intent,
-        publishedAt: intent === "published" ? new Date() : null,
-        bookedAt: parsed.data.booked ? new Date() : null,
-        bookingNotRequired: parsed.data.bookingNotRequired,
-        bookingReference: parsed.data.booked
-          ? (parsed.data.bookingReference ?? null)
-          : null,
-        bookingTotalCents: parsed.data.booked
-          ? (parsed.data.bookingTotalCents ?? null)
-          : null,
-        bookingNotes: parsed.data.booked
-          ? (parsed.data.bookingNotes ?? null)
-          : null,
-        requiresApproval: formData.get("requiresApproval") === "on",
-      })
-      .returning();
-    if (paymentSetup?.success) {
-      const setup = paymentSetup.data;
-      const [account] = await tx
-        .insert(paymentAccounts)
+  let created: typeof sessions.$inferSelect;
+  try {
+    created = await db.transaction(async (tx) => {
+      const creation = await checkGameCreation(tx, user.id, requestKey.data);
+      if (creation.existingSessionId) {
+        const previous = await tx.query.sessions.findFirst({
+          where: eq(sessions.id, creation.existingSessionId),
+        });
+        if (!previous)
+          throw new BillingError(
+            "This creation already completed, but the game was deleted. Start a new game form."
+          );
+        return previous;
+      }
+      const [session] = await tx
+        .insert(sessions)
         .values({
-          ownerId: user.id,
-          method: setup.method,
-          label: setup.method,
-          details: setup.details,
+          slug: sessionSlug(parsed.data.title),
+          hostId: user.id,
+          groupId: groupMembership?.groupId ?? null,
+          title: parsed.data.title,
+          accentColor: parsed.data.accentColor,
+          venueId: selectedVenue?.id ?? null,
+          venueName: selectedVenue?.name ?? parsed.data.venueName,
+          venueAddress:
+            selectedVenue?.address ?? parsed.data.venueAddress ?? null,
+          startsAt: parsed.data.startsAt,
+          endsAt: parsed.data.endsAt,
+          capacity: parsed.data.capacity,
+          courtCount: parsed.data.courtCount,
+          notes: parsed.data.notes,
+          paymentCollectionRequested: collect,
+          playerPriceCents:
+            paymentSetup?.success &&
+            paymentSetup.data.contributionMode === "fixed"
+              ? Math.round(paymentSetup.data.fixedRate! * 100)
+              : parsed.data.playerPriceCents,
+          visibility: parsed.data.visibility,
+          status: intent,
+          publishedAt: intent === "published" ? new Date() : null,
+          bookedAt: parsed.data.booked ? new Date() : null,
+          bookingNotRequired: parsed.data.bookingNotRequired,
+          bookingReference: parsed.data.booked
+            ? (parsed.data.bookingReference ?? null)
+            : null,
+          bookingTotalCents: parsed.data.booked
+            ? (parsed.data.bookingTotalCents ?? null)
+            : null,
+          bookingNotes: parsed.data.booked
+            ? (parsed.data.bookingNotes ?? null)
+            : null,
+          requiresApproval: formData.get("requiresApproval") === "on",
         })
         .returning();
-      await tx.insert(expenses).values({
+      if (paymentSetup?.success) {
+        const setup = paymentSetup.data;
+        const [account] = await tx
+          .insert(paymentAccounts)
+          .values({
+            ownerId: user.id,
+            method: setup.method,
+            label: setup.method,
+            details: setup.details,
+          })
+          .returning();
+        await tx.insert(expenses).values({
+          sessionId: session.id,
+          kind: "court",
+          label: setup.label,
+          ...collectionSetupValues(setup),
+          paidById: user.id,
+          paymentAccountId: account.id,
+        });
+      }
+      await tx.insert(sessionPlayers).values({
         sessionId: session.id,
-        kind: "court",
-        label: setup.label,
-        ...collectionSetupValues(setup),
-        paidById: user.id,
-        paymentAccountId: account.id,
+        userId: user.id,
+        skillLevel: hostProfile.skillLevel,
+        role: "host",
+        rsvp: hostPlaying ? "going" : "declined",
+        playState: hostPlaying ? "waiting" : "unavailable",
+        respondedAt: new Date(),
       });
-    }
-    await tx.insert(sessionPlayers).values({
-      sessionId: session.id,
-      userId: user.id,
-      skillLevel: hostProfile.skillLevel,
-      role: "host",
-      rsvp: hostPlaying ? "going" : "declined",
-      playState: hostPlaying ? "waiting" : "unavailable",
-      respondedAt: new Date(),
-    });
-    const invitees = sessionInviteeIds(user.id, invitedUserIds);
-    if (invitees.length) {
-      await tx.insert(sessionPlayers).values(
-        invitees.map((userId) => ({
+      const invitees = sessionInviteeIds(user.id, invitedUserIds);
+      if (invitees.length) {
+        await tx.insert(sessionPlayers).values(
+          invitees.map((userId) => ({
+            sessionId: session.id,
+            userId,
+            skillLevel: experienceByUser.get(userId) ?? null,
+            role: "player" as const,
+            rsvp: "invited" as const,
+            invitationReceivedAt: new Date(),
+            playState: "unavailable" as const,
+          }))
+        );
+        await tx.insert(notifications).values(
+          invitees.map((userId) => ({
+            userId,
+            sessionId: session.id,
+            type: "session_invite",
+            payload: {
+              groupId: groupMembership?.groupId ?? null,
+              hostName: hostProfile.name,
+              startsAt: session.startsAt.toISOString(),
+              venueName: session.venueName,
+            },
+          }))
+        );
+      }
+      await tx.insert(courts).values(
+        Array.from({ length: session.courtCount }, (__, index) => ({
           sessionId: session.id,
-          userId,
-          skillLevel: experienceByUser.get(userId) ?? null,
-          role: "player" as const,
-          rsvp: "invited" as const,
-          invitationReceivedAt: new Date(),
-          playState: "unavailable" as const,
+          label: `Court ${index + 1}`,
+          position: index + 1,
         }))
       );
-      await tx.insert(notifications).values(
-        invitees.map((userId) => ({
-          userId,
-          sessionId: session.id,
-          type: "session_invite",
-          payload: {
-            groupId: groupMembership?.groupId ?? null,
-            hostName: hostProfile.name,
-            startsAt: session.startsAt.toISOString(),
-            venueName: session.venueName,
-          },
-        }))
-      );
-    }
-    await tx.insert(courts).values(
-      Array.from({ length: session.courtCount }, (__, index) => ({
+      await tx.insert(billingGameUsage).values({
+        userId: user.id,
+        requestKey: requestKey.data,
         sessionId: session.id,
-        label: `Court ${index + 1}`,
-        position: index + 1,
-      }))
-    );
-    return session;
-  });
+        createdAt: creation.createdAt,
+      });
+      return session;
+    });
+  } catch (error) {
+    if (error instanceof BillingError) return { error: error.message };
+    throw error;
+  }
   if (intent === "published") {
     const event = {
       userId: user.id,

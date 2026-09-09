@@ -6,6 +6,7 @@ export const adminResources = [
   "court-requests",
   "feedback",
   "audit",
+  "billing",
 ] as const;
 export type AdminResource = (typeof adminResources)[number];
 export type AdminDateValue = Date | string;
@@ -76,7 +77,22 @@ export type AdminAuditRecord = {
   actorName: string | null;
 };
 
+export type AdminBillingRecord = {
+  id: string;
+  email: string;
+  status:
+    | "awaiting_payment"
+    | "submitted"
+    | "clarification"
+    | "approved"
+    | "rejected"
+    | "cancelled";
+  amountCents: number;
+  createdAt: AdminDateValue;
+};
+
 export type AdminRecord =
+  | AdminBillingRecord
   | AdminUserRecord
   | AdminSessionRecord
   | AdminVenueRecord
@@ -91,6 +107,7 @@ export type AdminRecordMap = {
   "court-requests": AdminCourtRequestRecord;
   feedback: AdminFeedbackRecord;
   audit: AdminAuditRecord;
+  billing: AdminBillingRecord;
 };
 
 export type AdminPage<T> = {

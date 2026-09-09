@@ -11,6 +11,7 @@ import {
   getAdminVenues,
 } from "@/features/admin/queries";
 import { adminResources } from "@/features/admin/records";
+import { getAdminBillingRequests } from "@/features/billing/queries";
 import { getAdminFeedback } from "@/features/feedback/queries";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
@@ -69,22 +70,24 @@ export async function GET(
 
   try {
     const page =
-      resource.data === "users"
-        ? await getAdminUsers({ query, cursor })
-        : resource.data === "sessions"
-          ? await getAdminSessions({ query, status, cursor })
-          : resource.data === "venues"
-            ? await getAdminVenues({ query, status, cursor })
-            : resource.data === "court-requests"
-              ? await getAdminVenueChangeRequests({
-                  query,
-                  status,
-                  type,
-                  cursor,
-                })
-              : resource.data === "feedback"
-                ? await getAdminFeedback({ query, status, type, cursor })
-                : await getAdminAuditLog(cursor);
+      resource.data === "billing"
+        ? await getAdminBillingRequests(cursor)
+        : resource.data === "users"
+          ? await getAdminUsers({ query, cursor })
+          : resource.data === "sessions"
+            ? await getAdminSessions({ query, status, cursor })
+            : resource.data === "venues"
+              ? await getAdminVenues({ query, status, cursor })
+              : resource.data === "court-requests"
+                ? await getAdminVenueChangeRequests({
+                    query,
+                    status,
+                    type,
+                    cursor,
+                  })
+                : resource.data === "feedback"
+                  ? await getAdminFeedback({ query, status, type, cursor })
+                  : await getAdminAuditLog(cursor);
 
     return Response.json(
       { items: page.items, nextCursor: page.nextCursor },

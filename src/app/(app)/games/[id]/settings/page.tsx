@@ -9,6 +9,7 @@ import {
   sessionPlayers,
 } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import { ParticipantImagesForm } from "@/features/billing/forms";
 import { paymentRevision } from "@/features/payments/payment-revision";
 import { PaymentSettings } from "@/features/payments/payment-settings";
 import { profileAvatarUrl } from "@/features/players/avatar";
@@ -174,6 +175,25 @@ export default async function GameSettingsPage({
             section={section}
             status={data.session.status}
           />
+          {section === "invite" &&
+          data.session.hostId === user.id &&
+          data.session.status !== "cancelled" ? (
+            <section
+              aria-labelledby="participant-images-title"
+              className="mt-8 border-t border-line pt-6"
+            >
+              <h2
+                id="participant-images-title"
+                className="mb-4 text-lg font-semibold"
+              >
+                Participant image uploads
+              </h2>
+              <ParticipantImagesForm
+                sessionId={data.session.id}
+                enabled={data.session.participantImagesEnabled}
+              />
+            </section>
+          ) : null}
           {section === "plan" && data.session.status === "published" ? (
             <CancelSessionControl
               sessionId={data.session.id}

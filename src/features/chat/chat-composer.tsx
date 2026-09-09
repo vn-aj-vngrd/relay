@@ -18,10 +18,12 @@ export function ChatComposer({
   sessionId,
   slug,
   maxImageBytes = DEFAULT_CHAT_IMAGE_MAX_BYTES,
+  canUploadImages = true,
 }: {
   sessionId: string;
   slug?: string;
   maxImageBytes?: number;
+  canUploadImages?: boolean;
 }) {
   const [state, action, pending] = useActionState(sendMessage, {});
   const [fileName, setFileName] = useState("");
@@ -51,7 +53,13 @@ export function ChatComposer({
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       {slug ? <input type="hidden" name="slug" value={slug} /> : null}
-      {fileName ? (
+      {!canUploadImages ? (
+        <p className="mb-2 text-xs leading-5 text-muted">
+          The host has turned off participant photo uploads. Text chat is still
+          available.
+        </p>
+      ) : null}
+      {canUploadImages && fileName ? (
         <div className="mb-2 flex items-center justify-between rounded-lg bg-surface-strong px-3 py-2 text-xs">
           <span className="min-w-0 flex-1 truncate">Photo · {fileName}</span>
           <button
@@ -68,36 +76,38 @@ export function ChatComposer({
         </div>
       ) : null}
       <div className="flex items-end gap-2">
-        <label className="pressable grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink has-focus-visible:outline-3 has-focus-visible:outline-primary">
-          <span className="sr-only">
-            Attach a photo, up to {formatChatImageLimit(maxImageBytes)}
-          </span>
-          <Tooltip
-            content={`Attach a photo up to ${formatChatImageLimit(maxImageBytes)}`}
-          />
-          <ImageSquare aria-hidden size={20} />
-          <input
-            ref={fileRef}
-            name="image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              const error = file
-                ? validateChatImageMetadata(file, maxImageBytes)
-                : null;
-              if (error) {
-                event.target.value = "";
-                setFileName("");
-                setImageError(error);
-                return;
-              }
-              setImageError("");
-              setFileName(file?.name ?? "");
-            }}
-          />
-        </label>
+        {canUploadImages ? (
+          <label className="pressable grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink has-focus-visible:outline-3 has-focus-visible:outline-primary">
+            <span className="sr-only">
+              Attach a photo, up to {formatChatImageLimit(maxImageBytes)}
+            </span>
+            <Tooltip
+              content={`Attach a photo up to ${formatChatImageLimit(maxImageBytes)}`}
+            />
+            <ImageSquare aria-hidden size={20} />
+            <input
+              ref={fileRef}
+              name="image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                const error = file
+                  ? validateChatImageMetadata(file, maxImageBytes)
+                  : null;
+                if (error) {
+                  event.target.value = "";
+                  setFileName("");
+                  setImageError(error);
+                  return;
+                }
+                setImageError("");
+                setFileName(file?.name ?? "");
+              }}
+            />
+          </label>
+        ) : null}
         <label htmlFor="message" className="sr-only">
           Message
         </label>

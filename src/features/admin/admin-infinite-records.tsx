@@ -8,6 +8,7 @@ import { z } from "zod";
 import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import type {
   AdminAuditRecord,
+  AdminBillingRecord,
   AdminCourtRequestRecord,
   AdminFeedbackRecord,
   AdminPage,
@@ -17,6 +18,7 @@ import type {
   AdminUserRecord,
   AdminVenueRecord,
 } from "@/features/admin/records";
+import { requestStatusLabels } from "@/features/billing/domain";
 import {
   type FeedbackArea,
   feedbackAreaLabels,
@@ -292,6 +294,31 @@ function FeedbackRows({ items }: { items: AdminFeedbackRecord[] }) {
   );
 }
 
+function BillingRows({ items }: { items: AdminBillingRecord[] }) {
+  return (
+    <ol className="divide-y divide-line border-y border-line">
+      {items.map((item) => (
+        <li key={item.id}>
+          <Link
+            href={`/admin/billing/requests/${item.id}`}
+            className="flex items-center gap-4 py-4"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="break-all text-sm font-semibold">{item.email}</p>
+              <p className="mt-1 text-sm text-muted">
+                {requestStatusLabels[item.status]} · ₱
+                {(item.amountCents / 100).toFixed(2)}
+              </p>
+              <AdminDate value={item.createdAt} />
+            </div>
+            <ArrowRight aria-hidden size={17} className="shrink-0 text-muted" />
+          </Link>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function AdminInfiniteRecords({
   resource,
   initialPage,
@@ -383,6 +410,8 @@ export function AdminInfiniteRecords({
       >
         <AuditRows items={items as AdminAuditRecord[]} />
       </TableShell>
+    ) : resource === "billing" ? (
+      <BillingRows items={items as AdminBillingRecord[]} />
     ) : resource === "court-requests" ? (
       <CourtRequestRows items={items as AdminCourtRequestRecord[]} />
     ) : (

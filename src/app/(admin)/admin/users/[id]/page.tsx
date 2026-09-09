@@ -52,6 +52,12 @@ export default async function AdminUserPage({
           <div className="flex items-center gap-3">
             <AdminStatus value={user.suspendedAt ? "suspended" : "active"} />
             <ButtonLink
+              href={`/admin/users/${user.id}/billing`}
+              variant="secondary"
+            >
+              Plan & allowances
+            </ButtonLink>
+            <ButtonLink
               href={`/admin/users/${user.id}/edit`}
               variant="secondary"
             >

@@ -613,36 +613,19 @@ html.lenis.lenis-smooth iframe {
 .marketing-hero-copy {
   animation: none;
 }
-.marketing-hero-product {
-  animation: marketing-product-enter 900ms 100ms cubic-bezier(0.16, 1, 0.3, 1)
-    both;
-}
-.marketing-hero-slide {
-  height: 34rem;
-  overflow: hidden;
-}
-@media (min-width: 640px) {
-  .marketing-hero-slide {
-    height: 40rem;
-  }
-}
-@media (min-width: 1024px) {
-  .marketing-hero-slide {
-    height: 43rem;
-  }
-}
-.marketing-hero-slide-content {
-  height: 100%;
-  animation: marketing-hero-slide-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
 .marketing-reveal-ready {
-  transform: translate3d(0, 28px, 0);
-  transition: transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  opacity: 0;
+  transform: translate3d(0, 32px, 0) scale(0.99);
+  clip-path: inset(0 0 6%);
+  transition:
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1),
+    clip-path 850ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .marketing-reveal-ready.marketing-reveal-visible {
-  transform: translate3d(0, 0, 0);
-  will-change: auto;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  clip-path: inset(0);
 }
 .marketing-reveal-ready:is(
   [data-marketing-reveal="sequence"],
@@ -650,6 +633,7 @@ html.lenis.lenis-smooth iframe {
   [data-marketing-reveal="split-reverse"],
   [data-marketing-reveal="workflow"]
 ) {
+  opacity: 1;
   transform: none;
   clip-path: none;
 }
@@ -657,9 +641,11 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready[data-marketing-reveal="split"] > *,
 .marketing-reveal-ready[data-marketing-reveal="split-reverse"] > *,
 .marketing-reveal-ready[data-marketing-reveal="workflow"] > div > * {
+  opacity: 0;
   transform: translate3d(0, 24px, 0);
-  transition: transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  transition:
+    opacity 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .marketing-reveal-ready[data-marketing-reveal="sequence"] > :nth-child(2) {
   transition-delay: 90ms;
@@ -695,8 +681,8 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="workflow"]
   > div
   > * {
+  opacity: 1;
   transform: translate3d(0, 0, 0);
-  will-change: auto;
 }
 .marketing-reveal-ready[data-marketing-reveal="mask"] {
   transform: scale(0.985);
@@ -713,6 +699,48 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="final"] {
   transform: translate3d(0, 0, 0) scale(1);
 }
+/* The hero assembles one game: plan, crew, live court, then follow-through. */
+.marketing-reveal-ready[data-marketing-reveal="hero"] [data-marketing-part] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.marketing-reveal-ready[data-marketing-reveal="hero"]
+  [data-marketing-part="crew"] {
+  transition-delay: 80ms;
+}
+.marketing-reveal-ready[data-marketing-reveal="hero"]
+  [data-marketing-part="court"] {
+  transform: translateY(24px) scale(0.97);
+  transition-delay: 150ms;
+}
+.marketing-reveal-ready[data-marketing-reveal="hero"]
+  [data-marketing-part="follow-through"] {
+  transition-delay: 230ms;
+}
+.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"]
+  [data-marketing-part] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.marketing-reveal-ready:focus-within,
+.marketing-reveal-ready:focus-within * {
+  opacity: 1;
+  transform: none;
+  clip-path: none;
+  transition-duration: 0ms;
+  transition-delay: 0ms;
+}
+@media (max-width: 639px) {
+  .marketing-reveal-ready {
+    transform: translateY(20px);
+  }
+  .marketing-reveal-ready.marketing-reveal-visible {
+    transform: none;
+  }
+}
 .marketing-back-to-top {
   pointer-events: none;
   opacity: 0;
@@ -725,41 +753,6 @@ html.lenis.lenis-smooth iframe {
   pointer-events: auto;
   opacity: 1;
   transform: translateY(0);
-}
-@keyframes marketing-product-enter {
-  from {
-    clip-path: inset(0 0 6%);
-    transform: translate3d(0, 28px, 0) scale(0.99);
-  }
-  to {
-    clip-path: inset(0);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-@keyframes marketing-hero-slide-enter {
-  from {
-    opacity: 0.55;
-    clip-path: inset(0 0 3% 0);
-    transform: translate3d(14px, 0, 0);
-  }
-  to {
-    opacity: 1;
-    clip-path: inset(0);
-    transform: translate3d(0, 0, 0);
-  }
-}
-@keyframes marketing-hero-progress-fill {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-.marketing-hero-progress {
-  animation-name: marketing-hero-progress-fill;
-  animation-timing-function: linear;
-  animation-fill-mode: both;
 }
 
 @media (max-width: 63.999rem) {
@@ -1105,7 +1098,6 @@ html[data-density="compact"] .public-session-chat-thread {
   }
   .marketing-hero-copy,
   .marketing-hero-product,
-  .marketing-hero-slide-content,
   .marketing-reveal-ready {
     animation: none;
     opacity: 1;
@@ -1113,7 +1105,9 @@ html[data-density="compact"] .public-session-chat-thread {
     transform: none;
   }
   .marketing-reveal-ready[data-marketing-reveal] > *,
-  .marketing-reveal-ready[data-marketing-reveal="workflow"] > div > * {
+  .marketing-reveal-ready[data-marketing-reveal="workflow"] > div > *,
+  .marketing-reveal-ready[data-marketing-reveal="hero"] [data-marketing-part] {
+    opacity: 1;
     clip-path: none;
     transform: none;
     transition: none;

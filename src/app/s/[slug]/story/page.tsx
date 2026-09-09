@@ -57,6 +57,10 @@ export default async function PublicStoryPage({
             recap={recap}
             memory={memory}
             canContribute={canContribute}
+            uploadsDisabled={
+              !data.session.participantImagesEnabled &&
+              data.session.hostId !== user?.id
+            }
             viewerPlayerId={viewerPlayer?.id}
             goingCount={goingCount}
             hostName={hostName}

@@ -1,9 +1,3 @@
-import {
-  CheckCircle,
-  Clock,
-  CurrencyCircleDollar,
-  Play,
-} from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
@@ -11,22 +5,14 @@ import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { ButtonLink } from "@/components/ui/button";
 import { ChatComposer } from "@/features/chat/chat-composer";
 import { ChatThread } from "@/features/chat/chat-thread";
-import { HeroSessionCarousel } from "@/features/marketing/hero-session-carousel";
 import { LiveCourt } from "@/features/matches/live-court";
 import { PlaySetupForm } from "@/features/matches/play-setup-form";
 import { PaymentProofForm } from "@/features/payments/payment-proof-form";
 import { CreateSessionForm } from "@/features/sessions/create-session-form";
-import type { SessionOverview } from "@/features/sessions/overview";
-import { sessionReadiness } from "@/features/sessions/readiness";
 import { RsvpControl } from "@/features/sessions/rsvp-control";
-import { SessionAtAGlance } from "@/features/sessions/session-overview";
-import { SessionReadinessPanel } from "@/features/sessions/session-readiness";
-import {
-  SessionHero,
-  SessionPlanDetails,
-} from "@/features/sessions/session-summary";
+import { SessionHero } from "@/features/sessions/session-summary";
 
-import { RecapTemplatePreview } from "./recap-template-preview";
+export { HeroProductShot } from "./hero-product-shot";
 
 const heroSession = {
   title: "Saturday Night Pickle",
@@ -40,21 +26,6 @@ const heroSession = {
 };
 
 const heroPlayers = ["Van", "AJ", "Mika", "Bea", "John"];
-const heroReadiness = sessionReadiness({
-  goingCount: 8,
-  booked: true,
-  bookingNotRequired: false,
-});
-const heroOverview: SessionOverview = {
-  messageCount: 12,
-  play: {
-    activeMatchCount: 0,
-    completedMatchCount: 0,
-    waitingCount: 0,
-    featuredMatch: null,
-  },
-  payment: { view: "host", proofCount: 1, unpaidCount: 4 },
-};
 
 function ProductComponentFrame({
   children,
@@ -69,7 +40,7 @@ function ProductComponentFrame({
     <figure>
       <div
         inert
-        className="overflow-hidden rounded-xl border border-line bg-canvas text-left text-ink shadow-[0_8px_8px_rgb(20_24_34_/_0.08)] [--primary:#5962d9] [--session-cover:#18233b]"
+        className="overflow-hidden rounded-xl border border-line bg-surface text-left text-ink shadow-[0_8px_8px_rgb(20_24_34_/_0.08)] [--primary:#5962d9] [--session-cover:#18233b]"
       >
         {children}
       </div>
@@ -81,61 +52,6 @@ function ProductComponentFrame({
         <span>{detail}</span>
       </figcaption>
     </figure>
-  );
-}
-
-function HeroOverviewPanel() {
-  return (
-    <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Overview" />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <article className="public-session-panel min-w-0 overflow-hidden rounded-xl border border-line bg-surface">
-          <SessionHero
-            session={heroSession}
-            hostLabel="Hosted by you"
-            headingLevel="h2"
-          />
-          <div className="px-5 py-6 sm:px-8 sm:py-8">
-            <div className="hidden sm:block">
-              <SessionPlanDetails session={heroSession} />
-            </div>
-            <SessionAtAGlance
-              overview={heroOverview}
-              hrefBase="#"
-              status="published"
-            />
-          </div>
-        </article>
-        <aside className="hidden space-y-6 lg:block">
-          <section className="rounded-xl border border-line bg-surface p-5">
-            <p className="text-sm font-semibold text-primary">Host access</p>
-            <h2 className="mt-1 text-lg font-bold">You manage this game</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Editing, roster controls, payments, Play, and scoring appear only
-              for hosts.
-            </p>
-            <SessionReadinessPanel
-              readiness={heroReadiness}
-              sessionId="preview"
-              hrefBase="#"
-            />
-            <ButtonLink href="#/play" className="mt-5 w-full">
-              <Play aria-hidden weight="fill" size={15} /> Set up Play
-            </ButtonLink>
-          </section>
-          <section>
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-bold">Who’s playing</h2>
-                <p className="mt-1 text-sm text-muted">8 of 10 going</p>
-              </div>
-              <AvatarStack names={heroPlayers.slice(0, 3)} total={8} />
-            </div>
-            <HeroPlayerRows limit={3} />
-          </section>
-        </aside>
-      </div>
-    </div>
   );
 }
 
@@ -204,188 +120,6 @@ function HeroPlayersPanel() {
       </div>
     </div>
   );
-}
-
-function HeroPlayPanel() {
-  return (
-    <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Play" />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <LiveCourt
-          sessionId="00000000-0000-4000-8000-000000000001"
-          matchId="00000000-0000-4000-8000-000000000002"
-          number="Court 1"
-          teams={["Van + AJ", "Mika + Bea"]}
-          scores={[8, 6]}
-          version={1}
-          canScore
-        />
-        <aside>
-          <div className="flex items-center justify-between border-y border-line py-3">
-            <span className="inline-flex items-center gap-2 text-sm font-semibold">
-              <Clock aria-hidden size={17} className="text-primary" /> Round 3
-            </span>
-            <span className="score text-sm">08:42</span>
-          </div>
-          <h2 className="mt-5 text-lg font-bold">Up next</h2>
-          <ol className="mt-3 divide-y divide-line border-y border-line">
-            {["Kara + Luis", "John + Sam", "Nico + Aya"].map((team, index) => (
-              <li
-                key={team}
-                className="flex min-h-12 items-center gap-3 text-sm"
-              >
-                <span className="score w-5 text-muted">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span className="font-medium">{team}</span>
-              </li>
-            ))}
-          </ol>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-function HeroChatPanel() {
-  return (
-    <div className="flex h-full flex-col px-4 pt-5 sm:px-6 sm:pt-6">
-      <GamePageIntro title="Chat" />
-      <ChatThread messageCount={4}>
-        <div className="space-y-5">
-          <p className="text-center text-xs text-muted">AJ joined the game</p>
-          <div className="flex items-end gap-2">
-            <Avatar name="Mika" index={2} size="sm" />
-            <div className="max-w-[75%] rounded-xl rounded-bl-sm bg-surface-strong px-3 py-2.5 text-sm">
-              Parking is open beside Court 2.
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <div className="max-w-[78%] rounded-xl rounded-br-sm bg-primary px-3 py-2.5 text-sm text-white">
-              Perfect. I’ll bring the extra balls.
-            </div>
-          </div>
-          <p className="text-center text-xs text-muted">
-            Court 1 match started
-          </p>
-        </div>
-      </ChatThread>
-      <ChatComposer sessionId="00000000-0000-4000-8000-000000000001" />
-    </div>
-  );
-}
-
-function HeroPaymentsPanel() {
-  const shares = [
-    ["AJ", "Proof sent", "₱300"],
-    ["Mika", "Confirmed", "₱300"],
-    ["Bea", "Not paid", "₱300"],
-    ["John", "Not paid", "₱300"],
-  ];
-  return (
-    <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Payments" />
-      <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section>
-          <div className="flex items-end justify-between gap-4 border-y border-line py-5">
-            <div>
-              <p className="text-sm text-muted">
-                Court rental · paid upfront by Van
-              </p>
-              <p className="score mt-2 text-4xl font-bold">₱2,400</p>
-            </div>
-            <p className="text-right text-sm text-muted">
-              ₱300 each
-              <br />7 paying players
-            </p>
-          </div>
-          <ul className="divide-y divide-line border-b border-line">
-            {shares.map(([name, status, amount], index) => (
-              <li key={name} className="flex min-h-14 items-center gap-3">
-                <Avatar name={name} index={index + 1} size="sm" />
-                <span className="flex-1 text-sm font-medium">{name}</span>
-                <span
-                  className={`text-xs ${status === "Confirmed" ? "text-success" : "text-muted"}`}
-                >
-                  {status}
-                </span>
-                <span className="score w-14 text-right text-sm">{amount}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <aside className="self-start rounded-xl border border-line p-5">
-          <CurrencyCircleDollar
-            aria-hidden
-            size={22}
-            className="text-primary"
-          />
-          <h2 className="mt-3 text-lg font-bold">1 proof to review</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Confirm AJ’s screenshot, then Relay updates the group’s payment
-            status.
-          </p>
-          <div className="mt-5 flex items-center gap-2 border-t border-line pt-4 text-sm font-semibold text-success">
-            <CheckCircle aria-hidden size={18} /> ₱900 confirmed
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-function HeroStoryPanel() {
-  return (
-    <div className="px-4 py-5 sm:px-6 sm:py-6">
-      <GamePageIntro title="Story" />
-      <div className="mx-auto max-w-4xl">
-        <RecapTemplatePreview cardsOnly />
-      </div>
-    </div>
-  );
-}
-
-export function HeroProductShot() {
-  const slides = [
-    {
-      id: "overview",
-      label: "Overview",
-      moment: "The plan is settled.",
-      summary: "Saturday, 7:00 PM · Central Pickle · 8 of 10 going",
-      content: <HeroOverviewPanel />,
-    },
-    {
-      id: "play",
-      label: "Play",
-      moment: "The first games go live.",
-      summary: "Court 1 is 8–6 · open Players for the roster and waitlist.",
-      content: <HeroPlayPanel />,
-      roster: <HeroPlayersPanel />,
-    },
-    {
-      id: "chat",
-      label: "Chat",
-      moment: "Everyone knows where to be.",
-      summary: "Arrival notes and court updates stay attached to the game.",
-      content: <HeroChatPanel />,
-    },
-    {
-      id: "payments",
-      label: "Payments",
-      moment: "The host gets repaid.",
-      summary: "Each ₱300 share has one clear status and proof trail.",
-      content: <HeroPaymentsPanel />,
-    },
-    {
-      id: "story",
-      label: "Story",
-      moment: "The game becomes the memory.",
-      summary: "Final scores and photos become a 9:16 story to share.",
-      content: <HeroStoryPanel />,
-    },
-  ] as const;
-
-  return <HeroSessionCarousel slides={slides} />;
 }
 
 export function CreateProductPreview() {

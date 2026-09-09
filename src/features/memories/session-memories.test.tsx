@@ -33,7 +33,8 @@ const match: RecapMatch = {
 function renderMemories(
   status: "draft" | "published" | "live" | "completed" | "cancelled",
   visibility: "public" | "link" | "private" = "link",
-  price?: PlayerPriceInput
+  price?: PlayerPriceInput,
+  permission = { canContribute: false, uploadsDisabled: false }
 ) {
   return render(
     <SessionMemories
@@ -56,7 +57,8 @@ function renderMemories(
       }}
       recap={buildSessionRecap([match], players)}
       memory={null}
-      canContribute={false}
+      canContribute={permission.canContribute}
+      uploadsDisabled={permission.uploadsDisabled}
       viewerPlayerId="a"
       goingCount={6}
       hostName="Van"
@@ -66,6 +68,21 @@ function renderMemories(
 }
 
 describe("SessionMemories", () => {
+  it("explains host-disabled photos without removing story access", () => {
+    renderMemories("completed", "link", undefined, {
+      canContribute: true,
+      uploadsDisabled: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(
+      screen.getByText(/host has turned off participant photo uploads/)
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Add to memory" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Make" }));
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
+  });
   it.each([
     [{ playerPriceCents: null, hasExpense: false }, "Price not set"],
     [{ playerPriceCents: null, hasExpense: true }, "Player share pending"],

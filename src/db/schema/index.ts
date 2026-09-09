@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   index,
@@ -438,6 +439,9 @@ export const sessions = pgTable(
     roundDurationMinutes: integer("round_duration_minutes"),
     rosterLocked: boolean("roster_locked").notNull().default(false),
     requiresApproval: boolean("requires_approval").notNull().default(false),
+    participantImagesEnabled: boolean("participant_images_enabled")
+      .notNull()
+      .default(true),
     bookedAt: timestamp("booked_at", { withTimezone: true }),
     bookingNotRequired: boolean("booking_not_required")
       .default(false)
@@ -1180,5 +1184,183 @@ export const adminAuditLogs = pgTable(
       table.id.desc()
     ),
     index("admin_audit_target_idx").on(table.targetType, table.targetId),
+  ]
+);
+
+export const billingSettings = pgTable("billing_settings", {
+  id: text("id").primaryKey().default("global"),
+  acceptingPayments: boolean("accepting_payments").notNull().default(false),
+  supportContact: text("support_contact").notNull().default(""),
+  reviewTime: text("review_time").notNull().default(""),
+  policy: text("policy").notNull().default(""),
+  ...timestamps,
+});
+
+export const billingMethods = pgTable("billing_methods", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  provider: text("provider").notNull(),
+  recipient: text("recipient").notNull(),
+  account: text("account").notNull(),
+  instructions: text("instructions").notNull(),
+  qrPath: text("qr_path"),
+  enabled: boolean("enabled").notNull().default(false),
+  ...timestamps,
+});
+
+export type BillingMethodSnapshot = {
+  provider: string;
+  recipient: string;
+  account: string;
+  instructions: string;
+  qrPath: string | null;
+  supportContact: string;
+  reviewTime: string;
+  policy: string;
+};
+
+export const billingRequests = pgTable(
+  "billing_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    methodId: uuid("method_id")
+      .notNull()
+      .references(() => billingMethods.id, { onDelete: "restrict" }),
+    snapshot: jsonb("snapshot").$type<BillingMethodSnapshot>().notNull(),
+    planVersion: text("plan_version").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    games: integer("games").notNull(),
+    storageBytes: bigint("storage_bytes", { mode: "number" }).notNull(),
+    status: text("status", {
+      enum: [
+        "awaiting_payment",
+        "submitted",
+        "clarification",
+        "approved",
+        "rejected",
+        "cancelled",
+      ],
+    })
+      .notNull()
+      .default("awaiting_payment"),
+    transactionReference: text("transaction_reference"),
+    verifiedTransactionKey: text("verified_transaction_key"),
+    proofPath: text("proof_path"),
+    reviewNote: text("review_note"),
+    reviewedBy: uuid("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    uniqueIndex("billing_verified_transaction_unique").on(
+      table.verifiedTransactionKey
+    ),
+    uniqueIndex("billing_one_open_request")
+      .on(table.userId)
+      .where(
+        sql`${table.status} in ('awaiting_payment', 'submitted', 'clarification')`
+      ),
+    index("billing_requests_created_idx").on(table.createdAt, table.id),
+  ]
+);
+
+export const billingTerms = pgTable(
+  "billing_terms",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    requestId: uuid("request_id")
+      .unique()
+      .references(() => billingRequests.id, { onDelete: "restrict" }),
+    source: text("source", { enum: ["manual", "complimentary"] }).notNull(),
+    planVersion: text("plan_version").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    usageStartsAt: timestamp("usage_starts_at", {
+      withTimezone: true,
+    }).notNull(),
+    games: integer("games").notNull(),
+    storageBytes: bigint("storage_bytes", { mode: "number" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("billing_terms_user_period_idx").on(
+      table.userId,
+      table.startsAt,
+      table.endsAt
+    ),
+    check(
+      "billing_term_dates_valid",
+      sql`${table.endsAt} > ${table.startsAt} and ${table.usageStartsAt} <= ${table.startsAt}`
+    ),
+  ]
+);
+
+export const billingOverrides = pgTable("billing_overrides", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  games: integer("games"),
+  storageBytes: bigint("storage_bytes", { mode: "number" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  reason: text("reason").notNull(),
+  ...timestamps,
+});
+
+// No session FK: deleting a game never refunds its creation allowance.
+export const billingGameUsage = pgTable(
+  "billing_game_usage",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requestKey: uuid("request_key").notNull(),
+    sessionId: uuid("session_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("billing_creation_request_unique").on(
+      table.userId,
+      table.requestKey
+    ),
+    index("billing_game_usage_user_date_idx").on(table.userId, table.createdAt),
+  ]
+);
+
+// Reservations survive interrupted uploads; only confirmed deletion releases bytes.
+export const billingMedia = pgTable(
+  "billing_media",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    hostId: uuid("host_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    sessionId: uuid("session_id").notNull(),
+    actorKey: text("actor_key").notNull(),
+    kind: text("kind", { enum: ["chat", "memory"] }).notNull(),
+    bucket: text("bucket").notNull(),
+    path: text("path").notNull().unique(),
+    bytes: bigint("bytes", { mode: "number" }).notNull(),
+    status: text("status", { enum: ["reserved", "stored", "released"] })
+      .notNull()
+      .default("reserved"),
+    storedAt: timestamp("stored_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("billing_media_host_idx").on(table.hostId),
+    index("billing_media_actor_date_idx").on(table.actorKey, table.createdAt),
+    check("billing_media_bytes_valid", sql`${table.bytes} > 0`),
   ]
 );
