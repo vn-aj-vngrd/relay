@@ -699,32 +699,22 @@ html.lenis.lenis-smooth iframe {
 .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="final"] {
   transform: translate3d(0, 0, 0) scale(1);
 }
-/* The hero assembles one game: plan, crew, live court, then follow-through. */
-.marketing-reveal-ready[data-marketing-reveal="hero"] [data-marketing-part] {
+/* Set the hidden pose immediately; only the entrance gets a delay/transition. */
+.marketing-reveal-ready[data-marketing-reveal="hero"] {
   opacity: 0;
-  transform: translateY(18px);
-  transition:
-    opacity 560ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 780ms cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translate3d(0, 80px, 0);
+  clip-path: none;
+  transition: none;
 }
-.marketing-reveal-ready[data-marketing-reveal="hero"]
-  [data-marketing-part="crew"] {
-  transition-delay: 80ms;
-}
-.marketing-reveal-ready[data-marketing-reveal="hero"]
-  [data-marketing-part="court"] {
-  transform: translateY(24px) scale(0.97);
-  transition-delay: 150ms;
-}
-.marketing-reveal-ready[data-marketing-reveal="hero"]
-  [data-marketing-part="follow-through"] {
-  transition-delay: 230ms;
-}
-.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"]
-  [data-marketing-part] {
+.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"] {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: none;
+  transition:
+    opacity 240ms ease-out,
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: 240ms;
 }
+.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"]:focus-within,
 .marketing-reveal-ready:focus-within,
 .marketing-reveal-ready:focus-within * {
   opacity: 1;
@@ -1095,10 +1085,13 @@ html[data-density="compact"] .public-session-chat-thread {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
   .marketing-hero-copy,
   .marketing-hero-product,
-  .marketing-reveal-ready {
+  .marketing-reveal-ready,
+  .marketing-reveal-ready[data-marketing-reveal="hero"],
+  .marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"] {
     animation: none;
     opacity: 1;
     clip-path: none;
