@@ -61,7 +61,23 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("MarketingEnhancements", () => {
-  it("paints the hero's start state before revealing it, then cleans up", () => {
+  it("never hides or restarts the CSS hero entrance during hydration", () => {
+    const observe = vi.spyOn(ImmediateObserver.prototype, "observe");
+    const { unmount } = render(
+      <>
+        <div className="marketing-hero-product">CSS hero scene</div>
+        <MarketingEnhancements />
+      </>
+    );
+    const hero = screen.getByText("CSS hero scene");
+    expect(hero).not.toHaveClass("marketing-reveal-ready");
+    expect(hero).not.toHaveClass("marketing-reveal-visible");
+    expect(observe).not.toHaveBeenCalledWith(hero);
+    unmount();
+    expect(hero.className).toBe("marketing-hero-product");
+  });
+
+  it("paints an in-view chapter's start state before revealing it, then cleans up", () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
       new DOMRect(0, 40, 200, 100)
     );
@@ -74,7 +90,7 @@ describe("MarketingEnhancements", () => {
       .mockImplementation(() => undefined);
     const { unmount } = render(
       <>
-        <div data-marketing-reveal="hero">Game scene</div>
+        <div data-marketing-reveal="mask">Game scene</div>
         <MarketingEnhancements />
       </>
     );

@@ -5,46 +5,48 @@ const stylesheet = readFileSync(
   new URL("../../app/globals.css", import.meta.url),
   "utf8"
 );
-
-const heroSelector = '.marketing-reveal-ready[data-marketing-reveal="hero"]';
-const reducedMotionStart = stylesheet.lastIndexOf(
-  "@media (prefers-reduced-motion: reduce)"
+const page = readFileSync(
+  new URL("../../app/(marketing)/page.tsx", import.meta.url),
+  "utf8"
 );
 
+function rule(selector: string) {
+  return stylesheet.split(`${selector} {`)[1]?.split("}")[0];
+}
+
 describe("Hero entrance motion contract", () => {
-  it("pauses before a pronounced smooth rise without nested stagger", () => {
-    const start = stylesheet.split(`${heroSelector} {`)[1]?.split("}")[0];
-    expect(start).toContain("opacity: 0");
-    expect(start).toContain("translate3d(0, 80px, 0)");
-    expect(start).toContain("clip-path: none");
-    expect(start).toContain("transition: none");
-    expect(start).not.toContain("transition-delay");
-
-    const entrance = stylesheet
-      .split(
-        '.marketing-reveal-ready.marketing-reveal-visible[data-marketing-reveal="hero"] {'
-      )[1]
-      ?.split("}")[0];
-    expect(entrance).toContain("opacity: 1");
-    expect(entrance).toContain("transform: none");
-    expect(entrance).toContain("opacity 240ms ease-out");
+  it("holds the hidden pose from first paint without waiting for hydration", () => {
+    const entrance = rule(".marketing-hero-product");
     expect(entrance).toContain(
-      "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)"
+      "marketing-hero-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) 240ms backwards"
     );
-    expect(entrance).not.toContain("scale(");
-    expect(entrance).toContain("transition-delay: 240ms");
-
-    const normalMotion = stylesheet.slice(0, reducedMotionStart);
-    expect(normalMotion).not.toMatch(
-      /\[data-marketing-reveal="hero"\]\s+\[data-marketing-part/
+    expect(entrance).toContain(
+      "marketing-hero-fade 240ms ease-out 240ms backwards"
     );
+    expect(rule("@keyframes marketing-hero-rise")).toContain(
+      "transform: translate3d(0, 80px, 0)"
+    );
+    expect(rule("@keyframes marketing-hero-fade")).toContain("opacity: 0");
   });
 
-  it("explicitly overrides hero specificity for reduced motion", () => {
-    const reducedMotion = stylesheet.slice(reducedMotionStart);
-    expect(reducedMotion).toContain(`${heroSelector},`);
-    expect(reducedMotion).toContain("transform: none");
-    expect(reducedMotion).toContain("opacity: 1");
-    expect(reducedMotion).toContain("transition-delay: 0ms !important");
+  it("keeps the server-rendered hero outside the hydration reveal controller", () => {
+    const hero = page.match(/<div\s+id="product"[^>]*>/)?.[0];
+    expect(hero).toContain("marketing-hero-product");
+    expect(hero).not.toContain("data-marketing-reveal");
+  });
+
+  it("skips the entrance for reduced motion and keyboard focus", () => {
+    const reducedMotion = stylesheet.slice(
+      stylesheet.lastIndexOf("@media (prefers-reduced-motion: reduce)")
+    );
+    const heroReset = reducedMotion
+      .split(".marketing-hero-product,")[1]
+      ?.split("}")[0];
+    expect(heroReset).toContain("animation: none");
+    expect(heroReset).toContain("transform: none");
+    expect(heroReset).toContain("opacity: 1");
+    expect(rule(".marketing-hero-product:focus-within")).toContain(
+      "animation: none"
+    );
   });
 });
