@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser, requireUser } from "@/features/auth/session";
 import { getServerEnv } from "@/lib/env";
+import { getVerifiedAssuranceLevel } from "@/lib/supabase/assurance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { parseAdminEmails } from "./validation";
@@ -25,8 +26,7 @@ export async function getAuthorizedAal2Admin(): Promise<User | null> {
   const user = await getAuthorizedAdmin();
   if (!user) return null;
   const supabase = await createSupabaseServerClient();
-  const { data, error } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data, error } = await getVerifiedAssuranceLevel(supabase);
   return !error && data.currentLevel === "aal2" ? user : null;
 }
 
@@ -35,8 +35,7 @@ export async function requireAdmin(): Promise<User> {
   if (!isAdminEmail(user.email)) redirect("/admin-access-denied");
 
   const supabase = await createSupabaseServerClient();
-  const { data, error } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data, error } = await getVerifiedAssuranceLevel(supabase);
   if (error || data.currentLevel !== "aal2") redirect("/admin-security");
 
   return user;

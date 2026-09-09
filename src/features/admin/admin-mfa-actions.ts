@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getVerifiedAssuranceLevel } from "@/lib/supabase/assurance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { getAuthorizedAdmin } from "./auth";
@@ -51,7 +52,7 @@ export async function prepareAdminMfaAction(): Promise<MfaPreparation> {
   const { admin, supabase } = authorization;
 
   const { data: assurance, error: assuranceError } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    await getVerifiedAssuranceLevel(supabase);
   if (assuranceError)
     return {
       ok: false,

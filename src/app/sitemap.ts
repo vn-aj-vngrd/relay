@@ -4,6 +4,9 @@ import { helpArticles } from "@/features/help/content";
 import { getCourtSitemapEntries } from "@/features/venues/directory";
 import { getPublicEnv } from "@/lib/env";
 
+// Court listings require the runtime database, which is unavailable during CI builds.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = getPublicEnv().NEXT_PUBLIC_APP_URL;
   const courts = await getCourtSitemapEntries();

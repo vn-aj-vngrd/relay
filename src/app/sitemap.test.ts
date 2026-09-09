@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import sitemap from "./sitemap";
+import sitemap, { dynamic } from "./sitemap";
 
 vi.mock("@/lib/env", () => ({
   getPublicEnv: () => ({ NEXT_PUBLIC_APP_URL: "https://relay.example" }),
@@ -16,6 +16,10 @@ vi.mock("@/features/venues/directory", () => ({
 }));
 
 describe("sitemap", () => {
+  it("opts out of build-time prerendering for database-backed court entries", () => {
+    expect(dynamic).toBe("force-dynamic");
+  });
+
   it("includes public product routes and every verified court detail page", async () => {
     const entries = await sitemap();
 

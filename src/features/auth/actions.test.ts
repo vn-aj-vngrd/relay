@@ -42,6 +42,10 @@ vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(async () => ({
     auth: {
+      getSession: vi.fn(async () => ({
+        data: { session: { access_token: "recovery-token" } },
+        error: null,
+      })),
       getUser: mocks.getUser,
       mfa: {
         challengeAndVerify: mocks.challengeAndVerify,

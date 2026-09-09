@@ -7,6 +7,7 @@ import { z } from "zod";
 import { getPublicEnv } from "@/lib/env";
 import { checkRateLimit, requestIdentity } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { getVerifiedAssuranceLevel } from "@/lib/supabase/assurance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { resolvePostAuthDestination } from "./destination";
@@ -382,7 +383,7 @@ async function verifyPasswordMfa(
   });
 
   const { data: assurance, error: assuranceError } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    await getVerifiedAssuranceLevel(supabase);
   if (assuranceError)
     authError(
       "Your authenticator could not be checked. Try again.",
@@ -443,7 +444,7 @@ export async function updateRecoveredPassword(formData: FormData) {
   if (password.data !== confirmation)
     authError("Passwords do not match.", "/update-password");
   const { data: assurance, error: assuranceError } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    await getVerifiedAssuranceLevel(supabase);
   if (assuranceError)
     authError(
       "Your authenticator could not be checked. Try again.",
@@ -529,7 +530,7 @@ export async function setTemporaryPassword(formData: FormData) {
 
   const supabase = await createSupabaseServerClient();
   const { data: assurance, error: assuranceError } =
-    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    await getVerifiedAssuranceLevel(supabase);
   if (assuranceError)
     authError(
       "Your authenticator could not be checked. Try again.",

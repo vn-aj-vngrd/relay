@@ -10,6 +10,7 @@ import {
 } from "@/features/auth/actions";
 import { PasswordMfaForm } from "@/features/auth/password-mfa-form";
 import { getCurrentUser } from "@/features/auth/session";
+import { getVerifiedAssuranceLevel } from "@/lib/supabase/assurance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Choose your password" };
@@ -22,7 +23,7 @@ export default async function SetPasswordPage({
   const supabase = await createSupabaseServerClient();
   const [user, assurance] = await Promise.all([
     getCurrentUser(),
-    supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+    getVerifiedAssuranceLevel(supabase),
   ]);
   if (!user) redirect("/login?next=/set-password");
   if (user.app_metadata.force_password_change !== true) redirect("/home");
