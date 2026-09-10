@@ -2,24 +2,38 @@
 
 ## Product contract
 
-Subscriptions belong to individual accounts. Groups, co-hosts and players do not buy seats. The host's plan supplies game-creation and hosted-media allowances; joining, RSVP, Play, scoring, basic recap and game repayment remain available on both plans.
+Subscriptions belong to individual accounts. Groups, co-hosts and players do not buy seats. The host's plan supplies game-creation and hosted-media allowances; joining, RSVP, Play, scoring, basic recap and game repayment remain available on all plans.
 
-| Allowance | Free | Pro |
-| --- | --- | --- |
-| Price | PHP 0 | PHP 299 per manually renewed calendar month |
-| Successfully created games | 5 / Philippine calendar month | 30 / subscription term |
-| Retained chat images + game photos | 100 MiB total | 2 GiB total |
-| Players / courts per game | 40 / 20 | 40 / 20 |
+| Default allowance | Free | Plus | Pro |
+| --- | --- | --- | --- |
+| Price per month | PHP 0 | PHP 149 | PHP 299 |
+| Successfully created games per month | 5 / Philippine calendar month | 12 / monthly term | 30 / monthly term |
+| Retained chat images + game photos | 100 MiB total | 500 MiB total | 2 GiB total |
+| Players / courts per game | 40 / 20 | 40 / 20 | 40 / 20 |
 
-`src/features/billing/domain.ts` is the versioned policy catalog. An approved term snapshots its plan version and allowances. Do not mutate a published plan version in place; introduce a version and intentionally decide existing-customer treatment. This first release does not provide an arbitrary plan/price editor.
+`src/features/billing/domain.ts` supplies defaults. `billing_settings.plan_catalog` stores the admin-published catalog; `src/features/billing/catalog.ts` supplies it to pricing, account billing and enforcement. Paid tiers default to Coming soon. Monthly prices (PHP), monthly game allowances, total storage and Active/Coming soon/Paused availability are editable in `/admin/billing/plans`. Free must stay available at PHP 0. Technical player/court ceilings, per-file limits and daily upload/security safeguards are not commercial settings. Commercial plans also have a public visibility toggle; hidden plans cannot be bought through self-service, including renewals, but remain assignable by admins. Existing requests and terms are unchanged.
 
-Pro starts after admin approval. Early renewal appends a calendar-month term after the paid-through date. January 31 clamps to February's last day; subsequent terms anchor to their actual start date. Initial upgrade carries current-calendar-month creations into the first Pro term. Expiry resolves directly from the current time; a missed background task cannot preserve expired access. Free fallback counts creations in the current Philippine calendar month.
+Each publication generates a new tier-prefixed version and audited before/after state, and rejects stale edits. Payment requests and terms retain their agreed price/allowance snapshots. Free allowance edits apply immediately without resetting actual usage. Per-account overrides retain precedence. Null catalogs use the documented defaults; source defaults are not a substitute for an operator publishing their offer.
+
+Paid access starts after admin approval. Plus/Pro identity comes from the snapshotted tier-prefixed plan version, including legacy `pro-v1` records. Choosing a different paid plan schedules it after existing paid-through access; there is no mid-term proration. Early renewal appends a calendar-month term after the paid-through date. January 31 clamps to February's last day; subsequent terms anchor to their actual start date. Initial upgrade carries current-calendar-month creations into the first Pro term. Expiry resolves directly from the current time; a missed background task cannot preserve expired access. Free fallback counts creations in the current Philippine calendar month.
 
 Games are charged only in the same database transaction as successful creation. A form retains an idempotency key across retries; a repeated key returns the already-created game. Deleting or cancelling never refunds creation usage. New creation still has an independent 20-attempt/minute abuse throttle.
 
+## Admin-only Unlimited and account assignments
+
+Unlimited is a fourth default, always hidden from public pricing and unavailable to checkout. It removes game-creation and retained-photo-storage quotas without disabling per-file, daily-upload, player/court or abuse safeguards. Actual usage and storage reservations are still recorded; provider costs are not unlimited or waived. No account receives it automatically based on admin role.
+
+Admin account billing can assign any catalog plan to any existing account, even with paid access already active/scheduled. An assignment snapshots the selected plan and uses the existing optional override expiry. Precedence is active assignment → current paid/complimentary term → Free, followed by explicit numeric account overrides. Blank numeric values inherit; under Unlimited they remove that hosting quota. Explicit zero still blocks new usage. Assignment changes require admin authorization, reason and confirmation and generate audit/notification records.
+
+Removing/expiring an assignment restores the currently effective underlying subscription or Free. Paid dates keep running; assignments do not pause or rewrite terms or refund/reset actual usage. Existing assignment snapshots stay fixed when only their numeric overrides or date change.
+
+Own-account sidebar shows name with the effective plan below it; own profile and Settings show the same plan and contextual billing action. Other players' profile views omit billing details. Upgrade prompts target visible, active capacity improvements with payment collection available; Coming soon uses Explore plans, and admin-managed assignments use Plan & billing without upselling. The shell/profile summary is request-memoized and does not query full game/media usage totals. Labels resolve on server refresh; enforcement never relies on a cached label.
+
 ## Account surfaces
 
-- `/settings/plan`: effective plan, games, retained/reserved storage, reset/expiry dates, manual upgrade/renewal and cursor-paged payment history.
+- `/pricing`: public monthly plan cards first, then a grouped comparison table and FAQs, with prices/allowances from the published catalog. Landing uses the same cards. Coming soon has no purchase action; Paused is distinct. Purchases require both an Active plan and enabled collection with an enabled payment method.
+- `/settings/plan` (Plan & billing) reuses the Settings underline navigation with three URL-backed tabs: **My plan** (default: effective plan, usage, photo management and pending payment), **Plans** (summary pricing cards, one `/pricing` details link and selected-plan payment setup), and **History** (plan and payment records). Each tab only queries its relevant data. The full comparison and FAQs live only on `/pricing`. Selecting an available card uses `?section=plans&plan=plus|pro`; legacy `?plan=` links still work. Unavailable/hidden selections never expose a form. Admin-managed accounts can browse summaries but are not offered an ineffective upgrade action. Submitted plan versions are checked again server-side before creating a request. Contextual Upgrade/Explore links open Plans; generic billing management links open My plan.
+- Plan history lists snapshotted paid/complimentary terms and the latest admin assignment, without exposing private audit notes or claiming to include earlier assignment changes. Active underlying terms are distinguished from admin-assigned access. Term history and payment history have independent stable five-record cursors. Both histories are visible in the dedicated History tab, without nested disclosure controls. Legacy payment/term cursor links and `?payments=1` open History; explicit tab selection takes precedence.
 - `/settings/plan/requests/[id]`: owner-only snapshot of payment instructions, QR, amount, account details, policies, transaction-reference submission, optional private proof and review state.
 - `/settings/plan/media`: host-owned photo management and storage release; game settings → Invite also exposes participant image permissions to the original host.
 
@@ -32,11 +46,12 @@ Other avatar/group/payment-proof limits remain operational, attempt-based UTC th
 ## Admin surfaces
 
 - `/admin/billing`: existing `AdminInfiniteRecords` pattern, stable 30-row cursors, shared admin-pagination API authorization/rate limit, no payment proof or recipient details in list payloads.
+- `/admin/billing/plans`: versioned price and allowance publication, per-tier launch/paused controls, links to account management and public pricing. Active paid tiers require payment configuration first. Changing sales availability never revokes terms or prevents review of existing requests.
 - `/admin/billing/settings`: multiple payment methods, recipient/account details, optional QR upload/replacement, enabled state, instructions, sales pause, verification timeframe, support contact and operator-approved refund/dispute/retention policy.
 - `/admin/billing/requests/[id]`: private proof and transaction reference, request clarification, reject or approve received funds. Another administrator must verify an admin's own payment.
-- `/admin/users/[id]/billing`: effective usage, overrides with reason/optional date expiry, complimentary one-month grants and recovery of old incomplete media uploads.
+- `/admin/users/[id]/billing`: effective usage, overrides with reason/optional date expiry, complimentary Plus/Pro grants (one calendar month by default, optional custom expiry) and recovery of old incomplete media uploads.
 
-An allowance left blank inherits the current plan. Zero blocks new usage. Overrides do not bypass technical/security constraints. Expiry is the end of the selected Philippine date. Use an override to provide extra capacity rather than erasing real usage or inventing a payment. Complimentary grants cannot be repeatedly submitted while any Pro term remains active/scheduled.
+An allowance left blank inherits the current plan. Zero blocks new usage. Overrides do not bypass technical/security constraints. Expiry is the end of the selected Philippine date. Use an override to provide extra capacity rather than erasing real usage or inventing a payment. Complimentary grants cannot be repeatedly submitted while any paid-plan term remains active/scheduled. Custom grant expiry overrides the term end, not the allowance: the selected game's quota covers the whole custom term without intermediate monthly resets. It never creates revenue or replaces an existing paid term.
 
 ## Manual payment workflow
 
@@ -56,11 +71,11 @@ The early planning model was PHP 3,500/month for one Supabase Micro production p
 
 Use provider usage alerts. Never assume per-account storage allowances are free reserved Supabase capacity. Keep private media out of service-worker caches, and do not publish payment files or log submitted references/screenshots. Stored historical QR versions are intentional snapshots, not replace-in-place assets.
 
-Deployment/backfill/rollback instructions: `drizzle/0051_personal_subscriptions.md`. No production migration or payment configuration is applied by source edits. The migration grants existing beta accounts a complimentary month; communicate that transition before rollout.
+Deployment/backfill/rollback instructions: `drizzle/0051_personal_subscriptions.md` and `drizzle/0052_dynamic_billing_catalog.md`, followed by `drizzle/0053_admin_plan_assignments.md`. No production migration or payment configuration is applied by source edits. The migration grants existing beta accounts a complimentary month; communicate that transition before rollout.
 
 ## Deferred capabilities
 
-Automatic recurring billing/provider webhooks, automatic image compression, a plan-price editor, refunds, raw usage corrections and email renewal delivery are not part of this initial manual-billing implementation. Broader operational upload throttles are not converted to successful-upload quotas in this change.
+Automatic recurring billing/provider webhooks, automatic image compression, annual plans, mid-term prorations, arbitrary feature/technical-limit editors, refunds, raw usage corrections and email renewal delivery are not part of this initial manual-billing implementation. Broader operational upload throttles are not converted to successful-upload quotas in this change.
 
 ## UI direction contract
 

@@ -19,19 +19,20 @@ import {
 import { requireAdmin } from "@/features/admin/auth";
 import { requireUser } from "@/features/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
-
+import { getBillingCatalog } from "./catalog";
 import {
   BillingError,
   type BillingState,
   MiB,
   manilaMonth,
-  plans,
+  normalizeBillingCatalog,
   renewalPeriod,
   transactionKey,
 } from "./domain";
 import { removeBillingFile, uploadBillingFile } from "./files";
 import { type BillingTransaction, lockBillingAccount } from "./usage";
 import {
+  catalogPlanSchema,
   methodSchema,
   overrideSchema,
   reasonSchema,
@@ -40,6 +41,8 @@ import {
 } from "./validation";
 
 function refresh(userId?: string) {
+  revalidatePath("/", "layout");
+  revalidatePath("/pricing");
   revalidatePath("/settings/plan");
   revalidatePath("/admin/billing", "layout");
   if (userId) revalidatePath(`/admin/users/${userId}/billing`);
@@ -91,6 +94,95 @@ async function audit(
     targetId,
     reason,
     metadata,
+  });
+}
+
+export async function saveBillingPlan(
+  _: BillingState,
+  data: FormData
+): Promise<BillingState> {
+  const admin = await requireAdmin();
+  return guarded(async () => {
+    await throttle(admin.id);
+    const price = z
+      .string()
+      .regex(
+        /^\d+(\.\d{1,2})?$/,
+        "Enter a PHP amount with up to two decimal places."
+      )
+      .parse(data.get("price"));
+    const input = catalogPlanSchema.parse({
+      ...Object.fromEntries(data),
+      priceCents: Math.round(Number(price) * 100),
+      visible: data.get("visible") === "on",
+    });
+    const reason = reasonSchema.parse(data.get("reason"));
+    if (data.get("confirm") !== "on")
+      throw new BillingError(
+        "Confirm the price, monthly games, total storage and availability before publishing."
+      );
+    await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`select pg_advisory_xact_lock(hashtextextended('relay.billing-settings', 0))`
+      );
+      const settings = await tx.query.billingSettings.findFirst({
+        where: eq(billingSettings.id, "global"),
+      });
+      const catalog = normalizeBillingCatalog(settings?.planCatalog);
+      const before = catalog.find((plan) => plan.id === input.id);
+      if (!before || before.version !== input.version)
+        throw new BillingError(
+          "This plan changed. Refresh and review the latest values before publishing."
+        );
+      if (
+        input.id !== "free" &&
+        input.id !== "unlimited" &&
+        input.visible &&
+        input.availability === "active"
+      ) {
+        const method = await tx.query.billingMethods.findFirst({
+          where: eq(billingMethods.enabled, true),
+        });
+        if (
+          !settings?.acceptingPayments ||
+          !settings.supportContact ||
+          !settings.reviewTime ||
+          !settings.policy ||
+          !method
+        )
+          throw new BillingError(
+            "Enable payments and complete payment methods, support and policies in Payment settings first."
+          );
+      }
+      const after = {
+        ...before,
+        version: `${input.id}-${crypto.randomUUID()}`,
+        priceCents: input.priceCents,
+        games: input.games,
+        storageBytes: input.storageMiB * MiB,
+        availability: input.availability,
+        visible: input.visible,
+      };
+      const planCatalog = catalog.map((plan) =>
+        plan.id === input.id ? after : plan
+      );
+      await tx
+        .insert(billingSettings)
+        .values({ id: "global", planCatalog })
+        .onConflictDoUpdate({
+          target: billingSettings.id,
+          set: { planCatalog, updatedAt: new Date() },
+        });
+      await audit(tx, admin.id, "billing.plan_published", input.id, reason, {
+        before,
+        after,
+      });
+    });
+    refresh();
+    return {
+      success:
+        "Plan published. Existing payment requests and paid terms keep their agreed limits. Free-plan changes apply immediately.",
+    };
   });
 }
 
@@ -211,6 +303,7 @@ export async function createUpgradeRequest(
   return guarded(async () => {
     await throttle(user.id);
     const methodId = z.uuid().parse(data.get("methodId"));
+    const planId = z.enum(["plus", "pro"]).parse(data.get("planId") ?? "pro");
     const id = await db.transaction(async (tx) => {
       await lockBillingAccount(tx, user.id);
       const existing = await tx.query.billingRequests.findFirst({
@@ -240,15 +333,26 @@ export async function createUpgradeRequest(
         throw new BillingError(
           "Paid upgrades are not available right now. Please try later."
         );
+      const plan = normalizeBillingCatalog(settings.planCatalog).find(
+        (entry) => entry.id === planId
+      );
+      if (!plan?.visible || plan.availability !== "active")
+        throw new BillingError(
+          "This plan is not accepting purchases. View pricing for its current availability."
+        );
+      if (data.get("planVersion") !== plan.version)
+        throw new BillingError(
+          "The plan changed. Refresh and review the current price and allowances before continuing."
+        );
       const [request] = await tx
         .insert(billingRequests)
         .values({
           userId: user.id,
           methodId,
-          amountCents: plans.pro.priceCents,
-          planVersion: plans.pro.version,
-          games: plans.pro.games,
-          storageBytes: plans.pro.storageBytes,
+          amountCents: plan.priceCents,
+          planVersion: plan.version,
+          games: plan.games,
+          storageBytes: plan.storageBytes,
           snapshot: {
             provider: method.provider,
             recipient: method.recipient,
@@ -331,7 +435,7 @@ export async function submitSubscriptionPayment(
     refresh();
     return {
       success:
-        "Payment submitted. Pro starts after the received funds are verified.",
+        "Payment submitted. Paid access starts after the received funds are verified.",
     };
   });
 }
@@ -468,7 +572,7 @@ export async function reviewSubscriptionPayment(
     return {
       success:
         input.decision === "approved"
-          ? "Payment approved. One month of Pro has been credited."
+          ? "Payment approved. One monthly term of the requested plan has been credited."
           : "Review saved. The account can view your note.",
     };
   });
@@ -488,6 +592,10 @@ export async function saveAccountOverrides(
       ...Object.fromEntries(data),
       expiresAt,
     });
+    if (data.get("confirm") !== "on")
+      throw new BillingError(
+        "Confirm the account plan, limits and expiry before applying changes."
+      );
     if (input.expiresAt && input.expiresAt <= new Date())
       throw new BillingError("Choose an expiry in the future.");
     await db.transaction(async (tx) => {
@@ -499,8 +607,18 @@ export async function saveAccountOverrides(
       const before = await tx.query.billingOverrides.findFirst({
         where: eq(billingOverrides.userId, input.userId),
       });
+      const catalog = await getBillingCatalog(tx);
+      // Retain an existing assignment snapshot when only its limits/date change.
+      const planOverride = input.planId
+        ? before?.planOverride?.id === input.planId
+          ? before.planOverride
+          : catalog.find((plan) => plan.id === input.planId)
+        : null;
+      if (input.planId && !planOverride)
+        throw new BillingError("Plan not found.");
       const values = {
         userId: input.userId,
+        planOverride: planOverride ?? null,
         games: input.games,
         storageBytes: input.storageMiB === null ? null : input.storageMiB * MiB,
         expiresAt: input.expiresAt,
@@ -511,6 +629,12 @@ export async function saveAccountOverrides(
         .insert(billingOverrides)
         .values(values)
         .onConflictDoUpdate({ target: billingOverrides.userId, set: values });
+      await tx.insert(notifications).values({
+        userId: input.userId,
+        type: "subscription_assignment",
+        payload: {},
+        dedupeKey: `billing-assignment:${input.userId}:${crypto.randomUUID()}`,
+      });
       await audit(
         tx,
         admin.id,
@@ -535,9 +659,14 @@ export async function grantComplimentaryPro(
   const admin = await requireAdmin();
   return guarded(async () => {
     const userId = z.uuid().parse(data.get("userId"));
+    const planId = z.enum(["plus", "pro"]).parse(data.get("planId") ?? "pro");
+    const expiresOn = data.get("expiresOn");
+    const customEnd = expiresOn
+      ? new Date(`${z.iso.date().parse(expiresOn)}T23:59:59.999+08:00`)
+      : null;
     const reason = reasonSchema.parse(data.get("reason"));
     if (data.get("confirm") !== "on")
-      throw new BillingError("Confirm the complimentary one-month grant.");
+      throw new BillingError("Confirm the complimentary plan and expiry.");
     await db.transaction(async (tx) => {
       await lockBillingAccount(tx, userId);
       const last = await tx.query.billingTerms.findFirst({
@@ -548,18 +677,26 @@ export async function grantComplimentaryPro(
       // Deliberately reject repeat grants while any term remains: a retry cannot extend access twice.
       if (last && last.endsAt > now)
         throw new BillingError(
-          "This account already has Pro access scheduled. Use a limit override instead."
+          "This account already has paid-plan access scheduled. Use a limit override instead."
         );
+      const catalog = await getBillingCatalog(tx);
+      const plan = catalog.find((entry) => entry.id === planId);
+      if (!plan) throw new BillingError("Plan not found.");
       const period = renewalPeriod(now);
+      if (customEnd) {
+        if (customEnd <= now)
+          throw new BillingError("Choose a future grant expiry date.");
+        period.end = customEnd;
+      }
       await tx.insert(billingTerms).values({
         userId,
         source: "complimentary",
-        planVersion: plans.pro.version,
+        planVersion: plan.version,
         startsAt: period.start,
         endsAt: period.end,
         usageStartsAt: manilaMonth(now).start,
-        games: plans.pro.games,
-        storageBytes: plans.pro.storageBytes,
+        games: plan.games,
+        storageBytes: plan.storageBytes,
       });
       await tx.insert(notifications).values({
         userId,
@@ -567,14 +704,16 @@ export async function grantComplimentaryPro(
         payload: {},
         dedupeKey: `subscription-grant:${userId}:${period.end.toISOString()}`,
       });
-      await audit(tx, admin.id, "billing.pro_granted", userId, reason, {
+      await audit(tx, admin.id, "billing.plan_granted", userId, reason, {
+        planId,
+        planVersion: plan.version,
         endsAt: period.end,
       });
     });
     refresh(userId);
     return {
       success:
-        "One complimentary month of Pro granted. It expires automatically.",
+        "Complimentary access granted to the selected plan. It expires automatically on the recorded date.",
     };
   });
 }

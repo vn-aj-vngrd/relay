@@ -2,6 +2,7 @@
 
 import {
   CaretUpDown,
+  CreditCard,
   ShieldCheck,
   SignOut,
   SlidersHorizontal,
@@ -12,6 +13,10 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ButtonSpinner } from "@/components/ui/button";
 import { signOut } from "@/features/auth/actions";
+import {
+  type AccountPlanSummary,
+  accountPlanHref,
+} from "@/features/billing/account-plan-policy";
 import { Avatar } from "./avatar-stack";
 import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
@@ -34,11 +39,13 @@ export function SidebarAccount({
   username,
   avatarUrl,
   isAdmin = false,
+  plan,
 }: {
   name: string;
   username: string;
   avatarUrl?: string;
   isAdmin?: boolean;
+  plan?: AccountPlanSummary;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -61,6 +68,15 @@ export function SidebarAccount({
 
   return (
     <div ref={root} data-tour="profile" className="sidebar-account relative">
+      {plan && plan.action !== "Plan & billing" ? (
+        <Link
+          href={accountPlanHref(plan.action)}
+          className="sidebar-account-copy mb-1 flex min-h-9 items-center gap-2 rounded-md px-2 text-[13px] font-medium text-primary hover:bg-surface-strong"
+        >
+          <CreditCard aria-hidden size={17} />
+          {plan.action}
+        </Link>
+      ) : null}
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -70,15 +86,22 @@ export function SidebarAccount({
         className="sidebar-account-trigger pressable group relative flex h-10 w-full items-center gap-2 rounded-md px-1.5 text-left hover:bg-surface-strong"
       >
         <Avatar name={name} imageUrl={avatarUrl} size="sm" />
-        <span className="sidebar-account-copy min-w-0 flex-1 truncate text-[13px] font-medium">
-          {name}
+        <span className="sidebar-account-copy min-w-0 flex-1 text-[13px] font-medium">
+          <span className="block truncate">{name}</span>
+          {plan ? (
+            <span className="block truncate text-xs font-normal text-muted">
+              {plan.name} plan
+            </span>
+          ) : null}
         </span>
         <CaretUpDown
           aria-hidden
           size={14}
           className="sidebar-account-caret text-muted"
         />
-        <SidebarItemTooltip>{name}</SidebarItemTooltip>
+        <SidebarItemTooltip>
+          {plan ? `${name} · ${plan.name} plan` : name}
+        </SidebarItemTooltip>
       </button>
       {open ? (
         <div
@@ -106,6 +129,15 @@ export function SidebarAccount({
           >
             <SlidersHorizontal size={17} />
             Settings
+          </Link>
+          <Link
+            role="menuitem"
+            href="/settings/plan"
+            onClick={() => setOpen(false)}
+            className="flex min-h-9 items-center gap-2 rounded-md px-2 text-sm text-muted hover:bg-surface-strong hover:text-ink"
+          >
+            <CreditCard aria-hidden size={17} />
+            Plan & billing
           </Link>
           {isAdmin ? (
             <Link

@@ -18,6 +18,20 @@ export default async function AdminBillingPage() {
           </ButtonLink>
         }
       />
+      <nav
+        aria-label="Billing navigation"
+        className="mb-6 flex flex-wrap gap-3"
+      >
+        <ButtonLink href="/admin/billing/plans" variant="secondary">
+          Plans & pricing
+        </ButtonLink>
+        <ButtonLink href="/admin/users" variant="secondary">
+          Manage accounts
+        </ButtonLink>
+        <ButtonLink href="/pricing" variant="quiet">
+          View public pricing
+        </ButtonLink>
+      </nav>
       <AdminInfiniteRecords
         resource="billing"
         initialPage={page}

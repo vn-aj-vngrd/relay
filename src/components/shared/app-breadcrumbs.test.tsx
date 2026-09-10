@@ -11,7 +11,7 @@ describe("buildBreadcrumbItems", () => {
     ).toEqual([
       { href: "/home", label: "Home" },
       { href: "/settings", label: "Settings" },
-      { href: "/settings/plan", label: "Plan & usage" },
+      { href: "/settings/plan", label: "Plan & billing" },
       { href: undefined, label: "Payment requests" },
       { href: undefined, label: "Payment request" },
     ]);

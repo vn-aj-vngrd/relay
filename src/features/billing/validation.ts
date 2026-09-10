@@ -2,6 +2,58 @@ import { z } from "zod";
 
 import { billingProviders } from "./domain";
 
+const requiredCatalogInteger = (max: number) =>
+  z.preprocess(
+    (value) => (value === "" || value === null ? undefined : value),
+    z.coerce.number().int().min(0).max(max)
+  );
+
+export const catalogPlanSchema = z
+  .object({
+    id: z.enum(["free", "plus", "pro", "unlimited"]),
+    visible: z.boolean().default(true),
+    version: z.string().min(1).max(120),
+    priceCents: z.coerce.number().int().min(0).max(10_000_000),
+    games: requiredCatalogInteger(100_000),
+    storageMiB: requiredCatalogInteger(1024 * 1024),
+    availability: z.enum(["coming_soon", "active", "paused"]),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.id === "free" &&
+      (value.priceCents !== 0 || value.availability !== "active")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Free must remain available at no charge.",
+      });
+    }
+    if (
+      value.id === "unlimited" &&
+      (value.visible ||
+        value.priceCents !== 0 ||
+        value.games !== 0 ||
+        value.storageMiB !== 0)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Unlimited is admin-only, hidden and unmetered. Use account overrides for explicit limits.",
+      });
+    }
+    if (
+      value.id !== "free" &&
+      value.id !== "unlimited" &&
+      value.priceCents === 0
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Paid plans need a price above zero. Use a complimentary grant for free access.",
+      });
+    }
+  });
+
 export const reasonSchema = z
   .string()
   .trim()
@@ -58,6 +110,7 @@ const nullableInteger = (max: number) =>
   );
 export const overrideSchema = z.object({
   userId: z.uuid(),
+  planId: z.enum(["", "free", "plus", "pro", "unlimited"]).default(""),
   games: nullableInteger(100_000),
   storageMiB: nullableInteger(1024 * 1024),
   expiresAt: z.preprocess(

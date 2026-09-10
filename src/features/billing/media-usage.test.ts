@@ -13,6 +13,7 @@ vi.mock("@/db/client", async () => {
   const tx = {
     execute: mocks.lock,
     query: {
+      billingSettings: { findFirst: async () => null },
       billingTerms: { findFirst: async () => null },
       billingOverrides: { findFirst: mocks.override },
     },
@@ -43,7 +44,7 @@ vi.mock("@/db/client", async () => {
   };
 });
 
-import { MiB } from "./domain";
+import { defaultBillingPlans, MiB } from "./domain";
 import { reserveMedia } from "./usage";
 
 const input = {
@@ -62,6 +63,23 @@ beforeEach(() => {
 });
 
 describe("media reservation allowance", () => {
+  it("removes retained-storage quotas for Unlimited without bypassing upload safeguards", async () => {
+    mocks.override.mockResolvedValue({
+      planOverride: defaultBillingPlans.find(
+        (plan) => plan.id === "unlimited"
+      )!,
+      games: null,
+      storageBytes: null,
+      expiresAt: null,
+    });
+    mocks.bytes = 100 * 1024 * MiB;
+    await expect(reserveMedia(input)).resolves.toHaveProperty("id");
+    mocks.uploads = 10;
+    await expect(reserveMedia(input)).rejects.toThrow("10 chat images today");
+    await expect(reserveMedia({ ...input, bytes: MiB + 1 })).rejects.toThrow(
+      "smaller image"
+    );
+  });
   it("accepts the exact remaining Free storage capacity", async () => {
     mocks.bytes = 99 * MiB;
     await expect(reserveMedia(input)).resolves.toHaveProperty(

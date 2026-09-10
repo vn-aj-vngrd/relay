@@ -1,5 +1,7 @@
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
+import { getAccountPlanSummary } from "@/features/billing/account-plan";
+import { accountPlanHref } from "@/features/billing/account-plan-policy";
 import { NotificationSettingsForm } from "@/features/notifications/notification-settings-form";
 import { getNotificationSettings } from "@/features/notifications/settings";
 import { PreferenceControls } from "@/features/preferences/preference-controls";
@@ -21,6 +23,8 @@ export default async function SettingsPage({
     query.section === "notifications"
       ? query.section
       : "account";
+  const accountPlan =
+    section === "account" ? await getAccountPlanSummary(user.id) : null;
   const notificationSettings =
     section === "notifications" ? await getNotificationSettings(user.id) : null;
 
@@ -64,17 +68,17 @@ export default async function SettingsPage({
               Change password
             </ButtonLink>
             <div className="mt-8 border-t border-line pt-6">
-              <h2 className="text-lg font-semibold">Plan & usage</h2>
+              <h2 className="text-lg font-semibold">Plan & billing</h2>
               <p className="mt-2 text-sm text-muted">
-                View your hosting allowance, photo storage and personal
-                subscription.
+                {accountPlan?.name} plan. View your hosting allowance, photo
+                storage and personal subscription.
               </p>
               <ButtonLink
-                href="/settings/plan"
+                href={accountPlanHref(accountPlan?.action ?? "Plan & billing")}
                 variant="secondary"
                 className="mt-4"
               >
-                Manage plan & usage
+                {accountPlan?.action ?? "Plan & billing"}
               </ButtonLink>
             </div>
           </section>

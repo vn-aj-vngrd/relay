@@ -11,8 +11,10 @@ export { requestStatusLabels } from "./domain";
 
 export function PlanUsage({
   usage,
+  compact = false,
 }: {
   usage: Awaited<ReturnType<typeof getAccountUsage>>;
+  compact?: boolean;
 }) {
   return (
     <section aria-labelledby="plan-usage-title">
@@ -20,40 +22,73 @@ export function PlanUsage({
         {plans[usage.plan].name} plan
       </h2>
       <dl className="mt-4 divide-y divide-line border-y border-line text-sm">
+        {usage.planAssigned ? (
+          <div className="flex flex-wrap justify-between gap-2 py-4">
+            <dt>Admin-assigned plan</dt>
+            <dd>
+              {usage.planAssignmentExpiresAt
+                ? `Until ${billingDate(usage.planAssignmentExpiresAt)} (PH)`
+                : "Until an admin removes it"}
+            </dd>
+          </div>
+        ) : null}
         <div className="flex flex-wrap justify-between gap-2 py-4">
           <dt>
-            Games created{usage.gamesOverridden ? " · Admin override" : ""}
+            {usage.planAssigned
+              ? "Games created in this usage period"
+              : usage.plan === "free"
+                ? "Games created this calendar month"
+                : "Games created this term"}
+            {usage.gamesOverridden ? " · Admin override" : ""}
           </dt>
           <dd className="score">
-            {usage.gamesUsed} / {usage.games}
+            {usage.gamesUsed} /{" "}
+            {usage.gamesUnlimited ? "Unlimited" : usage.games}
           </dd>
         </div>
         <div className="flex flex-wrap justify-between gap-2 py-4">
           <dt>
-            Hosted-game media
+            Total photo storage
             {usage.storageOverridden ? " · Admin override" : ""}
           </dt>
           <dd className="score">
-            {storageLabel(usage.bytesUsed)} / {storageLabel(usage.storageBytes)}
+            {storageLabel(usage.bytesUsed)} /{" "}
+            {usage.storageUnlimited
+              ? "Unlimited"
+              : storageLabel(usage.storageBytes)}
           </dd>
         </div>
         <div className="flex flex-wrap justify-between gap-2 py-4">
           <dt>
-            {usage.plan === "pro"
-              ? "Current Pro period ends"
+            {usage.planAssigned || usage.plan !== "free"
+              ? "Game usage period ends"
               : "Game allowance resets"}
           </dt>
           <dd>{billingDate(usage.end)} (PH)</dd>
         </div>
-        {usage.paidThrough ? (
+        {usage.paidThrough &&
+        (!compact ||
+          (!usage.planAssigned &&
+            usage.plan !== "free" &&
+            usage.paidThrough > usage.end)) ? (
           <div className="flex flex-wrap justify-between gap-2 py-4">
-            <dt>Pro access {usage.plan === "pro" ? "through" : "ended"}</dt>
+            <dt>
+              {usage.planAssigned
+                ? "Underlying subscription paid through"
+                : usage.plan !== "free"
+                  ? "Paid-plan access through"
+                  : "Paid-plan access ended"}
+            </dt>
             <dd>{billingDate(usage.paidThrough)} (PH)</dd>
           </div>
         ) : null}
-        {usage.term ? (
+        {usage.term && !compact ? (
           <div className="flex flex-wrap justify-between gap-2 py-4">
-            <dt>Access source</dt>
+            <dt>
+              {usage.planAssigned
+                ? "Underlying subscription source"
+                : "Access source"}
+            </dt>
             <dd>
               {usage.term.source === "manual"
                 ? "Manually verified payment"
@@ -63,84 +98,27 @@ export function PlanUsage({
         ) : null}
       </dl>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-        Storage includes chat images and game photos added by anyone in games
-        you host. It does not reset monthly. Failed game creation does not spend
-        your allowance; deleting a game does not refund it.
+        {compact
+          ? "Chat images and game photos share your total storage. Storage does not reset monthly."
+          : "Storage includes chat images and game photos added by anyone in games you host. It does not reset monthly. Failed game creation does not spend your allowance; deleting a game does not refund it."}
+        {usage.plan === "unlimited"
+          ? " Upload and safety limits still apply."
+          : null}
       </p>
-      {usage.plan === "pro" &&
+      {!usage.planAssigned &&
+      usage.plan !== "free" &&
       usage.paidThrough &&
       usage.paidThrough.getTime() - Date.now() <= 7 * 86400_000 ? (
         <Alert variant="info" className="mt-4">
-          Pro ends {billingDate(usage.paidThrough)} (PH). Renew manually to keep
-          your allowance. No automatic charge will be made.
+          Paid-plan access ends {billingDate(usage.paidThrough)} (PH). Renew
+          manually to keep your allowance. No automatic charge will be made.
         </Alert>
       ) : null}
     </section>
   );
 }
 
-export function PlanComparison() {
-  return (
-    <section aria-labelledby="plan-comparison-title">
-      <h2 id="plan-comparison-title" className="text-lg font-semibold">
-        Personal plans
-      </h2>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">
-            Free and Pro personal subscriptions
-          </caption>
-          <thead>
-            <tr className="border-b border-line">
-              <th scope="col" className="py-3 pr-4">
-                Allowance
-              </th>
-              <th scope="col" className="py-3 pr-4">
-                Free
-              </th>
-              <th scope="col" className="py-3">
-                Pro
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              [
-                "Price",
-                `₱${plans.free.priceCents / 100}`,
-                `₱${plans.pro.priceCents / 100}/month`,
-              ],
-              [
-                "Successful game creations",
-                `${plans.free.games}/month`,
-                `${plans.pro.games}/month`,
-              ],
-              [
-                "Chat-image + memory storage",
-                `${storageLabel(plans.free.storageBytes)} total`,
-                `${storageLabel(plans.pro.storageBytes)} total`,
-              ],
-              ["Players / courts per game", "40 / 20", "40 / 20"],
-            ].map(([label, free, pro]) => (
-              <tr key={label} className="border-b border-line">
-                <th scope="row" className="py-4 pr-4 font-medium">
-                  {label}
-                </th>
-                <td className="py-4 pr-4">{free}</td>
-                <td className="py-4">{pro}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-        Both plans include guest RSVP, joining games, co-hosting, groups, Play,
-        scoring, basic recap, text chat and repayments. Players do not need Pro
-        to join a Pro host’s game. Normal abuse protection applies.
-      </p>
-    </section>
-  );
-}
+export { PlanComparison } from "./plan-comparison";
 
 export function PaymentInstructions({
   snapshot,

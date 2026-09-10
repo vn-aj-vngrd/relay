@@ -8,6 +8,11 @@ import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db/client";
 import { billingRequests } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
+import {
+  planIdFromVersion,
+  plans,
+  storageLabel,
+} from "@/features/billing/domain";
 import { billingFileUrl } from "@/features/billing/files";
 import {
   CancelUpgradeForm,
@@ -33,6 +38,7 @@ export default async function PaymentRequestPage({
     ),
   });
   if (!request) notFound();
+  const planName = plans[planIdFromVersion(request.planVersion)].name;
   const [qrUrl, downloadUrl, proofUrl] = await Promise.all([
     billingFileUrl(request.snapshot.qrPath),
     billingFileUrl(request.snapshot.qrPath, true),
@@ -44,9 +50,9 @@ export default async function PaymentRequestPage({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <header>
         <ButtonLink href="/settings/plan" variant="secondary">
-          Back to Plan & usage
+          Back to Plan & billing
         </ButtonLink>
-        <h1 className="app-title mt-5">Pro payment request</h1>
+        <h1 className="app-title mt-5">{planName} payment request</h1>
         <p className="mt-2 text-sm text-muted">
           {requestStatusLabels[request.status]}
         </p>
@@ -61,8 +67,8 @@ export default async function PaymentRequestPage({
       ) : null}
       {request.status === "approved" ? (
         <Alert variant="success">
-          Payment approved. Your Pro access has been credited. See Plan & usage
-          for its dates.
+          Payment approved. Your requested plan has been credited. See Plan &
+          billing for its dates.
         </Alert>
       ) : null}
       {request.status === "submitted" ? (
@@ -80,8 +86,10 @@ export default async function PaymentRequestPage({
           {(request.amountCents / 100).toFixed(2)}
         </h2>
         <p className="mb-5 max-w-2xl text-sm leading-6 text-muted">
-          One calendar month of Pro starts after approval, or extends your
-          current term. Manual renewal; no automatic charge. These are the
+          {request.games} games per month and{" "}
+          {storageLabel(request.storageBytes)} total photo storage. One calendar
+          month of {planName} starts after approval, or after your current
+          paid-through date. Manual renewal; no automatic charge. These are the
           payment instructions saved when this request was created.
         </p>
         <PaymentInstructions

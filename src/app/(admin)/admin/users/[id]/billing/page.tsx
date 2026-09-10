@@ -7,6 +7,7 @@ import { db } from "@/db/client";
 import { billingMedia, users } from "@/db/schema";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
+import { getBillingCatalog } from "@/features/billing/catalog";
 import { billingDate, storageLabel } from "@/features/billing/domain";
 import {
   AccountOverrideForm,
@@ -26,7 +27,7 @@ export default async function AdminAccountBillingPage({
   if (!id.success) notFound();
   const user = await db.query.users.findFirst({ where: eq(users.id, id.data) });
   if (!user) notFound();
-  const [usage, reservations] = await Promise.all([
+  const [usage, reservations, catalog] = await Promise.all([
     getAccountUsage(user.id),
     db.query.billingMedia.findMany({
       where: and(
@@ -36,6 +37,7 @@ export default async function AdminAccountBillingPage({
       orderBy: asc(billingMedia.createdAt),
       limit: 20,
     }),
+    getBillingCatalog(),
   ]);
   return (
     <div>
@@ -59,9 +61,11 @@ export default async function AdminAccountBillingPage({
           </h2>
           <AccountOverrideForm
             userId={user.id}
+            catalog={catalog}
             override={
               usage.override
                 ? {
+                    planId: usage.override.planOverride?.id ?? null,
                     games: usage.override.games,
                     storageBytes: usage.override.storageBytes,
                     expiresAt: usage.override.expiresAt?.toISOString() ?? null,
@@ -78,7 +82,7 @@ export default async function AdminAccountBillingPage({
             id="complimentary-pro-title"
             className="mb-4 text-lg font-semibold"
           >
-            Complimentary Pro
+            Complimentary plan access
           </h2>
           <ComplimentaryProForm userId={user.id} />
         </section>

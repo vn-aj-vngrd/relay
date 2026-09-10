@@ -7,6 +7,7 @@ describe("subscription notifications", () => {
     "subscription_renewal",
     "subscription_review",
     "subscription_grant",
+    "subscription_assignment",
   ])("routes %s to personal billing, never a game payment", (type) => {
     const notice = notificationPresentation({
       type,

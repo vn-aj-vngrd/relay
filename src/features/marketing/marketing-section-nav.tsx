@@ -9,6 +9,7 @@ const sections = [
   { id: "play", label: "Play" },
   { id: "payments", label: "Repay" },
   { id: "story", label: "Story" },
+  { id: "pricing", label: "Pricing" },
 ] as const;
 
 type SectionId = (typeof sections)[number]["id"];
@@ -68,7 +69,7 @@ export function MarketingSectionNav() {
     <nav
       ref={navRef}
       aria-label="Marketing navigation"
-      className="relative hidden items-center gap-6 md:flex"
+      className="relative hidden items-center gap-4 lg:flex"
     >
       {sections.map((section) => (
         <a

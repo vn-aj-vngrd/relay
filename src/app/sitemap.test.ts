@@ -27,6 +27,7 @@ describe("sitemap", () => {
       expect.arrayContaining([
         expect.objectContaining({ url: "https://relay.example" }),
         expect.objectContaining({ url: "https://relay.example/courts" }),
+        expect.objectContaining({ url: "https://relay.example/pricing" }),
         expect.objectContaining({
           url: "https://relay.example/courts/nice-serve",
         }),

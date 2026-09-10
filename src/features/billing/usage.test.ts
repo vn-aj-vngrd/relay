@@ -4,11 +4,13 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/db/client", () => ({ db: {} }));
 
 import { billingGameUsage, billingMedia } from "@/db/schema";
+import { defaultBillingPlans, type resolveAllowance } from "./domain";
 import { type BillingTransaction, checkGameCreation } from "./usage";
 
 let events: string[];
 let gamesUsed: number;
 let previousId: string | null;
+let override: Parameters<typeof resolveAllowance>[0]["override"];
 let term: {
   startsAt: Date;
   endsAt: Date;
@@ -29,8 +31,9 @@ function transaction() {
           return previousId ? { sessionId: previousId } : null;
         },
       },
+      billingSettings: { findFirst: async () => null },
       billingTerms: { findFirst: async () => term },
-      billingOverrides: { findFirst: async () => null },
+      billingOverrides: { findFirst: async () => override },
     },
     select: () => ({
       from: (table: unknown) => ({
@@ -50,10 +53,29 @@ beforeEach(() => {
   gamesUsed = 0;
   previousId = null;
   term = null;
+  override = null;
   vi.clearAllMocks();
 });
 
 describe("atomic game allowance boundary", () => {
+  it("does not impose a game quota on Unlimited, but honors explicit account limits", async () => {
+    override = {
+      planOverride: defaultBillingPlans.find(
+        (plan) => plan.id === "unlimited"
+      )!,
+      games: null,
+      storageBytes: null,
+      expiresAt: null,
+    };
+    gamesUsed = 100_000;
+    expect(
+      await checkGameCreation(transaction(), "user", "key")
+    ).toHaveProperty("existingSessionId", null);
+    override = { ...override, games: 0 };
+    await expect(
+      checkGameCreation(transaction(), "user", "key")
+    ).rejects.toThrow("100000 of 0 games");
+  });
   it("locks before reading idempotency and usage", async () => {
     expect(await checkGameCreation(transaction(), "user", "key")).toMatchObject(
       { existingSessionId: null, createdAt: expect.any(Date) }

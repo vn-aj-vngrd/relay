@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  defaultBillingPlans,
   MiB,
   manilaDay,
   manilaMonth,
   mediaPolicy,
   nextBillingMonth,
+  normalizeBillingCatalog,
   plans,
+  publicBillingPlans,
   renewalPeriod,
   resolveAllowance,
   transactionKey,
@@ -22,6 +25,90 @@ const term = {
 };
 
 describe("personal subscription policy", () => {
+  it("adds an always-hidden Unlimited default to legacy catalogs", () => {
+    const legacy = defaultBillingPlans.filter(
+      (plan) => plan.id !== "unlimited"
+    );
+    const catalog = normalizeBillingCatalog(legacy);
+    expect(catalog.find((plan) => plan.id === "unlimited")).toMatchObject({
+      visible: false,
+    });
+    expect(publicBillingPlans(catalog).map((plan) => plan.id)).toEqual([
+      "free",
+      "plus",
+      "pro",
+    ]);
+  });
+  it("resolves Unlimited over a paid term, without resetting its usage window", () => {
+    const planOverride = defaultBillingPlans.find(
+      (plan) => plan.id === "unlimited"
+    )!;
+    const override = {
+      planOverride,
+      games: null,
+      storageBytes: null,
+      expiresAt: null,
+    };
+    expect(resolveAllowance({ now, term, override })).toMatchObject({
+      plan: "unlimited",
+      planAssigned: true,
+      gamesUnlimited: true,
+      storageUnlimited: true,
+      start: term.usageStartsAt,
+      end: term.endsAt,
+    });
+    expect(
+      resolveAllowance({ now, term, override: { ...override, games: 0 } })
+    ).toMatchObject({
+      gamesUnlimited: false,
+      games: 0,
+      storageUnlimited: true,
+    });
+    expect(
+      resolveAllowance({ now, term, override: { ...override, expiresAt: now } })
+    ).toMatchObject({ plan: "pro", games: 30, gamesUnlimited: false });
+    expect(resolveAllowance({ now, term })).toMatchObject({
+      plan: "pro",
+      games: 30,
+    });
+  });
+  it("resolves Plus snapshots and keeps their limits despite catalog changes", () => {
+    expect(
+      resolveAllowance({
+        now,
+        term: { ...term, planVersion: "plus-published", games: 12 },
+        freePlan: { games: 2, storageBytes: MiB },
+      })
+    ).toMatchObject({
+      plan: "plus",
+      games: 12,
+      storageBytes: term.storageBytes,
+      start: term.usageStartsAt,
+    });
+  });
+  it("uses dynamic Free allowances at expiry without resetting the calendar window", () => {
+    expect(
+      resolveAllowance({
+        now: term.endsAt,
+        term,
+        freePlan: { games: 9, storageBytes: 500 * MiB },
+      })
+    ).toMatchObject({
+      plan: "free",
+      games: 9,
+      storageBytes: 500 * MiB,
+      start: new Date("2026-06-30T16:00:00Z"),
+    });
+  });
+  it("inherits dynamic Free limits while preserving explicit zero overrides", () => {
+    expect(
+      resolveAllowance({
+        now,
+        freePlan: { games: 9, storageBytes: 500 * MiB },
+        override: { games: 0, storageBytes: null, expiresAt: null },
+      })
+    ).toMatchObject({ plan: "free", games: 0, storageBytes: 500 * MiB });
+  });
   it("offers five Free games and thirty Pro games for PHP 299", () => {
     expect(plans.free).toMatchObject({
       games: 5,

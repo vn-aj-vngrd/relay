@@ -4,12 +4,26 @@ export const MiB = 1024 * 1024;
 
 // Immutable versions: new commercial terms require a new version, not an edit.
 export const plans = {
+  unlimited: {
+    version: "unlimited-v1",
+    name: "Unlimited",
+    priceCents: 0,
+    games: 0,
+    storageBytes: 0,
+  },
   free: {
     version: "free-v1",
     name: "Free",
     priceCents: 0,
     games: 5,
     storageBytes: 100 * MiB,
+  },
+  plus: {
+    version: "plus-v1",
+    name: "Plus",
+    priceCents: 14_900,
+    games: 12,
+    storageBytes: 500 * MiB,
   },
   pro: {
     version: "pro-v1",
@@ -19,6 +33,50 @@ export const plans = {
     storageBytes: 2048 * MiB,
   },
 } as const;
+
+export type PlanId = keyof typeof plans;
+export type PlanAvailability = "coming_soon" | "active" | "paused";
+export type BillingPlan = {
+  id: PlanId;
+  version: string;
+  name: string;
+  priceCents: number;
+  games: number;
+  storageBytes: number;
+  availability: PlanAvailability;
+  visible: boolean;
+};
+export const defaultBillingPlans: BillingPlan[] = (
+  ["free", "plus", "pro", "unlimited"] as const
+).map((id) => ({
+  id,
+  ...plans[id],
+  availability: id === "free" || id === "unlimited" ? "active" : "coming_soon",
+  visible: id !== "unlimited",
+}));
+
+// Merge by identity so existing three-tier JSON catalogs gain new defaults.
+export function normalizeBillingCatalog(
+  catalog?: BillingPlan[] | null
+): BillingPlan[] {
+  return defaultBillingPlans.map((fallback) => {
+    const stored = catalog?.find((plan) => plan.id === fallback.id);
+    return {
+      ...fallback,
+      ...stored,
+      visible: fallback.id === "unlimited" ? false : (stored?.visible ?? true),
+    };
+  });
+}
+
+export function publicBillingPlans(catalog: BillingPlan[]) {
+  return catalog.filter((plan) => plan.visible && plan.id !== "unlimited");
+}
+
+export function planIdFromVersion(version?: string): PlanId {
+  if (version?.startsWith("unlimited-")) return "unlimited";
+  return version?.startsWith("plus-") ? "plus" : "pro";
+}
 
 export const mediaPolicy = {
   chat: {
@@ -120,7 +178,9 @@ export function transactionKey(provider: string, reference: string) {
 
 export function resolveAllowance(input: {
   now: Date;
+  freePlan?: { games: number; storageBytes: number };
   term?: {
+    planVersion?: string;
     startsAt: Date;
     endsAt: Date;
     games: number;
@@ -128,6 +188,7 @@ export function resolveAllowance(input: {
     usageStartsAt: Date;
   } | null;
   override?: {
+    planOverride?: BillingPlan | null;
     games: number | null;
     storageBytes: number | null;
     expiresAt: Date | null;
@@ -141,12 +202,32 @@ export function resolveAllowance(input: {
       ? override
       : null;
   const month = manilaMonth(now);
+  const assigned = activeOverride?.planOverride;
+  const plan =
+    assigned?.id ??
+    (activeTerm
+      ? planIdFromVersion(activeTerm.planVersion)
+      : ("free" as const));
   return {
-    plan: activeTerm ? ("pro" as const) : ("free" as const),
-    games: activeOverride?.games ?? activeTerm?.games ?? plans.free.games,
+    plan,
+    planAssigned: Boolean(assigned),
+    planAssignmentExpiresAt: assigned
+      ? (activeOverride?.expiresAt ?? null)
+      : null,
+    gamesUnlimited: plan === "unlimited" && activeOverride?.games == null,
+    storageUnlimited:
+      plan === "unlimited" && activeOverride?.storageBytes == null,
+    games:
+      activeOverride?.games ??
+      assigned?.games ??
+      activeTerm?.games ??
+      input.freePlan?.games ??
+      plans.free.games,
     storageBytes:
       activeOverride?.storageBytes ??
+      assigned?.storageBytes ??
       activeTerm?.storageBytes ??
+      input.freePlan?.storageBytes ??
       plans.free.storageBytes,
     gamesOverridden: activeOverride?.games != null,
     storageOverridden: activeOverride?.storageBytes != null,

@@ -1,9 +1,12 @@
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { Brand, RelayMark } from "@/components/shared/brand";
 import { getCurrentUser } from "@/features/auth/session";
+import { getBillingOffer } from "@/features/billing/catalog";
+import { PlanCards } from "@/features/billing/plan-comparison";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
@@ -55,8 +58,13 @@ const secondaryAction =
   "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-[13px] font-semibold hover:border-muted hover:bg-surface-strong";
 
 export default async function MarketingPage() {
+  await connection();
   const primaryHref = "/games/new";
-  const signedIn = Boolean(await getCurrentUser());
+  const [user, offer] = await Promise.all([
+    getCurrentUser(),
+    getBillingOffer(),
+  ]);
+  const signedIn = Boolean(user);
 
   return (
     <main
@@ -398,6 +406,50 @@ export default async function MarketingPage() {
         </div>
       </section>
 
+      <section
+        id="pricing"
+        aria-labelledby="landing-pricing-title"
+        className="border-t border-line px-5 py-16 sm:px-8 sm:py-24"
+      >
+        <div className="mx-auto max-w-[1180px]">
+          <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h2
+                id="landing-pricing-title"
+                className="text-3xl font-semibold tracking-tight sm:text-4xl"
+              >
+                A plan for how often you host.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-muted">
+                Start with Free. Paid plans offer more games per month and more
+                total photo storage. Your players don’t need a subscription to
+                join.
+              </p>
+            </div>
+            <Link
+              href="/pricing"
+              className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-lg text-sm font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              Compare all plan details
+              <ArrowRight aria-hidden size={16} />
+            </Link>
+          </div>
+          <div className="mt-8">
+            <PlanCards {...offer} />
+          </div>
+          <div className="mt-6 grid gap-3 border-t border-line pt-5 text-sm leading-6 text-muted md:grid-cols-2 md:gap-8">
+            <p>
+              Free resets on the 1st of each month in Philippine time. Paid game
+              allowances renew with each monthly term.
+            </p>
+            <p>
+              Photo storage does not reset monthly. Paid renewal is manual, with
+              no automatic charges.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className="border-t border-line bg-surface px-5 py-24 text-center sm:px-8 sm:py-36">
         <div data-marketing-reveal="final" className="mx-auto max-w-3xl">
           <div className="mx-auto mb-7 grid h-10 w-10 place-items-center">
@@ -425,6 +477,7 @@ export default async function MarketingPage() {
             <Link href="/games/open">Open games</Link>
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>
+            <Link href="/pricing">Pricing</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
             <Link href={signedIn ? "/home" : "/login"}>

@@ -1,0 +1,1 @@
+ALTER TABLE "billing_overrides" ADD COLUMN "plan_override" jsonb;

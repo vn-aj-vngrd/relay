@@ -9,6 +9,11 @@ import { db } from "@/db/client";
 import { billingRequests, users } from "@/db/schema";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
+import {
+  planIdFromVersion,
+  plans,
+  storageLabel,
+} from "@/features/billing/domain";
 import { billingFileUrl } from "@/features/billing/files";
 import { PaymentReviewForm } from "@/features/billing/forms";
 import {
@@ -49,9 +54,23 @@ export default async function AdminPaymentRequestPage({
         <p className="text-lg font-semibold">
           Expected amount: ₱{(request.amountCents / 100).toFixed(2)}
         </p>
-        <p className="break-all text-sm text-muted">
-          Request reference: {request.id}
-        </p>
+        <div className="text-sm leading-6">
+          <p className="font-semibold">
+            {plans[planIdFromVersion(request.planVersion)].name} · one monthly
+            term
+          </p>
+          <p className="text-muted">
+            {request.games} games per month ·{" "}
+            {storageLabel(request.storageBytes)} total photo storage
+          </p>
+          <p className="mt-2 text-muted">
+            These are the agreed request values, not today’s catalog. Approval
+            schedules this term after any existing paid-through access.
+          </p>
+          <p className="mt-2 break-all text-muted">
+            Request reference: {request.id}
+          </p>
+        </div>
         <PaymentInstructions
           snapshot={request.snapshot}
           qrUrl={qrUrl}

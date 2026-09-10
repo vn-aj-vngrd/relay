@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
   request: vi.fn(),
   term: vi.fn(),
   settings: vi.fn(),
+  owner: vi.fn(),
+  override: vi.fn(),
   method: vi.fn(),
   values: vi.fn(),
   set: vi.fn(),
@@ -40,6 +42,8 @@ vi.mock("@/db/client", () => {
       billingRequests: { findFirst: mocks.request },
       billingTerms: { findFirst: mocks.term },
       billingSettings: { findFirst: mocks.settings },
+      billingOverrides: { findFirst: mocks.override },
+      users: { findFirst: mocks.owner },
       billingMethods: { findFirst: mocks.method },
     },
     execute: vi.fn(),
@@ -50,6 +54,7 @@ vi.mock("@/db/client", () => {
           returning: async () => [
             { id: "11111111-1111-4111-8111-111111111111" },
           ],
+          onConflictDoUpdate: async () => undefined,
         };
       },
     }),
@@ -79,14 +84,22 @@ vi.mock("@/db/client", () => {
   };
 });
 
-import { billingRequests, billingTerms } from "@/db/schema";
+import {
+  adminAuditLogs,
+  billingOverrides,
+  billingRequests,
+  billingSettings,
+  billingTerms,
+} from "@/db/schema";
 import {
   createUpgradeRequest,
   grantComplimentaryPro,
   reviewSubscriptionPayment,
+  saveAccountOverrides,
+  saveBillingPlan,
   submitSubscriptionPayment,
 } from "./actions";
-import { plans } from "./domain";
+import { defaultBillingPlans, plans } from "./domain";
 
 const id = "11111111-1111-4111-8111-111111111111";
 const request = {
@@ -120,6 +133,8 @@ beforeEach(() => {
   mocks.user.mockResolvedValue({ id: "payer" });
   mocks.request.mockResolvedValue(request);
   mocks.term.mockResolvedValue(null);
+  mocks.owner.mockResolvedValue({ id });
+  mocks.override.mockResolvedValue(null);
   mocks.upload.mockResolvedValue(null);
 });
 
@@ -143,6 +158,57 @@ describe("subscription payment approval", () => {
       "error"
     );
     expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("keeps an old Plus request's agreed allowances when approving", async () => {
+    const plusRequest = {
+      ...request,
+      planVersion: "plus-old",
+      games: 11,
+      storageBytes: 400 * 1024 * 1024,
+    };
+    mocks.request
+      .mockResolvedValueOnce(plusRequest)
+      .mockResolvedValueOnce(plusRequest)
+      .mockResolvedValueOnce(null);
+    await reviewSubscriptionPayment({}, approval());
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingTerms,
+      expect.objectContaining({
+        planVersion: "plus-old",
+        games: 11,
+        storageBytes: 400 * 1024 * 1024,
+      })
+    );
+    expect(mocks.settings).not.toHaveBeenCalled();
+  });
+  it("grants selected Plus access with a custom expiry without recording a payment", async () => {
+    const end = new Date(Date.now() + 10 * 86400_000)
+      .toISOString()
+      .slice(0, 10);
+    expect(
+      await grantComplimentaryPro(
+        {},
+        form({
+          userId: id,
+          planId: "plus",
+          expiresOn: end,
+          reason: "Support extension",
+          confirm: "on",
+        })
+      )
+    ).toHaveProperty("success");
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingTerms,
+      expect.objectContaining({
+        source: "complimentary",
+        planVersion: "plus-v1",
+        games: 12,
+        endsAt: new Date(`${end}T23:59:59.999+08:00`),
+      })
+    );
+    expect(
+      mocks.values.mock.calls.some(([table]) => table === billingRequests)
+    ).toBe(false);
   });
   it("credits one snapshotted term only after received-funds confirmation", async () => {
     mocks.request
@@ -222,7 +288,231 @@ describe("subscription payment approval", () => {
   });
 });
 
+describe("admin account plan assignments", () => {
+  const assignment = () =>
+    form({
+      userId: id,
+      planId: "unlimited",
+      games: "",
+      storageMiB: "",
+      reason: "Internal host account",
+      confirm: "on",
+    });
+  it("requires administrator authorization before assigning Unlimited", async () => {
+    mocks.admin.mockRejectedValue(new Error("Forbidden"));
+    await expect(saveAccountOverrides({}, assignment())).rejects.toThrow(
+      "Forbidden"
+    );
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+  it("assigns Unlimited over existing paid access without changing financial history", async () => {
+    expect(await saveAccountOverrides({}, assignment())).toHaveProperty(
+      "success"
+    );
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingOverrides,
+      expect.objectContaining({
+        userId: id,
+        planOverride: expect.objectContaining({
+          id: "unlimited",
+          visible: false,
+        }),
+        games: null,
+        storageBytes: null,
+      })
+    );
+    expect(
+      mocks.values.mock.calls.some(
+        ([table]) => table === billingTerms || table === billingRequests
+      )
+    ).toBe(false);
+    expect(mocks.values).toHaveBeenCalledWith(
+      adminAuditLogs,
+      expect.objectContaining({
+        action: "billing.overrides_updated",
+        targetId: id,
+      })
+    );
+  });
+  it("removes the assignment without rewriting usage or paid terms", async () => {
+    const data = assignment();
+    data.set("planId", "");
+    expect(await saveAccountOverrides({}, data)).toHaveProperty("success");
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingOverrides,
+      expect.objectContaining({ planOverride: null })
+    );
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+});
+
+describe("admin catalog publishing", () => {
+  function publish(overrides: Record<string, string> = {}) {
+    return form({
+      id: "plus",
+      version: "plus-v1",
+      price: "179.50",
+      games: "15",
+      storageMiB: "750",
+      availability: "coming_soon",
+      visible: "on",
+      reason: "Update launch offer",
+      confirm: "on",
+      ...overrides,
+    });
+  }
+  it("requires AAL2 admin authorization", async () => {
+    mocks.admin.mockRejectedValue(new Error("Forbidden"));
+    await expect(saveBillingPlan({}, publish())).rejects.toThrow("Forbidden");
+    expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+  it("publishes a new version and audit without editing terms or requests", async () => {
+    expect(await saveBillingPlan({}, publish())).toHaveProperty("success");
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingSettings,
+      expect.objectContaining({
+        planCatalog: expect.arrayContaining([
+          expect.objectContaining({
+            id: "plus",
+            priceCents: 17950,
+            games: 15,
+            storageBytes: 750 * 1024 * 1024,
+            version: expect.stringMatching(/^plus-/),
+          }),
+        ]),
+      })
+    );
+    expect(mocks.values).toHaveBeenCalledWith(
+      adminAuditLogs,
+      expect.objectContaining({
+        action: "billing.plan_published",
+        reason: "Update launch offer",
+      })
+    );
+    expect(
+      mocks.values.mock.calls.some(
+        ([table]) => table === billingTerms || table === billingRequests
+      )
+    ).toBe(false);
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+  it("rejects stale edits and unconfirmed changes", async () => {
+    expect(
+      await saveBillingPlan({}, publish({ version: "old-version" }))
+    ).toHaveProperty("error");
+    expect(await saveBillingPlan({}, publish({ confirm: "" }))).toHaveProperty(
+      "error"
+    );
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("requires payment readiness before activating a paid plan", async () => {
+    expect(
+      await saveBillingPlan({}, publish({ availability: "active" }))
+    ).toHaveProperty("error");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("allows activation only after configuration is ready", async () => {
+    mocks.settings.mockResolvedValue({
+      acceptingPayments: true,
+      supportContact: "Support",
+      reviewTime: "One day",
+      policy: "Published payment policy",
+    });
+    mocks.method.mockResolvedValue({ id });
+    expect(
+      await saveBillingPlan({}, publish({ availability: "active" }))
+    ).toHaveProperty("success");
+  });
+  it("cannot charge for or pause Free", async () => {
+    expect(
+      await saveBillingPlan({}, publish({ id: "free", version: "free-v1" }))
+    ).toHaveProperty("error");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+});
+
 describe("upgrade requests", () => {
+  it("rejects self-purchase of Unlimited and hidden active plans", async () => {
+    mocks.request.mockResolvedValue(null);
+    expect(
+      await createUpgradeRequest(
+        {},
+        form({ methodId: id, planId: "unlimited" })
+      )
+    ).toHaveProperty("error");
+    mocks.settings.mockResolvedValue({
+      acceptingPayments: true,
+      planCatalog: defaultBillingPlans.map((plan) => ({
+        ...plan,
+        visible: false,
+        availability: "active",
+      })),
+    });
+    mocks.method.mockResolvedValue({ id });
+    expect(
+      await createUpgradeRequest(
+        {},
+        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+      )
+    ).toHaveProperty("error");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("blocks Coming soon plans even with collection enabled", async () => {
+    mocks.request.mockResolvedValue(null);
+    mocks.settings.mockResolvedValue({ acceptingPayments: true });
+    mocks.method.mockResolvedValue({ id });
+    expect(
+      await createUpgradeRequest(
+        {},
+        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+      )
+    ).toHaveProperty("error");
+    expect(mocks.values).not.toHaveBeenCalled();
+  });
+  it("blocks stale prices and snapshots an active Plus offer from the server", async () => {
+    mocks.request.mockResolvedValue(null);
+    mocks.settings.mockResolvedValue({
+      acceptingPayments: true,
+      planCatalog: defaultBillingPlans.map((plan) =>
+        plan.id === "plus"
+          ? {
+              ...plan,
+              version: "plus-new",
+              priceCents: 18900,
+              games: 16,
+              availability: "active",
+            }
+          : plan
+      ),
+    });
+    mocks.method.mockResolvedValue({ id, provider: "GCash" });
+    expect(
+      await createUpgradeRequest(
+        {},
+        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+      )
+    ).toHaveProperty("error");
+    expect(mocks.values).not.toHaveBeenCalled();
+    await expect(
+      createUpgradeRequest(
+        {},
+        form({
+          methodId: id,
+          planId: "plus",
+          planVersion: "plus-new",
+          amountCents: "1",
+        })
+      )
+    ).rejects.toThrow("redirect:");
+    expect(mocks.values).toHaveBeenCalledWith(
+      billingRequests,
+      expect.objectContaining({
+        planVersion: "plus-new",
+        amountCents: 18900,
+        games: 16,
+      })
+    );
+  });
   it("returns an existing open request rather than creating another", async () => {
     await expect(
       createUpgradeRequest({}, form({ methodId: id }))
@@ -244,6 +534,10 @@ describe("upgrade requests", () => {
       supportContact: "Billing support",
       reviewTime: "One business day",
       policy: "Published policy",
+      planCatalog: defaultBillingPlans.map((plan) => ({
+        ...plan,
+        availability: "active",
+      })),
     });
     mocks.method.mockResolvedValue({
       id,
@@ -256,7 +550,12 @@ describe("upgrade requests", () => {
     await expect(
       createUpgradeRequest(
         {},
-        form({ methodId: id, amountCents: "1", qrPath: "attacker" })
+        form({
+          methodId: id,
+          planVersion: "pro-v1",
+          amountCents: "1",
+          qrPath: "attacker",
+        })
       )
     ).rejects.toThrow("redirect:");
     expect(mocks.values).toHaveBeenCalledWith(

@@ -70,7 +70,7 @@ export default async function HostedMediaPage({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <header>
         <ButtonLink href="/settings/plan" variant="secondary">
-          Back to Plan & usage
+          Back to Plan & billing
         </ButtonLink>
         <h1 className="app-title mt-5">Hosted-game photos</h1>
         <p className="mt-2 text-sm text-muted">

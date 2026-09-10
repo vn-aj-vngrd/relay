@@ -1,0 +1,1 @@
+ALTER TABLE "billing_settings" ADD COLUMN "plan_catalog" jsonb;

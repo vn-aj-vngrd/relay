@@ -12,6 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const courts = await getCourtSitemapEntries();
   return [
     { url: origin, changeFrequency: "weekly", priority: 1 },
+    { url: `${origin}/pricing`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${origin}/courts`, changeFrequency: "weekly", priority: 0.9 },
     ...courts.map(({ slug }) => ({
       url: `${origin}/courts/${slug}`,

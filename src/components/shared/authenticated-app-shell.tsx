@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import { db } from "@/db/client";
 import { notifications } from "@/db/schema";
 import { isAdminEmail } from "@/features/admin/auth";
+import { getAccountPlanSummary } from "@/features/billing/account-plan";
 import { NotificationRealtimeRefresh } from "@/features/notifications/realtime-refresh";
 import { ApplicationTour } from "@/features/onboarding/application-tour";
 import { profileAvatarUrl } from "@/features/players/avatar";
@@ -31,14 +32,16 @@ export async function AuthenticatedAppShell({
   user: User;
   showApplicationTour?: boolean;
 }) {
-  const [profile, unreadCount, invitationCount] = await Promise.all([
-    ensureProfile(user),
-    db.$count(
-      notifications,
-      and(eq(notifications.userId, user.id), isNull(notifications.readAt))
-    ),
-    getInvitationCount(user.id),
-  ]);
+  const [profile, unreadCount, invitationCount, accountPlan] =
+    await Promise.all([
+      ensureProfile(user),
+      db.$count(
+        notifications,
+        and(eq(notifications.userId, user.id), isNull(notifications.readAt))
+      ),
+      getInvitationCount(user.id),
+      getAccountPlanSummary(user.id),
+    ]);
   const isAdmin = isAdminEmail(user.email);
 
   return (
@@ -70,6 +73,7 @@ export async function AuthenticatedAppShell({
               username={profile.username}
               avatarUrl={profileAvatarUrl(profile.avatarPath)}
               isAdmin={isAdmin}
+              plan={accountPlan}
             />
           </div>
         </div>

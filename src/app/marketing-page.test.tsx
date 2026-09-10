@@ -2,7 +2,17 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ getCurrentUser: vi.fn() }));
+vi.mock("next/server", () => ({ connection: async () => undefined }));
 
+vi.mock("@/features/billing/catalog", async () => {
+  const { defaultBillingPlans } = await import("@/features/billing/domain");
+  return {
+    getBillingOffer: async () => ({
+      catalog: defaultBillingPlans,
+      acceptingPayments: false,
+    }),
+  };
+});
 vi.mock("@/features/auth/session", () => ({
   getCurrentUser: mocks.getCurrentUser,
 }));
@@ -21,9 +31,6 @@ vi.mock("@/features/marketing/marketing-enhancements", () => ({
 }));
 vi.mock("@/features/marketing/marketing-highlights", () => ({
   MarketingHighlights: () => null,
-}));
-vi.mock("@/features/marketing/marketing-section-nav", () => ({
-  MarketingSectionNav: () => null,
 }));
 vi.mock("@/features/marketing/product-previews", () => ({
   ChatProductPreview: () => null,
@@ -60,6 +67,28 @@ describe("marketing account actions", () => {
       "href",
       "/signup"
     );
+    expect(header.getByRole("link", { name: "Pricing" })).toHaveAttribute(
+      "href",
+      "#pricing"
+    );
+    expect(
+      header
+        .getAllByRole("link")
+        .filter((link) => link.getAttribute("href") === "/pricing")
+    ).toHaveLength(0);
+    const pricing = screen.getByRole("region", {
+      name: "A plan for how often you host.",
+    });
+    expect(pricing).toHaveAttribute("id", "pricing");
+    const comparison = within(pricing).getByRole("link", {
+      name: "Compare all plan details",
+    });
+    expect(comparison).toHaveAttribute("href", "/pricing");
+    expect(
+      comparison.compareDocumentPosition(
+        within(pricing).getAllByRole("article")[0]
+      ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(
       header.queryByRole("link", { name: "Get started" })
     ).not.toBeInTheDocument();

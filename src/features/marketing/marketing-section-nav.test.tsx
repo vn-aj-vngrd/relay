@@ -46,8 +46,19 @@ describe("MarketingSectionNav", () => {
         {section("play", 2_000)}
         {section("payments", 2_500)}
         {section("story", 3_000)}
+        {section("pricing", 3_500)}
         <MarketingSectionNav />
       </>
+    );
+
+    const links = screen.getAllByRole("link");
+    expect(links.slice(-2).map((link) => link.textContent)).toEqual([
+      "Story",
+      "Pricing",
+    ]);
+    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute(
+      "href",
+      "#pricing"
     );
 
     window.scrollY = 800;
@@ -66,6 +77,18 @@ describe("MarketingSectionNav", () => {
         "aria-current",
         "location"
       )
+    );
+
+    window.scrollY = 3_300;
+    fireEvent.scroll(window);
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute(
+        "aria-current",
+        "location"
+      )
+    );
+    expect(screen.getByRole("link", { name: "Story" })).not.toHaveAttribute(
+      "aria-current"
     );
   });
 });

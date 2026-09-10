@@ -18,6 +18,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { BillingPlan } from "@/features/billing/domain";
+
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -1190,6 +1192,7 @@ export const adminAuditLogs = pgTable(
 export const billingSettings = pgTable("billing_settings", {
   id: text("id").primaryKey().default("global"),
   acceptingPayments: boolean("accepting_payments").notNull().default(false),
+  planCatalog: jsonb("plan_catalog").$type<BillingPlan[]>(),
   supportContact: text("support_contact").notNull().default(""),
   reviewTime: text("review_time").notNull().default(""),
   policy: text("policy").notNull().default(""),
@@ -1303,6 +1306,7 @@ export const billingTerms = pgTable(
 );
 
 export const billingOverrides = pgTable("billing_overrides", {
+  planOverride: jsonb("plan_override").$type<BillingPlan>(),
   userId: uuid("user_id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),

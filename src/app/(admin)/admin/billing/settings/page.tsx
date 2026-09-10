@@ -36,6 +36,17 @@ export default async function BillingSettingsPage() {
           </ButtonLink>
         }
       />
+      <nav
+        aria-label="Billing navigation"
+        className="mb-6 flex flex-wrap gap-3"
+      >
+        <ButtonLink href="/admin/billing/plans" variant="secondary">
+          Plans & pricing
+        </ButtonLink>
+        <ButtonLink href="/admin/users" variant="secondary">
+          Manage accounts
+        </ButtonLink>
+      </nav>
       <div className="flex flex-col gap-10">
         <section aria-labelledby="billing-settings-title">
           <h2

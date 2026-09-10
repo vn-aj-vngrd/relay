@@ -17,10 +17,18 @@ import {
   reviewSubscriptionPayment,
   saveAccountOverrides,
   saveBillingMethod,
+  saveBillingPlan,
   saveBillingSettings,
   submitSubscriptionPayment,
 } from "./actions";
-import { type BillingState, billingProviders, MiB, plans } from "./domain";
+import {
+  type BillingPlan,
+  type BillingState,
+  billingProviders,
+  defaultBillingPlans,
+  MiB,
+  type PlanId,
+} from "./domain";
 import {
   cleanupStalledUpload,
   removeHostedPhoto,
@@ -142,6 +150,78 @@ function ReasonField() {
   );
 }
 
+export function BillingPlanForm({ plan }: { plan: BillingPlan }) {
+  if (plan.id === "unlimited")
+    return (
+      <p className="max-w-2xl text-sm leading-6 text-muted">
+        Admin-only access with no game-creation or retained-photo-storage quota.
+        Always hidden from public pricing and never purchasable. Assign it from
+        any account’s Plan & allowances page, with an optional expiry.
+        File-size, daily-upload and abuse safeguards still apply.
+      </p>
+    );
+  return (
+    <BillingForm
+      action={saveBillingPlan}
+      submit={`Publish ${plan.name} changes`}
+    >
+      <input type="hidden" name="id" value={plan.id} />
+      <input type="hidden" name="version" value={plan.version} />
+      <TextField
+        name="price"
+        label="Price per month (PHP)"
+        value={String(plan.priceCents / 100)}
+      />
+      <TextField
+        name="games"
+        label="Games per month"
+        value={String(plan.games)}
+        type="number"
+      />
+      <TextField
+        name="storageMiB"
+        label="Total photo storage (MiB, not monthly)"
+        value={String(plan.storageBytes / MiB)}
+        type="number"
+      />
+      <SelectField
+        id={`${plan.id}-availability`}
+        name="availability"
+        label="Availability"
+        defaultValue={plan.availability}
+        options={
+          plan.id === "free"
+            ? [{ value: "active", label: "Available now" }]
+            : [
+                {
+                  value: "coming_soon",
+                  label: "Coming soon — visible, no purchases",
+                },
+                { value: "active", label: "Active — allow purchases" },
+                { value: "paused", label: "Paused — stop new purchases" },
+              ]
+        }
+      />
+      <p className="text-sm leading-6 text-muted">
+        1,024 MiB = 1 GiB. Zero blocks new usage. Existing purchases retain
+        their agreed price and allowances. Free-plan changes apply immediately,
+        without deleting content or resetting usage. Technical player/court
+        limits and upload safeguards are not billing settings.
+      </p>
+      <CheckField name="visible" checked={plan.visible}>
+        Show this plan on public pricing and allow public purchase when Active.
+        Hidden plans remain assignable by admins; existing purchases are
+        preserved.
+      </CheckField>
+      <ReasonField />
+      <CheckField name="confirm">
+        I reviewed the monthly price, monthly games, total storage and
+        availability above. Publish these values to pricing and new purchases.
+      </CheckField>
+    </BillingForm>
+  );
+}
+
 export function BillingSettingsForm({
   settings,
 }: {
@@ -177,8 +257,8 @@ export function BillingSettingsForm({
         name="acceptingPayments"
         checked={settings?.acceptingPayments}
       >
-        Accept new Pro upgrade and renewal requests. Existing requests remain
-        reviewable when paused.
+        Enable paid-plan purchases. Each plan must also be Active in Plans &
+        pricing. Existing requests remain reviewable when purchases are paused.
       </CheckField>
       <ReasonField />
       <CheckField name="confirm">
@@ -271,16 +351,44 @@ export function BillingMethodForm({
 export function UpgradeForm({
   methods,
   renewing,
+  catalog = defaultBillingPlans,
 }: {
   methods: { id: string; provider: string; recipient: string }[];
   renewing: boolean;
+  catalog?: BillingPlan[];
 }) {
+  const available = catalog.filter(
+    (plan) =>
+      (plan.id === "plus" || plan.id === "pro") &&
+      plan.visible &&
+      plan.availability === "active"
+  );
+  const [selected, setSelected] = useState(available[0]?.id ?? "pro");
+  const plan = available.find((entry) => entry.id === selected) ?? available[0];
+  if (!plan)
+    return (
+      <Alert variant="info">
+        Paid plans are coming soon or paused. Your current access is unchanged.
+      </Alert>
+    );
   return (
     <BillingForm
       action={createUpgradeRequest}
-      submit={`${renewing ? "Renew" : "Upgrade to"} Pro — ₱${plans.pro.priceCents / 100}`}
+      submit={`Request ${plan.name} — ₱${plan.priceCents / 100} for one month`}
       pendingLabel="Preparing payment…"
     >
+      <input type="hidden" name="planVersion" value={plan.version} />
+      <SelectField
+        id="subscription-plan"
+        name="planId"
+        label="Monthly plan"
+        value={plan.id}
+        onValueChange={(value) => setSelected(value as "plus" | "pro")}
+        options={available.map((entry) => ({
+          value: entry.id,
+          label: `${entry.name} · ₱${entry.priceCents / 100}/month · ${entry.games} games per month`,
+        }))}
+      />
       <SelectField
         id="subscription-method"
         name="methodId"
@@ -292,9 +400,12 @@ export function UpgradeForm({
         }))}
       />
       <p className="text-sm leading-6 text-muted">
-        One calendar month of personal Pro access after approval. Manual
-        renewal; no automatic charge. Review the QR, account details and
-        policies before paying.
+        {plan.games} games for one calendar month of {plan.name} access.{" "}
+        {renewing
+          ? "The selected plan starts after your current paid-through date; there is no mid-term proration."
+          : "Access starts after approval; games already created this calendar month count toward your first term."}{" "}
+        Manual renewal; no automatic charge. Review the exact price, QR, account
+        details and policies before paying.
       </p>
     </BillingForm>
   );
@@ -380,9 +491,12 @@ export function PaymentReviewForm({ id }: { id: string }) {
 export function AccountOverrideForm({
   userId,
   override,
+  catalog = defaultBillingPlans,
 }: {
   userId: string;
+  catalog?: BillingPlan[];
   override?: {
+    planId?: PlanId | null;
     games: number | null;
     storageBytes: number | null;
     expiresAt: string | null;
@@ -398,10 +512,30 @@ export function AccountOverrideForm({
   return (
     <BillingForm action={saveAccountOverrides} submit="Save account allowances">
       <input type="hidden" name="userId" value={userId} />
+      <SelectField
+        id="account-plan-assignment"
+        name="planId"
+        label="Admin-assigned plan"
+        defaultValue={override?.planId ?? ""}
+        options={[
+          { value: "", label: "Inherit existing subscription or Free" },
+          ...catalog.map((plan) => ({
+            value: plan.id,
+            label: `${plan.name}${!plan.visible ? " · hidden, admin only" : ""}`,
+          })),
+        ]}
+      />
+      <p className="text-sm leading-6 text-muted">
+        An assignment takes effect immediately and preserves paid terms
+        underneath it. Removing it restores the current subscription or Free.
+        Usage is never reset, and paid term dates keep running. New assignments
+        snapshot the selected plan’s current allowances.
+      </p>
       <p className="text-sm leading-6 text-muted">
         Leave an allowance blank to inherit the plan. Zero blocks new usage.
-        Existing games remain accessible. Overrides do not disable security
-        safeguards.
+        Existing games remain accessible. For Unlimited, blank means no hosting
+        quota; a number adds an explicit limit. Overrides do not disable
+        security safeguards.
       </p>
       <TextField
         name="games"
@@ -443,6 +577,10 @@ export function AccountOverrideForm({
         </Button>
       ) : null}
       <ReasonField />
+      <CheckField name="confirm">
+        Apply this plan assignment, allowance limits and expiry now. Existing
+        usage and paid history will not be reset.
+      </CheckField>
     </BillingForm>
   );
 }
@@ -490,13 +628,50 @@ export function ParticipantImagesForm({
 }
 
 export function ComplimentaryProForm({ userId }: { userId: string }) {
+  const [expiry, setExpiry] = useState("");
   return (
-    <BillingForm action={grantComplimentaryPro} submit="Grant one month of Pro">
+    <BillingForm
+      action={grantComplimentaryPro}
+      submit="Grant complimentary access"
+    >
       <input type="hidden" name="userId" value={userId} />
+      <SelectField
+        id="complimentary-plan"
+        name="planId"
+        label="Plan to grant"
+        defaultValue="pro"
+        options={[
+          { value: "plus", label: "Plus" },
+          { value: "pro", label: "Pro" },
+        ]}
+      />
+      <DatePickerField
+        id="grant-expiry"
+        name="expiresOn"
+        label="Custom expiry date (optional, Philippine time)"
+        value={expiry}
+        onValueChange={setExpiry}
+      />
+      {expiry ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="self-start"
+          onClick={() => setExpiry("")}
+        >
+          Use one month instead
+        </Button>
+      ) : null}
+      <p className="text-sm leading-6 text-muted">
+        Default: one calendar month. A custom date overrides the term end, not
+        the allowance: the plan’s game allowance covers the whole custom term
+        without intermediate resets. Existing or scheduled paid access is never
+        replaced.
+      </p>
       <ReasonField />
       <CheckField name="confirm">
-        Grant one complimentary calendar month, starting now. No payment will be
-        recorded or charged.
+        Grant the selected plan starting now, ending after one calendar month or
+        on the custom expiry date above. No payment will be recorded or charged.
       </CheckField>
     </BillingForm>
   );

@@ -22,6 +22,7 @@ import {
   billingTerms,
 } from "@/db/schema";
 
+import { getBillingCatalog } from "./catalog";
 import {
   BillingError,
   billingDate,
@@ -48,7 +49,7 @@ export async function getAccountUsage(
   connection: BillingTransaction | typeof db = db,
   now = new Date()
 ) {
-  const [term, override] = await Promise.all([
+  const [term, override, catalog] = await Promise.all([
     connection.query.billingTerms.findFirst({
       where: and(
         eq(billingTerms.userId, userId),
@@ -60,8 +61,14 @@ export async function getAccountUsage(
     connection.query.billingOverrides.findFirst({
       where: eq(billingOverrides.userId, userId),
     }),
+    getBillingCatalog(connection),
   ]);
-  const allowance = resolveAllowance({ now, term, override });
+  const allowance = resolveAllowance({
+    now,
+    term,
+    override,
+    freePlan: catalog.find((plan) => plan.id === "free"),
+  });
   const [gameRows, mediaRows, latestTerm] = await Promise.all([
     connection
       .select({ count: sql<number>`count(*)::int` })
@@ -119,9 +126,9 @@ export async function checkGameCreation(
   // for this lock, so record the same post-lock instant used for its allowance.
   const createdAt = new Date();
   const usage = await getAccountUsage(userId, tx, createdAt);
-  if (usage.gamesUsed >= usage.games)
+  if (!usage.gamesUnlimited && usage.gamesUsed >= usage.games)
     throw new BillingError(
-      `You’ve used ${usage.gamesUsed} of ${usage.games} games. Your ${usage.plan === "pro" ? "current Pro period ends" : "allowance resets"} ${billingDate(usage.end)} (Philippine time). View Plan & usage in Settings for options.`
+      `You’ve used ${usage.gamesUsed} of ${usage.games} games. Your ${usage.plan !== "free" ? "current paid period ends" : "allowance resets"} ${billingDate(usage.end)} (Philippine time). View Plan & billing in Settings for options.`
     );
   return { existingSessionId: null, createdAt };
 }
@@ -149,7 +156,10 @@ export async function reserveMedia(input: {
     await lockBillingAccount(tx, input.hostId);
     const createdAt = new Date();
     const usage = await getAccountUsage(input.hostId, tx, createdAt);
-    if (usage.bytesUsed + input.bytes > usage.storageBytes)
+    if (
+      !usage.storageUnlimited &&
+      usage.bytesUsed + input.bytes > usage.storageBytes
+    )
       throw new BillingError(
         "This game’s host has reached their photo-storage limit. You can still send text messages and submit payment proof."
       );

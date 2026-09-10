@@ -23,6 +23,8 @@ import { matches, matchPlayers, profiles, sessionPlayers } from "@/db/schema";
 import { isAdminEmail } from "@/features/admin/auth";
 import { signOut } from "@/features/auth/actions";
 import { getCurrentUser } from "@/features/auth/session";
+import { getAccountPlanSummary } from "@/features/billing/account-plan";
+import { accountPlanHref } from "@/features/billing/account-plan-policy";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { playingExperienceLabel } from "@/features/players/playing-experience";
 
@@ -91,6 +93,9 @@ async function ProfileHeader({
 }) {
   const { profile, ownProfile } = await profilePromise;
   const imageUrl = profileAvatarUrl(profile.avatarPath);
+  const accountPlan = ownProfile
+    ? await getAccountPlanSummary(profile.userId)
+    : null;
 
   return (
     <header className="flex items-start gap-4 pb-7">
@@ -113,6 +118,17 @@ async function ProfileHeader({
           ) : null}
         </div>
         <p className="mt-0.5 text-sm text-muted">@{profile.username}</p>
+        {accountPlan ? (
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+            <span className="text-muted">{accountPlan.name} plan</span>
+            <ButtonLink
+              href={accountPlanHref(accountPlan.action)}
+              variant="quiet"
+            >
+              {accountPlan.action}
+            </ButtonLink>
+          </div>
+        ) : null}
         {profile.city || profile.dominantHand || profile.skillLevel ? (
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted">
             {profile.city ? (
