@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { AccountBilling } from "@/features/billing/account-billing";
@@ -23,6 +24,12 @@ export default async function PlanPage({
         <p className="mt-2 text-sm text-muted">
           Manage your hosting plan, compare options and review your history.
         </p>
+        <Link
+          href="/help/subscription-payments"
+          className="mt-2 inline-flex min-h-11 items-center text-sm text-primary hover:underline"
+        >
+          How to pay for a Relay subscription
+        </Link>
       </header>
       <BillingTabs active={section} query={query} />
       <div className="py-6">

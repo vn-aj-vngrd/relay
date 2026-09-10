@@ -58,8 +58,13 @@ describe("Help Center reading surfaces", () => {
     render(<HelpCenterContent category="payments" />);
     const results = screen.getByRole("region", { name: "Payments" });
     expect(within(results).getAllByRole("heading", { level: 3 })).toHaveLength(
-      3
+      4
     );
+    expect(
+      within(results).getByRole("link", {
+        name: /How to pay for a Relay subscription/,
+      })
+    ).toHaveAttribute("href", "/help/subscription-payments");
     expect(
       screen.getByRole("search").querySelector('[name="category"]')
     ).toHaveValue("payments");
@@ -131,6 +136,28 @@ describe("Help Center reading surfaces", () => {
     expect(
       screen.getByText("Email Relay support").closest("details")
     ).not.toHaveAttribute("open");
+  });
+
+  it("renders the subscription guide as five ordered steps with a plan link", () => {
+    const article = getHelpArticle("subscription-payments");
+    if (!article) throw new Error("Missing subscription guide");
+    render(<HelpArticleContent article={article} />);
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "How to pay for a Relay subscription",
+      })
+    ).toBeVisible();
+    const steps = screen.getByRole("region", { name: "Steps" });
+    const items = steps.querySelectorAll("ol > li");
+    expect(items).toHaveLength(5);
+    article.steps.forEach((step, index) => {
+      expect(items[index]).toHaveTextContent(step);
+    });
+    expect(screen.getByText(article.summary)).toBeVisible();
+    expect(
+      within(steps).getByRole("link", { name: "Open subscription plans" })
+    ).toHaveAttribute("href", "/settings/plan?section=plans");
   });
 
   it("keeps screenshot figures beside their steps with full-size access", () => {

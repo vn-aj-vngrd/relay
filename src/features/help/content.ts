@@ -64,7 +64,7 @@ export const helpCategories = [
     id: "payments",
     title: "Payments",
     description:
-      "Coordinate external repayment, player shares, proof, and review.",
+      "Pay for a Relay subscription or handle game repayments and proof.",
   },
   {
     id: "together",
@@ -1140,6 +1140,44 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/matches/availability.ts",
       "public/sw.js",
     ],
+  },
+  {
+    slug: "subscription-payments",
+    category: "payments",
+    title: "How to pay for a Relay subscription",
+    summary:
+      "Pay for your hosting plan in five steps. This is separate from repaying a game host. Renewals are manual; Relay will not automatically charge you.",
+    audience: "Account owners buying or renewing a paid plan.",
+    prerequisites: [
+      "Sign in to your Relay account. A paid plan and payment method must be available.",
+    ],
+    steps: [
+      "Choose a plan. Open Settings → Plan & billing → Plans. Select an available paid plan, choose a payment method, and submit the request to see your payment details.",
+      "Check the details. On your payment request, review the exact amount, recipient, account details, instructions, and payment policy. Use the QR code if one is provided.",
+      "Send your payment. Pay the exact amount outside Relay using the listed method. Keep the transaction reference from your payment provider.",
+      "Submit your reference. Return to the payment request. Under Already paid?, enter the payment provider’s transaction reference—not the Relay request reference. A screenshot is optional. Select Submit payment for verification.",
+      "Wait for approval. Relay checks that the money arrived. Open your request from Plan & billing to check its status and expected review time. Do not pay again while it is awaiting verification.",
+    ],
+    outcome:
+      "After approval, your plan starts immediately or after your current paid-through date. Check My plan for the dates and History for payment records.",
+    troubleshooting: [
+      "No paid plan available? Coming soon or paused plans cannot be purchased. Check Plans again later.",
+      "Asked for clarification? Read the note on your request, correct the reference or add the requested screenshot, and submit again. A screenshot alone does not confirm payment.",
+      "Rejected or taking longer than the stated review time? Read any review note and use the billing support contact on your request. If you already paid, do not send another payment without resolving the first one.",
+      "Need to renew? Follow these steps again. Check My plan for expiry warnings and your in-app notifications for renewal reminders. There is no automatic debit.",
+      "Need to cancel or ask for a refund? Cancel an unpaid request only if you have not sent money. Otherwise, follow the payment policy and contact billing support. Refunds are handled outside Relay. Never email payment screenshots; upload them only on your payment request.",
+    ],
+    related: ["payments", "support"],
+    sources: [
+      "docs/SUBSCRIPTIONS.md",
+      "src/features/billing/actions.ts",
+      "src/features/billing/forms.tsx",
+      "src/app/(app)/settings/plan/requests/[id]/page.tsx",
+    ],
+    action: {
+      href: "/settings/plan?section=plans",
+      label: "Open subscription plans",
+    },
   },
   {
     slug: "host-payments",

@@ -86,6 +86,24 @@ describe("Help Center article contract", () => {
     expect(getHelpArticle("not-an-article")).toBeUndefined();
   });
 
+  it("makes subscription payment guidance searchable with safe payment boundaries", () => {
+    const article = getHelpArticle("subscription-payments");
+    expect(article?.steps).toHaveLength(5);
+    expect(article?.category).toBe("payments");
+    expect(article?.summary).toContain("separate from repaying a game host");
+    expect(article?.summary).toContain("Renewals are manual");
+    expect(article?.steps[3]).toContain("not the Relay request reference");
+    expect(article?.steps[3]).toContain("screenshot is optional");
+    expect(article?.steps[4]).toContain("Do not pay again");
+    expect(article?.outcome).toContain("after your current paid-through date");
+    expect(article?.action?.href).toBe("/settings/plan?section=plans");
+    for (const query of ["subscription", "renew", "transaction reference"]) {
+      expect(
+        searchHelpArticles(query, "payments").map((result) => result.slug)
+      ).toContain("subscription-payments");
+    }
+  });
+
   it("preserves every old manual and FAQ fragment as an article link", () => {
     expect(legacyHelpLinks.map((link) => link.id)).toEqual([
       "find-a-court",

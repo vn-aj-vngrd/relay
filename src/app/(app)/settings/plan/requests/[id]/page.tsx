@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -59,6 +60,12 @@ export default async function PaymentRequestPage({
         <p className="mt-2 break-all text-xs text-muted">
           Request reference: {request.id}
         </p>
+        <Link
+          href="/help/subscription-payments"
+          className="mt-2 inline-flex min-h-11 items-center text-sm text-primary hover:underline"
+        >
+          How to pay for a Relay subscription
+        </Link>
       </header>
       {request.reviewNote ? (
         <Alert variant={request.status === "rejected" ? "danger" : "info"}>
