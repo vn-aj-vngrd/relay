@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { AccountBilling } from "@/features/billing/account-billing";
+import { BillingSkeleton } from "@/features/billing/billing-skeleton";
 import { BillingTabs } from "@/features/billing/billing-tabs";
 import {
   type BillingPageQuery,
@@ -14,11 +15,6 @@ export default async function PlanPage({
 }) {
   const query = await searchParams;
   const section = billingSection(query);
-  const loadingLabel = {
-    current: "Loading your plan and usage…",
-    plans: "Loading available plans…",
-    history: "Loading your plan and payment history…",
-  }[section];
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -32,11 +28,7 @@ export default async function PlanPage({
       <div className="py-6">
         <Suspense
           key={`${section}:${query.plan ?? ""}:${query.cursor ?? ""}:${query.terms ?? ""}`}
-          fallback={
-            <p role="status" className="py-6 text-sm text-muted">
-              {loadingLabel}
-            </p>
-          }
+          fallback={<BillingSkeleton section={section} />}
         >
           <AccountBilling searchParams={Promise.resolve(query)} />
         </Suspense>

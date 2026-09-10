@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import type { BillingMethodSnapshot } from "@/db/schema";
@@ -6,21 +7,29 @@ import type { BillingMethodSnapshot } from "@/db/schema";
 import { billingDate, plans, storageLabel } from "./domain";
 import { PaymentDetailsCopy } from "./payment-details-copy";
 import type { getAccountUsage } from "./usage";
+import { UsageMeter } from "./usage-meter";
 
 export { requestStatusLabels } from "./domain";
 
 export function PlanUsage({
   usage,
   compact = false,
+  planAction,
+  storageAction,
 }: {
   usage: Awaited<ReturnType<typeof getAccountUsage>>;
   compact?: boolean;
+  planAction?: ReactNode;
+  storageAction?: ReactNode;
 }) {
   return (
     <section aria-labelledby="plan-usage-title">
-      <h2 id="plan-usage-title" className="text-lg font-semibold">
-        {plans[usage.plan].name} plan
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="plan-usage-title" className="text-lg font-semibold">
+          {plans[usage.plan].name} plan
+        </h2>
+        {planAction}
+      </div>
       <dl className="mt-4 divide-y divide-line border-y border-line text-sm">
         {usage.planAssigned ? (
           <div className="flex flex-wrap justify-between gap-2 py-4">
@@ -41,9 +50,14 @@ export function PlanUsage({
                 : "Games created this term"}
             {usage.gamesOverridden ? " · Admin override" : ""}
           </dt>
-          <dd className="score">
-            {usage.gamesUsed} /{" "}
-            {usage.gamesUnlimited ? "Unlimited" : usage.games}
+          <dd className="w-40 text-right sm:w-52">
+            <UsageMeter
+              label="Games used"
+              used={usage.gamesUsed}
+              limit={usage.games}
+              unlimited={usage.gamesUnlimited}
+              valueText={`${usage.gamesUsed} / ${usage.gamesUnlimited ? "Unlimited" : usage.games}`}
+            />
           </dd>
         </div>
         <div className="flex flex-wrap justify-between gap-2 py-4">
@@ -51,11 +65,15 @@ export function PlanUsage({
             Total photo storage
             {usage.storageOverridden ? " · Admin override" : ""}
           </dt>
-          <dd className="score">
-            {storageLabel(usage.bytesUsed)} /{" "}
-            {usage.storageUnlimited
-              ? "Unlimited"
-              : storageLabel(usage.storageBytes)}
+          <dd className="flex w-40 flex-col items-end gap-2 text-right sm:w-52">
+            <UsageMeter
+              label="Photo storage used"
+              used={usage.bytesUsed}
+              limit={usage.storageBytes}
+              unlimited={usage.storageUnlimited}
+              valueText={`${storageLabel(usage.bytesUsed)} / ${usage.storageUnlimited ? "Unlimited" : storageLabel(usage.storageBytes)}`}
+            />
+            {storageAction}
           </dd>
         </div>
         <div className="flex flex-wrap justify-between gap-2 py-4">
@@ -97,7 +115,7 @@ export function PlanUsage({
           </div>
         ) : null}
       </dl>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+      <p className="mt-3 text-sm leading-6 text-muted">
         {compact
           ? "Chat images and game photos share your total storage. Storage does not reset monthly."
           : "Storage includes chat images and game photos added by anyone in games you host. It does not reset monthly. Failed game creation does not spend your allowance; deleting a game does not refund it."}

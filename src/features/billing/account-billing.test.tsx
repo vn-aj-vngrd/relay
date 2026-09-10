@@ -215,9 +215,14 @@ describe("simplified account billing", () => {
 
   it("defaults to current usage without pricing or historical data", async () => {
     await show();
+    const photos = screen.getByRole("link", { name: "Manage photos" });
+    expect(photos).toHaveAttribute("href", "/settings/plan/media");
+    expect(photos.closest("dd")?.parentElement).toHaveTextContent(
+      "Total photo storage"
+    );
     expect(
-      screen.getByRole("link", { name: "Manage photos" })
-    ).toBeInTheDocument();
+      screen.getByRole("heading", { name: "Free plan" }).parentElement
+    ).toContainElement(screen.getByRole("link", { name: "View plans" }));
     expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
       "href",
       "/settings/plan?section=plans"

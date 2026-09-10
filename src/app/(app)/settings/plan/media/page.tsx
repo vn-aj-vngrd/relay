@@ -1,8 +1,10 @@
+import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, lt, ne, or } from "drizzle-orm";
 import Image from "next/image";
 import { z } from "zod";
 
 import { ButtonLink } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { db } from "@/db/client";
 import { billingMedia, sessions } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
@@ -11,6 +13,8 @@ import {
   ParticipantImagesForm,
   RemoveHostedPhotoForm,
 } from "@/features/billing/forms";
+import { getAccountUsage } from "@/features/billing/usage";
+import { UsageMeter } from "@/features/billing/usage-meter";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 export default async function HostedMediaPage({
@@ -24,27 +28,30 @@ export default async function HostedMediaPage({
     .object({ before: z.iso.datetime(), id: z.uuid() })
     .safeParse(query);
   const date = cursor.success ? new Date(cursor.data.before) : null;
-  const rows = await db
-    .select({ media: billingMedia, title: sessions.title })
-    .from(billingMedia)
-    .leftJoin(sessions, eq(sessions.id, billingMedia.sessionId))
-    .where(
-      and(
-        eq(billingMedia.hostId, user.id),
-        ne(billingMedia.status, "released"),
-        cursor.success && date
-          ? or(
-              lt(billingMedia.createdAt, date),
-              and(
-                eq(billingMedia.createdAt, date),
-                lt(billingMedia.id, cursor.data.id)
+  const [usage, rows] = await Promise.all([
+    getAccountUsage(user.id),
+    db
+      .select({ media: billingMedia, title: sessions.title })
+      .from(billingMedia)
+      .leftJoin(sessions, eq(sessions.id, billingMedia.sessionId))
+      .where(
+        and(
+          eq(billingMedia.hostId, user.id),
+          ne(billingMedia.status, "released"),
+          cursor.success && date
+            ? or(
+                lt(billingMedia.createdAt, date),
+                and(
+                  eq(billingMedia.createdAt, date),
+                  lt(billingMedia.id, cursor.data.id)
+                )
               )
-            )
-          : undefined
+            : undefined
+        )
       )
-    )
-    .orderBy(desc(billingMedia.createdAt), desc(billingMedia.id))
-    .limit(25);
+      .orderBy(desc(billingMedia.createdAt), desc(billingMedia.id))
+      .limit(25),
+  ]);
   const page = rows.slice(0, 24);
   const storage = createSupabaseAdminClient().storage;
   const photos = await Promise.all(
@@ -69,15 +76,43 @@ export default async function HostedMediaPage({
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <header>
-        <ButtonLink href="/settings/plan" variant="secondary">
-          Back to Plan & billing
-        </ButtonLink>
-        <h1 className="app-title mt-5">Hosted-game photos</h1>
+        <div className="flex min-h-11 items-center gap-2">
+          <ButtonLink
+            href="/settings/plan"
+            variant="quiet"
+            aria-label="Back to Plan & billing"
+            className="-ml-3 h-11 min-h-11 w-11 shrink-0 px-0"
+          >
+            <CaretLeft aria-hidden size={18} />
+            <Tooltip content="Back to Plan & billing" />
+          </ButtonLink>
+          <h1 className="text-sm font-semibold text-ink">Hosted-game photos</h1>
+        </div>
         <p className="mt-2 text-sm text-muted">
-          Manage chat images and memories using your storage. Removing a photo
-          removes it for everyone.
+          Chat images and game photos from games you own, including player
+          uploads. Removing a photo frees your storage and removes it for
+          everyone.
         </p>
       </header>
+      <section
+        aria-labelledby="photo-storage-title"
+        className="border-y border-line py-5"
+      >
+        <h2 id="photo-storage-title" className="mb-3 text-lg font-semibold">
+          Photo storage
+        </h2>
+        <UsageMeter
+          label="Photo storage used"
+          used={usage.bytesUsed}
+          limit={usage.storageBytes}
+          unlimited={usage.storageUnlimited}
+          valueText={`${storageLabel(usage.bytesUsed)} used · ${usage.storageUnlimited ? "Unlimited storage" : `${storageLabel(usage.storageBytes)} total`}`}
+        />
+        <p className="mt-3 text-sm leading-6 text-muted">
+          Storage does not reset monthly. Pending uploads also reserve space
+          until they complete or are cleaned up.
+        </p>
+      </section>
       {session ? (
         <section
           className="border-y border-line py-5"
@@ -124,7 +159,9 @@ export default async function HostedMediaPage({
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold">
-                  {title ?? "Deleted game"} · {storageLabel(media.bytes)}
+                  {title ?? "Deleted game"} ·{" "}
+                  {media.kind === "chat" ? "Chat image" : "Game photo"} ·{" "}
+                  {storageLabel(media.bytes)}
                 </p>
                 {title ? (
                   <ButtonLink

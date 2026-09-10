@@ -146,21 +146,27 @@ export async function AccountBilling({
     <div className="flex flex-col gap-8">
       {section === "current" && usage ? (
         <div>
-          <PlanUsage usage={usage} compact />
-          <ButtonLink
-            href="/settings/plan/media"
-            variant="quiet"
-            className="mt-3"
-          >
-            Manage photos
-          </ButtonLink>
-          <ButtonLink
-            href={billingSectionHref("plans")}
-            variant="secondary"
-            className="ml-2 mt-3"
-          >
-            View plans
-          </ButtonLink>
+          <PlanUsage
+            usage={usage}
+            compact
+            planAction={
+              <ButtonLink
+                href={billingSectionHref("plans")}
+                variant="secondary"
+              >
+                View plans
+              </ButtonLink>
+            }
+            storageAction={
+              <ButtonLink
+                href="/settings/plan/media"
+                variant="quiet"
+                className="-mr-3 text-primary"
+              >
+                Manage photos
+              </ButtonLink>
+            }
+          />
           {usage.planAssigned ? (
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
               Your plan is managed by an admin. Contact support to change it.
