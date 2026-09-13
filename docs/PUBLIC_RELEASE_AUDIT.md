@@ -4,6 +4,8 @@ This is Relay’s durable release authority for security, reliability, and marke
 
 ## Decision
 
+Latest verification: [2026-09-13 release check](./RELEASE_VERIFICATION_2026-09-13.md). Release `aceb1d33d49c` is deployed and healthy, but the production browser suite encountered authentication-page 429s. Real auth and an uninterrupted new-game lifecycle remain unverified. Older candidate results below do not clear these current gaps.
+
 **Current release class:** capped, invite-only Philippines beta with initial field operations in Cebu.
 
 Relay may move to unrestricted public signup only when every blocking row below has dated evidence. “10/10” means all objective gates pass; it does not mean the service is invulnerable or guaranteed to remain available. No internet service can promise freedom from DDoS, account compromise, provider outages, or unknown vulnerabilities.
@@ -50,7 +52,7 @@ Each pillar is scored from 0–10. A public release requires:
 - `/api/health` is a database-free public liveness endpoint.
 - `/api/health?deep=1` performs a private database readiness check and requires a 32+ character bearer secret.
 - Production Playwright runs serially instead of manufacturing a firewall burst from one shared IP.
-- `scripts/verify-production-release.sh` verifies the authenticated host/guest workflow, public endpoints, CSP, and ordinary shared-IP navigation.
+- `scripts/verify-production-release.sh` verifies public browser behavior, endpoints, CSP, and ordinary shared-IP navigation. It reports incomplete release evidence until real authentication and the host/guest lifecycle are verified separately; the trusted fixture is localhost-only.
 - `scripts/backup-database.sh` selects PostgreSQL client tools new enough for the production server, creates a private custom-format dump, validates its structure, and emits a checksum outside the repository.
 - Games, groups, notifications, search, and platform-admin collections load automatically in bounded batches with stable cursors and accessible fallback controls; there is no numbered-page interaction.
 - Private collection APIs use `private, no-store`, refresh session claims, and deduplicate appended rows. Realtime session invalidations continue to refetch authoritative data.
@@ -134,15 +136,15 @@ Latest release evidence (2026-08-31, commit `ddeaa6b`, deployment `dpl_7bEFAUotw
 
 ## Production verification
 
-Use a disposable account whose data may be mutated and deleted by the test:
+Run public production checks against the canonical origin. Real authentication and the uninterrupted host/guest lifecycle require separately recorded evidence using a disposable account:
 
 ```bash
-export E2E_AUTH_EMAIL='disposable-test@example.com'
-export E2E_AUTH_PASSWORD='...'
-export E2E_AUTH_EXISTING='true'
+export E2E_BASE_URL='https://relay.vanajvanguardia.tech'
 export HEALTHCHECK_SECRET='...'
 pnpm release:verify-production
 ```
+
+The script exits 2 after passing public checks because those checks cannot establish authenticated release readiness. Do not interpret skipped authenticated tests as a pass; see `CRITICAL_USER_JOURNEYS.md` for the remaining scenarios.
 
 The workflow must run against the exact release deployment. A 429 from the bounded `GET /login` probe is a failure. Vercel Hobby exposes managed system mitigation but not the full custom Firewall/IP-bypass controls; never pause system mitigation to make a test green. If observed beta traffic produces legitimate 429s after normal human navigation, place a reviewed Cloudflare configuration in front of a custom domain or upgrade the Vercel plan before broadening traffic. The verifier includes cooldowns so it tests a shared-network burst rather than manufacturing a continuous bot signature.
 

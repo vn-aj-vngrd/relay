@@ -1,5 +1,7 @@
 # Browser validation
 
+For manual CI profiles, setup, and coverage maintenance, read [Reliability](../docs/RELIABILITY.md).
+
 `pnpm test:e2e` covers public browser flows. The authenticated host/guest game test requires an explicit trusted-session opt-in; it must never solve or disable production CAPTCHA.
 
 ## Trusted game-lifecycle fixture (local app only)
@@ -28,6 +30,18 @@ The default lifecycle test reuses the account without resetting onboarding, crea
 For an explicitly authorized debugging session only, `E2E_REUSE_SESSION_ID=<exact-id>` resumes a published, link-only `Relay E2E …` game after verifying its exact ID and dedicated owner in Supabase. This skips creation/settings checks and adds a **partial-diagnostic** annotation; a passing resumed run is **not** a passing full end-to-end flow. Start from a suitable clean roster; this mode deliberately does not reset roster, payment, match, or guest state.
 
 `E2E_RETAIN_SESSION=true` explicitly retains the tracked test game and annotates its ID for operator cleanup (for example, when the normal deletion quota is exhausted). Otherwise cleanup is mandatory. Never delete by title prefix or sweep all games belonging to an account. When a quota blocks cleanup, record exact IDs privately and wait for quota expiry before using the regular owner-authorized Delete game flow.
+
+## Critical journey branches
+
+`docs/CRITICAL_USER_JOURNEYS.md` defines the game journey acceptance criteria and records browser versus unit-only coverage. `game-branches.spec.ts` complements the normal lifecycle with approval/rejection, capacity, waitlist promotion, response changes, and roster locking. It requires `E2E_SESSION_FIXTURE=true` and an exact `E2E_BRANCH_SESSION_ID` accepted by the existing disposable-game guard. Run only the `desktop-chromium` project; its guest contexts use a mobile viewport.
+
+This diagnostic changes capacity/approval and adds three synthetic guests. It retains the game and never resets state. Inspect the named game before running; it must have an unlocked roster and room to increase its player limit by one. `E2E_BRANCH_CANCEL=true` additionally cancels that exact game, making it terminal and ineligible for later reuse. Do not enable cancellation on a roster containing real people. No automatic cleanup or retries are used because the altered state is evidence for inspection.
+
+```sh
+E2E_SESSION_FIXTURE=true E2E_BRANCH_SESSION_ID=<owned-test-game-id> \
+  node --env-file=.env.local node_modules/@playwright/test/cli.js test \
+  e2e/game-branches.spec.ts --project=desktop-chromium
+```
 
 ## Password/CAPTCHA smoke remains separate
 

@@ -1,0 +1,109 @@
+name: Manual reliability
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Essential journeys or the full automated suite
+        type: choice
+        default: essential
+        options: [essential, full]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-reliability
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_APP_URL: http://localhost:3002
+  NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-publishable-key
+  SUPABASE_SECRET_KEY: ci-secret-key
+  DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/relay
+  GEOAPIFY_API_KEY: ci-placeholder-key-000000000
+  GEOAPIFY_API_URL: https://api.geoapify.com
+  ADMIN_EMAILS: ""
+  CHAT_IMAGE_MAX_BYTES: "1048576"
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm typecheck
+      - name: Run selected regression suite
+        env:
+          PROFILE: ${{ inputs.profile }}
+        run: pnpm test:reliability "$PROFILE"
+      - name: Upload full unit coverage
+        if: always() && inputs.profile == 'full'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-coverage-${{ github.sha }}
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: warn
+
+  journeys:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: reliability
+    env:
+      RELIABILITY_PROFILE: ${{ inputs.profile }}
+      E2E_SESSION_FIXTURE: "true"
+      E2E_AUTH_USER_ID: ${{ secrets.E2E_AUTH_USER_ID }}
+      E2E_AUTH_EMAIL: ${{ secrets.E2E_AUTH_EMAIL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Require dedicated test configuration
+        shell: bash
+        run: |
+          for key in E2E_AUTH_USER_ID E2E_AUTH_EMAIL NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY SUPABASE_SECRET_KEY DATABASE_URL GEOAPIFY_API_KEY; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing reliability environment secret: $key"
+              exit 1
+            fi
+          done
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - name: Run fresh common journeys
+        run: pnpm test:e2e:reliability
+      - name: Record scope
+        if: always()
+        env:
+          PROFILE: ${{ inputs.profile }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          {
+            echo "### Manual reliability: $PROFILE"
+            echo "Commit: $COMMIT"
+            echo "See step results for passed/failed journeys. A skipped selected journey fails the run."
+            echo "Password/CAPTCHA, hosted deployment behavior, and retained-game branch diagnostics remain separate checks (docs/RELIABILITY.md)."
+          } >> "$GITHUB_STEP_SUMMARY"

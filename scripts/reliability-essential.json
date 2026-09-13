@@ -1,0 +1,20 @@
+[
+  "src/features/sessions/create-session-form.test.tsx",
+  "src/features/sessions/create-session-payment.test.ts",
+  "src/features/sessions/create-session-destination.test.ts",
+  "src/features/sessions/rsvp-concurrency.test.ts",
+  "src/features/sessions/rsvp-control.test.tsx",
+  "src/features/sessions/share-button.test.tsx",
+  "src/features/sessions/roster-management.test.ts",
+  "src/features/sessions/roster-lock-action.test.ts",
+  "src/features/matches/start-play.test.ts",
+  "src/features/matches/lifecycle.test.ts",
+  "src/features/matches/rotation.test.ts",
+  "src/features/payments/domain.test.ts",
+  "src/features/payments/payment-proof-form.test.tsx",
+  "src/features/payments/collection-lifecycle.test.ts",
+  "src/features/payments/payment-switch-action.test.ts",
+  "src/features/memories/permissions.test.ts",
+  "src/features/memories/story-recap-layout.test.ts",
+  "src/features/auth/permissions.test.ts"
+]

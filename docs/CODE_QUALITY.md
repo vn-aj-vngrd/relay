@@ -36,7 +36,7 @@ At handoff, report which validation ran and which checks remain deferred to pre-
 
 Unit tests are a mandatory part of the code quality gate. Add or update unit tests for changed behavior; the full unit suite must pass before committing code.
 
-E2E is excluded from the required pre-commit gate. Follow the opt-in E2E rule in `AGENTS.md`: add or run E2E only when explicitly requested by the user. Otherwise, missing E2E results or credentials do not block agent handoff or committing.
+E2E is excluded from the required pre-commit gate. Maintain journey coverage and follow the manual execution policy in [RELIABILITY.md](RELIABILITY.md). Missing E2E results or credentials do not block agent handoff or committing; report them as unverified.
 
 **Complete when:** validation is proportional to risk, changed behavior has useful targeted tests, no suppression hides a fixable problem, and the handoff names any checks deferred to CI.
 

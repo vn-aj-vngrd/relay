@@ -1,3 +1,8 @@
+import { Suspense } from "react";
+import {
+  AppVersion,
+  AppVersionFallback,
+} from "@/components/shared/app-version";
 import { ButtonLink } from "@/components/ui/button";
 import { requireUser } from "@/features/auth/session";
 import { getAccountPlanSummary } from "@/features/billing/account-plan";
@@ -84,6 +89,9 @@ export default async function SettingsPage({
           </section>
         )}
       </div>
+      <Suspense fallback={<AppVersionFallback />}>
+        <AppVersion />
+      </Suspense>
     </div>
   );
 }

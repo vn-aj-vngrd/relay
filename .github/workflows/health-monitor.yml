@@ -18,13 +18,19 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Check public liveness
-        run: curl --fail --silent --show-error --max-time 20 --retry 1 https://relay-pickleball.vercel.app/api/health >/dev/null
+        run: |
+          set -o pipefail
+          curl --fail --silent --show-error --max-time 20 --retry 1 \
+            https://relay.vanajvanguardia.tech/api/health |
+            jq --exit-status --slurp 'length == 1 and .[0].status == "ok"' >/dev/null
 
       - name: Check private database readiness
         env:
           HEALTHCHECK_SECRET: ${{ secrets.HEALTHCHECK_SECRET }}
         run: |
+          set -o pipefail
           test -n "$HEALTHCHECK_SECRET"
           curl --fail --silent --show-error --max-time 20 --retry 1 \
             -H "Authorization: Bearer $HEALTHCHECK_SECRET" \
-            'https://relay-pickleball.vercel.app/api/health?deep=1' >/dev/null
+            'https://relay.vanajvanguardia.tech/api/health?deep=1' |
+            jq --exit-status --slurp 'length == 1 and .[0].status == "ok" and .[0].database == "reachable"' >/dev/null
