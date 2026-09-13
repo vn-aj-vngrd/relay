@@ -50,7 +50,7 @@ jobs:
         run: pnpm test:reliability "$PROFILE"
       - name: Upload full unit coverage
         if: always() && inputs.profile == 'full'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: unit-coverage-${{ github.sha }}
           path: coverage/
