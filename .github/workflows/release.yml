@@ -48,7 +48,7 @@ jobs:
         with:
           version: 10.12.1
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         if: steps.current.outputs.release == 'true'
         with:
           node-version: 24
