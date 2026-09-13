@@ -315,16 +315,6 @@ export default async function PaymentsPage({
                                     name={name}
                                   />
                                 ) : null}
-                                {!cancelled &&
-                                !payment.pendingAdjustment &&
-                                own &&
-                                payment.amountCents > 0 &&
-                                payment.status === "unpaid" ? (
-                                  <PaymentProofForm
-                                    paymentId={payment.id}
-                                    reviewNote={payment.reviewNote}
-                                  />
-                                ) : null}
                                 {payment.status === "sent" ? (
                                   <div className="mt-3 flex flex-wrap items-start gap-3 rounded-lg bg-surface-strong p-3">
                                     {proofUrl ? (
@@ -464,13 +454,37 @@ export default async function PaymentsPage({
                               </span>
                             </a>
                           ) : null}
-                          {!canManagePayments ? (
+                          {!canManagePayments &&
+                          !cancelled &&
+                          expensePayments.some(
+                            ({ payment }) =>
+                              payment.status === "unpaid" &&
+                              payment.amountCents > 0 &&
+                              !payment.pendingAdjustment
+                          ) ? (
                             <p className="mt-3 text-xs text-muted">
                               Pay the host, then upload proof.
                             </p>
                           ) : null}
                         </section>
                       ) : null}
+                      {!cancelled
+                        ? expensePayments
+                            .filter(
+                              ({ payment, player }) =>
+                                player.userId === user.id &&
+                                payment.status === "unpaid" &&
+                                payment.amountCents > 0 &&
+                                !payment.pendingAdjustment
+                            )
+                            .map(({ payment }) => (
+                              <PaymentProofForm
+                                key={payment.id}
+                                paymentId={payment.id}
+                                reviewNote={payment.reviewNote}
+                              />
+                            ))
+                        : null}
                     </div>
                   </div>
                 </article>

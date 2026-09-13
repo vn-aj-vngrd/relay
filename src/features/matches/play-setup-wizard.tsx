@@ -87,6 +87,12 @@ export function PlaySetupWizard({
           </Link>
         ) : null}
         <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+          {play.playerCount < 4 ? (
+            <p role="status" className="w-full text-sm text-muted">
+              Mark {4 - play.playerCount} more{" "}
+              {play.playerCount === 3 ? "player" : "players"} here to continue.
+            </p>
+          ) : null}
           <Button
             type="button"
             disabled={play.playerCount < 4}

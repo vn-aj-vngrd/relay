@@ -64,7 +64,7 @@ function recapCopy(input: RecapStoryInput) {
         row("focus", "We’re playing", 48, { weight: 600, gapAfter: 32 }),
         row(
           "matches",
-          `${recap.matchCount} completed ${plural(recap.matchCount, "match")}`,
+          `${recap.matchCount} completed ${plural(recap.matchCount, "match", "matches")}`,
           48,
           { weight: 600 }
         ),
@@ -98,17 +98,22 @@ function recapCopy(input: RecapStoryInput) {
         row("focus", "Night recap", 48, { weight: 600, gapAfter: 32 }),
         row(
           "matches",
-          `${recap.matchCount} ${plural(recap.matchCount, "match")} played`,
+          `${recap.matchCount} ${plural(recap.matchCount, "match", "matches")} played`,
           48,
           { weight: 600 }
         ),
-        row("points", `${recap.totalPoints} points played`, 48, {
-          weight: 600,
-        }),
+        row(
+          "points",
+          `${recap.totalPoints} ${plural(recap.totalPoints, "point")} played`,
+          48,
+          {
+            weight: 600,
+          }
+        ),
         row(
           "time",
           recap.playMinutes
-            ? `${recap.playMinutes} minutes of court time`
+            ? `${recap.playMinutes} ${plural(recap.playMinutes, "minute")} of court time`
             : "Court time not recorded"
         ),
       ];
@@ -221,7 +226,7 @@ function recapCopy(input: RecapStoryInput) {
           number(String(recap.busiestCourt.matches)),
           row(
             "record-label",
-            `${plural(recap.busiestCourt.matches, "match")} played here`,
+            `${plural(recap.busiestCourt.matches, "match", "matches")} played here`,
             40
           ),
           row("focus", "Busiest court", 36, { secondary: true }),
@@ -236,7 +241,7 @@ function recapCopy(input: RecapStoryInput) {
       body = [
         row(
           "matches",
-          `Across ${recap.matchCount} ${plural(recap.matchCount, "match")}`,
+          `Across ${recap.matchCount} ${plural(recap.matchCount, "match", "matches")}`,
           40
         ),
       ];
@@ -249,7 +254,7 @@ function recapCopy(input: RecapStoryInput) {
       body = [
         row(
           "matches",
-          `Across ${recap.matchCount} ${plural(recap.matchCount, "match")}`,
+          `Across ${recap.matchCount} ${plural(recap.matchCount, "match", "matches")}`,
           40
         ),
       ];

@@ -5,7 +5,6 @@ import {
   Check,
   CheckCircle,
   Question,
-  ShareNetwork,
   UserCircle,
   X,
 } from "@phosphor-icons/react";
@@ -15,13 +14,13 @@ import { useActionState, useState } from "react";
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
-import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import {
   playingExperienceLabel,
   playingExperienceOptions,
 } from "@/features/players/playing-experience";
 
 import { rsvpAction, type SessionActionState } from "./actions";
+import { ShareButton } from "./share-button";
 
 type Choice = "going" | "maybe" | "declined";
 type CurrentRsvp = Choice | "invited" | "pending" | "waitlisted";
@@ -107,6 +106,7 @@ export function RsvpControl({
   currentSkillLevel,
   locked = false,
   full = false,
+  requiresApproval = false,
   instance = "default",
   discoverySource,
 }: {
@@ -120,6 +120,7 @@ export function RsvpControl({
   currentSkillLevel?: string | null;
   locked?: boolean;
   full?: boolean;
+  requiresApproval?: boolean;
   instance?: "mobile" | "desktop" | "default";
   discoverySource?: "open-games" | "search";
 }) {
@@ -127,7 +128,6 @@ export function RsvpControl({
     initialChoice(currentRsvp)
   );
   const [state, action, pending] = useActionState(rsvpAction, {});
-  const [shareMessage, setShareMessage] = useState("");
   const preserveValues = usePreserveFormValuesOnError(state);
   const isReturningGuest = Boolean(guestName);
   const nameInputId = `guest-${instance}-${sessionId}`;
@@ -136,24 +136,8 @@ export function RsvpControl({
   const signupHref = `/signup?next=${encodeURIComponent(sharedPath)}`;
   const guestResponseSaved = state.success && !signedIn;
 
-  async function share() {
-    try {
-      if (navigator.share)
-        await navigator.share({
-          title: document.title,
-          url: window.location.href,
-        });
-      else {
-        await navigator.clipboard.writeText(window.location.href);
-        setShareMessage("Link copied");
-        window.setTimeout(() => setShareMessage(""), 2500);
-      }
-      await trackSharedSessionEvent({ sessionId, event: "invite_shared" });
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError"))
-        setShareMessage("Copy the address from your browser to share.");
-    }
-  }
+  const needsApproval =
+    requiresApproval && currentRsvp !== "going" && currentRsvp !== "waitlisted";
 
   const responseMessage = state.success
     ? state.rsvp === "pending"
@@ -316,18 +300,28 @@ export function RsvpControl({
                   <ButtonSpinner />
                   Saving…
                 </>
-              ) : currentRsvp ? (
+              ) : choice === "going" && needsApproval ? (
+                currentRsvp === "pending" ? (
+                  "Update request"
+                ) : (
+                  "Request to join"
+                )
+              ) : choice === "going" && full && currentRsvp !== "going" ? (
+                "Join waitlist"
+              ) : currentRsvp && currentRsvp !== "invited" ? (
                 "Update response"
               ) : choice === "going" ? (
-                full ? (
-                  "Join waitlist"
-                ) : (
-                  "Confirm I’m going"
-                )
+                "Confirm I’m going"
               ) : (
                 "Save response"
               )}
             </Button>
+            {choice === "going" && needsApproval ? (
+              <p className="text-xs leading-5 text-muted">
+                The host must approve your request before your spot is
+                confirmed.
+              </p>
+            ) : null}
             {state.error ? (
               <p role="alert" className="text-sm font-medium text-danger">
                 {state.error}
@@ -379,26 +373,13 @@ export function RsvpControl({
           ) : null}
         </>
       )}
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={share}
-        className="mt-3 w-full"
-      >
-        <ShareNetwork aria-hidden size={16} />
-        <span>
-          {shareMessage === "Link copied" ? "Link copied" : "Share game"}
-        </span>
-      </Button>
-      {shareMessage && shareMessage !== "Link copied" ? (
-        <p aria-live="polite" className="mt-2 text-center text-xs text-danger">
-          {shareMessage}
-        </p>
-      ) : (
-        <span className="sr-only" aria-live="polite">
-          {shareMessage}
-        </span>
-      )}
+      <div className="mt-3 [&>button]:w-full">
+        <ShareButton
+          url={sharedPath}
+          title="Relay game"
+          sessionId={sessionId}
+        />
+      </div>
     </div>
   );
 }

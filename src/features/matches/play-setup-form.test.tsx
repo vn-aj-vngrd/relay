@@ -175,7 +175,7 @@ describe("PlaySetupForm", () => {
       screen.getByRole("radio", { name: /^Keep pairs together/ })
     );
 
-    expect(screen.getByText("4 here · 6 going · 1 court")).toBeVisible();
+    expect(screen.getByText("4 in rotation · 6 going · 1 court")).toBeVisible();
     expect(screen.getByText("Pair 3")).toBeVisible();
   });
 

@@ -485,7 +485,7 @@ export function PlaySetupForm({
       ) : null}
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
         <p className="text-sm text-muted">
-          {playerCount} here · {goingRosterCount} going · {courtCount}{" "}
+          {playerCount} in rotation · {goingRosterCount} going · {courtCount}{" "}
           {courtCount === 1 ? "court" : "courts"}
         </p>
         {onBack ? (

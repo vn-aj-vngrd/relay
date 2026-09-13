@@ -1477,6 +1477,15 @@ export async function rsvpAction(
         await tx.execute(
           sql`select id from ${sessions} where id = ${session.id} for update`
         );
+        const currentSession = await tx.query.sessions.findFirst({
+          where: eq(sessions.id, session.id),
+        });
+        if (
+          !currentSession ||
+          !["published", "live"].includes(currentSession.status)
+        )
+          throw new Error("RSVP_CLOSED");
+        if (currentSession.rosterLocked) throw new Error("RSVP_LOCKED");
         const current = await tx
           .select()
           .from(sessionPlayers)
@@ -1487,8 +1496,8 @@ export async function rsvpAction(
         });
         if (
           !canRespondToSession({
-            visibility: session.visibility,
-            hostId: session.hostId,
+            visibility: currentSession.visibility,
+            hostId: currentSession.hostId,
             userId: user?.id,
             hasRosterIdentity: Boolean(identity),
           })
@@ -1514,11 +1523,11 @@ export async function rsvpAction(
         ).length;
         const transition = planRosterTransition({
           roster: current,
-          capacity: session.capacity,
+          capacity: currentSession.capacity,
           intent: {
             playerId: identity?.id,
             requested: parsed.data.choice,
-            requiresApproval: session.requiresApproval,
+            requiresApproval: currentSession.requiresApproval,
           },
         });
         const nextRsvp = transition.target.rsvp;
@@ -1614,7 +1623,7 @@ export async function rsvpAction(
                 : (parsed.data.guestName ?? identity.guestName ?? null),
             },
           });
-        if (session.status === "live" && actorPlayerId) {
+        if (currentSession.status === "live" && actorPlayerId) {
           const queueEntry = await tx.query.sessionQueue.findFirst({
             where: and(
               eq(sessionQueue.sessionId, session.id),
@@ -1666,7 +1675,7 @@ export async function rsvpAction(
             })
             .where(eq(sessionPlayers.id, update.id));
         for (const promotedId of transition.promotedPlayerIds) {
-          if (session.status === "live") {
+          if (currentSession.status === "live") {
             const queue = await tx
               .select()
               .from(sessionQueue)
@@ -1717,6 +1726,13 @@ export async function rsvpAction(
     newGuestToken = result.guestToken;
     reachedFourthPlayer = result.reachedFourth;
   } catch (error) {
+    if (error instanceof Error && error.message === "RSVP_CLOSED")
+      return { error: "This game is no longer accepting responses." };
+    if (error instanceof Error && error.message === "RSVP_LOCKED")
+      return {
+        error:
+          "The host has closed responses. Refresh to see the current roster.",
+      };
     if (error instanceof Error && error.message === "PRIVATE_SESSION")
       return {
         error: "This private game only accepts responses from invited players.",

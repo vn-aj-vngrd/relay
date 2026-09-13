@@ -9,6 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ rsvpAction: vi.fn(async () => ({})) }));
 vi.mock("./actions", () => ({ rsvpAction: mocks.rsvpAction }));
+vi.mock("@/features/analytics/actions", () => ({
+  trackSharedSessionEvent: vi.fn(async () => undefined),
+}));
 
 import { RsvpControl } from "./rsvp-control";
 
@@ -133,6 +136,33 @@ describe("RsvpControl", () => {
     expect(screen.getByRole("button", { name: "Join waitlist" })).toBeVisible();
   });
 
+  it.each([false, true])(
+    "discloses approval before joining even when full: %s",
+    (full) => {
+      render(
+        <RsvpControl
+          sessionId={sessionId}
+          slug="friends-night"
+          requiresApproval
+          full={full}
+          currentRsvp="invited"
+        />
+      );
+      expect(
+        screen.getByRole("button", { name: "Request to join" })
+      ).toBeVisible();
+      expect(
+        screen.getByText(
+          "The host must approve your request before your spot is confirmed."
+        )
+      ).toBeVisible();
+      fireEvent.click(screen.getByRole("button", { name: "Can’t go" }));
+      expect(
+        screen.getByRole("button", { name: "Save response" })
+      ).toBeVisible();
+    }
+  );
+
   it("recognizes a returning guest without asking for their name again", () => {
     render(
       <RsvpControl
@@ -156,4 +186,25 @@ describe("RsvpControl", () => {
       screen.queryByRole("button", { name: "Confirm I’m going" })
     ).not.toBeInTheDocument();
   });
+});
+
+it("shares the guest-accessible invitation rather than the signed-in workspace URL", async () => {
+  window.history.replaceState(null, "", "/games/internal-id?created=1");
+  const copy = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "share", {
+    configurable: true,
+    value: undefined,
+  });
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: copy },
+  });
+  render(<RsvpControl sessionId={sessionId} slug="friends-night" signedIn />);
+  fireEvent.click(screen.getByRole("button", { name: "Share game" }));
+  await waitFor(() =>
+    expect(copy).toHaveBeenCalledWith(
+      new URL("/s/friends-night", window.location.origin).toString()
+    )
+  );
+  window.history.replaceState(null, "", "/");
 });

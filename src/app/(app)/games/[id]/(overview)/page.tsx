@@ -144,6 +144,7 @@ export default async function GameOverviewPage({
                   accountUsername={accountProfile.username}
                   currentRsvp={currentRsvp}
                   currentSkillLevel={accountProfile.skillLevel}
+                  requiresApproval={session.requiresApproval}
                   locked={session.rosterLocked}
                   full={going.length >= session.capacity}
                   discoverySource={
@@ -295,6 +296,7 @@ export default async function GameOverviewPage({
               accountUsername={accountProfile.username}
               currentRsvp={membership?.rsvp}
               currentSkillLevel={accountProfile.skillLevel}
+              requiresApproval={session.requiresApproval}
               locked={session.rosterLocked}
               full={going.length >= session.capacity}
               instance="default"

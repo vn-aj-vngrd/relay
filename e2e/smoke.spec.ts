@@ -293,7 +293,10 @@ test("an authenticated host and guest can complete the core session flow", async
       .click();
     await check(page).toHaveURL(/\/home\?tour=1$/);
   }
-  if (new URL(page.url()).searchParams.has("tour")) {
+  if (
+    new URL(page.url()).searchParams.has("tour") ||
+    (await page.getByRole("dialog", { name: "Welcome to Relay" }).isVisible())
+  ) {
     await check(
       page.getByRole("dialog", { name: "Welcome to Relay" })
     ).toBeVisible();
@@ -503,10 +506,8 @@ test("an authenticated host and guest can complete the core session flow", async
           .click();
       }
       if (!reuse) {
-        await page.goto("/home");
-        await check(
-          page.locator(`a[href="/games/${sessionId}"]`).first()
-        ).toBeVisible();
+        // Home shows a bounded selection; a reused account may have earlier games.
+        // The full Games library must contain the newly published game.
         await page.goto("/games");
         await check(
           page.locator(`a[href="/games/${sessionId}"]`).first()
@@ -675,6 +676,10 @@ test("an authenticated host and guest can complete the core session flow", async
       await check(
         guestPage.locator("p:visible", { hasText: "Guest player" })
       ).toBeVisible();
+      if (process.env.E2E_RETAIN_SESSION === "true")
+        await guestContext.storageState({
+          path: testInfo.outputPath("guest-state.json"),
+        });
       await guestPage.getByRole("link", { name: "Play", exact: true }).click();
       await check(guestPage).toHaveURL(`${publicHref}/play`);
       await check(
@@ -709,7 +714,9 @@ test("an authenticated host and guest can complete the core session flow", async
       await setupPayments.click();
       await page.getByRole("button", { name: "Payment choice" }).click();
       await page.getByRole("option", { name: "Collect payment" }).click();
-      await page.getByLabel("Total amount").fill("300");
+      await page.getByLabel("Expense 1", { exact: true }).fill("Court rental");
+      await page.getByLabel("Amount (₱)", { exact: true }).fill("300");
+      await check(page.getByLabel("Total amount")).toHaveValue("300");
       await page
         .getByLabel("Payment details")
         .fill("0917 123 4567 · Relay host");
@@ -733,9 +740,9 @@ test("an authenticated host and guest can complete the core session flow", async
       await page
         .getByRole("link", { name: "View payments", exact: true })
         .click();
-      await check(
-        page.getByText("Host · paid the full amount upfront")
-      ).toBeVisible({ timeout: 15_000 });
+      await check(page.getByText("Host · paid upfront")).toBeVisible({
+        timeout: 15_000,
+      });
       await check(page.getByText("0 of 3 paid")).toBeVisible();
       await check(page.getByText("Mika Reyes", { exact: true })).toBeVisible();
       await check(page.getByText("Guest Bea", { exact: true })).toBeVisible();
@@ -743,7 +750,7 @@ test("an authenticated host and guest can complete the core session flow", async
 
       await guestPage.goto(`${publicHref}/payments`);
       await check(
-        guestPage.getByRole("heading", { name: "Your payment" })
+        guestPage.getByRole("heading", { name: "Your payment", level: 3 })
       ).toBeVisible();
       await guestPage
         .getByLabel("Payment screenshot")
@@ -768,7 +775,9 @@ test("an authenticated host and guest can complete the core session flow", async
         timeout: 30_000,
       });
       await guestPage.reload();
-      await check(guestPage.getByText("Payment confirmed")).toBeVisible();
+      await check(
+        guestPage.getByText("Payment confirmed", { exact: true })
+      ).toBeVisible();
 
       await page.goto(`/games/${sessionId}/play`);
       await page.getByRole("link", { name: "Set up Play" }).click();

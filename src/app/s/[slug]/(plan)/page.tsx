@@ -286,6 +286,7 @@ export default async function PublicSessionPage({
                     guestName={guestName}
                     currentRsvp={currentRsvp}
                     currentSkillLevel={currentSkillLevel}
+                    requiresApproval={session.requiresApproval}
                     locked={session.rosterLocked}
                     full={spots === 0}
                     instance="mobile"
@@ -340,6 +341,7 @@ export default async function PublicSessionPage({
                   guestName={guestName}
                   currentRsvp={currentRsvp}
                   currentSkillLevel={currentSkillLevel}
+                  requiresApproval={session.requiresApproval}
                   locked={session.rosterLocked}
                   full={spots === 0}
                   instance="desktop"

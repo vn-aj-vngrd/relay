@@ -61,6 +61,29 @@ const photoModes = [
 ] as const;
 
 describe("shared social-story recap layout", () => {
+  it.each([1, 2])(
+    "uses correct count labels in preview and exported stories for %i",
+    (count) => {
+      const layout = storyRecapLayout({
+        ...base,
+        recap: {
+          ...recap,
+          matchCount: count,
+          totalPoints: count,
+          playMinutes: count,
+        },
+      })!;
+      expect(layout.blocks.find((block) => block.id === "matches")?.text).toBe(
+        `${count} ${count === 1 ? "match" : "matches"} played`
+      );
+      expect(layout.blocks.find((block) => block.id === "points")?.text).toBe(
+        `${count} ${count === 1 ? "point" : "points"} played`
+      );
+      expect(layout.blocks.find((block) => block.id === "time")?.text).toBe(
+        `${count} ${count === 1 ? "minute" : "minutes"} of court time`
+      );
+    }
+  );
   for (const { id: theme } of storyThemes) {
     for (const template of templates) {
       it.each(photoModes)(

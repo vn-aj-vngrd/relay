@@ -195,13 +195,7 @@ export default async function PublicPaymentsPage({
                         <p className="text-sm text-muted">
                           Proof submission is closed.
                         </p>
-                      ) : (
-                        <PaymentProofForm
-                          paymentId={payment.id}
-                          reviewNote={payment.reviewNote}
-                          slug={slug}
-                        />
-                      )}
+                      ) : null}
                     </div>
                   </div>
                   <div className="min-w-0 space-y-6 border-t border-line pt-5 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
@@ -229,7 +223,13 @@ export default async function PublicPaymentsPage({
                             "Ask the host for payment details."}
                         </p>
                         <p className="mt-3 text-xs leading-5 text-muted">
-                          Pay the host, then upload proof.
+                          {cancelled
+                            ? "This game was cancelled. Contact the host about any payment already made."
+                            : payment.status === "confirmed"
+                              ? "Payment confirmed. No further payment is needed for this share."
+                              : payment.status === "sent"
+                                ? "Your proof is with the host. Wait for confirmation before sending another payment."
+                                : "Pay the host, then upload proof."}
                         </p>
                         {receiptUrl ? (
                           <a
@@ -256,9 +256,21 @@ export default async function PublicPaymentsPage({
                           className="aspect-square w-full max-w-60 rounded-lg bg-white object-contain"
                         />
                         <p className="mt-2 max-w-60 text-center text-xs text-muted">
-                          Scan to pay
+                          {!cancelled && payment.status === "unpaid"
+                            ? "Scan to pay"
+                            : "Payment QR"}
                         </p>
                       </div>
+                    ) : null}
+                    {!cancelled &&
+                    payment.status === "unpaid" &&
+                    payment.amountCents > 0 &&
+                    !payment.pendingAdjustment ? (
+                      <PaymentProofForm
+                        paymentId={payment.id}
+                        reviewNote={payment.reviewNote}
+                        slug={slug}
+                      />
                     ) : null}
                   </div>
                 </section>

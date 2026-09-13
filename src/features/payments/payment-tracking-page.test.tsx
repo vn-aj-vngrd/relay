@@ -84,6 +84,96 @@ function collections(assigned: boolean) {
 
 describe("authenticated collection tracking", () => {
   it.each([false, true])(
+    "shows the recipient before requesting proof (shared: %s)",
+    async (shared) => {
+      const payment = {
+        id: "payment",
+        expenseId: expense.id,
+        sessionPlayerId: "player-id",
+        status: "unpaid",
+        amountCents: 120000,
+        pendingAdjustment: null,
+        adjustmentHistory: [],
+      };
+      if (shared) {
+        mocks.publicSession.mockResolvedValue(workspace);
+        mocks.viewer.mockResolvedValue({
+          player: { id: "player-id", userId: "player", rsvp: "going" },
+        });
+        mocks.rows.mockResolvedValueOnce([
+          { expense, account, payment, playerUserId: "player" },
+        ]);
+        render(
+          await PublicPaymentsPage({
+            params: Promise.resolve({ slug: "shared" }),
+          })
+        );
+      } else {
+        collections(true);
+        render(await PaymentsPage({ params: Promise.resolve({ id: "game" }) }));
+      }
+      expect(
+        screen
+          .getByText("Host account")
+          .compareDocumentPosition(screen.getByText("Payment screenshot")) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+    }
+  );
+  it.each(["sent", "confirmed"])(
+    "does not ask players to pay again after %s on either route",
+    async (status) => {
+      const payment = {
+        id: "payment",
+        expenseId: expense.id,
+        sessionPlayerId: "player-id",
+        status,
+        amountCents: 120000,
+        pendingAdjustment: null,
+        adjustmentHistory: [],
+      };
+      mocks.rows
+        .mockResolvedValueOnce([{ expense, account }])
+        .mockResolvedValueOnce([
+          {
+            expense,
+            payment,
+            player: { userId: "player" },
+            profile: { name: "Player" },
+          },
+        ]);
+      const view = render(
+        await PaymentsPage({ params: Promise.resolve({ id: "game" }) })
+      );
+      expect(
+        screen.queryByText("Pay the host, then upload proof.")
+      ).not.toBeInTheDocument();
+      view.unmount();
+      mocks.publicSession.mockResolvedValue(workspace);
+      mocks.viewer.mockResolvedValue({
+        player: { id: "player-id", userId: "player", rsvp: "going" },
+      });
+      mocks.rows.mockResolvedValueOnce([
+        { expense, account, payment, playerUserId: "player" },
+      ]);
+      render(
+        await PublicPaymentsPage({
+          params: Promise.resolve({ slug: "shared" }),
+        })
+      );
+      expect(
+        screen.queryByText("Pay the host, then upload proof.")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByText(
+          status === "sent"
+            ? "Your proof is with the host. Wait for confirmation before sending another payment."
+            : "Payment confirmed. No further payment is needed for this share."
+        )
+      ).toBeVisible();
+    }
+  );
+  it.each([false, true])(
     "shows Free and retained history without payable controls (shared: %s)",
     async (shared) => {
       const archived = { ...expense, archivedAt: new Date() };

@@ -54,5 +54,8 @@ describe("PlaySetupWizard", () => {
     expect(
       screen.getByRole("button", { name: "Continue to game options" })
     ).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Mark 1 more player here to continue."
+    );
   });
 });

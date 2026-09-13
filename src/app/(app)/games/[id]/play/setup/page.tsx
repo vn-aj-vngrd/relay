@@ -92,7 +92,7 @@ export default async function PlaySetupPage({
                         ? `${checkedIn.length} here · players marked Not here can join the queue when they arrive.`
                         : attendanceTaken
                           ? "No players are marked here. Mark at least four here before continuing."
-                          : "No arrivals marked yet. Everyone going will enter the first rotation."}
+                          : "No arrivals marked yet. Everyone going will enter the first rotation. If everyone has arrived, choose Mark all here; otherwise mark only the players present."}
                     </p>
                   </div>
                   {going.length ? (
