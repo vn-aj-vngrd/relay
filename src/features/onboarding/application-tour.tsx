@@ -288,7 +288,9 @@ export function ApplicationTour({ required }: { required: boolean }) {
             />
           ))}
         </div>
-        <div className="mt-5 flex items-center justify-between gap-3">
+        <div
+          className={`mt-5 gap-3 ${finalStep ? "grid grid-cols-[auto_minmax(0,1fr)] items-center" : "flex items-center justify-between"}`}
+        >
           {step ? (
             <Button
               variant="quiet"
@@ -301,8 +303,12 @@ export function ApplicationTour({ required }: { required: boolean }) {
             <span />
           )}
           {finalStep ? (
-            <div className="flex items-center gap-2">
-              <form noValidate action={completeProductTour}>
+            <div className="contents">
+              <form
+                noValidate
+                action={completeProductTour}
+                className="justify-self-end"
+              >
                 <input
                   type="hidden"
                   name="destination"
@@ -315,7 +321,11 @@ export function ApplicationTour({ required }: { required: boolean }) {
                   {continuationLabel}
                 </PendingSubmit>
               </form>
-              <form noValidate action={completeProductTour}>
+              <form
+                noValidate
+                action={completeProductTour}
+                className="col-span-2 min-w-0"
+              >
                 <input
                   type="hidden"
                   name="destination"
@@ -324,7 +334,7 @@ export function ApplicationTour({ required }: { required: boolean }) {
                 <PendingSubmit
                   data-tour-primary
                   pendingLabel="Opening…"
-                  className="pressable inline-flex h-9 shrink-0 items-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
+                  className="pressable inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-[13px] font-semibold text-white hover:bg-primary-hover"
                 >
                   Create game
                   <ArrowRight aria-hidden size={15} />

@@ -19,7 +19,7 @@ export default async function PublicMorePage({
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+      <div className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6">
         <h1 className="sr-only">More</h1>
         <div>
           <PreferenceControls appearanceOnly />

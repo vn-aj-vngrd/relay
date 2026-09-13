@@ -8,7 +8,7 @@ export default function PublicMoreLoading() {
       aria-label="Loading game preferences"
       aria-busy="true"
     >
-      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+      <div className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6">
         <h1 className="sr-only">More</h1>
         <div>
           <Skeleton className="h-4 w-24" />

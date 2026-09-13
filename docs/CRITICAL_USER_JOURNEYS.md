@@ -48,3 +48,7 @@ E2E_SESSION_FIXTURE=true E2E_BRANCH_SESSION_ID=<owned-test-game-id> \
 Do not mark all journeys verified from a unit-suite pass. Require the normal browser lifecycle and relevant alternative browser paths for a release that changes them, alongside `pnpm check:full`. Record the commit, environment, date and evidence. Prior evidence remains prior evidence; a resumed game does not validate creation.
 
 Before claiming complete critical-journey coverage, close the explicit gaps above: uninterrupted new-game lifecycle, signed-in invited player/guest claim, live scoring conflicts and recovery, alternative payment flows, and real auth/mobile integrations. Use a normally available disposable-account quota; do not provision accounts merely to evade a limit or change billing state to force a pass.
+
+## Shared tab layout regression
+
+Overview, Play, Chat, Payments and Story share one tab-to-content inset on authenticated and shared routes, including loading states. `src/features/sessions/game-tab-spacing.test.ts` guards spacing ownership; `play-roster-surface.test.tsx` covers roster lifecycle behavior. This source/component coverage is not a rendered browser geometry check.

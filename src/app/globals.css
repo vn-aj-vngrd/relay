@@ -431,9 +431,13 @@ p:not(.truncate) {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }
-@media (max-width: 39.999rem) {
-  .game-workspace-content:has(.authenticated-chat-page) {
-    padding-top: 0;
+/* One tab-to-content inset across authenticated and shared game routes. */
+.game-tab-content {
+  padding-top: 0.75rem;
+}
+@media (min-width: 40rem) {
+  .game-tab-content {
+    padding-top: 1rem;
   }
 }
 @media (orientation: landscape) and (max-height: 31.25rem) and (

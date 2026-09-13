@@ -48,7 +48,7 @@ export default async function PublicPaymentsPage({
         className="public-session-page min-h-screen bg-surface"
         style={sessionAccentStyle(data.session.accentColor)}
       >
-        <div className="public-session-content mx-auto w-full max-w-xl bg-surface px-4 py-4 text-center sm:px-6 sm:py-14">
+        <div className="public-session-content game-tab-content mx-auto w-full max-w-xl bg-surface px-4 pb-4 text-center sm:px-6 sm:pb-14">
           <CurrencyCircleDollar
             aria-hidden
             size={26}
@@ -127,7 +127,7 @@ export default async function PublicPaymentsPage({
       className="public-session-page min-h-screen bg-surface"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+      <div className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6">
         <h1 className="sr-only">Your payment</h1>
         {cancelled ? (
           <p

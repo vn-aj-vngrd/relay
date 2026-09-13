@@ -14,7 +14,7 @@ flowchart LR
   T --> S
 ```
 
-Vercel deployment and GitHub release creation are independent. Release success means CI passed and the source was tagged; it does not prove deployment or the user journeys passed. Existing automatic deployment is not gated on CI by this change. Prefer pull requests with required CI checks before merging; direct pushes to `master` retain today's behavior.
+Vercel deployment and GitHub release creation are independent. Release success means CI passed and the source was tagged; it does not prove deployment or the user journeys passed. Existing automatic deployment is not gated on CI by this change. Follow [the PR workflow](DEVELOPMENT_WORKFLOW.md): branch from current `origin/master`, validate, and merge through a checked PR.
 
 ## What happens after a push
 

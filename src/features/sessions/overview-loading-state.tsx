@@ -134,7 +134,7 @@ export function OverviewLoadingState({
       id="main-content"
       className="public-session-page min-h-screen bg-surface"
     >
-      <div className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8">
+      <div className="game-tab-content mx-auto w-full max-w-6xl pb-12 sm:px-6">
         {content}
       </div>
     </main>

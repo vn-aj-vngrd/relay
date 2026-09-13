@@ -80,8 +80,11 @@ describe("ApplicationTour", () => {
     ).toBeVisible();
     expect(screen.getByRole("button", { name: "Create game" })).toHaveClass(
       "whitespace-nowrap",
-      "shrink-0"
+      "w-full"
     );
+    expect(
+      screen.getByRole("button", { name: "Create game" }).closest("form")
+    ).toHaveClass("col-span-2");
     expect(screen.getByRole("button", { name: "Explore Relay" })).toHaveClass(
       "whitespace-nowrap"
     );

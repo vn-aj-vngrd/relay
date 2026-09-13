@@ -19,6 +19,10 @@ Both paths represent the same session and use the same vocabulary, information o
 - RSVP changes update capabilities in place. Hosts and co-hosts see management controls; participants see personal actions; invitees, pending players, and discoverers see only actions they can complete.
 - Guest RSVP never requires registration. A successful guest response may offer account creation afterward; authentication must claim the existing response, reconcile an unanswered account invitation without adding a second roster row, and return the player to that game. The guest token remains valid when signup is canceled or interrupted.
 
+## Tab spacing
+
+The `game-tab-content` class owns the tab-to-content top inset: 12px on mobile and 16px from the small breakpoint. Authenticated routes apply it once in `GameWorkspaceFrame`; shared routes and their loading states apply it once on their content container. Inline roster content starts at that inset without extra top padding. Preserve internal card, section and empty-state spacing separately.
+
 ## Canonical navigation
 
 Keep these destinations and labels in this order:

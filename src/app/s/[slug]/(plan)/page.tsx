@@ -190,7 +190,7 @@ export default async function PublicSessionPage({
           __html: JSON.stringify(eventJsonLd).replaceAll("<", "\\u003c"),
         }}
       />
-      <div className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8">
+      <div className="game-tab-content mx-auto w-full max-w-6xl pb-12 sm:px-6">
         <div className="px-4 sm:px-0">
           <GamePageIntro title="Overview" />
         </div>
