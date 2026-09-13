@@ -10,7 +10,7 @@ export default function PublicChatLoading() {
         role="status"
         aria-label="Loading session chat"
         aria-busy="true"
-        className="public-chat-panel mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 py-4 sm:px-6 sm:py-8"
+        className="public-chat-panel game-tab-content mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 pb-4 sm:px-6 sm:pb-8"
       >
         <div className="min-w-0">
           <h1 className="sr-only">Chat</h1>

@@ -70,7 +70,7 @@ export default async function PublicPlayPage({
       className="public-session-page min-h-full bg-surface pb-6 sm:pb-8"
       style={sessionAccentStyle(data.session.accentColor)}
     >
-      <div className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8">
+      <div className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6">
         <h1 className="sr-only">{completed ? "Recap" : "Play"}</h1>
         {!ended && data.session.status !== "live" ? roster : null}
         <SessionPlay

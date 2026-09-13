@@ -10,7 +10,7 @@ export default function PublicPaymentsLoading() {
         role="status"
         aria-label="Loading payment details"
         aria-busy="true"
-        className="public-session-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 pt-4 sm:px-6 sm:py-8"
+        className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6"
       >
         <h1 className="sr-only">Your payment</h1>
         <section className="public-session-section grid min-w-0 gap-6 border-y border-line lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8">

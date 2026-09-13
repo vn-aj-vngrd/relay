@@ -50,6 +50,16 @@ function Roster({ status = "live" }: { status?: string }) {
 }
 
 describe("Play roster surface", () => {
+  it.each(["published", "completed", "cancelled"])(
+    "preserves section spacing only for the %s roster position",
+    (status) => {
+      render(<Roster status={status} />);
+      const section = screen.getByRole("region", {
+        name: status === "published" ? "Players" : "Final roster",
+      });
+      expect(section).toHaveClass(status === "published" ? "pb-5" : "py-5");
+    }
+  );
   it("places live status and Players in the same wrapping header row", () => {
     render(<Roster />);
     const status = screen.getByText("Play in progress");

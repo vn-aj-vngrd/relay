@@ -122,7 +122,7 @@ export function GameWorkspaceFrame({
         </div>
       )}
 
-      <div className="game-workspace-content min-h-0 min-w-0 flex-1 pt-3 sm:pt-4">
+      <div className="game-workspace-content game-tab-content min-h-0 min-w-0 flex-1">
         {children}
       </div>
     </>

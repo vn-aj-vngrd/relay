@@ -102,7 +102,10 @@ export function PlayRosterSurface({
   }
 
   return (
-    <section className="py-5" aria-labelledby="play-roster-title">
+    <section
+      className={ended ? "py-5" : "pb-5"}
+      aria-labelledby="play-roster-title"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2
           ref={heading}

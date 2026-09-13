@@ -78,7 +78,7 @@ export default function PublicPlanLoading() {
           role="status"
           aria-label="Loading game plan"
           aria-busy="true"
-          className="mx-auto w-full max-w-6xl pb-12 pt-4 sm:px-6 sm:pt-8"
+          className="game-tab-content mx-auto w-full max-w-6xl pb-12 sm:px-6"
         >
           <div className="px-4 sm:px-0">
             <GamePageIntro title="Overview" />
