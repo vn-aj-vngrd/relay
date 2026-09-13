@@ -51,4 +51,4 @@ Before claiming complete critical-journey coverage, close the explicit gaps abov
 
 ## Shared tab layout regression
 
-Overview, Play, Chat, Payments and Story share one tab-to-content inset on authenticated and shared routes, including loading states. `src/features/sessions/game-tab-spacing.test.ts` guards spacing ownership; `play-roster-surface.test.tsx` covers roster lifecycle behavior. This source/component coverage is not a rendered browser geometry check.
+Overview, Play, Chat, Payments and Story share one tab-to-content inset on authenticated and shared routes, including loading states. `src/features/sessions/game-tab-spacing.test.ts` guards spacing ownership; `play-roster-surface.test.tsx` covers roster lifecycle behavior. `e2e/game-layout.spec.ts` additionally measures compiled-CSS tab offsets at 390px and 1440px using current route/loading container classes and real roster/tour components. It checks final-roster spacing, denied-payment internal padding and both final tour continuations. These synthetic layout checks do not replace authenticated game-journey E2E.

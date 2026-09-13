@@ -26,7 +26,7 @@ describe("game tab spacing ownership", () => {
       "game-workspace-content game-tab-content"
     );
     expect(read("src/features/sessions/play-roster-surface.tsx")).toContain(
-      'className="pb-5" aria-labelledby="play-roster-title"'
+      'className={ended ? "py-5" : "pb-5"}'
     );
     expect(read("src/features/sessions/overview-loading-state.tsx")).toContain(
       "game-tab-content"

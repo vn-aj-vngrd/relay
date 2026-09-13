@@ -46,3 +46,11 @@ E2E_SESSION_FIXTURE=true E2E_BRANCH_SESSION_ID=<owned-test-game-id> \
 ## Password/CAPTCHA smoke remains separate
 
 The trusted fixture validates authenticated **product behavior**, not password login, signup, SMTP, or CAPTCHA success. Run the password authentication smoke in `docs/integrations.md` manually with real Turnstile verification and the disposable password stored locally. Confirm a missing/expired challenge cannot submit or authenticate, then complete a real challenge, sign in, sign out, and verify protected routes reject the signed-out browser. Existing auth form/action unit tests verify fail-closed behavior and token forwarding; public E2E still checks login/signup entry routes. Record the manual outcome separately. A trusted-fixture pass must not be reported as CAPTCHA/password browser verification.
+
+## Game layout regression
+
+`game-layout.spec.ts` uses the existing compiled-CSS synthetic fixture pattern. It measures route/loading container offsets, real roster lifecycle spacing and the real tour footer at 390px and 1440px, including Open saved game. Only navigation and the tour completion mutation are stubbed. The payment notice uses its source container class. No account or game mutation is needed; this is component geometry coverage, not a live authenticated route walkthrough. The manual Full reliability profile discovers this test automatically.
+
+```sh
+E2E_BASE_URL=http://localhost:3002 pnpm exec playwright test e2e/game-layout.spec.ts --project=mobile-chromium --workers=1 --retries=0
+```

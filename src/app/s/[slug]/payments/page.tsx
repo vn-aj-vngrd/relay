@@ -48,23 +48,27 @@ export default async function PublicPaymentsPage({
         className="public-session-page min-h-screen bg-surface"
         style={sessionAccentStyle(data.session.accentColor)}
       >
-        <div className="public-session-content game-tab-content mx-auto w-full max-w-xl bg-surface px-4 pb-4 text-center sm:px-6 sm:pb-14">
-          <CurrencyCircleDollar
-            aria-hidden
-            size={26}
-            className="mx-auto text-primary"
-          />
-          <h1 className="mt-4 text-2xl font-bold">Payments are for players</h1>
-          <p className="mt-2 leading-7 text-muted">
-            Join the game first to see the host’s payment details and your
-            assigned share.
-          </p>
-          <Link
-            href={`/s/${slug}`}
-            className="mt-6 inline-flex min-h-11 items-center font-semibold text-primary"
-          >
-            Join on the plan
-          </Link>
+        <div className="public-session-content game-tab-content mx-auto w-full max-w-xl bg-surface px-4 pb-8 text-center sm:px-6">
+          <section className="py-10">
+            <CurrencyCircleDollar
+              aria-hidden
+              size={26}
+              className="mx-auto text-primary"
+            />
+            <h1 className="mt-4 text-2xl font-bold">
+              Payments are for players
+            </h1>
+            <p className="mt-2 leading-7 text-muted">
+              Join the game first to see the host’s payment details and your
+              assigned share.
+            </p>
+            <Link
+              href={`/s/${slug}`}
+              className="mt-6 inline-flex min-h-11 items-center font-semibold text-primary"
+            >
+              Join on the plan
+            </Link>
+          </section>
         </div>
       </main>
     );
