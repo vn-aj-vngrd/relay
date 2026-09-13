@@ -35,6 +35,8 @@ Vercel deployment and GitHub release creation are independent. Release success m
 
 The largest change since the last release wins. Use a Conventional Commit title when squash-merging a PR. Nonconforming messages may not trigger a release; existing commit hooks remain authoritative. With no preceding release tag, semantic-release starts at **v1.0.0**, covering the existing history. This is a numbering baseline, not public-release clearance. Subsequent notes contain only changes since the previous release.
 
+The Conventional Commits preset is pinned to 9.3.1 because the installed release-notes generator uses changelog writer 8; preset 10 requires writer 9. Upgrade these together and keep the actual notes-rendering regression test passing.
+
 Git tags are the version source of truth. The private app's `package.json` version remains its development placeholder, avoiding bot commits, repeated Vercel builds and release loops. No manually maintained `CHANGELOG.md` is needed; GitHub Releases is the requested changelog destination.
 
 ## Version awareness
