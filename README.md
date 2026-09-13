@@ -18,6 +18,10 @@ A mobile-first social pickleball session app built with Next.js, TypeScript, Sup
 
 Core consumer workflows are database-backed: authentication, session creation, public guest RSVP with transactional capacity handling, rosters, live queue setup, match creation, persistent scoring, match completion, standings, chat, and profiles. Supabase Realtime publication is configured; client subscriptions and the remaining venue/group/payment/memory management slices continue from the same domain model.
 
+## Contributing
+
+Follow the [development workflow](docs/DEVELOPMENT_WORKFLOW.md) for branch names, commit messages, pull requests, reviews, and releases. Read [AGENTS.md](AGENTS.md) for the relevant implementation runbooks and validation timing.
+
 ## Run locally
 
 ```bash
