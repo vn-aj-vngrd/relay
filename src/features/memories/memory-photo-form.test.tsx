@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { uploadMemoryPhotoState } from "./actions";
@@ -30,7 +30,10 @@ it("retains the caption and offers retry when adding a photo fails", async () =>
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "Photo storage is full."
   );
-  expect(screen.getByLabelText(/Caption/)).toHaveValue("Our Saturday crew");
+  // The alert can render before the effect restores uncontrolled inputs.
+  await waitFor(() => {
+    expect(screen.getByLabelText(/Caption/)).toHaveValue("Our Saturday crew");
+  });
   expect(screen.getByRole("button", { name: "Add to memory" })).toBeEnabled();
   expect(screen.queryByRole("status")).toBeNull();
 });
