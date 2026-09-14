@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 type TabChipItem<T extends string> = {
   value: T;
@@ -18,6 +24,7 @@ export function TabChipRail<T extends string>({
   className = "",
   itemClassName = "",
   variant = "chip",
+  renderItem,
 }: {
   label: string;
   items: readonly TabChipItem<T>[];
@@ -27,6 +34,7 @@ export function TabChipRail<T extends string>({
   className?: string;
   itemClassName?: string;
   variant?: "chip" | "underline";
+  renderItem?: (item: TabChipItem<T>) => ReactNode;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const activeItem = useRef<HTMLElement | null>(null);
@@ -138,7 +146,7 @@ export function TabChipRail<T extends string>({
               onFocus={(event) => revealFocusedItem(event.currentTarget)}
               className={classes}
             >
-              {item.label}
+              {renderItem ? renderItem(item) : item.label}
             </Link>
           ) : (
             <button
@@ -151,7 +159,7 @@ export function TabChipRail<T extends string>({
               onFocus={(event) => revealFocusedItem(event.currentTarget)}
               className={classes}
             >
-              {item.label}
+              {renderItem ? renderItem(item) : item.label}
             </button>
           );
         })}

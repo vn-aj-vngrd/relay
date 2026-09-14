@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   drawFramedInvitation,
   framedInvitationLayout,
+  prepareInvitationBlocks,
+  storyHeadingSize,
   wrapStoryCopy,
 } from "./story-framed-invitation";
 import { storyJoinGeometry } from "./story-join";
@@ -211,4 +213,52 @@ describe("framed invitation readable allocation", () => {
       )
     );
   });
+});
+
+describe("readable long Story headings", () => {
+  it("keeps the reported handle whole at a readable heading size", () => {
+    const text = "vanajvanguardia";
+    const [block] = prepareInvitationBlocks(
+      [{ id: "headline", text, size: 112, weight: 900 }],
+      1
+    );
+    expect(block.lines).toEqual([text]);
+    expect(block.size).toBeGreaterThanOrEqual(48);
+    expect(block.size).toBeLessThan(112);
+    expect(storyHeadingSize("Van", 112)).toBe(112);
+  });
+
+  it("wraps complete names at spaces before breaking any word", () => {
+    const text = "Alexandria Montgomery Vanguardia";
+    const size = storyHeadingSize(text, 112);
+    const lines = wrapStoryCopy(text, size);
+    expect(lines.join(" ")).toBe(text);
+    for (const word of text.split(" ")) {
+      expect(lines.some((line) => line.includes(word))).toBe(true);
+    }
+  });
+
+  it("retains every grapheme in exceptionally long Unicode handles", () => {
+    const cluster = "👩🏽‍🚀";
+    const text = cluster.repeat(32);
+    const size = storyHeadingSize(text, 112);
+    expect(size).toBe(48);
+    const lines = wrapStoryCopy(text, size);
+    expect(lines.join("")).toBe(text);
+    for (const line of lines) {
+      expect(line.replaceAll(cluster, "")).toBe("");
+    }
+    const counts = lines.map((line) => line.split(cluster).length - 1);
+    expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(2);
+  });
+});
+
+it("keeps a team connector attached to its player name", () => {
+  const text = "vanajvanguardia + AlexandriaMontgomery";
+  const lines = wrapStoryCopy(text, storyHeadingSize(text, 112));
+  expect(lines.join(" ")).toBe(text);
+  expect(lines).not.toContain("+");
+  expect(lines.some((line) => line.includes("+ AlexandriaMontgomery"))).toBe(
+    true
+  );
 });

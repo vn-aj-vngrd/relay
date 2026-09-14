@@ -1,7 +1,7 @@
 import { type BillingPlan, mediaPolicy, storageLabel } from "./domain";
 
 export const planDescriptions = {
-  free: "For occasional games with friends.",
+  free: "For regular games with friends.",
   plus: "For hosts organizing games regularly.",
   pro: "For frequent hosts bringing more players together.",
   unlimited: "Admin-managed hosting access.",
@@ -103,13 +103,19 @@ export function getPricingComparison(pricingPlans: BillingPlan[]) {
           values: pricingPlans.map(() => String(mediaPolicy.chat.dailyUploads)),
         },
         {
+          label: "Photos per game · shared album, not monthly",
+          values: pricingPlans.map(
+            () => `${mediaPolicy.memory.perGame} photos`
+          ),
+        },
+        {
           label: "Maximum size per game photo",
           values: pricingPlans.map(() =>
             pricingStorage(mediaPolicy.memory.maxBytes)
           ),
         },
         {
-          label: "Game photos per uploader per day",
+          label: "Game photo uploads per person per day · abuse safeguard",
           values: pricingPlans.map(() =>
             String(mediaPolicy.memory.dailyUploads)
           ),
@@ -166,8 +172,7 @@ export const pricingQuestions = [
   },
   {
     question: "Are photo upload limits different on paid plans?",
-    answer:
-      "No. Every plan uses the same per-file and per-uploader daily limits shown above. JPEG, PNG and WebP are supported; images must already fit the size limit because Relay does not automatically compress them. Daily limits reset at midnight Philippine time and apply across games for signed-in uploaders; guest limits are scoped to the game. Deleting an upload does not restore its daily allowance.",
+    answer: `No. Every game can retain up to ${mediaPolicy.memory.perGame} photos shared by all players, provided the host has enough storage. Whichever fills first stops new uploads. Neither the album limit nor retained storage resets monthly. Removing a game photo frees an album slot and its stored bytes after deletion completes. There is no per-player album cap. Every plan uses the same per-file and per-uploader daily limits shown above. JPEG, PNG and WebP are supported; images must already fit the size limit because Relay does not automatically compress them. Daily limits reset at midnight Philippine time and apply across games for signed-in uploaders; guest limits are scoped to the game. Deleting an upload does not restore its daily allowance.`,
   },
   {
     question: "How will monthly payments work?",

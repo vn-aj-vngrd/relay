@@ -7,13 +7,14 @@ Subscriptions belong to individual accounts. Groups, co-hosts and players do not
 | Default allowance | Free | Plus | Pro |
 | --- | --- | --- | --- |
 | Price per month | PHP 0 | PHP 149 | PHP 299 |
-| Successfully created games per month | 5 / Philippine calendar month | 12 / monthly term | 30 / monthly term |
-| Retained chat images + game photos | 100 MiB total | 500 MiB total | 2 GiB total |
+| Successfully created games per month | 12 / Philippine calendar month | 40 / monthly term | 100 / monthly term |
+| Retained chat images + game photos | 250 MiB total | 2 GiB total | 10 GiB total |
+| Retained game photos, shared by everyone | 50 per game | 50 per game | 50 per game |
 | Players / courts per game | 40 / 20 | 40 / 20 | 40 / 20 |
 
 `src/features/billing/domain.ts` supplies defaults. `billing_settings.plan_catalog` stores the admin-published catalog; `src/features/billing/catalog.ts` supplies it to pricing, account billing and enforcement. Paid tiers default to Coming soon. Monthly prices (PHP), monthly game allowances, total storage and Active/Coming soon/Paused availability are editable in `/admin/billing/plans`. Free must stay available at PHP 0. Technical player/court ceilings, per-file limits and daily upload/security safeguards are not commercial settings. Commercial plans also have a public visibility toggle; hidden plans cannot be bought through self-service, including renewals, but remain assignable by admins. Existing requests and terms are unchanged.
 
-Each publication generates a new tier-prefixed version and audited before/after state, and rejects stale edits. Payment requests and terms retain their agreed price/allowance snapshots. Free allowance edits apply immediately without resetting actual usage. Per-account overrides retain precedence. Null catalogs use the documented defaults; source defaults are not a substitute for an operator publishing their offer.
+Each publication generates a new tier-prefixed version and audited before/after state, and rejects stale edits. Payment requests and terms retain their agreed price/allowance snapshots. Free allowance edits apply immediately without resetting actual usage. Per-account overrides retain precedence. Null catalogs use the v2 defaults. Exact unmodified standard v1 offers are normalized to v2 games/storage without changing their availability, price or visibility. Custom published versions/allowances remain untouched and require an explicit admin publication to adopt the new offer. Historical payment requests, paid terms and account-assignment snapshots remain unchanged; no quota reset or automatic upgrade of an existing paid term occurs.
 
 Paid access starts after admin approval. Plus/Pro identity comes from the snapshotted tier-prefixed plan version, including legacy `pro-v1` records. Choosing a different paid plan schedules it after existing paid-through access; there is no mid-term proration. Early renewal appends a calendar-month term after the paid-through date. January 31 clamps to February's last day; subsequent terms anchor to their actual start date. Initial upgrade carries current-calendar-month creations into the first Pro term. Expiry resolves directly from the current time; a missed background task cannot preserve expired access. Free fallback counts creations in the current Philippine calendar month.
 
@@ -39,7 +40,7 @@ Own-account sidebar shows name with the effective plan below it; own profile and
 
 Both authenticated and shared-link chat/memory actions use the same reservation service. A photo spends the uploader's daily allowance and the host's storage. The participant is never asked to upgrade their own account to fix a host-storage limit.
 
-Chat: one JPEG/PNG/WebP per message, at most 1 MiB, 10 uploads/day/account across games (session-scoped for guests). Memory photos: at most 2 MiB, 20/day/account across games. These counts reserve in-flight uploads and retain successful usage after deletion. Day boundaries are midnight Philippine time. The smaller-file requirement is explicit; no automatic compression is claimed.
+Chat: one JPEG/PNG/WebP per message, at most 1 MiB, 10 uploads/day/account across games (session-scoped for guests). Memory photos: at most 2 MiB, 100/day/account across games (session-scoped for guests), plus 50 retained photos per game across all contributors. The daily limit is an abuse safeguard, not a monthly entitlement or per-player album cap. The album count includes in-flight reservations and stored photos, excludes confirmed releases, and never resets monthly. Both available host storage and an available album slot are required; whichever fills first blocks new uploads. Existing albums over 50 are retained but cannot accept new photos until below the cap. These counts reserve in-flight uploads and retain successful usage after deletion. Day boundaries are midnight Philippine time. The smaller-file requirement is explicit; no automatic compression is claimed.
 
 Other avatar/group/payment-proof limits remain operational, attempt-based UTC throttles. Payment files do not spend the host's billable media storage. The old five-collections/day restriction is removed; payment management keeps its existing per-minute safeguard. The obsolete `CHAT_IMAGE_MAX_BYTES` environment override is retired so upload validation and plan copy share one 1 MiB policy.
 
@@ -85,3 +86,13 @@ STORY: inspect allowance, choose Pro, pay the snapshotted destination, submit a 
 FIRST VIEWPORT: compact heading then factual usage rows; payment screens place recipient/account details beside a bounded QR.
 FORM: extend the established Settings/Admin workflow; no visual-world replacement or concept roll.
 FINISH: the automated pre-commit gate covers formatting/lint, strict types, the full unit suite and a production build. Rendered visual review and E2E have not been performed; passing the automated gate is not a visual acceptance claim.
+
+
+## Clear limit UX
+
+Both Story routes show the game’s 50-photo maximum. Contributors see reserved/stored album usage and the host’s shared storage totals; no private billing records are passed to the client. The upload form explains that both limits apply and neither resets monthly, disables submission at a known full limit, and retains server enforcement for stale/concurrent clients and files exceeding the remaining bytes. Only the host gets Manage photos and View plans links. Pricing/help/Plan & billing use the same policy values. Local device-only Story rendering does not consume either cloud quota. The per-file ceiling remains 2 MiB; automatic resizing is separate work and is not advertised.
+
+Validation for the v2 allowance and album-cap change is deferred to pre-commit. No provider plan, production catalog or historical term was mutated during implementation.
+
+
+Photo upload copy stays brief: album usage, host storage usage and one shared-album sentence. Finite storage adds a short availability reminder. Cross-game accounting, reset rules and daily limits live in a collapsed “How photo limits work” disclosure below the upload controls. Manage photos uses the standard secondary button opposite the Photos from the game heading and description, wrapping below on narrow screens, and remains host-only; View plans appears only when finite storage reaches 80% usage, never for unlimited storage. Full-limit recovery stays visible above the form.

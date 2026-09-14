@@ -115,3 +115,37 @@ describe("Story photo export", () => {
     expect(close).toHaveBeenCalledOnce();
   });
 });
+
+it.each([0, 50, 100])(
+  "moves a landscape photo horizontally at crop %i in preview-equivalent cover geometry",
+  async (position) => {
+    const bitmap = { width: 2000, height: 1000, close: vi.fn() };
+    vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue(bitmap));
+    const context = {
+      save: vi.fn(),
+      beginPath: vi.fn(),
+      rect: vi.fn(),
+      clip: vi.fn(),
+      drawImage: vi.fn(),
+      restore: vi.fn(),
+    };
+    const bounds = { x: 40, y: 200, width: 1000, height: 1000 };
+    await drawStoryPhoto(
+      context as unknown as CanvasRenderingContext2D,
+      new Blob(),
+      1080,
+      1920,
+      position,
+      bounds
+    );
+    expect(context.drawImage).toHaveBeenCalledWith(
+      bitmap,
+      40 - (1000 * position) / 100,
+      200,
+      2000,
+      1000
+    );
+    expect(context.clip).toHaveBeenCalledOnce();
+    expect(bitmap.close).toHaveBeenCalledOnce();
+  }
+);

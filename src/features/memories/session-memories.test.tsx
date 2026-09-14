@@ -81,7 +81,10 @@ describe("SessionMemories", () => {
       screen.queryByRole("button", { name: "Add to memory" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
-    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add your photo to this memory" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeDisabled();
   });
   it.each([
     [{ playerPriceCents: null, hasExpense: false }, "Price not set"],
@@ -227,6 +230,35 @@ describe("SessionMemories", () => {
       screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
-    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add your photo to this memory" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeDisabled();
   });
 });
+
+it.each(["public", "link", "private"] as const)(
+  "preserves a %s story draft when switching photo chips",
+  (visibility) => {
+    renderMemories("completed", visibility);
+    const caption = screen.getByRole("textbox", { name: "Your caption" });
+    fireEvent.change(caption, { target: { value: "Our Saturday crew." } });
+    fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
+    const photoInput = screen.getByLabelText("Choose story photo file");
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(screen.queryByRole("textbox", { name: "Your caption" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Photos, 0" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Make" }));
+    expect(screen.getByRole("textbox", { name: "Your caption" })).toHaveValue(
+      "Our Saturday crew."
+    );
+    expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByLabelText("Choose story photo file")).toBe(photoInput);
+  }
+);

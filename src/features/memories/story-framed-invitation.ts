@@ -36,17 +36,31 @@ function advance(character: string) {
   return 0.75;
 }
 
+const storyGraphemes = new Intl.Segmenter(undefined, {
+  granularity: "grapheme",
+});
+const graphemes = (text: string) =>
+  Array.from(storyGraphemes.segment(text), ({ segment }) => segment);
+// A team connector belongs with the following name, never on its own line.
+const storyWords = (text: string) => text.match(/(?:[+&]\s+)?\S+/g) ?? [];
+const copyWidth = (text: string) =>
+  graphemes(text).reduce((sum, character) => sum + advance(character), 0);
+
+/** Keep ordinary handles whole before wrapping. A bounded floor prevents a
+ * pathological name from reducing the entire story to unreadable type. */
+export function storyHeadingSize(text: string, size: number, width = 936) {
+  const longest = Math.max(1, ...storyWords(text).map(copyWidth));
+  return Math.min(size, Math.max(Math.min(size, 48), width / longest));
+}
+
 export function wrapStoryCopy(text: string, size: number, width = 936) {
   const lines: string[] = [];
   for (const paragraph of text.split("\n")) {
     let line = "";
     let used = 0;
-    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
-      const wordWidth = Array.from(word).reduce(
-        (sum, char) => sum + advance(char) * size,
-        0
-      );
-      if (line && used + size * 0.35 + wordWidth > width) {
+    for (const word of storyWords(paragraph)) {
+      const wordWidth = copyWidth(word) * size;
+      if (line && used + size * 0.35 + wordWidth > width + 0.001) {
         lines.push(line);
         line = "";
         used = 0;
@@ -55,9 +69,14 @@ export function wrapStoryCopy(text: string, size: number, width = 936) {
         line += " ";
         used += size * 0.35;
       }
-      for (const char of word) {
+      // Distribute unavoidable breaks rather than leaving a tiny last fragment.
+      const limit =
+        wordWidth > width
+          ? wordWidth / Math.ceil(wordWidth / width) + size * 0.5
+          : width;
+      for (const char of graphemes(word)) {
         const next = advance(char) * size;
-        if (line && used + next > width) {
+        if (line && used + next > Math.min(width, limit) + 0.001) {
           lines.push(line);
           line = "";
           used = 0;
@@ -79,8 +98,8 @@ export function invitationCopyBlocks(
   const title = {
     id: "title",
     text: input.title,
-    size: framed ? 72 : 88,
-    weight: 700,
+    size: framed ? 72 : input.theme === "court-pop" ? 112 : 88,
+    weight: input.theme === "court-pop" ? 900 : 700,
     gapAfter: 32,
   };
   const schedule = { id: "schedule", text: input.date, size: 36, weight: 600 };
@@ -182,7 +201,10 @@ export function prepareInvitationBlocks<T extends CopyBlock>(
   width = 936
 ) {
   return blocks.map((block, index) => {
-    const size = block.size * factor;
+    const heading = block.id === "headline" || block.id === "title";
+    const size =
+      (heading ? storyHeadingSize(block.text, block.size, width) : block.size) *
+      factor;
     const lines = wrapStoryCopy(block.text, size, width);
     const gap =
       index === blocks.length - 1 ? 0 : (block.gapAfter ?? 12) * factor;
@@ -194,6 +216,56 @@ export function prepareInvitationBlocks<T extends CopyBlock>(
       gap,
     };
   });
+}
+
+/** Expressive themes read as posters: subject, sporting artwork, then details.
+ * Both renderers consume these rows. Artwork gives up space before copy does. */
+export function prepareStoryPoster<T extends CopyBlock>(
+  heading: T[],
+  details: T[],
+  bottom: number
+) {
+  const top = 180;
+  const gap = 40;
+  const minimumArt = 160;
+  const budget = bottom - top - minimumArt - gap * 2;
+  const height = (blocks: ReturnType<typeof prepareInvitationBlocks<T>>) =>
+    blocks.reduce((sum, block) => sum + block.height, 0);
+  let factor = 1;
+  let head = prepareInvitationBlocks(heading, factor);
+  let body = prepareInvitationBlocks(details, factor);
+  while (height(head) + height(body) > budget) {
+    factor *= 0.96;
+    head = prepareInvitationBlocks(heading, factor);
+    body = prepareInvitationBlocks(details, factor);
+  }
+  const bodyTop = bottom - height(body);
+  const artTop = top + height(head) + gap;
+  const availableArt = bodyTop - gap - artTop;
+  const scene = storyScene("court-pop", false, "background", "center", true, {
+    bottom,
+  });
+  scene.heading = { x: 72, y: top, width: 936, height: height(head) };
+  scene.facts = { x: 72, y: bodyTop, width: 936, height: height(body) };
+  scene.art = {
+    x: 72,
+    y: artTop,
+    width: 936,
+    height: availableArt,
+  };
+  const position = (blocks: typeof head, start: number) => {
+    let y = start;
+    return blocks.map((block) => {
+      const positioned = { ...block, x: 72, y, baseline: y + block.size };
+      y += block.height;
+      return positioned;
+    });
+  };
+  return {
+    scene,
+    factor,
+    blocks: [...position(head, top), ...position(body, bodyTop)],
+  };
 }
 
 /** Full-width, content-sized rows; only unusually dense copy reduces type after

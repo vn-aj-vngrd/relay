@@ -82,18 +82,18 @@ describe("atomic game allowance boundary", () => {
     );
     expect(events.slice(0, 2)).toEqual(["lock", "idempotency"]);
   });
-  it("permits a fifth Free game but rejects a sixth", async () => {
-    gamesUsed = 4;
+  it("permits a twelfth Free game but rejects a thirteenth", async () => {
+    gamesUsed = 11;
     expect(
       await checkGameCreation(transaction(), "user", "key")
     ).toHaveProperty("existingSessionId", null);
-    gamesUsed = 5;
+    gamesUsed = 12;
     await expect(
       checkGameCreation(transaction(), "user", "key")
-    ).rejects.toThrow("5 of 5 games");
+    ).rejects.toThrow("12 of 12 games");
   });
   it("returns an already-created game even when the allowance is exhausted", async () => {
-    gamesUsed = 5;
+    gamesUsed = 12;
     previousId = "existing-game";
     expect(
       await checkGameCreation(transaction(), "user", "same-key")
@@ -104,7 +104,7 @@ describe("atomic game allowance boundary", () => {
     await checkGameCreation(transaction(), "user", "key");
     expect(writes).not.toHaveBeenCalled();
   });
-  it("allows up to thirty games for an active Pro term", async () => {
+  it("preserves the allowance of an existing thirty-game Pro term", async () => {
     const now = new Date();
     term = {
       startsAt: new Date(now.getTime() - 1000),

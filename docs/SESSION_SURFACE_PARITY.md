@@ -100,3 +100,12 @@ For every session-surface change:
 5. Verify keyboard focus, dialog dismissal, score-control labels, no horizontal overflow, and one `h1`.
 
 Complete when differences are explained by viewer capability rather than separate UI implementations.
+
+
+Story navigation uses the same borderless Make/Photos chip rail and touch-sized options through SessionMemories on both access paths. Switching the internal view preserves the unfinished composer draft; contribution permissions and private-game join-link restrictions remain route-owned.
+
+
+Story photo allowance: both account and shared-link surfaces use the same 50-photo album cap and host-owned storage budget. Contributors see usage and the rule that whichever limit fills first stops uploads; neither resets monthly. Only monthly game creation renews (Free 12, Plus 40, Pro 100 for standard v2 offers). Storage is 250 MiB / 2 GiB / 10 GiB for standard v2 offers. Existing/custom snapshots may differ. The host gets storage-management and plan links; other players are not asked to upgrade their own accounts. Regression coverage includes full album with spare bytes, full storage with spare album slots, exact boundaries and preserved legacy/custom terms. Validation deferred to pre-commit.
+
+
+Story gallery photos open in a shared fullscreen Dialog on both routes. The viewer displays the complete image with object-contain, caption and live photo counter; previous/next buttons, Left/Right keys and horizontal swipes cycle through available photos. Single-photo albums omit navigation. Escape/native dialog dismissal and Close return focus to the initiating thumbnail. Safe-area padding and bounded scrolling captions preserve mobile controls. Image failures retain recovery text and navigation. Reuses the existing ChatPhotoViewer dialog pattern and Make swipe threshold. Unit coverage added; validation deferred to pre-commit.

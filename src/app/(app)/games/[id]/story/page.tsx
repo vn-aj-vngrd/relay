@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { requireUser } from "@/features/auth/session";
+import { getGamePhotoAllowance } from "@/features/billing/usage";
 import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
 import { storyJoinUrl } from "@/features/memories/story-join-url";
@@ -24,6 +25,9 @@ export default async function GameStoryPage({
   if (!price) notFound();
   const canContribute =
     canManageSessionWorkspace(data.access) || data.membership?.rsvp === "going";
+  const photoAllowance = canContribute
+    ? await getGamePhotoAllowance(data.session.hostId, data.session.id)
+    : undefined;
   const goingCount = data.roster.filter(
     ({ player }) => player.rsvp === "going"
   ).length;
@@ -40,6 +44,8 @@ export default async function GameStoryPage({
       <GamePageIntro title="Story" />
       <div className="mx-auto w-full max-w-6xl">
         <SessionMemories
+          photoAllowance={photoAllowance}
+          canManageStorage={data.session.hostId === user.id}
           session={data.session}
           price={price}
           joinUrl={storyJoinUrl(data.session)}

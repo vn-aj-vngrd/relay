@@ -90,7 +90,7 @@ describe("Story scene geometry", () => {
           expect(box.y).toBeGreaterThanOrEqual(160);
           expect(box.y + box.height).toBeLessThanOrEqual(1810);
         }
-        expect(scene.photo.x - frame.x).toBe(id === "minimal" ? 20 : 116);
+        expect(scene.photo.x - frame.x).toBe(id === "minimal" ? 20 : 40);
         expect(scene.photo.y - frame.y).toBe(id === "minimal" ? 20 : 40);
         const transform = storyArtTransform(scene.art);
         expect(transform.scale * 480).toBeLessThanOrEqual(scene.art.height);

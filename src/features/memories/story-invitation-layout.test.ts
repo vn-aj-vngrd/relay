@@ -29,6 +29,62 @@ const copy = {
 };
 
 describe("nonframed footer-aware invitation rows", () => {
+  it.each(storyThemes.filter(({ id }) => id !== "minimal"))(
+    "$label keeps the title and complete details outside its artwork for every footer",
+    ({ id: theme }) => {
+      for (const joinMode of ["off", "qr", "link"] as const) {
+        const layout = storyInvitationLayout({
+          ...copy,
+          theme,
+          template: "invitation",
+          joinMode,
+        });
+        const [title, ...details] = layout.blocks;
+        expect(title.y + title.height).toBeLessThan(layout.scene.art.y);
+        expect(layout.scene.art.height).toBeGreaterThanOrEqual(160);
+        for (const block of details) {
+          expect(block.y).toBeGreaterThan(
+            layout.scene.art.y + layout.scene.art.height
+          );
+          expect(block.y + block.height).toBeLessThanOrEqual(
+            Math.min(1810, storyJoinGeometry(joinMode).footer.y - 32) + 0.001
+          );
+        }
+      }
+    }
+  );
+  it.each(["off", "qr", "link"] as const)(
+    "Court Pop places the title before artwork and complete invitation details above the %s footer",
+    (joinMode) => {
+      const layout = storyInvitationLayout({
+        ...copy,
+        theme: "court-pop",
+        template: "invitation",
+        joinMode,
+      });
+      const title = layout.blocks[0];
+      const art = layout.scene.art;
+      const bottom = Math.min(1810, storyJoinGeometry(joinMode).footer.y - 32);
+      expect(title.id).toBe("title");
+      expect(title.size).toBe(112);
+      expect(title.y).toBe(180);
+      expect(title.y + title.height).toBeLessThan(art.y);
+      expect(art.height).toBeGreaterThanOrEqual(160);
+      for (const block of layout.blocks.slice(1)) {
+        expect(block.y).toBeGreaterThan(art.y + art.height);
+        expect(block.y + block.height).toBeLessThanOrEqual(bottom + 0.001);
+      }
+      expect(layout.blocks.find((block) => block.id === "schedule")?.size).toBe(
+        36
+      );
+      expect(layout.blocks.find((block) => block.id === "price")?.text).toBe(
+        copy.invitation.priceLabel
+      );
+      expect(layout.blocks.find((block) => block.id === "going")?.text).toBe(
+        "3/8 Going"
+      );
+    }
+  );
   it.each([
     ["2026-09-08T16:00:00Z", "2026-09-08T16:45:00Z"],
     ["2026-09-30T03:30:00Z", "2026-09-30T04:45:00Z"],
@@ -59,7 +115,9 @@ describe("nonframed footer-aware invitation rows", () => {
       }
     }
   );
-  for (const { id: theme } of storyThemes) {
+  for (const { id: theme } of storyThemes.filter(
+    ({ id }) => id === "minimal"
+  )) {
     it.each(["invitation", "spots"] as const)(
       `${theme}/%s translates ordinary copy without scaling type, width or artwork`,
       (template) => {
@@ -136,15 +194,14 @@ describe("nonframed footer-aware invitation rows", () => {
     ).toBe(customNote);
     for (const block of layout.blocks) {
       expect(block.x).toBe(72);
-      expect(block.y).toBeGreaterThanOrEqual(680);
+      expect(block.y).toBeGreaterThanOrEqual(180);
+      const art = layout.scene.art;
+      expect(
+        block.y + block.height <= art.y || block.y >= art.y + art.height
+      ).toBe(true);
       expect(block.y + block.height).toBeLessThanOrEqual(1504.001);
     }
-    expect(layout.scene.art).toEqual({
-      x: 72,
-      y: 160,
-      width: 936,
-      height: 480,
-    });
+    expect(layout.scene.art.height).toBeGreaterThanOrEqual(159.999);
   });
 
   it("draws shared full-width baselines and fonts with no Canvas maxWidth or transforms", () => {

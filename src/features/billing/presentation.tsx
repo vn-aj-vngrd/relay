@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Alert } from "@/components/ui/alert";
 import type { BillingMethodSnapshot } from "@/db/schema";
 
-import { billingDate, plans, storageLabel } from "./domain";
+import { billingDate, mediaPolicy, plans, storageLabel } from "./domain";
 import { PaymentDetailsCopy } from "./payment-details-copy";
 import type { getAccountUsage } from "./usage";
 import { UsageMeter } from "./usage-meter";
@@ -30,6 +30,12 @@ export function PlanUsage({
         </h2>
         {planAction}
       </div>
+      <p className="mt-2 text-sm leading-6 text-muted">
+        Games renew each monthly allowance period. Storage is shared across your
+        game photos and chat images and does not reset. Each game holds up to{" "}
+        {mediaPolicy.memory.perGame} photos; whichever limit fills first stops
+        new uploads.
+      </p>
       <dl className="mt-4 divide-y divide-line border-y border-line text-sm">
         {usage.planAssigned ? (
           <div className="flex flex-wrap justify-between gap-2 py-4">

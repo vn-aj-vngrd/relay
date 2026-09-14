@@ -60,3 +60,45 @@ describe("server-owned billing catalog", () => {
     });
   });
 });
+
+it("upgrades standard v1 offers while preserving availability and custom offers", async () => {
+  mocks.settings.mockResolvedValue({
+    planCatalog: [
+      {
+        ...defaultBillingPlans.find((plan) => plan.id === "free"),
+        version: "free-v1",
+        games: 5,
+        storageBytes: 100 * 1024 * 1024,
+      },
+      {
+        ...defaultBillingPlans.find((plan) => plan.id === "plus"),
+        version: "plus-v1",
+        games: 12,
+        storageBytes: 500 * 1024 * 1024,
+        availability: "paused",
+      },
+      {
+        ...defaultBillingPlans.find((plan) => plan.id === "pro"),
+        version: "pro-custom",
+        games: 200,
+        storageBytes: 50 * 1024 * 1024 * 1024,
+      },
+    ],
+  });
+  const catalog = await getBillingCatalog();
+  expect(catalog.find((plan) => plan.id === "free")).toMatchObject({
+    version: "free-v2",
+    games: 12,
+    storageBytes: 250 * 1024 * 1024,
+  });
+  expect(catalog.find((plan) => plan.id === "plus")).toMatchObject({
+    version: "plus-v2",
+    games: 40,
+    storageBytes: 2 * 1024 * 1024 * 1024,
+    availability: "paused",
+  });
+  expect(catalog.find((plan) => plan.id === "pro")).toMatchObject({
+    version: "pro-custom",
+    games: 200,
+  });
+});

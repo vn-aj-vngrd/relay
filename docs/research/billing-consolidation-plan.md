@@ -30,9 +30,9 @@ Reuse these foundations. Intentional additions are Plus identity, public compari
 
 | Plan | PHP price | Successfully created games | Retained photo storage |
 | --- | --- | --- | --- |
-| Free | 0 | 5 / Philippine calendar month | 100 MiB |
-| Plus | 149 / monthly term | 12 / term | 500 MiB |
-| Pro | 299 / monthly term | 30 / term | 2 GiB |
+| Free | 0 | 12 / Philippine calendar month | 250 MiB |
+| Plus | 149 / monthly term | 40 / term | 2 GiB |
+| Pro | 299 / monthly term | 100 / term | 10 GiB |
 
 Plus price and limits require confirmation. Preserve existing Free/Pro versions and historical snapshots. No annual switch, per-seat charge, unlimited promise or credit packs.
 
@@ -101,6 +101,9 @@ Mandatory unit coverage for changed behavior: tier resolution; version snapshots
 
 ## Decisions needed before a confirmed implementation brief
 
-1. Confirm Plus at PHP 149, 12 games and 500 MiB, alongside existing Free and Pro.
+1. Confirm Plus at PHP 149, 40 games and 2 GiB, alongside existing Free and Pro.
 2. During Coming soon, keep Free limits and existing grants (recommended), or grant every account temporary paid-tier capacity?
 3. Does admin Set plan mean assigning plans to users only, or also editing public prices/allowances? Recommended scope supports assignments; if commercial editing is wanted, add versioned draft/publish controls, not unrestricted inline edits.
+
+
+2026-09-14 policy update: game albums allow 50 retained photos across all contributors, subject to host storage; no monthly photo reset. See [current subscription contract](../SUBSCRIPTIONS.md) for versioning, daily safeguards and rollout status.

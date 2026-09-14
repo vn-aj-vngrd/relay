@@ -1,16 +1,140 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  defaultStoryTheme,
+  drawStoryDecorations,
   drawStoryTheme,
+  storyArtSubject,
   storyPhotoDecorations,
+  storyPosterEdges,
+  storySurface,
   storyThemeDecorations,
+  storyThemePaper,
   storyThemes,
 } from "./story-theme";
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Story themes", () => {
-  it("offers five distinct requested styles, preserving Minimal as the default", () => {
+  it("uses Court Pop paper for saturated choices while preserving light paper and full photos", () => {
+    expect(defaultStoryTheme).toBe("scrapbook");
+    expect(storySurface("court-pop", { color: "#635bde" })).toEqual({
+      color: "#f4f1e8",
+      light: true,
+    });
+    const pink = { color: "#ffe0eb", light: true };
+    expect(storySurface("court-pop", pink)).toEqual(pink);
+    const photo = { imageUrl: "blob:local-photo" };
+    expect(storySurface("court-pop", photo)).toBe(photo);
+    expect(storySurface("minimal", pink)).toBe(pink);
+  });
+
+  it.each(storyThemes)(
+    "preserves $label paper, photo contrast and shared edge rendering",
+    ({ id }) => {
+      const surface = { color: "#347571" };
+      expect(storySurface(id, surface)).toEqual(
+        id === "minimal" ? surface : { color: storyThemePaper(id), light: true }
+      );
+      const photo = { imageUrl: "blob:local-photo", color: "#347571" };
+      expect(storySurface(id, photo)).toBe(photo);
+      const pink = { color: "#ffe0eb", light: true };
+      expect(storySurface(id, pink)).toEqual(pink);
+      const paths: string[] = [];
+      vi.stubGlobal(
+        "Path2D",
+        class {
+          constructor(path: string) {
+            paths.push(path);
+          }
+        }
+      );
+      const context = {
+        save: vi.fn(),
+        restore: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+      };
+      const edges = storyPosterEdges(id, "#ffffff");
+      drawStoryDecorations(
+        context as unknown as CanvasRenderingContext2D,
+        edges
+      );
+      expect(paths).toEqual(edges.map(({ path }) => path));
+      expect(edges.length).toBeGreaterThan(0);
+    }
+  );
+
+  it.each(storyThemes.filter(({ id }) => id !== "minimal"))(
+    "carries the selected accent into $label artwork and photo mat",
+    ({ id }) => {
+      const options = { accent: "#347571" };
+      const frame = { x: 72, y: 160, width: 936, height: 840 };
+      expect(
+        storyThemeDecorations(id, options).some(
+          ({ fill, stroke }) =>
+            fill === options.accent || stroke === options.accent
+        )
+      ).toBe(true);
+      expect(
+        storyPhotoDecorations(id, frame, options).some(
+          ({ fill, stroke }) =>
+            fill === options.accent || stroke === options.accent
+        )
+      ).toBe(true);
+    }
+  );
+
+  it.each(["poster", "people", "result"] as const)(
+    "exports the same selected accent and %s artwork as the preview",
+    (subject) => {
+      const paths: string[] = [];
+      vi.stubGlobal(
+        "Path2D",
+        class {
+          constructor(path: string) {
+            paths.push(path);
+          }
+        }
+      );
+      const context = {
+        save: vi.fn(),
+        restore: vi.fn(),
+        fill: vi.fn(),
+        stroke: vi.fn(),
+      };
+      const options = { subject, accent: "#347571" };
+      drawStoryTheme(
+        context as unknown as CanvasRenderingContext2D,
+        "court-pop",
+        undefined,
+        options
+      );
+      const art = storyThemeDecorations("court-pop", options);
+      expect(paths).toEqual(art.map(({ path }) => path));
+      expect(
+        art.some(
+          ({ fill, stroke }) =>
+            fill === options.accent || stroke === options.accent
+        )
+      ).toBe(true);
+    }
+  );
+
+  it("gives invitations, people and results distinct art using existing focus IDs", () => {
+    expect(storyArtSubject("invitation")).toBe("poster");
+    expect(storyArtSubject("crew")).toBe("people");
+    expect(storyArtSubject("points")).toBe("result");
+    const art = ["invitation", "crew", "points"].map((template) =>
+      JSON.stringify(
+        storyThemeDecorations("court-pop", {
+          subject: storyArtSubject(template),
+        })
+      )
+    );
+    expect(new Set(art).size).toBe(3);
+  });
+  it("offers five distinct requested styles, retaining Minimal without a hero illustration", () => {
     expect(storyThemes.map(({ label }) => label)).toEqual([
       "Minimal",
       "Scrapbook",
@@ -97,3 +221,14 @@ describe("Story themes", () => {
     }
   );
 });
+
+it.each(storyThemes.filter(({ id }) => id !== "minimal"))(
+  "$label changes its sporting composition with the story subject",
+  ({ id }) => {
+    const signatures = (["poster", "people", "result"] as const).map(
+      (subject) => JSON.stringify(storyThemeDecorations(id, { subject }))
+    );
+    expect(new Set(signatures).size).toBe(3);
+    expect(storyArtSubject("winning-team")).toBe("people");
+  }
+);

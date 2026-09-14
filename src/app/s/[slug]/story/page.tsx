@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/features/auth/session";
+import { getGamePhotoAllowance } from "@/features/billing/usage";
 import { getSessionRecap } from "@/features/memories/queries";
 import { SessionMemories } from "@/features/memories/session-memories";
 import { storyJoinUrl } from "@/features/memories/story-join-url";
@@ -31,6 +32,9 @@ export default async function PublicStoryPage({
       viewerPlayer?.role === "cohost" ||
       viewerPlayer?.rsvp === "going"
   );
+  const photoAllowance = canContribute
+    ? await getGamePhotoAllowance(data.session.hostId, data.session.id)
+    : undefined;
   const goingCount = data.roster.filter(
     ({ player }) => player.rsvp === "going"
   ).length;
@@ -51,6 +55,8 @@ export default async function PublicStoryPage({
         <h1 className="sr-only">Story</h1>
         <div>
           <SessionMemories
+            photoAllowance={photoAllowance}
+            canManageStorage={data.session.hostId === user?.id}
             session={data.session}
             price={price}
             joinUrl={storyJoinUrl(data.session)}
