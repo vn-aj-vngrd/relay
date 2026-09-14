@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { billingMedia, sessions } from "@/db/schema";
+import { allowsGamePhotos } from "@/features/memories/permissions";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 import { BillingError } from "./domain";
@@ -91,7 +92,7 @@ export async function storeGameMedia(
         !session ||
         session.hostId !== input.hostId ||
         session.status === "cancelled" ||
-        (input.kind === "memory" && session.status !== "completed")
+        (input.kind === "memory" && !allowsGamePhotos(session.status))
       )
         throw new BillingError("This game is no longer accepting photos.");
       if (

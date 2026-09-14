@@ -90,10 +90,8 @@ export function SessionMemories({
   );
   const date = `${formatSessionDate(session.startsAt, session.timezone)} · ${formatSessionTime(session.startsAt, session.endsAt, session.timezone)}`;
   const accent = sessionAccent(session.accentColor);
-  const completed = session.status === "completed";
-  const showPhotos = completed || photos.length > 0;
   const [view, setView] = useState<"make" | "photos">("make");
-  const activeView = showPhotos ? view : "make";
+  const activeView = view;
   if (session.status === "draft" || session.status === "cancelled") {
     return (
       <section
@@ -118,18 +116,16 @@ export function SessionMemories({
     <div
       className={`${styles.storySurface} flex min-w-0 flex-col gap-4 sm:gap-6`}
     >
-      {showPhotos ? (
-        <TabChipRail
-          label="Story views"
-          items={[
-            { value: "make", label: "Make" },
-            { value: "photos", label: "Photos", count: photos.length },
-          ]}
-          value={activeView}
-          onChange={setView}
-          variant="chip"
-        />
-      ) : null}
+      <TabChipRail
+        label="Story views"
+        items={[
+          { value: "make", label: "Make" },
+          { value: "photos", label: "Photos", count: photos.length },
+        ]}
+        value={activeView}
+        onChange={setView}
+        variant="chip"
+      />
 
       {/* Keep the local photo and edits when browsing game photos. */}
       <section aria-label="Create a story" hidden={activeView !== "make"}>

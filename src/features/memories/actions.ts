@@ -12,14 +12,16 @@ import { storeGameMedia } from "@/features/billing/media";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
-import { canContributeMemory } from "./permissions";
+import { allowsGamePhotos, canContributeMemory } from "./permissions";
 
-async function requireCompletedParticipant(sessionId: string) {
+async function requireMemoryParticipant(sessionId: string) {
   const session = await db.query.sessions.findFirst({
     where: eq(sessions.id, sessionId),
   });
-  if (session?.status !== "completed")
-    throw new Error("Photos can be added after the game ends.");
+  if (!session || !allowsGamePhotos(session.status))
+    throw new Error(
+      "Photos can be added to published, live, or completed games."
+    );
 
   const viewer = await getSessionViewer(session.id, session.slug);
   const user = viewer?.user ?? (await getCurrentUser());
@@ -83,7 +85,7 @@ export async function uploadMemoryPhotoState(
 async function uploadMemoryPhoto(formData: FormData) {
   const sessionId = z.uuid().parse(formData.get("sessionId"));
   const { actorKey, uploaderId, session, memory } =
-    await requireCompletedParticipant(sessionId);
+    await requireMemoryParticipant(sessionId);
   const file = formData.get("photo");
   if (
     !(file instanceof File) ||
