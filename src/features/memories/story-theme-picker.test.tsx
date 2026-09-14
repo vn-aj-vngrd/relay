@@ -6,6 +6,26 @@ import { StoryThemePicker } from "./story-theme-picker";
 afterEach(cleanup);
 
 describe("StoryThemePicker photo previews", () => {
+  it("uses the same selected paper palette as the full story", () => {
+    render(
+      <StoryThemePicker
+        theme="scrapbook"
+        accent="#bd4545"
+        subject="people"
+        onChange={vi.fn()}
+      />
+    );
+    for (const theme of ["Scrapbook", "Coquette", "Court Pop", "Retro Rally"]) {
+      expect(
+        screen.getByRole("button", { name: theme }).querySelector("svg > path")
+      ).toHaveAttribute("fill", "#ffeded");
+    }
+    expect(
+      screen
+        .getByRole("button", { name: "Minimal" })
+        .querySelector("svg > path")
+    ).toHaveAttribute("fill", "#bd4545");
+  });
   it("renders device photos as images without SVG URL references", () => {
     const { container } = render(
       <StoryThemePicker

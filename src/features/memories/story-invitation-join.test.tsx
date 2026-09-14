@@ -1,11 +1,12 @@
 import {
   act,
   fireEvent,
-  render,
+  render as renderComponent,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
@@ -23,6 +24,44 @@ import { storyRegionStyle } from "./story-scene";
 import { storyThemes } from "./story-theme";
 
 const mocks = vi.hoisted(() => ({ toCanvas: vi.fn() }));
+// These scenarios exercise invitation/export controls after opening the editor.
+function clickStoryButton(name: string) {
+  const panel = [
+    "Minimal",
+    "Scrapbook",
+    "Coquette",
+    "Court Pop",
+    "Retro Rally",
+  ].includes(name)
+    ? "Look"
+    : ["Full background", "Framed foreground"].includes(name)
+      ? "Layout"
+      : [
+            "Invitation",
+            "Who’s in?",
+            "Open spots",
+            "We’re playing",
+            "Match pulse",
+            "The crew",
+            "QR + link",
+            "Link only",
+            "Off",
+          ].includes(name)
+        ? "Details"
+        : null;
+  if (panel) fireEvent.click(screen.getByRole("button", { name: panel }));
+  fireEvent.click(screen.getByRole("button", { name }));
+}
+
+function render(element: ReactElement) {
+  const result = renderComponent(element);
+  const details = screen.queryByRole("button", {
+    name: "Details",
+  });
+  if (details) fireEvent.click(details);
+  return result;
+}
+
 vi.mock("qrcode", () => ({ toCanvas: mocks.toCanvas }));
 
 const url = "https://relay.example/s/saturday-night-123abc";
@@ -110,7 +149,7 @@ afterEach(() => {
 });
 
 function customize() {
-  fireEvent.click(screen.getByRole("button", { name: /Customize story/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Details" }));
 }
 
 describe("invitation join details", () => {
@@ -132,7 +171,7 @@ describe("invitation join details", () => {
           screen.getByRole("button", { name: "Download PNG" })
         ).toBeEnabled()
       );
-      fireEvent.click(screen.getByRole("button", { name: focus }));
+      clickStoryButton(focus);
       expect(
         container.querySelector('[data-story-fact="title"]')
       ).toHaveTextContent(props.title);
@@ -173,7 +212,7 @@ describe("invitation join details", () => {
       expect(
         container.querySelectorAll('[data-story-separator="plan-rsvp"]')
       ).toHaveLength(1);
-      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      clickStoryButton("Download PNG");
       const layout = storyInvitationLayout({
         ...props,
         template: focus === "Invitation" ? "invitation" : "spots",
@@ -235,13 +274,12 @@ describe("invitation join details", () => {
             })
           );
           customize();
-          fireEvent.click(screen.getByRole("button", { name: label }));
+          clickStoryButton(label);
           if (hasPhoto) {
-            fireEvent.click(screen.getByRole("button", { name: "Background" }));
-            fireEvent.click(screen.getByRole("button", { name: "Our court" }));
-            fireEvent.click(
-              screen.getByRole("button", { name: "Full background" })
-            );
+            fireEvent.click(screen.getByRole("button", { name: "Look" }));
+            fireEvent.click(screen.getByRole("button", { name: "Photos" }));
+            clickStoryButton("Use Our court");
+            clickStoryButton("Full background");
           }
           const off = storyInvitationLayout({
             ...props,
@@ -252,12 +290,8 @@ describe("invitation join details", () => {
             joinMode: "off",
           });
           for (const joinMode of ["off", "qr", "link"] as const) {
-            fireEvent.click(
-              screen.getByRole("button", {
-                name: { off: "Off", qr: "QR + link", link: "Link only" }[
-                  joinMode
-                ],
-              })
+            clickStoryButton(
+              { off: "Off", qr: "QR + link", link: "Link only" }[joinMode]
             );
             await waitFor(() =>
               expect(
@@ -304,14 +338,12 @@ describe("invitation join details", () => {
             }
             context.fillText.mockClear();
             vi.mocked(HTMLAnchorElement.prototype.click).mockClear();
-            fireEvent.click(
-              screen.getByRole("button", { name: "Download PNG" })
-            );
+            clickStoryButton("Download PNG");
             await waitFor(() =>
               expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledOnce()
             );
             expect(context.fillText).toHaveBeenCalledWith(
-              "RELAY · GAME INVITE · CURRENT PLAN",
+              "RELAY",
               storyInvitationHeader.x,
               storyInvitationHeader.baseline
             );
@@ -343,8 +375,8 @@ describe("invitation join details", () => {
         ).toBeEnabled()
       );
       customize();
-      fireEvent.click(screen.getByRole("button", { name: label }));
-      fireEvent.click(screen.getByRole("button", { name: "Link only" }));
+      clickStoryButton(label);
+      clickStoryButton("Link only");
       const footer = container.querySelector('[data-story-region="join"] rect');
       const surface = container.querySelector(
         "[data-story-theme]"
@@ -355,9 +387,7 @@ describe("invitation join details", () => {
       expect(footerColor.style.backgroundColor).toBe(
         surface.style.backgroundColor
       );
-      fireEvent.click(
-        screen.getByRole("button", { name: "Expand story preview" })
-      );
+      clickStoryButton("Expand story preview");
       const dialog = screen.getByRole("dialog");
       expect(
         dialog.querySelector('[data-story-region="composition"]')
@@ -431,7 +461,7 @@ describe("invitation join details", () => {
       screen.queryByRole("button", { name: "Copy game link" })
     ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Game link")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+    clickStoryButton("Download PNG");
     await waitFor(() =>
       expect(context.drawImage).toHaveBeenCalledWith(
         expect.any(HTMLCanvasElement),
@@ -473,18 +503,28 @@ describe("invitation join details", () => {
         ).toBeEnabled()
       );
       customize();
-      fireEvent.click(screen.getByRole("button", { name: label }));
-      fireEvent.click(screen.getByRole("button", { name: "Background" }));
-      fireEvent.click(screen.getByRole("button", { name: "Our court" }));
-      fireEvent.change(screen.getByLabelText("Photo crop"), {
+      clickStoryButton(label);
+      fireEvent.click(screen.getByRole("button", { name: "Look" }));
+      fireEvent.click(screen.getByRole("button", { name: "Photos" }));
+      clickStoryButton("Use Our court");
+      fireEvent.click(screen.getByRole("button", { name: /^Edit photo 1:/ }));
+      fireEvent.change(screen.getByLabelText("Horizontal crop"), {
         target: { value: "75" },
       });
-      fireEvent.click(
-        screen.getByRole("button", { name: "Framed foreground" })
-      );
+      fireEvent.change(screen.getByLabelText("Vertical crop"), {
+        target: { value: "75" },
+      });
+      clickStoryButton("Framed foreground");
+      fireEvent.click(screen.getByRole("button", { name: "Layout" }));
       fireEvent.click(
         screen.getByRole("button", {
-          name: placement[0].toUpperCase() + placement.slice(1),
+          name: (
+            {
+              top: "Photo first",
+              center: "Balanced",
+              bottom: "Details first",
+            } as const
+          )[placement],
         })
       );
       const layout = framedInvitationLayout({
@@ -512,15 +552,16 @@ describe("invitation join details", () => {
       expect(
         container.querySelector('[data-story-region="photo"] img')
       ).toHaveStyle({ objectPosition: "75% 75%" });
-      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      clickStoryButton("Download PNG");
       await waitFor(() =>
         expect(drawPhoto).toHaveBeenCalledWith(
           context,
           "/court.png",
           1080,
           1920,
-          75,
-          scene.photo
+          50,
+          scene.photo,
+          { x: 75, y: 75, zoom: 1 }
         )
       );
       await waitFor(() =>
@@ -542,14 +583,13 @@ describe("invitation join details", () => {
           )
         );
       }
-      fireEvent.click(screen.getByRole("button", { name: "Full background" }));
+      clickStoryButton("Full background");
+      fireEvent.click(screen.getByRole("button", { name: "Photos" }));
       expect(
         screen.queryByRole("group", { name: "Photo placement options" })
       ).not.toBeInTheDocument();
-      expect(screen.getByLabelText("Photo crop")).toHaveValue("75");
-      fireEvent.click(
-        screen.getByRole("button", { name: "Framed foreground" })
-      );
+      expect(screen.getByLabelText("Horizontal crop")).toHaveValue("75");
+      clickStoryButton("Framed foreground");
       expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
         "data-photo-placement",
         placement
@@ -575,20 +615,19 @@ describe("invitation join details", () => {
           screen.getByRole("button", { name: "Download PNG" })
         ).toBeEnabled()
       );
-      fireEvent.click(screen.getByRole("button", { name: "Invitation" }));
+      clickStoryButton("Invitation");
       customize();
       fireEvent.click(
         screen.getByRole("button", {
           name: { qr: "QR + link", link: "Link only", off: "Off" }[joinMode],
         })
       );
-      fireEvent.click(screen.getByRole("button", { name: "Scrapbook" }));
-      fireEvent.click(screen.getByRole("button", { name: "Background" }));
-      fireEvent.click(screen.getByRole("button", { name: "Our court" }));
-      fireEvent.click(
-        screen.getByRole("button", { name: "Framed foreground" })
-      );
-      fireEvent.click(screen.getByRole("button", { name: "Message" }));
+      clickStoryButton("Scrapbook");
+      fireEvent.click(screen.getByRole("button", { name: "Look" }));
+      fireEvent.click(screen.getByRole("button", { name: "Photos" }));
+      clickStoryButton("Use Our court");
+      clickStoryButton("Framed foreground");
+      fireEvent.click(screen.getByRole("button", { name: "Details" }));
       const customNote =
         "Bring your paddle and stay for a few friendly games with us.";
       fireEvent.change(screen.getByRole("textbox", { name: /Personal line/ }), {
@@ -609,7 +648,7 @@ describe("invitation join details", () => {
       expect(
         container.querySelector('[data-story-region="photo"]')
       ).toHaveStyle(storyRegionStyle(layout.scene.photo));
-      fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+      clickStoryButton("Download PNG");
       await waitFor(() =>
         expect(drawPhoto).toHaveBeenCalledWith(
           context,
@@ -617,7 +656,8 @@ describe("invitation join details", () => {
           1080,
           1920,
           50,
-          layout.scene.photo
+          layout.scene.photo,
+          { x: 50, y: 50, zoom: 1 }
         )
       );
       await waitFor(() =>
@@ -642,25 +682,25 @@ describe("invitation join details", () => {
       expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled()
     );
     customize();
-    fireEvent.click(screen.getByRole("button", { name: "Link only" }));
+    clickStoryButton("Link only");
     expect(
       container.querySelector('[data-story-region="join"] image')
     ).toBeNull();
     expect(
       container.querySelector('[data-story-region="composition"]')
     ).toHaveStyle({ left: "0%", width: "100%", height: "100%" });
-    fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+    clickStoryButton("Download PNG");
     await waitFor(() =>
       expect(context.fillRect).toHaveBeenCalledWith(0, 1728, 1080, 192)
     );
     expect(context.translate).not.toHaveBeenCalledWith(54, 0);
     expect(context.scale).not.toHaveBeenCalledWith(0.9, 0.9);
-    fireEvent.click(screen.getByRole("button", { name: "Invitation" }));
+    clickStoryButton("Invitation");
     expect(screen.getByRole("button", { name: "Link only" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
-    fireEvent.click(screen.getByRole("button", { name: "Off" }));
+    clickStoryButton("Off");
     expect(container.querySelector('[data-story-region="join"]')).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Copy game link" })
@@ -705,9 +745,7 @@ describe("invitation join details", () => {
     expect(screen.getByRole("button", { name: "Share Story" })).toBeDisabled();
     expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
     expect(screen.queryByLabelText("Game link")).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Expand story preview" })
-    );
+    clickStoryButton("Expand story preview");
     const dialog = screen.getByRole("dialog");
     expect(
       within(dialog).queryByLabelText("Game link")
@@ -737,7 +775,7 @@ describe("invitation join details", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled()
     );
-    fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
+    clickStoryButton("Download PNG");
     await waitFor(() =>
       expect(HTMLCanvasElement.prototype.toBlob).toHaveBeenCalled()
     );
@@ -764,7 +802,7 @@ describe("invitation join details", () => {
     const { container } = render(<RecapShareCard {...props} />);
     await waitFor(() => expect(mocks.toCanvas).toHaveBeenCalledOnce());
     customize();
-    fireEvent.click(screen.getByRole("button", { name: "Off" }));
+    clickStoryButton("Off");
     await act(async () => finish());
     expect(container.querySelector('[data-story-region="join"]')).toBeNull();
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();

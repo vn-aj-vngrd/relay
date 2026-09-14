@@ -1,17 +1,13 @@
 "use client";
 
 import {
-  CaretDown,
   CaretLeft,
   CaretRight,
   Check,
   DownloadSimple,
-  ImageSquare,
   ShareNetwork,
-  SlidersHorizontal,
   X,
 } from "@phosphor-icons/react";
-import Image from "next/image";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
@@ -19,7 +15,6 @@ import { Dialog } from "@/components/ui/dialog";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackSharedSessionEvent } from "@/features/analytics/actions";
 import { sessionAccents } from "@/features/sessions/accent";
-import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
 
 import type { SessionRecap } from "./recap";
 import {
@@ -30,6 +25,8 @@ import {
   type StoryPhase,
 } from "./recap-share";
 import { type RecapBackground, RecapStoryCard } from "./recap-story-card";
+import { type StoryCollageLayout, storyPhotoSlots } from "./story-collage";
+import { storyColorsForGame } from "./story-color";
 import {
   drawFramedInvitation,
   framedInvitationLayout,
@@ -46,10 +43,10 @@ import {
   storyJoinPalette,
 } from "./story-join";
 import { StoryJoinHelp } from "./story-join-help";
-import { decodeStoryPhoto, drawStoryPhoto } from "./story-photo";
+import { drawStoryPhoto } from "./story-photo";
+import { StoryPhotoEditor } from "./story-photo-editor";
 import { drawStoryRecap, storyRecapLayout } from "./story-recap-layout";
 import {
-  babyPink,
   type StoryPhotoPlacement,
   type StoryPhotoRole,
   storyArtTransform,
@@ -65,17 +62,15 @@ import {
   storyPosterEdges,
   storyPosterPanel,
   storyResultColor,
+  storySecondaryInk,
   storySurface,
-  storyThemes,
 } from "./story-theme";
 import { StoryThemePicker } from "./story-theme-picker";
 import styles from "./story-workspace.module.css";
+import { useStoryPhotos } from "./use-story-photos";
 import { useStoryQr } from "./use-story-qr";
 
 type RecapPhoto = { id: string; url: string; alt: string };
-
-// Story-only colors do not change the game accent or global app palette.
-const storyPalette: RecapBackground[] = [babyPink];
 
 function trackStoryShare(
   sessionId: string | undefined,
@@ -128,27 +123,15 @@ export function RecapShareCard({
     sessionAccents.find(
       (option) => option.solid.toLowerCase() === accent.toLowerCase()
     ) ?? sessionAccents[0];
-  const [customBackground, setCustomBackground] =
-    useState<RecapBackground | null>(null);
-  const backgrounds = useMemo<RecapBackground[]>(
-    () => [
-      ...[
-        gameAccent,
-        ...sessionAccents.filter(({ id }) => id !== gameAccent.id),
-      ].map((option) => ({
-        id: `accent:${option.id}`,
-        label: option.label,
-        color: option.solid,
-      })),
-      ...storyPalette,
-      ...photos.map((photo) => ({
-        id: `photo:${photo.id}`,
-        label: photo.alt,
-        imageUrl: photo.url,
-      })),
-      ...(customBackground ? [customBackground] : []),
-    ],
-    [customBackground, gameAccent, photos]
+  const photoSelection = useStoryPhotos();
+  const [editorSection, setEditorSection] = useState<
+    "photos" | "layout" | "look" | "details"
+  >("photos");
+  const [collageLayout, setCollageLayout] =
+    useState<StoryCollageLayout>("editorial");
+  const backgrounds = useMemo(
+    () => storyColorsForGame(gameAccent.id),
+    [gameAccent.id]
   );
   const [template, setTemplate] = useState<RecapShareTemplateId>(
     templates.find((item) => item.id === "custom")?.id ?? templates[0].id
@@ -156,12 +139,12 @@ export function RecapShareCard({
   const [theme, setTheme] = useState<StoryTheme>(defaultStoryTheme);
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
-  const [photoOptionsOpen, setPhotoOptionsOpen] = useState(false);
   const [moreStoriesOpen, setMoreStoriesOpen] = useState(false);
-  const photoOptionsId = useId();
   const storyOptionsId = useId();
-  const [photoPosition, setPhotoPosition] = useState(50);
-  const [photoRole, setPhotoRole] = useState<StoryPhotoRole>("foreground");
+  const photoEditorId = useId();
+  const photoPosition = 50;
+  const [requestedPhotoRole, setPhotoRole] =
+    useState<StoryPhotoRole>("foreground");
   const [photoPlacement, setPhotoPlacement] =
     useState<StoryPhotoPlacement>("center");
   const [surfaceId, setSurfaceId] = useState(`accent:${gameAccent.id}`);
@@ -170,20 +153,16 @@ export function RecapShareCard({
   const [joinMode, setJoinMode] = useState<StoryJoinMode>("qr");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
-  const [customizeOpen, setCustomizeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [customizeSection, setCustomizeSection] = useState<
-    "background" | "message"
-  >("background");
-  const customizeButton = useRef<HTMLButtonElement>(null);
-  const customizationId = useId();
   const previewTitleId = useId();
   const previewDialog = useRef<HTMLDialogElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const customPhotoInput = useRef<HTMLInputElement>(null);
-  const photoSelection = useRef(0);
-  const background =
-    backgrounds.find((item) => item.id === backgroundId) ?? backgrounds[0];
+  const photoRole =
+    photoSelection.photos.length > 1 ? "foreground" : requestedPhotoRole;
+  const background: RecapBackground =
+    photoSelection.photos[0] ??
+    backgrounds.find((item) => item.id === backgroundId) ??
+    backgrounds[0];
   const sceneBackground =
     backgrounds.find((item) => item.id === surfaceId) ?? backgrounds[0];
   const templateIndex = templates.findIndex((item) => item.id === template);
@@ -236,65 +215,17 @@ export function RecapShareCard({
   );
 
   useEffect(() => {
+    setMessage("");
+  }, [photoSelection.photos]);
+
+  useEffect(() => {
     if (!templates.some((item) => item.id === template))
       setTemplate(templates[0].id);
   }, [template, templates]);
 
-  useEffect(
-    () => () => {
-      if (customBackground?.imageUrl?.startsWith("blob:"))
-        URL.revokeObjectURL(customBackground.imageUrl);
-    },
-    [customBackground]
-  );
-
-  useEffect(
-    () => () => {
-      photoSelection.current += 1;
-    },
-    []
-  );
-
   useEffect(() => {
     if (previewOpen) previewDialog.current?.showModal();
   }, [previewOpen]);
-
-  async function chooseCustomPhoto(file: File | undefined) {
-    if (!file) return;
-    const selection = ++photoSelection.current;
-    setMessage("Adding your photo…");
-    if (
-      !isSupportedImageType(file.type) ||
-      file.size === 0 ||
-      file.size > 10 * 1024 * 1024 ||
-      !(await hasValidImageSignature(file))
-    ) {
-      if (selection === photoSelection.current)
-        setMessage("Choose a JPG, PNG, or WebP photo under 10 MB.");
-      return;
-    }
-    try {
-      const bitmap = await decodeStoryPhoto(file);
-      bitmap.close();
-    } catch {
-      if (selection === photoSelection.current)
-        setMessage(
-          "This photo couldn’t be read. Choose another JPG, PNG, or WebP."
-        );
-      return;
-    }
-    if (selection !== photoSelection.current) return;
-    const imageUrl = URL.createObjectURL(file);
-    setCustomBackground({
-      id: "custom-photo",
-      label: file.name,
-      imageUrl,
-      file,
-    });
-    setBackgroundId("custom-photo");
-    if (template === "custom") setPhotoRole("foreground");
-    setMessage("Photo added to this story only. It hasn’t been uploaded.");
-  }
 
   function chooseTemplate(id: RecapShareTemplateId) {
     setTemplate(id);
@@ -317,6 +248,7 @@ export function RecapShareCard({
   }
 
   async function createCard(linkOnly = false) {
+    photoSelection.clearMessage();
     if (photoRequired) throw new Error("Add a photo to this memory first");
     const exportJoin =
       join && linkOnly ? { ...join, mode: "link" as const } : join;
@@ -421,14 +353,22 @@ export function RecapShareCard({
     }
     if (background.imageUrl) {
       try {
-        await drawStoryPhoto(
-          context,
-          background.file ?? background.imageUrl,
-          canvas.width,
-          canvas.height,
-          photoPosition,
-          scene.framed ? scene.photo : undefined
+        const slots = storyPhotoSlots(
+          scene.photo,
+          photoSelection.photos.length,
+          collageLayout
         );
+        for (const [index, photo] of photoSelection.photos.entries()) {
+          await drawStoryPhoto(
+            context,
+            photo.file ?? photo.imageUrl,
+            canvas.width,
+            canvas.height,
+            photoPosition,
+            scene.framed ? slots[index] : undefined,
+            photo.crop
+          );
+        }
       } catch (error) {
         throw new Error("Selected photo unavailable", { cause: error });
       }
@@ -441,7 +381,7 @@ export function RecapShareCard({
     const light =
       Boolean(surface.light) && (!background.imageUrl || scene.framed);
     const foreground = light ? "#17181d" : "#ffffff";
-    const secondary = light ? "rgba(23,24,29,.62)" : "rgba(255,255,255,.68)";
+    const secondary = storySecondaryInk(light);
     const rule = light ? "rgba(23,24,29,.18)" : "rgba(255,255,255,.22)";
 
     context.fillStyle = "#91aa1e";
@@ -455,9 +395,8 @@ export function RecapShareCard({
     context.fillStyle = foreground;
     context.font = `700 ${storyInvitationHeader.size}px Inter, Arial, sans-serif`;
     context.textBaseline = "alphabetic";
-    const isInvitation = template === "invitation" || template === "spots";
     context.fillText(
-      `RELAY · ${isInvitation ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`,
+      "RELAY",
       storyInvitationHeader.x,
       storyInvitationHeader.baseline
     );
@@ -650,8 +589,15 @@ export function RecapShareCard({
             recap={recap}
             template={template}
             background={background}
+            selectedPhotos={photoSelection.photos}
+            collageLayout={collageLayout}
             photoPlaceholder={photoRequired}
-            onAddPhoto={() => customPhotoInput.current?.click()}
+            onAddPhoto={() => {
+              setEditorSection("photos");
+              document
+                .getElementById(photoEditorId)
+                ?.scrollIntoView({ behavior: "instant", block: "nearest" });
+            }}
             viewerPlayerId={viewerPlayerId}
             theme={theme}
             overlay={overlay}
@@ -699,215 +645,289 @@ export function RecapShareCard({
         </div>
       </div>
       <div className="min-w-0">
-        <section className="mb-5" aria-label="Memory photo">
+        <section
+          className="mb-5"
+          aria-label="Story editor controls"
+          id={photoEditorId}
+        >
           <h2 className="text-lg font-bold">Make it your memory</h2>
           <p className="mt-1 text-sm text-muted">
-            Add a photo. Pick a look. Share your game.
+            Pick your moments. Make them yours.
           </p>
-          <div className="mt-3 flex items-center gap-3">
-            {background.imageUrl ? (
-              <Image
-                src={background.imageUrl}
-                alt="Selected story photo"
-                width={48}
-                height={48}
-                unoptimized
-                className="h-12 w-12 rounded-lg object-cover"
-              />
-            ) : null}
-            <Button
-              type="button"
-              variant="secondary"
-              aria-expanded={photoOptionsOpen}
-              aria-controls={photoOptionsId}
-              onClick={() => setPhotoOptionsOpen((open) => !open)}
-            >
-              <ImageSquare aria-hidden size={18} />
-              {background.imageUrl ? "Change photo" : "Add your photo"}
-            </Button>
+          <div className="mt-4">
+            <TabChipRail
+              label="Story editor"
+              items={[
+                { value: "photos", label: "Photos" },
+                { value: "layout", label: "Layout" },
+                { value: "look", label: "Look" },
+                { value: "details", label: "Details" },
+              ]}
+              value={editorSection}
+              onChange={setEditorSection}
+            />
           </div>
-          <div id={photoOptionsId} hidden={!photoOptionsOpen} className="mt-3">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => customPhotoInput.current?.click()}
-              >
-                Choose from device
-              </Button>
-              {background.imageUrl ? (
-                <Button
-                  type="button"
-                  variant="quiet"
-                  onClick={() => {
-                    photoSelection.current += 1;
-                    setBackgroundId(surfaceId);
-                    setCustomBackground(null);
-                    setMessage("");
-                  }}
-                >
-                  Remove photo
-                </Button>
+          <div hidden={editorSection !== "photos"}>
+            <StoryPhotoEditor selection={photoSelection} gamePhotos={photos} />
+          </div>
+          {editorSection === "layout" ? (
+            <fieldset className="mt-4 min-w-0">
+              <legend className="text-sm font-semibold">
+                {photoSelection.photos.length > 1
+                  ? "Collage layout"
+                  : "Photo layout"}
+              </legend>
+              {photoSelection.photos.length > 1 ? (
+                <>
+                  <div className="mt-3">
+                    <TabChipRail
+                      label="Collage layout"
+                      items={[
+                        { value: "editorial", label: "Hero + moments" },
+                        { value: "grid", label: "Contact sheet" },
+                      ]}
+                      value={collageLayout}
+                      onChange={setCollageLayout}
+                      renderItem={({ value, label }) => (
+                        <span className="flex items-center gap-2">
+                          <svg
+                            aria-hidden
+                            viewBox="0 0 120 140"
+                            className="h-6 w-5"
+                            fill="currentColor"
+                          >
+                            {storyPhotoSlots(
+                              { x: 0, y: 0, width: 120, height: 140 },
+                              Math.max(2, photoSelection.photos.length),
+                              value
+                            ).map((slot, index) => (
+                              <rect key={index} {...slot} rx="3" />
+                            ))}
+                          </svg>
+                          {label}
+                        </span>
+                      )}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-muted">
+                    All your photos stay selected. Put your favorite first in
+                    Photos.
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-muted">
+                  One photo makes a poster. Choose 2–4 photos to create a
+                  collage.
+                </p>
+              )}
+              {photoSelection.photos.length === 1 ? (
+                <fieldset className="mt-4 min-w-0">
+                  <legend className="mb-2 text-sm font-semibold">
+                    Photo style
+                  </legend>
+                  <TabChipRail
+                    label="Photo role"
+                    items={[
+                      { value: "background", label: "Full background" },
+                      { value: "foreground", label: "Framed foreground" },
+                    ]}
+                    value={photoRole}
+                    onChange={setPhotoRole}
+                  />
+                </fieldset>
+              ) : null}
+              {photoRole === "foreground" ? (
+                <div className="mt-4">
+                  <p className="mb-2 text-sm font-semibold">Photo placement</p>
+                  <TabChipRail
+                    label="Photo placement options"
+                    items={[
+                      { value: "top", label: "Photo first" },
+                      { value: "center", label: "Balanced" },
+                      { value: "bottom", label: "Details first" },
+                    ]}
+                    value={photoPlacement}
+                    onChange={setPhotoPlacement}
+                  />
+                </div>
+              ) : null}
+            </fieldset>
+          ) : null}
+          {editorSection === "look" ? (
+            <div className="space-y-5">
+              <StoryThemePicker
+                theme={theme}
+                subject={storyArtSubject(template)}
+                photoUrl={background.imageUrl}
+                onChange={setTheme}
+                light={(scene.framed ? sceneBackground : background).light}
+                accent={
+                  (scene.framed ? sceneBackground : background).color ?? accent
+                }
+              />
+              {!background.imageUrl || scene.framed ? (
+                <fieldset className="min-w-0">
+                  <legend className="text-sm font-semibold">Color</legend>
+                  <p className="mt-1 text-xs text-muted" aria-live="polite">
+                    {(scene.framed ? sceneBackground : background).label}
+                    {(scene.framed ? surfaceId : backgroundId) ===
+                    `accent:${gameAccent.id}`
+                      ? " · Game color"
+                      : ""}
+                  </p>
+                  <div
+                    className="mt-3 flex flex-wrap gap-2"
+                    role="group"
+                    aria-label="Story background"
+                  >
+                    {backgrounds.map((item) => {
+                      const selected =
+                        (scene.framed ? surfaceId : backgroundId) === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          aria-label={`${item.label} background`}
+                          aria-pressed={selected}
+                          onClick={() => {
+                            setSurfaceId(item.id);
+                            setBackgroundId(item.id);
+                          }}
+                          className={`grid h-9 w-9 place-items-center rounded-full border-2 outline-none focus-visible:ring-3 focus-visible:ring-primary/25 ${selected ? "border-ink" : "border-transparent"}`}
+                          style={{
+                            backgroundColor: storySurface(theme, item).color,
+                          }}
+                        >
+                          {selected ? (
+                            <span className="grid h-5 w-5 place-items-center rounded-full bg-black/65 text-white">
+                              <Check aria-hidden size={14} weight="bold" />
+                            </span>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs leading-5 text-muted">
+                    Colors adapt to your theme. Changes apply to this story
+                    only.
+                  </p>
+                </fieldset>
+              ) : null}
+              {background.imageUrl && !scene.framed ? (
+                <label className="text-sm font-semibold">
+                  Text contrast
+                  <input
+                    type="range"
+                    aria-label="Text contrast"
+                    min="20"
+                    max="80"
+                    value={overlay}
+                    onChange={(event) => setOverlay(Number(event.target.value))}
+                    className="mt-1 min-h-11 w-full accent-primary"
+                  />
+                  <span className="mt-1 block text-xs font-normal text-muted">
+                    Darken the photo behind the story.
+                  </span>
+                </label>
               ) : null}
             </div>
-            <p className="mt-2 text-xs text-muted">
-              Device photos are added to your story only.
-            </p>
-            {photos.length ? (
-              <div className="mt-3">
-                <p className="mb-2 text-xs font-semibold">
-                  Or use a game photo
-                </p>
-                <div
-                  className="flex gap-2 overflow-x-auto"
-                  role="group"
-                  aria-label="Game photos for your memory"
-                >
-                  {photos.map((photo) => (
-                    <button
-                      type="button"
-                      key={photo.id}
-                      aria-label={`Use ${photo.alt}`}
-                      aria-pressed={backgroundId === `photo:${photo.id}`}
-                      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-line focus-visible:outline-2 focus-visible:outline-primary"
-                      onClick={() => {
-                        photoSelection.current += 1;
-                        setBackgroundId(`photo:${photo.id}`);
-                        setPhotoRole("foreground");
-                        setMessage("");
-                      }}
-                    >
-                      <Image
-                        src={photo.url}
-                        alt=""
-                        fill
-                        sizes="64px"
-                        className="object-cover"
-                      />
-                      {backgroundId === `photo:${photo.id}` ? (
-                        <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
-                          <Check aria-hidden size={18} />
-                        </span>
-                      ) : null}
-                    </button>
-                  ))}
+          ) : null}
+          {editorSection === "details" ? (
+            <div className="mt-4 space-y-5">
+              <fieldset className="min-w-0">
+                <legend className="text-sm font-semibold">Story type</legend>
+                <div id={storyOptionsId} className="mt-3">
+                  <TabChipRail
+                    label="Story focus options"
+                    className={styles.optionRail}
+                    items={templates
+                      .filter(
+                        (item) =>
+                          moreStoriesOpen ||
+                          templates.length <= 4 ||
+                          [
+                            "custom",
+                            "overview",
+                            "personal",
+                            "crew",
+                            template,
+                          ].includes(item.id)
+                      )
+                      .map((item) => ({ value: item.id, label: item.label }))}
+                    value={template}
+                    onChange={chooseTemplate}
+                  />
                 </div>
-              </div>
-            ) : null}
-          </div>
-          {template === "custom" ? (
-            <>
-              <label className="mt-3 block text-sm font-semibold">
-                Your caption
-                <input
-                  value={customHeadline}
-                  onChange={(event) => setCustomHeadline(event.target.value)}
-                  maxLength={56}
-                  className="field"
-                  placeholder="Our kind of game."
-                />
-              </label>
-              <div className="mt-2">
-                <TabChipRail
-                  label="Memory caption ideas"
-                  items={[
-                    "Same court next week?",
-                    "Our kind of game.",
-                    "Good games. Better company.",
-                  ].map((line) => ({ value: line, label: line }))}
-                  value={customHeadline}
-                  onChange={setCustomHeadline}
-                />
-              </div>
-            </>
-          ) : null}
-          <input
-            ref={customPhotoInput}
-            type="file"
-            aria-label="Choose story photo file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              void chooseCustomPhoto(file);
-            }}
-          />
-        </section>
-        <fieldset className="min-w-0">
-          <legend className="sr-only">Story focus</legend>
-          <div id={storyOptionsId} className="mt-3">
-            <TabChipRail
-              label="Story focus options"
-              className={styles.optionRail}
-              items={templates
-                .filter(
-                  (item) =>
-                    moreStoriesOpen ||
-                    templates.length <= 4 ||
-                    [
-                      "custom",
-                      "overview",
-                      "personal",
-                      "crew",
-                      template,
-                    ].includes(item.id)
-                )
-                .map((item) => ({ value: item.id, label: item.label }))}
-              value={template}
-              onChange={chooseTemplate}
-            />
-          </div>
-          {templates.length > 4 ? (
-            <button
-              type="button"
-              className="mt-2 min-h-9 rounded-lg px-1 text-sm font-semibold text-primary hover:underline"
-              aria-expanded={moreStoriesOpen}
-              aria-controls={storyOptionsId}
-              onClick={() => setMoreStoriesOpen((open) => !open)}
-            >
-              {moreStoriesOpen ? "Fewer stories" : "More stories"}
-            </button>
-          ) : null}
-        </fieldset>
+                {templates.length > 4 ? (
+                  <button
+                    type="button"
+                    className="mt-2 min-h-9 rounded-lg px-1 text-sm font-semibold text-primary hover:underline"
+                    aria-expanded={moreStoriesOpen}
+                    aria-controls={storyOptionsId}
+                    onClick={() => setMoreStoriesOpen((open) => !open)}
+                  >
+                    {moreStoriesOpen ? "Fewer stories" : "More stories"}
+                  </button>
+                ) : null}
+              </fieldset>
+              {template === "custom" ? (
+                <>
+                  <label className="mt-3 block text-sm font-semibold">
+                    Your caption
+                    <input
+                      value={customHeadline}
+                      onChange={(event) =>
+                        setCustomHeadline(event.target.value)
+                      }
+                      maxLength={56}
+                      className="field"
+                      placeholder="Our kind of game."
+                    />
+                  </label>
+                  <div className="mt-2">
+                    <TabChipRail
+                      label="Memory caption ideas"
+                      items={[
+                        "Same court next week?",
+                        "Our kind of game.",
+                        "Good games. Better company.",
+                      ].map((line) => ({ value: line, label: line }))}
+                      value={customHeadline}
+                      onChange={setCustomHeadline}
+                    />
+                  </div>
+                </>
+              ) : null}
 
-        <StoryThemePicker
-          theme={theme}
-          subject={storyArtSubject(template)}
-          photoUrl={background.imageUrl}
-          onChange={setTheme}
-          accent={(scene.framed ? sceneBackground : background).color ?? accent}
-        />
+              <fieldset className="mt-4 min-w-0">
+                <legend className="sr-only">Message</legend>
 
-        <div className="mt-6 border-y border-line">
-          <button
-            type="button"
-            ref={customizeButton}
-            aria-expanded={customizeOpen}
-            aria-controls={customizationId}
-            onClick={() => setCustomizeOpen((open) => !open)}
-            className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
-          >
-            <SlidersHorizontal
-              aria-hidden
-              size={19}
-              className="shrink-0 text-primary"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold">Customize story</span>
-              <span className="mt-0.5 block truncate text-xs font-normal text-muted">
-                {storyThemes.find((item) => item.id === theme)?.label} ·{" "}
-                {background.label}
-              </span>
-            </span>
-            <CaretDown
-              aria-hidden
-              size={17}
-              className={`shrink-0 text-muted transition-transform motion-reduce:transition-none ${customizeOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-          {customizeOpen ? (
-            <div id={customizationId} className="min-w-0 pb-4 pt-2">
+                <label className="mt-3 block text-sm font-semibold">
+                  Personal line{" "}
+                  <span className="font-normal text-muted">(optional)</span>
+                  <input
+                    value={customNote}
+                    onChange={(event) => setCustomNote(event.target.value)}
+                    maxLength={72}
+                    className="field"
+                    placeholder="Let’s play again soon."
+                  />
+                </label>
+                <div className="mt-3">
+                  <TabChipRail
+                    label="Personal line suggestions"
+                    items={(phase === "published"
+                      ? [
+                          "Meet you at the kitchen.",
+                          "Bring a paddle. Bring a friend.",
+                        ]
+                      : ["Same court next time?", "Good games. Better company."]
+                    ).map((line) => ({ value: line, label: line }))}
+                    value={customNote}
+                    onChange={setCustomNote}
+                  />
+                </div>
+              </fieldset>
               {eligibleJoinUrl ? (
                 <fieldset className="mb-4 min-w-0">
                   <legend className="text-sm font-bold">Join details</legend>
@@ -926,213 +946,16 @@ export function RecapShareCard({
                   </div>
                 </fieldset>
               ) : null}
-              <TabChipRail
-                label="Customize options"
-                items={[
-                  { value: "background", label: "Background" },
-                  { value: "message", label: "Message" },
-                ]}
-                value={customizeSection}
-                onChange={setCustomizeSection}
-                variant="underline"
-              />
-              {customizeSection === "background" ? (
-                <div>
-                  <fieldset className="mt-4 min-w-0">
-                    <legend className="text-sm font-bold">Background</legend>
-                    <div
-                      className="mt-3 flex max-h-52 flex-wrap gap-2 overflow-y-auto p-1"
-                      role="group"
-                      aria-label="Story background"
-                    >
-                      {backgrounds.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          aria-label={
-                            item.imageUrl
-                              ? item.label
-                              : `${item.label} background`
-                          }
-                          aria-pressed={
-                            backgroundId === item.id ||
-                            (scene.framed && surfaceId === item.id)
-                          }
-                          onClick={() => {
-                            if (!item.imageUrl) setSurfaceId(item.id);
-                            if (item.imageUrl || !scene.framed)
-                              setBackgroundId(item.id);
-                          }}
-                          className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-3 focus-visible:ring-primary/25 ${backgroundId === item.id || (scene.framed && surfaceId === item.id) ? "border-primary" : "border-transparent"}`}
-                          style={{ backgroundColor: item.color }}
-                        >
-                          {item.imageUrl ? (
-                            <Image
-                              src={item.imageUrl}
-                              alt=""
-                              fill
-                              sizes="56px"
-                              unoptimized={item.imageUrl.startsWith("blob:")}
-                              className="object-cover"
-                            />
-                          ) : null}
-                          {backgroundId === item.id ||
-                          (scene.framed && surfaceId === item.id) ? (
-                            <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
-                              <Check aria-hidden size={17} weight="bold" />
-                            </span>
-                          ) : null}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => customPhotoInput.current?.click()}
-                        className="grid h-14 w-14 place-items-center rounded-lg border border-dashed border-line text-muted hover:border-primary hover:text-primary"
-                        aria-label="Add a story photo"
-                      >
-                        <ImageSquare aria-hidden size={21} />
-                      </button>
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-muted">
-                      Device photos stay local. To share them with the game, add
-                      them separately in Photos.
-                    </p>
-                  </fieldset>
-
-                  {background.imageUrl ? (
-                    <div className="mt-4 grid gap-4">
-                      <fieldset className="min-w-0">
-                        <legend className="mb-2 text-sm font-semibold">
-                          Photo role
-                        </legend>
-                        <TabChipRail
-                          label="Photo role"
-                          items={[
-                            { value: "background", label: "Full background" },
-                            { value: "foreground", label: "Framed foreground" },
-                          ]}
-                          value={photoRole}
-                          onChange={setPhotoRole}
-                        />
-                      </fieldset>
-                      {scene.framed ? (
-                        <fieldset className="min-w-0">
-                          <legend className="mb-2 text-sm font-semibold">
-                            Photo placement
-                          </legend>
-                          <TabChipRail
-                            label="Photo placement options"
-                            items={[
-                              { value: "top", label: "Top" },
-                              { value: "center", label: "Center" },
-                              { value: "bottom", label: "Bottom" },
-                            ]}
-                            value={photoPlacement}
-                            onChange={setPhotoPlacement}
-                          />
-                          <p className="mt-2 text-xs text-muted">
-                            Moves the framed photo; game details fit in a
-                            separate space. Color swatches change the paper.
-                          </p>
-                        </fieldset>
-                      ) : null}
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="text-sm font-semibold">
-                          Photo crop
-                          <input
-                            type="range"
-                            aria-label="Photo crop"
-                            min="0"
-                            max="100"
-                            value={photoPosition}
-                            onChange={(event) =>
-                              setPhotoPosition(Number(event.target.value))
-                            }
-                            className="mt-1 min-h-11 w-full accent-primary"
-                          />
-                          <span className="mt-1 block text-xs font-normal text-muted">
-                            Move left–right for wide photos or top–bottom for
-                            tall photos. Photos that fit exactly won’t move.
-                          </span>
-                        </label>
-                        {!scene.framed ? (
-                          <label className="text-sm font-semibold">
-                            Text contrast
-                            <input
-                              type="range"
-                              aria-label="Text contrast"
-                              min="20"
-                              max="80"
-                              value={overlay}
-                              onChange={(event) =>
-                                setOverlay(Number(event.target.value))
-                              }
-                              className="mt-1 min-h-11 w-full accent-primary"
-                            />
-                            <span className="mt-1 block text-xs font-normal text-muted">
-                              Darken the photo behind the story.
-                            </span>
-                          </label>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {customizeSection === "message" ? (
-                <fieldset className="mt-4 min-w-0">
-                  <legend className="text-sm font-bold">Message</legend>
-
-                  <label className="mt-3 block text-sm font-semibold">
-                    Personal line{" "}
-                    <span className="font-normal text-muted">(optional)</span>
-                    <input
-                      value={customNote}
-                      onChange={(event) => setCustomNote(event.target.value)}
-                      maxLength={72}
-                      className="field"
-                      placeholder="Let’s play again soon."
-                    />
-                  </label>
-                  <div className="mt-3">
-                    <TabChipRail
-                      label="Personal line suggestions"
-                      items={(phase === "published"
-                        ? [
-                            "Meet you at the kitchen.",
-                            "Bring a paddle. Bring a friend.",
-                          ]
-                        : [
-                            "Same court next time?",
-                            "Good games. Better company.",
-                          ]
-                      ).map((line) => ({ value: line, label: line }))}
-                      value={customNote}
-                      onChange={setCustomNote}
-                    />
-                  </div>
-                </fieldset>
-              ) : null}
-              <Button
-                type="button"
-                variant="quiet"
-                className="mt-4"
-                onClick={() => {
-                  setCustomizeOpen(false);
-                  customizeButton.current?.focus();
-                }}
-              >
-                Done customizing
-              </Button>
             </div>
           ) : null}
-        </div>
+        </section>
         <div className={`${styles.actions} ${styles.shareActions}`}>
           <Button
             type="button"
             onClick={share}
-            disabled={pending || qrBlocked || photoRequired}
+            disabled={
+              pending || photoSelection.adding || qrBlocked || photoRequired
+            }
           >
             {pending ? (
               <ButtonSpinner />
@@ -1145,7 +968,9 @@ export function RecapShareCard({
             type="button"
             variant="secondary"
             onClick={() => void download()}
-            disabled={pending || qrBlocked || photoRequired}
+            disabled={
+              pending || photoSelection.adding || qrBlocked || photoRequired
+            }
           >
             <DownloadSimple aria-hidden size={16} />
             Download PNG
@@ -1213,8 +1038,15 @@ export function RecapShareCard({
                 recap={recap}
                 template={template}
                 background={background}
+                selectedPhotos={photoSelection.photos}
+                collageLayout={collageLayout}
                 photoPlaceholder={photoRequired}
-                onAddPhoto={() => customPhotoInput.current?.click()}
+                onAddPhoto={() => {
+                  setEditorSection("photos");
+                  document
+                    .getElementById(photoEditorId)
+                    ?.scrollIntoView({ behavior: "instant", block: "nearest" });
+                }}
                 viewerPlayerId={viewerPlayerId}
                 theme={theme}
                 overlay={overlay}
@@ -1260,7 +1092,9 @@ export function RecapShareCard({
               <Button
                 type="button"
                 onClick={share}
-                disabled={pending || qrBlocked || photoRequired}
+                disabled={
+                  pending || photoSelection.adding || qrBlocked || photoRequired
+                }
               >
                 {pending ? (
                   <ButtonSpinner />
@@ -1273,7 +1107,9 @@ export function RecapShareCard({
                 type="button"
                 variant="secondary"
                 onClick={() => void download()}
-                disabled={pending || qrBlocked || photoRequired}
+                disabled={
+                  pending || photoSelection.adding || qrBlocked || photoRequired
+                }
                 aria-label="Download PNG"
               >
                 <DownloadSimple aria-hidden size={16} />

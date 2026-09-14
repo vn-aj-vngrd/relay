@@ -16,10 +16,10 @@ import {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Story themes", () => {
-  it("uses Court Pop paper for saturated choices while preserving light paper and full photos", () => {
+  it("applies selected palette colors to Court Pop paper while preserving light paper and full photos", () => {
     expect(defaultStoryTheme).toBe("scrapbook");
     expect(storySurface("court-pop", { color: "#635bde" })).toEqual({
-      color: "#f4f1e8",
+      color: "#eeecff",
       light: true,
     });
     const pink = { color: "#ffe0eb", light: true };
@@ -28,6 +28,17 @@ describe("Story themes", () => {
     expect(storySurface("court-pop", photo)).toBe(photo);
     expect(storySurface("minimal", pink)).toBe(pink);
   });
+
+  it.each(storyThemes)(
+    "changes $label paper when the selected palette changes",
+    ({ id }) => {
+      const blue = storySurface(id, { color: "#2563eb" });
+      const coral = storySurface(id, { color: "#bd4545" });
+      expect(blue.color).toBe(id === "minimal" ? "#2563eb" : "#eaf1ff");
+      expect(coral.color).toBe(id === "minimal" ? "#bd4545" : "#ffeded");
+      expect(blue.color).not.toBe(coral.color);
+    }
+  );
 
   it.each(storyThemes)(
     "preserves $label paper, photo contrast and shared edge rendering",

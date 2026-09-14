@@ -6,6 +6,38 @@ import { storyScene } from "./story-scene";
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Story photo export", () => {
+  it("exports an independently zoomed crop inside its collage slot", async () => {
+    const bitmap = { width: 1000, height: 500, close: vi.fn() };
+    vi.stubGlobal("createImageBitmap", vi.fn().mockResolvedValue(bitmap));
+    const context = {
+      save: vi.fn(),
+      beginPath: vi.fn(),
+      rect: vi.fn(),
+      clip: vi.fn(),
+      drawImage: vi.fn(),
+      restore: vi.fn(),
+    };
+    await drawStoryPhoto(
+      context as unknown as CanvasRenderingContext2D,
+      new Blob(),
+      1080,
+      1920,
+      50,
+      { x: 100, y: 200, width: 500, height: 500 },
+      { x: 100, y: 0, zoom: 2 }
+    );
+    expect(context.rect).toHaveBeenCalledWith(100, 200, 500, 500);
+    expect(context.drawImage).toHaveBeenCalledWith(
+      bitmap,
+      -1400,
+      200,
+      2000,
+      1000
+    );
+    expect(context.restore).toHaveBeenCalledOnce();
+    expect(bitmap.close).toHaveBeenCalledOnce();
+  });
+
   it("decodes a local File directly without fetching its preview URL", async () => {
     const file = new File(["synthetic photo"], "court.png", {
       type: "image/png",

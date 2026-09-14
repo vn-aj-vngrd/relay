@@ -143,9 +143,7 @@ describe("SessionMemories", () => {
     expect(
       screen.queryByRole("button", { name: "Copy link" })
     ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Photos" })
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Story editor" })).toBeVisible();
   });
 
   it("gives draft and cancelled games truthful non-sharing states", () => {
@@ -244,8 +242,10 @@ it.each(["public", "link", "private"] as const)(
   "preserves a %s story draft when switching photo chips",
   (visibility) => {
     renderMemories("completed", visibility);
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
     const caption = screen.getByRole("textbox", { name: "Your caption" });
     fireEvent.change(caption, { target: { value: "Our Saturday crew." } });
+    fireEvent.click(screen.getByRole("button", { name: "Look" }));
     fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
     const photoInput = screen.getByLabelText("Choose story photo file");
     fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
@@ -255,9 +255,11 @@ it.each(["public", "link", "private"] as const)(
       "true"
     );
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
     expect(screen.getByRole("textbox", { name: "Your caption" })).toHaveValue(
       "Our Saturday crew."
     );
+    fireEvent.click(screen.getByRole("button", { name: "Look" }));
     expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
       "aria-pressed",
       "true"

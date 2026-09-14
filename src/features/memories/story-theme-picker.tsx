@@ -8,8 +8,8 @@ import {
   storyMemoryFont,
   storyPosterEdges,
   storyScoreFont,
+  storySurface,
   storyThemeDecorations,
-  storyThemePaper,
   storyThemes,
 } from "./story-theme";
 import styles from "./story-workspace.module.css";
@@ -21,12 +21,14 @@ export function StoryThemePicker({
   accent,
   subject,
   photoUrl,
+  light,
   onChange,
 }: {
   theme: StoryTheme;
   accent: string;
   subject: StoryArtOptions["subject"];
   photoUrl?: string;
+  light?: boolean;
   onChange: (theme: StoryTheme) => void;
 }) {
   return (
@@ -50,12 +52,12 @@ export function StoryThemePicker({
               >
                 <path
                   d="M0 0H1080V1440H0Z"
-                  fill={value === "minimal" ? accent : storyThemePaper(value)}
+                  fill={storySurface(value, { color: accent, light }).color}
                 />
                 <g transform="scale(1 .75)">
                   {storyPosterEdges(
                     value,
-                    value === "minimal" ? "#fff" : "#17181d"
+                    value === "minimal" && !light ? "#fff" : "#17181d"
                   ).map((part) => (
                     <path
                       key={part.path}
@@ -69,7 +71,7 @@ export function StoryThemePicker({
                 <text
                   x="88"
                   y="320"
-                  fill={value === "minimal" ? "#fff" : "#17181d"}
+                  fill={value === "minimal" && !light ? "#fff" : "#17181d"}
                   fontSize="124"
                   fontWeight="900"
                   fontFamily={
@@ -119,7 +121,7 @@ export function StoryThemePicker({
                 </g>
                 <path
                   d="M88 1230H700M88 1290H470"
-                  stroke={value === "minimal" ? "#fff" : "#17181d"}
+                  stroke={value === "minimal" && !light ? "#fff" : "#17181d"}
                   strokeWidth="20"
                 />
               </svg>
