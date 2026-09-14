@@ -46,7 +46,7 @@ Biome is the only import-order mechanism. Use `pnpm check:fix`; avoid hand-maint
 
 ## Hooks
 
-Lefthook validates staged supported files without modifying them. Commit subjects follow the Conventional Commit or matching branch-ticket syntax in [Development workflow](DEVELOPMENT_WORKFLOW.md). The agent's pre-commit validation above is separate from the installed hooks; the hooks do not run the full gate. Keep hooks enabled; CI remains authoritative.
+Lefthook validates staged supported files without modifying them. Commit subjects follow the Conventional Commit syntax in [Development workflow](DEVELOPMENT_WORKFLOW.md). The agent's pre-commit validation above is separate from the installed hooks; the hooks do not run the full gate. Keep hooks enabled; CI remains authoritative.
 
 ## CI contract
 

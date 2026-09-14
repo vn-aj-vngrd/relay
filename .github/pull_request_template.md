@@ -1,3 +1,5 @@
+<!-- PR title: <type>(optional-scope): Summary. Keep this title when squash-merging. Use feat for new functionality, fix for corrections, and ! for breaking changes. Put ticket references below. -->
+
 ## Summary
 
 - Describe the problem and resulting behavior.
