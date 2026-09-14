@@ -4,6 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
 
 permissions:
   contents: read
@@ -44,6 +45,10 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Validate release-compatible PR title
+        if: github.event_name == 'pull_request'
+        run: node scripts/validate-commit-message.mjs --pr-title
 
       - name: Restore Next.js build cache
         uses: actions/cache@v4

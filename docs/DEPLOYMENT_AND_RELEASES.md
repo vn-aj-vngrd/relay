@@ -33,7 +33,7 @@ Vercel deployment and GitHub release creation are independent. Release success m
 | `feat!: Change the game contract` or `BREAKING CHANGE:` footer | Major, e.g. 1.2.3 → 2.0.0 |
 | `docs:`, `ci:`, `chore:`, `test:`, `refactor:`, `style:`, `build:` | Patch; included in notes |
 
-The largest change since the last release wins. Set a Conventional Commit squash subject when merging a PR; the review title may use the ticket format in [Development workflow](DEVELOPMENT_WORKFLOW.md). Nonconforming messages may not trigger a release; existing commit hooks remain authoritative. With no preceding release tag, semantic-release starts at **v1.0.0**, covering the existing history. This is a numbering baseline, not public-release clearance. Subsequent notes contain only changes since the previous release.
+The largest change since the last release wins. PR titles and squash subjects both require Conventional Commits under [Development workflow](DEVELOPMENT_WORKFLOW.md); retain the validated PR title when squashing and put tickets in the body. A squash merge contributes one commit to the release notes, not separate entries for its original commits. Nonconforming messages may not trigger a release; existing commit hooks remain authoritative. With no preceding release tag, semantic-release starts at **v1.0.0**, covering the existing history. This is a numbering baseline, not public-release clearance. Subsequent notes contain only changes since the previous release.
 
 The Conventional Commits preset is pinned to 9.3.1 because the installed release-notes generator uses changelog writer 8; preset 10 requires writer 9. Upgrade these together and keep the actual notes-rendering regression test passing.
 
