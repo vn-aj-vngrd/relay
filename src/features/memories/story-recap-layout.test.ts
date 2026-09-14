@@ -110,7 +110,10 @@ describe("shared social-story recap layout", () => {
                   block.y >= frame.y + frame.height + 31.999
               ).toBe(true);
             } else if (theme !== "minimal") {
-              expect(block.y).toBeGreaterThanOrEqual(680);
+              const art = layout.scene.art;
+              expect(
+                block.y + block.height <= art.y || block.y >= art.y + art.height
+              ).toBe(true);
             }
           }
           expect(layout.blocks.find((block) => block.id === "note")!.text).toBe(
@@ -228,4 +231,79 @@ describe("shared social-story recap layout", () => {
     ).toBe(customNote);
     expect(layout.scene.frame!.height).toBeGreaterThanOrEqual(479.999);
   });
+});
+
+it.each(storyThemes)(
+  "$label fits complete player handles in every photo placement",
+  ({ id: theme }) => {
+    const namedRecap = buildSessionRecap(
+      [
+        {
+          id: "name-game",
+          courtLabel: "Court 1",
+          teamA: ["a"],
+          teamB: ["b"],
+          scoreA: 11,
+          scoreB: 8,
+          status: "completed",
+          startedAt: null,
+          finishedAt: null,
+        },
+      ],
+      [
+        { id: "a", name: "vanajvanguardia" },
+        { id: "b", name: "Alexandria Montgomery" },
+      ]
+    );
+    for (const photo of photoModes) {
+      const layout = storyRecapLayout({
+        ...base,
+        ...photo,
+        recap: namedRecap,
+        template: "personal",
+        theme,
+      })!;
+      const heading = layout.blocks.find(({ id }) => id === "headline")!;
+      expect(heading.lines).toEqual(["vanajvanguardia"]);
+      expect(heading.size).toBeGreaterThanOrEqual(48);
+    }
+  }
+);
+
+it.each(storyThemes)(
+  "$label places real memory statistics beside a framed photo",
+  ({ id: theme }) => {
+    const layout = storyRecapLayout({
+      ...base,
+      theme,
+      template: "custom",
+      hasPhoto: true,
+      photoRole: "foreground",
+    })!;
+    expect(
+      layout.blocks.find(({ id }) => id === "memory-stats")?.lines.join(" ")
+    ).toBe("1 match · 19 points played");
+    expect(
+      layout.blocks.find(({ id }) => id === "memory-result")?.lines.join(" ")
+    ).toBe("Van · 1–0 wins–losses");
+    expect(layout.scene.photo.height).toBeGreaterThan(480);
+    for (const block of layout.blocks) {
+      for (let index = 0; index < block.lines.length; index += 1) {
+        const baseline = block.baseline + index * block.size * 1.25;
+        expect(
+          baseline <= layout.scene.photo.y ||
+            baseline >= layout.scene.photo.y + layout.scene.photo.height
+        ).toBe(true);
+      }
+    }
+  }
+);
+
+it("does not invent a player result for a spectator memory", () => {
+  const layout = storyRecapLayout({
+    ...base,
+    template: "custom",
+    viewerPlayerId: "spectator",
+  })!;
+  expect(layout.blocks.some(({ id }) => id === "memory-result")).toBe(false);
 });

@@ -12,25 +12,25 @@ export const plans = {
     storageBytes: 0,
   },
   free: {
-    version: "free-v1",
+    version: "free-v2",
     name: "Free",
     priceCents: 0,
-    games: 5,
-    storageBytes: 100 * MiB,
+    games: 12,
+    storageBytes: 250 * MiB,
   },
   plus: {
-    version: "plus-v1",
+    version: "plus-v2",
     name: "Plus",
     priceCents: 14_900,
-    games: 12,
-    storageBytes: 500 * MiB,
+    games: 40,
+    storageBytes: 2048 * MiB,
   },
   pro: {
-    version: "pro-v1",
+    version: "pro-v2",
     name: "Pro",
     priceCents: 29_900,
-    games: 30,
-    storageBytes: 2048 * MiB,
+    games: 100,
+    storageBytes: 10 * 1024 * MiB,
   },
 } as const;
 
@@ -61,9 +61,31 @@ export function normalizeBillingCatalog(
 ): BillingPlan[] {
   return defaultBillingPlans.map((fallback) => {
     const stored = catalog?.find((plan) => plan.id === fallback.id);
+    // Upgrade only unchanged standard v1 offers. Preserve custom published
+    // terms, availability and account/paid snapshots.
+    const legacy = {
+      free: { games: 5, storageBytes: 100 * MiB },
+      plus: { games: 12, storageBytes: 500 * MiB },
+      pro: { games: 30, storageBytes: 2048 * MiB },
+    };
+    const previous = fallback.id === "unlimited" ? null : legacy[fallback.id];
+    const standardLegacy =
+      previous &&
+      stored &&
+      stored.version === `${fallback.id}-v1` &&
+      stored.games === previous.games &&
+      stored.storageBytes === previous.storageBytes &&
+      stored.priceCents === fallback.priceCents;
     return {
       ...fallback,
       ...stored,
+      ...(standardLegacy
+        ? {
+            version: fallback.version,
+            games: fallback.games,
+            storageBytes: fallback.storageBytes,
+          }
+        : {}),
       visible: fallback.id === "unlimited" ? false : (stored?.visible ?? true),
     };
   });
@@ -84,8 +106,21 @@ export const mediaPolicy = {
     dailyUploads: 10,
     bucket: "chat-images",
   },
-  memory: { maxBytes: 2 * MiB, dailyUploads: 20, bucket: "session-memories" },
+  memory: {
+    maxBytes: 2 * MiB,
+    dailyUploads: 100,
+    perGame: 50,
+    bucket: "session-memories",
+  },
 } as const;
+
+export type GamePhotoAllowance = {
+  photosUsed: number;
+  photoLimit: number;
+  bytesUsed: number;
+  storageBytes: number;
+  storageUnlimited: boolean;
+};
 
 export const billingProviders = [
   "GCash",

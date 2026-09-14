@@ -1,6 +1,5 @@
 import Image from "next/image";
 import type { ComponentProps, CSSProperties } from "react";
-
 import type { SessionRecap } from "./recap";
 import type {
   RecapShareTemplateId,
@@ -31,10 +30,17 @@ import {
 } from "./story-scene";
 import {
   type StoryTheme,
+  storyArtSubject,
+  storyMemoryInk,
   storyPhotoDecorations,
+  storyPosterEdges,
+  storyPosterPanel,
+  storyResultColor,
   storyScoreFont,
+  storySurface,
   storyThemeDecorations,
 } from "./story-theme";
+import styles from "./story-workspace.module.css";
 
 export type RecapBackground = {
   id: string;
@@ -50,10 +56,12 @@ export function RecapStoryCard({
   ...props
 }: ComponentProps<typeof StoryContent> & { join?: StoryJoinDetails | null }) {
   if (!join) return <StoryContent {...props} />;
-  const surface =
+  const surface = storySurface(
+    props.theme ?? "minimal",
     props.background.imageUrl && props.photoRole === "foreground"
-      ? props.sceneBackground
-      : props.background;
+      ? (props.sceneBackground ?? { color: "#ffe0eb", light: true })
+      : props.background
+  );
   return (
     <div
       className={`relative isolate aspect-[9/16] overflow-hidden rounded-xl ${props.className ?? ""}`}
@@ -100,6 +108,8 @@ function StoryContent({
   invitation,
   courtCount = 0,
   joinMode = "off",
+  photoPlaceholder = false,
+  onAddPhoto,
 }: {
   title: string;
   venue: string;
@@ -123,6 +133,8 @@ function StoryContent({
   invitation?: StoryInvitationFacts;
   courtCount?: number;
   joinMode?: "qr" | "link" | "off";
+  photoPlaceholder?: boolean;
+  onAddPhoto?: () => void;
 }) {
   const isInvitation = template === "invitation" || template === "spots";
   const framedCopy =
@@ -168,8 +180,8 @@ function StoryContent({
     customHeadline,
     customNote,
     theme,
-    hasPhoto: Boolean(background.imageUrl),
-    photoRole,
+    hasPhoto: Boolean(background.imageUrl) || photoPlaceholder,
+    photoRole: photoPlaceholder ? "foreground" : photoRole,
     photoPlacement,
   });
   const scene =
@@ -183,9 +195,14 @@ function StoryContent({
       true,
       { bottom: storyJoinGeometry(joinMode).footer.y - 32 }
     );
-  const surface = scene.framed
+  const selectedSurface = scene.framed
     ? (sceneBackground ?? { color: "#ffe0eb", light: true })
     : background;
+  const surface = storySurface(theme, selectedSurface);
+  const artOptions = {
+    subject: storyArtSubject(template),
+    accent: selectedSurface.color,
+  };
   const light =
     Boolean(surface.light) && (!background.imageUrl || scene.framed);
   const artTransform = storyArtTransform(scene.art);
@@ -208,7 +225,7 @@ function StoryContent({
       role="group"
       aria-roledescription="slide"
       aria-label={`${template.replaceAll("-", " ")} social recap preview`}
-      className={`relative isolate aspect-[9/16] overflow-hidden rounded-xl [container-type:inline-size] ${light ? "text-[#17181d]" : "text-white"} ${className}`}
+      className={`${styles.photoMemory} relative isolate aspect-[9/16] overflow-hidden rounded-xl [container-type:inline-size] ${light ? "text-[#17181d]" : "text-white"} ${className}`}
       style={
         {
           backgroundColor: surface.color ?? "#11131a",
@@ -216,6 +233,26 @@ function StoryContent({
         } as CSSProperties
       }
     >
+      {!background.imageUrl && !photoPlaceholder ? (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 1080 1920"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          fill="none"
+        >
+          {storyPosterEdges(theme, surface.light ? "#17181d" : "#ffffff").map(
+            (decoration) => (
+              <path
+                key={decoration.path}
+                d={decoration.path}
+                fill={decoration.fill ?? "none"}
+                stroke={decoration.stroke}
+                strokeWidth={decoration.strokeWidth}
+              />
+            )
+          )}
+        </svg>
+      ) : null}
       {scene.frame ? (
         <span
           aria-hidden
@@ -225,6 +262,60 @@ function StoryContent({
             backgroundColor: "#fff8f0",
           }}
         />
+      ) : null}
+      {photoPlaceholder ? (
+        <button
+          type="button"
+          onClick={onAddPhoto}
+          aria-label="Add your photo to this memory"
+          className={`absolute ${styles.photoPlaceholder}`}
+          style={storyRegionStyle(scene.photo)}
+        >
+          <svg
+            aria-hidden="true"
+            width="88"
+            height="100"
+            viewBox="0 0 88 100"
+            fill="none"
+          >
+            <path
+              d="M22 8h24q14 0 14 16v27q0 13-14 13h-6v27H28V63q-20 0-20-16V24Q8 8 22 8Z"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M20 23h28M20 30h28M29 76h11M29 83h11"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <circle
+              cx="65"
+              cy="67"
+              r="18"
+              fill="#cfda9e"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M59 59h.1M71 59h.1M65 67h.1M59 75h.1M71 75h.1"
+              stroke="currentColor"
+              strokeWidth="4"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="font-bold" style={{ fontSize: "5cqw" }}>
+            Your photo goes here
+          </span>
+          <span style={{ fontSize: "3.5cqw" }}>
+            The crew. The court. Your favorite moment.
+          </span>
+          <span
+            className="mt-2 rounded-full border border-current px-4 py-2 font-semibold"
+            style={{ fontSize: "3.5cqw" }}
+          >
+            Add your photo
+          </span>
+        </button>
       ) : null}
       {background.imageUrl ? (
         <div
@@ -239,7 +330,7 @@ function StoryContent({
             sizes="(max-width: 640px) 90vw, 430px"
             unoptimized
             className="object-cover"
-            style={{ objectPosition: `center ${photoPosition}%` }}
+            style={{ objectPosition: `${photoPosition}% ${photoPosition}%` }}
           />
           {!scene.framed ? (
             <span
@@ -303,7 +394,11 @@ function StoryContent({
                 ? light
                   ? "rgba(23,24,29,.62)"
                   : "rgba(255,255,255,.68)"
-                : "currentColor"
+                : block.id === "result"
+                  ? storyResultColor(theme, selectedSurface, "currentColor")
+                  : template === "custom" && block.id === "headline"
+                    ? storyMemoryInk(theme, light ? "#17181d" : "#ffffff")
+                    : "currentColor"
             }
           >
             {block.lines.map((line, index) => (
@@ -326,6 +421,17 @@ function StoryContent({
           className="pointer-events-none absolute inset-0 h-full w-full"
           fill="none"
         >
+          {theme === "court-pop" && !scene.frame && !background.imageUrl
+            ? storyPosterPanel(scene.art).map((decoration) => (
+                <path
+                  key={decoration.path}
+                  d={decoration.path}
+                  fill={decoration.fill ?? "none"}
+                  stroke={decoration.stroke}
+                  strokeWidth={decoration.strokeWidth}
+                />
+              ))
+            : null}
           <g
             transform={
               scene.frame
@@ -334,8 +440,8 @@ function StoryContent({
             }
           >
             {(scene.frame
-              ? storyPhotoDecorations(theme, scene.frame)
-              : storyThemeDecorations(theme)
+              ? storyPhotoDecorations(theme, scene.frame, artOptions)
+              : storyThemeDecorations(theme, artOptions)
             ).map((decoration) => (
               <path
                 key={decoration.path}

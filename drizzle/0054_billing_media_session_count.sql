@@ -1,0 +1,1 @@
+CREATE INDEX "billing_media_session_kind_status_idx" ON "billing_media" USING btree ("session_id","kind","status");

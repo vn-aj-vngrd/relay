@@ -132,3 +132,20 @@ describe("shared pricing presentation", () => {
     expect(screen.getByText(/no automatic debit/)).toBeInTheDocument();
   });
 });
+
+it("explains the shared album cap independently from retained storage", () => {
+  render(
+    <>
+      <PlanComparison catalog={defaultBillingPlans} />
+      <PricingQuestions />
+    </>
+  );
+  expect(
+    screen.getByRole("row", {
+      name: /Photos per game · shared album, not monthly/,
+    })
+  ).toHaveTextContent("50 photos");
+  expect(
+    screen.getByText(/Whichever fills first stops new uploads/)
+  ).toBeInTheDocument();
+});

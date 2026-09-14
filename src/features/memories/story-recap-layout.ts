@@ -3,13 +3,18 @@ import { type RecapShareTemplateId, viewerStanding } from "./recap-share";
 import {
   type CopyBlock,
   prepareInvitationBlocks,
+  prepareStoryPoster,
 } from "./story-framed-invitation";
 import {
   type StoryPhotoPlacement,
   type StoryPhotoRole,
   storyScene,
 } from "./story-scene";
-import { type StoryTheme, storyScoreFont } from "./story-theme";
+import {
+  type StoryTheme,
+  storyMemoryFont,
+  storyScoreFont,
+} from "./story-theme";
 
 export type RecapStoryInput = {
   template: RecapShareTemplateId;
@@ -274,7 +279,24 @@ function recapCopy(input: RecapStoryInput) {
       ];
       break;
     case "custom":
-      head = [{ ...heading(input.customHeadline || input.title), size: 88 }];
+      head = [{ ...heading(input.customHeadline || input.title), size: 104 }];
+      body = [
+        row(
+          "memory-stats",
+          `${recap.matchCount} ${plural(recap.matchCount, "match", "matches")} · ${recap.totalPoints} ${plural(recap.totalPoints, "point")} played`,
+          38,
+          { weight: 600 }
+        ),
+        ...(personal
+          ? [
+              row(
+                "memory-result",
+                `${personal.name} · ${personal.wins}–${personal.losses} wins–losses`,
+                34
+              ),
+            ]
+          : []),
+      ];
       titleInHeading =
         !input.customHeadline || input.customHeadline === input.title;
       break;
@@ -313,6 +335,53 @@ export function storyRecapLayout(input: RecapStoryInput) {
     return null;
   const copy = recapCopy(input);
   const framed = input.hasPhoto && input.photoRole === "foreground";
+  if (input.theme !== "minimal") {
+    const bold = input.theme === "court-pop";
+    const emphasize = (block: StoryRow): StoryRow => ({
+      ...block,
+      size:
+        block.id === "result"
+          ? framed
+            ? 144
+            : bold
+              ? 240
+              : 192
+          : block.id === "headline"
+            ? input.template === "custom"
+              ? 104
+              : framed
+                ? 72
+                : bold
+                  ? 112
+                  : 88
+            : block.size,
+      weight:
+        bold && (block.id === "headline" || block.numeric) ? 900 : block.weight,
+    });
+    copy.head = copy.head.map(emphasize);
+    copy.body = copy.body.map(emphasize);
+    if (!framed) {
+      // Keep a player's name and record together above the art.
+      if (copy.body[0]?.id === "result") {
+        copy.head.push(...copy.body.splice(0, 2));
+      }
+      const poster = prepareStoryPoster(copy.head, copy.body, 1810);
+      const blocks = poster.blocks.map((block) => ({
+        ...block,
+        fontFamily:
+          input.template === "custom" && block.id === "headline"
+            ? storyMemoryFont(input.theme)
+            : block.numeric
+              ? storyScoreFont(input.theme)
+              : "Inter, Arial, sans-serif",
+      }));
+      return {
+        ...poster,
+        blocks,
+        separators: recapSeparators(blocks),
+      };
+    }
+  }
   const center = framed && input.photoPlacement === "center";
   const initialScene = storyScene(
     input.theme,
@@ -362,22 +431,32 @@ export function storyRecapLayout(input: RecapStoryInput) {
         x: 72,
         y,
         baseline: y + block.size,
-        fontFamily: block.numeric
-          ? storyScoreFont(input.theme)
-          : "Inter, Arial, sans-serif",
+        fontFamily:
+          input.template === "custom" && block.id === "headline"
+            ? storyMemoryFont(input.theme)
+            : block.numeric
+              ? storyScoreFont(input.theme)
+              : "Inter, Arial, sans-serif",
       };
       y += block.height;
       return result;
     });
   };
+  const bodyHeight = height(prepared.body);
+  const bodyTop = framed
+    ? scene.facts.y
+    : input.theme === "minimal" && !input.hasPhoto
+      ? 160 + (1650 - bodyHeight) / 2
+      : 1810 - bodyHeight;
   const blocks = [
     ...position(prepared.head, scene.heading?.y ?? 160),
-    ...position(
-      prepared.body,
-      framed ? scene.facts.y : 1810 - height(prepared.body)
-    ),
+    ...position(prepared.body, bodyTop),
   ];
-  const separators = blocks.flatMap((block, index) =>
+  return { scene, blocks, separators: recapSeparators(blocks), factor };
+}
+
+function recapSeparators(blocks: Array<StoryRow & { y: number; gap: number }>) {
+  return blocks.flatMap((block, index) =>
     block.separatorBefore && index > 0
       ? [
           {
@@ -389,7 +468,6 @@ export function storyRecapLayout(input: RecapStoryInput) {
         ]
       : []
   );
-  return { scene, blocks, separators, factor };
 }
 
 export function drawStoryRecap(
@@ -397,7 +475,9 @@ export function drawStoryRecap(
   layout: NonNullable<ReturnType<typeof storyRecapLayout>>,
   foreground: string,
   secondary: string,
-  separator: string
+  separator: string,
+  resultColor = foreground,
+  headlineColor = foreground
 ) {
   context.save();
   context.fillStyle = separator;
@@ -406,7 +486,13 @@ export function drawStoryRecap(
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
   for (const block of layout.blocks) {
-    context.fillStyle = block.secondary ? secondary : foreground;
+    context.fillStyle = block.secondary
+      ? secondary
+      : block.id === "result"
+        ? resultColor
+        : block.id === "headline"
+          ? headlineColor
+          : foreground;
     context.font = `${block.weight} ${block.size}px ${block.fontFamily}`;
     block.lines.forEach((text, index) =>
       context.fillText(

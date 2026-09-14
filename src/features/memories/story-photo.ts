@@ -31,7 +31,8 @@ export async function drawStoryPhoto(
     );
     const drawWidth = bitmap.width * scale;
     const drawHeight = bitmap.height * scale;
-    const overflow = Math.max(0, drawHeight - box.height);
+    const overflowY = Math.max(0, drawHeight - box.height);
+    const overflowX = Math.max(0, drawWidth - box.width);
     if (bounds) {
       context.save();
       context.beginPath();
@@ -41,8 +42,8 @@ export async function drawStoryPhoto(
     try {
       context.drawImage(
         bitmap,
-        box.x + (box.width - drawWidth) / 2,
-        box.y - overflow * (photoPosition / 100),
+        box.x - overflowX * (photoPosition / 100),
+        box.y - overflowY * (photoPosition / 100),
         drawWidth,
         drawHeight
       );

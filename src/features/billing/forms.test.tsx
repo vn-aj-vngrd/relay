@@ -33,10 +33,10 @@ describe("subscription forms", () => {
     const plan = defaultBillingPlans[1];
     render(<BillingPlanForm plan={plan} />);
     expect(screen.getByLabelText("Price per month (PHP)")).toHaveValue("149");
-    expect(screen.getByLabelText("Games per month")).toHaveValue(12);
+    expect(screen.getByLabelText("Games per month")).toHaveValue(40);
     expect(
       screen.getByLabelText("Total photo storage (MiB, not monthly)")
-    ).toHaveValue(500);
+    ).toHaveValue(2048);
     expect(
       screen.getByRole("checkbox", { name: /reviewed the monthly price/ })
     ).not.toBeChecked();

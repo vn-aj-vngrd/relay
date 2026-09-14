@@ -2,14 +2,14 @@ import {
   type FramedInvitationInput,
   invitationCopyBlocks,
   prepareInvitationBlocks,
+  prepareStoryPoster,
 } from "./story-framed-invitation";
 import { storyJoinGeometry } from "./story-join";
 import { storyScene } from "./story-scene";
 
-/** Nonframed invitations retain the export's large type and full-width rows.
- * Footer modes change only the bottom anchor for ordinary copy. Artwork stays
- * in its original slot; only overflow copy rewraps at smaller type, never via a
- * scene/facts transform. Framed invitations keep their separate photo budget. */
+/** Expressive invitations separate the leading title, fitted artwork and
+ * footer-aware facts. Minimal retains its low-aligned factual baseline.
+ * Framed invitations keep their separate photo budget. */
 export function storyInvitationLayout(input: FramedInvitationInput) {
   const bottom = Math.min(
     1810,
@@ -19,6 +19,8 @@ export function storyInvitationLayout(input: FramedInvitationInput) {
     bottom,
   });
   const { heading, details } = invitationCopyBlocks(input, false);
+  if (input.theme !== "minimal")
+    return prepareStoryPoster(heading, details, bottom);
   const copy = [...heading, ...details];
   const prepare = (factor: number) =>
     prepareInvitationBlocks(copy, factor, scene.facts.width);

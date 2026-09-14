@@ -58,7 +58,7 @@ export function storyScene(
         ? 80
         : 0;
     const photoHeight = Math.min(
-      840,
+      1120,
       available - factsHeight - gap - headingSpace
     );
     if (placement === "bottom") {
@@ -86,7 +86,7 @@ export function storyScene(
     facts = region(top, bottom - top);
   }
   const frame = framed ? photo : null;
-  const leftInset = theme === "minimal" ? 20 : 116;
+  const leftInset = theme === "minimal" ? 20 : 40;
   const inset = theme === "minimal" ? 20 : 40;
   return {
     framed,

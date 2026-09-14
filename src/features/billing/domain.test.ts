@@ -109,21 +109,27 @@ describe("personal subscription policy", () => {
       })
     ).toMatchObject({ plan: "free", games: 0, storageBytes: 500 * MiB });
   });
-  it("offers five Free games and thirty Pro games for PHP 299", () => {
+  it("offers 12 Free, 40 Plus and 100 Pro games with retained storage", () => {
     expect(plans.free).toMatchObject({
-      games: 5,
-      storageBytes: 100 * MiB,
+      games: 12,
+      storageBytes: 250 * MiB,
       priceCents: 0,
     });
     expect(plans.pro).toMatchObject({
-      games: 30,
-      storageBytes: 2048 * MiB,
+      games: 100,
+      storageBytes: 10 * 1024 * MiB,
       priceCents: 29900,
+    });
+    expect(plans.plus).toMatchObject({
+      games: 40,
+      storageBytes: 2048 * MiB,
+      priceCents: 14900,
     });
     expect(mediaPolicy.chat).toMatchObject({ maxBytes: MiB, dailyUploads: 10 });
     expect(mediaPolicy.memory).toMatchObject({
       maxBytes: 2 * MiB,
-      dailyUploads: 20,
+      dailyUploads: 100,
+      perGame: 50,
     });
   });
   it("resets Free at Philippine midnight, not UTC midnight", () => {
@@ -155,7 +161,7 @@ describe("personal subscription policy", () => {
   it("defaults to Free", () =>
     expect(resolveAllowance({ now })).toMatchObject({
       plan: "free",
-      games: 5,
+      games: 12,
       gamesOverridden: false,
     }));
   it("carries calendar-month creation usage into a new Pro term", () =>
@@ -167,7 +173,7 @@ describe("personal subscription policy", () => {
   it("expires access exactly at the boundary without a background job", () =>
     expect(resolveAllowance({ now: term.endsAt, term })).toMatchObject({
       plan: "free",
-      games: 5,
+      games: 12,
       start: new Date("2026-06-30T16:00:00Z"),
     }));
   it("resolves overrides per field, including zero", () =>

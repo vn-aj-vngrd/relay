@@ -133,6 +133,40 @@ export async function checkGameCreation(
   return { existingSessionId: null, createdAt };
 }
 
+// Count reservations as well as stored photos, so concurrent uploads cannot
+// claim the last album slot twice. Confirmed deletion releases both quotas.
+export async function getGamePhotoCount(
+  sessionId: string,
+  connection: BillingTransaction | typeof db = db
+) {
+  const [row] = await connection
+    .select({ photoCount: sql<number>`count(*)::int` })
+    .from(billingMedia)
+    .where(
+      and(
+        eq(billingMedia.sessionId, sessionId),
+        eq(billingMedia.kind, "memory"),
+        ne(billingMedia.status, "released")
+      )
+    );
+  return row?.photoCount ?? 0;
+}
+
+export async function getGamePhotoAllowance(hostId: string, sessionId: string) {
+  const [usage, photosUsed] = await Promise.all([
+    getAccountUsage(hostId),
+    getGamePhotoCount(sessionId),
+  ]);
+  // Only upload-relevant totals cross the route boundary, never billing records.
+  return {
+    photosUsed,
+    photoLimit: mediaPolicy.memory.perGame,
+    bytesUsed: usage.bytesUsed,
+    storageBytes: usage.storageBytes,
+    storageUnlimited: usage.storageUnlimited,
+  };
+}
+
 export async function reserveMedia(input: {
   hostId: string;
   sessionId: string;
@@ -155,13 +189,22 @@ export async function reserveMedia(input: {
     );
     await lockBillingAccount(tx, input.hostId);
     const createdAt = new Date();
+    if (
+      input.kind === "memory" &&
+      (await getGamePhotoCount(input.sessionId, tx)) >=
+        mediaPolicy.memory.perGame
+    ) {
+      throw new BillingError(
+        `This game has reached its ${mediaPolicy.memory.perGame}-photo limit, shared by all players. The host can remove a game photo to make room. Upgrading does not increase this album limit.`
+      );
+    }
     const usage = await getAccountUsage(input.hostId, tx, createdAt);
     if (
       !usage.storageUnlimited &&
       usage.bytesUsed + input.bytes > usage.storageBytes
     )
       throw new BillingError(
-        "This game’s host has reached their photo-storage limit. You can still send text messages and submit payment proof."
+        "This photo exceeds the host’s remaining shared storage. The host can manage photos or view plans in Settings. Storage does not reset monthly; existing photos, text chat and payment proof remain available."
       );
     const [{ count }] = await tx
       .select({ count: sql<number>`count(*)::int` })

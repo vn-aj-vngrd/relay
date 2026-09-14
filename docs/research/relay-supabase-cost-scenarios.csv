@@ -1,0 +1,5 @@
+scenario,hosts,storage_utilization,monthly_delivery_multiple,cached_fraction,average_storage_GB,cached_egress_GB,uncached_egress_GB,modeled_USD_month
+Small pilot,100,0.25,3,0.8,26.718,64.123,16.031,25.0
+Moderate scale,1000,0.25,3,0.8,267.177,641.225,160.306,40.3
+Heavy photo use,1000,1,10,0.8,1068.709,8549.669,2137.417,464.49
+Heavy uncached stress,1000,1,10,0,1068.709,0.0,10687.087,984.97

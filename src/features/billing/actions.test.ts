@@ -201,8 +201,8 @@ describe("subscription payment approval", () => {
       billingTerms,
       expect.objectContaining({
         source: "complimentary",
-        planVersion: "plus-v1",
-        games: 12,
+        planVersion: "plus-v2",
+        games: 40,
         endsAt: new Date(`${end}T23:59:59.999+08:00`),
       })
     );
@@ -350,7 +350,7 @@ describe("admin catalog publishing", () => {
   function publish(overrides: Record<string, string> = {}) {
     return form({
       id: "plus",
-      version: "plus-v1",
+      version: "plus-v2",
       price: "179.50",
       games: "15",
       storageMiB: "750",
@@ -425,7 +425,7 @@ describe("admin catalog publishing", () => {
   });
   it("cannot charge for or pause Free", async () => {
     expect(
-      await saveBillingPlan({}, publish({ id: "free", version: "free-v1" }))
+      await saveBillingPlan({}, publish({ id: "free", version: "free-v2" }))
     ).toHaveProperty("error");
     expect(mocks.values).not.toHaveBeenCalled();
   });
@@ -452,7 +452,7 @@ describe("upgrade requests", () => {
     expect(
       await createUpgradeRequest(
         {},
-        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+        form({ methodId: id, planId: "plus", planVersion: "plus-v2" })
       )
     ).toHaveProperty("error");
     expect(mocks.values).not.toHaveBeenCalled();
@@ -464,7 +464,7 @@ describe("upgrade requests", () => {
     expect(
       await createUpgradeRequest(
         {},
-        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+        form({ methodId: id, planId: "plus", planVersion: "plus-v2" })
       )
     ).toHaveProperty("error");
     expect(mocks.values).not.toHaveBeenCalled();
@@ -489,7 +489,7 @@ describe("upgrade requests", () => {
     expect(
       await createUpgradeRequest(
         {},
-        form({ methodId: id, planId: "plus", planVersion: "plus-v1" })
+        form({ methodId: id, planId: "plus", planVersion: "plus-v2" })
       )
     ).toHaveProperty("error");
     expect(mocks.values).not.toHaveBeenCalled();
@@ -552,7 +552,7 @@ describe("upgrade requests", () => {
         {},
         form({
           methodId: id,
-          planVersion: "pro-v1",
+          planVersion: "pro-v2",
           amountCents: "1",
           qrPath: "attacker",
         })

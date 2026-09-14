@@ -91,9 +91,9 @@ describe("dedicated public pricing page", () => {
     expect(
       cards[2].compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING
     ).not.toBe(0);
-    expect(main.getByText("5 games per month")).toBeInTheDocument();
     expect(main.getByText("12 games per month")).toBeInTheDocument();
-    expect(main.getByText("30 games per month")).toBeInTheDocument();
+    expect(main.getByText("40 games per month")).toBeInTheDocument();
+    expect(main.getByText("100 games per month")).toBeInTheDocument();
     expect(
       main.getByRole("heading", { name: "How plans work" })
     ).toBeInTheDocument();

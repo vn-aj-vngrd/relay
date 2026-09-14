@@ -48,6 +48,13 @@ test("expressive real Story components fit long facts and export every theme", a
   });
   await page.addScriptTag({ path: bundle });
   await expect(page.locator("#theme-sheet [data-story-theme]")).toHaveCount(5);
+  for (const card of await page
+    .locator("#theme-sheet [data-story-theme]")
+    .all()) {
+    const heading = card.locator('[data-story-fact="headline"]');
+    await expect(heading.locator("tspan")).toHaveCount(1);
+    await expect(heading).toHaveText("vanajvanguardia");
+  }
   await page.evaluate(() => document.fonts.ready);
   await page
     .locator("#theme-sheet")
@@ -63,28 +70,25 @@ test("expressive real Story components fit long facts and export every theme", a
       .poll(() =>
         page.locator("#stress-sheet [data-story-theme]").evaluateAll((cards) =>
           cards.every((card) => {
-            const header = card
-              .querySelector('[data-story-region="header"]')!
-              .getBoundingClientRect();
-            const frame = card
-              .querySelector('[data-story-region="facts"]')!
-              .getBoundingClientRect();
-            const facts = card
-              .querySelector("[data-story-fitted-content]")!
-              .getBoundingClientRect();
-            const headerElement = card.querySelector(
-              '[data-story-region="header"]'
+            const header = card.querySelector(
+              '[data-story-region="header"] text'
             )!;
-            const range = document.createRange();
-            range.selectNodeContents(headerElement);
-            const headerText = range.getBoundingClientRect();
+            const headerBounds = header.getBoundingClientRect();
             const cardBounds = card.getBoundingClientRect();
+            const facts = [...card.querySelectorAll("[data-story-fact]")];
             return (
-              headerText.bottom <=
+              facts.length > 0 &&
+              headerBounds.bottom <=
                 cardBounds.top + cardBounds.height * (136 / 1920) &&
-              header.bottom < frame.top &&
-              facts.top >= frame.top - 1 &&
-              facts.bottom <= frame.bottom + 1
+              facts.every((fact) => {
+                const bounds = fact.getBoundingClientRect();
+                return (
+                  bounds.left >= cardBounds.left &&
+                  bounds.right <= cardBounds.right &&
+                  bounds.top > headerBounds.bottom &&
+                  bounds.bottom <= cardBounds.bottom
+                );
+              })
             );
           })
         )
@@ -99,6 +103,22 @@ test("expressive real Story components fit long facts and export every theme", a
   await page.locator("#theme-sheet, #stress-sheet").evaluateAll((elements) => {
     for (const element of elements) element.remove();
   });
+  await expect(
+    page.getByRole("button", { name: "Scrapbook", exact: true })
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("button", { name: "Add your photo to this memory" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Download PNG", exact: true })
+  ).toBeDisabled();
+  await page.getByRole("button", { name: "Night recap", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: /Customize story/ })
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    page.getByRole("group", { name: "Story theme" }).getByRole("button")
+  ).toHaveCount(5);
   const photo = await page.evaluate(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 720;
@@ -119,6 +139,36 @@ test("expressive real Story components fit long facts and export every theme", a
     context.fill();
     return canvas.toDataURL("image/png").split(",")[1];
   });
+  // The photo-memory entry works before opening Customize.
+  await page.getByRole("button", { name: "Your story", exact: true }).click();
+  await page
+    .getByLabel("Your caption", { exact: true })
+    .fill("Our Saturday crew.");
+  await page.getByLabel("Choose story photo file").setInputFiles({
+    name: "memory-court.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(photo, "base64"),
+  });
+  await expect(page.getByRole("status")).toContainText("hasn’t been uploaded");
+  await expect(
+    page.getByRole("button", { name: "Add your photo to this memory" })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Download PNG", exact: true })
+  ).toBeEnabled();
+  const memoryDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download PNG", exact: true }).click();
+  await (await memoryDownload).saveAs(testInfo.outputPath("photo-memory.png"));
+  await page.getByRole("button", { name: "Change photo", exact: true }).click();
+  await page.getByRole("button", { name: "Remove photo", exact: true }).click();
+  await expect(page.getByLabel("Your caption", { exact: true })).toHaveValue(
+    "Our Saturday crew."
+  );
+  await expect(
+    page.getByRole("button", { name: "Add your photo to this memory" })
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Night recap", exact: true }).click();
+  await page.getByRole("button", { name: "More stories", exact: true }).click();
   await page.getByText("Customize story", { exact: true }).click();
   for (const label of [
     "Minimal",
@@ -127,7 +177,6 @@ test("expressive real Story components fit long facts and export every theme", a
     "Court Pop",
     "Retro Rally",
   ]) {
-    await page.getByRole("button", { name: "Layout", exact: true }).click();
     await page.getByRole("button", { name: label, exact: true }).click();
     await page.getByRole("button", { name: "Background", exact: true }).click();
     await page.getByRole("button", { name: "Baby Pink background" }).click();
@@ -175,11 +224,14 @@ test("expressive real Story components fit long facts and export every theme", a
             const photoBounds = element
               .querySelector('[data-story-region="photo"]')!
               .getBoundingClientRect();
-            const facts = element
-              .querySelector('[data-story-region="facts"]')!
-              .getBoundingClientRect();
-            return (
-              photoBounds.bottom <= facts.top || facts.bottom <= photoBounds.top
+            return [...element.querySelectorAll("[data-story-fact]")].every(
+              (fact) => {
+                const bounds = fact.getBoundingClientRect();
+                return (
+                  photoBounds.bottom <= bounds.top ||
+                  bounds.bottom <= photoBounds.top
+                );
+              }
             );
           })
         )

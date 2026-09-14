@@ -1,9 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
+import { ButtonLink } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
+import {
+  type GamePhotoAllowance,
+  mediaPolicy,
+} from "@/features/billing/domain";
 import { sessionAccent } from "@/features/sessions/accent";
 import {
   formatSessionDate,
@@ -13,10 +17,11 @@ import {
   type PlayerPriceInput,
   playerPriceText,
 } from "@/features/sessions/player-price";
-
 import { MemoryPhotoForm } from "./memory-photo-form";
+import { MemoryPhotoGallery } from "./memory-photo-gallery";
 import type { SessionRecap as SessionRecapData } from "./recap";
 import { RecapShareCard } from "./recap-share-card";
+import styles from "./story-workspace.module.css";
 
 export type SessionMemoryData = {
   media: Array<{
@@ -39,6 +44,8 @@ export function SessionMemories({
   storyAsOf,
   joinUrl,
   price,
+  photoAllowance,
+  canManageStorage = false,
 }: {
   session: {
     id: string;
@@ -66,6 +73,8 @@ export function SessionMemories({
   storyAsOf: string;
   joinUrl?: string | null;
   price?: PlayerPriceInput;
+  photoAllowance?: GamePhotoAllowance;
+  canManageStorage?: boolean;
 }) {
   const photos = (memory?.media ?? []).flatMap((item) =>
     item.url
@@ -74,6 +83,7 @@ export function SessionMemories({
             id: item.id,
             url: item.url,
             alt: item.altText ?? `Photo from ${session.title}`,
+            caption: item.caption,
           },
         ]
       : []
@@ -105,7 +115,9 @@ export function SessionMemories({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-7">
+    <div
+      className={`${styles.storySurface} flex min-w-0 flex-col gap-4 sm:gap-6`}
+    >
       {showPhotos ? (
         <TabChipRail
           label="Story views"
@@ -115,88 +127,104 @@ export function SessionMemories({
           ]}
           value={activeView}
           onChange={setView}
-          variant="underline"
-          className="border-b border-line"
+          variant="chip"
         />
       ) : null}
 
-      {activeView === "make" ? (
-        <section aria-label="Create a story">
-          <RecapShareCard
-            sessionId={session.id}
-            joinUrl={joinUrl}
-            title={session.title}
-            venue={session.venueName}
-            date={date}
-            accent={accent.solid}
-            recap={recap}
-            photos={photos}
-            viewerPlayerId={viewerPlayerId}
-            phase={session.status as "published" | "live" | "completed"}
-            invitation={{
-              hostName,
-              priceLabel: playerPriceText(price ?? session),
-              goingCount,
-              capacity: session.capacity,
-              requiresApproval: session.requiresApproval,
-              waitlistOpen: goingCount >= session.capacity,
-            }}
-            courtCount={session.courtCount}
-            storyAsOf={storyAsOf}
-          />
-        </section>
-      ) : null}
+      {/* Keep the local photo and edits when browsing game photos. */}
+      <section aria-label="Create a story" hidden={activeView !== "make"}>
+        <RecapShareCard
+          sessionId={session.id}
+          joinUrl={joinUrl}
+          title={session.title}
+          venue={session.venueName}
+          date={date}
+          accent={accent.solid}
+          recap={recap}
+          photos={photos}
+          viewerPlayerId={viewerPlayerId}
+          phase={session.status as "published" | "live" | "completed"}
+          invitation={{
+            hostName,
+            priceLabel: playerPriceText(price ?? session),
+            goingCount,
+            capacity: session.capacity,
+            requiresApproval: session.requiresApproval,
+            waitlistOpen: goingCount >= session.capacity,
+          }}
+          courtCount={session.courtCount}
+          storyAsOf={storyAsOf}
+        />
+      </section>
 
       {activeView === "photos" ? (
-        <section aria-labelledby="memory-photos-title">
-          <div>
-            <h2 id="memory-photos-title" className="text-xl font-bold">
-              Photos from the game
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted">
-              Keep the moments the scoreboard missed. Added photos also become
-              available as story backgrounds.
-            </p>
-          </div>
-          {photos.length ? (
-            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {memory?.media.map((item) =>
-                item.url ? (
-                  <figure key={item.id}>
-                    <Image
-                      src={item.url}
-                      alt={item.altText ?? "Session photo"}
-                      width={640}
-                      height={640}
-                      className="aspect-square w-full rounded-[10px] object-cover"
-                    />
-                    {item.caption ? (
-                      <figcaption className="mt-1 text-xs text-muted">
-                        {item.caption}
-                      </figcaption>
-                    ) : null}
-                  </figure>
-                ) : null
+        <section
+          aria-labelledby="memory-photos-title"
+          className={styles.photosWorkspace}
+        >
+          <header className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 id="memory-photos-title" className="text-xl font-bold">
+                Photos from the game
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Keep your game moments here, then use them in Make.
+              </p>
+            </div>
+            {canManageStorage ? (
+              <ButtonLink
+                href="/settings/plan/media"
+                variant="secondary"
+                className="shrink-0"
+              >
+                Manage photos
+              </ButtonLink>
+            ) : null}
+          </header>
+          <div
+            className={
+              canContribute && !uploadsDisabled
+                ? styles.photosWithUpload
+                : styles.photosLayout
+            }
+          >
+            {canContribute && !uploadsDisabled ? (
+              <div className={styles.photoUpload}>
+                <MemoryPhotoForm
+                  sessionId={session.id}
+                  allowance={photoAllowance}
+                  canManageStorage={canManageStorage}
+                />
+              </div>
+            ) : null}
+            <div className={styles.photoGallery}>
+              <h3 className="mb-3 text-sm font-semibold">
+                {photoAllowance?.photosUsed ?? memory?.media.length ?? 0} /{" "}
+                {photoAllowance?.photoLimit ?? mediaPolicy.memory.perGame} game
+                photos
+              </h3>
+              {photos.length ? (
+                <MemoryPhotoGallery photos={photos} />
+              ) : (
+                <div className="rounded-xl bg-surface-strong px-5 py-8">
+                  <p className="text-sm font-semibold">
+                    Your game album starts here
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted">
+                    {canContribute && !uploadsDisabled
+                      ? "No photos yet. Add the first moment from the game."
+                      : "No photos have been added to this game yet."}
+                  </p>
+                </div>
               )}
+              {canContribute && uploadsDisabled ? (
+                <p className="mt-4 text-sm leading-6 text-muted">
+                  The host has turned off participant photo uploads. Existing
+                  photos remain available.
+                </p>
+              ) : null}
             </div>
-          ) : (
-            <p className="mt-4 border-y border-line py-7 text-sm text-muted">
-              {canContribute && !uploadsDisabled
-                ? "No photos yet. Add the first moment from the game."
-                : "No photos have been added to this game yet."}
-            </p>
-          )}
-          {canContribute && uploadsDisabled ? (
-            <p className="mt-5 text-sm text-muted">
-              The host has turned off participant photo uploads. Existing photos
-              remain available.
-            </p>
-          ) : null}
-          {canContribute && !uploadsDisabled ? (
-            <div className="mt-5">
-              <MemoryPhotoForm sessionId={session.id} />
-            </div>
-          ) : null}
+          </div>
         </section>
       ) : null}
     </div>

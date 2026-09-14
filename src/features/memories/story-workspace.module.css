@@ -1,3 +1,92 @@
+@font-face {
+  font-family: "Relay Hand";
+  src: url("/fonts/caveat/Caveat.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+.photoMemory {
+  isolation: isolate;
+}
+
+/* Shared by account and shared-link Story. Chips use the shared compact size. */
+.storySurface {
+  width: 100%;
+  min-width: 0;
+}
+
+.storySurface section {
+  min-width: 0;
+}
+
+.photosWorkspace {
+  width: 100%;
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+.photosLayout,
+.photosWithUpload {
+  display: grid;
+  gap: 1.75rem;
+  margin-top: 1.25rem;
+  align-items: start;
+}
+
+.photoUpload,
+.photoGallery {
+  min-width: 0;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 0.75rem;
+}
+
+.singlePhoto {
+  max-width: 22rem;
+}
+
+@media (min-width: 48rem) {
+  .photosWithUpload {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+    column-gap: 2rem;
+  }
+
+  .photosWithUpload .photoGallery {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .photosWithUpload .photoUpload {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+.photoPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #e9e4d7;
+  color: #34544f;
+  border: 1px dashed #8a9e94;
+  cursor: pointer;
+}
+
+.photoPlaceholder:focus-visible {
+  outline: 3px solid var(--color-primary, #347571);
+  outline-offset: -6px;
+}
+
+.photoPlaceholder:hover {
+  background: #e0e0ce;
+}
+
 .workspace {
   display: grid;
   min-width: 0;
@@ -15,11 +104,11 @@
   margin-inline: auto;
 }
 
-/* Bound one dimension only: the card owns the true 9:16 aspect ratio.
-   svh keeps browser chrome opening/closing from jumping the controls. */
+/* Keep practical details readable on phones; the page can scroll rather than
+   shrinking the story to fit the viewport left beneath game navigation. */
 .portrait {
   position: relative;
-  width: min(100%, 17.5rem, 30svh);
+  width: min(100%, 20rem);
   margin-inline: auto;
 }
 
@@ -30,10 +119,36 @@
   margin-top: 1rem;
 }
 
+.themeRail {
+  margin-top: 0.75rem;
+  padding-block: 0.25rem;
+}
+
+.themeRail .themeOption {
+  display: flex;
+  flex: 0 0 5.25rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.375rem 0.375rem 0.5rem;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.themeThumbnail {
+  display: block;
+  width: 4.375rem;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 5px;
+}
+
 .actions > button {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
   white-space: normal;
   line-height: 1.25;
   padding-block: 0.5rem;
@@ -97,6 +212,33 @@
     orientation: landscape
   ) {
   .portrait {
-    width: min(100%, 28.125svh);
+    width: min(100%, 17.5rem);
+  }
+}
+
+.photoViewer {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  gap: 1rem;
+  padding: max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.photoViewer button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+@media (max-width: 47.999rem) {
+  .shareActions {
+    position: sticky;
+    /* Match the shared shells’ reserved space above mobile navigation. */
+    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    z-index: 20;
+    background: var(--surface);
+    padding-block: 0.75rem;
+    border-top: 1px solid var(--line);
   }
 }

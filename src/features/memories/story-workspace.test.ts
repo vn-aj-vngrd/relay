@@ -8,7 +8,7 @@ const stylesheet = readFileSync(
 
 describe("Story workspace responsive layout contract", () => {
   it("keeps mobile centered and stacked with bounded desktop columns", () => {
-    const mobile = stylesheet.match(/^\.workspace\s*\{([^}]+)\}/)?.[1];
+    const mobile = stylesheet.match(/^\.workspace\s*\{([^}]+)\}/m)?.[1];
     expect(mobile).toContain("max-width: 40rem");
     expect(mobile).toContain("margin-inline: auto");
     expect(mobile).not.toContain("grid-template-columns");

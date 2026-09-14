@@ -63,6 +63,7 @@ const context = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubGlobal("Path2D", class {});
   mocks.toCanvas.mockResolvedValue(undefined);
   vi.stubGlobal(
     "ResizeObserver",
@@ -177,7 +178,7 @@ describe("invitation join details", () => {
         ...props,
         template: focus === "Invitation" ? "invitation" : "spots",
         customNote: "",
-        theme: "minimal",
+        theme: "scrapbook",
         placement: "center",
         joinMode: "qr",
       });
@@ -510,7 +511,7 @@ describe("invitation join details", () => {
       ).toHaveStyle(storyRegionStyle(scene.photo));
       expect(
         container.querySelector('[data-story-region="photo"] img')
-      ).toHaveStyle({ objectPosition: "center 75%" });
+      ).toHaveStyle({ objectPosition: "75% 75%" });
       fireEvent.click(screen.getByRole("button", { name: "Download PNG" }));
       await waitFor(() =>
         expect(drawPhoto).toHaveBeenCalledWith(
@@ -590,7 +591,7 @@ describe("invitation join details", () => {
       fireEvent.click(screen.getByRole("button", { name: "Message" }));
       const customNote =
         "Bring your paddle and stay for a few friendly games with us.";
-      fireEvent.change(screen.getByLabelText(/Personal line/), {
+      fireEvent.change(screen.getByRole("textbox", { name: /Personal line/ }), {
         target: { value: customNote },
       });
       const layout = framedInvitationLayout({

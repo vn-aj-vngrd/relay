@@ -55,7 +55,20 @@ import {
   storyArtTransform,
   storyScene,
 } from "./story-scene";
-import { drawStoryTheme, type StoryTheme, storyThemes } from "./story-theme";
+import {
+  defaultStoryTheme,
+  drawStoryDecorations,
+  drawStoryTheme,
+  type StoryTheme,
+  storyArtSubject,
+  storyMemoryInk,
+  storyPosterEdges,
+  storyPosterPanel,
+  storyResultColor,
+  storySurface,
+  storyThemes,
+} from "./story-theme";
+import { StoryThemePicker } from "./story-theme-picker";
 import styles from "./story-workspace.module.css";
 import { useStoryQr } from "./use-story-qr";
 
@@ -138,17 +151,21 @@ export function RecapShareCard({
     [customBackground, gameAccent, photos]
   );
   const [template, setTemplate] = useState<RecapShareTemplateId>(
-    templates[0].id
+    templates.find((item) => item.id === "custom")?.id ?? templates[0].id
   );
-  const [theme, setTheme] = useState<StoryTheme>("minimal");
+  const [theme, setTheme] = useState<StoryTheme>(defaultStoryTheme);
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
+  const [photoOptionsOpen, setPhotoOptionsOpen] = useState(false);
+  const [moreStoriesOpen, setMoreStoriesOpen] = useState(false);
+  const photoOptionsId = useId();
+  const storyOptionsId = useId();
   const [photoPosition, setPhotoPosition] = useState(50);
   const [photoRole, setPhotoRole] = useState<StoryPhotoRole>("foreground");
   const [photoPlacement, setPhotoPlacement] =
     useState<StoryPhotoPlacement>("center");
   const [surfaceId, setSurfaceId] = useState(`accent:${gameAccent.id}`);
-  const [customHeadline, setCustomHeadline] = useState("Our kind of game.");
+  const [customHeadline, setCustomHeadline] = useState("Same court next week?");
   const [customNote, setCustomNote] = useState("");
   const [joinMode, setJoinMode] = useState<StoryJoinMode>("qr");
   const [pending, setPending] = useState(false);
@@ -156,8 +173,8 @@ export function RecapShareCard({
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [customizeSection, setCustomizeSection] = useState<
-    "theme" | "background" | "message"
-  >("theme");
+    "background" | "message"
+  >("background");
   const customizeButton = useRef<HTMLButtonElement>(null);
   const customizationId = useId();
   const previewTitleId = useId();
@@ -205,6 +222,7 @@ export function RecapShareCard({
           qrStatus: qr?.status ?? "loading",
         }
       : null;
+  const photoRequired = template === "custom" && !background.imageUrl;
   const qrBlocked = join?.mode === "qr" && qr?.status !== "ready";
   const joinKey = `${eligibleJoinUrl ?? ""}|${joinMode}|${activeTemplate.id}`;
   const currentJoinKey = useRef(joinKey);
@@ -244,6 +262,7 @@ export function RecapShareCard({
   async function chooseCustomPhoto(file: File | undefined) {
     if (!file) return;
     const selection = ++photoSelection.current;
+    setMessage("Adding your photo…");
     if (
       !isSupportedImageType(file.type) ||
       file.size === 0 ||
@@ -273,6 +292,7 @@ export function RecapShareCard({
       file,
     });
     setBackgroundId("custom-photo");
+    if (template === "custom") setPhotoRole("foreground");
     setMessage("Photo added to this story only. It hasn’t been uploaded.");
   }
 
@@ -297,6 +317,7 @@ export function RecapShareCard({
   }
 
   async function createCard(linkOnly = false) {
+    if (photoRequired) throw new Error("Add a photo to this memory first");
     const exportJoin =
       join && linkOnly ? { ...join, mode: "link" as const } : join;
     if (exportJoin?.mode === "qr" && qr?.status !== "ready") {
@@ -307,6 +328,13 @@ export function RecapShareCard({
     canvas.height = 1920;
     const context = canvas.getContext("2d");
     if (!context) throw new Error("Canvas unavailable");
+    // Use the same loaded face as the SVG preview, including poster weights.
+    if (
+      template === "custom" &&
+      (theme === "scrapbook" || theme === "coquette")
+    )
+      await document.fonts?.load?.('700 104px "Relay Hand"');
+    await document.fonts?.ready;
 
     const framedCopy =
       background.imageUrl &&
@@ -368,10 +396,20 @@ export function RecapShareCard({
         Boolean(exportJoin),
         { bottom: storyJoinGeometry(exportJoin?.mode ?? "off").footer.y - 32 }
       );
-    const surface = scene.framed ? sceneBackground : background;
+    const selectedSurface = scene.framed ? sceneBackground : background;
+    const surface = storySurface(theme, selectedSurface);
+    const artOptions = {
+      subject: storyArtSubject(template),
+      accent: selectedSurface.color,
+    };
     context.fillStyle = surface.color ?? "#11131a";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.save();
+    if (!background.imageUrl)
+      drawStoryDecorations(
+        context,
+        storyPosterEdges(theme, surface.light ? "#17181d" : "#ffffff")
+      );
     if (scene.frame) {
       context.fillStyle = "#fff8f0";
       context.fillRect(
@@ -434,16 +472,26 @@ export function RecapShareCard({
       );
     }
     if (recapCopy) {
-      drawStoryRecap(context, recapCopy, foreground, secondary, rule);
+      drawStoryRecap(
+        context,
+        recapCopy,
+        foreground,
+        secondary,
+        rule,
+        storyResultColor(theme, selectedSurface, foreground),
+        template === "custom" ? storyMemoryInk(theme, foreground) : foreground
+      );
     }
     if (scene.frame) {
-      drawStoryTheme(context, theme, scene.frame);
+      drawStoryTheme(context, theme, scene.frame, artOptions);
     } else if (theme !== "minimal") {
+      if (theme === "court-pop" && !background.imageUrl)
+        drawStoryDecorations(context, storyPosterPanel(scene.art));
       const art = storyArtTransform(scene.art);
       context.save();
       context.translate(art.x, art.y);
       context.scale(art.scale, art.scale);
-      drawStoryTheme(context, theme);
+      drawStoryTheme(context, theme, undefined, artOptions);
       context.restore();
     } else {
       drawStoryTheme(context, theme);
@@ -570,25 +618,6 @@ export function RecapShareCard({
         }}
         className={`${styles.carousel} rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/25`}
       >
-        <div className="mb-3 flex items-center justify-end gap-3">
-          <Button type="button" variant="quiet" onClick={openPreview}>
-            Enlarge preview
-          </Button>
-        </div>
-        <div
-          className="mb-3 grid gap-1"
-          style={{
-            gridTemplateColumns: `repeat(${templates.length}, minmax(0, 1fr))`,
-          }}
-        >
-          {templates.map((item) => (
-            <span
-              key={item.id}
-              aria-hidden
-              className={`h-1 rounded-full ${item.id === template ? "bg-primary" : "bg-line"}`}
-            />
-          ))}
-        </div>
         <div
           className={styles.portrait}
           onTouchStart={(event) => {
@@ -621,6 +650,8 @@ export function RecapShareCard({
             recap={recap}
             template={template}
             background={background}
+            photoPlaceholder={photoRequired}
+            onAddPhoto={() => customPhotoInput.current?.click()}
             viewerPlayerId={viewerPlayerId}
             theme={theme}
             overlay={overlay}
@@ -636,12 +667,14 @@ export function RecapShareCard({
             courtCount={courtCount}
             className="w-full shadow-[0_3px_8px_rgb(20_24_34_/_0.12)]"
           />
-          <button
-            type="button"
-            onClick={openPreview}
-            className="absolute inset-0 z-10 cursor-zoom-in rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/35"
-            aria-label="Expand story preview"
-          />
+          {!photoRequired ? (
+            <button
+              type="button"
+              onClick={openPreview}
+              className="absolute inset-0 z-10 cursor-zoom-in rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-primary/35"
+              aria-label="Expand story preview"
+            />
+          ) : null}
         </div>
         <div className="mt-3 grid grid-cols-[44px_1fr_44px] items-center gap-2">
           <button
@@ -666,21 +699,185 @@ export function RecapShareCard({
         </div>
       </div>
       <div className="min-w-0">
+        <section className="mb-5" aria-label="Memory photo">
+          <h2 className="text-lg font-bold">Make it your memory</h2>
+          <p className="mt-1 text-sm text-muted">
+            Add a photo. Pick a look. Share your game.
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            {background.imageUrl ? (
+              <Image
+                src={background.imageUrl}
+                alt="Selected story photo"
+                width={48}
+                height={48}
+                unoptimized
+                className="h-12 w-12 rounded-lg object-cover"
+              />
+            ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              aria-expanded={photoOptionsOpen}
+              aria-controls={photoOptionsId}
+              onClick={() => setPhotoOptionsOpen((open) => !open)}
+            >
+              <ImageSquare aria-hidden size={18} />
+              {background.imageUrl ? "Change photo" : "Add your photo"}
+            </Button>
+          </div>
+          <div id={photoOptionsId} hidden={!photoOptionsOpen} className="mt-3">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => customPhotoInput.current?.click()}
+              >
+                Choose from device
+              </Button>
+              {background.imageUrl ? (
+                <Button
+                  type="button"
+                  variant="quiet"
+                  onClick={() => {
+                    photoSelection.current += 1;
+                    setBackgroundId(surfaceId);
+                    setCustomBackground(null);
+                    setMessage("");
+                  }}
+                >
+                  Remove photo
+                </Button>
+              ) : null}
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              Device photos are added to your story only.
+            </p>
+            {photos.length ? (
+              <div className="mt-3">
+                <p className="mb-2 text-xs font-semibold">
+                  Or use a game photo
+                </p>
+                <div
+                  className="flex gap-2 overflow-x-auto"
+                  role="group"
+                  aria-label="Game photos for your memory"
+                >
+                  {photos.map((photo) => (
+                    <button
+                      type="button"
+                      key={photo.id}
+                      aria-label={`Use ${photo.alt}`}
+                      aria-pressed={backgroundId === `photo:${photo.id}`}
+                      className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 border-line focus-visible:outline-2 focus-visible:outline-primary"
+                      onClick={() => {
+                        photoSelection.current += 1;
+                        setBackgroundId(`photo:${photo.id}`);
+                        setPhotoRole("foreground");
+                        setMessage("");
+                      }}
+                    >
+                      <Image
+                        src={photo.url}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                      {backgroundId === `photo:${photo.id}` ? (
+                        <span className="absolute inset-0 grid place-items-center bg-black/25 text-white">
+                          <Check aria-hidden size={18} />
+                        </span>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+          {template === "custom" ? (
+            <>
+              <label className="mt-3 block text-sm font-semibold">
+                Your caption
+                <input
+                  value={customHeadline}
+                  onChange={(event) => setCustomHeadline(event.target.value)}
+                  maxLength={56}
+                  className="field"
+                  placeholder="Our kind of game."
+                />
+              </label>
+              <div className="mt-2">
+                <TabChipRail
+                  label="Memory caption ideas"
+                  items={[
+                    "Same court next week?",
+                    "Our kind of game.",
+                    "Good games. Better company.",
+                  ].map((line) => ({ value: line, label: line }))}
+                  value={customHeadline}
+                  onChange={setCustomHeadline}
+                />
+              </div>
+            </>
+          ) : null}
+          <input
+            ref={customPhotoInput}
+            type="file"
+            aria-label="Choose story photo file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              void chooseCustomPhoto(file);
+            }}
+          />
+        </section>
         <fieldset className="min-w-0">
           <legend className="sr-only">Story focus</legend>
-          <div className="mt-3">
+          <div id={storyOptionsId} className="mt-3">
             <TabChipRail
               label="Story focus options"
               className={styles.optionRail}
-              items={templates.map((item) => ({
-                value: item.id,
-                label: item.label,
-              }))}
+              items={templates
+                .filter(
+                  (item) =>
+                    moreStoriesOpen ||
+                    templates.length <= 4 ||
+                    [
+                      "custom",
+                      "overview",
+                      "personal",
+                      "crew",
+                      template,
+                    ].includes(item.id)
+                )
+                .map((item) => ({ value: item.id, label: item.label }))}
               value={template}
               onChange={chooseTemplate}
             />
           </div>
+          {templates.length > 4 ? (
+            <button
+              type="button"
+              className="mt-2 min-h-9 rounded-lg px-1 text-sm font-semibold text-primary hover:underline"
+              aria-expanded={moreStoriesOpen}
+              aria-controls={storyOptionsId}
+              onClick={() => setMoreStoriesOpen((open) => !open)}
+            >
+              {moreStoriesOpen ? "Fewer stories" : "More stories"}
+            </button>
+          ) : null}
         </fieldset>
+
+        <StoryThemePicker
+          theme={theme}
+          subject={storyArtSubject(template)}
+          photoUrl={background.imageUrl}
+          onChange={setTheme}
+          accent={(scene.framed ? sceneBackground : background).color ?? accent}
+        />
 
         <div className="mt-6 border-y border-line">
           <button
@@ -732,7 +929,6 @@ export function RecapShareCard({
               <TabChipRail
                 label="Customize options"
                 items={[
-                  { value: "theme", label: "Theme" },
                   { value: "background", label: "Background" },
                   { value: "message", label: "Message" },
                 ]}
@@ -740,32 +936,6 @@ export function RecapShareCard({
                 onChange={setCustomizeSection}
                 variant="underline"
               />
-              {customizeSection === "theme" ? (
-                <div>
-                  <fieldset className="mt-4 min-w-0">
-                    <legend className="text-sm font-bold">Theme</legend>
-                    <div className="mt-3">
-                      <TabChipRail
-                        label="Story theme"
-                        className={styles.optionRail}
-                        items={storyThemes.map((item) => ({
-                          value: item.id,
-                          label: item.label,
-                        }))}
-                        value={theme}
-                        onChange={setTheme}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-muted">
-                      {
-                        storyThemes.find((item) => item.id === theme)
-                          ?.description
-                      }
-                    </p>
-                  </fieldset>
-                </div>
-              ) : null}
-
               {customizeSection === "background" ? (
                 <div>
                   <fieldset className="mt-4 min-w-0">
@@ -822,18 +992,6 @@ export function RecapShareCard({
                       >
                         <ImageSquare aria-hidden size={21} />
                       </button>
-                      <input
-                        ref={customPhotoInput}
-                        type="file"
-                        aria-label="Choose story photo file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="sr-only"
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          event.target.value = "";
-                          void chooseCustomPhoto(file);
-                        }}
-                      />
                     </div>
                     <p className="mt-2 text-xs leading-5 text-muted">
                       Device photos stay local. To share them with the game, add
@@ -893,7 +1051,8 @@ export function RecapShareCard({
                             className="mt-1 min-h-11 w-full accent-primary"
                           />
                           <span className="mt-1 block text-xs font-normal text-muted">
-                            Move the crop from top to bottom.
+                            Move left–right for wide photos or top–bottom for
+                            tall photos. Photos that fit exactly won’t move.
                           </span>
                         </label>
                         {!scene.framed ? (
@@ -924,20 +1083,7 @@ export function RecapShareCard({
               {customizeSection === "message" ? (
                 <fieldset className="mt-4 min-w-0">
                   <legend className="text-sm font-bold">Message</legend>
-                  {template === "custom" ? (
-                    <label className="mt-3 block text-sm font-semibold">
-                      Headline
-                      <input
-                        value={customHeadline}
-                        onChange={(event) =>
-                          setCustomHeadline(event.target.value)
-                        }
-                        maxLength={56}
-                        className="field"
-                        placeholder="Our kind of game."
-                      />
-                    </label>
-                  ) : null}
+
                   <label className="mt-3 block text-sm font-semibold">
                     Personal line{" "}
                     <span className="font-normal text-muted">(optional)</span>
@@ -949,6 +1095,23 @@ export function RecapShareCard({
                       placeholder="Let’s play again soon."
                     />
                   </label>
+                  <div className="mt-3">
+                    <TabChipRail
+                      label="Personal line suggestions"
+                      items={(phase === "published"
+                        ? [
+                            "Meet you at the kitchen.",
+                            "Bring a paddle. Bring a friend.",
+                          ]
+                        : [
+                            "Same court next time?",
+                            "Good games. Better company.",
+                          ]
+                      ).map((line) => ({ value: line, label: line }))}
+                      value={customNote}
+                      onChange={setCustomNote}
+                    />
+                  </div>
                 </fieldset>
               ) : null}
               <Button
@@ -965,8 +1128,12 @@ export function RecapShareCard({
             </div>
           ) : null}
         </div>
-        <div className={styles.actions}>
-          <Button type="button" onClick={share} disabled={pending || qrBlocked}>
+        <div className={`${styles.actions} ${styles.shareActions}`}>
+          <Button
+            type="button"
+            onClick={share}
+            disabled={pending || qrBlocked || photoRequired}
+          >
             {pending ? (
               <ButtonSpinner />
             ) : (
@@ -978,12 +1145,17 @@ export function RecapShareCard({
             type="button"
             variant="secondary"
             onClick={() => void download()}
-            disabled={pending || qrBlocked}
+            disabled={pending || qrBlocked || photoRequired}
           >
             <DownloadSimple aria-hidden size={16} />
             Download PNG
           </Button>
         </div>
+        {photoRequired ? (
+          <p className="mt-2 text-xs text-muted">
+            Add a photo to share this memory.
+          </p>
+        ) : null}
         <StoryJoinHelp
           blocked={qrBlocked}
           failed={qr?.status === "error"}
@@ -1041,6 +1213,8 @@ export function RecapShareCard({
                 recap={recap}
                 template={template}
                 background={background}
+                photoPlaceholder={photoRequired}
+                onAddPhoto={() => customPhotoInput.current?.click()}
                 viewerPlayerId={viewerPlayerId}
                 theme={theme}
                 overlay={overlay}
@@ -1086,7 +1260,7 @@ export function RecapShareCard({
               <Button
                 type="button"
                 onClick={share}
-                disabled={pending || qrBlocked}
+                disabled={pending || qrBlocked || photoRequired}
               >
                 {pending ? (
                   <ButtonSpinner />
@@ -1099,7 +1273,7 @@ export function RecapShareCard({
                 type="button"
                 variant="secondary"
                 onClick={() => void download()}
-                disabled={pending || qrBlocked}
+                disabled={pending || qrBlocked || photoRequired}
                 aria-label="Download PNG"
               >
                 <DownloadSimple aria-hidden size={16} />

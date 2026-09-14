@@ -8,6 +8,7 @@ vi.mock("@/features/analytics/actions", () => ({
   trackSharedSessionEvent: vi.fn(),
 }));
 
+import type { GamePhotoAllowance } from "@/features/billing/domain";
 import type { PlayerPriceInput } from "@/features/sessions/player-price";
 import { buildSessionRecap, type RecapMatch } from "./recap";
 import { SessionMemories } from "./session-memories";
@@ -34,11 +35,13 @@ function renderMemories(
   status: "draft" | "published" | "live" | "completed" | "cancelled",
   visibility: "public" | "link" | "private" = "link",
   price?: PlayerPriceInput,
-  permission = { canContribute: false, uploadsDisabled: false }
+  permission = { canContribute: false, uploadsDisabled: false },
+  photoAllowance?: GamePhotoAllowance
 ) {
   return render(
     <SessionMemories
       price={price}
+      photoAllowance={photoAllowance}
       session={{
         id: "session",
         title: "Saturday Night Pickle",
@@ -81,7 +84,10 @@ describe("SessionMemories", () => {
       screen.queryByRole("button", { name: "Add to memory" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
-    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add your photo to this memory" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeDisabled();
   });
   it.each([
     [{ playerPriceCents: null, hasExpense: false }, "Price not set"],
@@ -227,6 +233,69 @@ describe("SessionMemories", () => {
       screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Make" }));
-    expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add your photo to this memory" })
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Share Story" })).toBeDisabled();
   });
+});
+
+it.each(["public", "link", "private"] as const)(
+  "preserves a %s story draft when switching photo chips",
+  (visibility) => {
+    renderMemories("completed", visibility);
+    const caption = screen.getByRole("textbox", { name: "Your caption" });
+    fireEvent.change(caption, { target: { value: "Our Saturday crew." } });
+    fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
+    const photoInput = screen.getByLabelText("Choose story photo file");
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(screen.queryByRole("textbox", { name: "Your caption" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Photos, 0" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Make" }));
+    expect(screen.getByRole("textbox", { name: "Your caption" })).toHaveValue(
+      "Our Saturday crew."
+    );
+    expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(screen.getByLabelText("Choose story photo file")).toBe(photoInput);
+  }
+);
+
+it.each(["public", "link", "private"] as const)(
+  "includes reserved photos in the %s album usage heading",
+  (visibility) => {
+    renderMemories(
+      "completed",
+      visibility,
+      undefined,
+      { canContribute: true, uploadsDisabled: false },
+      {
+        photosUsed: 50,
+        photoLimit: 50,
+        bytesUsed: 100,
+        storageBytes: 1000000,
+        storageUnlimited: false,
+      }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(
+      screen.getByRole("heading", { name: "50 / 50 game photos" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Add to memory" })
+    ).toBeDisabled();
+  }
+);
+
+it("falls back to stored photo usage when no allowance is provided", () => {
+  renderMemories("completed");
+  fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+  expect(
+    screen.getByRole("heading", { name: "0 / 50 game photos" })
+  ).toBeVisible();
 });

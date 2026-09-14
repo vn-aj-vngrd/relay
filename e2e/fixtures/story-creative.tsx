@@ -6,7 +6,7 @@ import { babyPink } from "../../src/features/memories/story-scene";
 import { storyThemes } from "../../src/features/memories/story-theme";
 
 const players = [
-  "Alexandra dela Cruz",
+  "vanajvanguardia",
   "Christopher Montgomery",
   "María Gabriela Santos",
   "Jamie Lee",
@@ -63,7 +63,7 @@ createRoot(root).render(
           <RecapStoryCard
             {...props}
             background={babyPink}
-            template="standings"
+            template="personal"
             theme={id}
           />
         </section>
@@ -76,34 +76,29 @@ createRoot(root).render(
       {storyThemes
         .filter(({ id }) => id !== "minimal")
         .flatMap(({ id }) =>
-          (["center", "snapshot"] as const).flatMap((layout) =>
-            (["crew", "invitation"] as const).map((template) => (
-              <section
-                key={`${id}-${layout}-${template}`}
-                style={{ width: 199 }}
-              >
-                <h2>
-                  {id} {layout} {template}
-                </h2>
-                <RecapStoryCard
-                  {...props}
-                  background={babyPink}
-                  template={template}
-                  invitation={{
-                    hostName: "Alexandra dela Cruz",
-                    priceLabel: "Free",
-                    goingCount: 8,
-                    capacity: 12,
-                    requiresApproval: false,
-                    waitlistOpen: false,
-                  }}
-                  theme={id}
-                  phase="live"
-                  storyAsOf="September 5 · 10:45 PM · current update"
-                />
-              </section>
-            ))
-          )
+          (["crew", "invitation"] as const).map((template) => (
+            <section key={`${id}-${template}`} style={{ width: 199 }}>
+              <h2>
+                {id} {template}
+              </h2>
+              <RecapStoryCard
+                {...props}
+                background={babyPink}
+                template={template}
+                invitation={{
+                  hostName: "vanajvanguardia",
+                  priceLabel: "Free",
+                  goingCount: 8,
+                  capacity: 12,
+                  requiresApproval: false,
+                  waitlistOpen: false,
+                }}
+                theme={id}
+                phase="live"
+                storyAsOf="September 5 · 10:45 PM · current update"
+              />
+            </section>
+          ))
         )}
     </div>
   </div>

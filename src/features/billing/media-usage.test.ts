@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   bytes: 0,
   uploads: 0,
+  photoCount: 0,
   insert: vi.fn(),
   lock: vi.fn(),
   override: vi.fn(),
@@ -20,9 +21,11 @@ vi.mock("@/db/client", async () => {
     select: (shape: Record<string, unknown>) => ({
       from: (table: unknown) => ({
         where: async () =>
-          "bytes" in shape
-            ? [{ bytes: String(mocks.bytes) }]
-            : [{ count: table === billingMedia ? mocks.uploads : 0 }],
+          "photoCount" in shape
+            ? [{ photoCount: mocks.photoCount }]
+            : "bytes" in shape
+              ? [{ bytes: String(mocks.bytes) }]
+              : [{ count: table === billingMedia ? mocks.uploads : 0 }],
       }),
     }),
     insert: () => ({
@@ -59,6 +62,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.bytes = 0;
   mocks.uploads = 0;
+  mocks.photoCount = 0;
   mocks.override.mockResolvedValue(null);
 });
 
@@ -81,7 +85,7 @@ describe("media reservation allowance", () => {
     );
   });
   it("accepts the exact remaining Free storage capacity", async () => {
-    mocks.bytes = 99 * MiB;
+    mocks.bytes = 249 * MiB;
     await expect(reserveMedia(input)).resolves.toHaveProperty(
       "id",
       "reservation"
@@ -97,8 +101,10 @@ describe("media reservation allowance", () => {
     );
   });
   it("rejects even a one-byte storage overage before reserving", async () => {
-    mocks.bytes = 99 * MiB + 1;
-    await expect(reserveMedia(input)).rejects.toThrow("host has reached");
+    mocks.bytes = 249 * MiB + 1;
+    await expect(reserveMedia(input)).rejects.toThrow(
+      "remaining shared storage"
+    );
     expect(mocks.insert).not.toHaveBeenCalled();
   });
   it("allows the tenth image but not the eleventh for an uploader", async () => {
@@ -125,4 +131,44 @@ describe("media reservation allowance", () => {
       );
     expect(mocks.lock).not.toHaveBeenCalled();
   });
+});
+
+it("reserves the fiftieth album slot but blocks the next photo, independently of storage", async () => {
+  const memory = { ...input, kind: "memory" as const };
+  mocks.photoCount = 49;
+  await expect(reserveMedia(memory)).resolves.toHaveProperty("id");
+  mocks.photoCount = 50;
+  mocks.insert.mockClear();
+  await expect(reserveMedia(memory)).rejects.toThrow("50-photo limit");
+  expect(mocks.insert).not.toHaveBeenCalled();
+});
+
+it("blocks an album with room when the shared storage is exhausted", async () => {
+  mocks.photoCount = 30;
+  mocks.bytes = 250 * MiB;
+  await expect(reserveMedia({ ...input, kind: "memory" })).rejects.toThrow(
+    "remaining shared storage"
+  );
+  expect(mocks.insert).not.toHaveBeenCalled();
+});
+
+it("lets one contributor fill an album without a per-player album cap", async () => {
+  mocks.photoCount = 49;
+  mocks.uploads = 49;
+  await expect(
+    reserveMedia({ ...input, kind: "memory" })
+  ).resolves.toHaveProperty("id");
+});
+
+it("retains the album ceiling even when the host has Unlimited storage", async () => {
+  mocks.override.mockResolvedValue({
+    planOverride: defaultBillingPlans.find((plan) => plan.id === "unlimited"),
+    games: null,
+    storageBytes: null,
+    expiresAt: null,
+  });
+  mocks.photoCount = 50;
+  await expect(reserveMedia({ ...input, kind: "memory" })).rejects.toThrow(
+    "50-photo limit"
+  );
 });
