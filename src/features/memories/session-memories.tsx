@@ -199,7 +199,8 @@ export function SessionMemories({
             ) : null}
             <div className={styles.photoGallery}>
               <h3 className="mb-3 text-sm font-semibold">
-                {memory?.media.length ?? 0} / {mediaPolicy.memory.perGame} game
+                {photoAllowance?.photosUsed ?? memory?.media.length ?? 0} /{" "}
+                {photoAllowance?.photoLimit ?? mediaPolicy.memory.perGame} game
                 photos
               </h3>
               {photos.length ? (
