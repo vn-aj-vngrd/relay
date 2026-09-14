@@ -135,3 +135,38 @@ describe("host-owned media storage", () => {
     expect(mocks.persist).not.toHaveBeenCalled();
   });
 });
+
+describe("memory photo storage phases", () => {
+  it.each(["published", "live", "completed"])(
+    "persists memory photos during %s",
+    async (status) => {
+      mocks.session.mockResolvedValue([
+        { hostId: "host", status, participantImagesEnabled: true },
+      ]);
+      await expect(
+        storeGameMedia({ ...input, kind: "memory" }, mocks.persist)
+      ).resolves.toBeUndefined();
+      expect(mocks.persist).toHaveBeenCalledOnce();
+      expect(mocks.update).toHaveBeenCalledWith({
+        status: "stored",
+        storedAt: expect.any(Date),
+      });
+      expect(mocks.remove).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["draft", "cancelled"])(
+    "cleans up when the locked session is %s",
+    async (status) => {
+      mocks.session.mockResolvedValue([
+        { hostId: "host", status, participantImagesEnabled: true },
+      ]);
+      await expect(
+        storeGameMedia({ ...input, kind: "memory" }, mocks.persist)
+      ).rejects.toThrow("no longer accepting photos");
+      expect(mocks.persist).not.toHaveBeenCalled();
+      expect(mocks.remove).toHaveBeenCalledWith([input.path]);
+      expect(mocks.update).toHaveBeenCalledWith({ status: "released" });
+    }
+  );
+});
