@@ -299,3 +299,41 @@ it("falls back to stored photo usage when no allowance is provided", () => {
     screen.getByRole("heading", { name: "0 / 50 game photos" })
   ).toBeVisible();
 });
+
+it.each(["public", "link", "private"] as const)(
+  "shows Make and Photos before play on %s games",
+  (visibility) => {
+    renderMemories("published", visibility, undefined, {
+      canContribute: true,
+      uploadsDisabled: false,
+    });
+    expect(screen.getByRole("button", { name: "Make" })).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(
+      screen.getByRole("form", { name: "Add a game photo" })
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Make" }));
+    expect(
+      screen.getByRole("region", { name: "Create a story" })
+    ).toBeVisible();
+  }
+);
+
+it.each(["published", "live"] as const)(
+  "respects viewer and upload restrictions during %s",
+  (status) => {
+    const { unmount } = renderMemories(status);
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(screen.queryByRole("form", { name: "Add a game photo" })).toBeNull();
+    unmount();
+    renderMemories(status, "link", undefined, {
+      canContribute: true,
+      uploadsDisabled: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
+    expect(screen.queryByRole("form", { name: "Add a game photo" })).toBeNull();
+    expect(
+      screen.getByText(/host has turned off participant photo uploads/)
+    ).toBeVisible();
+  }
+);

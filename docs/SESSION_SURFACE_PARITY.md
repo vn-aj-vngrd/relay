@@ -109,3 +109,6 @@ Story photo allowance: both account and shared-link surfaces use the same 50-pho
 
 
 Story gallery photos open in a shared fullscreen Dialog on both routes. The viewer displays the complete image with object-contain, caption and live photo counter; previous/next buttons, Left/Right keys and horizontal swipes cycle through available photos. Single-photo albums omit navigation. Escape/native dialog dismissal and Close return focus to the initiating thumbnail. Safe-area padding and bounded scrolling captions preserve mobile controls. Image failures retain recovery text and navigation. Reuses the existing ChatPhotoViewer dialog pattern and Make swipe threshold. Unit coverage added; validation deferred to pre-commit.
+
+
+Story Make and Photos are both available from publication through live play and completion, even with an empty album. Hosts, co-hosts and Going account/guest players can add pregame memories using the existing upload flow. Draft and cancelled games remain unavailable; spectator access is read-only. Participant-image restrictions, shared album caps and host storage limits still apply. The shared SessionMemories implementation keeps both private and public routes aligned. Permission, upload-action and component regression tests cover the phase boundaries; browser execution remains opt-in.
