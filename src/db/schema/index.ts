@@ -1364,6 +1364,11 @@ export const billingMedia = pgTable(
   },
   (table) => [
     index("billing_media_host_idx").on(table.hostId),
+    index("billing_media_session_kind_status_idx").on(
+      table.sessionId,
+      table.kind,
+      table.status
+    ),
     index("billing_media_actor_date_idx").on(table.actorKey, table.createdAt),
     check("billing_media_bytes_valid", sql`${table.bytes} > 0`),
   ]
