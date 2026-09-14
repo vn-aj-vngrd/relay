@@ -1,3 +1,4 @@
+import { type StoryPhotoCrop, storyPhotoGeometry } from "./story-collage";
 import type { StoryRegion } from "./story-scene";
 
 export async function decodeStoryPhoto(source: string | Blob) {
@@ -20,19 +21,18 @@ export async function drawStoryPhoto(
   width: number,
   height: number,
   photoPosition: number,
-  bounds?: StoryRegion
+  bounds?: StoryRegion,
+  crop?: StoryPhotoCrop
 ) {
   const bitmap = await decodeStoryPhoto(source);
   try {
     const box = bounds ?? { x: 0, y: 0, width, height };
-    const scale = Math.max(
-      box.width / bitmap.width,
-      box.height / bitmap.height
+    const geometry = storyPhotoGeometry(
+      bitmap.width,
+      bitmap.height,
+      box,
+      crop ?? { x: photoPosition, y: photoPosition, zoom: 1 }
     );
-    const drawWidth = bitmap.width * scale;
-    const drawHeight = bitmap.height * scale;
-    const overflowY = Math.max(0, drawHeight - box.height);
-    const overflowX = Math.max(0, drawWidth - box.width);
     if (bounds) {
       context.save();
       context.beginPath();
@@ -42,10 +42,10 @@ export async function drawStoryPhoto(
     try {
       context.drawImage(
         bitmap,
-        box.x - overflowX * (photoPosition / 100),
-        box.y - overflowY * (photoPosition / 100),
-        drawWidth,
-        drawHeight
+        geometry.x,
+        geometry.y,
+        geometry.width,
+        geometry.height
       );
     } finally {
       if (bounds) context.restore();

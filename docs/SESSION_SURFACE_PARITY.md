@@ -112,3 +112,6 @@ Story gallery photos open in a shared fullscreen Dialog on both routes. The view
 
 
 Story Make and Photos are both available from publication through live play and completion, even with an empty album. Hosts, co-hosts and Going account/guest players can add pregame memories using the existing upload flow. Draft and cancelled games remain unavailable; spectator access is read-only. Participant-image restrictions, shared album caps and host storage limits still apply. The shared SessionMemories implementation keeps both private and public routes aligned. Permission, upload-action and component regression tests cover the phase boundaries; browser execution remains opt-in.
+
+
+Story collage composer: both authenticated and shared routes use the same RecapShareCard through SessionMemories. Photos/Layout/Look/Details controls and the updated MemoriesSkeleton share the same mobile structure. The personal draft supports 1–4 device/album photos, independent crops and order, and both collage arrangements across all five themes. It survives Make/Photos switches in memory only. This does not change pregame upload permissions, album limits, storage accounting or the shared gallery. Regression coverage is authored; validation deferred to pre-commit.

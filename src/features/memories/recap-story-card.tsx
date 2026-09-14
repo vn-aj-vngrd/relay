@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { ComponentProps, CSSProperties } from "react";
 import type { SessionRecap } from "./recap";
 import type {
@@ -6,6 +5,11 @@ import type {
   StoryInvitationFacts,
   StoryPhase,
 } from "./recap-share";
+import {
+  type StoryCollageLayout,
+  type StorySelectedPhoto,
+  storyPhotoSlots,
+} from "./story-collage";
 import {
   framedInvitationLayout,
   invitationSeparators,
@@ -20,6 +24,7 @@ import {
   storyJoinPalette,
 } from "./story-join";
 import { StoryJoinFooter } from "./story-join-footer";
+import { StoryPhotoPreview } from "./story-photo-preview";
 import { storyRecapLayout } from "./story-recap-layout";
 import {
   type StoryPhotoPlacement,
@@ -37,6 +42,7 @@ import {
   storyPosterPanel,
   storyResultColor,
   storyScoreFont,
+  storySecondaryInk,
   storySurface,
   storyThemeDecorations,
 } from "./story-theme";
@@ -102,14 +108,14 @@ function StoryContent({
   sceneBackground,
   customHeadline = "Our kind of game.",
   customNote = "",
-  storyAsOf,
   className = "",
-  phase = "completed",
   invitation,
   courtCount = 0,
   joinMode = "off",
   photoPlaceholder = false,
   onAddPhoto,
+  selectedPhotos,
+  collageLayout = "editorial",
 }: {
   title: string;
   venue: string;
@@ -135,6 +141,8 @@ function StoryContent({
   joinMode?: "qr" | "link" | "off";
   photoPlaceholder?: boolean;
   onAddPhoto?: () => void;
+  selectedPhotos?: StorySelectedPhoto[];
+  collageLayout?: StoryCollageLayout;
 }) {
   const isInvitation = template === "invitation" || template === "spots";
   const framedCopy =
@@ -215,7 +223,7 @@ function StoryContent({
   const separators = invitationCopy
     ? invitationSeparators(invitationCopy)
     : (recapCopy?.separators ?? []);
-  const header = `RELAY · ${isInvitation ? `GAME INVITE · ${storyAsOf ?? "CURRENT PLAN"}` : phase === "live" ? `LIVE · ${storyAsOf ?? "CURRENT UPDATE"}` : "NIGHT MEMORY"}`;
+  const header = "RELAY";
 
   return (
     <div
@@ -317,30 +325,53 @@ function StoryContent({
           </span>
         </button>
       ) : null}
-      {background.imageUrl ? (
-        <div
-          data-story-region="photo"
-          className="absolute overflow-hidden"
-          style={storyRegionStyle(scene.photo)}
-        >
-          <Image
-            src={background.imageUrl}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 90vw, 430px"
-            unoptimized
-            className="object-cover"
-            style={{ objectPosition: `${photoPosition}% ${photoPosition}%` }}
-          />
-          {!scene.framed ? (
-            <span
-              aria-hidden
-              className="absolute inset-0"
-              style={{ backgroundColor: `rgba(8,10,16,${overlay / 100})` }}
-            />
-          ) : null}
-        </div>
-      ) : null}
+      {background.imageUrl
+        ? (() => {
+            const images = selectedPhotos?.length
+              ? selectedPhotos
+              : [
+                  {
+                    id: background.id,
+                    label: background.label,
+                    imageUrl: background.imageUrl,
+                    crop: { x: photoPosition, y: photoPosition, zoom: 1 },
+                  },
+                ];
+            const slots = storyPhotoSlots(
+              scene.photo,
+              images.length,
+              collageLayout
+            );
+            return (
+              <>
+                {images.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    data-story-region="photo"
+                    data-photo-id={photo.id}
+                    className="absolute overflow-hidden"
+                    style={storyRegionStyle(slots[index])}
+                  >
+                    <StoryPhotoPreview
+                      key={photo.imageUrl}
+                      src={photo.imageUrl}
+                      crop={photo.crop}
+                    />
+                  </div>
+                ))}
+                {!scene.framed ? (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{
+                      backgroundColor: `rgba(8,10,16,${overlay / 100})`,
+                    }}
+                  />
+                ) : null}
+              </>
+            );
+          })()
+        : null}
       <svg
         aria-hidden="true"
         viewBox="0 0 1080 1920"
@@ -391,9 +422,7 @@ function StoryContent({
             fontWeight={block.weight}
             fill={
               block.secondary
-                ? light
-                  ? "rgba(23,24,29,.62)"
-                  : "rgba(255,255,255,.68)"
+                ? storySecondaryInk(light)
                 : block.id === "result"
                   ? storyResultColor(theme, selectedSurface, "currentColor")
                   : template === "custom" && block.id === "headline"

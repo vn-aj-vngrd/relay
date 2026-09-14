@@ -1,3 +1,4 @@
+import { storyColors } from "./story-color";
 import type { StoryRegion } from "./story-scene";
 
 export const defaultStoryTheme = "scrapbook" as const;
@@ -6,15 +7,20 @@ export type StoryArtOptions = {
   accent?: string;
 };
 
-/** Saturated palette choices ink the artwork; light palettes tint the paper.
+/** Palette choices tint the paper as well as the artwork.
  * Full-background photos retain their existing contrast controls. */
 export function storySurface<
   T extends { color?: string; light?: boolean; imageUrl?: string },
 >(theme: StoryTheme, surface: T): T {
   if (theme === "minimal" || surface.imageUrl) return surface;
+  const palette = storyColors.find(
+    (option) => option.color.toLowerCase() === surface.color?.toLowerCase()
+  );
   return {
     ...surface,
-    color: surface.light ? surface.color : storyThemePaper(theme),
+    color: surface.light
+      ? surface.color
+      : (palette?.soft ?? storyThemePaper(theme)),
     light: true,
   };
 }
@@ -114,6 +120,10 @@ export function storyMemoryInk(theme: StoryTheme, foreground: string) {
   if (theme === "scrapbook") return "#2454b8";
   if (theme === "coquette") return "#9b365e";
   return foreground;
+}
+
+export function storySecondaryInk(light: boolean) {
+  return light ? "#5b5963" : "#ffffff";
 }
 
 export function storyMemoryFont(theme: StoryTheme) {

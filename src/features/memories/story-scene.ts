@@ -9,12 +9,8 @@ export type StoryRegion = {
   height: number;
 };
 
-export const babyPink = {
-  id: "story:pink",
-  label: "Baby Pink",
-  color: "#ffe0eb",
-  light: true,
-} as const;
+export { babyPink } from "./story-color";
+
 const region = (y: number, height: number): StoryRegion => ({
   x: 72,
   y,

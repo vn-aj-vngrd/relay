@@ -103,19 +103,23 @@ test("expressive real Story components fit long facts and export every theme", a
   await page.locator("#theme-sheet, #stress-sheet").evaluateAll((elements) => {
     for (const element of elements) element.remove();
   });
-  await expect(
-    page.getByRole("button", { name: "Scrapbook", exact: true })
-  ).toHaveAttribute("aria-pressed", "true");
+  const editor = page.getByRole("group", { name: "Story editor", exact: true });
+  const section = async (name: string) =>
+    editor.getByRole("button", { name, exact: true }).click();
+  await expect(editor.getByRole("button")).toHaveCount(4);
+  await expect(page.getByText("Customize story", { exact: true })).toHaveCount(
+    0
+  );
   await expect(
     page.getByRole("button", { name: "Add your photo to this memory" })
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Download PNG", exact: true })
   ).toBeDisabled();
-  await page.getByRole("button", { name: "Night recap", exact: true }).click();
+  await section("Look");
   await expect(
-    page.getByRole("button", { name: /Customize story/ })
-  ).toHaveAttribute("aria-expanded", "false");
+    page.getByRole("button", { name: "Scrapbook", exact: true })
+  ).toHaveAttribute("aria-pressed", "true");
   await expect(
     page.getByRole("group", { name: "Story theme" }).getByRole("button")
   ).toHaveCount(5);
@@ -139,85 +143,85 @@ test("expressive real Story components fit long facts and export every theme", a
     context.fill();
     return canvas.toDataURL("image/png").split(",")[1];
   });
-  // The photo-memory entry works before opening Customize.
-  await page.getByRole("button", { name: "Your story", exact: true }).click();
+  await section("Details");
   await page
     .getByLabel("Your caption", { exact: true })
     .fill("Our Saturday crew.");
-  await page.getByLabel("Choose story photo file").setInputFiles({
-    name: "memory-court.png",
-    mimeType: "image/png",
-    buffer: Buffer.from(photo, "base64"),
-  });
-  await expect(page.getByRole("status")).toContainText("hasn’t been uploaded");
+  await section("Photos");
+  const upload = async (names: string[]) => {
+    await section("Photos");
+    await page.getByLabel("Choose story photo file").setInputFiles(
+      names.map((name) => ({
+        name: `${name}.png`,
+        mimeType: "image/png",
+        buffer: Buffer.from(photo, "base64"),
+      }))
+    );
+    await expect(page.getByRole("status")).toContainText(
+      "Nothing was uploaded"
+    );
+  };
+  const downloadStory = async (name: string) => {
+    const downloaded = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Download PNG", exact: true })
+      .click();
+    const path = testInfo.outputPath(name);
+    await (await downloaded).saveAs(path);
+    const png = await readFile(path);
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1080, 1920]);
+  };
+  await upload(["memory-court"]);
   await expect(
     page.getByRole("button", { name: "Add your photo to this memory" })
   ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "Download PNG", exact: true })
-  ).toBeEnabled();
-  const memoryDownload = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download PNG", exact: true }).click();
-  await (await memoryDownload).saveAs(testInfo.outputPath("photo-memory.png"));
-  await page.getByRole("button", { name: "Change photo", exact: true }).click();
+  await downloadStory("photo-memory.png");
+  await page.getByRole("button", { name: /^Edit photo 1:/ }).click();
   await page.getByRole("button", { name: "Remove photo", exact: true }).click();
-  await expect(page.getByLabel("Your caption", { exact: true })).toHaveValue(
-    "Our Saturday crew."
-  );
   await expect(
     page.getByRole("button", { name: "Add your photo to this memory" })
   ).toBeVisible();
+  await section("Details");
+  await expect(page.getByLabel("Your caption", { exact: true })).toHaveValue(
+    "Our Saturday crew."
+  );
   await page.getByRole("button", { name: "Night recap", exact: true }).click();
-  await page.getByRole("button", { name: "More stories", exact: true }).click();
-  await page.getByText("Customize story", { exact: true }).click();
-  for (const label of [
+  for (const look of [
     "Minimal",
     "Scrapbook",
     "Coquette",
     "Court Pop",
     "Retro Rally",
   ]) {
-    await page.getByRole("button", { name: label, exact: true }).click();
-    await page.getByRole("button", { name: "Background", exact: true }).click();
-    await page.getByRole("button", { name: "Baby Pink background" }).click();
-    for (const withPhoto of [false, true]) {
-      if (withPhoto) {
-        await page.getByLabel("Choose story photo file").setInputFiles({
-          name: "synthetic-court.png",
-          mimeType: "image/png",
-          buffer: Buffer.from(photo, "base64"),
-        });
-        await expect(page.getByRole("status")).toContainText(
-          "hasn’t been uploaded"
-        );
-      }
-      const download = page.waitForEvent("download");
+    await section("Photos");
+    if (await page.getByRole("button", { name: /^Edit photo 1:/ }).count()) {
+      await page.getByRole("button", { name: /^Edit photo 1:/ }).click();
       await page
-        .getByRole("button", { name: "Download PNG", exact: true })
+        .getByRole("button", { name: "Remove photo", exact: true })
         .click();
-      const file = await download;
-      const path = testInfo.outputPath(
-        `${label}-${withPhoto ? "photo" : "pink"}.png`
-      );
-      await file.saveAs(path);
-      const png = await readFile(path);
-      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([
-        1080, 1920,
-      ]);
-      await expect(page.getByRole("status")).toContainText("1080 × 1920");
     }
+    await section("Look");
+    await page.getByRole("button", { name: look, exact: true }).click();
+    await page.getByRole("button", { name: "Baby Pink background" }).click();
+    await downloadStory(`${look}-pink.png`);
+    await upload(["synthetic-court"]);
+    await section("Layout");
     await page.getByRole("button", { name: "Framed foreground" }).click();
-    await page.getByLabel("Photo crop", { exact: true }).press("End");
-    for (const placement of ["Top", "Center", "Bottom"]) {
+    await section("Photos");
+    await page.getByRole("button", { name: /^Edit photo 1:/ }).click();
+    await page.getByLabel("Horizontal crop", { exact: true }).press("End");
+    for (const [placement, label] of [
+      ["top", "Photo first"],
+      ["center", "Balanced"],
+      ["bottom", "Details first"],
+    ]) {
+      await section("Layout");
       await page
-        .getByRole("group", { name: "Photo placement" })
-        .getByRole("button", { name: placement, exact: true })
+        .getByRole("group", { name: "Photo placement options" })
+        .getByRole("button", { name: label, exact: true })
         .click();
       const card = page.locator("[data-story-theme]");
-      await expect(card).toHaveAttribute(
-        "data-photo-placement",
-        placement.toLowerCase()
-      );
+      await expect(card).toHaveAttribute("data-photo-placement", placement);
       await expect
         .poll(() =>
           card.evaluate((element) => {
@@ -236,21 +240,31 @@ test("expressive real Story components fit long facts and export every theme", a
           })
         )
         .toBe(true);
-      await card.screenshot({
-        path: testInfo.outputPath(`${label}-${placement}-preview.png`),
-      });
-      const download = page.waitForEvent("download");
-      await page
-        .getByRole("button", { name: "Download PNG", exact: true })
-        .click();
-      const path = testInfo.outputPath(`${label}-${placement}-export.png`);
-      await (await download).saveAs(path);
-      const png = await readFile(path);
-      expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([
-        1080, 1920,
-      ]);
+      await downloadStory(`${look}-${placement}.png`);
     }
     await page.getByRole("button", { name: "Full background" }).click();
+    await downloadStory(`${look}-background.png`);
+  }
+  await upload(["action", "crew", "paddles"]);
+  await expect(page.locator('[data-story-region="photo"]')).toHaveCount(4);
+  await page.getByRole("button", { name: /^Edit photo 2:/ }).click();
+  await page.getByLabel("Photo zoom", { exact: true }).press("End");
+  await page.getByRole("button", { name: "Move earlier", exact: true }).click();
+  await section("Layout");
+  await page
+    .getByRole("button", { name: "Contact sheet", exact: true })
+    .click();
+  await section("Look");
+  for (const look of [
+    "Court Pop",
+    "Scrapbook",
+    "Minimal",
+    "Coquette",
+    "Retro Rally",
+  ]) {
+    await page.getByRole("button", { name: look, exact: true }).click();
+    await expect(page.locator('[data-story-region="photo"]')).toHaveCount(4);
+    await downloadStory(`collage-${look}.png`);
   }
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth)

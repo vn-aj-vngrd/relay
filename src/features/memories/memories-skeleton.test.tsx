@@ -24,10 +24,10 @@ describe("MemoriesSkeleton", () => {
       screen.getByRole("heading", { name: "Make it your memory" })
     ).toBeVisible();
     expect(
-      screen.getByText("Add a photo. Pick a look. Share your game.")
+      screen.getByText("Pick your moments. Make them yours.")
     ).toBeVisible();
-    expect(screen.getByText("Story theme")).toBeVisible();
-    expect(screen.getByText("Customize story")).toBeVisible();
+    expect(screen.getByText("Details")).toBeVisible();
+    expect(screen.queryByText("Customize story")).not.toBeInTheDocument();
     expect(screen.queryByText("Enlarge preview")).not.toBeInTheDocument();
   });
 });

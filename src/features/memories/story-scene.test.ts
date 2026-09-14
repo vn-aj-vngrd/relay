@@ -67,6 +67,7 @@ describe("Story scene geometry", () => {
       id: "story:pink",
       label: "Baby Pink",
       color: "#ffe0eb",
+      soft: "#ffe0eb",
       light: true,
     });
   });
