@@ -137,7 +137,8 @@ export async function POST(request: Request) {
       tools: createAgentTools(user.id, config, signal),
       stopWhen: isStepCount(6),
       prepareStep: ({ stepNumber }) => ({
-        toolChoice: stepNumber >= 5 ? "none" : "auto",
+        // Omit tools entirely on the answer step; some endpoints reject tool_choice: none.
+        activeTools: stepNumber >= 5 ? [] : undefined,
       }),
       maxOutputTokens: config.maxOutputTokens,
       maxRetries: 0,

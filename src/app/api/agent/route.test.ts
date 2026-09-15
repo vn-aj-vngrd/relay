@@ -138,11 +138,13 @@ describe("Agent streaming boundary", () => {
       ({
         prepareStep,
       }: {
-        prepareStep: (step: { stepNumber: number }) => { toolChoice: string };
+        prepareStep: (step: { stepNumber: number }) => {
+          activeTools?: string[];
+        };
       }) => ({
         fullStream: (async function* () {
           for (let stepNumber = 0; stepNumber < 6; stepNumber++) {
-            if (prepareStep({ stepNumber }).toolChoice === "none") {
+            if (prepareStep({ stepNumber }).activeTools?.length === 0) {
               expect(stepNumber).toBe(5);
               yield { type: "text-delta", text: "Here is the summary." };
             } else {

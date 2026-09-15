@@ -10,6 +10,7 @@ export function agentModel(
   return createOpenRouter({ apiKey: decryptAgentKey(encryptedApiKey) }).chat(
     model,
     {
+      // Do not require parallel_tool_calls support; read execution has its own cap.
       provider: {
         require_parameters: true,
         data_collection: requireZeroRetention ? "deny" : "allow",

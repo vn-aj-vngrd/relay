@@ -228,3 +228,17 @@ History uses the same focused app shell as Agent: no breadcrumbs, a fixed compac
 ### PR 23 release validation (2026-09-16)
 
 Pre-commit review fixed timestamp restoration and cancelled pending chat creation on navigation/account exit. Formatting/lint and TypeScript passed. The full unit run passed 2,406 of 2,407 tests; the remaining URL test was incorrectly assigned to Node, moved to jsdom, and its two-test file passed on rerun. The webpack production build passed. The standard local Turbopack build was blocked by worker port binding; GitHub CI must pass its standard build before merge. Browser/E2E and a live OpenRouter request were not run. The configured database was rechecked: history RLS is enabled, anon/authenticated direct access is denied, and allow_court_search is non-null.
+
+### Tool-call compatibility
+
+Relay intentionally omits `parallel_tool_calls`: with `require_parameters: true`,
+OpenRouter excludes endpoints that do not list this optional parameter. Poolside
+Laguna S 2.1 free currently lists tools and auto tool choice, but not parallel calls
+or tool choice none. Read tools are independent, owner-scoped and capped at 12
+executions per request, including concurrent model calls. The final model step
+uses an empty active-tool list so the provider receives neither tools nor a
+`tool_choice` parameter, reserving that step for an answer without unsupported
+routing requirements. Strict privacy routing remains unchanged.
+
+Sources checked September 16, 2026: [OpenRouter parameter routing](https://openrouter.ai/docs/guides/routing/provider-selection)
+and [Poolside endpoint metadata](https://openrouter.ai/api/v1/models/poolside/laguna-s-2.1:free/endpoints).

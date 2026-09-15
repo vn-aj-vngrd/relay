@@ -91,6 +91,30 @@ describe("Agent read-only registry", () => {
     expect(JSON.stringify(result)).not.toContain("secret");
     expect(result).toHaveProperty("unavailable", true);
   });
+  it("caps concurrent model tool calls at twelve authorized reads", async () => {
+    mocks.game.mockReset().mockResolvedValue({ id: "game" });
+    const tools = createAgentTools(
+      "server-user",
+      defaultAgentConfig,
+      new AbortController().signal
+    );
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, index) =>
+        tools.gameDetails.execute!(
+          { id: "game" },
+          { toolCallId: String(index), messages: [], context: {} }
+        )
+      )
+    );
+    expect(mocks.game).toHaveBeenCalledTimes(12);
+    expect(mocks.game).toHaveBeenCalledWith("server-user", "game");
+    expect(results.slice(12)).toEqual(
+      Array.from({ length: 8 }, () => ({
+        unavailable: true,
+        reason: "Read limit reached. Narrow the question.",
+      }))
+    );
+  });
   it("does no data reads after cancellation", async () => {
     mocks.game.mockClear();
     const controller = new AbortController();
