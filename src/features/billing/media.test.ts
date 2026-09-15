@@ -170,3 +170,23 @@ describe("memory photo storage phases", () => {
     }
   );
 });
+
+it.each([
+  { kind: "chat" as const, actorKey: "user:other-player" },
+  { kind: "chat" as const, actorKey: "guest:visitor" },
+  { kind: "memory" as const, actorKey: "user:other-player" },
+  { kind: "memory" as const, actorKey: "guest:visitor" },
+])(
+  "charges the host for $kind uploaded by $actorKey",
+  async ({ kind, actorKey }) => {
+    await storeGameMedia({ ...input, kind, actorKey }, mocks.persist);
+    expect(mocks.reserve).toHaveBeenCalledExactlyOnceWith({
+      hostId: "host",
+      sessionId: "game",
+      actorKey,
+      kind,
+      path: input.path,
+      bytes: input.file.size,
+    });
+  }
+);

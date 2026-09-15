@@ -21,8 +21,9 @@ import {
   billingOverrides,
   billingTerms,
 } from "@/db/schema";
+import { MAX_IMAGE_UPLOAD_MIB } from "@/lib/upload-config";
 
-import { getBillingCatalog } from "./catalog";
+import { getBillingCatalog, getImageUploadLimits } from "./catalog";
 import {
   BillingError,
   billingDate,
@@ -153,12 +154,14 @@ export async function getGamePhotoCount(
 }
 
 export async function getGamePhotoAllowance(hostId: string, sessionId: string) {
-  const [usage, photosUsed] = await Promise.all([
+  const [imageLimits, usage, photosUsed] = await Promise.all([
+    getImageUploadLimits(),
     getAccountUsage(hostId),
     getGamePhotoCount(sessionId),
   ]);
   // Only upload-relevant totals cross the route boundary, never billing records.
   return {
+    maxImageBytes: imageLimits.memoryImageMaxBytes,
     photosUsed,
     photoLimit: mediaPolicy.memory.perGame,
     bytesUsed: usage.bytesUsed,
@@ -179,10 +182,19 @@ export async function reserveMedia(input: {
   if (
     !Number.isSafeInteger(input.bytes) ||
     input.bytes <= 0 ||
-    input.bytes > policy.maxBytes
+    input.bytes > MAX_IMAGE_UPLOAD_MIB * 1024 * 1024
   )
     throw new BillingError("Choose a smaller image.");
   return db.transaction(async (tx) => {
+    const imageLimits = await getImageUploadLimits(tx);
+    const maxBytes =
+      input.kind === "chat"
+        ? imageLimits.chatImageMaxBytes
+        : imageLimits.memoryImageMaxBytes;
+    if (input.bytes > maxBytes)
+      throw new BillingError(
+        "Choose a smaller image. The photo limit may have changed; refresh the page and try again."
+      );
     // Fixed lock order: uploader, then host. All upload reservations use this order.
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`relay.upload:${input.actorKey}`}, 0))`

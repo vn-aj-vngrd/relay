@@ -158,8 +158,12 @@ export function PlanCards({
 
 export function PlanComparison({
   catalog: inputCatalog,
+  chatImageMaxBytes,
+  memoryImageMaxBytes,
 }: {
   catalog: BillingPlan[];
+  chatImageMaxBytes?: number;
+  memoryImageMaxBytes?: number;
 }) {
   const catalog = publicBillingPlans(inputCatalog);
   if (!catalog.length) return null;
@@ -194,7 +198,11 @@ export function PlanComparison({
               ))}
             </tr>
           </thead>
-          {getPricingComparison(catalog).map((group) => (
+          {getPricingComparison(
+            catalog,
+            chatImageMaxBytes,
+            memoryImageMaxBytes
+          ).map((group) => (
             <tbody key={group.title}>
               <tr className="border-b border-line bg-surface-raised">
                 <th

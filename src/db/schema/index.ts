@@ -1193,6 +1193,8 @@ export const billingSettings = pgTable("billing_settings", {
   id: text("id").primaryKey().default("global"),
   acceptingPayments: boolean("accepting_payments").notNull().default(false),
   planCatalog: jsonb("plan_catalog").$type<BillingPlan[]>(),
+  chatImageMaxMiB: integer("chat_image_max_mib").notNull().default(4),
+  memoryImageMaxMiB: integer("memory_image_max_mib").notNull().default(4),
   supportContact: text("support_contact").notNull().default(""),
   reviewTime: text("review_time").notNull().default(""),
   policy: text("policy").notNull().default(""),

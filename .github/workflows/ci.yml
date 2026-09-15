@@ -21,9 +21,7 @@ env:
   SUPABASE_SECRET_KEY: ci-secret-key
   DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/relay
   GEOAPIFY_API_KEY: ci-placeholder-key-000000000
-  GEOAPIFY_API_URL: https://api.geoapify.com
   ADMIN_EMAILS: ""
-  CHAT_IMAGE_MAX_BYTES: "1048576"
 
 jobs:
   validate:

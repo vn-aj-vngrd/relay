@@ -1,0 +1,2 @@
+ALTER TABLE "billing_settings" ADD COLUMN "chat_image_max_mib" integer DEFAULT 4 NOT NULL;--> statement-breakpoint
+ALTER TABLE "billing_settings" ADD COLUMN "memory_image_max_mib" integer DEFAULT 4 NOT NULL;

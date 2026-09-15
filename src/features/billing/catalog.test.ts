@@ -11,7 +11,11 @@ vi.mock("@/db/client", () => ({
   },
 }));
 
-import { getBillingCatalog, getBillingOffer } from "./catalog";
+import {
+  getBillingCatalog,
+  getBillingOffer,
+  getImageUploadLimits,
+} from "./catalog";
 import { defaultBillingPlans, publicBillingPlans } from "./domain";
 
 beforeEach(() => vi.resetAllMocks());
@@ -34,6 +38,8 @@ describe("server-owned billing catalog", () => {
     expect(await getBillingOffer()).toEqual({
       catalog: publicBillingPlans(defaultBillingPlans),
       acceptingPayments: false,
+      chatImageMaxBytes: 4 * 1024 * 1024,
+      memoryImageMaxBytes: 4 * 1024 * 1024,
     });
     expect(
       defaultBillingPlans
@@ -57,6 +63,8 @@ describe("server-owned billing catalog", () => {
     expect(await getBillingOffer()).toEqual({
       catalog: publicBillingPlans(defaultBillingPlans),
       acceptingPayments: true,
+      chatImageMaxBytes: 4 * 1024 * 1024,
+      memoryImageMaxBytes: 4 * 1024 * 1024,
     });
   });
 });
@@ -101,4 +109,16 @@ it("upgrades standard v1 offers while preserving availability and custom offers"
     version: "pro-custom",
     games: 200,
   });
+});
+
+it("returns the saved chat limit for uploads and public pricing", async () => {
+  mocks.settings.mockResolvedValue({ chatImageMaxMiB: 3 });
+  expect(await getImageUploadLimits()).toEqual({
+    chatImageMaxBytes: 3 * 1024 * 1024,
+    memoryImageMaxBytes: 4 * 1024 * 1024,
+  });
+  expect(await getBillingOffer()).toHaveProperty(
+    "chatImageMaxBytes",
+    3 * 1024 * 1024
+  );
 });

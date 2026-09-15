@@ -95,7 +95,7 @@ export function MemoryPhotoForm({
         id="memory-photo"
         name="photo"
         label="Add a photo from the game"
-        hint={`JPG, PNG or WebP · Up to ${storageLabel(mediaPolicy.memory.maxBytes)} per photo.`}
+        hint={`JPG, PNG or WebP · Up to ${storageLabel(allowance?.maxImageBytes ?? mediaPolicy.memory.maxBytes)} per photo.`}
         buttonLabel="Choose a game photo"
         required
       />

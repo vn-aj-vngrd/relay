@@ -125,9 +125,12 @@ describe("personal subscription policy", () => {
       storageBytes: 2048 * MiB,
       priceCents: 14900,
     });
-    expect(mediaPolicy.chat).toMatchObject({ maxBytes: MiB, dailyUploads: 10 });
+    expect(mediaPolicy.chat).toMatchObject({
+      maxBytes: 4 * MiB,
+      dailyUploads: 10,
+    });
     expect(mediaPolicy.memory).toMatchObject({
-      maxBytes: 2 * MiB,
+      maxBytes: 4 * MiB,
       dailyUploads: 100,
       perGame: 50,
     });

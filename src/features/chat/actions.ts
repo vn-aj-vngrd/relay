@@ -6,7 +6,8 @@ import { z } from "zod";
 
 import { db } from "@/db/client";
 import { messageReactions, messages, sessions } from "@/db/schema";
-import { BillingError, mediaPolicy } from "@/features/billing/domain";
+import { getImageUploadLimits } from "@/features/billing/catalog";
+import { BillingError } from "@/features/billing/domain";
 import { storeGameMedia } from "@/features/billing/media";
 import { canParticipate, getSessionViewer } from "@/features/sessions/viewer";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
@@ -30,7 +31,10 @@ export async function sendMessage(
   if (body.length > 1000)
     return { error: "Keep messages under 1,000 characters." };
   const imageValidation = hasImage
-    ? await validateChatImageFile(image, mediaPolicy.chat.maxBytes)
+    ? await validateChatImageFile(
+        image,
+        (await getImageUploadLimits()).chatImageMaxBytes
+      )
     : null;
   if (imageValidation && "error" in imageValidation)
     return { error: imageValidation.error };
