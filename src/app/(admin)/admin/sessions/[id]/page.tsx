@@ -1,3 +1,5 @@
+export const metadata = { title: "Game details · Admin" };
+
 import {
   ArrowLeft,
   ArrowSquareOut,

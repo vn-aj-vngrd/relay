@@ -1,3 +1,5 @@
+export const metadata = { title: "Game overview" };
+
 import { CalendarCheck, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";

@@ -83,7 +83,7 @@ Relay currently uses Inter across product UI to match the Linear baseline. Geist
 - Controls: 8–10px radius.
 - Discrete session/match objects: 14–16px radius.
 - Compact identity/status: full circle or pill only when its semantics justify the shape.
-- Shared `.field` textareas use equal 14px padding on all sides.
+- Shared `.field` textareas use equal 14px padding on all sides and automatic height so their rows remain visible.
 - Inputs are 48px high. Standard buttons and pill-shaped filter chips use the shared compact 36px density at every viewport; large actions are 40px, and courtside score controls remain 64px. Dropdown options keep comfortable touch rows even when their trigger is compact.
 - Use rows, dividers, and whitespace before cards. Nested cards are not allowed.
 
@@ -337,3 +337,27 @@ Story offers nine curated palettes: the six game colors plus Baby Pink, Cream an
 Agent is an Operate surface for quick questions while planning or heading to a game. Reuse the application shell, semantic surface/ink/line/primary tokens, Button and admin PendingSubmit controls. The conversation is a single column capped at 768px, with understated user message backgrounds, plain assistant text, linked sources and a bottom composer. Empty state suggestions start a real query; busy, stopped, unavailable and failed states retain useful controls. New chat clears only ephemeral browser state. Desktop navigation uses the sidebar; mobile uses a 44px header entry rather than adding another bottom tab. Model output is escaped text with narrowly allowed internal links. Admin settings use existing labeled fields and section divisions. Agent uses a shared rounded green cursor with three pickleball perforations. Its pale green fill and forest-green outline are fixed brand colors across themes, separate from primary action color; navigation state remains on the surrounding control. Rendered light/dark, mobile/desktop review remains deferred, not certified by this source description.
 
 Agent plan allowances: Admin → Agent owns live Free/Plus/Pro message budgets (initially 50/250/750). Agent and Plan & billing show charged usage, in-progress reservations and the Philippine reset date, with a link to plan options. Quota feedback distinguishes temporary reservations from used messages. Public plan cards and the comparison use the same configured values; zero means not included and unavailable Agent is labeled Coming soon. The landing page highlights Agent through a hero anchor, section navigation and a dedicated two-column explanation/example conversation after the existing Highlights. The example is an interactive, clearly labelled sample-data demo with selectable questions, a brief thinking state and progressive answer text. It plays once on entering view and supports pause, resume and replay. Animation pauses offscreen and in hidden tabs; reduced motion shows complete answers immediately. No provider calls, account data or quota consumption are involved. Existing marketing type, tokens and ButtonLink controls are reused. Rendered review remains unverified; automated gate results belong in the PR.
+
+### Shared action feedback and settings
+
+Use `ActionNotice` with the action response for transient success/failure results;
+the root `ToastViewport` announces them and keeps errors until dismissed. Success
+messages expire after eight seconds, paused during pointer/focus interaction.
+Keep field-linked validation, retry controls and persistent setup guidance inline.
+The toast host uses the browser top layer when available so native dialogs do not
+cover errors. Do not put secrets in notifications.
+
+Use the shared `Switch` for on/off preferences (Agent capabilities and notification
+settings). Use checkboxes for explicit selections and destructive choices such as
+removing a credential. Enabled checkboxes and their labels use a pointer cursor.
+
+Every page supplies a descriptive metadata title; the root layout alone appends
+`· Relay`. Private routes use static contextual names without extra data reads.
+The landing Agent demo types a sample question in its composer, sends it, pauses
+for retrieval, and streams an answer. It never calls the provider or spends quota.
+
+Agent chat uses content-sized sent bubbles, wrapping unbroken text at the
+container boundary. Assistant answers discard leading blank space. The composer
+shows one outer focus border, a 4,000-character counter and a toast when clipping
+oversized input. Action toasts are centered at the top on every viewport.
+Admin Agent inherits the admin shell content width: its heading, setup panel and settings align with the breadcrumbs, without a narrower nested column.

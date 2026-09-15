@@ -1,3 +1,5 @@
+export const metadata = { title: "Game details" };
+
 import { DeviceMobile, ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 

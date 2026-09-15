@@ -1,3 +1,5 @@
+export const metadata = { title: "Invitations" };
+
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";
 import {

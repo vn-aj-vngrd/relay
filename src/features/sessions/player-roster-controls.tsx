@@ -10,9 +10,8 @@ import {
 } from "@phosphor-icons/react";
 import type { KeyboardEvent } from "react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
-
 import { Avatar } from "@/components/shared/avatar-stack";
-import { Alert } from "@/components/ui/alert";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
@@ -301,15 +300,17 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
           : "Use @username to find a Relay player. Plain names are added as guests."}
       </p>
       {state.error ? (
-        <p role="alert" className="mt-2 text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : state.success ? (
-        <p role="status" className="mt-2 text-sm font-medium text-success">
-          {state.playerOutcome === "invited"
-            ? "Invitation sent."
-            : "Guest added."}
-        </p>
+        <ActionNotice
+          message={
+            state.playerOutcome === "invited"
+              ? "Invitation sent."
+              : "Guest added."
+          }
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );
@@ -421,9 +422,7 @@ export function RemovePlayerButton({
             </div>
           </div>
           {state.error ? (
-            <p role="alert" className="mt-4 text-sm font-medium text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
             <Button
@@ -469,7 +468,9 @@ export function RosterLockButton({
   );
   return (
     <form noValidate action={action}>
-      {state.error ? <Alert className="mb-3">{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <SubmitButton
         pendingLabel={locked ? "Unlocking…" : "Locking…"}

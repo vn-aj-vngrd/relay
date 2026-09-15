@@ -407,6 +407,13 @@
       "when": 1789465645135,
       "tag": "0057_agent_message_allowances",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789481544750,
+      "tag": "0058_agent_privacy_mode",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -39,9 +40,7 @@ export function AddGroupMemberForm({ groupId }: { groupId: string }) {
           />
         </div>
         {state.error ? (
-          <p role="alert" className="mt-1.5 text-sm font-medium text-danger">
-            {state.error}
-          </p>
+          <ActionNotice message={state.error} response={state} />
         ) : null}
       </div>
       <SubmitButton

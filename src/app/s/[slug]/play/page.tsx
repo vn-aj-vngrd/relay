@@ -1,3 +1,5 @@
+export const metadata = { title: "Game play" };
+
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 

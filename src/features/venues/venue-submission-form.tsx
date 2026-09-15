@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
-import { Alert } from "@/components/ui/alert";
 import { ComboboxField } from "@/components/ui/combobox-field";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -100,9 +100,11 @@ export function VenueSubmissionForm({
         <h2 className="text-lg font-[680]">
           Thanks for improving Court Finder
         </h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-muted">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
         <Link
           href={initialVenue ? `/courts/${initialVenue.slug}` : "/courts"}
           className="mt-5 inline-flex text-sm font-semibold text-primary"
@@ -121,7 +123,9 @@ export function VenueSubmissionForm({
     >
       <input type="hidden" name="requestType" value={requestType} />
       <input type="hidden" name="venueId" value={initialVenue?.id ?? ""} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
 
       <fieldset>
         <legend className="text-lg font-[680] text-ink">

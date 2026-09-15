@@ -33,6 +33,32 @@ beforeEach(() => {
   mocks.error = undefined;
 });
 describe("Agent chat controls", () => {
+  it("uses the composer border instead of a second textarea focus ring", () => {
+    render(<AgentChat available />);
+    const input = screen.getByRole("textbox", { name: "Message Agent" });
+    expect(input).toHaveClass("agent-composer-input");
+    expect(input.closest("form")).toHaveClass("focus-within:border-primary");
+  });
+  it("caps oversized pastes and asks the user to review before sending", () => {
+    render(<AgentChat available />);
+    const input = screen.getByRole("textbox", { name: "Message Agent" });
+    fireEvent.paste(input, {
+      clipboardData: { getData: () => "x".repeat(4100) },
+    });
+    expect(input).toHaveValue("x".repeat(4000));
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Extra text was removed"
+    );
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(screen.getByText("4,000 / 4,000 characters")).toBeInTheDocument();
+  });
+  it("uses shimmer text while waiting for the first response", () => {
+    mocks.status = "submitted";
+    render(<AgentChat available />);
+    expect(screen.getByText("Looking into your question…")).toHaveClass(
+      "text-shimmer"
+    );
+  });
   it("submits a natural-language suggestion", () => {
     render(<AgentChat available />);
     fireEvent.click(

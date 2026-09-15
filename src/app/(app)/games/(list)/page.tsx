@@ -1,3 +1,5 @@
+export const metadata = { title: "Games" };
+
 import { redirect } from "next/navigation";
 import { requireUser } from "@/features/auth/session";
 import { sessionDateKey } from "@/features/sessions/format";

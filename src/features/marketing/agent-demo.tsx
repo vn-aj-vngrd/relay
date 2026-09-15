@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowCounterClockwise, Pause, Play } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwise,
+  ArrowUp,
+  Pause,
+  Play,
+} from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AgentMark } from "@/features/agent/agent-mark";
@@ -36,23 +41,34 @@ export function AgentDemo() {
   const root = useRef<HTMLElement>(null);
   const started = useRef(false);
   const [selected, setSelected] = useState(0);
-  const [frame, setFrame] = useState<number | null>(null);
+  const [frame, setFrame] = useState<number | null>(-1);
   const [playing, setPlaying] = useState(false);
   const [visible, setVisible] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [reduced, setReduced] = useState(true);
   const example = examples[selected];
+  const idle = frame === -1;
   const complete = frame === null;
-  const thinking = frame !== null && frame < thinkingFrames;
+  const questionFrames = Math.ceil(example.question.length / 3);
+  const composing = frame !== null && frame >= 0 && frame < questionFrames;
+  const thinking =
+    frame !== null &&
+    frame >= questionFrames &&
+    frame < questionFrames + thinkingFrames;
+  const draft = composing ? example.question.slice(0, (frame + 1) * 3) : "";
   const answer = complete
     ? example.answer
     : example.answer.slice(
         0,
-        Math.max(0, frame - thinkingFrames) * charactersPerFrame
+        Math.max(0, frame - questionFrames - thinkingFrames) *
+          charactersPerFrame
       );
 
   useEffect(() => {
-    if (!window.matchMedia) return;
+    if (!window.matchMedia) {
+      setFrame(null);
+      return;
+    }
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     function updatePreference() {
       setReduced(preference.matches);
@@ -94,11 +110,18 @@ export function AgentDemo() {
   }, []);
 
   useEffect(() => {
-    if (!playing || !visible || !pageVisible || reduced || frame === null)
+    if (
+      !playing ||
+      !visible ||
+      !pageVisible ||
+      reduced ||
+      frame === null ||
+      frame < 0
+    )
       return;
     const timeout = window.setTimeout(() => {
       if (
-        (frame - thinkingFrames) * charactersPerFrame >=
+        (frame - questionFrames - thinkingFrames) * charactersPerFrame >=
         example.answer.length
       ) {
         setFrame(null);
@@ -106,7 +129,15 @@ export function AgentDemo() {
       } else setFrame(frame + 1);
     }, 55);
     return () => window.clearTimeout(timeout);
-  }, [playing, visible, pageVisible, reduced, frame, example.answer]);
+  }, [
+    playing,
+    visible,
+    pageVisible,
+    reduced,
+    frame,
+    example.answer,
+    questionFrames,
+  ]);
 
   function choose(index: number) {
     started.current = true;
@@ -151,38 +182,69 @@ export function AgentDemo() {
           ))}
         </div>
         <div className="min-h-[290px] sm:min-h-[260px]" aria-hidden="true">
-          <p
-            key={example.question}
-            className={`${styles.question} ml-7 rounded-xl bg-surface-strong px-4 py-3 text-sm leading-6`}
-          >
-            {example.question}
-          </p>
+          {!idle && !composing ? (
+            <p
+              key={example.question}
+              className={`${styles.question} ml-7 rounded-xl bg-surface-strong px-4 py-3 text-sm leading-6`}
+            >
+              {example.question}
+            </p>
+          ) : (
+            <p className="h-14 text-right text-xs text-muted">
+              A question about your next game
+            </p>
+          )}
           <div className="mb-3 mt-6 flex items-center gap-2 text-sm font-semibold">
             <AgentMark size={22} />
             Agent
           </div>
-          {thinking ? (
-            <p className="flex h-7 items-center gap-2 text-sm text-muted">
-              <span
-                className={styles.thinking}
+          <div className={styles.response}>
+            {idle || composing ? (
+              <p className="text-sm text-muted">
+                {composing
+                  ? "Waiting for your question…"
+                  : "Choose an example below to start a conversation."}
+              </p>
+            ) : thinking ? (
+              <p
+                className="text-shimmer inline-block h-7 text-sm text-muted"
                 data-paused={!playing || !visible || !pageVisible}
               >
-                •••
-              </span>
-              Checking the game details
-            </p>
-          ) : (
-            <p className="text-sm leading-7">
-              {answer}
-              {!complete ? <span className={styles.caret} /> : null}
-            </p>
-          )}
-          {complete ? (
+                Checking the game details
+              </p>
+            ) : (
+              <p className="text-sm leading-7">
+                {answer}
+                {!complete ? <span className={styles.caret} /> : null}
+              </p>
+            )}
+            {complete ? (
+              <p className="mt-4 text-xs font-medium text-muted">
+                {example.source}
+              </p>
+            ) : null}
+          </div>
+          <div className={styles.reducedResponse}>
+            <p className="text-sm leading-7">{example.answer}</p>
             <p className="mt-4 text-xs font-medium text-muted">
               {example.source}
             </p>
-          ) : null}
+          </div>
+          <div className="mt-6 flex min-h-12 items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+            <span className={draft ? "text-ink" : "text-muted"}>
+              {draft || "Ask about your games…"}
+              {composing ? <span className={styles.caret} /> : null}
+            </span>
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-white">
+              <ArrowUp size={16} />
+            </span>
+          </div>
         </div>
+        <noscript>
+          <p className="text-sm leading-7">
+            Sample answer: {example.question} {example.answer}
+          </p>
+        </noscript>
         <div
           className="sr-only"
           role="status"
@@ -191,7 +253,11 @@ export function AgentDemo() {
         >
           {complete
             ? `${example.question} ${example.answer}`
-            : "Agent demo is answering the selected question."}
+            : idle
+              ? "Choose an example to see Agent respond."
+              : composing
+                ? "Typing an example question."
+                : "Agent demo is answering the selected question."}
         </div>
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-4">
           <p className="text-xs leading-5 text-muted">
@@ -202,7 +268,7 @@ export function AgentDemo() {
               variant="quiet"
               className="shrink-0"
               onClick={() =>
-                complete ? choose(selected) : setPlaying(!playing)
+                complete || idle ? choose(selected) : setPlaying(!playing)
               }
             >
               {complete ? (
@@ -212,11 +278,13 @@ export function AgentDemo() {
               ) : (
                 <Play size={16} aria-hidden />
               )}
-              {complete
-                ? "Replay demo"
-                : playing
-                  ? "Pause demo"
-                  : "Resume demo"}
+              {idle
+                ? "Play demo"
+                : complete
+                  ? "Replay demo"
+                  : playing
+                    ? "Pause demo"
+                    : "Resume demo"}
             </Button>
           ) : null}
         </div>

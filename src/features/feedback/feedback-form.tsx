@@ -2,6 +2,7 @@
 
 import { Bug, ChatCircleText, Lightbulb } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -233,14 +234,14 @@ export function FeedbackForm({
       </label>
 
       {state.error ? (
-        <p role="alert" className="mt-5 text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {state.success ? (
-        <p role="status" className="mt-5 text-sm font-semibold text-success">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
 
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-line pt-5">

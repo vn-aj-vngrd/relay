@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { type ReactNode, useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
@@ -89,7 +89,9 @@ export function CourtBookingGate({
           >
             Confirm your court arrangement before setting up Play.
           </p>
-          {state.error ? <Alert className="mt-4">{state.error}</Alert> : null}
+          {state.error ? (
+            <ActionNotice message={state.error} response={state} />
+          ) : null}
           <form action={action} noValidate>
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="version" value={version} />

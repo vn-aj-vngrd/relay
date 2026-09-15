@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 import {
@@ -56,13 +56,13 @@ function RemoveCohostControl({
         Remove co-host
       </ConfirmSubmitButton>
       {state.error ? (
-        <p role="alert" className="mt-1 max-w-56 text-xs text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : state.message ? (
-        <p role="status" className="mt-1 text-xs text-primary">
-          {state.message}
-        </p>
+        <ActionNotice
+          message={state.message}
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );
@@ -154,13 +154,13 @@ export function OrganizerSettings({
             player.
           </p>
           {state.error ? (
-            <p role="alert" className="mt-2 text-sm text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : state.message ? (
-            <p role="status" className="mt-2 text-sm text-primary">
-              {state.message}
-            </p>
+            <ActionNotice
+              message={state.message}
+              response={state}
+              variant="success"
+            />
           ) : null}
         </form>
       ) : null}

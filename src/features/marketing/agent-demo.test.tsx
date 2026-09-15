@@ -34,19 +34,39 @@ function enter() {
   act(() => intersect(true));
 }
 async function finish() {
-  for (let index = 0; index < 50; index++)
+  for (let index = 0; index < 90; index++)
     await act(async () => {
       vi.advanceTimersByTime(55);
     });
 }
 describe("Agent landing demo", () => {
+  it("starts ready instead of showing a completed answer before entering view", () => {
+    render(<AgentDemo />);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Choose an example to see Agent respond."
+    );
+    expect(
+      screen.getByRole("button", { name: "Play demo" })
+    ).toBeInTheDocument();
+    enter();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Typing an example question."
+    );
+    expect(screen.getByRole("status")).not.toHaveTextContent(
+      "Your next game is Saturday doubles"
+    );
+  });
   it("plays once, pauses, resumes and finishes with an accessible answer", async () => {
     render(<AgentDemo />);
     enter();
-    expect(screen.getByText("Checking the game details")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Typing an example question."
+    );
     fireEvent.click(screen.getByRole("button", { name: "Pause demo" }));
     await finish();
-    expect(screen.getByText("Checking the game details")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Typing an example question."
+    );
     fireEvent.click(screen.getByRole("button", { name: "Resume demo" }));
     await finish();
     expect(screen.getByRole("status")).toHaveTextContent(
@@ -63,7 +83,9 @@ describe("Agent landing demo", () => {
     enter();
     act(() => intersect(false));
     await finish();
-    expect(screen.getByText("Checking the game details")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Typing an example question."
+    );
     fireEvent.click(screen.getByRole("button", { name: "Open games" }));
     enter();
     await finish();
@@ -86,7 +108,9 @@ describe("Agent landing demo", () => {
       });
       fireEvent(document, new Event("visibilitychange"));
       await finish();
-      expect(screen.getByText("Checking the game details")).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Typing an example question."
+      );
       Object.defineProperty(document, "hidden", {
         configurable: true,
         value: false,

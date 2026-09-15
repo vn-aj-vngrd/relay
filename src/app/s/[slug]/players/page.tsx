@@ -1,3 +1,5 @@
+export const metadata = { title: "Game players" };
+
 import { notFound, redirect } from "next/navigation";
 
 import {

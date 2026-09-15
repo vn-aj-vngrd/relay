@@ -1,3 +1,5 @@
+export const metadata = { title: "Court requests · Admin" };
+
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 import { SelectField } from "@/components/ui/select-field";

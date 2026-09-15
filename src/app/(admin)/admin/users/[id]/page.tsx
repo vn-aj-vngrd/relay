@@ -1,3 +1,5 @@
+export const metadata = { title: "User details · Admin" };
+
 import {
   ArrowLeft,
   Compass,

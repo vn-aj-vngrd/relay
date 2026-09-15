@@ -59,7 +59,7 @@ Help Center is the only product-instruction source. No vector store, embeddings,
 4. Configure allowed reads, optional public-facing tone guidance and limits. Enable only after setup. The form verifies that the stored key can be decrypted; it does not make a billable test call or certify provider credentials/model availability.
 5. Verify Help Center grounding, actual game/roster permissions, cancellation, provider failure and quota behavior with disposable users and the selected provider before release.
 
-The provider requests `require_parameters: true`, `data_collection: deny`, and `zdr: true`. There is no privacy-downgrading fallback: a model without a compatible provider fails with safe recovery copy. Review OpenRouter account logging settings and the selected provider's terms as part of deployment; these routing flags do not promise that Relay controls all third-party operational metadata.
+Strict mode is the default: the provider requests `require_parameters: true`, `data_collection: deny`, and `zdr: true`. Admins may explicitly save provider-policy mode, which uses `data_collection: allow` and `zdr: false`; the UI explains that providers may retain or use submitted data. There is no automatic privacy downgrade. Both chat and the connection test use the saved mode. Review OpenRouter account logging settings and the selected provider's terms as part of deployment; these routing flags do not promise that Relay controls all third-party operational metadata.
 
 Credentials use AES-256-GCM with random 96-bit nonces, authenticated version context and authentication tags. The UI receives only `hasKey`, never plaintext or ciphertext. Admin saves run in a transaction with a row lock and audit record; the audit contains enablement and credential-changed flags, not keys or instructions. Blank input preserves a stored key; removal is explicit. All form fields other than the credential are intentional admin-visible configuration.
 
@@ -125,3 +125,43 @@ Quota handling reuses `getAccountAllowance` and `lockBillingAccount` from billin
 `GET /api/agent` returns only the signed-in active account's allowance, charged/reserved/remaining counts and reset date. The chat refreshes this summary after requests; Plan & billing also shows it. Monthly-cap responses are distinct from the hourly abuse throttle, and copy recognizes that in-progress answers can temporarily reserve remaining messages.
 
 **Messages are the user-facing unit; they are not a cost unit.** Retain the hourly throttle, bounded history, tool-step/output limits and provider-side spending cap. An answer can invoke multiple model steps. Measure representative per-answer costs in OpenRouter before committing to margins or raising allowances; the 50/250/750 ladder is approved product configuration, not measured cost evidence.
+
+### Readiness and safe settings edits
+
+Admin → Agent shows separate server checks for enablement, encryption availability,
+credential readability, model selection, read-only capabilities, and usage storage.
+“Ready to accept questions” does not claim the provider/model has been tested: the
+first request still goes through OpenRouter's authorization and model routing.
+Existing credentials stay stored when editing other settings. Use **Replace API
+key** to supply a replacement; removing a key remains an explicit checkbox choice.
+
+Usage queries serialize timestamps before passing raw SQL parameters to the
+Postgres driver. A usage failure keeps requests blocked and is reported separately
+from disabled or incomplete configuration. Never bypass quota checks to restore
+availability.
+
+### Connection testing and model compatibility
+
+**Test saved connection** is MFA-admin protected and limited to three attempts per
+minute per admin. It uses the saved credential/model, the same privacy routing as
+chat, and one synthetic tool. It verifies tool completion plus streamed text with
+a 25-second timeout. It sends no application data or custom instructions, does
+not consume Agent message quota, and may incur a small OpenRouter charge.
+Only fixed, classified results are returned; raw provider errors and generated
+test output are never shown or logged.
+
+In strict mode, model suggestions come from OpenRouter's public zero-data-retention endpoint catalog and require tools plus tool choice. Provider-policy mode uses the public model catalog filtered for tools. A model can support tools yet have no
+compatible private endpoint, including some free models. In that case, choose a
+suggested model and test, or explicitly choose provider-policy mode after reviewing the disclosure. Tool calling uses auto mode, since some valid models do not support forced required/none modes.
+Reference: [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
+
+Failed streams trigger the chat's retry UI rather than adding application error
+copy as an assistant message. The composer caps messages at 4,000 characters,
+shows a counter, and asks users to review truncated pastes before sending.
+Loading text uses a CSS-only left-to-right shimmer inspired by
+[AI Elements](https://elements.ai-sdk.dev/components/shimmer), with static text
+under reduced motion or forced colors.
+
+Migration `0058_agent_privacy_mode.sql` adds the non-null strict-mode flag with a
+true default. Existing installations remain strict. Changing privacy mode is
+admin-authorized, audited and never exposes a credential or enables write tools.

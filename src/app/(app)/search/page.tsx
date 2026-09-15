@@ -1,3 +1,5 @@
+export const metadata = { title: "Search" };
+
 import { requireUser } from "@/features/auth/session";
 import { type SearchFilter, searchFilters } from "@/features/search/domain";
 import { GlobalSearch } from "@/features/search/global-search";

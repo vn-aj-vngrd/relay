@@ -2,6 +2,7 @@
 
 import { useActionState, useId, useState } from "react";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
@@ -91,9 +92,11 @@ export function PaymentAmountForm({
       </p>
       {state.success ? (
         <div className="basis-full">
-          <Alert variant="success">
-            Adjustment saved. Any increase awaits the player’s response.
-          </Alert>
+          <ActionNotice
+            message="Adjustment saved. Any increase awaits the player’s response."
+            response={state}
+            variant="success"
+          />
         </div>
       ) : null}
       {state.error ? (
@@ -180,10 +183,16 @@ export function PaymentChoiceForm({
       className="flex flex-col gap-4"
     >
       <input type="hidden" name="sessionId" value={sessionId} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       <input type="hidden" name="paymentRevision" value={revision ?? ""} />
       {state.success ? (
-        <Alert variant="success">Payment settings saved.</Alert>
+        <ActionNotice
+          message="Payment settings saved."
+          response={state}
+          variant="success"
+        />
       ) : null}
       {previousDefaults && choice === "collect" && !reusePrevious ? (
         <Button
@@ -280,9 +289,15 @@ export function EditExpenseForm({
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="expenseId" value={expenseId} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       {state.success ? (
-        <Alert variant="success">Payment settings saved.</Alert>
+        <ActionNotice
+          message="Payment settings saved."
+          response={state}
+          variant="success"
+        />
       ) : null}
       {totalReadOnly || contributionReadOnly ? (
         <p className="max-w-prose text-sm text-muted">
@@ -341,7 +356,9 @@ export function AssignPlayerShareForm({
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="expenseId" value={expenseId} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       <SelectField
         id={`${id}-player`}
         name="sessionPlayerId"
@@ -397,7 +414,9 @@ export function PaymentAdjustmentResponse({
     <form noValidate action={action} className="mt-3 flex flex-col gap-3">
       <input type="hidden" name="paymentId" value={paymentId} />
       <input type="hidden" name="proposalId" value={proposalId} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       <div className="flex flex-wrap gap-2">
         <SubmitButton name="decision" value="accept" pendingLabel="Saving…">
           Agree to new amount

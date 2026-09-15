@@ -2,6 +2,7 @@
 
 import { PencilSimple } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -46,9 +47,11 @@ function ScoreCorrectionControl({
         Correct
       </Button>
       {state.success ? (
-        <span role="status" className="sr-only">
-          {state.success}
-        </span>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
       <Dialog
         ref={dialogRef}
@@ -103,9 +106,7 @@ function ScoreCorrectionControl({
             />
           </div>
           {state.error ? (
-            <p role="alert" className="mt-4 text-sm font-medium text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
             <Button

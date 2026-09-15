@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { defaultAgentLimits } from "./allowance";
+import { agentMessageMaxLength } from "./constants";
 
 const messageAllowance = z.preprocess(
   (value) => (value === "" || value === null ? undefined : value),
@@ -7,6 +8,7 @@ const messageAllowance = z.preprocess(
 );
 
 export const agentConfigSchema = z.object({
+  requireZeroRetention: z.boolean().default(true),
   freeMessages: messageAllowance.default(defaultAgentLimits.freeMessages),
   plusMessages: messageAllowance.default(defaultAgentLimits.plusMessages),
   proMessages: messageAllowance.default(defaultAgentLimits.proMessages),
@@ -24,6 +26,7 @@ export const agentConfigSchema = z.object({
 });
 export type AgentConfig = z.infer<typeof agentConfigSchema>;
 export const defaultAgentConfig: AgentConfig = {
+  requireZeroRetention: true,
   ...defaultAgentLimits,
   enabled: false,
   model: "",
@@ -44,7 +47,7 @@ export const agentRequestSchema = z
         z
           .object({
             role: z.enum(["user", "assistant"]),
-            content: z.string().trim().min(1).max(4000),
+            content: z.string().trim().min(1).max(agentMessageMaxLength),
           })
           .strict()
       )

@@ -1,3 +1,5 @@
+export const metadata = { title: "Photo storage" };
+
 import { CaretLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, lt, ne, or } from "drizzle-orm";
 import Image from "next/image";

@@ -1,3 +1,5 @@
+export const metadata = { title: "Users · Admin" };
+
 import { MagnifyingGlass, UserPlus } from "@phosphor-icons/react/dist/ssr";
 
 import { ButtonLink } from "@/components/ui/button";

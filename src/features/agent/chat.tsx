@@ -3,10 +3,12 @@ import { useChat } from "@ai-sdk/react";
 import { ArrowUp, Plus, Stop } from "@phosphor-icons/react";
 import { TextStreamChatTransport } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { AgentMark } from "./agent-mark";
 import type { AgentUsageSummary } from "./allowance";
 import { AgentAnswer } from "./answer";
+import { agentMessageMaxLength } from "./constants";
 import { AgentUsageSummaryView } from "./usage-summary";
 
 const suggestions = [
@@ -35,7 +37,7 @@ const transport = new TextStreamChatTransport({
             .filter((part) => part.type === "text")
             .map((part) => part.text)
             .join("")
-            .slice(0, 4000),
+            .slice(0, agentMessageMaxLength),
         }))
         .filter((message) => message.content.trim())
         .slice(-24),
@@ -45,9 +47,11 @@ const transport = new TextStreamChatTransport({
 
 export function AgentChat({
   available,
+  unavailableReason = "Agent is not available yet. You can still browse your games and Help Center.",
   initialUsage = null,
 }: {
   available: boolean;
+  unavailableReason?: string;
   initialUsage?: AgentUsageSummary | null;
 }) {
   const [usage, setUsage] = useState(initialUsage);
@@ -93,7 +97,18 @@ export function AgentChat({
     if (follow.current && viewport.current)
       viewport.current.scrollTop = viewport.current.scrollHeight;
   }, [messages, status]);
+  function limitInput(text: string) {
+    if (text.length <= agentMessageMaxLength) return text;
+    notify(
+      "Messages can contain up to 4,000 characters. Extra text was removed; review your message before sending."
+    );
+    return text.slice(0, agentMessageMaxLength).replace(/[\uD800-\uDBFF]$/, "");
+  }
   async function send(text: string) {
+    if (text.length > agentMessageMaxLength) {
+      setInput(limitInput(text));
+      return;
+    }
     if (!text.trim() || busy || !available) return;
     clearError();
     follow.current = true;
@@ -148,7 +163,7 @@ export function AgentChat({
                 aria-label={message.role === "user" ? "You" : "Agent"}
                 className={
                   message.role === "user"
-                    ? "ml-auto max-w-[90%] rounded-xl bg-surface-strong px-4 py-3"
+                    ? "ml-auto w-fit min-w-0 max-w-[90%] rounded-xl bg-surface-strong px-4 py-3"
                     : "max-w-full pr-2"
                 }
               >
@@ -195,7 +210,10 @@ export function AgentChat({
           </div>
         )}
         {status === "submitted" ? (
-          <p role="status" className="mt-5 text-sm text-muted">
+          <p
+            role="status"
+            className="text-shimmer mt-5 inline-block text-sm text-muted"
+          >
             Looking into your question…
           </p>
         ) : null}
@@ -204,8 +222,7 @@ export function AgentChat({
         {usage ? <AgentUsageSummaryView usage={usage} /> : null}
         {!available ? (
           <p role="status" className="mb-3 text-sm text-muted">
-            Agent is not available yet. You can still browse your games and Help
-            Center.
+            {unavailableReason}
           </p>
         ) : null}
         {error ? (
@@ -240,12 +257,23 @@ export function AgentChat({
             ref={field}
             id="agent-message"
             value={input}
-            onChange={(event) => setInput(event.target.value)}
-            maxLength={4000}
+            onChange={(event) => setInput(limitInput(event.target.value))}
+            onPaste={(event) => {
+              const pasted = event.clipboardData.getData("text");
+              const start = event.currentTarget.selectionStart;
+              const end = event.currentTarget.selectionEnd;
+              const next = input.slice(0, start) + pasted + input.slice(end);
+              if (next.length > agentMessageMaxLength) {
+                event.preventDefault();
+                setInput(limitInput(next));
+              }
+            }}
+            aria-describedby="agent-message-limit"
+            maxLength={agentMessageMaxLength}
             rows={2}
             disabled={!available}
             placeholder="Ask Agent…"
-            className="w-full resize-none bg-transparent text-[15px] leading-6 outline-none placeholder:text-muted disabled:opacity-50"
+            className="agent-composer-input w-full resize-none bg-transparent text-[15px] leading-6 outline-none placeholder:text-muted disabled:opacity-50"
             onKeyDown={(event) => {
               if (
                 event.key === "Enter" &&
@@ -257,6 +285,13 @@ export function AgentChat({
               }
             }}
           />
+          <p
+            id="agent-message-limit"
+            className="mt-1 text-right text-xs tabular-nums text-muted"
+          >
+            {input.length.toLocaleString()} /{" "}
+            {agentMessageMaxLength.toLocaleString()} characters
+          </p>
           <div className="mt-2 flex items-center justify-between gap-3">
             <p className="text-xs text-muted">
               Insights and answers. No changes to your games.

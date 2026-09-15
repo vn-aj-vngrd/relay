@@ -3,6 +3,7 @@
 import { ArrowCounterClockwise, Compass } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -70,9 +71,7 @@ export function OnboardingResetControl({
             </div>
           </div>
           {state.error ? (
-            <p role="alert" className="mt-4 text-sm font-medium text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           <div className="mt-7 flex justify-end gap-2">
             <Button
@@ -87,9 +86,11 @@ export function OnboardingResetControl({
         </form>
       </Dialog>
       {state.success ? (
-        <p role="status" className="mt-2 text-sm font-medium text-success">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
     </div>
   );

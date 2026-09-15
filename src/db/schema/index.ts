@@ -1383,6 +1383,9 @@ export const agentSettings = pgTable(
     plusMessages: integer("plus_messages").notNull().default(250),
     proMessages: integer("pro_messages").notNull().default(750),
     id: text("id").primaryKey().default("global"),
+    requireZeroRetention: boolean("require_zero_retention")
+      .notNull()
+      .default(true),
     enabled: boolean("enabled").notNull().default(false),
     encryptedApiKey: text("encrypted_api_key"),
     model: text("model").notNull().default(""),

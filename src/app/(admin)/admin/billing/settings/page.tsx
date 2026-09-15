@@ -1,3 +1,5 @@
+export const metadata = { title: "Settings · Admin" };
+
 import { asc, eq } from "drizzle-orm";
 import Image from "next/image";
 

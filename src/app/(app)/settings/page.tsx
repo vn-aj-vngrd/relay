@@ -1,3 +1,5 @@
+export const metadata = { title: "Settings" };
+
 import { Suspense } from "react";
 import {
   AppVersion,

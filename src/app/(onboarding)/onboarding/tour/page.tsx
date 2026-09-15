@@ -1,3 +1,5 @@
+export const metadata = { title: "Welcome to Relay" };
+
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/features/auth/session";

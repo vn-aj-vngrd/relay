@@ -1,3 +1,5 @@
+export const metadata = { title: "Home" };
+
 import {
   ArrowRight,
   CalendarBlank,

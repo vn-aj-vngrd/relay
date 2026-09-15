@@ -1,3 +1,5 @@
+export const metadata = { title: "Get started" };
+
 import { redirect } from "next/navigation";
 
 import { Brand } from "@/components/shared/brand";

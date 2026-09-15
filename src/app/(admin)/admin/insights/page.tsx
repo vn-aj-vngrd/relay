@@ -1,3 +1,5 @@
+export const metadata = { title: "Insights · Admin" };
+
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminInsights } from "@/features/admin/queries";
 import { sessionFunnelStages } from "@/features/analytics/insights";

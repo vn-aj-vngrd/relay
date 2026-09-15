@@ -1,3 +1,5 @@
+export const metadata = { title: "Plan request · Admin" };
+
 import { eq } from "drizzle-orm";
 import Image from "next/image";
 import { notFound } from "next/navigation";

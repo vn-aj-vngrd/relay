@@ -1,3 +1,5 @@
+export const metadata = { title: "Game story" };
+
 import { notFound } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";

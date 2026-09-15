@@ -1,3 +1,5 @@
+export const metadata = { title: "Create group" };
+
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, eq, isNotNull } from "drizzle-orm";
 import Link from "next/link";

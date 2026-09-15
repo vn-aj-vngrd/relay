@@ -1,3 +1,5 @@
+export const metadata = { title: "Feedback · Admin" };
+
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
 import { SelectField } from "@/components/ui/select-field";

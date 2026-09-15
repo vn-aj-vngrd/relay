@@ -10,6 +10,7 @@ import {
   Warning,
 } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -77,13 +78,13 @@ export function CourtAvailabilityControl({
         {nextAvailable ? "Reopen" : active ? "Close after match" : "Close"}
       </SubmitButton>
       {state.error ? (
-        <p role="alert" className="basis-full text-xs text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : state.message ? (
-        <p role="status" className="basis-full text-xs text-primary">
-          {state.message}
-        </p>
+        <ActionNotice
+          message={state.message}
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );
@@ -130,9 +131,7 @@ export function QueueOrderControls({
         </Button>
       ))}
       {state.error ? (
-        <p role="alert" className="basis-full text-right text-xs text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
     </form>
   );
@@ -217,9 +216,7 @@ export function MatchCancellationControl({
             placeholder="Court became unavailable"
           />
           {state.error ? (
-            <p role="alert" className="mt-2 text-sm text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           <div className="mt-6 flex justify-end gap-2">
             <Button

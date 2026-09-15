@@ -1,3 +1,5 @@
+export const metadata = { title: "Game settings" };
+
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db/client";

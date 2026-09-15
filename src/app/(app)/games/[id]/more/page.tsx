@@ -1,3 +1,5 @@
+export const metadata = { title: "Game details" };
+
 import {
   ArrowSquareOut,
   CaretRight,

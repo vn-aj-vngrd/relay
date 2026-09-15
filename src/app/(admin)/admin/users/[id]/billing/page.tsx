@@ -1,3 +1,5 @@
+export const metadata = { title: "Billing · Admin" };
+
 import { and, asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { z } from "zod";

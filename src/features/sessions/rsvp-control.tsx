@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
@@ -323,9 +324,7 @@ export function RsvpControl({
               </p>
             ) : null}
             {state.error ? (
-              <p role="alert" className="text-sm font-medium text-danger">
-                {state.error}
-              </p>
+              <ActionNotice message={state.error} response={state} />
             ) : responseMessage && !guestResponseSaved ? (
               <p role="status" className="text-sm font-medium text-primary">
                 {responseMessage}

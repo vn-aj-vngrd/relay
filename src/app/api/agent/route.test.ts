@@ -88,7 +88,9 @@ describe("Agent streaming boundary", () => {
         yield { type: "error", error: new Error("provider failed") };
       })(),
     });
-    await (await POST(request())).text();
+    await expect((await POST(request())).text()).rejects.toThrow(
+      "Agent response interrupted"
+    );
     expect(mocks.charge).toHaveBeenCalledOnce();
     expect(mocks.release).not.toHaveBeenCalled();
   });
@@ -195,9 +197,9 @@ describe("Agent streaming boundary", () => {
         };
       })(),
     });
-    const text = await (await POST(request())).text();
-    expect(text).toContain("couldn't finish");
-    expect(text).not.toContain("PRIVATE_PROVIDER_KEY");
+    await expect((await POST(request())).text()).rejects.toThrow(
+      "Agent response interrupted"
+    );
     expect(mocks.charge).not.toHaveBeenCalled();
     expect(mocks.release).toHaveBeenCalledOnce();
   });

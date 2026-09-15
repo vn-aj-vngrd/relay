@@ -1,3 +1,5 @@
+export const metadata = { title: "Your plan" };
+
 import Link from "next/link";
 import { Suspense } from "react";
 

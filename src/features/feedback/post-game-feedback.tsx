@@ -2,6 +2,7 @@
 
 import { CheckCircle, Smiley, WarningCircle, X } from "@phosphor-icons/react";
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { ButtonLink } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
@@ -94,9 +95,7 @@ export function PostGameFeedback({
         </ButtonLink>
       </div>
       {state.error ? (
-        <p role="alert" className="mt-3 text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
     </section>
   );

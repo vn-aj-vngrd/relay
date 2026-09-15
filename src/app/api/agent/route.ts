@@ -1,11 +1,10 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { isStepCount, streamText } from "ai";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { readAgentSettings } from "@/features/agent/config";
-import { decryptAgentKey } from "@/features/agent/credentials";
 import { agentInstructions } from "@/features/agent/instructions";
+import { agentModel } from "@/features/agent/provider";
 import { readAgentRequest } from "@/features/agent/request";
 import { createAgentTools } from "@/features/agent/tools";
 import {
@@ -89,25 +88,16 @@ export async function POST(request: Request) {
       cancellation.signal,
       AbortSignal.timeout(50_000),
     ]);
-    const openrouter = createOpenRouter({
-      apiKey: decryptAgentKey(encryptedApiKey),
-    });
     const result = streamText({
-      model: openrouter.chat(config.model, {
-        parallelToolCalls: false,
-        provider: {
-          require_parameters: true,
-          data_collection: "deny",
-          zdr: true,
-        },
-      }),
+      model: agentModel(
+        config.model,
+        encryptedApiKey,
+        config.requireZeroRetention
+      ),
       system: agentInstructions(config.instructions),
       messages: body.messages,
       tools: createAgentTools(user.id, config, signal),
       stopWhen: isStepCount(6),
-      prepareStep: ({ stepNumber }) => ({
-        toolChoice: stepNumber >= 5 ? "none" : "auto",
-      }),
       maxOutputTokens: config.maxOutputTokens,
       maxRetries: 0,
       abortSignal: signal,
@@ -145,24 +135,13 @@ export async function POST(request: Request) {
               wrote = true;
             }
           }
-          if (!wrote && !signal.aborted)
-            controller.enqueue(
-              encoder.encode(
-                "I couldn't finish this answer. Please narrow your question and try again."
-              )
-            );
+          if (!wrote && !signal.aborted) throw new Error("Empty response");
           await release();
           controller.close();
         } catch {
-          if (!request.signal.aborted && !cancellation.signal.aborted) {
-            controller.enqueue(
-              encoder.encode(
-                "\n\nAgent couldn't finish this response. Please try again."
-              )
-            );
-            await release();
-            controller.close();
-          } else controller.error(new Error("Response stopped"));
+          await release();
+          // A failed stream becomes a client error, never a fabricated assistant turn.
+          controller.error(new Error("Agent response interrupted"));
         } finally {
           await release();
         }

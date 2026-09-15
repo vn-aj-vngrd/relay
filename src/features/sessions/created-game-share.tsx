@@ -3,8 +3,8 @@
 import { CheckCircle, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useEffect, useId, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
-import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 
@@ -127,7 +127,7 @@ export function CreatedGameShare({
                 )}
               </div>
               {state.error ? (
-                <Alert className="mt-3">{state.error}</Alert>
+                <ActionNotice message={state.error} response={state} />
               ) : null}
               <form noValidate id={dismissFormId} action={dismissAction}>
                 <input type="hidden" name="sessionId" value={sessionId} />

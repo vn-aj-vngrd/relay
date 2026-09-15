@@ -1,3 +1,5 @@
+export const metadata = { title: "Group details" };
+
 import {
   CalendarPlus,
   CaretRight,

@@ -1,3 +1,5 @@
+export const metadata = { title: "Venue details · Admin" };
+
 import { redirect } from "next/navigation";
 
 export default async function LegacyAdminVenuePage({

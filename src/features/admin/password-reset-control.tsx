@@ -3,8 +3,8 @@
 import { Check, Copy, Key, Warning } from "@phosphor-icons/react";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
-import { Alert } from "@/components/ui/alert";
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -46,7 +46,11 @@ export function PasswordResetControl({
     const credentials = `Email: ${state.accountEmail}\nTemporary password: ${state.temporaryPassword}`;
     return (
       <div>
-        <Alert variant="success">{state.success}</Alert>
+        <ActionNotice
+          message={state.success ?? "Password reset."}
+          response={state}
+          variant="success"
+        />
         <p className="mt-3 text-sm leading-6 text-muted">
           Share this privately. It is shown once. The player signs in with it,
           verifies their existing authenticator, then chooses a new password.
@@ -118,7 +122,9 @@ export function PasswordResetControl({
               </p>
             </div>
           </div>
-          {state.error ? <Alert className="mt-5">{state.error}</Alert> : null}
+          {state.error ? (
+            <ActionNotice message={state.error} response={state} />
+          ) : null}
           <div className="mt-5">
             <label
               htmlFor="password-reset-reason"

@@ -22,7 +22,7 @@ export async function getAgentUsage(
   const [counts] = await connection
     .select({
       used: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'charged')::int`,
-      reserved: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'reserved' and ${agentMessageUsage.expiresAt} > ${now})::int`,
+      reserved: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'reserved' and ${agentMessageUsage.expiresAt} > ${now.toISOString()})::int`,
     })
     .from(agentMessageUsage)
     .where(

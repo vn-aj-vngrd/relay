@@ -2,6 +2,7 @@
 
 import { Warning } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -61,9 +62,11 @@ export function CancelSessionControl({
         Cancel game
       </Button>
       {state.success ? (
-        <p role="status" className="mt-3 text-sm font-medium text-primary">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
       <Dialog
         ref={dialogRef}
@@ -120,9 +123,7 @@ export function CancelSessionControl({
             />
           </div>
           {state.error ? (
-            <p role="alert" className="mt-3 text-sm text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           <div className="mt-6 flex justify-end gap-2">
             <Button

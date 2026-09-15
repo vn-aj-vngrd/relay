@@ -1,3 +1,5 @@
+export const metadata = { title: "Feedback details · Admin" };
+
 import {
   ArrowSquareOut,
   EnvelopeSimple,

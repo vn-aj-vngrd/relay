@@ -1,3 +1,5 @@
+export const metadata = { title: "Court details · Admin" };
+
 import { ArrowSquareOut } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";

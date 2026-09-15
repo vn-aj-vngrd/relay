@@ -1,3 +1,5 @@
+export const metadata = { title: "Game memories" };
+
 import { redirect } from "next/navigation";
 
 export default async function LegacyGameMemoriesPage({
