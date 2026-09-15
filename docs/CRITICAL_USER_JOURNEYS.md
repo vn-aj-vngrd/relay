@@ -21,6 +21,19 @@ Scope: Relay's organizer and invited-player experience, from planning through pa
 | J13 | Host/player creates and downloads Story | The default photo placeholder becomes a poster or 2–4 photo collage; each crop and photo order survive layout/theme edits; facts remain truthful; preview/export geometry agrees. | `recap-share-card.test.tsx`, `story-collage-editor.test.tsx`, `story-collage.test.ts`, `use-story-photos.test.tsx`, invitation/recap layout suites and `e2e/story-creative.spec.ts`. New collage coverage is authored, not run. Actual mobile social-app handoff remains manual. |
 | J14 | User signs in or returns from a shared link | Public entry is usable; protected routes reject signed-out users; guest-to-account handoff preserves the response and destination. | Entry and protected-route browser tests; auth and destination unit coverage. Actual signup, CAPTCHA, SMTP and guest-account claim are not browser-verified. |
 
+## Admin photo limits
+
+An MFA-verified administrator can save separate 1–4 MiB chat and album limits.
+The shared authenticated/guest upload forms and pricing show the saved values;
+server uploads and reservations enforce exact boundaries even after an open
+form becomes stale. Existing photos, host storage, daily limits and the album
+count remain unchanged. `image-upload-limits-action.test.ts`,
+`image-upload-limits-control.test.tsx`, `media-usage.test.ts`,
+`memories/actions.test.ts` and `memory-photo-form.test.tsx` cover this at unit and
+component level. The migration companion documents the pending authenticated
+browser scenario; the non-admin E2E fixture cannot change global Admin settings.
+Local check results are recorded in the PR; browser execution remains opt-in.
+
 ## Repeatable checks
 
 The normal lifecycle stays in `e2e/smoke.spec.ts`. The alternative roster paths live in `e2e/game-branches.spec.ts`; they use the same `establishTestSession` and `reusableTestGame` guards. Both require the dedicated non-admin fixture described in `e2e/README.md` and `docs/AGENT_VALIDATION.md`.

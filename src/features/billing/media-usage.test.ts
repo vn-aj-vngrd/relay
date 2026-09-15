@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   bytes: 0,
+  chatImageMaxMiB: 1,
+  memoryImageMaxMiB: 2,
   uploads: 0,
   photoCount: 0,
   insert: vi.fn(),
@@ -14,7 +16,12 @@ vi.mock("@/db/client", async () => {
   const tx = {
     execute: mocks.lock,
     query: {
-      billingSettings: { findFirst: async () => null },
+      billingSettings: {
+        findFirst: async () => ({
+          chatImageMaxMiB: mocks.chatImageMaxMiB,
+          memoryImageMaxMiB: mocks.memoryImageMaxMiB,
+        }),
+      },
       billingTerms: { findFirst: async () => null },
       billingOverrides: { findFirst: mocks.override },
     },
@@ -61,6 +68,8 @@ const input = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.bytes = 0;
+  mocks.chatImageMaxMiB = 1;
+  mocks.memoryImageMaxMiB = 2;
   mocks.uploads = 0;
   mocks.photoCount = 0;
   mocks.override.mockResolvedValue(null);
@@ -171,4 +180,40 @@ it("retains the album ceiling even when the host has Unlimited storage", async (
   await expect(reserveMedia({ ...input, kind: "memory" })).rejects.toThrow(
     "50-photo limit"
   );
+});
+
+it("enforces the latest admin chat limit at the reservation boundary", async () => {
+  mocks.chatImageMaxMiB = 3;
+  await expect(
+    reserveMedia({ ...input, bytes: 3 * MiB })
+  ).resolves.toHaveProperty("id");
+  await expect(reserveMedia({ ...input, bytes: 3 * MiB + 1 })).rejects.toThrow(
+    "smaller image"
+  );
+  mocks.chatImageMaxMiB = 1;
+  mocks.memoryImageMaxMiB = 2;
+  await expect(reserveMedia({ ...input, bytes: 2 * MiB })).rejects.toThrow(
+    "smaller image"
+  );
+});
+
+it("keeps album photos at 2 MiB when the chat limit increases", async () => {
+  mocks.chatImageMaxMiB = 4;
+  await expect(
+    reserveMedia({ ...input, kind: "memory", bytes: 2 * MiB + 1 })
+  ).rejects.toThrow("smaller image");
+});
+
+it("enforces the independent album setting including exact boundaries", async () => {
+  mocks.memoryImageMaxMiB = 4;
+  await expect(
+    reserveMedia({ ...input, kind: "memory", bytes: 4 * MiB })
+  ).resolves.toHaveProperty("id");
+  await expect(
+    reserveMedia({ ...input, kind: "memory", bytes: 4 * MiB + 1 })
+  ).rejects.toThrow("smaller image");
+  mocks.memoryImageMaxMiB = 1;
+  await expect(
+    reserveMedia({ ...input, kind: "memory", bytes: MiB + 1 })
+  ).rejects.toThrow("smaller image");
 });

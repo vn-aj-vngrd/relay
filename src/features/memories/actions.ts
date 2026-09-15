@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { memories, memoryMedia, sessions } from "@/db/schema";
 import { getCurrentUser } from "@/features/auth/session";
-import { mediaPolicy } from "@/features/billing/domain";
+import { getImageUploadLimits } from "@/features/billing/catalog";
 import { storeGameMedia } from "@/features/billing/media";
 import { getSessionViewer } from "@/features/sessions/viewer";
 import { hasValidImageSignature, isSupportedImageType } from "@/lib/image-file";
@@ -87,13 +87,16 @@ async function uploadMemoryPhoto(formData: FormData) {
   const { actorKey, uploaderId, session, memory } =
     await requireMemoryParticipant(sessionId);
   const file = formData.get("photo");
+  const { memoryImageMaxBytes } = await getImageUploadLimits();
   if (
     !(file instanceof File) ||
     !isSupportedImageType(file.type) ||
     file.size === 0 ||
-    file.size > mediaPolicy.memory.maxBytes
+    file.size > memoryImageMaxBytes
   )
-    throw new Error("Choose a JPG, PNG, or WebP image no larger than 2 MiB.");
+    throw new Error(
+      `Choose a JPG, PNG, or WebP image no larger than ${memoryImageMaxBytes / (1024 * 1024)} MiB.`
+    );
   if (!(await hasValidImageSignature(file)))
     throw new Error("That file doesn’t appear to be a valid image.");
   if (!session.participantImagesEnabled && uploaderId !== session.hostId)

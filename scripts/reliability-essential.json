@@ -16,5 +16,7 @@
   "src/features/payments/payment-switch-action.test.ts",
   "src/features/memories/permissions.test.ts",
   "src/features/memories/story-recap-layout.test.ts",
+  "src/features/billing/media-usage.test.ts",
+  "src/features/admin/image-upload-limits-action.test.ts",
   "src/features/auth/permissions.test.ts"
 ]

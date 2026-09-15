@@ -10,13 +10,18 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
+import { ImageUploadLimitsControl } from "@/features/admin/image-upload-limits-control";
 import { AdminDate } from "@/features/admin/presentation";
 import { getAdminOverview } from "@/features/admin/queries";
 import { SignupCapacityControl } from "@/features/admin/signup-capacity-control";
+import { getImageUploadLimits } from "@/features/billing/catalog";
 
 export default async function AdminOverviewPage() {
   await connection();
-  const data = await getAdminOverview();
+  const [data, imageLimits] = await Promise.all([
+    getAdminOverview(),
+    getImageUploadLimits(),
+  ]);
 
   return (
     <div>
@@ -64,6 +69,7 @@ export default async function AdminOverviewPage() {
           accountCap={data.accountCap}
           userCount={data.userCount}
         />
+        <ImageUploadLimitsControl {...imageLimits} />
       </div>
 
       <section className="mt-10" aria-labelledby="product-loop-title">

@@ -1,4 +1,7 @@
-import { DEFAULT_CHAT_IMAGE_MAX_BYTES } from "@/lib/upload-config";
+import {
+  DEFAULT_CHAT_IMAGE_MAX_BYTES,
+  DEFAULT_MEMORY_IMAGE_MAX_BYTES,
+} from "@/lib/upload-config";
 
 export const MiB = 1024 * 1024;
 
@@ -107,7 +110,7 @@ export const mediaPolicy = {
     bucket: "chat-images",
   },
   memory: {
-    maxBytes: 2 * MiB,
+    maxBytes: DEFAULT_MEMORY_IMAGE_MAX_BYTES,
     dailyUploads: 100,
     perGame: 50,
     bucket: "session-memories",
@@ -115,6 +118,7 @@ export const mediaPolicy = {
 } as const;
 
 export type GamePhotoAllowance = {
+  maxImageBytes?: number;
   photosUsed: number;
   photoLimit: number;
   bytesUsed: number;

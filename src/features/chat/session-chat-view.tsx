@@ -10,7 +10,7 @@ import {
   sessionPlayers,
   sessions,
 } from "@/db/schema";
-import { mediaPolicy } from "@/features/billing/domain";
+import { getImageUploadLimits } from "@/features/billing/catalog";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
@@ -34,8 +34,8 @@ export async function SessionChatView({
   readOnlyMessage?: string;
   className?: string;
 }) {
-  const maxImageBytes = mediaPolicy.chat.maxBytes;
-  const [imageSession, messageRows] = await Promise.all([
+  const [imageLimits, imageSession, messageRows] = await Promise.all([
+    getImageUploadLimits(),
     db.query.sessions.findFirst({
       where: eq(sessions.id, sessionId),
       columns: { hostId: true, participantImagesEnabled: true },
@@ -230,7 +230,7 @@ export async function SessionChatView({
         <ChatComposer
           sessionId={sessionId}
           slug={slug}
-          maxImageBytes={maxImageBytes}
+          maxImageBytes={imageLimits.chatImageMaxBytes}
           canUploadImages={canUploadImages}
         />
       ) : readOnlyMessage ? (

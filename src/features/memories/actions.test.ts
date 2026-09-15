@@ -4,7 +4,12 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   viewer: vi.fn(),
   store: vi.fn(),
+  imageLimits: vi.fn(),
   revalidate: vi.fn(),
+}));
+vi.mock("server-only", () => ({}));
+vi.mock("@/features/billing/catalog", () => ({
+  getImageUploadLimits: mocks.imageLimits,
 }));
 vi.mock("@/db/client", () => ({
   db: {
@@ -47,6 +52,10 @@ function photoForm() {
 }
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.imageLimits.mockResolvedValue({
+    chatImageMaxBytes: 1024 * 1024,
+    memoryImageMaxBytes: 2 * 1024 * 1024,
+  });
   mocks.session.mockResolvedValue(session);
   mocks.viewer.mockResolvedValue({
     user: null,
@@ -112,4 +121,28 @@ describe("game photo upload phases", () => {
       success: true,
     });
   });
+});
+
+it("uses the saved album size for guest upload validation", async () => {
+  const MiB = 1024 * 1024;
+  mocks.imageLimits.mockResolvedValue({
+    chatImageMaxBytes: MiB,
+    memoryImageMaxBytes: 3 * MiB,
+  });
+  const data = photoForm();
+  data.set(
+    "photo",
+    new File([new Uint8Array(3 * MiB)], "crew.png", { type: "image/png" })
+  );
+  expect(await uploadMemoryPhotoState({}, data)).toEqual({ success: true });
+  mocks.store.mockClear();
+  mocks.imageLimits.mockResolvedValue({
+    chatImageMaxBytes: MiB,
+    memoryImageMaxBytes: 2 * MiB,
+  });
+  expect(await uploadMemoryPhotoState({}, data)).toHaveProperty(
+    "error",
+    "Choose a JPG, PNG, or WebP image no larger than 2 MiB."
+  );
+  expect(mocks.store).not.toHaveBeenCalled();
 });

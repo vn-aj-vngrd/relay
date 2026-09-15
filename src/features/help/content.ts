@@ -1284,9 +1284,9 @@ export const helpArticles: readonly HelpArticle[] = [
       "Use reactions for a quick acknowledgment. Open a photo thumbnail for the viewer and close it when done.",
     ],
     outcome:
-      "Your message joins the game conversation. People with access to a public/link-only shared game may read it; avoid sensitive information.",
+      "Your message joins the game conversation. People with access to a public/link-only shared game may read it; avoid sensitive information. Note: chat and game-album photos use the game host’s account storage, not the uploader’s, including photos added by guests. Daily upload limits still apply to each uploader.",
     troubleshooting: [
-      "Sending needs text or a photo. Check the upload guidance for supported JPG/PNG/WebP images and the current limit.",
+      "Sending needs text or a photo. JPG, PNG and WebP photos default to a 4 MiB limit; admins can change it, so check the form for the current limit. Resize larger phone photos before uploading.",
       "Wait after a rate limit and confirm messages after reconnection. Cancelled-game Chat is intentionally read-only.",
       "If you are recognized only as Pending or a link viewer, wait for a participating state rather than trying to bypass the control.",
     ],
@@ -1305,20 +1305,20 @@ export const helpArticles: readonly HelpArticle[] = [
       "Keep factual results distinct from the image you choose to share.",
     audience: "Game viewers; photo contribution needs eligible participation",
     prerequisites: [
-      "Access to the game. Shared memory uploads require completion and host/co-host or Going participant identity, including eligible guests.",
+      "Access to a published, live, or completed game and host/co-host or Going participant identity, including eligible guests.",
     ],
     steps: [
       "After the host ends the game, open Play, now Recap, for completed results and standings. No scored matches means no invented winner.",
       "Open Story to create an invitation before play, a safe live update during play, or a completed-game portrait afterward.",
       "Choose the available focus, layout, background, crop, contrast, and words. Preview the image and use supported native sharing or download the PNG.",
-      "After completion, use Story’s Photos surface to add shared game memories. Upload JPG, PNG, or WebP under 10 MB and confirm the photo saved.",
+      "Use Story’s Photos surface to add shared game memories. Upload JPG, PNG, or WebP within the size shown on the form and confirm the photo saved.",
     ],
     outcome:
-      "Recap preserves the factual game; Story exports an image based on supported game data. A custom device background stays local unless separately uploaded as a shared photo.",
+      "Recap preserves the factual game; Story exports an image based on supported game data. A custom device background stays local unless separately uploaded as a shared photo. Note: chat and game-album photos use the game host’s account storage, not the uploader’s, including photos added by guests. The shared album also has a 50-photo cap.",
     troubleshooting: [
       "Not every focus is available in every phase or without supporting results. Do not manufacture scores to unlock a Story.",
       "If photo retrieval or image generation fails, choose another background and retry. If native sharing is unsupported or canceled, use PNG download.",
-      "A memory upload requires the right lifecycle and identity; an arbitrary link viewer cannot add photos.",
+      "Album photos default to a 4 MiB limit; admins can change it, so check the form for the current limit. Resize larger phone photos before uploading. An arbitrary link viewer cannot add photos.",
     ],
     related: ["score-corrections", "repeat-games", "privacy"],
     sources: [

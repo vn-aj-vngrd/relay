@@ -142,3 +142,16 @@ describe("Help Center article contract", () => {
     expect(searchHelpArticles("no-such-task-xyz")).toEqual([]);
   });
 });
+
+it.each(["chat", "recap-story"])(
+  "explains host-owned photo storage in %s",
+  (slug) => {
+    const article = getHelpArticle(slug);
+    expect(article?.outcome).toContain(
+      "game host’s account storage, not the uploader’s"
+    );
+    expect(article?.outcome).toContain("including photos added by guests");
+    expect(article?.troubleshooting.join(" ")).toContain("4 MiB");
+    expect(article?.steps.join(" ")).not.toContain("under 10 MB");
+  }
+);

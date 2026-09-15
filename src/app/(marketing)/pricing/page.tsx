@@ -94,7 +94,11 @@ export default async function PricingPage() {
             purchased yet.
           </p>
         </section>
-        <PlanComparison catalog={offer.catalog} />
+        <PlanComparison
+          catalog={offer.catalog}
+          chatImageMaxBytes={offer.chatImageMaxBytes}
+          memoryImageMaxBytes={offer.memoryImageMaxBytes}
+        />
         <PricingQuestions />
         <section
           className="flex flex-wrap items-center justify-between gap-6 border-t border-line pt-8"

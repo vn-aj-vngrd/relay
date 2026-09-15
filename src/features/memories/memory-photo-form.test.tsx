@@ -119,3 +119,20 @@ it.each([
     );
   }
 );
+
+it("shows the admin-configured album size in the upload guidance", () => {
+  render(
+    <MemoryPhotoForm
+      sessionId="game"
+      allowance={{
+        photosUsed: 0,
+        photoLimit: 50,
+        maxImageBytes: 3 * 1024 * 1024,
+        bytesUsed: 0,
+        storageBytes: 100 * 1024 * 1024,
+        storageUnlimited: false,
+      }}
+    />
+  );
+  expect(screen.getByText(/Up to 3.*MiB per photo/)).toBeVisible();
+});

@@ -23,7 +23,11 @@ export function pricingStorage(bytes: number) {
   return storageLabel(bytes).replace(".0 ", " ");
 }
 
-export function getPricingComparison(pricingPlans: BillingPlan[]) {
+export function getPricingComparison(
+  pricingPlans: BillingPlan[],
+  chatImageMaxBytes: number = mediaPolicy.chat.maxBytes,
+  memoryImageMaxBytes: number = mediaPolicy.memory.maxBytes
+) {
   return [
     {
       title: "Hosting capacity",
@@ -94,9 +98,7 @@ export function getPricingComparison(pricingPlans: BillingPlan[]) {
         },
         {
           label: "Maximum size per chat image",
-          values: pricingPlans.map(() =>
-            pricingStorage(mediaPolicy.chat.maxBytes)
-          ),
+          values: pricingPlans.map(() => pricingStorage(chatImageMaxBytes)),
         },
         {
           label: "Chat images per uploader per day",
@@ -110,9 +112,7 @@ export function getPricingComparison(pricingPlans: BillingPlan[]) {
         },
         {
           label: "Maximum size per game photo",
-          values: pricingPlans.map(() =>
-            pricingStorage(mediaPolicy.memory.maxBytes)
-          ),
+          values: pricingPlans.map(() => pricingStorage(memoryImageMaxBytes)),
         },
         {
           label: "Game photo uploads per person per day · abuse safeguard",

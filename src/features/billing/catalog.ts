@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { billingMethods, billingSettings } from "@/db/schema";
+import { resolveImageUploadLimits } from "@/lib/upload-config";
 
 import { normalizeBillingCatalog, publicBillingPlans } from "./domain";
 import type { BillingTransaction } from "./usage";
@@ -21,6 +22,7 @@ export async function getAdminBillingOffer() {
   return {
     catalog: normalizeBillingCatalog(settings?.planCatalog),
     acceptingPayments: Boolean(settings?.acceptingPayments && method),
+    ...resolveImageUploadLimits(settings),
   };
 }
 
@@ -36,4 +38,14 @@ export async function getBillingCatalog(
     where: eq(billingSettings.id, "global"),
   });
   return normalizeBillingCatalog(settings?.planCatalog);
+}
+
+export async function getImageUploadLimits(
+  connection: BillingTransaction | typeof db = db
+) {
+  const settings = await connection.query.billingSettings.findFirst({
+    where: eq(billingSettings.id, "global"),
+    columns: { chatImageMaxMiB: true, memoryImageMaxMiB: true },
+  });
+  return resolveImageUploadLimits(settings);
 }

@@ -35,7 +35,6 @@ Keep the button disabled until Google and Supabase are both configured. Google c
 | `NEXT_PUBLIC_SUPABASE_URL`             | Supabase project reference                     | Public                    | Local, Vercel |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase API Keys                              | Public                    | Local, Vercel |
 | `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`      | `true` after Google provider setup             | Public                    | Local, Vercel |
-| `NEXT_PUBLIC_MAGIC_LINK_ENABLED`       | `true` only after production SMTP is verified  | Public                    | Local, Vercel |
 | `SUPABASE_SECRET_KEY`                  | Supabase API Keys                              | Secret, server-only       | Local, Vercel |
 | `RESEND_API_KEY`                       | Resend API Keys                                | Secret, server-only       | Local, Vercel |
 | `SMTP_FROM_EMAIL`                      | Verified Resend domain sender                  | Setup-only configuration  | Local only    |
@@ -53,6 +52,7 @@ Keep the button disabled until Google and Supabase are both configured. Google c
 | `TURNSTILE_SECRET_KEY`                 | Cloudflare Turnstile widget                    | Secret, setup-only        | Local only    |
 | `HEALTHCHECK_SECRET`                   | `openssl rand -base64 32`                      | Secret, server-only       | Local, Vercel |
 | `ADMIN_EMAILS`                         | Relay owner                                    | Secret, server-only       | Local, Vercel |
+| `RELAY_READ_ONLY_MODE`                 | Optional emergency switch; defaults to `false` | Server-only feature flag  | Local, Vercel |
 
 `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, and `DATABASE_URL` must never use a `NEXT_PUBLIC_` prefix. `SMTP_FROM_EMAIL` is expanded when `supabase config push` applies Auth SMTP settings; `RESEND_API_KEY` is also available to Relay at runtime only for opted-in application notifications. The production sender is `Relay <relay@vanajvanguardia.tech>` for both paths. A verified `vanajvanguardia.tech` domain covers that address, so a separately verified `relay.vanajvanguardia.tech` subdomain is unnecessary unless mail should originate from that subdomain.
 
@@ -75,14 +75,13 @@ The Supabase **Before User Created** hook enforces the singleton `public.signup_
 3. With Resend SMTP configured, open `/forgot-password`, request a reset for a known account, and verify Resend logs show mail from `Relay <relay@vanajvanguardia.tech>`.
 4. Follow the reset link, confirm `/update-password` accepts a new password, signs the recovery session out, and returns to `/login` with a success message. Verify the link cannot be reused.
 5. Sign in with the new password, open Settings → Change password, and confirm the current-password flow works. Confirm an incorrect current password fails without changing it.
-6. When production SMTP is configured, set `NEXT_PUBLIC_MAGIC_LINK_ENABLED=true`, request a magic link, and confirm it returns through `/auth/callback`.
-7. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
-8. In Supabase Authentication → Users, verify one identity per enabled method.
-9. In the SQL editor, verify the same IDs exist in `public.users`.
-10. In Admin Console → Overview, set the account limit to the current registered-user count and confirm a new signup is rejected without creating an Auth user.
-11. Raise the limit by one, confirm one signup succeeds, and restore the intended launch limit.
+6. When Google is configured, continue with Google and confirm the consent screen returns to Relay.
+7. In Supabase Authentication → Users, verify one identity per enabled method.
+8. In the SQL editor, verify the same IDs exist in `public.users`.
+9. In Admin Console → Overview, set the account limit to the current registered-user count and confirm a new signup is rejected without creating an Auth user.
+10. Raise the limit by one, confirm one signup succeeds, and restore the intended launch limit.
 
-**Complete when:** password authentication creates a persistent session, the capacity boundary fails closed, and every enabled optional method passes its callback flow. Supabase’s built-in mailer is test-only; never enable magic links in production without custom SMTP.
+**Complete when:** password authentication creates a persistent session, the capacity boundary fails closed, and every enabled optional method passes its callback flow. Supabase’s built-in mailer is test-only; production Auth email requires custom SMTP.
 
 ## Storage contract
 
@@ -90,7 +89,7 @@ The Supabase **Before User Created** hook enforces the singleton `public.signup_
 - Private: `payment-qrs`, `payment-proofs`, `booking-screenshots`, `session-memories`, `chat-images`, `subscription-files`.
 - Avatar objects use `<user-id>/<filename>` so the baseline ownership policy can authorize them.
 - Payment proof objects use `<session-id>/<payment-id>` and are replaced in place so each payment has one current proof.
-- Chat photos use the shared 1 MiB policy in `src/features/billing/domain.ts` / `src/lib/upload-config.ts`; the former `CHAT_IMAGE_MAX_BYTES` environment override is retired. Game-memory photos require files no larger than 2 MiB. Both charge host-owned storage through reservations; do not raise file limits without reviewing Storage usage, egress and upload latency.
+- Admin → Operations overview → Photo upload sizes owns separate chat and game-album limits, each from 1–4 MiB. Both default to 4 MiB to give phone photos more headroom. Apply [`0055_admin_image_upload_limits`](../drizzle/0055_admin_image_upload_limits.md) before deploying this control. The former `CHAT_IMAGE_MAX_BYTES` environment override is retired. Both upload paths enforce the saved limits and charge the game host’s account storage through reservations, never a different uploader’s account storage. This includes account players, co-hosts and guests; uploader identity only controls daily abuse limits. Larger limits consume host storage faster; the 50-photo album cap and daily upload limits remain unchanged.
 - Private media stays inaccessible through the Data API until its feature adds participant/host path policies. Server-generated signed URLs must be short-lived.
 
 **Complete when:** anonymous users can read a public test asset, cannot read a private test asset, and an authenticated user can only mutate avatar objects under their own ID prefix.
@@ -170,6 +169,8 @@ Admin → Billing → Plans & pricing owns versioned monthly PHP prices, monthly
 The complete production gate, quota alerts, backup drill, and field acceptance criteria live in [`PUBLIC_RELEASE_AUDIT.md`](./PUBLIC_RELEASE_AUDIT.md).
 
 ## Emergency read-only mode
+
+`RELAY_READ_ONLY_MODE` is optional and disabled when unset or `false`. Set it to `true` to enable read-only mode; restart the local server or redeploy the affected Vercel environment after changing it.
 
 Pause all product writes while retaining reads and authentication:
 
