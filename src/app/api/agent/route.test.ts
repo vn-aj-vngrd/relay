@@ -133,6 +133,30 @@ describe("Agent streaming boundary", () => {
       );
     }
   );
+  it("reserves the final step for an answer after tool-only steps", async () => {
+    mocks.stream.mockImplementation(
+      ({
+        prepareStep,
+      }: {
+        prepareStep: (step: { stepNumber: number }) => { toolChoice: string };
+      }) => ({
+        fullStream: (async function* () {
+          for (let stepNumber = 0; stepNumber < 6; stepNumber++) {
+            if (prepareStep({ stepNumber }).toolChoice === "none") {
+              expect(stepNumber).toBe(5);
+              yield { type: "text-delta", text: "Here is the summary." };
+            } else {
+              yield { type: "tool-call" };
+              yield { type: "tool-result" };
+            }
+          }
+        })(),
+      })
+    );
+    const response = await POST(request());
+    expect(await response.text()).toBe("Here is the summary.");
+    expect(mocks.charge).toHaveBeenCalledOnce();
+  });
   it("does not invoke the provider when the monthly allowance is exhausted", async () => {
     mocks.reserve.mockRejectedValue(new AgentQuotaError("full"));
     expect((await POST(request())).status).toBe(402);

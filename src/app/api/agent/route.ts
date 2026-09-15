@@ -136,6 +136,9 @@ export async function POST(request: Request) {
       messages: modelMessages,
       tools: createAgentTools(user.id, config, signal),
       stopWhen: isStepCount(6),
+      prepareStep: ({ stepNumber }) => ({
+        toolChoice: stepNumber >= 5 ? "none" : "auto",
+      }),
       maxOutputTokens: config.maxOutputTokens,
       maxRetries: 0,
       abortSignal: signal,
