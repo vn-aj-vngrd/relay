@@ -428,6 +428,13 @@
       "when": 1789485054830,
       "tag": "0060_agent_court_search",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789492554203,
+      "tag": "0061_agent_conversation_privileges",
+      "breakpoints": true
     }
   ]
 }
