@@ -1,3 +1,5 @@
+export const metadata = { title: "Billing · Admin" };
+
 import { ButtonLink } from "@/components/ui/button";
 import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";

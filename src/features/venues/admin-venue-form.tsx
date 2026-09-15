@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -84,20 +85,14 @@ export function AdminVenueForm({ venue }: { venue: AdminVenueDefaults }) {
     >
       <input type="hidden" name="venueId" value={venue.id} />
       {state.error ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
-        >
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {state.success ? (
-        <p
-          role="status"
-          className="rounded-lg bg-success/8 px-4 py-3 text-sm font-medium text-success"
-        >
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
 
       <section className="grid gap-5 sm:grid-cols-2">

@@ -1,3 +1,5 @@
+export const metadata = { title: "Audit log · Admin" };
+
 import { AdminInfiniteRecords } from "@/features/admin/admin-infinite-records";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { getAdminAuditLog } from "@/features/admin/queries";

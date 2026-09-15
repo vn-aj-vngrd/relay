@@ -1,3 +1,5 @@
+export const metadata = { title: "Game recap" };
+
 import { redirect } from "next/navigation";
 
 export default async function LegacyGameRecapPage({

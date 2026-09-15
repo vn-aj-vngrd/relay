@@ -1,3 +1,5 @@
+export const metadata = { title: "Play setup" };
+
 import { redirect } from "next/navigation";
 
 import { GamePageIntro } from "@/components/shared/game-page-intro";

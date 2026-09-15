@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -54,13 +55,13 @@ export function LeadOrganizerControl({
           Save organizer
         </SubmitButton>
         {state.error ? (
-          <p role="alert" className="mt-2 text-sm text-danger">
-            {state.error}
-          </p>
+          <ActionNotice message={state.error} response={state} />
         ) : state.message ? (
-          <p role="status" className="mt-2 text-sm text-primary">
-            {state.message}
-          </p>
+          <ActionNotice
+            message={state.message}
+            response={state}
+            variant="success"
+          />
         ) : null}
       </form>
     </section>

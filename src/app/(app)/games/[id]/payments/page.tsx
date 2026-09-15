@@ -1,3 +1,5 @@
+export const metadata = { title: "Game payments" };
+
 import {
   CheckCircle,
   CircleDashed,

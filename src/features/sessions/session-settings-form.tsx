@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { ButtonLink } from "@/components/ui/button";
 import {
@@ -104,7 +105,13 @@ export function SessionSettingsForm({
             : "The plan and access rules are locked during Play. You can still update the player note, booking details, and organizers."}
         </p>
       ) : null}
-      {state.success ? <p role="status">Changes saved.</p> : null}
+      {state.success ? (
+        <ActionNotice
+          message="Changes saved."
+          response={state}
+          variant="success"
+        />
+      ) : null}
       {state.error ? (
         <div
           role="alert"

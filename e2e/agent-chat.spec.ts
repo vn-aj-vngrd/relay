@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 
 let bundle: string;
+let markdownStyles: string;
 test.beforeAll(async () => {
   const directory = await mkdtemp(join(tmpdir(), "relay-agent-"));
   const file = join(directory, "fixture.js");
@@ -19,6 +20,7 @@ test.beforeAll(async () => {
     "--define:process.env={}",
   ]);
   bundle = await readFile(file, "utf8");
+  markdownStyles = await readFile(join(directory, "fixture.css"), "utf8");
 });
 
 for (const width of [390, 1440]) {
@@ -32,10 +34,36 @@ for (const width of [390, 1440]) {
       .evaluateAll((elements) =>
         elements.map((element) => element.outerHTML).join("")
       );
-    await page.route("**/__synthetic-agent", (route) =>
+    await page.route("**/__synthetic-agent**", (route) =>
       route.fulfill({
         contentType: "text/html",
         body: `<html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles}</head><body><div id="agent-fixture"></div></body></html>`,
+      })
+    );
+    const conversation = {
+      id: "123e4567-e89b-42d3-a456-426614174000",
+      title: "When is my next game?",
+      updatedAt: "2030-09-01T00:00:00.000Z",
+      pending: false,
+      messages: [
+        { id: "question", role: "user", content: "When is my next game?" },
+        {
+          id: "reply",
+          role: "assistant",
+          content:
+            "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
+        },
+      ],
+    };
+    await page.route("**/api/agent/conversations**", (route) =>
+      route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(
+          route.request().method() === "GET" &&
+            new URL(route.request().url()).pathname.endsWith("conversations")
+            ? { conversations: [conversation], hasMore: false }
+            : conversation
+        ),
       })
     );
     await page.route("**/api/agent", (route) =>
@@ -54,12 +82,24 @@ for (const width of [390, 1440]) {
             }
           : {
               contentType: "text/plain",
-              body: "Synthetic answer: your game is tomorrow. [Guide](/help/create-game)",
+              body: "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
             }
       )
     );
     await page.goto("/__synthetic-agent");
+    await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });
+    if (width < 1024) {
+      await expect(
+        page.getByRole("link", { name: "Back to Home" })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Agent conversation", exact: true })
+      ).toHaveClass(/sr-only/);
+    }
+    await expect(
+      page.getByRole("button", { name: "Find courts near me." })
+    ).toBeVisible();
     await page
       .getByRole("button", { name: "When is my next game?", exact: true })
       .click();
@@ -72,6 +112,35 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("button", { name: "Send message" })
     ).toBeDisabled();
+    await expect(page.getByRole("log").locator("strong")).toHaveText(
+      "Synthetic answer:"
+    );
+    await page
+      .getByRole("textbox", { name: "Message Agent" })
+      .fill("Draft question");
+    await page.keyboard.press("ControlOrMeta+a");
+    await page.keyboard.press("ControlOrMeta+b");
+    await expect(
+      page.getByRole("textbox", { name: "Message Agent" }).locator("strong")
+    ).toHaveText("Draft question");
+    await page.getByRole("button", { name: "Toggle Agent page" }).click();
+    await page.getByRole("button", { name: "Toggle Agent page" }).click();
+    await expect(page.getByRole("log")).toContainText("Synthetic answer");
+    await expect(
+      page.getByRole("textbox", { name: "Message Agent" }).locator("strong")
+    ).toHaveText("Draft question");
+    await page.reload();
+    await page.addStyleTag({ content: markdownStyles });
+    await page.addScriptTag({ content: bundle });
+    await expect(page.getByRole("log")).toContainText("Synthetic answer");
+    await page.getByRole("button", { name: /^Chat history:/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Recent chats" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "See all chats" })
+    ).toHaveAttribute("href", "/agent/history");
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "New chat" }).click();
     await expect(
       page.getByRole("heading", { name: "Your games, a little clearer." })

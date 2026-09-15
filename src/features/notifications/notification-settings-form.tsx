@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { TimePickerField } from "@/components/ui/date-time-picker";
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Switch } from "@/components/ui/switch";
 import type { NotificationCategoryPreferences } from "@/db/schema";
 
 import {
@@ -52,14 +54,16 @@ function Toggle({
   accessibleLabel?: string;
 }) {
   return (
-    <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-medium">
-      <input
+    <label
+      htmlFor={name}
+      className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-medium"
+    >
+      <Switch
+        id={name}
         name={name}
-        type="checkbox"
         defaultChecked={disabled ? false : defaultChecked}
         disabled={disabled}
         aria-label={accessibleLabel}
-        className="h-4 w-4 accent-primary disabled:opacity-40"
       />
       {label}
     </label>
@@ -183,15 +187,17 @@ export function NotificationSettingsForm({
                 during a daily window.
               </p>
             </div>
-            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-medium">
-              <input
+            <label
+              htmlFor="quiet-hours-enabled"
+              className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-sm font-medium"
+            >
+              <Switch
+                id="quiet-hours-enabled"
                 name="quietHoursEnabled"
-                type="checkbox"
                 checked={quietHoursEnabled}
                 onChange={(event) =>
                   setQuietHoursEnabled(event.currentTarget.checked)
                 }
-                className="h-4 w-4 accent-primary"
               />
               Use quiet hours
             </label>
@@ -225,13 +231,13 @@ export function NotificationSettingsForm({
         </section>
 
         {state.error ? (
-          <p role="alert" className="text-sm font-medium text-danger">
-            {state.error}
-          </p>
+          <ActionNotice message={state.error} response={state} />
         ) : state.success ? (
-          <p role="status" className="text-sm font-medium text-primary">
-            {state.success}
-          </p>
+          <ActionNotice
+            message={state.success}
+            response={state}
+            variant="success"
+          />
         ) : null}
         <SubmitButton pendingLabel="Saving settings…">
           Save notification settings

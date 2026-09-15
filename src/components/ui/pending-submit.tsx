@@ -16,7 +16,7 @@ export function PendingSubmit({
       {...props}
       disabled={props.disabled || pending}
       aria-disabled={props.disabled || pending}
-      className={`whitespace-nowrap ${props.className ?? ""}`}
+      className={`inline-flex items-center justify-center gap-1.5 whitespace-nowrap ${props.className ?? ""}`}
     >
       {pending ? (
         <>

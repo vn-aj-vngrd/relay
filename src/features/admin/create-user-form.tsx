@@ -3,6 +3,7 @@
 import { Check, Copy } from "@phosphor-icons/react";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -137,9 +138,7 @@ export function CreateUserForm() {
         </p>
       </div>
       {state.error ? (
-        <p role="alert" className="text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       <div className="flex gap-2">
         <CreateButton />

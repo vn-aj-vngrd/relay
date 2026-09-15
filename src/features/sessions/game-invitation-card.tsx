@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { sessionAccentStyle } from "./accent";
 import { rsvpAction } from "./actions";
 import type { GameCollectionItem } from "./game-collection-types";
@@ -161,9 +162,7 @@ export function GameInvitationCard({
         <input type="hidden" name="inviteSource" value={source} />
         <InviteResponseButtons />
         {state.error ? (
-          <p role="alert" className="mt-3 text-sm font-medium text-danger">
-            {state.error}
-          </p>
+          <ActionNotice message={state.error} response={state} />
         ) : null}
       </form>
     </article>

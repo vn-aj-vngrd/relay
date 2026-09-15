@@ -1,3 +1,5 @@
+export const metadata = { title: "Edit profile" };
+
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { eq } from "drizzle-orm";
 import Link from "next/link";

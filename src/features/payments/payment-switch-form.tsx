@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
-import { Alert } from "@/components/ui/alert";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { SelectField } from "@/components/ui/select-field";
 import { updatePaymentChoiceState } from "./actions";
 
@@ -23,7 +23,9 @@ export function PaymentSwitchForm({
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="paymentRevision" value={revision} />
-      {state.error ? <Alert>{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       <div className="w-full">
         <SelectField
           id="switch-payment-choice"

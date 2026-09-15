@@ -407,6 +407,34 @@
       "when": 1789465645135,
       "tag": "0057_agent_message_allowances",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1789481544750,
+      "tag": "0058_agent_privacy_mode",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1789484403186,
+      "tag": "0059_agent_conversation_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1789485054830,
+      "tag": "0060_agent_court_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1789492554203,
+      "tag": "0061_agent_conversation_privileges",
+      "breakpoints": true
     }
   ]
 }

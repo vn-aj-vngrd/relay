@@ -3,6 +3,7 @@
 import { Camera } from "@phosphor-icons/react";
 import { useActionState, useEffect, useState } from "react";
 import { Avatar } from "@/components/shared/avatar-stack";
+import { ActionNotice } from "@/components/ui/action-notice";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -70,13 +71,13 @@ export function ProfileAvatarEditor({
         </SubmitButton>
       ) : null}
       {state.error ? (
-        <p role="alert" className="mt-2 max-w-44 text-xs leading-5 text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : state.success ? (
-        <p role="status" className="mt-2 text-xs font-medium text-success">
-          Photo updated.
-        </p>
+        <ActionNotice
+          message="Photo updated."
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );

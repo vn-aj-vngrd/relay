@@ -2,6 +2,7 @@
 
 import { Shuffle } from "@phosphor-icons/react";
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -32,9 +33,7 @@ export function StartRotationForm({
         {label}
       </SubmitButton>
       {state.error ? (
-        <p role="alert" className="mt-3 max-w-sm text-sm text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
     </form>
   );

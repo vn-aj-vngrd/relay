@@ -1,3 +1,5 @@
+export const metadata = { title: "Groups" };
+
 import { requireUser } from "@/features/auth/session";
 import {
   defaultGroupFilters,

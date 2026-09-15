@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -113,14 +114,14 @@ export function ProfileDetailsForm({
         <ErrorText errors={state.fieldErrors?.bio} />
       </div>
       {state.error ? (
-        <p role="alert" className="mt-4 text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {state.success ? (
-        <p role="status" className="mt-4 text-sm font-semibold text-success">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
       <div className="mt-5 flex items-center justify-between gap-4 border-t border-line pt-5">
         <p className="text-xs leading-5 text-muted">

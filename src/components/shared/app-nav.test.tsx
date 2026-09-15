@@ -58,8 +58,8 @@ describe("AppNav", () => {
     ).toHaveTextContent("3");
   });
 
-  it("places notifications below groups in the desktop main navigation", () => {
-    render(<AppNav mode="sidebar" unreadCount={12} />);
+  it("keeps the main desktop navigation focused on games and Agent", () => {
+    render(<AppNav mode="sidebar" />);
 
     const links = screen.getAllByRole("link");
     expect(links.map((link) => link.getAttribute("href"))).toEqual([
@@ -67,16 +67,14 @@ describe("AppNav", () => {
       "/games",
       "/groups",
       "/agent",
-      "/notifications",
     ]);
     expect(
-      screen.getByRole("link", { name: "Notifications, 12 unread" })
-    ).toHaveAttribute("href", "/notifications");
-    expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
+      screen.queryByRole("link", { name: /Notifications/ })
+    ).not.toBeInTheDocument();
   });
 
   it("keeps notifications out of the mobile bottom navigation", () => {
-    render(<AppNav mode="mobile" unreadCount={12} />);
+    render(<AppNav mode="mobile" />);
 
     expect(
       screen.queryByRole("link", { name: "Notifications, 12 unread" })

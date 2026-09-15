@@ -1,3 +1,5 @@
+export const metadata = { title: "Live game" };
+
 import { redirect } from "next/navigation";
 
 export default async function LegacyLivePage({

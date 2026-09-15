@@ -3,8 +3,8 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
-
 import { BootstrapScripts } from "@/components/shared/bootstrap-scripts";
+import { ToastViewport } from "@/components/ui/action-notice";
 
 import { OfflineIndicator } from "@/features/pwa/offline-indicator";
 import { PwaManager } from "@/features/pwa/pwa-manager";
@@ -103,6 +103,7 @@ export default function RootLayout({
           Skip to content
         </a>
         {children}
+        <ToastViewport />
         <OfflineIndicator />
         <PwaManager enabled={process.env.NODE_ENV === "production"} />
         <Analytics />

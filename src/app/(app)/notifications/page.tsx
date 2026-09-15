@@ -1,3 +1,5 @@
+export const metadata = { title: "Notifications" };
+
 import { Check } from "@phosphor-icons/react/dist/ssr";
 import { and, eq, isNull } from "drizzle-orm";
 import Link from "next/link";

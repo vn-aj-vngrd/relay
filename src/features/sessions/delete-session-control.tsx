@@ -3,6 +3,7 @@
 import { Trash, Warning } from "@phosphor-icons/react";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -98,9 +99,7 @@ export function DeleteSessionControl({
               aria-describedby="delete-session-description"
             />
             {state.error ? (
-              <p role="alert" className="mt-2 text-sm font-medium text-danger">
-                {state.error}
-              </p>
+              <ActionNotice message={state.error} response={state} />
             ) : null}
           </div>
           <div className="mt-7 flex justify-end gap-2">

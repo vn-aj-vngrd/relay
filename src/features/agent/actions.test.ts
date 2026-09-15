@@ -60,6 +60,41 @@ beforeEach(() => {
   );
 });
 describe("Agent administrator settings", () => {
+  it("saves and audits the Court Finder capability", async () => {
+    const data = form();
+    data.set("allowCourtSearch", "on");
+    await saveAgentSettings({}, data);
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({ allowCourtSearch: true })
+    );
+    expect(mocks.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ allowCourtSearch: true }),
+      })
+    );
+    data.delete("allowCourtSearch");
+    await saveAgentSettings({}, data);
+    expect(mocks.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowCourtSearch: false })
+    );
+  });
+  it("defaults privacy to strict and audits an explicit provider-policy change", async () => {
+    await saveAgentSettings({}, form());
+    expect(mocks.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ requireZeroRetention: true })
+    );
+    const data = form();
+    data.set("privacyMode", "provider");
+    await saveAgentSettings({}, data);
+    expect(mocks.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ requireZeroRetention: false })
+    );
+    expect(mocks.audit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ requireZeroRetention: false }),
+      })
+    );
+  });
   it("saves configurable monthly limits without resetting usage", async () => {
     const data = form();
     data.set("freeMessages", "75");
@@ -95,6 +130,29 @@ describe("Agent administrator settings", () => {
     expect(JSON.stringify(mocks.audit.mock.calls)).not.toContain("CIPHERTEXT");
     expect(JSON.stringify(mocks.audit.mock.calls)).not.toContain(
       "Keep it brief"
+    );
+  });
+  it("retains the stored key when enabling with an empty key field", async () => {
+    const data = form();
+    data.set("enabled", "on");
+    data.set("apiKey", "");
+    expect(await saveAgentSettings({}, data)).toHaveProperty("success");
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        encryptedApiKey: "EXISTING_CIPHERTEXT",
+        enabled: true,
+      })
+    );
+    expect(mocks.encrypt).not.toHaveBeenCalled();
+  });
+  it("ignores password-manager input when explicitly keeping the stored key", async () => {
+    const data = form();
+    data.set("keepKey", "on");
+    data.set("apiKey", "unrelated-autofilled-password");
+    expect(await saveAgentSettings({}, data)).toHaveProperty("success");
+    expect(mocks.encrypt).not.toHaveBeenCalled();
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({ encryptedApiKey: "EXISTING_CIPHERTEXT" })
     );
   });
   it("encrypts replacement credentials and returns no credential material", async () => {

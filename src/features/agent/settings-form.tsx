@@ -1,6 +1,10 @@
 "use client";
+
 import { useActionState, useEffect, useRef, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
+import { Button } from "@/components/ui/button";
 import { PendingSubmit } from "@/components/ui/pending-submit";
+import { Switch } from "@/components/ui/switch";
 import type { AdminActionState } from "@/features/admin/actions";
 import { saveAgentSettings } from "./actions";
 import type { AgentConfig } from "./validation";
@@ -20,13 +24,17 @@ export function AgentSettingsForm({
     saveAgentSettings,
     {}
   );
+  const [replacingKey, setReplacingKey] = useState(!hasKey);
   const [draft, setDraft] = useState(config);
   const keyInput = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (!pending && keyInput.current) keyInput.current.value = "";
-  }, [pending]);
+    if (!pending && state.success) {
+      if (keyInput.current) keyInput.current.value = "";
+      setReplacingKey(!hasKey);
+    }
+  }, [pending, state, hasKey]);
   return (
-    <form noValidate action={action} className="max-w-2xl space-y-7">
+    <form noValidate action={action} className="w-full space-y-7">
       <fieldset disabled={pending} className="space-y-7">
         <section className="space-y-4" aria-labelledby="agent-provider-heading">
           <h2 id="agent-provider-heading" className="text-lg font-semibold">
@@ -38,31 +46,50 @@ export function AgentSettingsForm({
               before storing a credential.
             </p>
           ) : null}
-          <div>
-            <label htmlFor="agent-key" className="text-sm font-semibold">
-              API key
-            </label>
-            <input
-              ref={keyInput}
-              id="agent-key"
-              name="apiKey"
-              type="password"
-              autoComplete="new-password"
-              maxLength={256}
-              className="field"
-              placeholder={
-                hasKey ? "Key stored · enter a new key to replace" : "sk-or-…"
-              }
-              aria-describedby="agent-key-hint"
-            />
-            <p
-              id="agent-key-hint"
-              className="mt-2 text-xs leading-5 text-muted"
-            >
-              Encrypted on the server. The saved key is never returned to this
-              page. Leave blank to keep it.
-            </p>
-          </div>
+          <input
+            type="hidden"
+            name="keepKey"
+            value={replacingKey ? "" : "on"}
+          />
+          {hasKey ? (
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-muted">API key stored securely</span>
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={() => setReplacingKey(!replacingKey)}
+              >
+                {replacingKey ? "Keep stored key" : "Replace API key"}
+              </Button>
+            </div>
+          ) : null}
+          {replacingKey ? (
+            <div>
+              <label htmlFor="agent-key" className="text-sm font-semibold">
+                API key
+              </label>
+              <input
+                ref={keyInput}
+                id="agent-key"
+                name="apiKey"
+                type="password"
+                autoComplete="new-password"
+                maxLength={256}
+                className="field"
+                placeholder={
+                  hasKey ? "Key stored · enter a new key to replace" : "sk-or-…"
+                }
+                aria-describedby="agent-key-hint"
+              />
+              <p
+                id="agent-key-hint"
+                className="mt-2 text-xs leading-5 text-muted"
+              >
+                Encrypted on the server. The saved key is never returned to this
+                page. Leave blank to keep it.
+              </p>
+            </div>
+          ) : null}
           <label className="flex min-h-9 items-center gap-2 text-sm">
             <input name="removeKey" type="checkbox" />
             Remove stored API key
@@ -91,10 +118,46 @@ export function AgentSettingsForm({
               ))}
             </datalist>
             <p className="mt-2 text-xs leading-5 text-muted">
-              Choose an OpenRouter model with streaming, tool calling and a
-              zero-data-retention provider. Availability depends on your
-              account.
+              Suggestions follow the saved privacy mode. Save privacy changes to
+              refresh suggestions, then test the connection. Availability and
+              limits depend on your OpenRouter account.
             </p>
+          </div>
+          <div className="border-t border-line pt-5">
+            <input
+              type="hidden"
+              name="privacyMode"
+              value={draft.requireZeroRetention ? "strict" : "provider"}
+            />
+            <label
+              htmlFor="agent-privacy"
+              className="flex min-h-9 items-center gap-3 text-sm font-semibold"
+            >
+              <Switch
+                id="agent-privacy"
+                checked={draft.requireZeroRetention}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    requireZeroRetention: event.target.checked,
+                  })
+                }
+              />
+              Require zero data retention
+            </label>
+            <p className="mt-2 text-sm leading-6 text-muted">
+              Recommended. Route only to providers that do not retain prompts or
+              use them for training.
+            </p>
+            {!draft.requireZeroRetention ? (
+              <p className="mt-3 rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm leading-6">
+                Provider policy mode: OpenRouter and the selected provider may
+                retain or use messages and authorized game data under their own
+                policies. Free models may require this mode. Secrets remain
+                protected and tools stay read-only. Save this choice, then test
+                the connection.
+              </p>
+            ) : null}
           </div>
         </section>
         <section
@@ -112,6 +175,11 @@ export function AgentSettingsForm({
               value: draft.allowGameData,
             },
             {
+              name: "allowCourtSearch",
+              label: "Allow Court Finder answers",
+              value: draft.allowCourtSearch,
+            },
+            {
               name: "allowHelp",
               label: "Allow Help Center answers",
               value: draft.allowHelp,
@@ -119,10 +187,11 @@ export function AgentSettingsForm({
           ].map((item) => (
             <label
               key={item.name}
+              htmlFor={`agent-${item.name}`}
               className="flex min-h-9 items-center gap-2 text-sm"
             >
-              <input
-                type="checkbox"
+              <Switch
+                id={`agent-${item.name}`}
                 name={item.name}
                 checked={item.value}
                 onChange={(event) =>
@@ -152,7 +221,7 @@ export function AgentSettingsForm({
               }
               maxLength={4000}
               rows={5}
-              className="field h-auto min-h-32 py-3"
+              className="field h-auto min-h-32"
               placeholder="For example: Keep answers brief and use a friendly tone."
             />
             <p className="mt-2 text-xs leading-5 text-muted">
@@ -258,14 +327,14 @@ export function AgentSettingsForm({
         </PendingSubmit>
       </fieldset>
       {state.error ? (
-        <p role="alert" className="text-sm text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm text-success">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );

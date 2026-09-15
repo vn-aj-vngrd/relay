@@ -1,6 +1,9 @@
 import { agentRequestSchema } from "./validation";
 
-export async function readAgentRequest(request: Request) {
+export async function readAgentJson(
+  request: Request,
+  maxBytes = 600_000
+): Promise<unknown> {
   if (!request.headers.get("content-type")?.startsWith("application/json"))
     return null;
   const reader = request.body?.getReader();
@@ -13,7 +16,7 @@ export async function readAgentRequest(request: Request) {
       if (done) break;
       size += value.byteLength;
       // Covers 24 × 4,000 UTF-16 units, worst-case JSON escapes and framing.
-      if (size > 600_000) {
+      if (size > maxBytes) {
         await reader.cancel();
         return null;
       }
@@ -25,13 +28,15 @@ export async function readAgentRequest(request: Request) {
       bytes.set(chunk, offset);
       offset += chunk.length;
     }
-    const parsed = agentRequestSchema.safeParse(
-      JSON.parse(new TextDecoder().decode(bytes))
-    );
-    return parsed.success ? parsed.data : null;
+    return JSON.parse(new TextDecoder().decode(bytes));
   } catch {
     return null;
   } finally {
     reader.releaseLock();
   }
+}
+
+export async function readAgentRequest(request: Request) {
+  const parsed = agentRequestSchema.safeParse(await readAgentJson(request));
+  return parsed.success ? parsed.data : null;
 }

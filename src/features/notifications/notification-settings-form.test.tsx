@@ -28,10 +28,10 @@ describe("NotificationSettingsForm", () => {
     render(<NotificationSettingsForm preferences={preferences} />);
 
     expect(
-      screen.getByRole("checkbox", { name: "Enable email delivery" })
+      screen.getByRole("switch", { name: "Enable email delivery" })
     ).not.toBeChecked();
     expect(
-      screen.getByRole("checkbox", { name: "Enable push delivery" })
+      screen.getByRole("switch", { name: "Enable push delivery" })
     ).not.toBeChecked();
     expect(screen.getByText("Invitations")).toBeVisible();
     expect(screen.getByText("RSVP and waitlist")).toBeVisible();
@@ -45,12 +45,12 @@ describe("NotificationSettingsForm", () => {
   it("loads reminder timing and quiet-hour preferences", () => {
     render(<NotificationSettingsForm preferences={preferences} />);
 
-    expect(screen.getByRole("checkbox", { name: "Day before" })).toBeChecked();
+    expect(screen.getByRole("switch", { name: "Day before" })).toBeChecked();
     expect(
-      screen.getByRole("checkbox", { name: "One hour before" })
+      screen.getByRole("switch", { name: "One hour before" })
     ).toBeChecked();
     expect(
-      screen.getByRole("checkbox", { name: "Use quiet hours" })
+      screen.getByRole("switch", { name: "Use quiet hours" })
     ).toBeChecked();
     expect(
       screen.getByRole("button", { name: /Quiet from/ })
@@ -66,7 +66,7 @@ describe("NotificationSettingsForm", () => {
   it("keeps quiet-hour controls visible while allowing the window to be disabled", () => {
     render(<NotificationSettingsForm preferences={preferences} />);
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Use quiet hours" }));
+    fireEvent.click(screen.getByRole("switch", { name: "Use quiet hours" }));
 
     expect(screen.getByRole("button", { name: /Quiet from/ })).toBeDisabled();
     expect(screen.getByRole("button", { name: /Quiet until/ })).toBeDisabled();

@@ -1,3 +1,5 @@
+export const metadata = { title: "Courts" };
+
 import { redirect } from "next/navigation";
 
 export default async function LegacyPublicCourtsPage({

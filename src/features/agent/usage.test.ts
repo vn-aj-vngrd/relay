@@ -1,3 +1,5 @@
+import type { SQL } from "drizzle-orm";
+import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -8,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   previous: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
+  selection: vi.fn(),
   used: 0,
   reserved: 0,
 }));
@@ -41,16 +44,31 @@ beforeEach(() => {
     async (work: (tx: unknown) => Promise<unknown>) =>
       work({
         query: { agentMessageUsage: { findFirst: mocks.previous } },
-        select: () => ({
-          from: () => ({
-            where: async () => [{ used: mocks.used, reserved: mocks.reserved }],
-          }),
-        }),
+        select: (selection: unknown) => {
+          mocks.selection(selection);
+          return {
+            from: () => ({
+              where: async () => [
+                { used: mocks.used, reserved: mocks.reserved },
+              ],
+            }),
+          };
+        },
         insert: () => ({ values: mocks.insert }),
       })
   );
 });
 describe("Agent allowance reservation", () => {
+  it("encodes the reservation clock as a string for the database driver", async () => {
+    await reserveAgentMessage("user", "request", defaultAgentLimits);
+    const selection = mocks.selection.mock.calls[0][0] as { reserved: SQL };
+    const query = new PgDialect().sqlToQuery(selection.reserved);
+    expect(query.params).toHaveLength(1);
+    expect(query.params[0]).toEqual(
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/)
+    );
+    expect(query.params[0]).not.toBeInstanceOf(Date);
+  });
   it("locks the billing account before checking capacity and reserving", async () => {
     await reserveAgentMessage("user", "request", defaultAgentLimits);
     expect(mocks.lock).toHaveBeenCalledWith(expect.any(Object), "user");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { SubmitButton } from "@/components/ui/submit-button";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -35,12 +36,7 @@ export function CreateGroupForm({
         <input type="hidden" name="sourceSessionId" value={sourceSessionId} />
       ) : null}
       {state.error ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
-        >
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {sourceSessionId ? (
         <div className="border-y border-line py-4">

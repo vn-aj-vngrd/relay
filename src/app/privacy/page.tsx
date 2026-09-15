@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy"
       summary="Relay uses only the information needed to organize a game, keep participants in sync, and preserve the session afterward."
-      updated="September 3, 2026"
+      updated="September 15, 2026"
     >
       <section>
         <h2>Information Relay stores</h2>
@@ -37,6 +37,26 @@ export default function PrivacyPage() {
             lifecycle events.
           </li>
         </ul>
+      </section>
+
+      <section>
+        <h2>Agent conversations</h2>
+        <p>
+          Agent saves your questions, visible replies and chat titles to your
+          account so you can return to them. Other players cannot open your
+          Agent history. You can delete individual conversations from History;
+          ordinary database backup retention still applies. Drafts remain in
+          your browser memory and are not saved to your account.
+        </p>
+        <p>
+          Questions and relevant game information are processed by OpenRouter
+          and the selected model provider. Provider retention depends on the
+          configured privacy mode and provider terms. Do not submit passwords,
+          API keys or other secrets. Saved replies may be outdated; check the
+          linked game, court or Help Center source. Agent searches court names
+          and addresses using the city or neighborhood you provide in chat; it
+          does not access your device location.
+        </p>
       </section>
 
       <section>

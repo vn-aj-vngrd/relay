@@ -1,3 +1,5 @@
+export const metadata = { title: "Feedback" };
+
 import { z } from "zod";
 
 import { requireUser } from "@/features/auth/session";

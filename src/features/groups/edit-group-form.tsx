@@ -3,6 +3,7 @@
 import { Camera, UsersThree, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -63,12 +64,7 @@ export function EditGroupForm({
       />
 
       {state.error ? (
-        <p
-          role="alert"
-          className="rounded-lg bg-danger/8 px-4 py-3 text-sm font-medium text-danger"
-        >
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
 
       <section aria-labelledby="group-photo-title">

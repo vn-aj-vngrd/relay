@@ -1,3 +1,5 @@
+export const metadata = { title: "Plans · Admin" };
+
 import { ButtonLink } from "@/components/ui/button";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";

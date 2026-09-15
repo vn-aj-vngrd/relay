@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
+  courts: vi.fn(),
+  court: vi.fn(),
   search: vi.fn(),
   game: vi.fn(),
   groups: vi.fn(),
@@ -12,10 +14,36 @@ vi.mock("./reads", () => ({
   readAgentGroups: mocks.groups,
 }));
 
+vi.mock("./courts", () => ({
+  searchAgentCourts: mocks.courts,
+  readAgentCourt: mocks.court,
+}));
+
 import { createAgentTools } from "./tools";
 import { defaultAgentConfig } from "./validation";
 
 describe("Agent read-only registry", () => {
+  it("passes named-place searches to the court service", async () => {
+    const tools = createAgentTools(
+      "user",
+      defaultAgentConfig,
+      new AbortController().signal
+    );
+    const input = { query: "Cebu City", nearMe: false, offset: 0 };
+    await tools.searchCourts.execute!(input, {
+      toolCallId: "court",
+      messages: [],
+      context: {},
+    });
+    expect(mocks.courts).toHaveBeenCalledWith(input);
+    expect(
+      createAgentTools(
+        "user",
+        { ...defaultAgentConfig, allowCourtSearch: false },
+        new AbortController().signal
+      )
+    ).not.toHaveProperty("searchCourts");
+  });
   it("exposes only read tools and honors disabled capabilities", () => {
     expect(
       Object.keys(
@@ -29,6 +57,8 @@ describe("Agent read-only registry", () => {
       "searchGames",
       "gameDetails",
       "myGroups",
+      "searchCourts",
+      "courtDetails",
       "helpIndex",
       "searchHelp",
       "readHelp",
@@ -36,7 +66,12 @@ describe("Agent read-only registry", () => {
     expect(
       createAgentTools(
         "user",
-        { ...defaultAgentConfig, allowGameData: false, allowHelp: false },
+        {
+          ...defaultAgentConfig,
+          allowGameData: false,
+          allowHelp: false,
+          allowCourtSearch: false,
+        },
         new AbortController().signal
       )
     ).toEqual({});
@@ -55,6 +90,30 @@ describe("Agent read-only registry", () => {
     expect(mocks.game).toHaveBeenCalledWith("server-user", "game-id");
     expect(JSON.stringify(result)).not.toContain("secret");
     expect(result).toHaveProperty("unavailable", true);
+  });
+  it("caps concurrent model tool calls at twelve authorized reads", async () => {
+    mocks.game.mockReset().mockResolvedValue({ id: "game" });
+    const tools = createAgentTools(
+      "server-user",
+      defaultAgentConfig,
+      new AbortController().signal
+    );
+    const results = await Promise.all(
+      Array.from({ length: 20 }, (_, index) =>
+        tools.gameDetails.execute!(
+          { id: "game" },
+          { toolCallId: String(index), messages: [], context: {} }
+        )
+      )
+    );
+    expect(mocks.game).toHaveBeenCalledTimes(12);
+    expect(mocks.game).toHaveBeenCalledWith("server-user", "game");
+    expect(results.slice(12)).toEqual(
+      Array.from({ length: 8 }, () => ({
+        unavailable: true,
+        reason: "Read limit reached. Narrow the question.",
+      }))
+    );
   });
   it("does no data reads after cancellation", async () => {
     mocks.game.mockClear();

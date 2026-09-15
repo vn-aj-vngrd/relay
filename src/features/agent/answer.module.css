@@ -1,0 +1,75 @@
+.markdown {
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.markdown > * + * {
+  margin-top: 0.75rem;
+}
+.markdown p {
+  white-space: pre-wrap;
+}
+.markdown :is(h1, h2, h3, h4, h5, h6) {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.markdown :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+.markdown ul {
+  list-style: disc;
+}
+.markdown ol {
+  list-style: decimal;
+}
+.markdown li + li {
+  margin-top: 0.25rem;
+}
+.markdown li > p + p {
+  margin-top: 0.5rem;
+}
+.markdown blockquote {
+  padding-left: 1rem;
+  border-left: 2px solid var(--line);
+  color: var(--muted);
+}
+.markdown code {
+  font-size: 0.875em;
+  background: var(--surface-strong);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.25rem;
+}
+.markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+.markdown pre code {
+  padding: 0;
+  background: none;
+  white-space: pre;
+}
+.markdown hr {
+  border-color: var(--line);
+}
+.tableScroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.markdown :is(th, td) {
+  border: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.markdown th {
+  font-weight: 600;
+}

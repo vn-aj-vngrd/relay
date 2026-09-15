@@ -3,6 +3,7 @@
 import { UploadSimple } from "@phosphor-icons/react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
@@ -63,9 +64,7 @@ export function PaymentProofForm({
         required
       />
       {state.error ? (
-        <p role="alert" className="mt-3 text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       <div className="mt-3">
         <SubmitProof />

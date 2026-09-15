@@ -2,8 +2,8 @@
 
 import { UploadSimple } from "@phosphor-icons/react";
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
-import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -84,11 +84,15 @@ export function MemoryPhotoForm({
           </div>
         ) : null}
       </div>
-      {state.error ? <Alert className="mb-4">{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
       {state.success ? (
-        <p role="status" className="mb-4 text-sm font-medium text-primary">
-          Photo added. It’s ready to use in Make.
-        </p>
+        <ActionNotice
+          message="Photo added. It’s ready to use in Make."
+          response={state}
+          variant="success"
+        />
       ) : null}
       <input type="hidden" name="sessionId" value={sessionId} />
       <ImageFileField

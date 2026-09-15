@@ -13,8 +13,8 @@ import { createPortal } from "react-dom";
 
 import { usePopoverTransition } from "./use-popover-transition";
 
-const OPEN_DELAY_MS = 300;
-const CLOSE_DELAY_MS = 150;
+const OPEN_DELAY_MS = 400;
+const CLOSE_DELAY_MS = 180;
 const VIEWPORT_GUTTER = 8;
 type Side = "top" | "bottom" | "left" | "right";
 
@@ -50,6 +50,8 @@ export function Tooltip({
   const dismissed = useRef(false);
   const touch = useRef(false);
   const { open, rendered, show, hide } = usePopoverTransition();
+  const stillRendered = useRef(rendered);
+  stillRendered.current = rendered;
   const [position, setPosition] = useState<{
     left: number;
     top: number;
@@ -108,7 +110,8 @@ export function Tooltip({
       triggerHovered.current = true;
       clearTimer();
       if (!eligible() || dismissed.current) return;
-      timer.current = setTimeout(reveal, OPEN_DELAY_MS);
+      if (stillRendered.current) reveal();
+      else timer.current = setTimeout(reveal, OPEN_DELAY_MS);
     };
     const exit = () => {
       triggerHovered.current = false;

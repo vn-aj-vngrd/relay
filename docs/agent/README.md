@@ -11,7 +11,7 @@ Agent answers questions about Relay games, rosters, groups, open games and the e
 - Dates in search filters use Asia/Manila, consistent with Open games discovery. Results also include the game's stored timezone. The assistant explains relative date ranges and asks for clarification when context is ambiguous.
 - No writes, actions, arbitrary SQL, code execution, browser, external URL retrieval, email, payment details, private notes or administrative tools are registered.
 
-Agent uses the shared outlined Phosphor Cursor mark in `agent-mark.tsx` across chat, navigation, admin and marketing. The landing hero links to a dedicated Agent showcase after the existing Highlights.
+Agent uses the shared rounded green cursor with pickleball perforations in `agent-mark.tsx` across chat, navigation, admin and marketing. The landing hero links to a dedicated Agent showcase after the existing Highlights. Its interactive demo uses local sample questions and answers, never the provider or account data. Visitors can select a question, pause/resume or replay; reduced motion reveals the whole response without typing animation.
 
 ## Architecture
 
@@ -59,7 +59,7 @@ Help Center is the only product-instruction source. No vector store, embeddings,
 4. Configure allowed reads, optional public-facing tone guidance and limits. Enable only after setup. The form verifies that the stored key can be decrypted; it does not make a billable test call or certify provider credentials/model availability.
 5. Verify Help Center grounding, actual game/roster permissions, cancellation, provider failure and quota behavior with disposable users and the selected provider before release.
 
-The provider requests `require_parameters: true`, `data_collection: deny`, and `zdr: true`. There is no privacy-downgrading fallback: a model without a compatible provider fails with safe recovery copy. Review OpenRouter account logging settings and the selected provider's terms as part of deployment; these routing flags do not promise that Relay controls all third-party operational metadata.
+Strict mode is the default: the provider requests `require_parameters: true`, `data_collection: deny`, and `zdr: true`. Admins may explicitly save provider-policy mode, which uses `data_collection: allow` and `zdr: false`; the UI explains that providers may retain or use submitted data. There is no automatic privacy downgrade. Both chat and the connection test use the saved mode. Review OpenRouter account logging settings and the selected provider's terms as part of deployment; these routing flags do not promise that Relay controls all third-party operational metadata.
 
 Credentials use AES-256-GCM with random 96-bit nonces, authenticated version context and authentication tags. The UI receives only `hasKey`, never plaintext or ciphertext. Admin saves run in a transaction with a row lock and audit record; the audit contains enablement and credential-changed flags, not keys or instructions. Blank input preserves a stored key; removal is explicit. All form fields other than the credential are intentional admin-visible configuration.
 
@@ -75,8 +75,8 @@ Backend authorization and narrow data projections are the security boundary. Pro
 - Maximum 600 KB request body (including worst-case JSON escaping for the bounded conversation), 24 text messages and 4,000 characters per message. Clients cannot supply system/developer/tool roles, tool results, attachments, identity or provider settings. The optional UUID request identifier provides replay protection and does not grant access. Client assistant history is untrusted; tool reads establish current facts. The UI sends the latest 24 nonempty text messages and bounds each to 4,000 characters.
 - At most six model steps, twelve tool executions, a 50-second generation deadline and no model retries. Output tokens are capped per step (default 1,200; 256–4,000). OpenRouter account spending limits remain the global monetary safeguard.
 - Response streams contain text only. Reasoning, raw tool results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
-- Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help links become navigation; destination routes enforce authorization again.
-- Responses are private/no-store. Relay does not persist conversations, tool results or prompt/response telemetry. The browser retains the current chat only in memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
+- Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help/court links become navigation; destination routes enforce authorization again.
+- Responses are private/no-store. Relay saves conversation titles, user questions and visible answers for the account owner until deletion. It does not store tool payloads, reasoning or prompt/response telemetry. Drafts remain only in browser memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
 - Stop/disconnect/deadline cancel model work. An already executing database read may finish; cancellation prevents subsequent tool reads.
 
 Titles/names and previous assistant text can contain prompt injection. They cannot create new tools or change authorization, but model answers may still be misleading. Users must check source records. The UI does not execute suggested actions, HTML or remote resources. User-supplied text can itself contain sensitive data; do not submit secrets to the assistant.
@@ -96,7 +96,7 @@ Do not add a generic database/HTTP tool, tool-name dispatch supplied by the clie
 
 - Validate the normal authenticated journey with a configured provider.
 - Improve source-grounding evaluations and relevance based on real questions; add historical-game filtering or richer attention insights only when needed.
-- Consider explicit conversation persistence/retention and spending dashboards with user consent and tenant-safe access.
+- Consider history search, configurable retention and spending dashboards when needed.
 - Future actions belong in a separate command service and registry. The model may propose a typed action, but the server must reauthorize it, validate current state, show an exact preview and require explicit user confirmation. Use expiring server-held confirmation records, idempotency and audited execution. Never treat model text or replayed chat history as confirmation. **No action infrastructure or execution is implemented in V1.**
 
 ## Coverage and status
@@ -125,3 +125,120 @@ Quota handling reuses `getAccountAllowance` and `lockBillingAccount` from billin
 `GET /api/agent` returns only the signed-in active account's allowance, charged/reserved/remaining counts and reset date. The chat refreshes this summary after requests; Plan & billing also shows it. Monthly-cap responses are distinct from the hourly abuse throttle, and copy recognizes that in-progress answers can temporarily reserve remaining messages.
 
 **Messages are the user-facing unit; they are not a cost unit.** Retain the hourly throttle, bounded history, tool-step/output limits and provider-side spending cap. An answer can invoke multiple model steps. Measure representative per-answer costs in OpenRouter before committing to margins or raising allowances; the 50/250/750 ladder is approved product configuration, not measured cost evidence.
+
+### Readiness and safe settings edits
+
+Admin → Agent shows separate server checks for enablement, encryption availability,
+credential readability, model selection, read-only capabilities, and usage storage.
+“Ready to accept questions” does not claim the provider/model has been tested: the
+first request still goes through OpenRouter's authorization and model routing.
+Existing credentials stay stored when editing other settings. Use **Replace API
+key** to supply a replacement; removing a key remains an explicit checkbox choice.
+
+Usage queries serialize timestamps before passing raw SQL parameters to the
+Postgres driver. A usage failure keeps requests blocked and is reported separately
+from disabled or incomplete configuration. Never bypass quota checks to restore
+availability.
+
+### Connection testing and model compatibility
+
+**Test saved connection** is MFA-admin protected and limited to three attempts per
+minute per admin. It uses the saved credential/model, the same privacy routing as
+chat, and one synthetic tool. It verifies tool completion plus streamed text with
+a 25-second timeout. It sends no application data or custom instructions, does
+not consume Agent message quota, and may incur a small OpenRouter charge.
+Only fixed, classified results are returned; raw provider errors and generated
+test output are never shown or logged.
+
+In strict mode, model suggestions come from OpenRouter's public zero-data-retention endpoint catalog and require tools plus tool choice. Provider-policy mode uses the public model catalog filtered for tools. A model can support tools yet have no
+compatible private endpoint, including some free models. In that case, choose a
+suggested model and test, or explicitly choose provider-policy mode after reviewing the disclosure. Tool calling uses auto mode, since some valid models do not support forced required/none modes.
+Reference: [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection).
+
+Failed streams trigger the chat's retry UI rather than adding application error
+copy as an assistant message. The composer caps messages at 4,000 characters,
+shows a counter, and asks users to review truncated pastes before sending.
+Loading text uses a CSS-only left-to-right shimmer inspired by
+[AI Elements](https://elements.ai-sdk.dev/components/shimmer), with static text
+under reduced motion or forced colors.
+
+Migration `0058_agent_privacy_mode.sql` adds the non-null strict-mode flag with a
+true default. Existing installations remain strict. Changing privacy mode is
+admin-authorized, audited and never exposes a credential or enables write tools.
+
+
+## Conversation continuity and Markdown
+
+The authenticated app layout owns one lazily created SDK Chat instance so navigation within player pages preserves a stream and draft. Saved conversations live in `agent_conversations`, scoped to the authenticated account. The `?chat=<id>` URL restores a selected conversation after refresh; History lists the newest 30 titles at a time with cursor pagination, open, rename and confirmed delete. New chat starts a separate conversation. Drafts are not uploaded and are cleared on reload/sign-out.
+
+History routes require an active authenticated account; mutations enforce same-origin requests. Every database lookup/update/delete includes the authenticated owner. RLS has no browser policies and direct anon/authenticated table privileges are revoked. Titles, text-only messages and timestamps are returned; owner IDs, leases and internal configuration are not. Rows cascade on account deletion. Chats remain until deleted, subject to ordinary backup retention; provider retention follows the configured privacy mode.
+
+The server stores the accepted question before invoking the provider, uses saved history for continuation, and saves only visible answer text on completion/interruption. Client-supplied older messages are ignored for saved conversations. A row lock and 90-second lease prevent concurrent turns from overwriting each other; stale workers cannot modify a newer request or recreate a deleted chat. Partial replies carry an interrupted marker. Reloaded in-flight conversations poll until completion or lease expiry; a refresh does not guarantee generation continues, and streams cannot be resumed after disconnection.
+
+Each conversation is bounded to 100 messages; each model request uses at most 24 messages of 4,000 characters. Visible saved answers are capped at 32,000 characters. Create requests are rate limited to 30/hour per account; history APIs allow 120 requests/minute. Existing unpersisted conversations are not backfilled. The optional no-conversation request path remains for older clients and retains its original untrusted-history boundary.
+
+Saved text is historical context, not proof of access or current game state. Tools still reauthorize all reads, and no conversation-management API is exposed as a model tool. History changes do not enable game mutations.
+
+Apply migration `0059_agent_conversation_history.sql` before deployment. Applied on September 15, 2026; RLS and browser-role denial verified.
+
+Both sent and received messages use react-markdown with remark-gfm for headings, emphasis, lists, code and tables. Raw HTML, images and interactive task checkboxes are disabled. Links retain the exact internal game/group/help/court path allowlist; other destinations remain inert text. Long prose wraps and code/tables scroll within the message. Markdown rendering does not change backend trust or authorization.
+
+Future improvements can include search and configurable retention. Avoid automatic model-generated titles or extra provider calls until they are needed.
+
+Regression coverage: history.test.ts, history-api.test.ts, Agent route tests, answer.test.tsx, session.test.tsx and the synthetic e2e/agent-chat.spec.ts fixture. New coverage execution is deferred to pre-commit; browser execution remains opt-in.
+
+
+## Court Finder capability
+
+Admin → Agent → Behavior and access includes **Allow Court Finder answers**. `allowCourtSearch` controls both `searchCourts` and `courtDetails`; disabling it removes those tools. Saves are admin-authorized and audited. Migration `0060_agent_court_search.sql` enables this public-directory capability by default, consistent with the existing game/help read capabilities. It does not enable bookings or writes.
+
+The tools reuse `getCourtListings`, the same verified Philippines directory, details formatters as Court Finder. Search returns at most eight records, with a bounded offset and exact internal `/courts/<slug>` links. Name/city/neighborhood queries match directory names and addresses; there is no external venue discovery or named-city geocoding. Unknown prices/hours, restricted access and operational status remain explicit. A listed court is not proof of a currently bookable slot.
+
+Agent does not request device location or accept coordinates. For “near me” without a supplied place, it asks which city or neighborhood to search. Once the user supplies a place, the tools match directory names and addresses; no distance ranking or inferred location is used. The Find courts near me suggestion is hidden when the capability is off.
+
+Mobile Agent reuses Create Game's focused back-link and shell selectors, hides the global header/bottom navigation, honors safe-area padding and lets the conversation scroll above a fixed-in-layout composer. Desktop navigation remains unchanged.
+
+New regression coverage includes court directory filtering, manual-location follow-up, tool capability gating, safe court links and the admin toggle. Validation and browser execution remain deferred according to the development workflow. Both migrations 0059 and 0060 were applied on September 15, 2026; history RLS/browser-role restrictions and the court toggle column were verified. Application validation and deployment remain separate.
+
+The chat inherits the app content width without breadcrumbs. Its current conversation title opens History, with New chat on the right; the shared back control remains on mobile. Selecting or renaming the active conversation updates this title.
+
+### Compact history and composer
+
+The header starts as **Your chats**. The first question supplies an automatic, Markdown-free title (maximum 80 characters); later messages do not overwrite it. Rename remains available on the full history page. The header dropdown shows six recent conversation names and relative day ages, with a See all chats link to `/agent/history` for pagination and management. It follows the existing account-menu outside-click/Escape pattern.
+
+Messages, waiting text and composer share a centered 768px maximum width inside the wider header. Usage retains its reset date; the billing link is removed from chat. The live character counter is at the composer's lower left. Nearby questions prompt for a city or neighborhood in chat, without device-location controls.
+
+
+The chat fits the app container on desktop and mobile; only messages scroll. Desktop scrollbars use the existing chat’s muted gray thumb and appear on hover, keyboard focus or scrolling; touch and forced-color modes retain native indicators. Completed Agent replies offer Copy, preserving Markdown, with inline Copied feedback and an error toast if clipboard access fails.
+
+The recent-chat popover caps its height to the viewport, scrolls only its recent rows, and keeps See all chats in a separate footer. Titles truncate with full text available via the shared tooltip. The history page reuses the Games/Groups observer pattern with cursor-based batches, request deduplication, cancellation on unmount, and a manual retry/load fallback. Offscreen rows use the existing content-visibility optimization; list requests contain summaries only, not transcripts.
+
+The composer uses Tiptap with its Markdown extension to render formatting during editing. No formatting toolbar is shown. Cmd/Ctrl+B and Cmd/Ctrl+I apply marks directly; pasted plain-text Markdown is parsed into editor nodes. Clipboard HTML, files, images and drops are not accepted. Drafts and submissions stay Markdown, with the existing 4,000-character server limit and safe response renderer. Enter sends, Shift+Enter inserts a line break, and IME composition does not send. The editor is initialized client-side and grows within a bounded scrolling area. Rich-editor regression coverage is added; execution remains deferred to pre-commit.
+
+The landing demo mirrors the current chat header, filled New chat control, title picker, compact bubbles, shared Markdown answer renderer and character-count composer. Synthetic examples cover games, rosters, open games and the city/neighborhood follow-up for nearby courts. Playback supports typing, waiting, streaming, pause/replay, visibility pauses and reduced motion. No account data or model requests are used.
+
+### Conversation timestamps
+
+Show a centered muted timestamp above the first timestamped question, then above a subsequent user question on a new local calendar day or after at least 30 minutes since the previous timestamped message. Keep an Agent reply with its question. Labels use the viewer's device timezone: Today / Yesterday plus time, then month/day and time, including the year for older years. This is Relay's chosen grouping threshold; Linear's public Agent documentation does not specify its interval. References: [Linear Agent](https://linear.app/docs/linear-agent), [Stream date separators](https://getstream.io/chat/docs/sdk/react/components/utility-components/date-separator/).
+
+New saved messages receive server-generated `createdAt` values in the existing message JSON; no schema migration is needed. Live user messages use a provisional client timestamp, replaced by the server timestamp on history reload. Timestamps are display metadata and are not trusted for authorization or sent to the model. Existing messages without recorded timestamps omit the separator rather than inventing a time.
+
+History uses the same focused app shell as Agent: no breadcrumbs, a fixed compact header and one internal list viewport on both desktop and mobile. Each row contains a truncated title, relative age and accessible rename/delete icons with the shared tooltips; deletion retains the shared confirmation dialog. The observer roots in the list viewport, prefetches within 320px, pauses during editing/failures, cancels on unmount and stops if the server cursor makes no progress. The existing list content-visibility pattern reduces offscreen rendering work without adding a virtual-list dependency. Viewport, retry, deduplication and non-progress regressions are covered in unit tests; execution is deferred to pre-commit.
+
+### PR 23 release validation (2026-09-16)
+
+Pre-commit review fixed timestamp restoration and cancelled pending chat creation on navigation/account exit. Formatting/lint and TypeScript passed. The full unit run passed 2,406 of 2,407 tests; the remaining URL test was incorrectly assigned to Node, moved to jsdom, and its two-test file passed on rerun. The webpack production build passed. The standard local Turbopack build was blocked by worker port binding; GitHub CI must pass its standard build before merge. Browser/E2E and a live OpenRouter request were not run. The configured database was rechecked: history RLS is enabled, anon/authenticated direct access is denied, and allow_court_search is non-null.
+
+### Tool-call compatibility
+
+Relay intentionally omits `parallel_tool_calls`: with `require_parameters: true`,
+OpenRouter excludes endpoints that do not list this optional parameter. Poolside
+Laguna S 2.1 free currently lists tools and auto tool choice, but not parallel calls
+or tool choice none. Read tools are independent, owner-scoped and capped at 12
+executions per request, including concurrent model calls. The final model step
+uses an empty active-tool list so the provider receives neither tools nor a
+`tool_choice` parameter, reserving that step for an answer without unsupported
+routing requirements. Strict privacy routing remains unchanged.
+
+Sources checked September 16, 2026: [OpenRouter parameter routing](https://openrouter.ai/docs/guides/routing/provider-selection)
+and [Poolside endpoint metadata](https://openrouter.ai/api/v1/models/poolside/laguna-s-2.1:free/endpoints).

@@ -1,3 +1,5 @@
+export const metadata = { title: "Plan request" };
+
 import { and, eq } from "drizzle-orm";
 import Image from "next/image";
 import Link from "next/link";

@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useActionState, useId, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { DatePickerField } from "@/components/ui/date-time-picker";
 import { ImageFileField } from "@/components/ui/image-file-field";
 import { SelectField } from "@/components/ui/select-field";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { Switch } from "@/components/ui/switch";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
 
 import {
@@ -55,8 +57,16 @@ function BillingForm({
       onSubmitCapture={preserve}
       className="flex max-w-2xl flex-col gap-5"
     >
-      {state.error ? <Alert>{state.error}</Alert> : null}
-      {state.success ? <Alert variant="success">{state.success}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
+      {state.success ? (
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
+      ) : null}
       {children}
       <SubmitButton
         type="submit"
@@ -127,14 +137,23 @@ function CheckField({
   children: ReactNode;
   checked?: boolean;
 }) {
+  const id = useId();
   return (
-    <label className="flex min-h-11 items-start gap-3 text-sm leading-6">
-      <input
-        name={name}
-        type="checkbox"
-        defaultChecked={checked}
-        className="mt-1 size-4 shrink-0 accent-primary"
-      />
+    <label
+      htmlFor={id}
+      className="flex min-h-11 items-start gap-3 text-sm leading-6"
+    >
+      {name === "enabled" || name === "visible" ? (
+        <Switch id={id} name={name} defaultChecked={checked} />
+      ) : (
+        <input
+          id={id}
+          name={name}
+          type="checkbox"
+          defaultChecked={checked}
+          className="mt-1 size-4 shrink-0 accent-primary"
+        />
+      )}
       <span>{children}</span>
     </label>
   );

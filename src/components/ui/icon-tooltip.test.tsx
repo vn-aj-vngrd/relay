@@ -42,17 +42,31 @@ function Fixture() {
 }
 
 describe("IconTooltip", () => {
-  it("waits 300ms for hover intent and cancels a passing pointer", () => {
+  it("keeps the tooltip steady when the pointer returns during the close delay", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Coverage" });
     fireEvent.pointerEnter(trigger);
-    advance(299);
+    advance(400);
+    const tooltip = screen.getByRole("tooltip");
+    fireEvent.pointerLeave(trigger);
+    advance(179);
+    expect(tooltip).toHaveAttribute("data-state", "open");
+    fireEvent.pointerEnter(trigger);
+    advance(400);
+    expect(screen.getByRole("tooltip")).toBe(tooltip);
+    expect(tooltip).toHaveAttribute("data-state", "open");
+  });
+  it("waits 400ms for hover intent and cancels a passing pointer", () => {
+    render(<Fixture />);
+    const trigger = screen.getByRole("button", { name: "Coverage" });
+    fireEvent.pointerEnter(trigger);
+    advance(399);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     fireEvent.pointerLeave(trigger);
-    advance(300);
+    advance(400);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     fireEvent.pointerEnter(trigger);
-    advance(300);
+    advance(400);
     expect(screen.getByRole("tooltip")).toBeVisible();
   });
 
@@ -85,7 +99,7 @@ describe("IconTooltip", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     fireEvent.pointerLeave(trigger);
     fireEvent.pointerEnter(trigger);
-    advance(300);
+    advance(400);
     expect(screen.getByRole("tooltip")).toBeVisible();
   });
 
@@ -93,7 +107,7 @@ describe("IconTooltip", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Coverage" });
     fireEvent.pointerEnter(trigger);
-    advance(300);
+    advance(400);
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip.parentElement).toBe(document.body);
     expect(tooltip).toHaveClass("fixed", "pt-2");
@@ -105,7 +119,7 @@ describe("IconTooltip", () => {
     advance(5000);
     expect(tooltip).toHaveAttribute("data-state", "open");
     fireEvent.pointerLeave(tooltip);
-    advance(150);
+    advance(180);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect(tooltip).toHaveAttribute("data-state", "closed");
     advance(120);

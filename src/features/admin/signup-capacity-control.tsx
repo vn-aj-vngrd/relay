@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { PendingSubmit } from "@/components/ui/pending-submit";
 import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-values";
@@ -88,14 +89,14 @@ export function SignupCapacityControl({
             immediately. The limit includes admin-created accounts.
           </p>
           {state.error ? (
-            <p role="alert" className="mt-2 text-sm font-medium text-danger">
-              {state.error}
-            </p>
+            <ActionNotice message={state.error} response={state} />
           ) : null}
           {state.success ? (
-            <p role="status" className="mt-2 text-sm font-medium text-success">
-              {state.success}
-            </p>
+            <ActionNotice
+              message={state.success}
+              response={state}
+              variant="success"
+            />
           ) : null}
         </form>
       </div>

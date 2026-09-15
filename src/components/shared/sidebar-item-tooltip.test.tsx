@@ -52,11 +52,11 @@ function Fixture() {
 }
 
 describe("SidebarItemTooltip", () => {
-  it("shares the 300ms delay, body portal, animation and description ownership", () => {
+  it("shares the 400ms delay, body portal, animation and description ownership", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Open example" });
     fireEvent.pointerEnter(trigger);
-    advance(299);
+    advance(399);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     advance(1);
     const tooltip = screen.getByRole("tooltip");
@@ -81,13 +81,13 @@ describe("SidebarItemTooltip", () => {
     fireEvent.focus(trigger);
     expect(screen.getByRole("tooltip")).toBeVisible();
     fireEvent.pointerLeave(trigger);
-    advance(300);
+    advance(400);
     expect(screen.getByRole("tooltip")).toBeVisible();
     fireEvent.blur(trigger);
     advance(270);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     fireEvent.pointerEnter(trigger);
-    advance(300);
+    advance(400);
     fireEvent.pointerLeave(trigger);
     fireEvent.pointerEnter(screen.getByRole("tooltip"));
     advance(5000);
@@ -112,7 +112,7 @@ describe("SidebarItemTooltip", () => {
     const trigger = screen.getByRole("button", { name: "Open example" });
     delete document.documentElement.dataset.sidebar;
     fireEvent.pointerEnter(trigger);
-    advance(300);
+    advance(400);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     document.documentElement.dataset.sidebar = "compact";
     vi.stubGlobal(
@@ -190,7 +190,7 @@ describe("SidebarItemTooltip", () => {
       render(content);
       fireEvent.pointerEnter(screen.getByRole(role, { name: label }));
       expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
-      advance(300);
+      advance(400);
       const tooltip = screen.getByRole("tooltip");
       expect(tooltip).toHaveTextContent(text);
       expect(tooltip.parentElement).toBe(document.body);

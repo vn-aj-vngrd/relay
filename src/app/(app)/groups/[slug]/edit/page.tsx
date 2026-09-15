@@ -1,3 +1,5 @@
+export const metadata = { title: "Edit group" };
+
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 

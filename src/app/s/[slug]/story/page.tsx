@@ -1,3 +1,5 @@
+export const metadata = { title: "Game story" };
+
 import { notFound } from "next/navigation";
 
 import { getCurrentUser } from "@/features/auth/session";

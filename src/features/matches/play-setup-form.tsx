@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -525,7 +526,9 @@ export function PlaySetupForm({
           )
         ) : null}
       </div>
-      {state.error ? <Alert className="mt-4">{state.error}</Alert> : null}
+      {state.error ? (
+        <ActionNotice message={state.error} response={state} />
+      ) : null}
     </form>
   );
 }

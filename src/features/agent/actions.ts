@@ -14,6 +14,7 @@ export async function saveAgentSettings(
 ): Promise<AdminActionState> {
   const actor = await requireAdmin();
   const parsed = agentConfigSchema.safeParse({
+    requireZeroRetention: form.get("privacyMode") !== "provider",
     freeMessages: form.get("freeMessages") ?? undefined,
     plusMessages: form.get("plusMessages") ?? undefined,
     proMessages: form.get("proMessages") ?? undefined,
@@ -22,10 +23,13 @@ export async function saveAgentSettings(
     instructions: form.get("instructions"),
     allowGameData: form.get("allowGameData") === "on",
     allowHelp: form.get("allowHelp") === "on",
+    allowCourtSearch: form.get("allowCourtSearch") === "on",
     maxOutputTokens: form.get("maxOutputTokens"),
     requestsPerHour: form.get("requestsPerHour"),
   });
-  const apiKey = String(form.get("apiKey") ?? "").trim();
+  // Explicit keep mode ignores password-manager autofill during unrelated edits.
+  const apiKey =
+    form.get("keepKey") === "on" ? "" : String(form.get("apiKey") ?? "").trim();
   const removeKey = form.get("removeKey") === "on";
   if (
     !parsed.success ||
@@ -58,7 +62,11 @@ export async function saveAgentSettings(
         if (
           !encryptedApiKey ||
           !parsed.data.model ||
-          !(parsed.data.allowGameData || parsed.data.allowHelp)
+          !(
+            parsed.data.allowGameData ||
+            parsed.data.allowHelp ||
+            parsed.data.allowCourtSearch
+          )
         )
           throw new Error("Incomplete configuration");
         decryptAgentKey(encryptedApiKey);
@@ -74,6 +82,8 @@ export async function saveAgentSettings(
         targetId: "global",
         metadata: {
           enabled: parsed.data.enabled,
+          requireZeroRetention: parsed.data.requireZeroRetention,
+          allowCourtSearch: parsed.data.allowCourtSearch,
           freeMessages: parsed.data.freeMessages,
           plusMessages: parsed.data.plusMessages,
           proMessages: parsed.data.proMessages,

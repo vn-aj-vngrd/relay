@@ -1,0 +1,1 @@
+ALTER TABLE "agent_settings" ADD COLUMN "require_zero_retention" boolean DEFAULT true NOT NULL;

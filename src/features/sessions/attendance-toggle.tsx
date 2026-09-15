@@ -9,6 +9,7 @@ import {
   Square,
 } from "@phosphor-icons/react";
 import { useActionState } from "react";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { ButtonSpinner } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
@@ -55,12 +56,7 @@ export function AttendanceBulkActions({
         </SubmitButton>
       </form>
       {state.error ? (
-        <p
-          role="alert"
-          className="mt-1 text-right text-xs font-medium text-danger"
-        >
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
     </div>
   );
@@ -130,13 +126,13 @@ export function PlayAvailabilityControl({
         </button>
       </IconTooltip>
       {state.error ? (
-        <span role="alert" className="basis-full text-xs text-danger">
-          {state.error}
-        </span>
+        <ActionNotice message={state.error} response={state} />
       ) : state.message ? (
-        <span role="status" className="basis-full text-xs text-primary">
-          {state.message}
-        </span>
+        <ActionNotice
+          message={state.message}
+          response={state}
+          variant="success"
+        />
       ) : null}
     </form>
   );
@@ -193,16 +189,7 @@ export function AttendanceToggle({
         {present ? "Here" : "Not here"}
       </button>
       {state.error ? (
-        <span
-          role="alert"
-          className={
-            compact
-              ? "ml-2 text-xs text-danger"
-              : "basis-full text-xs text-danger"
-          }
-        >
-          {state.error}
-        </span>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
     </form>
   );

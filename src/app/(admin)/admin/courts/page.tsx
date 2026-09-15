@@ -1,3 +1,5 @@
+export const metadata = { title: "Courts · Admin" };
+
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 

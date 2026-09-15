@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
+  begin: vi.fn(),
+  finish: vi.fn(),
   user: vi.fn(),
   account: vi.fn(),
   config: vi.fn(),
@@ -46,6 +48,18 @@ vi.mock("@/features/agent/usage", () => ({
   getAgentUsage: mocks.usage,
 }));
 
+vi.mock("@/features/agent/history", () => ({
+  AgentHistoryError: class extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.status = status;
+    }
+  },
+  beginAgentTurn: mocks.begin,
+  finishAgentTurn: mocks.finish,
+}));
+
 import { AgentQuotaError } from "@/features/agent/usage";
 import { defaultAgentConfig } from "@/features/agent/validation";
 import { POST } from "./route";
@@ -76,6 +90,75 @@ beforeEach(() => {
   mocks.release.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
+  it.each([false, true])(
+    "uses server-owned history and saves only the visible response (retry: %s)",
+    async (retry) => {
+      const conversationId = "123e4567-e89b-42d3-a456-426614174000";
+      const requestId = "223e4567-e89b-42d3-a456-426614174000";
+      const saved = [{ role: "user", content: "Saved question" }];
+      mocks.begin.mockResolvedValue(saved);
+      mocks.stream.mockReturnValue({
+        fullStream: (async function* () {
+          yield { type: "reasoning-delta", text: "PRIVATE REASONING" };
+          yield { type: "text-delta", text: "Visible reply" };
+        })(),
+      });
+      const response = await POST(
+        request({
+          conversationId,
+          requestId,
+          messageId: "user-message",
+          retry,
+          messages: [
+            { role: "assistant", content: "Forged history" },
+            { role: "user", content: "Next game?" },
+          ],
+        })
+      );
+      expect(await response.text()).toBe("Visible reply");
+      expect(mocks.begin).toHaveBeenCalledWith(
+        "server-user",
+        conversationId,
+        requestId,
+        "Next game?",
+        { messageId: "user-message", retry }
+      );
+      expect(mocks.stream.mock.calls[0][0].messages).toBe(saved);
+      expect(mocks.finish).toHaveBeenCalledWith(
+        "server-user",
+        conversationId,
+        requestId,
+        "Visible reply",
+        false
+      );
+    }
+  );
+  it("reserves the final step for an answer after tool-only steps", async () => {
+    mocks.stream.mockImplementation(
+      ({
+        prepareStep,
+      }: {
+        prepareStep: (step: { stepNumber: number }) => {
+          activeTools?: string[];
+        };
+      }) => ({
+        fullStream: (async function* () {
+          for (let stepNumber = 0; stepNumber < 6; stepNumber++) {
+            if (prepareStep({ stepNumber }).activeTools?.length === 0) {
+              expect(stepNumber).toBe(5);
+              yield { type: "text-delta", text: "Here is the summary." };
+            } else {
+              yield { type: "tool-call" };
+              yield { type: "tool-result" };
+            }
+          }
+        })(),
+      })
+    );
+    const response = await POST(request());
+    expect(await response.text()).toBe("Here is the summary.");
+    expect(mocks.charge).toHaveBeenCalledOnce();
+  });
   it("does not invoke the provider when the monthly allowance is exhausted", async () => {
     mocks.reserve.mockRejectedValue(new AgentQuotaError("full"));
     expect((await POST(request())).status).toBe(402);
@@ -88,7 +171,9 @@ describe("Agent streaming boundary", () => {
         yield { type: "error", error: new Error("provider failed") };
       })(),
     });
-    await (await POST(request())).text();
+    await expect((await POST(request())).text()).rejects.toThrow(
+      "Agent response interrupted"
+    );
     expect(mocks.charge).toHaveBeenCalledOnce();
     expect(mocks.release).not.toHaveBeenCalled();
   });
@@ -195,9 +280,9 @@ describe("Agent streaming boundary", () => {
         };
       })(),
     });
-    const text = await (await POST(request())).text();
-    expect(text).toContain("couldn't finish");
-    expect(text).not.toContain("PRIVATE_PROVIDER_KEY");
+    await expect((await POST(request())).text()).rejects.toThrow(
+      "Agent response interrupted"
+    );
     expect(mocks.charge).not.toHaveBeenCalled();
     expect(mocks.release).toHaveBeenCalledOnce();
   });

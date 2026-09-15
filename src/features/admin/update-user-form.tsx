@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
+import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
@@ -123,14 +124,14 @@ export function UpdateUserForm({
         />
       </div>
       {state.error ? (
-        <p role="alert" className="text-sm font-medium text-danger">
-          {state.error}
-        </p>
+        <ActionNotice message={state.error} response={state} />
       ) : null}
       {state.success ? (
-        <p role="status" className="text-sm font-medium text-success">
-          {state.success}
-        </p>
+        <ActionNotice
+          message={state.success}
+          response={state}
+          variant="success"
+        />
       ) : null}
       <div className="flex gap-2">
         <SaveButton />
