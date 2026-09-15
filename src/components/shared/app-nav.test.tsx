@@ -13,6 +13,13 @@ beforeEach(() => {
 });
 
 describe("AppNav", () => {
+  it("links to Agent in the desktop sidebar", () => {
+    render(<AppNav mode="sidebar" />);
+    expect(screen.getByRole("link", { name: "Agent" })).toHaveAttribute(
+      "href",
+      "/agent"
+    );
+  });
   it("renders the theme-aware mobile bar with clear active and inactive states", () => {
     render(<AppNav mode="mobile" />);
 
@@ -59,6 +66,7 @@ describe("AppNav", () => {
       "/home",
       "/games",
       "/groups",
+      "/agent",
       "/notifications",
     ]);
     expect(

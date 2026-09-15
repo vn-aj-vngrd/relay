@@ -1,0 +1,83 @@
+import { z } from "zod";
+import { defaultAgentLimits } from "./allowance";
+
+const messageAllowance = z.preprocess(
+  (value) => (value === "" || value === null ? undefined : value),
+  z.coerce.number().int().min(0).max(100_000)
+);
+
+export const agentConfigSchema = z.object({
+  freeMessages: messageAllowance.default(defaultAgentLimits.freeMessages),
+  plusMessages: messageAllowance.default(defaultAgentLimits.plusMessages),
+  proMessages: messageAllowance.default(defaultAgentLimits.proMessages),
+  enabled: z.boolean(),
+  model: z
+    .string()
+    .trim()
+    .max(150)
+    .regex(/^(?:[a-zA-Z0-9._-]+\/[a-zA-Z0-9._:-]+)?$/),
+  instructions: z.string().trim().max(4000),
+  allowGameData: z.boolean(),
+  allowHelp: z.boolean(),
+  maxOutputTokens: z.coerce.number().int().min(256).max(4000),
+  requestsPerHour: z.coerce.number().int().min(1).max(120),
+});
+export type AgentConfig = z.infer<typeof agentConfigSchema>;
+export const defaultAgentConfig: AgentConfig = {
+  ...defaultAgentLimits,
+  enabled: false,
+  model: "",
+  instructions: "",
+  allowGameData: true,
+  allowHelp: true,
+  maxOutputTokens: 1200,
+  requestsPerHour: 30,
+};
+
+// Only text is accepted. Client-supplied tools, system messages, metadata and
+// attachments never become model messages or evidence of authorization.
+export const agentRequestSchema = z
+  .object({
+    requestId: z.uuid().optional(),
+    messages: z
+      .array(
+        z
+          .object({
+            role: z.enum(["user", "assistant"]),
+            content: z.string().trim().min(1).max(4000),
+          })
+          .strict()
+      )
+      .min(1)
+      .max(24),
+  })
+  .strict()
+  .refine((value) => value.messages.at(-1)?.role === "user");
+
+export const gameSearchSchema = z
+  .object({
+    scope: z.enum([
+      "mine",
+      "hosting",
+      "joining",
+      "attention",
+      "open",
+      "groups",
+    ]),
+    query: z.string().max(100).default(""),
+    groupId: z
+      .uuid()
+      .optional()
+      .describe("Optional group ID from myGroups; does not grant access"),
+    from: z.iso
+      .date()
+      .optional()
+      .describe("Inclusive date in Asia/Manila, YYYY-MM-DD"),
+    until: z.iso
+      .date()
+      .optional()
+      .describe("Inclusive date in Asia/Manila, YYYY-MM-DD"),
+    offset: z.number().int().min(0).max(200).default(0),
+  })
+  .refine((value) => !value.from || !value.until || value.from <= value.until);
+export type GameSearch = z.infer<typeof gameSearchSchema>;

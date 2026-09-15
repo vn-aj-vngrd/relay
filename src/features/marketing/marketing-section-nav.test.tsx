@@ -51,6 +51,10 @@ describe("MarketingSectionNav", () => {
       </>
     );
 
+    expect(screen.getByRole("link", { name: "Agent" })).toHaveAttribute(
+      "href",
+      "#agent"
+    );
     const links = screen.getAllByRole("link");
     expect(links.slice(-2).map((link) => link.textContent)).toEqual([
       "Story",

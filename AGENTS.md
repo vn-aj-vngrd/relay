@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Development loop
 
-- **PR workflow:** Start new work on a `van/` branch from freshly fetched `origin/master`. Read `docs/DEVELOPMENT_WORKFLOW.md` before naming branches or commits, opening or reviewing a PR, or merging; it defines naming, review, and release-message standards. Use Conventional Commit prefixes for commits, PR titles and squash subjects, including on ticket branches; put ticket references in the body. Changes reach `master` through a PR with passing checks; never push commits directly to `master`. Creating a PR does not authorize merging it.
+- **PR workflow:** Read `docs/DEVELOPMENT_WORKFLOW.md` before branching, committing, opening or reviewing a PR, merging, or verifying a release. It owns naming conventions, standing PR-to-production authorization, comment resolution and CI/deployment gates.
 
 - **Defer validation:** During development, focus on implementation. Do not automatically run linting, formatting checks, typechecking, tests, builds, or hook commands after edits or at ordinary handoff. Run checks earlier only when the user explicitly requests them (including test-first work).
 - **Journey coverage:** Maintain relevant E2E coverage when changing critical user behavior. Running E2E or dispatching its workflows remains opt-in and is excluded from pre-commit; follow `docs/RELIABILITY.md`.

@@ -10,6 +10,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AgentMark } from "@/features/agent/agent-mark";
 import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
 const items = [
@@ -47,6 +48,14 @@ const items = [
     icon: UsersThree,
     primary: false,
     mobileOnly: false,
+  },
+  {
+    href: "/agent",
+    label: "Agent",
+    icon: AgentMark,
+    primary: false,
+    mobileOnly: false,
+    desktopOnly: true,
   },
   {
     href: "/notifications",

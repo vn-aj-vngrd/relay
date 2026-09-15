@@ -1375,3 +1375,48 @@ export const billingMedia = pgTable(
     check("billing_media_bytes_valid", sql`${table.bytes} > 0`),
   ]
 );
+
+export const agentSettings = pgTable(
+  "agent_settings",
+  {
+    freeMessages: integer("free_messages").notNull().default(50),
+    plusMessages: integer("plus_messages").notNull().default(250),
+    proMessages: integer("pro_messages").notNull().default(750),
+    id: text("id").primaryKey().default("global"),
+    enabled: boolean("enabled").notNull().default(false),
+    encryptedApiKey: text("encrypted_api_key"),
+    model: text("model").notNull().default(""),
+    instructions: text("instructions").notNull().default(""),
+    allowGameData: boolean("allow_game_data").notNull().default(true),
+    allowHelp: boolean("allow_help").notNull().default(true),
+    maxOutputTokens: integer("max_output_tokens").notNull().default(1200),
+    requestsPerHour: integer("requests_per_hour").notNull().default(30),
+    ...timestamps,
+  },
+  (table) => [check("agent_settings_singleton", sql`${table.id} = 'global'`)]
+).enableRLS();
+
+export const agentMessageUsage = pgTable(
+  "agent_message_usage",
+  {
+    id: uuid("id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: text("status").notNull().default("reserved"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    index("agent_message_usage_user_date_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+    check(
+      "agent_message_usage_status",
+      sql`${table.status} in ('reserved', 'charged', 'released')`
+    ),
+  ]
+).enableRLS();

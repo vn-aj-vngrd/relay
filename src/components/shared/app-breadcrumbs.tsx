@@ -11,6 +11,7 @@ export type BreadcrumbItem = {
 
 const labels: Record<string, string> = {
   admin: "Admin Console",
+  agent: "Agent",
   audit: "Audit log",
   billing: "Billing",
   plan: "Plan & billing",

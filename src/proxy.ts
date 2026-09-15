@@ -17,6 +17,8 @@ const readOnlyWriteExceptions = [
   "/update-password",
 ];
 const sessionRefreshPrefixes = [
+  "/agent",
+  "/api/agent",
   "/admin",
   "/api/admin",
   "/api/games",
@@ -160,6 +162,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/agent/:path*",
     "/admin/:path*",
     "/api/:path*",
     "/auth/:path*",

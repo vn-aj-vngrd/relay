@@ -3,8 +3,12 @@ import {
   Clock,
   PauseCircle,
 } from "@phosphor-icons/react/dist/ssr";
-
 import { ButtonLink } from "@/components/ui/button";
+import {
+  agentMessageLimit,
+  defaultAgentLimits,
+  type PublicAgentOffer,
+} from "@/features/agent/allowance";
 
 import { type BillingPlan, type PlanId, publicBillingPlans } from "./domain";
 import {
@@ -21,12 +25,14 @@ export function PlanCards({
   account = false,
   currentPlan,
   allowPurchases = true,
+  agent = { ...defaultAgentLimits, enabled: false },
 }: {
   catalog: BillingPlan[];
   acceptingPayments?: boolean;
   account?: boolean;
   currentPlan?: PlanId;
   allowPurchases?: boolean;
+  agent?: PublicAgentOffer;
 }) {
   const catalog = publicBillingPlans(inputCatalog);
   if (!catalog.length)
@@ -92,6 +98,21 @@ export function PlanCards({
               <li>
                 <strong>{pricingStorage(plan.storageBytes)}</strong> total photo
                 storage
+              </li>
+              <li>
+                <strong className="text-primary">
+                  {agentMessageLimit(plan.id, agent).toLocaleString()} Agent
+                  messages per month
+                </strong>
+                {agentMessageLimit(plan.id, agent) === 0 ? (
+                  <span className="mt-1 block text-xs text-muted">
+                    Agent not included
+                  </span>
+                ) : !agent.enabled ? (
+                  <span className="mt-1 block text-xs text-muted">
+                    Agent coming soon
+                  </span>
+                ) : null}
               </li>
               <li>All core game features included</li>
               <li>No subscription needed for your players</li>
@@ -160,10 +181,12 @@ export function PlanComparison({
   catalog: inputCatalog,
   chatImageMaxBytes,
   memoryImageMaxBytes,
+  agent = { ...defaultAgentLimits, enabled: false },
 }: {
   catalog: BillingPlan[];
   chatImageMaxBytes?: number;
   memoryImageMaxBytes?: number;
+  agent?: PublicAgentOffer;
 }) {
   const catalog = publicBillingPlans(inputCatalog);
   if (!catalog.length) return null;
@@ -201,7 +224,8 @@ export function PlanComparison({
           {getPricingComparison(
             catalog,
             chatImageMaxBytes,
-            memoryImageMaxBytes
+            memoryImageMaxBytes,
+            agent
           ).map((group) => (
             <tbody key={group.title}>
               <tr className="border-b border-line bg-surface-raised">

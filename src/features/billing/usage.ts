@@ -45,7 +45,7 @@ export async function lockBillingAccount(
   );
 }
 
-export async function getAccountUsage(
+export async function getAccountAllowance(
   userId: string,
   connection: BillingTransaction | typeof db = db,
   now = new Date()
@@ -70,6 +70,15 @@ export async function getAccountUsage(
     override,
     freePlan: catalog.find((plan) => plan.id === "free"),
   });
+  return { ...allowance, term, override };
+}
+
+export async function getAccountUsage(
+  userId: string,
+  connection: BillingTransaction | typeof db = db,
+  now = new Date()
+) {
+  const allowance = await getAccountAllowance(userId, connection, now);
   const [gameRows, mediaRows, latestTerm] = await Promise.all([
     connection
       .select({ count: sql<number>`count(*)::int` })
@@ -99,8 +108,6 @@ export async function getAccountUsage(
     ...allowance,
     gamesUsed: gameRows[0]?.count ?? 0,
     bytesUsed: Number(mediaRows[0]?.bytes ?? 0),
-    term,
-    override,
     paidThrough: latestTerm?.endsAt ?? null,
   };
 }

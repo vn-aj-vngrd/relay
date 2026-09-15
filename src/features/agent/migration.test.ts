@@ -1,0 +1,17 @@
+import { readFileSync } from "node:fs";
+import { expect, it } from "vitest";
+
+it("keeps the Agent message ledger outside the Supabase client Data API", () => {
+  const migration = readFileSync(
+    "drizzle/0057_agent_message_allowances.sql",
+    "utf8"
+  );
+  expect(migration).toContain(
+    'ALTER TABLE "agent_message_usage" ENABLE ROW LEVEL SECURITY'
+  );
+  expect(migration).toContain(
+    'REVOKE ALL ON TABLE "agent_message_usage" FROM anon, authenticated, service_role'
+  );
+  expect(migration).not.toContain('"prompt"');
+  expect(migration).not.toContain('"response"');
+});

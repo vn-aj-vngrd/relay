@@ -1,3 +1,8 @@
+import {
+  type AgentLimits,
+  agentMessageLimit,
+  defaultAgentLimits,
+} from "@/features/agent/allowance";
 import { type BillingPlan, mediaPolicy, storageLabel } from "./domain";
 
 export const planDescriptions = {
@@ -26,7 +31,8 @@ export function pricingStorage(bytes: number) {
 export function getPricingComparison(
   pricingPlans: BillingPlan[],
   chatImageMaxBytes: number = mediaPolicy.chat.maxBytes,
-  memoryImageMaxBytes: number = mediaPolicy.memory.maxBytes
+  memoryImageMaxBytes: number = mediaPolicy.memory.maxBytes,
+  agent: AgentLimits & { enabled?: boolean } = defaultAgentLimits
 ) {
   return [
     {
@@ -54,6 +60,39 @@ export function getPricingComparison(
         },
         { label: "Players per game", values: ["40", "40", "40"] },
         { label: "Courts per game", values: ["20", "20", "20"] },
+      ],
+    },
+    {
+      title: "Agent · read-only AI assistant",
+      rows: [
+        {
+          label: "Agent messages per month",
+          values: pricingPlans.map((plan) =>
+            agentMessageLimit(plan.id, agent).toLocaleString()
+          ),
+        },
+        {
+          label: "Games, rosters, groups and Help Center answers",
+          values: pricingPlans.map((plan) =>
+            agentMessageLimit(plan.id, agent) === 0
+              ? "Not included"
+              : agent.enabled
+                ? "Included within message allowance"
+                : "Coming soon"
+          ),
+        },
+        {
+          label: "When Agent messages reset",
+          values: pricingPlans.map((plan) =>
+            plan.id === "free"
+              ? "1st of each month (PH time)"
+              : "Each monthly term"
+          ),
+        },
+        {
+          label: "Unused message rollover",
+          values: pricingPlans.map(() => "No rollover"),
+        },
       ],
     },
     {
@@ -150,6 +189,11 @@ export function getPricingComparison(
 }
 
 export const pricingQuestions = [
+  {
+    question: "How do Agent message allowances work?",
+    answer:
+      "One question or follow-up counts as one message when its answer starts. Internal searches and tool calls do not count separately. Failures or cancellations before an answer starts do not use a message; partial answers and cancellations after streaming starts count. Free resets on the 1st in Philippine time; paid plans follow their monthly term. There is no rollover. Upgrades preserve usage already consumed in the applicable period. Help Center remains free to browse. Agent is read-only and cannot change your games. Allowances are shown above; Agent availability is shown in the plan cards.",
+  },
   {
     question: "What counts as a game each month?",
     answer:

@@ -15,12 +15,12 @@ import {
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Compare Relay Free, Plus and Pro: monthly hosted games, total photo storage, included features and manual monthly billing.",
+    "Compare Relay Free, Plus and Pro: monthly hosted games, Agent AI messages, total photo storage, included features and manual monthly billing.",
   alternates: { canonical: "/pricing" },
   openGraph: {
     title: "Relay pricing",
     description:
-      "Hosting plans for your next pickleball game. Compare monthly games and total photo storage.",
+      "Hosting plans for your next pickleball game. Compare monthly games, Agent messages and total photo storage.",
     url: "/pricing",
     type: "website",
   },
@@ -84,18 +84,31 @@ export default async function PricingPage() {
             One personal plan for the host. Your players can join, RSVP and play
             without a paid subscription.
           </p>
+          <div className="mt-6 border-y border-line py-4">
+            <h2 className="font-semibold text-primary">
+              Meet Agent, your read-only game assistant
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+              Ask about your games, who's joining, your groups, or how Relay
+              works. Monthly message allowances scale with your plan.{" "}
+              {offer.agent?.enabled
+                ? "Agent is available now."
+                : "Agent is coming soon."}
+            </p>
+          </div>
           <div className="mt-8">
             <PlanCards {...offer} />
           </div>
           <p className="mt-5 max-w-3xl text-sm leading-7 text-muted">
-            Free games reset on the 1st of each month in Philippine time. Paid
-            plans include the stated games for each one-calendar-month term.
-            Photo storage does not reset monthly. Coming soon plans cannot be
-            purchased yet.
+            Free games and Agent messages reset on the 1st of each month in
+            Philippine time. Paid plans include the stated games and Agent
+            messages for each one-calendar-month term. Photo storage does not
+            reset monthly. Coming soon plans cannot be purchased yet.
           </p>
         </section>
         <PlanComparison
           catalog={offer.catalog}
+          agent={offer.agent}
           chatImageMaxBytes={offer.chatImageMaxBytes}
           memoryImageMaxBytes={offer.memoryImageMaxBytes}
         />

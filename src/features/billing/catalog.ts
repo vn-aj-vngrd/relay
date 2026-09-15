@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { billingMethods, billingSettings } from "@/db/schema";
+import { getPublicAgentOffer } from "@/features/agent/public-offer";
 import { resolveImageUploadLimits } from "@/lib/upload-config";
 
 import { normalizeBillingCatalog, publicBillingPlans } from "./domain";
@@ -27,8 +28,11 @@ export async function getAdminBillingOffer() {
 }
 
 export async function getBillingOffer() {
-  const offer = await getAdminBillingOffer();
-  return { ...offer, catalog: publicBillingPlans(offer.catalog) };
+  const [offer, agent] = await Promise.all([
+    getAdminBillingOffer(),
+    getPublicAgentOffer(),
+  ]);
+  return { ...offer, agent, catalog: publicBillingPlans(offer.catalog) };
 }
 
 export async function getBillingCatalog(
