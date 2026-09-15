@@ -503,12 +503,17 @@ export function AgentChat({
             <Button
               variant="secondary"
               disabled={busy || !available}
-              onClick={() => {
+              onClick={async () => {
                 if (busy || prepareLock.current || !available) return;
+                prepareLock.current = true;
                 chooseLoadingLabel();
                 follow.current = true;
                 clearError();
-                void regenerate();
+                try {
+                  await regenerate();
+                } finally {
+                  prepareLock.current = false;
+                }
               }}
             >
               Retry

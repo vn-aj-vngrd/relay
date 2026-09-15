@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render as renderComponent,
   screen,
@@ -65,6 +66,32 @@ describe("Agent chat controls", () => {
     expect(mocks.retry).toHaveBeenCalledOnce();
     expect(mocks.send).not.toHaveBeenCalled();
     expect(mocks.create).not.toHaveBeenCalled();
+  });
+  it("locks repeated retry clicks until regeneration settles", async () => {
+    mocks.error = new Error("AGENT_HTTP_502");
+    let finish!: () => void;
+    mocks.retry.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        })
+    );
+    render(<AgentChat available />);
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    act(() => {
+      fireEvent.click(retry);
+      fireEvent.click(retry);
+    });
+    expect(mocks.retry).toHaveBeenCalledOnce();
+    await act(async () => {
+      finish();
+    });
+    fireEvent.click(retry);
+    expect(mocks.retry).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      finish();
+    });
+    mocks.retry.mockReset();
   });
   it("shows a message skeleton until the saved conversation loads", async () => {
     window.history.replaceState(null, "", "/agent?chat=saved");
