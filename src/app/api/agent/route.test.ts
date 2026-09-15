@@ -101,6 +101,43 @@ describe("Agent streaming boundary", () => {
     expect((await POST(request())).status).toBe(401);
     expect(mocks.stream).not.toHaveBeenCalled();
   });
+  it.each(["https://relay-preview.vercel.app", "https://alternate.relay.test"])(
+    "accepts the deployment's same origin %s",
+    async (origin) => {
+      mocks.user.mockResolvedValue(null);
+      const response = await POST(
+        new Request(`${origin}/api/agent`, {
+          method: "POST",
+          headers: { origin, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [{ role: "user", content: "hello" }],
+          }),
+        })
+      );
+      expect(response.status).toBe(401);
+      expect(mocks.user).toHaveBeenCalledOnce();
+    }
+  );
+  it("rejects missing origins and forged forwarding headers", async () => {
+    for (const origin of [null, "https://evil.test"]) {
+      const headers = new Headers({
+        "x-forwarded-host": "evil.test",
+        host: "evil.test",
+      });
+      if (origin) headers.set("origin", origin);
+      expect(
+        (
+          await POST(
+            new Request("https://relay.test/api/agent", {
+              method: "POST",
+              headers,
+            })
+          )
+        ).status
+      ).toBe(403);
+    }
+    expect(mocks.user).not.toHaveBeenCalled();
+  });
   it("rejects suspended accounts, disabled Agent and exhausted quotas", async () => {
     mocks.account.mockResolvedValue({ suspendedAt: new Date() });
     expect((await POST(request())).status).toBe(403);

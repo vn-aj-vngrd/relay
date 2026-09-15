@@ -12,7 +12,8 @@ export async function readAgentRequest(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > 96_000) {
+      // Covers 24 × 4,000 UTF-16 units, worst-case JSON escapes and framing.
+      if (size > 600_000) {
         await reader.cancel();
         return null;
       }

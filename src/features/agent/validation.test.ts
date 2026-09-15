@@ -46,12 +46,33 @@ describe("Agent input boundary", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", content: "x".repeat(100_000) }],
+          messages: [{ role: "user", content: "x".repeat(600_001) }],
         }),
       })
     );
     expect(response).toBeNull();
   });
+  it.each(["a", "界", "\u0000", "\ud800"])(
+    "accepts a maximum-length JSON conversation containing %j",
+    async (character) => {
+      const body = {
+        requestId: "00000000-0000-4000-8000-000000000000",
+        messages: Array.from({ length: 24 }, (_, index) => ({
+          role: index % 2 ? "user" : "assistant",
+          content: character.repeat(4000),
+        })),
+      };
+      expect(
+        await readAgentRequest(
+          new Request("https://relay.test/api/agent", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          })
+        )
+      ).toEqual(body);
+    }
+  );
   it("accepts a bounded text conversation", async () => {
     const body = { messages: [{ role: "user", content: "My next game?" }] };
     expect(

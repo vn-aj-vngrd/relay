@@ -69,10 +69,10 @@ For credential rotation, replace the OpenRouter key in the form. For encryption-
 
 Backend authorization and narrow data projections are the security boundary. Prompts reinforce behavior but are not treated as access control. Custom instructions are model-visible public-facing guidance; do not put confidential information in them. System-prompt secrecy cannot be guaranteed by an LLM, so no secrets or sensitive configuration are put in the prompt.
 
-- Same-origin POSTs only, using the configured application origin; confirm `NEXT_PUBLIC_APP_URL` matches each environment.
+- Same-origin POSTs only, matching the actual request URL so production aliases and preview deployments work without trusting forwarded host headers.
 - Valid Supabase session plus an existing unsuspended account and no forced password change.
 - PostgreSQL-backed monthly plan allowances plus per-user hourly rate limits (default 30, configurable 1–120); no process-local quota state.
-- Maximum 96 KB request body, 24 text messages and 4,000 characters per message. Clients cannot supply system/developer/tool roles, tool results, attachments, identity or provider settings. The optional UUID request identifier provides replay protection and does not grant access. Client assistant history is untrusted; tool reads establish current facts. The UI sends the latest 24 nonempty text messages and bounds each to 4,000 characters.
+- Maximum 600 KB request body (including worst-case JSON escaping for the bounded conversation), 24 text messages and 4,000 characters per message. Clients cannot supply system/developer/tool roles, tool results, attachments, identity or provider settings. The optional UUID request identifier provides replay protection and does not grant access. Client assistant history is untrusted; tool reads establish current facts. The UI sends the latest 24 nonempty text messages and bounds each to 4,000 characters.
 - At most six model steps, twelve tool executions, a 50-second generation deadline and no model retries. Output tokens are capped per step (default 1,200; 256–4,000). OpenRouter account spending limits remain the global monetary safeguard.
 - Response streams contain text only. Reasoning, raw tool results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
 - Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help links become navigation; destination routes enforce authorization again.

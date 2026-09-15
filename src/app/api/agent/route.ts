@@ -17,7 +17,6 @@ import {
   reserveAgentMessage,
 } from "@/features/agent/usage";
 import { getCurrentUser } from "@/features/auth/session";
-import { getPublicEnv } from "@/lib/env";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
     }
   }
   try {
-    const origin = new URL(getPublicEnv().NEXT_PUBLIC_APP_URL).origin;
+    const origin = new URL(request.url).origin;
     if (request.headers.get("origin") !== origin)
       return failure(403, "Request not allowed.");
     const user = await getCurrentUser();
