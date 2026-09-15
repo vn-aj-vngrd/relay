@@ -5,6 +5,7 @@ import {
   defaultAgentLimits,
   type PublicAgentOffer,
 } from "@/features/agent/allowance";
+import { AgentDemo } from "./agent-demo";
 
 export function AgentShowcase({
   agent = { ...defaultAgentLimits, enabled: false },
@@ -58,33 +59,7 @@ export function AgentShowcase({
             </span>
           </div>
         </div>
-        <figure
-          className="min-w-0 rounded-xl border border-line bg-canvas p-5 sm:p-7"
-          aria-label="Illustrative Agent conversation"
-        >
-          <figcaption className="mb-6 flex items-center justify-between gap-4 text-xs text-muted">
-            <span>Example conversation</span>
-            <span>Illustrative game</span>
-          </figcaption>
-          <p className="ml-8 rounded-xl bg-surface-strong px-4 py-3 text-sm leading-6">
-            When is my next game, and who's joining?
-          </p>
-          <div className="mt-6 flex items-center gap-2 text-sm font-semibold">
-            <AgentMark size={18} className="text-primary" aria-hidden />
-            Agent
-          </div>
-          <p className="mt-3 text-sm leading-7">
-            Your next game is <strong>Saturday doubles</strong>, Saturday at 7
-            PM. Alex, Bea and Marco are Going. Jamie is waitlisted.
-          </p>
-          <p className="mt-3 text-sm leading-7">
-            The court booking still needs confirmation.
-          </p>
-          <p className="mt-5 border-t border-line pt-4 text-xs leading-5 text-muted">
-            Answers use the game details you can access. Check the linked
-            records before making plans.
-          </p>
-        </figure>
+        <AgentDemo />
       </div>
     </section>
   );

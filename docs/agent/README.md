@@ -11,7 +11,7 @@ Agent answers questions about Relay games, rosters, groups, open games and the e
 - Dates in search filters use Asia/Manila, consistent with Open games discovery. Results also include the game's stored timezone. The assistant explains relative date ranges and asks for clarification when context is ambiguous.
 - No writes, actions, arbitrary SQL, code execution, browser, external URL retrieval, email, payment details, private notes or administrative tools are registered.
 
-Agent uses the shared outlined Phosphor Cursor mark in `agent-mark.tsx` across chat, navigation, admin and marketing. The landing hero links to a dedicated Agent showcase after the existing Highlights.
+Agent uses the shared rounded green cursor with pickleball perforations in `agent-mark.tsx` across chat, navigation, admin and marketing. The landing hero links to a dedicated Agent showcase after the existing Highlights. Its interactive demo uses local sample questions and answers, never the provider or account data. Visitors can select a question, pause/resume or replay; reduced motion reveals the whole response without typing animation.
 
 ## Architecture
 

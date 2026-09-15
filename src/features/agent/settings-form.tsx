@@ -152,7 +152,7 @@ export function AgentSettingsForm({
               }
               maxLength={4000}
               rows={5}
-              className="field h-auto min-h-32 py-3"
+              className="field h-auto min-h-32"
               placeholder="For example: Keep answers brief and use a friendly tone."
             />
             <p className="mt-2 text-xs leading-5 text-muted">

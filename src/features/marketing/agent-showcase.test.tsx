@@ -24,7 +24,7 @@ describe("landing Agent highlight", () => {
     expect(
       screen.getByRole("link", { name: "See Agent plans" })
     ).toHaveAttribute("href", "/pricing");
-    expect(screen.getByText("Illustrative game")).toBeInTheDocument();
+    expect(screen.getByText(/Illustrative game\./)).toBeInTheDocument();
   });
   it("offers the real assistant when enabled", () => {
     render(
