@@ -41,7 +41,7 @@ export function connectionFailure(error: unknown): string {
   if (status === 402)
     return "OpenRouter requires credits for this request. Check the account balance and key spending limit.";
   if (status === 404 || status === 400 || status === 422)
-    return "No compatible model route accepted this request. Choose a model supporting tools, streaming and zero data retention; check OpenRouter privacy settings.";
+    return "OpenRouter rejected this model request. Check the model ID, available endpoints, supported tools and your OpenRouter account settings.";
   if (status === 429)
     return "OpenRouter is rate limiting this connection. Wait and retry, or check the account limits.";
   return "The connection test failed or timed out. Check model availability and OpenRouter account settings, then retry.";

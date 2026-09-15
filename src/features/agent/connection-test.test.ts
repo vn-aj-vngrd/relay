@@ -33,19 +33,27 @@ it("tests streaming and synthetic tool use without application data", async () =
     zdr: true,
   });
 });
-it("returns useful safe failures without echoing provider bodies or secrets", async () => {
-  mocks.stream.mockReturnValue({
-    fullStream: (async function* () {
-      yield {
-        type: "error",
-        error: { statusCode: 404, message: "PRIVATE_KEY BODY" },
-      };
-    })(),
-  });
-  const result = await probeAgentConnection("test/model", "encrypted");
-  expect(result.error).toContain("zero data retention");
-  expect(JSON.stringify(result)).not.toMatch(/PRIVATE_KEY|BODY/);
-});
+it.each([true, false])(
+  "returns mode-neutral safe failures with strict privacy %s",
+  async (strict) => {
+    mocks.stream.mockReturnValue({
+      fullStream: (async function* () {
+        yield {
+          type: "error",
+          error: { statusCode: 404, message: "PRIVATE_KEY BODY" },
+        };
+      })(),
+    });
+    const result = await probeAgentConnection(
+      "test/model",
+      "encrypted",
+      strict
+    );
+    expect(result.error).toContain("available endpoints");
+    expect(result.error).not.toContain("zero data retention");
+    expect(JSON.stringify(result)).not.toMatch(/PRIVATE_KEY|BODY/);
+  }
+);
 it("does not pass a model that produces no tool result", async () => {
   mocks.stream.mockReturnValue({
     fullStream: (async function* () {
