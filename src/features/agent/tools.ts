@@ -1,9 +1,14 @@
 import "server-only";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
+import { readAgentCourt, searchAgentCourts } from "./courts";
 import { agentHelpIndex, readAgentHelp, searchAgentHelp } from "./help";
 import { readAgentGame, readAgentGroups, searchAgentGames } from "./reads";
-import { type AgentConfig, gameSearchSchema } from "./validation";
+import {
+  type AgentConfig,
+  agentCourtSearchSchema,
+  gameSearchSchema,
+} from "./validation";
 
 export function createAgentTools(
   userId: string,
@@ -47,6 +52,26 @@ export function createAgentTools(
         offset: z.number().int().min(0).max(200).default(0),
       }),
       execute: ({ offset }) => read(() => readAgentGroups(userId, offset)),
+    });
+  }
+  if (config.allowCourtSearch) {
+    tools.searchCourts = tool({
+      description:
+        "Search Relay's verified Court Finder directory by court name, city or neighborhood. Use concise name/address keywords (for example Cebu City). For near me without a named place, set nearMe and ask the user which city or neighborhood. No device location is available. Results include public and restricted facilities with access/status labels, not live bookable slots. Paginate using nextOffset.",
+      inputSchema: agentCourtSearchSchema,
+      execute: (input) => read(() => searchAgentCourts(input)),
+    });
+    tools.courtDetails = tool({
+      description:
+        "Read a listed court's hours, price, facilities, access, contact and status using its slug from searchCourts or a Relay court URL. No booking actions.",
+      inputSchema: z.object({
+        slug: z
+          .string()
+          .min(1)
+          .max(150)
+          .regex(/^[a-zA-Z0-9_-]+$/),
+      }),
+      execute: ({ slug }) => read(() => readAgentCourt(slug)),
     });
   }
   if (config.allowHelp) {

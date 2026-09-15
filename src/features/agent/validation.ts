@@ -21,6 +21,7 @@ export const agentConfigSchema = z.object({
   instructions: z.string().trim().max(4000),
   allowGameData: z.boolean(),
   allowHelp: z.boolean(),
+  allowCourtSearch: z.boolean().default(true),
   maxOutputTokens: z.coerce.number().int().min(256).max(4000),
   requestsPerHour: z.coerce.number().int().min(1).max(120),
 });
@@ -33,15 +34,26 @@ export const defaultAgentConfig: AgentConfig = {
   instructions: "",
   allowGameData: true,
   allowHelp: true,
+  allowCourtSearch: true,
   maxOutputTokens: 1200,
   requestsPerHour: 30,
 };
+
+export const agentCourtSearchSchema = z
+  .object({
+    query: z.string().trim().max(100).default(""),
+    nearMe: z.boolean().default(false),
+    offset: z.number().int().min(0).max(200).default(0),
+  })
+  .strict();
+export type AgentCourtSearch = z.infer<typeof agentCourtSearchSchema>;
 
 // Only text is accepted. Client-supplied tools, system messages, metadata and
 // attachments never become model messages or evidence of authorization.
 export const agentRequestSchema = z
   .object({
     requestId: z.uuid().optional(),
+    conversationId: z.uuid().optional(),
     messages: z
       .array(
         z

@@ -9,23 +9,24 @@ vi.mock("next/navigation", () => ({ usePathname: () => usePathname() }));
 describe("SidebarSupportNav", () => {
   beforeEach(() => usePathname.mockReturnValue("/help"));
 
-  it("keeps only court suggestion, help, and feedback in the support area", () => {
+  it("keeps notifications and Help Center at the bottom", () => {
     render(<SidebarSupportNav />);
 
     expect(
       screen.getAllByRole("link").map((link) => link.getAttribute("href"))
-    ).toEqual(["/courts/suggest", "/help", "/feedback"]);
+    ).toEqual(["/notifications", "/help"]);
     expect(screen.getByRole("link", { name: "Help Center" })).toHaveAttribute(
       "aria-current",
       "page"
     );
   });
 
-  it("marks the court suggestion form as the current sidebar destination", () => {
-    usePathname.mockReturnValue("/courts/suggest");
-    render(<SidebarSupportNav />);
+  it("preserves the notification unread count and active state", () => {
+    usePathname.mockReturnValue("/notifications");
+    render(<SidebarSupportNav unreadCount={12} />);
+    expect(screen.getByLabelText("12 unread notifications")).toBeVisible();
     expect(
-      screen.getByRole("link", { name: "Suggest a court" })
+      screen.getByRole("link", { name: "Notifications, 12 unread" })
     ).toHaveAttribute("aria-current", "page");
   });
 

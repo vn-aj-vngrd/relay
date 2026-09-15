@@ -23,6 +23,7 @@ export async function saveAgentSettings(
     instructions: form.get("instructions"),
     allowGameData: form.get("allowGameData") === "on",
     allowHelp: form.get("allowHelp") === "on",
+    allowCourtSearch: form.get("allowCourtSearch") === "on",
     maxOutputTokens: form.get("maxOutputTokens"),
     requestsPerHour: form.get("requestsPerHour"),
   });
@@ -61,7 +62,11 @@ export async function saveAgentSettings(
         if (
           !encryptedApiKey ||
           !parsed.data.model ||
-          !(parsed.data.allowGameData || parsed.data.allowHelp)
+          !(
+            parsed.data.allowGameData ||
+            parsed.data.allowHelp ||
+            parsed.data.allowCourtSearch
+          )
         )
           throw new Error("Incomplete configuration");
         decryptAgentKey(encryptedApiKey);
@@ -78,6 +83,7 @@ export async function saveAgentSettings(
         metadata: {
           enabled: parsed.data.enabled,
           requireZeroRetention: parsed.data.requireZeroRetention,
+          allowCourtSearch: parsed.data.allowCourtSearch,
           freeMessages: parsed.data.freeMessages,
           plusMessages: parsed.data.plusMessages,
           proMessages: parsed.data.proMessages,

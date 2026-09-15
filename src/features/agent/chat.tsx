@@ -1,14 +1,35 @@
 "use client";
-import { useChat } from "@ai-sdk/react";
+import { Chat, useChat } from "@ai-sdk/react";
 import { ArrowUp, Plus, Stop } from "@phosphor-icons/react";
-import { TextStreamChatTransport } from "ai";
+import { TextStreamChatTransport, type UIMessage } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { FocusedBackLink } from "@/components/shared/focused-mobile-header";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { AgentMark } from "./agent-mark";
 import type { AgentUsageSummary } from "./allowance";
 import { AgentAnswer } from "./answer";
+import { AgentChatSkeleton } from "./chat-skeleton";
+import {
+  AgentComposerEditor,
+  type AgentComposerHandle,
+} from "./composer-editor";
 import { agentMessageMaxLength } from "./constants";
+import {
+  conversationMessages,
+  createConversation,
+  loadConversation,
+  setConversationUrl,
+} from "./history-client";
+import { AgentHistoryPanel } from "./history-panel";
+import {
+  formatMessageTime,
+  messageTimestamp,
+  showMessageTime,
+} from "./message-time";
+import { AgentReplyActions } from "./reply-actions";
+import type { AgentSession } from "./session";
+import { useAgentSession } from "./session";
 import { AgentUsageSummaryView } from "./usage-summary";
 
 const suggestions = [
@@ -17,45 +38,89 @@ const suggestions = [
   "Show open games tomorrow.",
   "How do I start a Quick Game?",
 ];
-const transport = new TextStreamChatTransport({
-  api: "/api/agent",
-  fetch: async (input, init) => {
-    const response = await fetch(input, init);
-    if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
-    return response;
-  },
-  prepareSendMessagesRequest: ({ messages }) => ({
-    body: {
-      requestId: crypto.randomUUID(),
-      messages: messages
-        .filter(
-          (message) => message.role === "user" || message.role === "assistant"
-        )
-        .map((message) => ({
-          role: message.role,
-          content: message.parts
-            .filter((part) => part.type === "text")
-            .map((part) => part.text)
-            .join("")
-            .slice(0, agentMessageMaxLength),
-        }))
-        .filter((message) => message.content.trim())
-        .slice(-24),
+const loadingLabels = [
+  "Thinking…",
+  "Pondering…",
+  "Considering…",
+  "Working it through…",
+  "Putting it together…",
+  "Connecting the dots…",
+];
+const createTransport = (session: AgentSession) =>
+  new TextStreamChatTransport({
+    api: "/api/agent",
+    fetch: async (input, init) => {
+      const response = await fetch(input, init);
+      if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
+      return response;
     },
-  }),
-});
+    prepareSendMessagesRequest: ({ messages }) => ({
+      body: {
+        requestId: crypto.randomUUID(),
+        conversationId: session.conversationId ?? undefined,
+        messages: messages
+          .filter(
+            (message) => message.role === "user" || message.role === "assistant"
+          )
+          .map((message) => ({
+            role: message.role,
+            content: message.parts
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("")
+              .slice(0, agentMessageMaxLength),
+          }))
+          .filter((message) => message.content.trim())
+          .slice(-24),
+      },
+    }),
+  });
 
 export function AgentChat({
   available,
+  allowCourtSearch = false,
   unavailableReason = "Agent is not available yet. You can still browse your games and Help Center.",
   initialUsage = null,
 }: {
   available: boolean;
+  allowCourtSearch?: boolean;
   unavailableReason?: string;
   initialUsage?: AgentUsageSummary | null;
 }) {
   const [usage, setUsage] = useState(initialUsage);
-  const [input, setInput] = useState("");
+  const session = useAgentSession();
+  const [chat] = useState(() => {
+    session.chat ??= new Chat({ transport: createTransport(session) });
+    return session.chat;
+  });
+  const [activeTitle, setActiveTitle] = useState(session.title);
+  const [activeId, setActiveId] = useState(session.conversationId);
+  const [preparing, setPreparing] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState<UIMessage | null>(
+    null
+  );
+  const [restoring, setRestoring] = useState(true);
+  const [remotePending, setRemotePending] = useState(false);
+  const prepareLock = useRef(false);
+  const preparation = useRef<{
+    controller: AbortController;
+    question: string;
+  } | null>(null);
+  useEffect(
+    () => () => {
+      const pending = preparation.current;
+      if (!pending) return;
+      pending.controller.abort();
+      session.draft = pending.question;
+      preparation.current = null;
+    },
+    [session]
+  );
+  const [input, setInput] = useState(session.draft);
+  useEffect(() => {
+    session.draft = input;
+  }, [input, session]);
+  const [loadingLabel, setLoadingLabel] = useState(loadingLabels[0]);
   const {
     messages,
     sendMessage,
@@ -64,12 +129,27 @@ export function AgentChat({
     stop,
     setMessages,
     clearError,
-    regenerate,
-  } = useChat({ transport });
+  } = useChat({ chat });
+  const visibleMessages = pendingQuestion
+    ? [...messages, pendingQuestion]
+    : messages;
   const viewport = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
-  const field = useRef<HTMLTextAreaElement>(null);
-  const busy = status === "submitted" || status === "streaming";
+  const [scrolling, setScrolling] = useState(false);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (scrollTimer.current) clearTimeout(scrollTimer.current);
+    },
+    []
+  );
+  const field = useRef<AgentComposerHandle>(null);
+  const busy =
+    status === "submitted" ||
+    status === "streaming" ||
+    preparing ||
+    restoring ||
+    remotePending;
   const errorCopy =
     error?.message === "AGENT_HTTP_402"
       ? "No Agent messages are currently available. If an answer is in progress, let it finish and retry. Otherwise, check Plan & billing for your reset date or options."
@@ -78,9 +158,11 @@ export function AgentChat({
         : error?.message === "AGENT_HTTP_401" ||
             error?.message === "AGENT_HTTP_403"
           ? "Sign in with an active account to continue."
-          : error?.message === "AGENT_HTTP_400"
-            ? "Shorten your message or start a new chat."
-            : "Agent couldn’t respond. Check your connection or try again later.";
+          : error?.message === "AGENT_HTTP_409"
+            ? "This chat is busy or full. Wait for its reply, or start a new chat."
+            : error?.message === "AGENT_HTTP_400"
+              ? "Shorten your message or start a new chat."
+              : "Agent couldn’t respond. Check your connection or try again later.";
   useEffect(() => {
     if (busy || !available) return;
     const controller = new AbortController();
@@ -97,6 +179,99 @@ export function AgentChat({
     if (follow.current && viewport.current)
       viewport.current.scrollTop = viewport.current.scrollHeight;
   }, [messages, status]);
+  function newConversation() {
+    session.conversationId = null;
+    session.title = "Your chats";
+    setActiveTitle("Your chats");
+    setRemotePending(false);
+    session.draft = "";
+    setConversationUrl(null);
+    setActiveId(null);
+    setMessages([]);
+    clearError();
+    setInput("");
+    field.current?.focus();
+  }
+  async function openConversation(id: string) {
+    setRestoring(true);
+    try {
+      const saved = await loadConversation(id);
+      setMessages(conversationMessages(saved));
+      session.conversationId = id;
+      session.title = saved.title;
+      setActiveTitle(saved.title);
+      setActiveId(id);
+      setRemotePending(saved.pending);
+      clearError();
+      setInput("");
+      session.draft = "";
+      setConversationUrl(id);
+    } catch {
+      notify("Couldn’t open this chat. Try again from History.");
+    } finally {
+      setRestoring(false);
+    }
+  }
+  useEffect(() => {
+    let cancelled = false;
+    const id = new URL(window.location.href).searchParams.get("chat");
+    if (
+      !id ||
+      (session.conversationId === id &&
+        (chat.status === "submitted" || chat.status === "streaming"))
+    ) {
+      setRestoring(false);
+      return;
+    }
+    void loadConversation(id)
+      .then((saved) => {
+        if (cancelled) return;
+        if (session.conversationId !== id) {
+          setInput("");
+          session.draft = "";
+        }
+        session.conversationId = id;
+        session.title = saved.title;
+        setActiveTitle(saved.title);
+        setActiveId(id);
+        setRemotePending(saved.pending);
+        setMessages(conversationMessages(saved));
+      })
+      .catch(() => {
+        if (!cancelled)
+          notify("Couldn’t restore this chat. Open History to try again.");
+      })
+      .finally(() => {
+        if (!cancelled) setRestoring(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session, setMessages, chat]);
+  useEffect(() => {
+    if (!remotePending || !activeId) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      void loadConversation(activeId)
+        .then((saved) => {
+          if (cancelled) return;
+          setMessages(conversationMessages(saved));
+          setRemotePending(saved.pending);
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setRemotePending(false);
+            notify(
+              "Couldn’t refresh this reply. Reopen the chat from History."
+            );
+          }
+        });
+    }, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [activeId, remotePending, setMessages]);
   function limitInput(text: string) {
     if (text.length <= agentMessageMaxLength) return text;
     notify(
@@ -104,37 +279,88 @@ export function AgentChat({
     );
     return text.slice(0, agentMessageMaxLength).replace(/[\uD800-\uDBFF]$/, "");
   }
+  function chooseLoadingLabel() {
+    const choices = loadingLabels.filter((label) => label !== loadingLabel);
+    setLoadingLabel(choices[Math.floor(Math.random() * choices.length)]);
+  }
   async function send(text: string) {
     if (text.length > agentMessageMaxLength) {
       setInput(limitInput(text));
       return;
     }
-    if (!text.trim() || busy || !available) return;
-    clearError();
+    if (!text.trim() || busy || prepareLock.current || !available) return;
+    prepareLock.current = true;
+    const controller = new AbortController();
+    preparation.current = { controller, question: text };
+    setPreparing(true);
+    const createdAt = new Date().toISOString();
+    setPendingQuestion({
+      metadata: { createdAt },
+      id: crypto.randomUUID(),
+      role: "user",
+      parts: [{ type: "text", text: text.trim() }],
+    });
+    chooseLoadingLabel();
     follow.current = true;
     setInput("");
-    await sendMessage({ text: text.trim() });
+    try {
+      if (!session.conversationId) {
+        const saved = await createConversation(text, controller.signal);
+        if (controller.signal.aborted) return;
+        session.conversationId = saved.id;
+        session.title = saved.title;
+        setActiveTitle(saved.title);
+        setActiveId(saved.id);
+        setConversationUrl(saved.id);
+      }
+    } catch {
+      if (controller.signal.aborted) return;
+      preparation.current = null;
+      notify(
+        "Couldn’t save this chat. Your question is still here; please try again."
+      );
+      setPreparing(false);
+      setPendingQuestion(null);
+      setInput(text);
+      prepareLock.current = false;
+      return;
+    }
+    // Preparation is cancellable while navigating; established streams remain
+    // owned by the authenticated session and continue across page changes.
+    preparation.current = null;
+    setPreparing(false);
+    setPendingQuestion(null);
+    clearError();
+    try {
+      await sendMessage(
+        { text: text.trim(), metadata: { createdAt } },
+        undefined
+      );
+    } finally {
+      prepareLock.current = false;
+    }
   }
   return (
     <section
       aria-label="Agent chat"
-      className="mx-auto flex h-[calc(100dvh-12rem)] min-h-[420px] max-w-3xl flex-col lg:h-[calc(100dvh-7rem)]"
+      className="agent-chat-page mx-auto flex h-full min-h-0 w-full flex-col"
     >
-      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line pb-4">
-        <div className="flex items-center gap-2.5">
-          <AgentMark className="text-primary" />
-          <h1 className="text-lg font-semibold">Agent</h1>
-          <span className="text-xs text-muted">Read-only</span>
+      <header className="-mx-4 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:mx-0 lg:h-auto lg:px-0 lg:pb-4">
+        <div className="flex min-w-0 flex-1 items-center gap-1">
+          <FocusedBackLink isAuthenticated className="lg:hidden" />
+          <h1 className="sr-only">Agent conversation</h1>
+          <AgentHistoryPanel
+            disabled={busy}
+            activeId={activeId}
+            activeTitle={activeTitle}
+            onSelect={openConversation}
+          />
         </div>
         <Button
           variant="quiet"
-          disabled={busy || !messages.length}
-          onClick={() => {
-            setMessages([]);
-            clearError();
-            setInput("");
-            field.current?.focus();
-          }}
+          className="rounded-full bg-surface-strong!"
+          disabled={busy || (!messages.length && !activeId)}
+          onClick={newConversation}
         >
           <Plus size={16} aria-hidden />
           New chat
@@ -142,83 +368,123 @@ export function AgentChat({
       </header>
       <div
         ref={viewport}
+        tabIndex={0}
+        data-scrolling={scrolling}
         onScroll={() => {
+          setScrolling(true);
+          if (scrollTimer.current) clearTimeout(scrollTimer.current);
+          scrollTimer.current = setTimeout(() => setScrolling(false), 900);
           const el = viewport.current;
           if (el)
             follow.current =
               el.scrollHeight - el.scrollTop - el.clientHeight < 80;
         }}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-6"
+        className="agent-conversation-scroll min-h-0 w-full flex-1 overflow-y-auto overscroll-contain py-4 lg:py-6"
         role="log"
         aria-label="Conversation"
         aria-live="polite"
         aria-relevant="additions text"
         aria-busy={busy}
       >
-        {messages.length ? (
-          <div className="space-y-7">
-            {messages.map((message) => (
-              <article
-                key={message.id}
-                aria-label={message.role === "user" ? "You" : "Agent"}
-                className={
-                  message.role === "user"
-                    ? "ml-auto w-fit min-w-0 max-w-[90%] rounded-xl bg-surface-strong px-4 py-3"
-                    : "max-w-full pr-2"
-                }
-              >
-                {message.role !== "user" ? (
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                    <AgentMark size={18} className="text-primary" />
-                    Agent
-                  </div>
-                ) : null}
-                <AgentAnswer
-                  text={message.parts
-                    .filter((part) => part.type === "text")
-                    .map((part) => part.text)
-                    .join("")}
-                />
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="mx-auto flex max-w-lg flex-col items-start justify-center py-10 sm:py-16">
-            <AgentMark size={36} className="mb-5 text-primary" />
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Your games, a little clearer.
-            </h2>
-            <p className="mt-3 text-sm leading-6 text-muted">
-              Ask about your next game, who's joining, your groups, or how Relay
-              works.
-            </p>
-            <div className="mt-7 flex w-full flex-col items-start gap-1">
-              {suggestions.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  disabled={!available}
-                  onClick={() => {
-                    void send(question);
-                  }}
-                  className="pressable min-h-11 rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-45"
-                >
-                  {question}
-                </button>
+        <div className="mx-auto w-full max-w-3xl">
+          {restoring ? (
+            <AgentChatSkeleton />
+          ) : visibleMessages.length ? (
+            <div className="space-y-7">
+              {visibleMessages.map((message, index) => (
+                <div key={message.id}>
+                  {showMessageTime(visibleMessages, index) ? (
+                    <p className="mb-6 text-center text-xs leading-5 text-muted">
+                      <time dateTime={messageTimestamp(message)?.toISOString()}>
+                        {formatMessageTime(messageTimestamp(message)!)}
+                      </time>
+                    </p>
+                  ) : null}
+                  <article
+                    aria-label={message.role === "user" ? "You" : "Agent"}
+                    className={
+                      message.role === "user"
+                        ? "ml-auto w-fit min-w-0 max-w-[90%] rounded-2xl bg-surface-strong px-3.5 py-2"
+                        : "max-w-full pr-2"
+                    }
+                  >
+                    {message.role !== "user" ? (
+                      <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                        <AgentMark size={18} className="text-primary" />
+                        Agent
+                      </div>
+                    ) : null}
+                    <AgentAnswer
+                      text={message.parts
+                        .filter((part) => part.type === "text")
+                        .map((part) => part.text)
+                        .join("")}
+                    />
+                    {message.metadata &&
+                    typeof message.metadata === "object" &&
+                    "interrupted" in message.metadata &&
+                    message.metadata.interrupted === true ? (
+                      <p className="mt-2 text-xs text-muted">
+                        This reply was interrupted. Ask a follow-up to continue.
+                      </p>
+                    ) : null}
+                    {message.role === "assistant" ? (
+                      <AgentReplyActions
+                        text={message.parts
+                          .filter((part) => part.type === "text")
+                          .map((part) => part.text)
+                          .join("")}
+                        disabled={
+                          status === "streaming" &&
+                          index === messages.length - 1
+                        }
+                      />
+                    ) : null}
+                  </article>
+                </div>
               ))}
             </div>
-          </div>
-        )}
-        {status === "submitted" ? (
-          <p
-            role="status"
-            className="text-shimmer mt-5 inline-block text-sm text-muted"
-          >
-            Looking into your question…
-          </p>
-        ) : null}
+          ) : (
+            <div className="mx-auto flex max-w-lg flex-col items-start justify-center py-10 sm:py-16">
+              <AgentMark size={36} className="mb-5 text-primary" />
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Your games, a little clearer.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Ask about your next game, who's joining, your groups, or how
+                Relay works.
+              </p>
+              <div className="mt-7 flex w-full flex-col items-start gap-1">
+                {[
+                  ...suggestions,
+                  ...(allowCourtSearch ? ["Find courts near me."] : []),
+                ].map((question) => (
+                  <button
+                    key={question}
+                    type="button"
+                    disabled={!available || busy}
+                    onClick={() => {
+                      void send(question);
+                    }}
+                    className="pressable min-h-11 rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-45"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {status === "submitted" || preparing || remotePending ? (
+            <p
+              role="status"
+              className="text-shimmer mt-5 inline-block text-sm text-muted"
+            >
+              {loadingLabel}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div className="shrink-0 pt-3">
+      <div className="mx-auto w-full max-w-3xl shrink-0 pt-3">
         {usage ? <AgentUsageSummaryView usage={usage} /> : null}
         {!available ? (
           <p role="status" className="mb-3 text-sm text-muted">
@@ -234,8 +500,16 @@ export function AgentChat({
             <Button
               variant="secondary"
               onClick={() => {
-                clearError();
-                void regenerate();
+                const last = messages.findLast(
+                  (message) => message.role === "user"
+                );
+                if (last)
+                  void send(
+                    last.parts
+                      .filter((part) => part.type === "text")
+                      .map((part) => part.text)
+                      .join("")
+                  );
               }}
             >
               Retry
@@ -250,53 +524,24 @@ export function AgentChat({
           }}
           className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
         >
-          <label htmlFor="agent-message" className="sr-only">
-            Message Agent
-          </label>
-          <textarea
+          <AgentComposerEditor
             ref={field}
-            id="agent-message"
             value={input}
-            onChange={(event) => setInput(limitInput(event.target.value))}
-            onPaste={(event) => {
-              const pasted = event.clipboardData.getData("text");
-              const start = event.currentTarget.selectionStart;
-              const end = event.currentTarget.selectionEnd;
-              const next = input.slice(0, start) + pasted + input.slice(end);
-              if (next.length > agentMessageMaxLength) {
-                event.preventDefault();
-                setInput(limitInput(next));
-              }
+            onChange={setInput}
+            onSubmit={(text) => {
+              void send(text);
             }}
-            aria-describedby="agent-message-limit"
-            maxLength={agentMessageMaxLength}
-            rows={2}
-            disabled={!available}
-            placeholder="Ask Agent…"
-            className="agent-composer-input w-full resize-none bg-transparent text-[15px] leading-6 outline-none placeholder:text-muted disabled:opacity-50"
-            onKeyDown={(event) => {
-              if (
-                event.key === "Enter" &&
-                !event.shiftKey &&
-                !event.nativeEvent.isComposing
-              ) {
-                event.preventDefault();
-                void send(input);
-              }
-            }}
+            disabled={!available || busy}
           />
-          <p
-            id="agent-message-limit"
-            className="mt-1 text-right text-xs tabular-nums text-muted"
-          >
-            {input.length.toLocaleString()} /{" "}
-            {agentMessageMaxLength.toLocaleString()} characters
-          </p>
           <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="text-xs text-muted">
-              Insights and answers. No changes to your games.
+            <p
+              id="agent-message-limit"
+              className="text-xs tabular-nums text-muted"
+            >
+              {input.length.toLocaleString()} /{" "}
+              {agentMessageMaxLength.toLocaleString()} characters
             </p>
-            {busy ? (
+            {status === "submitted" || status === "streaming" ? (
               <Button
                 type="button"
                 variant="secondary"
@@ -312,7 +557,7 @@ export function AgentChat({
               <Button
                 type="submit"
                 aria-label="Send message"
-                disabled={!available || !input.trim()}
+                disabled={!available || busy || !input.trim()}
               >
                 <ArrowUp size={18} aria-hidden />
               </Button>
@@ -320,11 +565,7 @@ export function AgentChat({
           </div>
         </form>
         <p className="mt-2 text-center text-xs leading-5 text-muted">
-          Answers can be mistaken. Check linked sources. Chats aren't saved by
-          Relay.
-          <br />
-          Questions and relevant game data are sent to our AI provider. Don't
-          share secrets.
+          AI can make mistakes. Check sources and don’t share secrets.
         </p>
       </div>
     </section>

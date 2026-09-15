@@ -21,8 +21,7 @@ it("shows message usage and an explicit Philippine reset date", () => {
   expect(screen.getByText(/12 of 50 messages used/)).toHaveTextContent(
     "October 1 (PH time)"
   );
-  expect(screen.getByRole("link", { name: "Plan & billing" })).toHaveAttribute(
-    "href",
-    "/settings/plan"
-  );
+  expect(
+    screen.queryByRole("link", { name: "Plan & billing" })
+  ).not.toBeInTheDocument();
 });

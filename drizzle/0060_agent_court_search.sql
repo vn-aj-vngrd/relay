@@ -1,0 +1,1 @@
+ALTER TABLE "agent_settings" ADD COLUMN "allow_court_search" boolean DEFAULT true NOT NULL;

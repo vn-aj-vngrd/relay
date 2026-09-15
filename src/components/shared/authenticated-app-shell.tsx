@@ -60,13 +60,9 @@ export async function AuthenticatedAppShell({
           <SidebarCollapseToggle />
         </div>
         <SidebarUtilityNav />
-        <AppNav
-          mode="sidebar"
-          invitationCount={invitationCount}
-          unreadCount={unreadCount}
-        />
+        <AppNav mode="sidebar" invitationCount={invitationCount} />
         <div className="mt-auto">
-          <SidebarSupportNav />
+          <SidebarSupportNav unreadCount={unreadCount} />
           <div className="mt-1 border-t border-line pt-1">
             <SidebarAccount
               name={profile.name}

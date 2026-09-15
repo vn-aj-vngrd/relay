@@ -883,15 +883,13 @@ html.lenis.lenis-smooth iframe {
 .menu-popover[data-align="stretch"] {
   transform-origin: top center;
 }
-.menu-popover[data-state="open"],
-.relay-tooltip[data-state="open"] {
+.menu-popover[data-state="open"] {
   animation: menu-popover-enter 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .tooltip-positioner[data-state="closed"] {
   pointer-events: none;
 }
-.menu-popover[data-state="closed"],
-.relay-tooltip[data-state="closed"] {
+.menu-popover[data-state="closed"] {
   pointer-events: none;
   animation: menu-popover-exit 120ms ease-in both;
 }
@@ -910,6 +908,13 @@ html.lenis.lenis-smooth iframe {
   to {
     opacity: 0;
   }
+}
+.relay-tooltip[data-state="open"] {
+  animation: menu-popover-fade-in 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.relay-tooltip[data-state="closed"] {
+  pointer-events: none;
+  animation: menu-popover-fade-out 120ms ease-out both;
 }
 @media (prefers-reduced-motion: reduce) {
   .menu-popover[data-state="open"],
@@ -1193,4 +1198,96 @@ input[type="checkbox"]:disabled {
     color: CanvasText;
     animation: none;
   }
+}
+
+/* Agent follows the focused Create Game mobile shell, with its own back control. */
+@media (max-width: 63.999rem) {
+  .app-shell:has(:is(.agent-chat-page, .agent-history-page))
+    > .app-mobile-header,
+  .app-shell:has(:is(.agent-chat-page, .agent-history-page)) > .app-bottom-nav,
+  .app-content:has(:is(.agent-chat-page, .agent-history-page))
+    > nav[aria-label="Breadcrumb"] {
+    display: none;
+  }
+  .app-scroll-surface:has(:is(.agent-chat-page, .agent-history-page)) {
+    overflow: hidden;
+  }
+  .app-content:has(:is(.agent-chat-page, .agent-history-page)) {
+    height: 100%;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+.app-content:has(:is(.agent-chat-page, .agent-history-page))
+  > nav[aria-label="Breadcrumb"] {
+  display: none;
+}
+.app-scroll-surface:has(:is(.agent-chat-page, .agent-history-page)) {
+  overflow: hidden;
+}
+.app-content:has(:is(.agent-chat-page, .agent-history-page)) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+@media (min-width: 64rem) {
+  .app-content:has(:is(.agent-chat-page, .agent-history-page)) {
+    padding-bottom: 1.5rem;
+  }
+}
+
+/* Keep touch/forced-color scrollbars native; desktop thumbs appear on intent. */
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  .agent-conversation-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: stable both-edges;
+  }
+  .agent-conversation-scroll:is(
+    :hover,
+    :focus-visible,
+    :focus-within,
+    [data-scrolling="true"]
+  ) {
+    scrollbar-color: color-mix(in oklch, var(--muted) 38%, transparent)
+      transparent;
+  }
+  .agent-conversation-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  .agent-conversation-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .agent-conversation-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 999px;
+  }
+  .agent-conversation-scroll:is(
+    :hover,
+    :focus-visible,
+    :focus-within,
+    [data-scrolling="true"]
+  )::-webkit-scrollbar-thumb {
+    background: color-mix(in oklch, var(--muted) 38%, transparent);
+  }
+}
+
+.agent-rich-composer:has(
+  > p:only-child > br.ProseMirror-trailingBreak:only-child
+)::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
+  position: absolute;
+}
+.agent-rich-composer {
+  position: relative;
+}
+.agent-rich-composer strong {
+  font-weight: 700;
+}
+.agent-rich-composer em {
+  font-style: italic;
 }

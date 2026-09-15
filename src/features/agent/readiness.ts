@@ -40,8 +40,9 @@ export function agentReadiness(
     },
     {
       label: "Read-only capabilities",
-      ready: config.allowGameData || config.allowHelp,
-      hint: "Enable game data or Help Center answers.",
+      ready:
+        config.allowGameData || config.allowHelp || config.allowCourtSearch,
+      hint: "Enable games, Court Finder or Help Center answers.",
     },
   ];
   return { ready: checks.every((check) => check.ready), checks, storageReady };

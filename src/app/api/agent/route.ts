@@ -3,6 +3,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { readAgentSettings } from "@/features/agent/config";
+import {
+  AgentHistoryError,
+  beginAgentTurn,
+  finishAgentTurn,
+} from "@/features/agent/history";
 import { agentInstructions } from "@/features/agent/instructions";
 import { agentModel } from "@/features/agent/provider";
 import { readAgentRequest } from "@/features/agent/request";
@@ -30,7 +35,25 @@ function failure(status: number, message: string) {
 
 export async function POST(request: Request) {
   let reservation: { userId: string; id: string } | null = null;
+  let savedTurn: {
+    userId: string;
+    conversationId: string;
+    requestId: string;
+  } | null = null;
+  let answer = "";
+  let interrupted = false;
   let charged = false;
+  async function saveTurn() {
+    if (!savedTurn) return;
+    await finishAgentTurn(
+      savedTurn.userId,
+      savedTurn.conversationId,
+      savedTurn.requestId,
+      answer,
+      interrupted
+    );
+    savedTurn = null;
+  }
   let released = false;
   async function release() {
     if (reservation && !charged && !released) {
@@ -82,6 +105,20 @@ export async function POST(request: Request) {
     const requestId = body.requestId ?? crypto.randomUUID();
     await reserveAgentMessage(user.id, requestId, config);
     reservation = { userId: user.id, id: requestId };
+    let modelMessages = body.messages;
+    if (body.conversationId) {
+      modelMessages = await beginAgentTurn(
+        user.id,
+        body.conversationId,
+        requestId,
+        body.messages.at(-1)!.content
+      );
+      savedTurn = {
+        userId: user.id,
+        conversationId: body.conversationId,
+        requestId,
+      };
+    }
     const cancellation = new AbortController();
     const signal = AbortSignal.any([
       request.signal,
@@ -95,7 +132,7 @@ export async function POST(request: Request) {
         config.requireZeroRetention
       ),
       system: agentInstructions(config.instructions),
-      messages: body.messages,
+      messages: modelMessages,
       tools: createAgentTools(user.id, config, signal),
       stopWhen: isStepCount(6),
       maxOutputTokens: config.maxOutputTokens,
@@ -118,12 +155,16 @@ export async function POST(request: Request) {
           for await (const part of result.fullStream) {
             if (part.type === "error" || part.type === "abort")
               throw new Error("Agent unavailable");
-            if (part.type === "finish" && part.finishReason === "length")
-              controller.enqueue(
-                encoder.encode(
-                  "\n\nThis answer reached its length limit. Ask a narrower follow-up for the remaining details."
-                )
-              );
+            if (
+              part.type === "finish" &&
+              part.finishReason === "length" &&
+              wrote
+            ) {
+              const note =
+                "\n\nThis answer reached its length limit. Ask a narrower follow-up for the remaining details.";
+              answer += note;
+              controller.enqueue(encoder.encode(note));
+            }
             if (part.type === "text-delta" && part.text.length) {
               if (signal.aborted) throw new Error("Response stopped");
               if (!charged && !part.text.trim()) continue;
@@ -131,18 +172,31 @@ export async function POST(request: Request) {
                 await chargeAgentMessage(user.id, requestId);
                 charged = true;
               }
+              answer += part.text;
               controller.enqueue(encoder.encode(part.text));
               wrote = true;
             }
           }
           if (!wrote && !signal.aborted) throw new Error("Empty response");
+          await saveTurn();
           await release();
           controller.close();
         } catch {
+          interrupted = true;
+          try {
+            await saveTurn();
+          } catch {
+            /* Fixed public error below; no transcript logging. */
+          }
           await release();
           // A failed stream becomes a client error, never a fabricated assistant turn.
           controller.error(new Error("Agent response interrupted"));
         } finally {
+          try {
+            await saveTurn();
+          } catch {
+            /* The saved prompt remains; no raw transcript is logged. */
+          }
           await release();
         }
       },
@@ -154,7 +208,15 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    interrupted = true;
+    try {
+      await saveTurn();
+    } catch {
+      /* Never log transcript storage errors. */
+    }
     await release();
+    if (error instanceof AgentHistoryError)
+      return failure(error.status, error.message);
     if (error instanceof AgentQuotaError)
       return failure(
         402,

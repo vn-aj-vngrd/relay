@@ -1392,6 +1392,7 @@ export const agentSettings = pgTable(
     instructions: text("instructions").notNull().default(""),
     allowGameData: boolean("allow_game_data").notNull().default(true),
     allowHelp: boolean("allow_help").notNull().default(true),
+    allowCourtSearch: boolean("allow_court_search").notNull().default(true),
     maxOutputTokens: integer("max_output_tokens").notNull().default(1200),
     requestsPerHour: integer("requests_per_hour").notNull().default(30),
     ...timestamps,
@@ -1420,6 +1421,39 @@ export const agentMessageUsage = pgTable(
     check(
       "agent_message_usage_status",
       sql`${table.status} in ('reserved', 'charged', 'released')`
+    ),
+  ]
+).enableRLS();
+
+export const agentConversations = pgTable(
+  "agent_conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    messages: jsonb("messages")
+      .$type<import("@/features/agent/history-types").SavedAgentMessage[]>()
+      .notNull()
+      .default([]),
+    activeRequestId: uuid("active_request_id"),
+    activeUntil: timestamp("active_until", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => [
+    index("agent_conversations_owner_updated_idx").on(
+      table.userId,
+      table.updatedAt,
+      table.id
+    ),
+    check(
+      "agent_conversation_title_length",
+      sql`char_length(${table.title}) between 1 and 100`
+    ),
+    check(
+      "agent_conversation_message_limit",
+      sql`jsonb_array_length(${table.messages}) <= 100`
     ),
   ]
 ).enableRLS();

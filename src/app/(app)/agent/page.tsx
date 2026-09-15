@@ -10,10 +10,12 @@ export default async function AgentPage() {
   const user = await requireUser("/agent");
   let usage: AgentUsageSummary | null = null;
   let available = false;
+  let allowCourtSearch = false;
   let unavailableReason =
     "Agent is temporarily unavailable. Please try again later.";
   try {
     const { config, encryptedApiKey } = await readAgentSettings();
+    allowCourtSearch = config.allowCourtSearch;
     const readiness = agentReadiness(config, encryptedApiKey);
     if (!readiness.ready) {
       unavailableReason = config.enabled
@@ -31,6 +33,7 @@ export default async function AgentPage() {
   return (
     <AgentChat
       available={available}
+      allowCourtSearch={allowCourtSearch}
       initialUsage={usage}
       unavailableReason={unavailableReason}
     />

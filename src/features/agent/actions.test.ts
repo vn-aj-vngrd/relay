@@ -60,6 +60,24 @@ beforeEach(() => {
   );
 });
 describe("Agent administrator settings", () => {
+  it("saves and audits the Court Finder capability", async () => {
+    const data = form();
+    data.set("allowCourtSearch", "on");
+    await saveAgentSettings({}, data);
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({ allowCourtSearch: true })
+    );
+    expect(mocks.audit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ allowCourtSearch: true }),
+      })
+    );
+    data.delete("allowCourtSearch");
+    await saveAgentSettings({}, data);
+    expect(mocks.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ allowCourtSearch: false })
+    );
+  });
   it("defaults privacy to strict and audits an explicit provider-policy change", async () => {
     await saveAgentSettings({}, form());
     expect(mocks.save).toHaveBeenLastCalledWith(

@@ -37,12 +37,12 @@ export function AgentShowcase({
           </h2>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted">
             Find your next game, see who's joining, and catch what needs your
-            attention. Ask in your own words—Agent brings your games, groups and
-            Relay guides into one conversation.
+            attention. Ask in your own words—Agent brings your games, groups,
+            court listings and Relay guides into one conversation.
           </p>
           <ul className="mt-6 space-y-3 text-sm text-ink">
             <li>“What games am I joining this weekend?”</li>
-            <li>“Show open games tomorrow.”</li>
+            <li>“Find courts near me.”</li>
             <li>“How do I start a Quick Game?”</li>
           </ul>
           <p className="mt-6 text-sm leading-6 text-muted">

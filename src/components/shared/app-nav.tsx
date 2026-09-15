@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   CalendarBlank,
   House,
   MapPin,
@@ -57,24 +56,14 @@ const items = [
     mobileOnly: false,
     desktopOnly: true,
   },
-  {
-    href: "/notifications",
-    label: "Notifications",
-    icon: Bell,
-    primary: false,
-    mobileOnly: false,
-    desktopOnly: true,
-  },
 ];
 
 export function AppNav({
   mode,
   invitationCount = 0,
-  unreadCount = 0,
 }: {
   mode: "sidebar" | "mobile";
   invitationCount?: number;
-  unreadCount?: number;
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => {
@@ -112,9 +101,7 @@ export function AppNav({
                   aria-label={
                     label === "Games" && invitationCount
                       ? `Games, ${invitationCount} invites`
-                      : label === "Notifications" && unreadCount
-                        ? `Notifications, ${unreadCount} unread`
-                        : label
+                      : label
                   }
                   aria-current={active ? "page" : undefined}
                   className={`sidebar-row sidebar-nav-item pressable group relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-[14px] font-medium ${primary ? "bg-primary text-white hover:bg-primary-hover" : active ? "bg-surface-strong text-ink" : "text-muted hover:bg-surface-strong/70 hover:text-ink"}`}
@@ -132,21 +119,11 @@ export function AppNav({
                         {invitationCount > 99 ? "99+" : invitationCount}
                       </span>
                     ) : null}
-                    {label === "Notifications" && unreadCount ? (
-                      <span
-                        aria-label={`${unreadCount} unread notifications`}
-                        className="score inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-soft px-1.5 text-[10px] font-bold text-primary"
-                      >
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    ) : null}
                   </span>
                   <SidebarItemTooltip>
                     {label === "Games" && invitationCount
                       ? `${label}, ${invitationCount} invites`
-                      : label === "Notifications" && unreadCount
-                        ? `${label} · ${unreadCount} unread`
-                        : label}
+                      : label}
                   </SidebarItemTooltip>
                 </Link>
               </li>

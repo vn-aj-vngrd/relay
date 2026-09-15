@@ -40,6 +40,24 @@ async function finish() {
     });
 }
 describe("Agent landing demo", () => {
+  it("matches the chat header and resets to a clean conversation", async () => {
+    render(<AgentDemo />);
+    enter();
+    await finish();
+    fireEvent.click(screen.getByRole("button", { name: "New chat" }));
+    expect(
+      screen.getByRole("button", { name: "Choose sample chat" })
+    ).toHaveTextContent("Your chats");
+    expect(screen.getByRole("status")).toHaveTextContent("Choose an example");
+    fireEvent.click(screen.getByRole("button", { name: "Choose sample chat" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Find courts near me." })
+    );
+    await finish();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Which city or neighborhood"
+    );
+  });
   it("starts ready instead of showing a completed answer before entering view", () => {
     render(<AgentDemo />);
     expect(screen.getByRole("status")).toHaveTextContent(

@@ -175,6 +175,11 @@ export function AgentSettingsForm({
               value: draft.allowGameData,
             },
             {
+              name: "allowCourtSearch",
+              label: "Allow Court Finder answers",
+              value: draft.allowCourtSearch,
+            },
+            {
               name: "allowHelp",
               label: "Allow Help Center answers",
               value: draft.allowHelp,

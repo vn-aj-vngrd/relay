@@ -19,7 +19,12 @@ it("requires enabled capabilities, a model and readable credentials", () => {
   expect(agentReadiness(config, "encrypted").ready).toBe(true);
   expect(
     agentReadiness(
-      { ...config, allowHelp: false, allowGameData: false },
+      {
+        ...config,
+        allowHelp: false,
+        allowGameData: false,
+        allowCourtSearch: false,
+      },
       "encrypted"
     ).ready
   ).toBe(false);
