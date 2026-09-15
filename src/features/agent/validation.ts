@@ -54,6 +54,8 @@ export const agentRequestSchema = z
   .object({
     requestId: z.uuid().optional(),
     conversationId: z.uuid().optional(),
+    messageId: z.string().min(1).max(100).optional(),
+    retry: z.boolean().optional(),
     messages: z
       .array(
         z
@@ -67,7 +69,8 @@ export const agentRequestSchema = z
       .max(24),
   })
   .strict()
-  .refine((value) => value.messages.at(-1)?.role === "user");
+  .refine((value) => value.messages.at(-1)?.role === "user")
+  .refine((value) => !value.retry || Boolean(value.messageId));
 
 export const gameSearchSchema = z
   .object({

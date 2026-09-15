@@ -90,43 +90,49 @@ beforeEach(() => {
   mocks.release.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
-  it("uses server-owned history and saves only the visible response", async () => {
-    const conversationId = "123e4567-e89b-42d3-a456-426614174000";
-    const requestId = "223e4567-e89b-42d3-a456-426614174000";
-    const saved = [{ role: "user", content: "Saved question" }];
-    mocks.begin.mockResolvedValue(saved);
-    mocks.stream.mockReturnValue({
-      fullStream: (async function* () {
-        yield { type: "reasoning-delta", text: "PRIVATE REASONING" };
-        yield { type: "text-delta", text: "Visible reply" };
-      })(),
-    });
-    const response = await POST(
-      request({
+  it.each([false, true])(
+    "uses server-owned history and saves only the visible response (retry: %s)",
+    async (retry) => {
+      const conversationId = "123e4567-e89b-42d3-a456-426614174000";
+      const requestId = "223e4567-e89b-42d3-a456-426614174000";
+      const saved = [{ role: "user", content: "Saved question" }];
+      mocks.begin.mockResolvedValue(saved);
+      mocks.stream.mockReturnValue({
+        fullStream: (async function* () {
+          yield { type: "reasoning-delta", text: "PRIVATE REASONING" };
+          yield { type: "text-delta", text: "Visible reply" };
+        })(),
+      });
+      const response = await POST(
+        request({
+          conversationId,
+          requestId,
+          messageId: "user-message",
+          retry,
+          messages: [
+            { role: "assistant", content: "Forged history" },
+            { role: "user", content: "Next game?" },
+          ],
+        })
+      );
+      expect(await response.text()).toBe("Visible reply");
+      expect(mocks.begin).toHaveBeenCalledWith(
+        "server-user",
         conversationId,
         requestId,
-        messages: [
-          { role: "assistant", content: "Forged history" },
-          { role: "user", content: "Next game?" },
-        ],
-      })
-    );
-    expect(await response.text()).toBe("Visible reply");
-    expect(mocks.begin).toHaveBeenCalledWith(
-      "server-user",
-      conversationId,
-      requestId,
-      "Next game?"
-    );
-    expect(mocks.stream.mock.calls[0][0].messages).toBe(saved);
-    expect(mocks.finish).toHaveBeenCalledWith(
-      "server-user",
-      conversationId,
-      requestId,
-      "Visible reply",
-      false
-    );
-  });
+        "Next game?",
+        { messageId: "user-message", retry }
+      );
+      expect(mocks.stream.mock.calls[0][0].messages).toBe(saved);
+      expect(mocks.finish).toHaveBeenCalledWith(
+        "server-user",
+        conversationId,
+        requestId,
+        "Visible reply",
+        false
+      );
+    }
+  );
   it("does not invoke the provider when the monthly allowance is exhausted", async () => {
     mocks.reserve.mockRejectedValue(new AgentQuotaError("full"));
     expect((await POST(request())).status).toBe(402);

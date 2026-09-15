@@ -112,7 +112,8 @@ export async function beginAgentTurn(
   userId: string,
   id: string,
   requestId: string,
-  prompt: string
+  prompt: string,
+  options: { messageId?: string; retry?: boolean } = {}
 ) {
   return db.transaction(async (tx) => {
     const [row] = await tx
@@ -130,17 +131,43 @@ export async function beginAgentTurn(
         409,
         "A reply is already in progress in this chat."
       );
-    if (row.messages.length > 98)
-      throw new AgentHistoryError(409, "This chat is full. Start a new chat.");
-    const messages: SavedAgentMessage[] = [
-      ...row.messages,
-      {
-        id: requestId,
-        role: "user",
-        content: prompt,
-        createdAt: new Date().toISOString(),
-      },
-    ];
+    const messageId = options.messageId ?? requestId;
+    const existingIndex = row.messages.findIndex(
+      (message) => message.id === messageId
+    );
+    let messages: SavedAgentMessage[];
+    if (existingIndex >= 0) {
+      const existing = row.messages[existingIndex];
+      // Only the latest user turn may be retried; stale tabs cannot erase newer turns.
+      if (
+        !options.retry ||
+        existing.role !== "user" ||
+        existing.content !== prompt ||
+        existingIndex !==
+          row.messages.findLastIndex((message) => message.role === "user")
+      )
+        throw new AgentHistoryError(
+          409,
+          "This chat has changed. Reopen it before retrying."
+        );
+      messages = row.messages.slice(0, existingIndex + 1);
+    } else {
+      // Requests rejected before persistence still need their first saved user turn.
+      if (row.messages.length > 98)
+        throw new AgentHistoryError(
+          409,
+          "This chat is full. Start a new chat."
+        );
+      messages = [
+        ...row.messages,
+        {
+          id: messageId,
+          role: "user",
+          content: prompt,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    }
     await tx
       .update(agentConversations)
       .set({

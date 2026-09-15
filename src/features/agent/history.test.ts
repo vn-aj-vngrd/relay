@@ -113,6 +113,77 @@ describe("private Agent history", () => {
     expect(messages[0].content).toHaveLength(4000);
     expect(messages.at(-1)?.content).toBe("Next game?");
   });
+  it.each([false, true])(
+    "retries a saved turn without duplicating its question (partial: %s)",
+    async (partial) => {
+      const question = {
+        id: "question-id",
+        role: "user",
+        content: "Question",
+        createdAt: "2026-09-15T12:00:00Z",
+      };
+      mocks.rows.push({
+        ...row(),
+        messages: [
+          question,
+          ...(partial
+            ? [
+                {
+                  id: "old-answer",
+                  role: "assistant",
+                  content: "Partial",
+                  interrupted: true,
+                },
+              ]
+            : []),
+        ],
+      });
+      const messages = await beginAgentTurn(
+        "owner",
+        "conversation",
+        "retry-request",
+        "Question",
+        { messageId: "question-id", retry: true }
+      );
+      expect(messages).toEqual([{ role: "user", content: "Question" }]);
+      expect(mocks.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          messages: [question],
+          activeRequestId: "retry-request",
+        })
+      );
+    }
+  );
+  it("saves a retry that failed before its question was persisted", async () => {
+    mocks.rows.push(row());
+    await beginAgentTurn("owner", "conversation", "retry-request", "Question", {
+      messageId: "question-id",
+      retry: true,
+    });
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({ id: "question-id", content: "Question" }),
+        ],
+      })
+    );
+  });
+  it("rejects a stale retry without deleting newer messages", async () => {
+    mocks.rows.push({
+      ...row(),
+      messages: [
+        { id: "old", role: "user", content: "Question" },
+        { id: "new", role: "user", content: "New question" },
+      ],
+    });
+    await expect(
+      beginAgentTurn("owner", "conversation", "retry-request", "Question", {
+        messageId: "old",
+        retry: true,
+      })
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
   it("does not resurrect a deleted chat or overwrite a newer turn", async () => {
     await finishAgentTurn("owner", "conversation", "old", "Answer");
     mocks.rows.push({ ...row(), activeRequestId: "new" });

@@ -111,7 +111,8 @@ export async function POST(request: Request) {
         user.id,
         body.conversationId,
         requestId,
-        body.messages.at(-1)!.content
+        body.messages.at(-1)!.content,
+        { messageId: body.messageId, retry: body.retry ?? false }
       );
       savedTurn = {
         userId: user.id,

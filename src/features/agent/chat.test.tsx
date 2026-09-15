@@ -58,6 +58,14 @@ beforeEach(() => {
   mocks.error = undefined;
 });
 describe("Agent chat controls", () => {
+  it("retries the existing turn instead of sending another question", async () => {
+    mocks.error = new Error("AGENT_HTTP_502");
+    render(<AgentChat available />);
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    expect(mocks.retry).toHaveBeenCalledOnce();
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
   it("shows a message skeleton until the saved conversation loads", async () => {
     window.history.replaceState(null, "", "/agent?chat=saved");
     let finish!: (value: {

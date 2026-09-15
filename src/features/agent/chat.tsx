@@ -54,9 +54,11 @@ const createTransport = (session: AgentSession) =>
       if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
       return response;
     },
-    prepareSendMessagesRequest: ({ messages }) => ({
+    prepareSendMessagesRequest: ({ messages, trigger }) => ({
       body: {
         requestId: crypto.randomUUID(),
+        messageId: messages.findLast((message) => message.role === "user")?.id,
+        retry: trigger === "regenerate-message",
         conversationId: session.conversationId ?? undefined,
         messages: messages
           .filter(
@@ -124,6 +126,7 @@ export function AgentChat({
   const {
     messages,
     sendMessage,
+    regenerate,
     status,
     error,
     stop,
@@ -499,17 +502,13 @@ export function AgentChat({
             <p className="text-danger">{errorCopy}</p>
             <Button
               variant="secondary"
+              disabled={busy || !available}
               onClick={() => {
-                const last = messages.findLast(
-                  (message) => message.role === "user"
-                );
-                if (last)
-                  void send(
-                    last.parts
-                      .filter((part) => part.type === "text")
-                      .map((part) => part.text)
-                      .join("")
-                  );
+                if (busy || prepareLock.current || !available) return;
+                chooseLoadingLabel();
+                follow.current = true;
+                clearError();
+                void regenerate();
               }}
             >
               Retry
