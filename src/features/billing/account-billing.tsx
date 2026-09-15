@@ -1,5 +1,4 @@
 import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
-
 import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db/client";
@@ -11,6 +10,9 @@ import {
   billingTerms,
 } from "@/db/schema";
 import { encodeAdminCursor, parseAdminCursor } from "@/features/admin/cursor";
+import { getPublicAgentOffer } from "@/features/agent/public-offer";
+import { getAgentUsage } from "@/features/agent/usage";
+import { AgentUsageSummaryView } from "@/features/agent/usage-summary";
 import { requireUser } from "@/features/auth/session";
 import {
   billingDate,
@@ -125,6 +127,11 @@ export async function AccountBilling({
           })
         : Promise.resolve(null),
     ]);
+  const agent = await getPublicAgentOffer();
+  const agentUsage =
+    section === "current"
+      ? await getAgentUsage(user.id, agent).catch(() => null)
+      : null;
   const catalog = publicBillingPlans(
     normalizeBillingCatalog(settings?.planCatalog)
   );
@@ -167,6 +174,27 @@ export async function AccountBilling({
               </ButtonLink>
             }
           />
+          <section
+            aria-labelledby="account-agent-title"
+            className="mt-6 border-t border-line pt-5"
+          >
+            <h2 id="account-agent-title" className="mb-2 font-semibold">
+              Agent messages
+            </h2>
+            {agentUsage ? (
+              <AgentUsageSummaryView usage={agentUsage} />
+            ) : (
+              <p className="text-sm text-muted">
+                Agent usage is temporarily unavailable.
+              </p>
+            )}
+            <p className="mt-2 text-xs leading-5 text-muted">
+              One message per answer started. No rollover.{" "}
+              {agent.enabled
+                ? "Read-only insights and Help Center answers."
+                : "Agent is coming soon."}
+            </p>
+          </section>
           {usage.planAssigned ? (
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
               Your plan is managed by an admin. Contact support to change it.
@@ -218,6 +246,7 @@ export async function AccountBilling({
             </p>
           ) : null}
           <PlanCards
+            agent={agent}
             catalog={catalog}
             acceptingPayments={acceptingPayments}
             account

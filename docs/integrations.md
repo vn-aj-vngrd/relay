@@ -195,3 +195,7 @@ Smoke-test a read and a blocked write after either command. The mode is an avail
 5. For a database password rotation, copy a fresh transaction-pooler URI and update both local and Vercel environments before removing the old credential.
 
 **Complete when:** the production deployment passes authentication and database checks using only the replacement credentials.
+
+## Agent provider setup
+
+Read [Agent configuration and security](agent/README.md) before enabling Agent. Apply migrations `0056_agent_settings` and `0057_agent_message_allowances`, provision the server-only `AGENT_ENCRYPTION_KEY`, then store the OpenRouter API key through **Admin → Agent** with MFA. Keep Agent disabled until the selected tool-capable model and required privacy routing work in the intended environment. No migration or provider activation occurs automatically.

@@ -393,6 +393,20 @@
       "when": 1789449500438,
       "tag": "0055_admin_image_upload_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1789460480045,
+      "tag": "0056_agent_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1789465645135,
+      "tag": "0057_agent_message_allowances",
+      "breakpoints": true
     }
   ]
 }

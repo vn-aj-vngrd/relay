@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   usage: vi.fn(),
+  agentUsage: vi.fn(),
   settings: vi.fn(),
   methods: vi.fn(),
   requests: vi.fn(),
@@ -13,6 +14,15 @@ const mocks = vi.hoisted(() => ({
   assignment: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
+vi.mock("@/features/agent/public-offer", () => ({
+  getPublicAgentOffer: async () => ({
+    enabled: false,
+    freeMessages: 50,
+    plusMessages: 250,
+    proMessages: 750,
+  }),
+}));
+vi.mock("@/features/agent/usage", () => ({ getAgentUsage: mocks.agentUsage }));
 vi.mock("@/features/auth/session", () => ({ requireUser: mocks.user }));
 vi.mock("@/features/billing/usage", () => ({ getAccountUsage: mocks.usage }));
 vi.mock("@/features/billing/forms", () => ({
@@ -50,6 +60,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.user.mockResolvedValue({ id: "account-owner" });
   mocks.usage.mockResolvedValue(baseUsage);
+  mocks.agentUsage.mockResolvedValue(null);
   mocks.settings.mockResolvedValue(null);
   mocks.methods.mockResolvedValue([]);
   mocks.requests.mockResolvedValue([]);

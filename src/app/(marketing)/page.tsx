@@ -2,11 +2,12 @@ import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-
 import { Brand, RelayMark } from "@/components/shared/brand";
+import { AgentMark } from "@/features/agent/agent-mark";
 import { getCurrentUser } from "@/features/auth/session";
 import { getBillingOffer } from "@/features/billing/catalog";
 import { PlanCards } from "@/features/billing/plan-comparison";
+import { AgentShowcase } from "@/features/marketing/agent-showcase";
 import { CourtFinderShowcase } from "@/features/marketing/court-finder-showcase";
 import { marketingCourts } from "@/features/marketing/marketing-courts";
 import { MarketingEnhancements } from "@/features/marketing/marketing-enhancements";
@@ -134,6 +135,16 @@ export default async function MarketingPage() {
                 : "Plan a game, explore open games, use Quick Play, or find a court before signing up. Log in when you want Relay to keep your game."}
             </p>
           </div>
+          <p className="mt-6 text-center">
+            <a
+              href="#agent"
+              className="inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-medium text-muted underline-offset-4 hover:text-ink hover:underline"
+            >
+              <AgentMark size={18} />
+              Meet Agent · your AI game assistant
+              <ArrowRight size={16} aria-hidden />
+            </a>
+          </p>
           <div id="product" className="marketing-hero-product mt-12 sm:mt-16">
             <HeroProductShot />
           </div>
@@ -141,6 +152,8 @@ export default async function MarketingPage() {
       </section>
 
       <MarketingHighlights />
+
+      <AgentShowcase agent={offer.agent} />
 
       <CourtFinderShowcase courts={marketingCourts} />
 
@@ -421,9 +434,9 @@ export default async function MarketingPage() {
                 A plan for how often you host.
               </h2>
               <p className="mt-4 text-base leading-7 text-muted">
-                Start with Free. Paid plans offer more games per month and more
-                total photo storage. Your players don’t need a subscription to
-                join.
+                Start with Free. Paid plans offer more games, more Agent
+                messages per month and more total photo storage. Your players
+                don’t need a subscription to join.
               </p>
             </div>
             <Link
@@ -477,6 +490,7 @@ export default async function MarketingPage() {
             <Link href="/games/open">Open games</Link>
             <Link href="/courts">Philippines courts</Link>
             <Link href="/play">Quick Play</Link>
+            <a href="#agent">Agent</a>
             <Link href="/pricing">Pricing</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>

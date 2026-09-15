@@ -11,6 +11,29 @@ const catalog = defaultBillingPlans.map((plan) =>
 );
 
 describe("shared pricing presentation", () => {
+  it("uses live Agent limits and does not offer Agent on a zero-allowance tier", () => {
+    render(
+      <PlanCards
+        catalog={catalog}
+        agent={{
+          enabled: true,
+          freeMessages: 0,
+          plusMessages: 350,
+          proMessages: 900,
+        }}
+      />
+    );
+    expect(
+      within(screen.getByRole("article", { name: "Free plan" })).getByText(
+        "Agent not included"
+      )
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("article", { name: "Plus plan" })).getByText(
+        "350 Agent messages per month"
+      )
+    ).toBeInTheDocument();
+  });
   it("hides internal and unpublished plans in cards and comparison columns", () => {
     const hidden = catalog.map((plan) => ({
       ...plan,

@@ -79,3 +79,11 @@ Story gallery photos open in a shared fullscreen Dialog on both routes. The view
 
 
 Story Make and Photos are both available from publication through live play and completion, even with an empty album. Hosts, co-hosts and Going account/guest players can add pregame memories using the existing upload flow. Draft and cancelled games remain unavailable; spectator access is read-only. Participant-image restrictions, shared album caps and host storage limits still apply. The shared SessionMemories implementation keeps both private and public routes aligned. Permission, upload-action and component regression tests cover the phase boundaries; browser execution remains opt-in.
+
+## Agent V1
+
+| Journey | Acceptance condition | Coverage / evidence |
+| --- | --- | --- |
+| A01 — Ask Agent about games, rosters, groups or Help Center | Authenticated active account; only authorized data; streaming answer with source links; no writes; cancellation and safe recovery | Agent request/read/tool/route/help unit regressions; synthetic responsive chat scenario in `e2e/agent-chat.spec.ts`. All execution deferred; live provider and cross-account database exercise unverified. |
+| A02 — Configure Agent as administrator | MFA-protected admin action; encrypted write-only credentials; audited changes; capability toggles cannot enable mutations | Agent credential/action regressions. Validation deferred; migration, admin browser/MFA journey and live provider setup unverified. |
+| A03 — Consume a monthly Agent allowance | Free/Plus/Pro defaults 50/250/750; configured limits match pricing; reservations prevent overspending; failed-before-text responses release; upgrade preserves usage; correct reset dates | Agent allowance/reservation/stream regressions and shared pricing/showcase tests added. Execution deferred; real concurrent PostgreSQL and provider-failure tests remain unverified. |

@@ -37,6 +37,12 @@ describe("server-owned billing catalog", () => {
   it("defaults to Free, Plus and Pro with paid purchases coming soon", async () => {
     expect(await getBillingOffer()).toEqual({
       catalog: publicBillingPlans(defaultBillingPlans),
+      agent: {
+        enabled: false,
+        freeMessages: 50,
+        plusMessages: 250,
+        proMessages: 750,
+      },
       acceptingPayments: false,
       chatImageMaxBytes: 4 * 1024 * 1024,
       memoryImageMaxBytes: 4 * 1024 * 1024,
@@ -62,6 +68,12 @@ describe("server-owned billing catalog", () => {
     mocks.method.mockResolvedValue({ id: "method" });
     expect(await getBillingOffer()).toEqual({
       catalog: publicBillingPlans(defaultBillingPlans),
+      agent: {
+        enabled: false,
+        freeMessages: 50,
+        plusMessages: 250,
+        proMessages: 750,
+      },
       acceptingPayments: true,
       chatImageMaxBytes: 4 * 1024 * 1024,
       memoryImageMaxBytes: 4 * 1024 * 1024,

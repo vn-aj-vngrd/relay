@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AgentMark } from "@/features/agent/agent-mark";
 
 const items = [
   { href: "/admin", label: "Overview", icon: Gauge },
@@ -21,6 +22,7 @@ const items = [
   { href: "/admin/sessions", label: "Games", icon: Volleyball },
   { href: "/admin/courts", label: "Courts", icon: MapPin },
   { href: "/admin/feedback", label: "Feedback", icon: ChatText },
+  { href: "/admin/agent", label: "Agent", icon: AgentMark },
   { href: "/admin/audit", label: "Audit log", icon: ClockCounterClockwise },
 ];
 

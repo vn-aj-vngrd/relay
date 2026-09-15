@@ -6,6 +6,13 @@ vi.mock("next/navigation", () => ({ usePathname: () => "/admin/courts" }));
 import { AdminNav } from "./admin-nav";
 
 describe("AdminNav", () => {
+  it("links to Agent configuration", () => {
+    render(<AdminNav mode="sidebar" />);
+    expect(screen.getByRole("link", { name: "Agent" })).toHaveAttribute(
+      "href",
+      "/admin/agent"
+    );
+  });
   it("uses Courts as the canonical admin directory label", () => {
     render(<AdminNav mode="sidebar" />);
     expect(screen.getByRole("link", { name: "Courts" })).toHaveAttribute(
