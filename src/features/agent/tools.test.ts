@@ -7,6 +7,10 @@ const mocks = vi.hoisted(() => ({
   search: vi.fn(),
   game: vi.fn(),
   groups: vi.fn(),
+  creationOptions: vi.fn(),
+}));
+vi.mock("./creation-service", () => ({
+  creationOptions: mocks.creationOptions,
 }));
 vi.mock("./reads", () => ({
   searchAgentGames: mocks.search,
@@ -23,6 +27,36 @@ import { createAgentTools } from "./tools";
 import { defaultAgentConfig } from "./validation";
 
 describe("Agent read-only registry", () => {
+  it.each([true, false])(
+    "passes court capability %s and exact group references without general game reads",
+    async (allowCourtSearch) => {
+      mocks.creationOptions.mockClear().mockResolvedValue({ groups: [] });
+      const tools = createAgentTools(
+        "owner",
+        {
+          ...defaultAgentConfig,
+          allowGameData: false,
+          allowGameCreation: true,
+          allowCourtSearch,
+        },
+        new AbortController().signal,
+        { conversationId: "chat", messageId: "message", requestId: "request" }
+      );
+      await tools.creationOptions.execute!(
+        {
+          groupReference: "my-group-outside-first-page",
+          courtReference: "court-outside-first-hundred",
+        },
+        { toolCallId: "options", messages: [], context: {} }
+      );
+      expect(mocks.creationOptions).toHaveBeenCalledWith(
+        "owner",
+        allowCourtSearch,
+        "my-group-outside-first-page",
+        "court-outside-first-hundred"
+      );
+    }
+  );
   it("passes named-place searches to the court service", async () => {
     const tools = createAgentTools(
       "user",

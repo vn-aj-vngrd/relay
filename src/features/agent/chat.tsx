@@ -115,13 +115,14 @@ export function AgentChat({
   const preparation = useRef<{
     controller: AbortController;
     question: string;
+    preserveDraft: boolean;
   } | null>(null);
   useEffect(
     () => () => {
       const pending = preparation.current;
       if (!pending) return;
       pending.controller.abort();
-      session.draft = pending.question;
+      if (!pending.preserveDraft) session.draft = pending.question;
       preparation.current = null;
     },
     [session]
@@ -167,7 +168,10 @@ export function AgentChat({
     reload: reloadProposals,
   } = useCreationProposals(activeId, busy, Boolean(capabilities));
   async function startCreation(flow: CreationFlow) {
-    await send(`${creationFlowLabels[flow]}. Ask me one question at a time.`);
+    await send(
+      `${creationFlowLabels[flow]}. Ask me one question at a time.`,
+      true
+    );
   }
   const errorCopy =
     error?.message === "AGENT_HTTP_402"
@@ -302,7 +306,7 @@ export function AgentChat({
     const choices = loadingLabels.filter((label) => label !== loadingLabel);
     setLoadingLabel(choices[Math.floor(Math.random() * choices.length)]);
   }
-  async function send(text: string) {
+  async function send(text: string, preserveDraft = false) {
     if (text.length > agentMessageMaxLength) {
       setInput(limitInput(text));
       return;
@@ -310,7 +314,7 @@ export function AgentChat({
     if (!text.trim() || busy || prepareLock.current || !available) return;
     prepareLock.current = true;
     const controller = new AbortController();
-    preparation.current = { controller, question: text };
+    preparation.current = { controller, question: text, preserveDraft };
     setPreparing(true);
     const createdAt = new Date().toISOString();
     setPendingQuestion({
@@ -321,7 +325,7 @@ export function AgentChat({
     });
     chooseLoadingLabel();
     follow.current = true;
-    setInput("");
+    if (!preserveDraft) setInput("");
     try {
       if (controller.signal.aborted) return;
       if (!session.conversationId) {
@@ -337,11 +341,13 @@ export function AgentChat({
       if (controller.signal.aborted) return;
       preparation.current = null;
       notify(
-        "Couldn’t save this chat. Your question is still here; please try again."
+        preserveDraft
+          ? "Couldn’t start this action. Your draft is unchanged; please try again."
+          : "Couldn’t save this chat. Your question is still here; please try again."
       );
       setPreparing(false);
       setPendingQuestion(null);
-      setInput(text);
+      if (!preserveDraft) setInput(text);
       prepareLock.current = false;
       return;
     }
@@ -469,7 +475,7 @@ export function AgentChat({
                     )
                     .map((proposal) => (
                       <AgentCreationCard
-                        onContinue={(prompt) => void send(prompt)}
+                        onContinue={(prompt) => void send(prompt, true)}
                         key={proposal.id}
                         proposal={proposal}
                         disabled={busy || !available}
@@ -529,7 +535,7 @@ export function AgentChat({
             )
             .map((proposal) => (
               <AgentCreationCard
-                onContinue={(prompt) => void send(prompt)}
+                onContinue={(prompt) => void send(prompt, true)}
                 key={proposal.id}
                 proposal={proposal}
                 disabled={busy || !available}

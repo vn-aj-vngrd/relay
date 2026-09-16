@@ -492,12 +492,30 @@ export async function confirmCreation(userId: string, id: string) {
   return project(saved);
 }
 
-export async function creationOptions(userId: string, includeCourts = false) {
+export async function creationOptions(
+  userId: string,
+  includeCourts = false,
+  groupReference?: string,
+  courtReference?: string
+) {
+  const reference = groupReference?.trim();
+  const groupFilter = reference
+    ? creationInputSchema.shape.groupId.safeParse(reference).success
+      ? eq(groups.id, reference)
+      : eq(groups.slug, reference)
+    : undefined;
+  const court = courtReference?.trim();
+  const courtFilter = court
+    ? creationInputSchema.shape.venueId.safeParse(court).success
+      ? eq(venues.id, court)
+      : eq(venues.slug, court)
+    : undefined;
   const groupRows = await db
-    .select({ id: groups.id, name: groups.name })
+    .select({ id: groups.id, name: groups.name, slug: groups.slug })
     .from(groupMembers)
     .innerJoin(groups, eq(groups.id, groupMembers.groupId))
-    .where(eq(groupMembers.userId, userId))
+    .where(and(eq(groupMembers.userId, userId), groupFilter))
+    .orderBy(asc(groups.name), asc(groups.id))
     .limit(30);
   const games = await db
     .select({
@@ -531,10 +549,15 @@ export async function creationOptions(userId: string, includeCourts = false) {
   return {
     courts: includeCourts
       ? await db
-          .select({ id: venues.id, name: venues.name, address: venues.address })
+          .select({
+            id: venues.id,
+            name: venues.name,
+            slug: venues.slug,
+            address: venues.address,
+          })
           .from(venues)
-          .where(eq(venues.listingStatus, "verified"))
-          .orderBy(asc(venues.name))
+          .where(and(eq(venues.listingStatus, "verified"), courtFilter))
+          .orderBy(asc(venues.name), asc(venues.id))
           .limit(100)
       : [],
     groups: groupRows,
@@ -544,7 +567,7 @@ export async function creationOptions(userId: string, includeCourts = false) {
       end: replayTime.format(endsAt),
       accentColor: sessionAccent(accentColor).id,
     })),
-    note: "Up to 30 items. Replay requires completed status. Saving a crew requires completed status and no existing group. Ask for a game URL if the target is absent.",
+    note: "Up to 30 groups/games and 100 courts. Resolve off-list groups with groupReference using an exact /groups/<slug> slug or ID; membership is always required. Resolve off-list courts with courtReference using an exact court slug or ID; only verified courts are returned when court search is enabled. Replay requires completed status. Saving a crew requires completed status and no existing group. Ask for a game URL if the target is absent.",
   };
 }
 

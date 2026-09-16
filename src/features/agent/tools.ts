@@ -99,11 +99,19 @@ export function createAgentTools(
   if (context && (config.allowGameCreation || config.allowGroupCreation)) {
     tools.creationOptions = tool({
       description:
-        "Read accessible groups and owned games for creation. Replay only completed games; save a crew only from an owned game without a group.",
-      inputSchema: z.object({}),
-      execute: () =>
+        "Read accessible groups, owned games, and enabled court suggestions for creation. Lists are bounded. If the requested group is absent, ask for its Relay group link and resolve its exact slug or UUID with groupReference, even when general game reads are disabled. Resolve a verified court outside the suggestions using its exact Relay slug or UUID as courtReference; court search must be enabled. Replay only completed games; save a crew only from an owned completed game without a group.",
+      inputSchema: z.object({
+        groupReference: z.string().trim().min(1).max(200).optional(),
+        courtReference: z.string().trim().min(1).max(200).optional(),
+      }),
+      execute: ({ groupReference, courtReference }) =>
         read(async () =>
-          (await import("./creation-service")).creationOptions(userId)
+          (await import("./creation-service")).creationOptions(
+            userId,
+            config.allowCourtSearch,
+            groupReference,
+            courtReference
+          )
         ),
     });
     tools.creationStatus = tool({

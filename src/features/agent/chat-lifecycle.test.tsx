@@ -96,3 +96,44 @@ describe("conversation creation during navigation", () => {
     );
   });
 });
+
+it("preserves an unsent draft when a creation action starts chat", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+  window.history.replaceState(null, "", "/agent");
+  mocks.create.mockResolvedValue({ id: "new", title: "Create game" });
+  mocks.load.mockResolvedValue({
+    id: "new",
+    title: "Create game",
+    messages: [],
+    pending: false,
+  });
+  render(
+    <AgentSessionProvider>
+      <AgentChat
+        available
+        capabilities={{
+          allowGameData: true,
+          allowCourtSearch: true,
+          allowHelp: true,
+          allowGameCreation: true,
+          allowGroupCreation: true,
+        }}
+      />
+    </AgentSessionProvider>
+  );
+  fireEvent.change(screen.getByRole("textbox", { name: "Draft" }), {
+    target: { value: "Keep this unfinished thought" },
+  });
+  await act(async () =>
+    fireEvent.click(
+      screen.getByRole("button", { name: "Help me create a game." })
+    )
+  );
+  expect(mocks.send).toHaveBeenCalledWith(
+    expect.objectContaining({ text: expect.stringContaining("Create game") }),
+    undefined
+  );
+  expect(screen.getByRole("textbox", { name: "Draft" })).toHaveValue(
+    "Keep this unfinished thought"
+  );
+});

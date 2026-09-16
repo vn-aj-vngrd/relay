@@ -92,7 +92,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Available capabilities and monthly message allowance depend on your account and the current Agent settings.",
     ],
     steps: [
-      "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks start a conversation with one question at a time; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to start setup in chat or insert its prompt. Escape closes the menu without changing your draft.",
+      "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks start a conversation with one question at a time and keep your unsent draft; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to start setup in chat or insert its prompt. Escape closes the menu without changing your draft.",
       "Explore your upcoming games, players, invitations, groups, and open games when game answers are enabled. Ask follow-up questions to narrow the results.",
       "Ask for courts near you. Agent asks which city or neighborhood to search in Relay's directory. It does not access device location or reserve a court.",
       "When game creation is enabled, ask to create a game, save a draft, replay a completed game you hosted, or create a game for your group. Agent retains details already supplied and asks for one missing detail per reply.",
@@ -139,6 +139,7 @@ export const helpArticles: readonly HelpArticle[] = [
     troubleshooting: [
       "Approval previews expire after 30 minutes; saved chat setups can be resumed and reviewed again. Use Edit details or Prepare a fresh preview if a review expires, the member list changes, or permissions change.",
       "If creation reports a connection error, reload action status before trying again. A Created result is authoritative even if the assistant's text was interrupted.",
+      "If a group or verified court is missing from Agent’s initial suggestions, share its Relay link so Agent can look it up. Group membership and the court-search capability still apply.",
       "If your hosting limit is reached, use an existing game or wait for the reset shown in your plan. Agent does not bypass account limits.",
       "Quick Play needs browser storage and remains local to the device. Starting it again may replace an existing local session after confirmation.",
     ],

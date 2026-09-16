@@ -90,7 +90,7 @@ describe("Agent slash discovery", () => {
       "true"
     );
   });
-  it("opens creation setup directly without sending a prompt", async () => {
+  it("delegates creation while retaining text outside the slash command", async () => {
     const create = vi.fn();
     const submit = vi.fn();
     render(
@@ -104,10 +104,12 @@ describe("Agent slash discovery", () => {
       />
     );
     const input = await screen.findByRole("textbox", { name: "Message Agent" });
-    paste(input, "/create");
+    paste(input, "Keep this idea /create");
     await screen.findByRole("listbox");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(create).toHaveBeenCalledWith("game");
+    expect(input).toHaveTextContent("Keep this idea");
+    expect(input).not.toHaveTextContent("/create");
     expect(submit).not.toHaveBeenCalled();
   });
   it("recognizes a slash query at a word boundary, preserving URLs and paths", () => {
