@@ -20,7 +20,17 @@ function Fixture() {
         </button>
         <div className="min-h-0 flex-1">
           {show ? (
-            <AgentChat available allowCourtSearch />
+            <AgentChat
+              available
+              allowCourtSearch
+              capabilities={{
+                allowGameData: true,
+                allowCourtSearch: true,
+                allowHelp: true,
+                allowGameCreation: true,
+                allowGroupCreation: true,
+              }}
+            />
           ) : (
             <p>Another app page</p>
           )}

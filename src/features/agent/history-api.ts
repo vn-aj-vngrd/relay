@@ -12,7 +12,8 @@ export const historyHeaders = {
 };
 export async function withAgentHistory(
   request: Request,
-  action: (userId: string) => Promise<unknown>
+  action: (userId: string) => Promise<unknown>,
+  unavailableMessage = "Chat history is temporarily unavailable."
 ) {
   try {
     if (
@@ -45,7 +46,7 @@ export async function withAgentHistory(
         error:
           error instanceof AgentHistoryError
             ? error.message
-            : "Chat history is temporarily unavailable.",
+            : unavailableMessage,
       },
       {
         status: error instanceof AgentHistoryError ? error.status : 503,

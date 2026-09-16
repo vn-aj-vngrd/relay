@@ -39,10 +39,14 @@ export function agentReadiness(
       hint: "Choose an OpenRouter model.",
     },
     {
-      label: "Read-only capabilities",
+      label: "Agent capabilities",
       ready:
-        config.allowGameData || config.allowHelp || config.allowCourtSearch,
-      hint: "Enable games, Court Finder or Help Center answers.",
+        config.allowGameData ||
+        config.allowHelp ||
+        config.allowCourtSearch ||
+        config.allowGameCreation ||
+        config.allowGroupCreation,
+      hint: "Enable an answer or creation capability.",
     },
   ];
   return { ready: checks.every((check) => check.ready), checks, storageReady };

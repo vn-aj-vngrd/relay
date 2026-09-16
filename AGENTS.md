@@ -28,6 +28,9 @@ Match related surfaces in layout, controls, copy, interactions, loading/empty/er
 
 ## Project runbooks
 
+- **Help Center:** For every implemented feature addition, behavior change, or removal, follow `docs/HELP_CENTER_MAINTENANCE.md` and update the affected user guides in the same change.
+- **Agent capabilities:** Before adding or changing Agent tools, creation flows, discovery, or admin capability controls, read `docs/agent/CAPABILITIES.md`.
+
 - **Reliability:** Read `docs/RELIABILITY.md` when changing user behavior, fixing a product bug, or assessing release readiness. Complete its regression coverage and evidence criteria.
 
 - **Code quality:** Read `docs/CODE_QUALITY.md` before adding dependencies, changing TypeScript or Ultracite/Biome conventions, or preparing a production change. Follow the Development loop above for validation timing; CI remains authoritative.

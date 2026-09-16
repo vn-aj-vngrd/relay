@@ -358,7 +358,7 @@ for retrieval, and streams an answer. It never calls the provider or spends quot
 
 Agent chat uses content-sized sent bubbles, wrapping unbroken text at the
 container boundary. Assistant answers discard leading blank space. The composer
-shows one outer focus border, a 4,000-character counter and a toast when clipping
+shows one outer focus border, a 4,000-character limit without a visible counter and a toast when clipping
 oversized input. Action toasts are centered at the top on every viewport.
 Admin Agent inherits the admin shell content width: its heading, setup panel and settings align with the breadcrumbs, without a narrower nested column.
 
@@ -367,3 +367,6 @@ Mobile Agent is a focused full-height conversation: reuse Create Game's back-to-
 Agent chat inherits the main content width and hides breadcrumbs on all viewports. The header uses a truncated conversation title with a dropdown indicator, keeping the full title available to assistive technology and on hover.
 
 The Agent title picker uses a small anchored dropdown with only recent names and day ages. See all chats opens a dedicated history page for rename/delete and older chats. The initial picker says Your chats; New chat is reserved for the right-side action. Conversation and composer content share max-w-3xl, while the header spans the application content width.
+
+
+Agent creation stays in the conversation: one missing question per reply, supplied answers retained, and a compact passive indicator for collected details. The + actions popover remains discovery only. Final review shows exact effects and requires explicit approval. Corrections happen in chat and produce a fresh review.

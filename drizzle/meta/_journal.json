@@ -435,6 +435,13 @@
       "when": 1789492554203,
       "tag": "0061_agent_conversation_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1789501658535,
+      "tag": "0062_agent_creation_proposals",
+      "breakpoints": true
     }
   ]
 }

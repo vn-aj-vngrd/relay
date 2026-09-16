@@ -266,7 +266,8 @@ describe("Agent streaming boundary", () => {
     expect(mocks.tools).toHaveBeenCalledWith(
       "server-user",
       expect.any(Object),
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      undefined
     );
     const options = mocks.stream.mock.calls[0][0];
     expect(JSON.stringify(options)).not.toContain("PRIVATE_PROVIDER_KEY");

@@ -1393,6 +1393,10 @@ export const agentSettings = pgTable(
     allowGameData: boolean("allow_game_data").notNull().default(true),
     allowHelp: boolean("allow_help").notNull().default(true),
     allowCourtSearch: boolean("allow_court_search").notNull().default(true),
+    allowGameCreation: boolean("allow_game_creation").notNull().default(false),
+    allowGroupCreation: boolean("allow_group_creation")
+      .notNull()
+      .default(false),
     maxOutputTokens: integer("max_output_tokens").notNull().default(1200),
     requestsPerHour: integer("requests_per_hour").notNull().default(30),
     ...timestamps,
@@ -1454,6 +1458,40 @@ export const agentConversations = pgTable(
     check(
       "agent_conversation_message_limit",
       sql`jsonb_array_length(${table.messages}) <= 100`
+    ),
+  ]
+).enableRLS();
+
+export const agentCreationProposals = pgTable(
+  "agent_creation_proposals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => agentConversations.id, { onDelete: "cascade" }),
+    messageId: text("message_id").notNull(),
+    input: jsonb("input")
+      .$type<import("@/features/agent/creation-schema").CreationInput>()
+      .notNull(),
+    preview: jsonb("preview")
+      .$type<import("@/features/agent/creation-schema").CreationPreview>()
+      .notNull(),
+    status: text("status").notNull().default("pending"),
+    destination: text("destination"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("agent_creation_conversation_idx").on(
+      table.conversationId,
+      table.createdAt
+    ),
+    check(
+      "agent_creation_status",
+      sql`${table.status} in ('pending', 'completed', 'cancelled')`
     ),
   ]
 ).enableRLS();

@@ -132,9 +132,20 @@ export async function POST(request: Request) {
         encryptedApiKey,
         config.requireZeroRetention
       ),
-      system: agentInstructions(config.instructions),
+      system: agentInstructions(config.instructions, new Date(), config),
       messages: modelMessages,
-      tools: createAgentTools(user.id, config, signal),
+      tools: createAgentTools(
+        user.id,
+        config,
+        signal,
+        body.conversationId && body.messageId
+          ? {
+              conversationId: body.conversationId,
+              messageId: body.messageId,
+              requestId,
+            }
+          : undefined
+      ),
       stopWhen: isStepCount(6),
       prepareStep: ({ stepNumber }) => ({
         // Omit tools entirely on the answer step; some endpoints reject tool_choice: none.

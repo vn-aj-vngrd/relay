@@ -226,7 +226,8 @@ describe("Agent chat controls", () => {
       "Extra text was removed"
     );
     expect(mocks.send).not.toHaveBeenCalled();
-    expect(screen.getByText("4,000 / 4,000 characters")).toBeInTheDocument();
+    expect(input.textContent).toHaveLength(4000);
+    expect(screen.queryByText("4,000 / 4,000 characters")).toBeNull();
   });
   it("uses shimmer text while waiting for the first response", () => {
     mocks.status = "submitted";

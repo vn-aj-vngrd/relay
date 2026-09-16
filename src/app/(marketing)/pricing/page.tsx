@@ -86,7 +86,7 @@ export default async function PricingPage() {
           </p>
           <div className="mt-6 border-y border-line py-4">
             <h2 className="font-semibold text-primary">
-              Meet Agent, your read-only game assistant
+              Meet Agent, your game assistant
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
               Ask about your games, who's joining, your groups, or how Relay

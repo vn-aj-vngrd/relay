@@ -1,15 +1,15 @@
 # Agent V1
 
-Agent answers questions about Relay games, rosters, groups, open games and the existing Help Center. It is read-only and disabled until an MFA-authorized administrator configures it.
+Agent answers questions about Relay games, rosters, groups, open games and the existing Help Center. It is disabled until an MFA-authorized administrator configures it. Creation capabilities are separately default-off; see [Capabilities](CAPABILITIES.md) before changing tools, confirmation, discovery, or admin controls.
 
 ## Product and scope
 
-- `/agent`: ephemeral conversation, streaming text, suggestions, source links, Stop, Retry and New chat. Desktop sidebar and mobile header provide entry points.
+- `/agent`: saved conversations, guided creation forms with explicit approval, streaming text, suggestions, source links, Stop, Retry and New chat. Desktop sidebar and mobile header provide entry points.
 - `/admin/agent`: enable/disable, write-only OpenRouter credential replacement/removal, searchable model IDs, behavior instructions, game/help capability switches, per-user hourly limits, output-token limits and monthly Free/Plus/Pro message allowances.
 - Upcoming game searches include published/live games whose end time is still in the future. They do not include drafts or archived history. Details can explain an authorized historical game when its ID is supplied.
 - Joining means Going, not invited, pending, Maybe or waitlisted. Attention means outstanding invitations/pending requests and hosted-game booking, fewer than four confirmed players, or pending-approval needs. It is not a payment or complete readiness audit.
 - Dates in search filters use Asia/Manila, consistent with Open games discovery. Results also include the game's stored timezone. The assistant explains relative date ranges and asks for clarification when context is ambiguous.
-- No writes, actions, arbitrary SQL, code execution, browser, external URL retrieval, email, payment details, private notes or administrative tools are registered.
+- Model tools can prepare creation forms but cannot execute them. Approved game/group creation uses the first-party confirmation endpoint; Quick Play starts locally after approval. Arbitrary SQL, code execution, browser access, external URL retrieval, external messages, payment mutations, private notes and administrative tools remain unavailable.
 
 Agent uses the shared rounded green cursor with pickleball perforations in `agent-mark.tsx` across chat, navigation, admin and marketing. The landing hero links to a dedicated Agent showcase after the existing Highlights. Its interactive demo uses local sample questions and answers, never the provider or account data. Visitors can select a question, pause/resume or replay; reduced motion reveals the whole response without typing animation.
 
@@ -22,7 +22,7 @@ flowchart LR
   Guard --> SDK[Vercel AI SDK streamText]
   Config[Server settings / encrypted credential] --> SDK
   SDK <--> OR[OpenRouter / supported privacy routing]
-  SDK --> Tools[Read-only tool registry bound to user ID]
+  SDK --> Tools[Read and preparation tools bound to user ID]
   Tools --> Reads[Authorized services and explicit projections]
   Tools --> Help[Existing Help Center content]
   Reads --> DB[(Relay database)]
@@ -76,12 +76,14 @@ Backend authorization and narrow data projections are the security boundary. Pro
 - At most six model steps, twelve tool executions, a 50-second generation deadline and no model retries. Output tokens are capped per step (default 1,200; 256–4,000). OpenRouter account spending limits remain the global monetary safeguard.
 - Response streams contain text only. Reasoning, raw tool results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
 - Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help/court links become navigation; destination routes enforce authorization again.
-- Responses are private/no-store. Relay saves conversation titles, user questions and visible answers for the account owner until deletion. It does not store tool payloads, reasoning or prompt/response telemetry. Drafts remain only in browser memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
+- Responses are private/no-store. Relay saves conversation titles, user questions and visible answers for the account owner until deletion. It does not store raw provider tool payloads, reasoning or prompt/response telemetry. Reviewed creation inputs and results are stored separately in owner-scoped proposal records; unsent composer drafts remain in browser memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
 - Stop/disconnect/deadline cancel model work. An already executing database read may finish; cancellation prevents subsequent tool reads.
 
-Titles/names and previous assistant text can contain prompt injection. They cannot create new tools or change authorization, but model answers may still be misleading. Users must check source records. The UI does not execute suggested actions, HTML or remote resources. User-supplied text can itself contain sensitive data; do not submit secrets to the assistant.
+Titles/names and previous assistant text can contain prompt injection. They cannot create new tools or change authorization, but model answers may still be misleading. Users must check source records. The UI renders server-owned creation previews; a first-party confirmation endpoint executes reviewed creations. It does not execute model text, HTML or remote resources. User-supplied text can itself contain sensitive data; do not submit secrets to the assistant.
 
 ## Extending capabilities
+
+For creation and mutations, follow [Capabilities](CAPABILITIES.md). The steps below apply to read tools.
 
 1. Define the user-visible question and exact authorized data needed.
 2. Reuse an existing domain read/permission predicate; add a focused service only where required.
@@ -97,7 +99,7 @@ Do not add a generic database/HTTP tool, tool-name dispatch supplied by the clie
 - Validate the normal authenticated journey with a configured provider.
 - Improve source-grounding evaluations and relevance based on real questions; add historical-game filtering or richer attention insights only when needed.
 - Consider history search, configurable retention and spending dashboards when needed.
-- Future actions belong in a separate command service and registry. The model may propose a typed action, but the server must reauthorize it, validate current state, show an exact preview and require explicit user confirmation. Use expiring server-held confirmation records, idempotency and audited execution. Never treat model text or replayed chat history as confirmation. **No action infrastructure or execution is implemented in V1.**
+- Creation contracts, current scope, and deferred actions are maintained in [Capabilities](CAPABILITIES.md).
 
 ## Coverage and status
 
@@ -215,7 +217,7 @@ The recent-chat popover caps its height to the viewport, scrolls only its recent
 
 The composer uses Tiptap with its Markdown extension to render formatting during editing. No formatting toolbar is shown. Cmd/Ctrl+B and Cmd/Ctrl+I apply marks directly; pasted plain-text Markdown is parsed into editor nodes. Clipboard HTML, files, images and drops are not accepted. Drafts and submissions stay Markdown, with the existing 4,000-character server limit and safe response renderer. Enter sends, Shift+Enter inserts a line break, and IME composition does not send. The editor is initialized client-side and grows within a bounded scrolling area. Rich-editor regression coverage is added; execution remains deferred to pre-commit.
 
-The landing demo mirrors the current chat header, filled New chat control, title picker, compact bubbles, shared Markdown answer renderer and character-count composer. Synthetic examples cover games, rosters, open games and the city/neighborhood follow-up for nearby courts. Playback supports typing, waiting, streaming, pause/replay, visibility pauses and reduced motion. No account data or model requests are used.
+The landing demo mirrors the current chat header, filled New chat control, title picker, compact bubbles, shared Markdown answer renderer and compact composer. Synthetic examples cover games, rosters, open games and the city/neighborhood follow-up for nearby courts. Playback supports typing, waiting, streaming, pause/replay, visibility pauses and reduced motion. No account data or model requests are used.
 
 ### Conversation timestamps
 
@@ -242,3 +244,10 @@ routing requirements. Strict privacy routing remains unchanged.
 
 Sources checked September 16, 2026: [OpenRouter parameter routing](https://openrouter.ai/docs/guides/routing/provider-selection)
 and [Poolside endpoint metadata](https://openrouter.ai/api/v1/models/poolside/laguna-s-2.1:free/endpoints).
+
+
+## Confirmed creation
+
+The first creation release uses `creation-service.ts` for durable expiring previews and confirmation, shared game/group commands for writes, and a separate authenticated `/api/agent/creations` endpoint. Text streaming remains intact; cards load from owner-scoped server records after a turn and on chat restoration. Historical text is never execution authority. Migration 0062 adds default-off capability flags and a server-only proposal table. Applying the migration and enabling flags are deployment steps; local implementation alone does not establish availability.
+
+Keep user guidance synchronized through [Help Center maintenance](../HELP_CENTER_MAINTENANCE.md). The Actions catalog is in `capabilities.ts`; current and deferred scope is in [Capabilities](CAPABILITIES.md).

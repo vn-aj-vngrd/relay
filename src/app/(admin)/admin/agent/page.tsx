@@ -46,7 +46,7 @@ export default async function AdminAgentPage() {
     <div className="w-full">
       <AdminPageHeading
         title="Agent"
-        description="Configure Relay's read-only assistant. Changes are audited."
+        description="Configure Relay's answers and confirmed creation capabilities. Changes are audited."
       />
       <section
         aria-labelledby="agent-readiness"

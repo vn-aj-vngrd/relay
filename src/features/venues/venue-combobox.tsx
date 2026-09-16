@@ -13,6 +13,7 @@ export function VenueCombobox({
   defaultVenueId = "",
   error,
   onValueChange,
+  onSelectionChange,
 }: {
   courts?: CourtSuggestion[];
   defaultValue?: string;
@@ -20,6 +21,11 @@ export function VenueCombobox({
   defaultVenueId?: string;
   error?: string;
   onValueChange?: () => void;
+  onSelectionChange?: (value: {
+    venue: string;
+    venueId?: string;
+    venueAddress?: string;
+  }) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState(defaultValue);
@@ -47,6 +53,11 @@ export function VenueCombobox({
     setVenueId(suggestion.id);
     setOpen(false);
     setActiveIndex(-1);
+    onSelectionChange?.({
+      venue: suggestion.name,
+      venueId: suggestion.id,
+      venueAddress: suggestion.address,
+    });
     onValueChange?.();
   }
 
@@ -109,6 +120,7 @@ export function VenueCombobox({
         placeholder="Search or enter a court…"
         value={query}
         onChange={(event) => {
+          onSelectionChange?.({ venue: event.target.value });
           setQuery(event.target.value);
           setAddress("");
           setVenueId("");

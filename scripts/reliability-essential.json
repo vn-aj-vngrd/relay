@@ -20,5 +20,10 @@
   "src/features/admin/image-upload-limits-action.test.ts",
   "src/features/auth/permissions.test.ts",
   "src/features/agent/usage.test.ts",
+  "src/features/agent/creation-service.test.ts",
+  "src/features/agent/creation-prepare.test.ts",
+  "src/features/agent/creation-progress.test.ts",
+  "src/features/agent/chat-lifecycle.test.tsx",
+  "src/features/groups/create-group-command.test.ts",
   "src/app/api/agent/route.test.ts"
 ]

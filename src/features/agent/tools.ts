@@ -2,6 +2,7 @@ import "server-only";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
 import { readAgentCourt, searchAgentCourts } from "./courts";
+import { creationPreparationSchema } from "./creation-schema";
 import { agentHelpIndex, readAgentHelp, searchAgentHelp } from "./help";
 import { readAgentGame, readAgentGroups, searchAgentGames } from "./reads";
 import {
@@ -13,7 +14,8 @@ import {
 export function createAgentTools(
   userId: string,
   config: AgentConfig,
-  signal: AbortSignal
+  signal: AbortSignal,
+  context?: { conversationId: string; messageId: string; requestId: string }
 ) {
   let calls = 0;
   async function read<T>(operation: () => Promise<T> | T) {
@@ -92,6 +94,67 @@ export function createAgentTools(
         "Read the authoritative Help Center guide before explaining how Relay works. Never reveal internal source file paths.",
       inputSchema: z.object({ slug: z.string().max(100) }),
       execute: ({ slug }) => read(() => readAgentHelp(slug)),
+    });
+  }
+  if (context && (config.allowGameCreation || config.allowGroupCreation)) {
+    tools.creationOptions = tool({
+      description:
+        "Read accessible groups, owned games, and enabled court suggestions for creation. Lists are bounded. If the requested group is absent, ask for its Relay group link and resolve its exact slug or UUID with groupReference, even when general game reads are disabled. Resolve a verified court outside the suggestions using its exact Relay slug or UUID as courtReference; court search must be enabled. Replay only completed games; save a crew only from an owned completed game without a group.",
+      inputSchema: z.object({
+        groupReference: z.string().trim().min(1).max(200).optional(),
+        courtReference: z.string().trim().min(1).max(200).optional(),
+      }),
+      execute: ({ groupReference, courtReference }) =>
+        read(async () =>
+          (await import("./creation-service")).creationOptions(
+            userId,
+            config.allowCourtSearch,
+            groupReference,
+            courtReference
+          )
+        ),
+    });
+    tools.creationStatus = tool({
+      description:
+        "Read trusted pending or completed creation status for this chat. Only a completed result proves an action happened. Never infer success from prior assistant text.",
+      inputSchema: z.object({}),
+      execute: () =>
+        read(async () =>
+          (
+            await (
+              await import("./creation-service")
+            ).listCreationProposals(userId, context.conversationId)
+          ).map(({ status, destination, preview, input }) => ({
+            status,
+            destination,
+            input,
+            title: preview.title,
+            details: preview.lines,
+          }))
+        ),
+    });
+    tools.prepareCreation = tool({
+      description:
+        "Prepare a game, group, or browser-local Quick Play through chat. Call as soon as the kind is known, including only supplied details or supported source defaults. Before each continuation, read creationStatus and merge the saved answers with new details. Ask exactly one missing question per response; never a numbered questionnaire or a form/panel. Complete drafts produce a final review card requiring an explicit approval button; no text reply can execute creation. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
+      inputSchema: creationPreparationSchema.safeExtend({
+        interactionMode: z.literal("chat").optional(),
+      }),
+      execute: (input) =>
+        read(async () => {
+          try {
+            return await (await import("./creation-service")).prepareCreation(
+              userId,
+              context.conversationId,
+              context.messageId,
+              context.requestId,
+              input
+            );
+          } catch (error) {
+            if (error instanceof (await import("./history")).AgentHistoryError)
+              return { status: "needs_input", message: error.message };
+            throw error;
+          }
+        }),
     });
   }
   return tools;

@@ -6,15 +6,19 @@ import { useEffect, useRef, useState } from "react";
 import { FocusedBackLink } from "@/components/shared/focused-mobile-header";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/ui/tooltip";
 import { AgentMark } from "./agent-mark";
 import type { AgentUsageSummary } from "./allowance";
 import { AgentAnswer } from "./answer";
+import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
 import { AgentChatSkeleton } from "./chat-skeleton";
 import {
   AgentComposerEditor,
   type AgentComposerHandle,
 } from "./composer-editor";
 import { agentMessageMaxLength } from "./constants";
+import { AgentCreationCard, useCreationProposals } from "./creation-cards";
+import { type CreationFlow, creationFlowLabels } from "./creation-model";
 import {
   conversationMessages,
   createConversation,
@@ -32,12 +36,6 @@ import type { AgentSession } from "./session";
 import { useAgentSession } from "./session";
 import { AgentUsageSummaryView } from "./usage-summary";
 
-const suggestions = [
-  "When is my next game?",
-  "What games need my attention?",
-  "Show open games tomorrow.",
-  "How do I start a Quick Game?",
-];
 const loadingLabels = [
   "Thinking…",
   "Pondering…",
@@ -81,15 +79,25 @@ const createTransport = (session: AgentSession) =>
 export function AgentChat({
   available,
   allowCourtSearch = false,
+  capabilities,
   unavailableReason = "Agent is not available yet. You can still browse your games and Help Center.",
   initialUsage = null,
 }: {
   available: boolean;
   allowCourtSearch?: boolean;
+  capabilities?: AgentCapabilities;
   unavailableReason?: string;
   initialUsage?: AgentUsageSummary | null;
 }) {
+  const enabledCapabilities = capabilities ?? {
+    allowGameData: true,
+    allowCourtSearch,
+    allowHelp: true,
+    allowGameCreation: false,
+    allowGroupCreation: false,
+  };
   const [usage, setUsage] = useState(initialUsage);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const session = useAgentSession();
   const [chat] = useState(() => {
     session.chat ??= new Chat({ transport: createTransport(session) });
@@ -107,13 +115,14 @@ export function AgentChat({
   const preparation = useRef<{
     controller: AbortController;
     question: string;
+    preserveDraft: boolean;
   } | null>(null);
   useEffect(
     () => () => {
       const pending = preparation.current;
       if (!pending) return;
       pending.controller.abort();
-      session.draft = pending.question;
+      if (!pending.preserveDraft) session.draft = pending.question;
       preparation.current = null;
     },
     [session]
@@ -153,6 +162,17 @@ export function AgentChat({
     preparing ||
     restoring ||
     remotePending;
+  const {
+    proposals,
+    error: proposalError,
+    reload: reloadProposals,
+  } = useCreationProposals(activeId, busy, Boolean(capabilities));
+  async function startCreation(flow: CreationFlow) {
+    await send(
+      `${creationFlowLabels[flow]}. Ask me one question at a time.`,
+      true
+    );
+  }
   const errorCopy =
     error?.message === "AGENT_HTTP_402"
       ? "No Agent messages are currently available. If an answer is in progress, let it finish and retry. Otherwise, check Plan & billing for your reset date or options."
@@ -286,7 +306,7 @@ export function AgentChat({
     const choices = loadingLabels.filter((label) => label !== loadingLabel);
     setLoadingLabel(choices[Math.floor(Math.random() * choices.length)]);
   }
-  async function send(text: string) {
+  async function send(text: string, preserveDraft = false) {
     if (text.length > agentMessageMaxLength) {
       setInput(limitInput(text));
       return;
@@ -294,7 +314,7 @@ export function AgentChat({
     if (!text.trim() || busy || prepareLock.current || !available) return;
     prepareLock.current = true;
     const controller = new AbortController();
-    preparation.current = { controller, question: text };
+    preparation.current = { controller, question: text, preserveDraft };
     setPreparing(true);
     const createdAt = new Date().toISOString();
     setPendingQuestion({
@@ -305,8 +325,9 @@ export function AgentChat({
     });
     chooseLoadingLabel();
     follow.current = true;
-    setInput("");
+    if (!preserveDraft) setInput("");
     try {
+      if (controller.signal.aborted) return;
       if (!session.conversationId) {
         const saved = await createConversation(text, controller.signal);
         if (controller.signal.aborted) return;
@@ -320,11 +341,13 @@ export function AgentChat({
       if (controller.signal.aborted) return;
       preparation.current = null;
       notify(
-        "Couldn’t save this chat. Your question is still here; please try again."
+        preserveDraft
+          ? "Couldn’t start this action. Your draft is unchanged; please try again."
+          : "Couldn’t save this chat. Your question is still here; please try again."
       );
       setPreparing(false);
       setPendingQuestion(null);
-      setInput(text);
+      if (!preserveDraft) setInput(text);
       prepareLock.current = false;
       return;
     }
@@ -444,39 +467,81 @@ export function AgentChat({
                       />
                     ) : null}
                   </article>
+                  {proposals
+                    .filter(
+                      (proposal) =>
+                        proposal.messageId === message.id &&
+                        proposal.status !== "cancelled"
+                    )
+                    .map((proposal) => (
+                      <AgentCreationCard
+                        onContinue={(prompt) => void send(prompt, true)}
+                        key={proposal.id}
+                        proposal={proposal}
+                        disabled={busy || !available}
+                        onChange={reloadProposals}
+                      />
+                    ))}
                 </div>
               ))}
             </div>
-          ) : (
+          ) : proposals.some(
+              (proposal) => proposal.status !== "cancelled"
+            ) ? null : (
             <div className="mx-auto flex max-w-lg flex-col items-start justify-center py-10 sm:py-16">
               <AgentMark size={36} className="mb-5 text-primary" />
               <h2 className="text-2xl font-semibold tracking-tight">
                 Your games, a little clearer.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted">
-                Ask about your next game, who's joining, your groups, or how
-                Relay works.
+                Ask about games, groups and courts. Use + below to see what
+                Agent can help you do.
               </p>
               <div className="mt-7 flex w-full flex-col items-start gap-1">
-                {[
-                  ...suggestions,
-                  ...(allowCourtSearch ? ["Find courts near me."] : []),
-                ].map((question) => (
-                  <button
-                    key={question}
-                    type="button"
-                    disabled={!available || busy}
-                    onClick={() => {
-                      void send(question);
-                    }}
-                    className="pressable min-h-11 rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-45"
-                  >
-                    {question}
-                  </button>
-                ))}
+                {availableAgentPrompts(enabledCapabilities)
+                  .filter((item) =>
+                    [
+                      "Create a game",
+                      "Create a group",
+                      "Find my next game",
+                      "Find courts near me",
+                      "Learn how Relay works",
+                    ].includes(item.label)
+                  )
+                  .map((item) => (
+                    <button
+                      key={item.prompt}
+                      type="button"
+                      disabled={!available || busy}
+                      onClick={() => {
+                        if ("flow" in item) void startCreation(item.flow);
+                        else void send(item.prompt);
+                      }}
+                      className="pressable min-h-11 rounded-lg px-3 py-2 text-left text-sm text-muted hover:bg-surface-strong hover:text-ink disabled:opacity-45"
+                    >
+                      {item.prompt}
+                    </button>
+                  ))}
               </div>
             </div>
           )}
+          {proposals
+            .filter(
+              (proposal) =>
+                proposal.status !== "cancelled" &&
+                !visibleMessages.some(
+                  (message) => message.id === proposal.messageId
+                )
+            )
+            .map((proposal) => (
+              <AgentCreationCard
+                onContinue={(prompt) => void send(prompt, true)}
+                key={proposal.id}
+                proposal={proposal}
+                disabled={busy || !available}
+                onChange={reloadProposals}
+              />
+            ))}
           {status === "submitted" || preparing || remotePending ? (
             <p
               role="status"
@@ -488,6 +553,17 @@ export function AgentChat({
         </div>
       </div>
       <div className="mx-auto w-full max-w-3xl shrink-0 pt-3">
+        {proposalError ? (
+          <div
+            role="alert"
+            className="mb-3 flex items-center gap-2 text-sm text-muted"
+          >
+            <p>{proposalError}</p>
+            <Button variant="quiet" onClick={reloadProposals}>
+              Reload actions
+            </Button>
+          </div>
+        ) : null}
         {usage ? <AgentUsageSummaryView usage={usage} /> : null}
         {!available ? (
           <p role="status" className="mb-3 text-sm text-muted">
@@ -520,54 +596,64 @@ export function AgentChat({
             </Button>
           </div>
         ) : null}
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send(input);
-          }}
-          className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
-        >
-          <AgentComposerEditor
-            ref={field}
-            value={input}
-            onChange={setInput}
-            onSubmit={(text) => {
-              void send(text);
+        <div className="relative">
+          <form
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void send(input);
             }}
-            disabled={!available || busy}
-          />
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <p
-              id="agent-message-limit"
-              className="text-xs tabular-nums text-muted"
-            >
-              {input.length.toLocaleString()} /{" "}
-              {agentMessageMaxLength.toLocaleString()} characters
-            </p>
-            {status === "submitted" || status === "streaming" ? (
-              <Button
+            className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
+          >
+            <AgentComposerEditor
+              ref={field}
+              capabilities={enabledCapabilities}
+              onCreate={(flow) => void startCreation(flow)}
+              onActionsOpenChange={setActionsOpen}
+              value={input}
+              onChange={setInput}
+              onSubmit={(text) => {
+                void send(text);
+              }}
+              disabled={!available || busy}
+            />
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <button
                 type="button"
-                variant="secondary"
-                aria-label="Stop response"
-                onClick={() => {
-                  void stop();
-                }}
+                aria-label="Actions"
+                aria-expanded={actionsOpen}
+                aria-haspopup="listbox"
+                disabled={!available || busy}
+                onClick={() => field.current?.openActions()}
+                className={`pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
               >
-                <Stop size={16} aria-hidden />
-                Stop
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                aria-label="Send message"
-                disabled={!available || busy || !input.trim()}
-              >
-                <ArrowUp size={18} aria-hidden />
-              </Button>
-            )}
-          </div>
-        </form>
+                <Plus size={18} aria-hidden />
+                <Tooltip content="Actions" side="top" />
+              </button>
+              {status === "submitted" || status === "streaming" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-label="Stop response"
+                  onClick={() => {
+                    void stop();
+                  }}
+                >
+                  <Stop size={16} aria-hidden />
+                  Stop
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  aria-label="Send message"
+                  disabled={!available || busy || !input.trim()}
+                >
+                  <ArrowUp size={18} aria-hidden />
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
         <p className="mt-2 text-center text-xs leading-5 text-muted">
           AI can make mistakes. Check sources and don’t share secrets.
         </p>

@@ -8,6 +8,10 @@
 
 - List the meaningful changes.
 
+## Help Center
+
+- Link updated articles for every functional change, or state why this change has no user-facing behavior impact.
+
 ## Technical details
 
 - Record decisions, assumptions, and relevant edge cases, or write None.

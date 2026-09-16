@@ -3,6 +3,10 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
+import {
+  type CreationProposal,
+  creationInputSchema,
+} from "../src/features/agent/creation-schema";
 
 let bundle: string;
 let markdownStyles: string;
@@ -40,6 +44,33 @@ for (const width of [390, 1440]) {
         body: `<html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles}</head><body><div id="agent-fixture"></div></body></html>`,
       })
     );
+    let creation: CreationProposal | null = null;
+    let approvals = 0;
+    await page.route("**/api/agent/creations**", async (route) => {
+      const request = route.request();
+      const action =
+        request.method() === "GET"
+          ? null
+          : (request.postDataJSON() as { action: string });
+      if (action?.action === "confirm" && creation) {
+        approvals++;
+        creation = {
+          ...creation,
+          status: "completed",
+          destination: "/groups/synthetic",
+        };
+      }
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify(
+          new URL(request.url()).searchParams.has("options")
+            ? { groups: [], hostedGames: [], courts: [] }
+            : request.method() === "GET"
+              ? { proposals: creation ? [creation] : [] }
+              : creation
+        ),
+      });
+    });
     const conversation = {
       id: "123e4567-e89b-42d3-a456-426614174000",
       title: "When is my next game?",
@@ -66,8 +97,45 @@ for (const width of [390, 1440]) {
         ),
       })
     );
-    await page.route("**/api/agent", (route) =>
-      route.fulfill(
+    await page.route("**/api/agent", (route) => {
+      if (route.request().method() !== "GET") {
+        const body = route.request().postDataJSON() as {
+          messageId: string;
+          messages: { content: string }[];
+        };
+        const text = body.messages.at(-1)?.content ?? "";
+        if (
+          text.startsWith("Create group") ||
+          creation?.status === "collecting"
+        ) {
+          const ready = text === "Synthetic crew";
+          creation = {
+            id: "creation",
+            messageId: body.messageId,
+            input: creationInputSchema.parse({
+              kind: "group",
+              title: ready ? text : undefined,
+              interactionMode: "chat",
+            }),
+            status: ready ? "pending" : "collecting",
+            preview: {
+              title: ready ? text : "Create group",
+              collecting: !ready,
+              lines: ["You are the owner."],
+              people: [],
+            },
+            destination: null,
+            expiresAt: "2099-01-01T00:00:00Z",
+          };
+          return route.fulfill({
+            contentType: "text/plain",
+            body: ready
+              ? "Review your group before approving."
+              : "What would you like to name your group?",
+          });
+        }
+      }
+      return route.fulfill(
         route.request().method() === "GET"
           ? {
               contentType: "application/json",
@@ -84,11 +152,63 @@ for (const width of [390, 1440]) {
               contentType: "text/plain",
               body: "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
             }
-      )
-    );
+      );
+    });
     await page.goto("/__synthetic-agent");
     await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });
+    await page.getByRole("button", { name: "Actions", exact: true }).click();
+    await expect(
+      page.getByRole("button", { name: "Actions", exact: true })
+    ).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      page.getByRole("button", { name: "Actions", exact: true })
+    ).toHaveClass(/bg-surface-strong/);
+    await expect(
+      page.getByRole("option", { name: /Create a game/ })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "All capabilities & help" })
+    ).toHaveAttribute("href", "/help/agent-capabilities");
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("button", { name: "Actions", exact: true })
+    ).toHaveAttribute("aria-expanded", "false");
+    const slashComposer = page.getByRole("textbox", { name: "Message Agent" });
+    await slashComposer.fill("/court");
+    await expect(
+      page.getByRole("listbox", { name: "Available Agent actions" })
+    ).toBeVisible();
+    await slashComposer.press("Enter");
+    await expect(slashComposer).toHaveText("Find courts near me.");
+    await expect(
+      page.getByRole("listbox", { name: "Available Agent actions" })
+    ).toHaveCount(0);
+    await slashComposer.fill("");
+
+    await page.getByRole("button", { name: "Actions", exact: true }).click();
+    await page
+      .getByRole("option", { name: /Create a group Help me create a group/ })
+      .click();
+    await expect(
+      page.getByRole("region", { name: "Creation progress" })
+    ).toBeVisible();
+    await expect(page.getByRole("log")).toContainText(
+      "What would you like to name your group?"
+    );
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await slashComposer.fill("Synthetic crew");
+    await page.getByRole("button", { name: "Send message" }).click();
+    await expect(
+      page.getByRole("button", { name: "Approve & create group" })
+    ).toBeVisible();
+    expect(approvals).toBe(0);
+    await page.getByRole("button", { name: "Approve & create group" }).click();
+    await expect(page.getByRole("link", { name: "Open group" })).toBeVisible();
+    expect(approvals).toBe(1);
+    creation = null;
+    await page.getByRole("button", { name: "New chat", exact: true }).click();
+
     if (width < 1024) {
       await expect(
         page.getByRole("link", { name: "Back to Home" })

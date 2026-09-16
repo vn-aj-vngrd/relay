@@ -34,3 +34,22 @@ it("revokes every Data API role from saved conversations in a follow-up migratio
     })
   );
 });
+
+it("keeps creation disabled by default and its proposals outside the Data API", () => {
+  const migration = readFileSync(
+    "drizzle/0062_agent_creation_proposals.sql",
+    "utf8"
+  );
+  expect(migration).toContain(
+    "allow_game_creation boolean NOT NULL DEFAULT false"
+  );
+  expect(migration).toContain(
+    "allow_group_creation boolean NOT NULL DEFAULT false"
+  );
+  expect(migration).toContain(
+    "ALTER TABLE agent_creation_proposals ENABLE ROW LEVEL SECURITY"
+  );
+  expect(migration).toContain(
+    "REVOKE ALL ON TABLE agent_creation_proposals FROM PUBLIC, anon, authenticated, service_role"
+  );
+});

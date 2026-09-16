@@ -46,8 +46,8 @@ export function AgentShowcase({
             <li>“How do I start a Quick Game?”</li>
           </ul>
           <p className="mt-6 text-sm leading-6 text-muted">
-            Read-only for now. Agent can explain your games, but cannot create,
-            join or change them.
+            Open Actions in chat to explore available tasks. Creation, when
+            enabled, requires your review and confirmation.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <ButtonLink href={agent.enabled ? "/agent" : "/pricing"}>
