@@ -176,7 +176,7 @@ for (const width of [390, 1440]) {
     await page
       .getByRole("option", { name: /Create a group Help me create a group/ })
       .click();
-    const setup = page.getByRole("dialog");
+    const setup = page.getByRole("region", { name: "Creation questions" });
     await expect(setup).toBeVisible();
     await setup.getByLabel("Group name").fill("Synthetic crew");
     await setup.getByRole("button", { name: "Review", exact: true }).click();

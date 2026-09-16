@@ -26,10 +26,12 @@ import { readAgentSettings } from "./config";
 import { applyReplaySource } from "./creation-form-model";
 import {
   type CreationInput,
+  type CreationPreparation,
   type CreationPreview,
   type CreationProposal,
   creationForm,
   creationInputSchema,
+  creationPreparationSchema,
   validateCreation,
 } from "./creation-schema";
 import { AgentHistoryError } from "./history";
@@ -244,8 +246,10 @@ export async function prepareCreation(
   conversationId: string,
   messageId: string,
   requestId: string,
-  input: CreationInput
+  raw: CreationPreparation
 ) {
+  const supplied = creationPreparationSchema.parse(raw);
+  const input = creationInputSchema.parse(supplied);
   const { config } = await readAgentSettings();
   ensureEnabled(config, input);
   let draft = input;
@@ -282,8 +286,13 @@ export async function prepareCreation(
       accentColor: sessionAccent(source.accentColor).id,
       replayGroupId: membership?.groupId,
     });
+    if (supplied.visibility !== undefined)
+      draft.visibility = supplied.visibility;
+    if (supplied.requiresApproval !== undefined)
+      draft.requiresApproval = supplied.requiresApproval;
   }
-  const prepared = creationFormDraft(draft);
+  const readyForApproval =
+    draft.interactionMode === "chat" && validateCreation(draft).length === 0;
   return db.transaction(async (tx) => {
     const [conversation] = await tx
       .select()
@@ -297,6 +306,9 @@ export async function prepareCreation(
       conversation.activeUntil <= new Date()
     )
       throw new AgentHistoryError(409, "This turn is no longer active.");
+    const prepared = readyForApproval
+      ? await previewCreation(tx, userId, draft)
+      : creationFormDraft(draft);
     await tx
       .update(agentCreationProposals)
       .set({ status: "cancelled", updatedAt: new Date() })
@@ -314,15 +326,24 @@ export async function prepareCreation(
         conversationId,
         messageId,
         ...prepared,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60_000),
+        expiresAt: new Date(
+          Date.now() + (readyForApproval ? 30 : 1440) * 60_000
+        ),
       })
       .returning();
     return {
-      status: "needs_form",
+      status: readyForApproval
+        ? "needs_approval"
+        : draft.interactionMode === "chat"
+          ? "needs_answer"
+          : "needs_form",
       title: proposal.preview.title,
       details: proposal.preview.lines,
-      message:
-        "A guided form is ready in the chat, prefilled with known details. Ask the user to complete the named fields there and review before approving. Do not ask a numbered list of questions. Nothing has been created.",
+      message: readyForApproval
+        ? "All required details are ready for review. Explain the exact preview and defaults, then ask the user to press the explicit approval button. Nothing has been created; a text reply is never approval."
+        : draft.interactionMode === "chat"
+          ? "Saved chat setup. Ask exactly one missing question in your reply, retain all existing answers, and do not ask the user to open a panel. Nothing has been created."
+          : "A guided form is ready in the chat, prefilled with known details. Ask the user to complete the named fields there and review before approving. Do not ask a numbered list of questions. Nothing has been created.",
     };
   });
 }

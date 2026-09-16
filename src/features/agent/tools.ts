@@ -2,7 +2,7 @@ import "server-only";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
 import { readAgentCourt, searchAgentCourts } from "./courts";
-import { creationInputSchema } from "./creation-schema";
+import { creationPreparationSchema } from "./creation-schema";
 import { agentHelpIndex, readAgentHelp, searchAgentHelp } from "./help";
 import { readAgentGame, readAgentGroups, searchAgentGames } from "./reads";
 import {
@@ -127,8 +127,8 @@ export function createAgentTools(
     });
     tools.prepareCreation = tool({
       description:
-        "Open a guided creation form for a game, group, or browser-local Quick Play. Call as soon as the kind is known, including only details already supplied. Missing fields are completed in the form; never ask a numbered questionnaire. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
-      inputSchema: creationInputSchema,
+        "Prepare a game, group, or browser-local Quick Play. Call as soon as the kind is known, including only supplied details. By default missing fields use the question panel. If the user requests chat-only answers, set interactionMode chat, retain it across turns, read creationStatus to merge existing answers, and ask one missing question at a time. Complete chat drafts produce a review card requiring an explicit approval button; no text reply can execute creation. Never ask a numbered questionnaire. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
+      inputSchema: creationPreparationSchema,
       execute: (input) =>
         read(async () => {
           try {

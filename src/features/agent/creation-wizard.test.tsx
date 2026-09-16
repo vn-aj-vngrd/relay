@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -20,18 +21,51 @@ const initial: CreationProposal = {
   expiresAt: "2099-01-01T00:00:00.000Z",
 };
 beforeEach(() => {
-  HTMLDialogElement.prototype.showModal = function () {
-    this.setAttribute("open", "");
-  };
-  HTMLDialogElement.prototype.close = function () {
-    this.removeAttribute("open");
-  };
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    }
+  );
 });
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 describe("Guided creation approval", () => {
+  it("sizes the question panel from its composer anchor, not its own top edge", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ groups: [], hostedGames: [], courts: [] }),
+      })
+    );
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    vi.spyOn(host, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, 160, 768, 420)
+    );
+    try {
+      render(
+        <AgentCreationCard
+          proposal={initial}
+          disabled={false}
+          onChange={vi.fn()}
+          panelHost={host}
+        />
+      );
+      const panel = await screen.findByRole("region", {
+        name: "Creation questions",
+      });
+      expect(host).toContainElement(panel);
+      expect(panel).toHaveStyle({ maxHeight: "460px" });
+    } finally {
+      host.remove();
+    }
+  });
   it("retains unsaved answers on a safe dismissal and reuses the retry identity", async () => {
     const fetcher = vi.fn(async (_url: string, init?: RequestInit) => {
       if (init?.method === "PUT") throw new Error("Connection interrupted");
@@ -48,7 +82,9 @@ describe("Guided creation approval", () => {
         onChange={vi.fn()}
       />
     );
-    let dialog = await screen.findByRole("dialog");
+    let dialog = await screen.findByRole("region", {
+      name: "Creation questions",
+    });
     fireEvent.change(within(dialog).getByLabelText("Group name"), {
       target: { value: "Friday crew" },
     });
@@ -58,9 +94,11 @@ describe("Guided creation approval", () => {
         name: "Keep answers and close",
       })
     );
-    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(
+      screen.queryByRole("region", { name: "Creation questions" })
+    ).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Continue setup" }));
-    dialog = await screen.findByRole("dialog");
+    dialog = await screen.findByRole("region", { name: "Creation questions" });
     expect(within(dialog).getByLabelText("Group name")).toHaveValue(
       "Friday crew"
     );
@@ -112,7 +150,9 @@ describe("Guided creation approval", () => {
           onChange={vi.fn()}
         />
       );
-      const dialog = await screen.findByRole("dialog");
+      const dialog = await screen.findByRole("region", {
+        name: "Creation questions",
+      });
       fireEvent.change(within(dialog).getByLabelText("Group name"), {
         target: { value: "Friday crew" },
       });
@@ -174,7 +214,9 @@ describe("Guided creation approval", () => {
         onChange={vi.fn()}
       />
     );
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await screen.findByRole("region", {
+      name: "Creation questions",
+    });
     fireEvent.click(within(dialog).getByRole("button", { name: "Review" }));
     expect(within(dialog).getByText("Enter a group name.")).toBeVisible();
     fireEvent.change(within(dialog).getByLabelText("Group name"), {
@@ -201,5 +243,90 @@ describe("Guided creation approval", () => {
         })
       )
     );
+  });
+});
+
+describe("Above-input question panel", () => {
+  it("renders in the composer host and saves answers before a conversational correction", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const beforeChat: { current: (() => Promise<void>) | null } = {
+      current: null,
+    };
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) => ({
+      ok: true,
+      json: async () =>
+        init?.method === "PUT"
+          ? { ...initial, input: JSON.parse(String(init.body)).input }
+          : { groups: [], hostedGames: [], courts: [] },
+    }));
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <AgentCreationCard
+        panelHost={host}
+        beforeChat={beforeChat}
+        proposal={initial}
+        disabled={false}
+        onChange={vi.fn()}
+      />
+    );
+    const panel = await within(host).findByRole("region", {
+      name: "Creation questions",
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.change(within(panel).getByLabelText("Group name"), {
+      target: { value: "Saved before chat" },
+    });
+    await act(async () => {
+      await beforeChat.current?.();
+    });
+    const payload = JSON.parse(
+      String(
+        fetcher.mock.calls.find(([, init]) => init?.method === "PUT")?.[1]?.body
+      )
+    );
+    expect(payload).toMatchObject({
+      action: "save",
+      input: { title: "Saved before chat" },
+    });
+    expect(within(host).queryByRole("region")).toBeNull();
+    host.remove();
+  });
+  it("switches to one-question-at-a-time chat without creating a resource", async () => {
+    const chat = vi.fn();
+    const fetcher = vi.fn(async (_url: string, init?: RequestInit) => ({
+      ok: true,
+      json: async () =>
+        init?.method === "PUT"
+          ? { ...initial, input: JSON.parse(String(init.body)).input }
+          : { groups: [], hostedGames: [], courts: [] },
+    }));
+    vi.stubGlobal("fetch", fetcher);
+    render(
+      <AgentCreationCard
+        proposal={initial}
+        disabled={false}
+        onChange={vi.fn()}
+        onChatMode={chat}
+      />
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Answer in chat" })
+    );
+    await waitFor(() => expect(chat).toHaveBeenCalledOnce());
+    expect(
+      JSON.parse(
+        String(
+          fetcher.mock.calls.find(([, init]) => init?.method === "PUT")?.[1]
+            ?.body
+        )
+      )
+    ).toMatchObject({ action: "save", input: { interactionMode: "chat" } });
+    expect(fetcher.mock.calls.some(([, init]) => init?.method === "POST")).toBe(
+      false
+    );
+    expect(
+      screen.getByRole("button", { name: "Answer with choices" })
+    ).toBeVisible();
   });
 });

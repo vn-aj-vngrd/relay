@@ -1,13 +1,20 @@
 "use client";
-import { X } from "@phosphor-icons/react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { Check, X } from "@phosphor-icons/react";
+import {
+  type ReactNode,
+  type RefObject,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   DatePickerField,
   TimeComboboxField,
 } from "@/components/ui/date-time-picker";
-import { Dialog } from "@/components/ui/dialog";
-import { SelectField } from "@/components/ui/select-field";
+
 import { sessionAccents } from "@/features/sessions/accent";
 import {
   type CourtSuggestion,
@@ -16,14 +23,17 @@ import {
 import { CreationRequestError, creationRequest } from "./creation-client";
 import {
   applyReplaySource,
-  creationFieldErrors,
   creationFlow,
-  creationFlowLabels,
-  creationStepLabels,
-  creationSteps,
   type ReplaySource,
 } from "./creation-form-model";
+import {
+  creationQuestions,
+  questionErrors,
+  questionLabels,
+  questionTitle,
+} from "./creation-questions";
 import type { CreationInput, CreationProposal } from "./creation-schema";
+import { agentPopoverSurface } from "./popover-surface";
 
 type Options = {
   groups: { id: string; name: string }[];
@@ -40,7 +50,13 @@ export function AgentCreationWizard({
   onClose,
   onDismiss,
   renderReview,
+  panelHost,
+  beforeChat,
+  onChatMode,
 }: {
+  onChatMode?: () => void;
+  panelHost?: HTMLElement | null;
+  beforeChat?: RefObject<(() => Promise<void>) | null>;
   proposal: CreationProposal;
   open: boolean;
   disabled: boolean;
@@ -56,11 +72,11 @@ export function AgentCreationWizard({
 }) {
   const [saved, setSaved] = useState(proposal);
   const [input, setInput] = useState(proposal.input);
-  const steps = creationSteps(input);
+  const steps = creationQuestions(input);
   const [step, setStep] = useState(() => {
     if (proposal.status === "pending") return steps.length;
     const missing = steps.findIndex(
-      (item) => Object.keys(creationFieldErrors(input, item)).length
+      (item) => Object.keys(questionErrors(input, item)).length
     );
     return missing < 0 ? steps.length - 1 : missing;
   });
@@ -81,7 +97,8 @@ export function AgentCreationWizard({
   const [options, setOptions] = useState<Options | null>(null);
   const [optionsError, setOptionsError] = useState(false);
   const [revision, setRevision] = useState(0);
-  const dialog = useRef<HTMLDialogElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  const [maxHeight, setMaxHeight] = useState(420);
   const heading = useRef<HTMLHeadingElement>(null);
   const id = useId();
   const review = step === steps.length;
@@ -89,35 +106,32 @@ export function AgentCreationWizard({
   const flow = creationFlow(input);
   const blocked = disabled || pending || reviewPending;
   useEffect(() => {
-    const element = dialog.current;
-    if (!open) {
-      element?.close();
-      return;
-    }
-    element?.showModal();
+    if (!open) return;
     const resize = () => {
-      if (element && window.visualViewport) {
-        element.style.transform = window.matchMedia("(max-width: 639px)")
-          .matches
-          ? `translateY(-${Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop)}px)`
-          : "";
-        element.style.maxHeight = `${Math.max(120, window.visualViewport.height - 24)}px`;
-      }
+      const viewportTop = window.visualViewport?.offsetTop ?? 0;
+      const available = panelHost
+        ? panelHost.getBoundingClientRect().bottom - viewportTop - 12
+        : window.innerHeight * 0.55;
+      setMaxHeight(Math.max(140, Math.min(460, available)));
     };
     resize();
+    const observer = new ResizeObserver(resize);
+    if (panelHost?.parentElement) observer.observe(panelHost.parentElement);
+    window.addEventListener("resize", resize);
     window.visualViewport?.addEventListener("resize", resize);
+    window.visualViewport?.addEventListener("scroll", resize);
     return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", resize);
       window.visualViewport?.removeEventListener("resize", resize);
-      element?.close();
+      window.visualViewport?.removeEventListener("scroll", resize);
     };
-  }, [open]);
+  }, [open, panelHost]);
   useEffect(() => {
-    heading.current?.focus();
-  }, [step]);
+    if (open) heading.current?.focus();
+  }, [step, open]);
   useEffect(() => {
-    dialog.current
-      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
-      ?.focus();
+    panel.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
   }, [errors]);
   useEffect(() => {
     const controller = new AbortController();
@@ -158,8 +172,11 @@ export function AgentCreationWizard({
       throw failure;
     }
   }
-  async function persist(action: "save" | "review") {
-    const signature = JSON.stringify({ action, id: saved.id, input });
+  async function persist(
+    action: "save" | "review",
+    draft: CreationInput = { ...input, interactionMode: "questions" }
+  ) {
+    const signature = JSON.stringify({ action, id: saved.id, input: draft });
     let currentId = saved.id;
     // Resolve an ambiguous previous transition before changing its payload or identity.
     if (attempt.current && attempt.current.signature !== signature) {
@@ -169,8 +186,13 @@ export function AgentCreationWizard({
       attempt.current = null;
     }
     attempt.current ??= {
-      signature: JSON.stringify({ action, id: currentId, input }),
-      payload: { action, id: currentId, input, requestId: crypto.randomUUID() },
+      signature: JSON.stringify({ action, id: currentId, input: draft }),
+      payload: {
+        action,
+        id: currentId,
+        input: draft,
+        requestId: crypto.randomUUID(),
+      },
     };
     const next = await submitAttempt();
     attempt.current = null;
@@ -197,7 +219,17 @@ export function AgentCreationWizard({
     }
   }
   function next() {
-    const issues = creationFieldErrors(input, current);
+    if (step === steps.length - 1) {
+      const missing = steps.findIndex(
+        (question) => Object.keys(questionErrors(input, question)).length
+      );
+      if (missing >= 0 && missing !== step) {
+        setStep(missing);
+        setErrors(questionErrors(input, steps[missing]));
+        return;
+      }
+    }
+    const issues = questionErrors(input, current);
     setErrors(issues);
     if (Object.keys(issues).length) return;
     void run(async () => {
@@ -217,6 +249,26 @@ export function AgentCreationWizard({
       onClose(review ? saved : await persist("save"));
     });
   }
+  useEffect(() => {
+    if (!beforeChat || !open) return;
+    const save = async () => {
+      if (locked.current || reviewPending)
+        throw new Error("Wait for the current creation step to finish.");
+      locked.current = true;
+      setPending(true);
+      try {
+        await persist("save");
+        onDismiss();
+      } finally {
+        locked.current = false;
+        setPending(false);
+      }
+    };
+    beforeChat.current = save;
+    return () => {
+      if (beforeChat.current === save) beforeChat.current = null;
+    };
+  });
   const field = (
     key: "title" | "description" | "capacity" | "courts" | "notes",
     label: string,
@@ -261,420 +313,522 @@ export function AgentCreationWizard({
       ) : null}
     </div>
   );
-  const select = <
-    K extends "visibility" | "costKind" | "mode" | "intent" | "accentColor",
-  >(
+  function choices<K extends keyof CreationInput>(
     key: K,
     label: string,
-    values: { value: NonNullable<CreationInput[K]>; label: string }[]
-  ) => (
-    <SelectField
-      id={`${id}-${key}`}
-      label={label}
-      value={input[key] ?? (key === "accentColor" ? "violet" : "")}
-      options={values}
-      onValueChange={(value) => change(key, value as CreationInput[K])}
-    />
-  );
-  return (
-    <Dialog
-      ref={dialog}
-      aria-labelledby={`${id}-heading`}
-      aria-describedby={`${id}-hint`}
-      onCancel={(event) => {
-        event.preventDefault();
-        if (!blocked) close();
-      }}
-      className="!mb-0 !mt-auto !w-full !max-w-3xl !rounded-b-none sm:!mb-auto sm:!w-[calc(100%_-_2rem)] sm:!rounded-xl"
-    >
-      <div className="flex max-h-[inherit] flex-col">
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-line px-5 py-4">
-          <div>
-            <p className="text-xs text-muted">
-              Step {step + 1} of {steps.length + 1} · {creationFlowLabels[flow]}
-            </p>
-            <h2
-              ref={heading}
-              tabIndex={-1}
-              id={`${id}-heading`}
-              className="mt-1 text-lg font-semibold outline-none"
-            >
-              {review
-                ? "Review and approve"
-                : current === "source"
-                  ? flow === "groupGame"
-                    ? "Choose your group"
-                    : "Choose a game"
-                  : current === "details"
-                    ? input.kind === "group"
-                      ? "Group details"
-                      : "Court and schedule"
-                    : current === "players"
-                      ? "Who’s playing?"
-                      : input.kind === "quickPlay"
-                        ? "Courts and format"
-                        : "Players and settings"}
-            </h2>
-            <p id={`${id}-hint`} className="mt-1 text-xs text-muted">
-              Nothing is created until you approve the final review.
-            </p>
-          </div>
-          <button
-            type="button"
-            aria-label="Save and close setup"
-            disabled={blocked}
-            onClick={close}
-            className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted hover:text-ink"
+    values: { value: CreationInput[K]; label: string; description?: string }[]
+  ) {
+    return (
+      <fieldset className="space-y-1">
+        <legend className="sr-only">{label}</legend>
+        {values.map((item) => (
+          <label
+            key={String(item.value)}
+            className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors motion-reduce:transition-none hover:bg-surface-strong ${input[key] === item.value ? "bg-surface-strong text-ink" : "text-muted"}`}
           >
-            <X size={18} />
-          </button>
-        </header>
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-5">
-          {error ? (
-            <div className="mb-4">
-              <p role="alert" className="text-sm text-danger">
-                {error}
-              </p>
-              <Button variant="quiet" disabled={blocked} onClick={onDismiss}>
-                Keep answers and close
-              </Button>
-            </div>
-          ) : null}
-          {optionsError && !review ? (
-            <div className="mb-4 text-sm text-muted">
-              Couldn’t load courts and sources.{" "}
-              <button
-                type="button"
-                className="text-primary"
-                onClick={() => setRevision((value) => value + 1)}
-              >
-                Retry
-              </button>
-            </div>
-          ) : null}
-          {review ? (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {steps.map((item, index) => (
-                  <Button
-                    key={item}
-                    variant="quiet"
-                    disabled={blocked}
-                    onClick={() => edit(index)}
-                  >
-                    Edit {creationStepLabels[item].toLowerCase()}
-                  </Button>
-                ))}
-              </div>
-              {renderReview(
-                saved,
-                () => edit(0),
-                (result) => onClose(result ?? saved),
-                setReviewPending,
-                pending
-              )}
-            </>
-          ) : (
-            <fieldset disabled={blocked} className="space-y-5">
-              {current === "source"
-                ? (() => {
-                    const group = flow === "groupGame";
-                    const rows = group
-                      ? (options?.groups ?? []).map((item) => ({
-                          value: item.id,
-                          label: item.name,
-                        }))
-                      : (options?.hostedGames ?? [])
-                          .filter((game) =>
-                            flow === "replay"
-                              ? game.status === "completed"
-                              : game.status === "completed" && !game.groupId
-                          )
-                          .map((game) => ({
-                            value: game.id,
-                            label: game.title,
-                          }));
-                    const value = group ? input.groupId : input.sourceSessionId;
-                    if (value && !rows.some((item) => item.value === value))
-                      rows.unshift({ value, label: "Current selection" });
-                    return (
-                      <>
-                        <SelectField
-                          id={`${id}-source`}
-                          label={group ? "Group" : "Your game"}
-                          value={value ?? ""}
-                          options={[
-                            {
-                              value: "",
-                              label: options ? "Choose one" : "Loading…",
-                            },
-                            ...rows,
-                          ]}
-                          error={errors[group ? "groupId" : "sourceSessionId"]}
-                          onValueChange={(selected) => {
-                            change(
-                              group ? "groupId" : "sourceSessionId",
-                              selected || undefined
-                            );
-                            const game = options?.hostedGames.find(
-                              (item) => item.id === selected
-                            );
-                            if (flow === "replay" && (game || !selected))
-                              setInput((previous) =>
-                                applyReplaySource(
-                                  previous,
-                                  options?.hostedGames.find(
-                                    (item) => item.id === input.sourceSessionId
-                                  ),
-                                  game
-                                )
-                              );
-                          }}
-                        />
-                        <p className="text-xs text-muted">
-                          Shows up to 30 of your recent games and groups.{" "}
-                          {flow === "replay"
-                            ? "Only completed games can be replayed."
-                            : flow === "crew"
-                              ? "Only your completed games without a group are eligible."
-                              : "The final review lists everyone who will be invited."}
-                        </p>
-                        {options && !rows.length ? (
-                          <p className="text-sm text-muted">
-                            No eligible {group ? "groups" : "games"} found.
-                            Cancel and use the regular creation page, or give
-                            Agent a game link.
-                          </p>
-                        ) : null}
-                      </>
-                    );
-                  })()
-                : null}
-              {current === "details" ? (
-                <>
-                  {field(
-                    "title",
-                    input.kind === "group" ? "Group name" : "Game name",
-                    input.kind === "group" ? 60 : 80
-                  )}
-                  {input.kind === "group" ? (
-                    field("description", "Description (optional)", 300)
-                  ) : (
-                    <>
-                      <div>
-                        <label
-                          htmlFor="venue"
-                          className="block text-sm font-medium"
-                        >
-                          Court
-                        </label>
-                        <VenueCombobox
-                          courts={(options?.courts ?? []).map((court) => ({
-                            ...court,
-                            address: court.address ?? "",
-                          }))}
-                          defaultValue={input.venue}
-                          defaultVenueId={input.venueId}
-                          defaultAddress={input.venueAddress}
-                          error={errors.venue}
-                          onSelectionChange={(value) =>
-                            setInput((previous) => ({
-                              ...previous,
-                              venue: value.venue || undefined,
-                              venueId: value.venueId,
-                              venueAddress: value.venueAddress,
-                            }))
-                          }
-                        />
-                        {errors.venue ? (
-                          <p
-                            id="venue-error"
-                            className="mt-1 text-xs text-danger"
-                          >
-                            {errors.venue}
-                          </p>
-                        ) : null}
-                      </div>
-                      <DatePickerField
-                        id={`${id}-date`}
-                        label="Date (Philippine time)"
-                        value={input.date ?? ""}
-                        error={errors.date}
-                        onValueChange={(value) =>
-                          change("date", value || undefined)
-                        }
-                      />
-                      <div className="grid grid-cols-2 gap-4">
-                        <TimeComboboxField
-                          id={`${id}-start`}
-                          label="Start time"
-                          value={input.start ?? ""}
-                          error={errors.start}
-                          onValueChange={(value) =>
-                            change("start", value || undefined)
-                          }
-                        />
-                        <TimeComboboxField
-                          id={`${id}-end`}
-                          label="End time"
-                          value={input.end ?? ""}
-                          error={errors.end}
-                          onValueChange={(value) =>
-                            change("end", value || undefined)
-                          }
-                        />
-                      </div>
-                    </>
-                  )}
-                </>
+            <input
+              type="radio"
+              name={`${id}-${key}`}
+              checked={input[key] === item.value}
+              onChange={() => change(key, item.value)}
+              className="mt-1 accent-primary"
+            />
+            <span className="min-w-0">
+              <span className="font-medium">{item.label}</span>
+              {item.description ? (
+                <span className="mt-0.5 block text-xs text-muted">
+                  {item.description}
+                </span>
               ) : null}
-              {current === "players" ? (
-                <label
-                  className="block text-sm font-medium"
-                  htmlFor={`${id}-players`}
-                >
-                  Player names, one per line
-                  <textarea
-                    id={`${id}-players`}
-                    rows={5}
-                    className="field mt-1.5 w-full"
-                    defaultValue={input.players?.join("\n")}
-                    aria-invalid={Boolean(errors.players)}
-                    aria-describedby={
-                      errors.players ? `${id}-players-error` : undefined
-                    }
-                    onChange={(event) =>
-                      change(
-                        "players",
-                        event.target.value
-                          .split("\n")
-                          .map((name) => name.trim())
-                          .filter(Boolean)
-                      )
+            </span>
+          </label>
+        ))}
+      </fieldset>
+    );
+  }
+  if (!open) return null;
+  const content = (
+    <section
+      ref={panel}
+      role="region"
+      aria-label="Creation questions"
+      style={{ maxHeight }}
+      className={`flex flex-col ${agentPopoverSurface}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !event.defaultPrevented) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!blocked) close();
+        }
+      }}
+    >
+      <header className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2">
+        <nav
+          aria-label="Creation steps"
+          className="flex min-w-0 flex-1 gap-1 overflow-x-auto"
+          onKeyDown={(event) => {
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            const buttons = Array.from(
+              event.currentTarget.querySelectorAll<HTMLButtonElement>(
+                "button:not(:disabled)"
+              )
+            );
+            const currentIndex = buttons.indexOf(
+              document.activeElement as HTMLButtonElement
+            );
+            buttons[
+              (currentIndex +
+                (event.key === "ArrowRight" ? 1 : buttons.length - 1)) %
+                buttons.length
+            ]?.focus();
+          }}
+        >
+          {[...steps, "review" as const].map((item, index) => (
+            <button
+              type="button"
+              key={item}
+              aria-label={`Go to ${item === "review" ? "review" : questionLabels[item].toLowerCase()}`}
+              disabled={blocked}
+              aria-current={step === index ? "step" : undefined}
+              onClick={() => {
+                if (index === steps.length) {
+                  const missing = steps.findIndex(
+                    (question) =>
+                      Object.keys(questionErrors(input, question)).length
+                  );
+                  if (missing >= 0) {
+                    void edit(missing);
+                    return;
+                  }
+                  void run(async () => {
+                    await persist("review");
+                    setStep(steps.length);
+                  });
+                } else void edit(index);
+              }}
+              className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium ${step === index ? "bg-surface-strong text-ink" : "text-muted hover:text-ink"}`}
+            >
+              {item !== "review" &&
+              !Object.keys(questionErrors(input, item)).length ? (
+                <Check size={12} aria-hidden />
+              ) : null}
+              {item === "review" ? "Review" : questionLabels[item]}
+            </button>
+          ))}
+        </nav>
+        <button
+          type="button"
+          aria-label="Save and close setup"
+          disabled={blocked}
+          onClick={close}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted hover:bg-surface-strong hover:text-ink"
+        >
+          <X size={16} aria-hidden />
+        </button>
+      </header>
+      <div className="min-h-0 overflow-y-auto overscroll-contain p-4">
+        <h2
+          ref={heading}
+          tabIndex={-1}
+          className="text-sm font-semibold outline-none"
+        >
+          {review ? "Review and approve" : questionTitle(input, current)}
+        </h2>
+        <p className="mb-4 mt-1 text-xs text-muted">
+          {review
+            ? "Nothing is created until you approve."
+            : "Choose an answer here, or tell Agent what to change in the chat below."}
+        </p>
+        {error ? (
+          <div className="mb-3">
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+            <Button variant="quiet" disabled={blocked} onClick={onDismiss}>
+              Keep answers and close
+            </Button>
+          </div>
+        ) : null}
+        {optionsError && !review ? (
+          <p className="mb-3 text-sm text-muted">
+            Couldn’t load courts and sources.{" "}
+            <button
+              type="button"
+              className="text-primary"
+              onClick={() => setRevision((value) => value + 1)}
+            >
+              Retry
+            </button>
+          </p>
+        ) : null}
+        {review ? (
+          renderReview(
+            saved,
+            () => edit(0),
+            (result) => onClose(result ?? saved),
+            setReviewPending,
+            pending
+          )
+        ) : (
+          <fieldset disabled={blocked} className="space-y-4">
+            {current === "source"
+              ? (() => {
+                  const group = flow === "groupGame";
+                  const rows = group
+                    ? (options?.groups ?? []).map((item) => ({
+                        value: item.id,
+                        label: item.name,
+                      }))
+                    : (options?.hostedGames ?? [])
+                        .filter(
+                          (game) =>
+                            game.status === "completed" &&
+                            (flow === "replay" || !game.groupId)
+                        )
+                        .map((game) => ({ value: game.id, label: game.title }));
+                  const key = group ? "groupId" : "sourceSessionId";
+                  const value = input[key];
+                  if (value && !rows.some((row) => row.value === value))
+                    rows.unshift({ value, label: "Current selection" });
+                  return (
+                    <fieldset className="space-y-1">
+                      <legend className="sr-only">
+                        {group ? "Group" : "Your game"}
+                      </legend>
+                      {rows.map((row) => (
+                        <label
+                          key={row.value}
+                          className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-surface-strong ${value === row.value ? "bg-surface-strong" : ""}`}
+                        >
+                          <input
+                            type="radio"
+                            name={`${id}-source`}
+                            checked={value === row.value}
+                            onChange={() => {
+                              if (flow === "replay")
+                                setInput((previous) =>
+                                  applyReplaySource(
+                                    previous,
+                                    options?.hostedGames.find(
+                                      (game) =>
+                                        game.id === previous.sourceSessionId
+                                    ),
+                                    options?.hostedGames.find(
+                                      (game) => game.id === row.value
+                                    )
+                                  )
+                                );
+                              else change(key, row.value);
+                            }}
+                          />
+                          <span className="truncate">{row.label}</span>
+                        </label>
+                      ))}
+                      {!options ? (
+                        <p role="status" className="text-sm text-muted">
+                          Loading choices…
+                        </p>
+                      ) : !rows.length ? (
+                        <p className="text-sm text-muted">
+                          No eligible {group ? "groups" : "completed games"}{" "}
+                          found. Tell Agent a game link, or cancel to use the
+                          regular creation page.
+                        </p>
+                      ) : null}
+                      <p className="pt-2 text-xs text-muted">
+                        Up to 30 recent choices.{" "}
+                        {flow === "crew"
+                          ? "Only completed games without a group are eligible."
+                          : flow === "replay"
+                            ? "Only completed games can be replayed."
+                            : "You’ll review the people invited before approval."}
+                      </p>
+                      {errors[key] ? (
+                        <p role="alert" className="text-sm text-danger">
+                          {errors[key]}
+                        </p>
+                      ) : null}
+                    </fieldset>
+                  );
+                })()
+              : null}
+            {current === "name" ? (
+              <>
+                {field(
+                  "title",
+                  input.kind === "group" ? "Group name" : "Game name",
+                  input.kind === "group" ? 60 : 80
+                )}
+                {input.kind === "group"
+                  ? field("description", "Description (optional)", 300)
+                  : null}
+              </>
+            ) : null}
+            {current === "court" ? (
+              <div>
+                <label htmlFor="venue" className="block text-sm font-medium">
+                  Court
+                </label>
+                <VenueCombobox
+                  courts={(options?.courts ?? []).map((court) => ({
+                    ...court,
+                    address: court.address ?? "",
+                  }))}
+                  defaultValue={input.venue}
+                  defaultVenueId={input.venueId}
+                  defaultAddress={input.venueAddress}
+                  error={errors.venue}
+                  onSelectionChange={(value) =>
+                    setInput((previous) => ({
+                      ...previous,
+                      venue: value.venue || undefined,
+                      venueId: value.venueId,
+                      venueAddress: value.venueAddress,
+                    }))
+                  }
+                />
+                {errors.venue ? (
+                  <p id="venue-error" className="mt-1 text-xs text-danger">
+                    {errors.venue}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {current === "schedule" ? (
+              <>
+                <DatePickerField
+                  id={`${id}-date`}
+                  label="Date (Philippine time)"
+                  value={input.date ?? ""}
+                  error={errors.date}
+                  onValueChange={(value) => change("date", value || undefined)}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <TimeComboboxField
+                    id={`${id}-start`}
+                    label="Start time"
+                    value={input.start ?? ""}
+                    error={errors.start}
+                    onValueChange={(value) =>
+                      change("start", value || undefined)
                     }
                   />
-                  {errors.players ? (
-                    <span
-                      id={`${id}-players-error`}
-                      className="mt-1 block text-xs text-danger"
-                    >
-                      {errors.players}
-                    </span>
-                  ) : null}
+                  <TimeComboboxField
+                    id={`${id}-end`}
+                    label="End time"
+                    value={input.end ?? ""}
+                    error={errors.end}
+                    onValueChange={(value) => change("end", value || undefined)}
+                  />
+                </div>
+              </>
+            ) : null}
+            {current === "players" ? (
+              <div>
+                <label
+                  htmlFor={`${id}-players`}
+                  className="text-sm font-medium"
+                >
+                  Player names, one per line
                 </label>
-              ) : null}
-              {current === "settings" ? (
-                <>
-                  {input.kind === "game"
-                    ? field("capacity", "Player capacity")
-                    : null}
+                <textarea
+                  id={`${id}-players`}
+                  rows={4}
+                  className="field mt-1.5 w-full"
+                  defaultValue={input.players?.join("\n")}
+                  aria-invalid={Boolean(errors.players)}
+                  onChange={(event) =>
+                    change(
+                      "players",
+                      event.target.value
+                        .split("\n")
+                        .map((name) => name.trim())
+                        .filter(Boolean)
+                    )
+                  }
+                />
+                {errors.players ? (
+                  <p className="text-xs text-danger">{errors.players}</p>
+                ) : null}
+              </div>
+            ) : null}
+            {current === "roster" ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  {field("capacity", "Player capacity")}
                   {field("courts", "Court count")}
-                  {input.kind === "quickPlay" ? (
-                    select("mode", "Format", [
-                      { value: "queue", label: "Paddle Stack" },
-                      { value: "random", label: "Mix It Up" },
-                      { value: "balanced", label: "Balanced Mix" },
-                      { value: "king_of_court", label: "Court Climb" },
-                    ])
-                  ) : (
-                    <>
-                      {select("visibility", "Visibility", [
-                        { value: "link", label: "Link only" },
-                        { value: "private", label: "Private" },
-                        { value: "public", label: "Public" },
-                      ])}
-                      {select(
-                        "accentColor",
-                        "Game color",
-                        sessionAccents.map((accent) => ({
-                          value: accent.id,
-                          label: accent.label,
-                        }))
-                      )}
-                      {select("costKind", "Payment", [
-                        { value: "unspecified", label: "Decide later" },
-                        { value: "free", label: "Free" },
-                        {
-                          value: "collect",
-                          label: "Set up collection after creation",
-                        },
-                      ])}
-                      {select("intent", "Create as", [
-                        { value: "published", label: "Published game" },
-                        { value: "draft", label: "Draft (no invitations)" },
-                      ])}
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={input.hostPlaying}
-                          onChange={(event) =>
-                            change("hostPlaying", event.target.checked)
-                          }
-                        />
-                        I’m playing
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={input.requiresApproval}
-                          onChange={(event) =>
-                            change("requiresApproval", event.target.checked)
-                          }
-                        />
-                        Require approval to join
-                      </label>
-                      {field("notes", "Notes (optional)", 1200)}
-                    </>
-                  )}
-                </>
-              ) : null}
-            </fieldset>
-          )}
-        </div>
-        <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                </div>
+                {choices("hostPlaying", "Your participation", [
+                  { value: true, label: "I’m playing" },
+                  { value: false, label: "I’m organizing only" },
+                ])}
+              </>
+            ) : null}
+            {current === "courts" ? field("courts", "Court count") : null}
+            {current === "format"
+              ? choices("mode", "Format", [
+                  {
+                    value: "queue",
+                    label: "Paddle Stack",
+                    description: "Rotate through a player queue.",
+                  },
+                  {
+                    value: "random",
+                    label: "Mix It Up",
+                    description: "Randomize the matchups.",
+                  },
+                  {
+                    value: "balanced",
+                    label: "Balanced Mix",
+                    description: "Balance matchups across players.",
+                  },
+                  {
+                    value: "king_of_court",
+                    label: "Court Climb",
+                    description: "Move between courts based on results.",
+                  },
+                ])
+              : null}
+            {current === "access" ? (
+              <>
+                {choices("visibility", "Visibility", [
+                  {
+                    value: "link",
+                    label: "Anyone with the link",
+                    description: "Share the game directly with your players.",
+                  },
+                  {
+                    value: "private",
+                    label: "Private",
+                    description: "Keep the game for invited players.",
+                  },
+                  {
+                    value: "public",
+                    label: "Public",
+                    description:
+                      "List the game when its publication requirements are met.",
+                  },
+                ])}
+                {choices("requiresApproval", "Join approval", [
+                  { value: false, label: "No approval needed" },
+                  { value: true, label: "Approve requests to join" },
+                ])}
+              </>
+            ) : null}
+            {current === "payment"
+              ? choices("costKind", "Payment", [
+                  { value: "unspecified", label: "Decide later" },
+                  { value: "free", label: "Free to play" },
+                  {
+                    value: "collect",
+                    label: "Collect payment",
+                    description:
+                      "Set up amounts and instructions after creation.",
+                  },
+                ])
+              : null}
+            {current === "finish" ? (
+              <>
+                {choices("intent", "Create as", [
+                  {
+                    value: "published",
+                    label: "Publish the game",
+                    description: "Send the invitations shown in your review.",
+                  },
+                  {
+                    value: "draft",
+                    label: "Save a draft",
+                    description: "Keep planning; no invitations are sent.",
+                  },
+                ])}
+                <details>
+                  <summary className="cursor-pointer text-sm text-muted">
+                    Game color and notes
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    {choices(
+                      "accentColor",
+                      "Game color",
+                      sessionAccents.map((accent) => ({
+                        value: accent.id,
+                        label: accent.label,
+                      }))
+                    )}
+                    {field("notes", "Notes (optional)", 1200)}
+                  </div>
+                </details>
+              </>
+            ) : null}
+          </fieldset>
+        )}
+      </div>
+      <footer className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-line px-3 py-2">
+        <Button
+          variant="quiet"
+          disabled={blocked}
+          onClick={() =>
+            void run(async () => {
+              const current = attempt.current ? await submitAttempt() : saved;
+              attempt.current = null;
+              setSaved(current);
+              const cancelled = await creationRequest<CreationProposal>(
+                "/api/agent/creations",
+                {
+                  method: "POST",
+                  body: JSON.stringify({ id: current.id, action: "cancel" }),
+                }
+              );
+              onClose(cancelled);
+            })
+          }
+        >
+          Cancel
+        </Button>
+        {!review && onChatMode ? (
           <Button
             variant="quiet"
             disabled={blocked}
             onClick={() =>
               void run(async () => {
-                const current = attempt.current ? await submitAttempt() : saved;
-                attempt.current = null;
-                setSaved(current);
-                const cancelled = await creationRequest<CreationProposal>(
-                  "/api/agent/creations",
-                  {
-                    method: "POST",
-                    body: JSON.stringify({ id: current.id, action: "cancel" }),
-                  }
-                );
-                onClose(cancelled);
+                const result = await persist("save", {
+                  ...input,
+                  interactionMode: "chat",
+                });
+                if (beforeChat) beforeChat.current = null;
+                onClose(result);
+                onChatMode();
               })
             }
           >
-            Cancel
+            Answer in chat
           </Button>
-          <div className="flex gap-2">
-            {step > 0 ? (
-              <Button
-                variant="secondary"
-                disabled={blocked}
-                onClick={() => edit(step - 1)}
-              >
-                Back
-              </Button>
-            ) : null}
-            {!review ? (
-              <Button disabled={blocked} onClick={next}>
-                {pending
-                  ? "Saving…"
-                  : step === steps.length - 1
-                    ? "Review"
-                    : "Next"}
-              </Button>
-            ) : null}
-          </div>
-        </footer>
-      </div>
-    </Dialog>
+        ) : null}
+        <span className="text-xs text-muted">
+          {step + 1} of {steps.length + 1}
+        </span>
+        <div className="flex gap-2">
+          {step > 0 ? (
+            <Button
+              variant="quiet"
+              disabled={blocked}
+              onClick={() => edit(step - 1)}
+            >
+              Back
+            </Button>
+          ) : null}
+          {!review ? (
+            <Button disabled={blocked} onClick={next}>
+              {pending
+                ? "Saving…"
+                : step === steps.length - 1
+                  ? "Review"
+                  : "Next"}
+            </Button>
+          ) : null}
+        </div>
+      </footer>
+    </section>
   );
+  return panelHost ? createPortal(content, panelHost) : content;
 }

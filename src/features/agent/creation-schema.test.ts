@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   creationForm,
   creationInputSchema,
+  creationPreparationSchema,
   validateCreation,
 } from "./creation-schema";
 
@@ -17,6 +18,26 @@ const game = {
   courts: 1,
 };
 describe("Agent creation drafts", () => {
+  it("distinguishes omitted replay access settings from explicit defaults", () => {
+    const omitted = creationPreparationSchema.parse({ kind: "game" });
+    expect(omitted.visibility).toBeUndefined();
+    expect(omitted.requiresApproval).toBeUndefined();
+    const explicit = creationPreparationSchema.parse({
+      kind: "game",
+      visibility: "link",
+      requiresApproval: false,
+    });
+    expect(explicit.visibility).toBe("link");
+    expect(explicit.requiresApproval).toBe(false);
+    expect(creationInputSchema.parse(omitted)).toMatchObject({
+      visibility: "link",
+      requiresApproval: false,
+    });
+    expect(
+      creationPreparationSchema.safeParse({ kind: "group", flow: "replay" })
+        .success
+    ).toBe(false);
+  });
   it("keeps an incomplete conversation from becoming a created draft", () => {
     const input = creationInputSchema.parse({ kind: "game", intent: "draft" });
     expect(validateCreation(input, now).length).toBeGreaterThan(0);

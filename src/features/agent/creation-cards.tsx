@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { creationRequest } from "./creation-client";
 import type { CreationProposal } from "./creation-schema";
@@ -274,17 +274,29 @@ export function AgentCreationReview({
 }
 
 export function AgentCreationCard({
+  onChatMode,
+  panelHost,
+  beforeChat,
   proposal,
   disabled,
   onChange,
 }: {
+  onChatMode?: () => void;
+  panelHost?: HTMLElement | null;
+  beforeChat?: RefObject<(() => Promise<void>) | null>;
   proposal: CreationProposal;
   disabled: boolean;
   onEdit?: () => void;
   onChange: () => void;
 }) {
-  const [open, setOpen] = useState(proposal.status === "collecting");
-  const [started, setStarted] = useState(proposal.status === "collecting");
+  const [open, setOpen] = useState(
+    proposal.status === "collecting" &&
+      proposal.input.interactionMode !== "chat"
+  );
+  const [started, setStarted] = useState(
+    proposal.status === "collecting" &&
+      proposal.input.interactionMode !== "chat"
+  );
   function showSetup() {
     setStarted(true);
     setOpen(true);
@@ -302,11 +314,15 @@ export function AgentCreationCard({
         >
           <h3 className="font-semibold">{current.preview.title}</h3>
           <p className="mt-1 text-sm text-muted">
-            Complete the setup, then review and approve. Nothing has been
-            created.
+            {current.input.interactionMode === "chat"
+              ? "Continue in chat—Agent will ask one question at a time."
+              : "Answer a few questions above the input, or tell Agent what to change."}{" "}
+            Nothing is created until you approve.
           </p>
           <Button className="mt-3" disabled={disabled} onClick={showSetup}>
-            Continue setup
+            {current.input.interactionMode === "chat"
+              ? "Answer with choices"
+              : "Continue setup"}
           </Button>
         </section>
       ) : (
@@ -323,6 +339,9 @@ export function AgentCreationCard({
       {started ? (
         <AgentCreationWizard
           proposal={current}
+          panelHost={panelHost}
+          beforeChat={beforeChat}
+          onChatMode={onChatMode}
           open={open}
           onDismiss={() => setOpen(false)}
           disabled={disabled}

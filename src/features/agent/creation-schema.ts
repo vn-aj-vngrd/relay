@@ -3,9 +3,10 @@ import { createGroupSchema } from "@/features/groups/domain";
 import { validateQuickPlayConfiguration } from "@/features/matches/quick-play-session";
 import { createSessionSchema } from "@/features/sessions/domain";
 
-export const creationInputSchema = z
+const creationBaseSchema = z
   .object({
     kind: z.enum(["game", "group", "quickPlay"]),
+    interactionMode: z.enum(["questions", "chat"]).optional(),
     flow: z
       .enum([
         "game",
@@ -47,19 +48,36 @@ export const creationInputSchema = z
       .enum(["queue", "random", "balanced", "king_of_court"])
       .default("queue"),
   })
-  .strict()
-  .refine(
-    (input) =>
-      !input.flow ||
-      input.kind ===
-        (input.flow === "quickPlay"
-          ? "quickPlay"
-          : input.flow === "group" || input.flow === "crew"
-            ? "group"
-            : "game"),
-    { message: "Choose a creation flow matching this action.", path: ["flow"] }
-  );
+  .strict();
+const matchesCreationFlow = (
+  input: Pick<z.infer<typeof creationBaseSchema>, "kind" | "flow">
+) =>
+  !input.flow ||
+  input.kind ===
+    (input.flow === "quickPlay"
+      ? "quickPlay"
+      : input.flow === "group" || input.flow === "crew"
+        ? "group"
+        : "game");
+const flowError = {
+  message: "Choose a creation flow matching this action.",
+  path: ["flow"],
+};
+export const creationInputSchema = creationBaseSchema.refine(
+  matchesCreationFlow,
+  flowError
+);
 export type CreationInput = z.infer<typeof creationInputSchema>;
+// Preparation must distinguish omitted replay settings from explicit user choices.
+export const creationPreparationSchema = creationBaseSchema
+  .extend({
+    visibility: creationBaseSchema.shape.visibility.unwrap().optional(),
+    requiresApproval: creationBaseSchema.shape.requiresApproval
+      .unwrap()
+      .optional(),
+  })
+  .refine(matchesCreationFlow, flowError);
+export type CreationPreparation = z.infer<typeof creationPreparationSchema>;
 export type CreationPreview = {
   collecting?: boolean;
   replacement?: { id: string; requestId: string };

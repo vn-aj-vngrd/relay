@@ -103,6 +103,9 @@ export function AgentChat({
   };
   const [usage, setUsage] = useState(initialUsage);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [creationPanelHost, setCreationPanelHost] =
+    useState<HTMLDivElement | null>(null);
+  const beforeCreationChat = useRef<(() => Promise<void>) | null>(null);
   const session = useAgentSession();
   const [chat] = useState(() => {
     session.chat ??= new Chat({ transport: createTransport(session) });
@@ -358,6 +361,8 @@ export function AgentChat({
     follow.current = true;
     setInput("");
     try {
+      if (beforeCreationChat.current) await beforeCreationChat.current();
+      if (controller.signal.aborted) return;
       if (!session.conversationId) {
         const saved = await createConversation(text, controller.signal);
         if (controller.signal.aborted) return;
@@ -503,6 +508,13 @@ export function AgentChat({
                     )
                     .map((proposal) => (
                       <AgentCreationCard
+                        panelHost={creationPanelHost}
+                        onChatMode={() =>
+                          void send(
+                            "Let’s finish this in chat. Ask me one question at a time."
+                          )
+                        }
+                        beforeChat={beforeCreationChat}
                         key={proposal.id}
                         proposal={proposal}
                         disabled={busy || !available}
@@ -562,6 +574,13 @@ export function AgentChat({
             )
             .map((proposal) => (
               <AgentCreationCard
+                panelHost={creationPanelHost}
+                onChatMode={() =>
+                  void send(
+                    "Let’s finish this in chat. Ask me one question at a time."
+                  )
+                }
+                beforeChat={beforeCreationChat}
                 key={proposal.id}
                 proposal={proposal}
                 disabled={busy || !available}
@@ -622,62 +641,68 @@ export function AgentChat({
             </Button>
           </div>
         ) : null}
-        <form
-          noValidate
-          onSubmit={(event) => {
-            event.preventDefault();
-            void send(input);
-          }}
-          className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
-        >
-          <AgentComposerEditor
-            ref={field}
-            capabilities={enabledCapabilities}
-            onCreate={(flow) => void startCreation(flow)}
-            onActionsOpenChange={setActionsOpen}
-            value={input}
-            onChange={setInput}
-            onSubmit={(text) => {
-              void send(text);
-            }}
-            disabled={!available || busy}
+        <div className="relative">
+          <div
+            ref={setCreationPanelHost}
+            className={`absolute inset-x-0 bottom-full z-40 mb-3 ${actionsOpen ? "hidden" : ""}`}
           />
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              aria-label="Actions"
-              aria-expanded={actionsOpen}
-              aria-haspopup="listbox"
+          <form
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              void send(input);
+            }}
+            className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
+          >
+            <AgentComposerEditor
+              ref={field}
+              capabilities={enabledCapabilities}
+              onCreate={(flow) => void startCreation(flow)}
+              onActionsOpenChange={setActionsOpen}
+              value={input}
+              onChange={setInput}
+              onSubmit={(text) => {
+                void send(text);
+              }}
               disabled={!available || busy}
-              onClick={() => field.current?.openActions()}
-              className={`pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
-            >
-              <Plus size={18} aria-hidden />
-              <Tooltip content="Actions" side="top" />
-            </button>
-            {status === "submitted" || status === "streaming" ? (
-              <Button
+            />
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <button
                 type="button"
-                variant="secondary"
-                aria-label="Stop response"
-                onClick={() => {
-                  void stop();
-                }}
+                aria-label="Actions"
+                aria-expanded={actionsOpen}
+                aria-haspopup="listbox"
+                disabled={!available || busy}
+                onClick={() => field.current?.openActions()}
+                className={`pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
               >
-                <Stop size={16} aria-hidden />
-                Stop
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                aria-label="Send message"
-                disabled={!available || busy || !input.trim()}
-              >
-                <ArrowUp size={18} aria-hidden />
-              </Button>
-            )}
-          </div>
-        </form>
+                <Plus size={18} aria-hidden />
+                <Tooltip content="Actions" side="top" />
+              </button>
+              {status === "submitted" || status === "streaming" ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-label="Stop response"
+                  onClick={() => {
+                    void stop();
+                  }}
+                >
+                  <Stop size={16} aria-hidden />
+                  Stop
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  aria-label="Send message"
+                  disabled={!available || busy || !input.trim()}
+                >
+                  <ArrowUp size={18} aria-hidden />
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
         <p className="mt-2 text-center text-xs leading-5 text-muted">
           AI can make mistakes. Check sources and don’t share secrets.
         </p>
