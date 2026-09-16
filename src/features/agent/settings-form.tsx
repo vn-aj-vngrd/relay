@@ -154,8 +154,8 @@ export function AgentSettingsForm({
                 Provider policy mode: OpenRouter and the selected provider may
                 retain or use messages and authorized game data under their own
                 policies. Free models may require this mode. Secrets remain
-                protected and tools stay read-only. Save this choice, then test
-                the connection.
+                protected and creations still require confirmation. Save this
+                choice, then test the connection.
               </p>
             ) : null}
           </div>
@@ -180,6 +180,16 @@ export function AgentSettingsForm({
               value: draft.allowCourtSearch,
             },
             {
+              name: "allowGameCreation",
+              label: "Allow game creation and local Quick Play",
+              value: draft.allowGameCreation,
+            },
+            {
+              name: "allowGroupCreation",
+              label: "Allow group and crew creation",
+              value: draft.allowGroupCreation,
+            },
+            {
               name: "allowHelp",
               label: "Allow Help Center answers",
               value: draft.allowHelp,
@@ -202,8 +212,8 @@ export function AgentSettingsForm({
             </label>
           ))}
           <p className="text-sm leading-6 text-muted">
-            Read-only access, authorization, privacy routing and tool limits are
-            always enforced. These settings cannot enable actions.
+            Creation is off by default. Users review and confirm each creation.
+            Permissions, hosting limits and privacy routing always apply.
           </p>
           <div>
             <label

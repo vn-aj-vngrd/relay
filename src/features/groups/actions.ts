@@ -1,29 +1,19 @@
 "use server";
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { db } from "@/db/client";
-import {
-  groupMembers,
-  groups,
-  profiles,
-  sessionPlayers,
-  sessions,
-} from "@/db/schema";
-import { trackSessionMilestone } from "@/features/analytics/events";
+import { groupMembers, groups, profiles } from "@/db/schema";
+
 import { requireUser } from "@/features/auth/session";
 import { validateAvatarFile } from "@/features/players/avatar-validation";
 import { assertRateLimit, checkRateLimit } from "@/lib/rate-limit";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-import {
-  addGroupMemberSchema,
-  createGroupSchema,
-  groupSlug,
-  updateGroupSchema,
-} from "./domain";
+import { createGroupCommand } from "./create-group-command";
+import { addGroupMemberSchema, updateGroupSchema } from "./domain";
 
 async function guardGroupMutation(userId: string) {
   await assertRateLimit(
@@ -43,91 +33,9 @@ export async function createGroupAction(
   _: GroupActionState,
   formData: FormData
 ): Promise<GroupActionState> {
-  const user = await requireUser();
-  await guardGroupMutation(user.id);
-  const parsed = createGroupSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-    sourceSessionId: formData.get("sourceSessionId") || undefined,
-  });
-  if (!parsed.success)
-    return {
-      error: "Check the group details below.",
-      values: {
-        name: String(formData.get("name") ?? ""),
-        description: String(formData.get("description") ?? ""),
-      },
-      fieldErrors: parsed.error.flatten().fieldErrors,
-    };
-
-  let sourcePlayerIds: string[] = [];
-  if (parsed.data.sourceSessionId) {
-    const source = await db.query.sessions.findFirst({
-      where: and(
-        eq(sessions.id, parsed.data.sourceSessionId),
-        eq(sessions.hostId, user.id)
-      ),
-    });
-    if (!source)
-      return { error: "Only the session host can save this crew as a group." };
-    if (source.groupId)
-      return { error: "This session already belongs to a group." };
-    const players = await db
-      .select({ userId: sessionPlayers.userId })
-      .from(sessionPlayers)
-      .where(
-        and(
-          eq(sessionPlayers.sessionId, source.id),
-          eq(sessionPlayers.rsvp, "going")
-        )
-      );
-    sourcePlayerIds = players
-      .map(({ userId }) => userId)
-      .filter((id): id is string => Boolean(id));
-  }
-
-  const group = await db.transaction(async (tx) => {
-    const [created] = await tx
-      .insert(groups)
-      .values({
-        slug: groupSlug(parsed.data.name),
-        ownerId: user.id,
-        name: parsed.data.name,
-        description: parsed.data.description || null,
-      })
-      .returning();
-    const memberIds = [...new Set([user.id, ...sourcePlayerIds])];
-    await tx.insert(groupMembers).values(
-      memberIds.map((userId) => ({
-        groupId: created.id,
-        userId,
-        role: userId === user.id ? ("owner" as const) : ("member" as const),
-      }))
-    );
-    if (parsed.data.sourceSessionId)
-      await tx
-        .update(sessions)
-        .set({
-          groupId: created.id,
-          version: sql`${sessions.version} + 1`,
-          updatedAt: new Date(),
-        })
-        .where(eq(sessions.id, parsed.data.sourceSessionId));
-    return created;
-  });
-
-  if (parsed.data.sourceSessionId)
-    await trackSessionMilestone({
-      name: "group_saved",
-      userId: user.id,
-      sessionId: parsed.data.sourceSessionId,
-      source: "authenticated",
-      metadata: { memberCount: sourcePlayerIds.length },
-    });
-  revalidatePath("/groups");
-  if (parsed.data.sourceSessionId)
-    revalidatePath(`/games/${parsed.data.sourceSessionId}`);
-  redirect(`/groups/${group.slug}`);
+  const result = await createGroupCommand(await requireUser(), formData);
+  if (result.destination) redirect(result.destination);
+  return result;
 }
 
 export async function updateGroupAction(

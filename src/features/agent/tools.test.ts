@@ -131,3 +131,24 @@ describe("Agent read-only registry", () => {
     expect(mocks.game).not.toHaveBeenCalled();
   });
 });
+
+it("exposes preparation only when enabled and tied to a persisted conversation", () => {
+  const signal = new AbortController().signal;
+  const context = {
+    conversationId: "chat",
+    messageId: "message",
+    requestId: "request",
+  };
+  expect(
+    createAgentTools("user", defaultAgentConfig, signal, context)
+      .prepareCreation
+  ).toBeUndefined();
+  const config = { ...defaultAgentConfig, allowGameCreation: true };
+  expect(
+    createAgentTools("user", config, signal).prepareCreation
+  ).toBeUndefined();
+  const tools = createAgentTools("user", config, signal, context);
+  expect(tools.prepareCreation).toBeDefined();
+  expect(tools.creationStatus).toBeDefined();
+  expect(tools.confirmCreation).toBeUndefined();
+});

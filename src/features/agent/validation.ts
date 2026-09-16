@@ -22,6 +22,8 @@ export const agentConfigSchema = z.object({
   allowGameData: z.boolean(),
   allowHelp: z.boolean(),
   allowCourtSearch: z.boolean().default(true),
+  allowGameCreation: z.boolean().default(false),
+  allowGroupCreation: z.boolean().default(false),
   maxOutputTokens: z.coerce.number().int().min(256).max(4000),
   requestsPerHour: z.coerce.number().int().min(1).max(120),
 });
@@ -35,6 +37,8 @@ export const defaultAgentConfig: AgentConfig = {
   allowGameData: true,
   allowHelp: true,
   allowCourtSearch: true,
+  allowGameCreation: false,
+  allowGroupCreation: false,
   maxOutputTokens: 1200,
   requestsPerHour: 30,
 };

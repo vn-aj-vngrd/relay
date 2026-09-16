@@ -147,7 +147,9 @@ function nextPlans(session: QuickPlaySession) {
   });
 }
 
-function validateConfiguration(configuration: QuickPlayConfiguration) {
+export function validateQuickPlayConfiguration(
+  configuration: QuickPlayConfiguration
+) {
   if (configuration.players.length < 4)
     throw new Error("Add at least four players.");
   if (configuration.players.length > maxQuickPlayPlayers) {
@@ -221,7 +223,7 @@ export function restoreQuickPlaySession(
   try {
     const stored = storedQuickPlaySchema.safeParse(JSON.parse(value));
     if (!stored.success) return null;
-    validateConfiguration(stored.data.session);
+    validateQuickPlayConfiguration(stored.data.session);
     return stored.data.session;
   } catch {
     return null;
@@ -235,7 +237,7 @@ export function serializeQuickPlaySession(session: QuickPlaySession) {
 export function startQuickPlay(
   configuration: QuickPlayConfiguration
 ): QuickPlaySession {
-  validateConfiguration(configuration);
+  validateQuickPlayConfiguration(configuration);
   return startNextQuickPlayMatches({
     ...configuration,
     players: configuration.players.map((player) => ({

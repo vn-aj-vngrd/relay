@@ -358,7 +358,7 @@ for retrieval, and streams an answer. It never calls the provider or spends quot
 
 Agent chat uses content-sized sent bubbles, wrapping unbroken text at the
 container boundary. Assistant answers discard leading blank space. The composer
-shows one outer focus border, a 4,000-character counter and a toast when clipping
+shows one outer focus border, a 4,000-character limit without a visible counter and a toast when clipping
 oversized input. Action toasts are centered at the top on every viewport.
 Admin Agent inherits the admin shell content width: its heading, setup panel and settings align with the breadcrumbs, without a narrower nested column.
 

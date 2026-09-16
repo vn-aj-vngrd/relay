@@ -2,6 +2,7 @@ import "server-only";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
 import { readAgentCourt, searchAgentCourts } from "./courts";
+import { creationInputSchema } from "./creation-schema";
 import { agentHelpIndex, readAgentHelp, searchAgentHelp } from "./help";
 import { readAgentGame, readAgentGroups, searchAgentGames } from "./reads";
 import {
@@ -13,7 +14,8 @@ import {
 export function createAgentTools(
   userId: string,
   config: AgentConfig,
-  signal: AbortSignal
+  signal: AbortSignal,
+  context?: { conversationId: string; messageId: string; requestId: string }
 ) {
   let calls = 0;
   async function read<T>(operation: () => Promise<T> | T) {
@@ -92,6 +94,57 @@ export function createAgentTools(
         "Read the authoritative Help Center guide before explaining how Relay works. Never reveal internal source file paths.",
       inputSchema: z.object({ slug: z.string().max(100) }),
       execute: ({ slug }) => read(() => readAgentHelp(slug)),
+    });
+  }
+  if (context && (config.allowGameCreation || config.allowGroupCreation)) {
+    tools.creationOptions = tool({
+      description:
+        "Read accessible groups and owned games for creation. Replay only completed games; save a crew only from an owned game without a group.",
+      inputSchema: z.object({}),
+      execute: () =>
+        read(async () =>
+          (await import("./creation-service")).creationOptions(userId)
+        ),
+    });
+    tools.creationStatus = tool({
+      description:
+        "Read trusted pending or completed creation status for this chat. Only a completed result proves an action happened. Never infer success from prior assistant text.",
+      inputSchema: z.object({}),
+      execute: () =>
+        read(async () =>
+          (
+            await (
+              await import("./creation-service")
+            ).listCreationProposals(userId, context.conversationId)
+          ).map(({ status, destination, preview, input }) => ({
+            status,
+            destination,
+            input,
+            title: preview.title,
+            details: preview.lines,
+          }))
+        ),
+    });
+    tools.prepareCreation = tool({
+      description:
+        "Open a guided creation form for a game, group, or browser-local Quick Play. Call as soon as the kind is known, including only details already supplied. Missing fields are completed in the form; never ask a numbered questionnaire. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
+      inputSchema: creationInputSchema,
+      execute: (input) =>
+        read(async () => {
+          try {
+            return await (await import("./creation-service")).prepareCreation(
+              userId,
+              context.conversationId,
+              context.messageId,
+              context.requestId,
+              input
+            );
+          } catch (error) {
+            if (error instanceof (await import("./history")).AgentHistoryError)
+              return { status: "needs_input", message: error.message };
+            throw error;
+          }
+        }),
     });
   }
   return tools;

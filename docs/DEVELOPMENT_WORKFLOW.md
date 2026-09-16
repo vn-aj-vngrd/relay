@@ -44,7 +44,7 @@ Mark incompatible changes in the squash subject with `!` and include a `BREAKING
 
 ## Pull requests and review
 
-1. Implement the scoped change using existing components and the relevant runbooks. Maintain regression coverage under [Reliability](RELIABILITY.md).
+1. Implement the scoped change using existing components and the relevant runbooks. Maintain regression coverage under [Reliability](RELIABILITY.md) and complete [Help Center maintenance](HELP_CENTER_MAINTENANCE.md) for functional changes.
 2. When committing or opening a PR is authorized, complete [the code quality gate](CODE_QUALITY.md), fix failures, and commit with hooks enabled. Push the feature branch explicitly, for example `git push -u origin van/game-tab-spacing`, and target `master`.
 3. Use `<type>(<optional-scope>): <Summary>` for every PR title, ideally at most 72 characters, with an imperative, sentence-case summary. Example: `feat(story): Add photo memories`. Keep ticket references in the PR body. Choose the type for the final combined change: new functionality uses `feat`, corrections use `fix`, and incompatible changes use `!` plus a `BREAKING CHANGE:` footer in the squash body. Do not copy the last fix commit type when the PR as a whole adds a feature. The required CI check validates titles on opening, new commits, reopening, title edits and readiness changes.
 4. Fill in the PR template with final behavior, concrete test evidence, and material risks. Keep screenshots for visual changes when captured; label unrun checks and synthetic fixtures accurately. Use `None` for sections without applicable details.
@@ -54,6 +54,8 @@ Mark incompatible changes in the squash subject with `!` and include a `BREAKING
 ## Merge and release
 
 Under the authorization above, merge once required CI and deployment checks pass on the current PR head, the base is up to date, requested reviews have finished or are documented as unavailable when optional, and review blockers are resolved. Update a published branch by merging `origin/master`; resolve conflicts while preserving both intended changes, then validate the resulting revision. Rewriting a published branch requires explicit authorization. Never bypass hooks or required checks.
+
+Squash is the only allowed PR merge method. Repository settings must enable squash merging and disable merge commits and rebase merges. Verify these settings when changing repository merge policy; preserve required checks and branch protection. Use `gh pr merge --squash` when merging through the CLI.
 
 GitHub is configured to default squash subjects to the PR title (`PR_TITLE`), even for single-commit PRs. Squash-merge using the validated PR title unchanged as the commit subject. Keep ticket references and breaking-change details in the body. Inspect the generated squash message before confirming. Semantic-release sees the single squash commit, not the original PR commits; generated notes summarize that subject rather than expanding every body bullet. Use a clear product-facing summary and do not assume the PR description becomes release notes.
 

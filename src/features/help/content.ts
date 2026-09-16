@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-05";
+export const helpReviewedAt = "2026-09-16";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -80,6 +80,79 @@ export const helpCategories = [
 ] as const;
 
 export const helpArticles: readonly HelpArticle[] = [
+  {
+    slug: "agent-capabilities",
+    category: "start",
+    title: "What Agent can help you do",
+    summary:
+      "Discover available questions and creation tasks from the + button in chat.",
+    audience: "Signed-in players and hosts",
+    prerequisites: [
+      "Sign in to an active Relay account. Agent must be enabled by an administrator.",
+      "Available capabilities and monthly message allowance depend on your account and the current Agent settings.",
+    ],
+    steps: [
+      "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks open guided forms; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to open its form or insert its prompt. Escape closes the menu without changing your draft.",
+      "Explore your upcoming games, players, invitations, groups, and open games when game answers are enabled. Ask follow-up questions to narrow the results.",
+      "Ask for courts near you. Agent asks which city or neighborhood to search in Relay's directory. It does not access device location or reserve a court.",
+      "When game creation is enabled, ask to create a game, save a draft, replay a completed game you hosted, or create a game for your group. Agent prefills a guided form with details already supplied and asks for missing information through named fields.",
+      "Quick Play is a local session on your device. Ask to set it up with player names, courts, and a play mode. A quick hosted game is a saved game instead; Agent clarifies which you want.",
+      "When group creation is enabled, create a group or save an eligible game's crew as a group. Review the people included before confirming.",
+      "Open All capabilities & help from the + or / menu for these instructions. Current Agent creation does not edit existing games, RSVP, change roles, confirm payments, or send external messages; use those features' regular Relay pages.",
+    ],
+    outcome:
+      "You can find the capabilities available to you and start the right conversation without remembering special commands.",
+    troubleshooting: [
+      "Missing creation options mean that capability is disabled. Contact an administrator or use Create game, Groups, or Quick Play directly.",
+      "Check linked records: answers can be mistaken. Questions and relevant data are sent to the configured AI provider, so keep secrets out of chat.",
+      "Chats are saved to your account. Use the session name menu to reopen a conversation, or See all chats to rename or delete saved chats.",
+    ],
+    related: ["agent-create", "create-a-game", "quick-play", "find-a-court"],
+    sources: [
+      "src/features/agent/capabilities.ts",
+      "src/features/agent/slash-commands.tsx",
+      "src/features/agent/tools.ts",
+    ],
+    action: { href: "/agent", label: "Open Agent" },
+  },
+  {
+    slug: "agent-create",
+    category: "hosting",
+    title: "Create games and groups with Agent",
+    summary:
+      "Complete a guided form, review the details, and explicitly approve what Agent creates.",
+    audience: "Signed-in hosts and group creators",
+    prerequisites: [
+      "An administrator must enable the relevant Agent creation capability.",
+      "Normal game creation limits and permissions apply. You must host a completed game to replay it; saving a crew requires an owned game that is not already linked to a group.",
+    ],
+    steps: [
+      "Choose a creation task from Agent’s + or / menu to open its form, or describe it in chat so Agent can prefill known details. Complete the named fields; there is no need to answer a numbered questionnaire.",
+      "Use Next and Back to move through the form. Games collect court and schedule, then players and settings. Replays, group games, and saved crews start with a source selector. Groups collect name and description. Quick Play collects player names, then courts and format. Select Review and check Philippine time, location, capacity, participation, visibility, payment choice, and draft or publication intent. New games do not mark a court booking as confirmed.",
+      "For group games or replays, expand Players to invite and review the audience. A saved crew includes linked Going players and you as owner, and links the source game to the new group. Guests without accounts are not added.",
+      "Use Edit on the review to change a section. Editing invalidates the previous approval and requires a fresh review. Clicking outside leaves the form and answers open; Save and close setup saves your answers so you can select Continue setup later. Cancel ends the setup. If saving fails, Keep answers and close preserves your unsaved fields while you stay on the Agent page; reopen Continue setup to retry. Next, Review, and typing yes never create anything.",
+      "Select Approve & create game, Approve & save draft, or Approve & create group on the final review. Wait for the result, then use Open game or Open group. Collect payment records your intent; finish setup in Game settings → Payments. Public discovery requires Free or a stated player price.",
+      "For Quick Play, choose Paddle Stack, Mix It Up, Balanced Mix, or Court Climb; use regular Quick Play setup for Team Round Robin, skill inputs, and fixed pairs. Review player names, courts, and mode, then select Approve & start Quick Play. Confirm replacement if this device already has a local session. It opens Play locally without creating an account game or inviting anyone.",
+      "Return to the chat to recover the result if you navigate away or lose connection. Confirmation retries recover the same created game or group. Stop response stops generation; it does not undo a creation that already completed.",
+    ],
+    outcome:
+      "A confirmed game or group is saved through the normal Relay creation rules, or Quick Play opens on your device.",
+    troubleshooting: [
+      "Approval previews expire after 30 minutes; saved setup forms can be resumed and reviewed again. Use Edit details or Prepare a fresh preview if a review expires, the member list changes, or permissions change.",
+      "If creation reports a connection error, reload action status before trying again. A Created result is authoritative even if the assistant's text was interrupted.",
+      "If your hosting limit is reached, use an existing game or wait for the reset shown in your plan. Agent does not bypass account limits.",
+      "Quick Play needs browser storage and remains local to the device. Starting it again may replace an existing local session after confirmation.",
+    ],
+    related: ["agent-capabilities", "create-a-game", "quick-play", "payments"],
+    sources: [
+      "src/features/agent/creation-service.ts",
+      "src/features/agent/creation-wizard.tsx",
+      "src/features/agent/creation-cards.tsx",
+      "src/features/sessions/create-session-command.ts",
+      "src/features/groups/create-group-command.ts",
+    ],
+    action: { href: "/agent", label: "Create with Agent" },
+  },
   {
     slug: "illustrated-game-cycle",
     category: "start",

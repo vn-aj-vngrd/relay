@@ -24,6 +24,8 @@ export async function saveAgentSettings(
     allowGameData: form.get("allowGameData") === "on",
     allowHelp: form.get("allowHelp") === "on",
     allowCourtSearch: form.get("allowCourtSearch") === "on",
+    allowGameCreation: form.get("allowGameCreation") === "on",
+    allowGroupCreation: form.get("allowGroupCreation") === "on",
     maxOutputTokens: form.get("maxOutputTokens"),
     requestsPerHour: form.get("requestsPerHour"),
   });
@@ -65,7 +67,9 @@ export async function saveAgentSettings(
           !(
             parsed.data.allowGameData ||
             parsed.data.allowHelp ||
-            parsed.data.allowCourtSearch
+            parsed.data.allowCourtSearch ||
+            parsed.data.allowGameCreation ||
+            parsed.data.allowGroupCreation
           )
         )
           throw new Error("Incomplete configuration");
@@ -84,6 +88,8 @@ export async function saveAgentSettings(
           enabled: parsed.data.enabled,
           requireZeroRetention: parsed.data.requireZeroRetention,
           allowCourtSearch: parsed.data.allowCourtSearch,
+          allowGameCreation: parsed.data.allowGameCreation,
+          allowGroupCreation: parsed.data.allowGroupCreation,
           freeMessages: parsed.data.freeMessages,
           plusMessages: parsed.data.plusMessages,
           proMessages: parsed.data.proMessages,

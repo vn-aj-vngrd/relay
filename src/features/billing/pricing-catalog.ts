@@ -63,7 +63,7 @@ export function getPricingComparison(
       ],
     },
     {
-      title: "Agent · read-only AI assistant",
+      title: "Agent · AI game assistant",
       rows: [
         {
           label: "Agent messages per month",
@@ -192,7 +192,7 @@ export const pricingQuestions = [
   {
     question: "How do Agent message allowances work?",
     answer:
-      "One question or follow-up counts as one message when its answer starts. Internal searches and tool calls do not count separately. Failures or cancellations before an answer starts do not use a message; partial answers and cancellations after streaming starts count. Free resets on the 1st in Philippine time; paid plans follow their monthly term. There is no rollover. Upgrades preserve usage already consumed in the applicable period. Help Center remains free to browse. Agent is read-only and cannot change your games. Allowances are shown above; Agent availability is shown in the plan cards.",
+      "One question or follow-up counts as one message when its answer starts. Internal searches and tool calls do not count separately. Failures or cancellations before an answer starts do not use a message; partial answers and cancellations after streaming starts count. Free resets on the 1st in Philippine time; paid plans follow their monthly term. There is no rollover. Upgrades preserve usage already consumed in the applicable period. Help Center remains free to browse. Available creation tasks appear in Actions and require your confirmation; existing-game management stays in its regular Relay pages. Allowances are shown above; Agent availability is shown in the plan cards.",
   },
   {
     question: "What counts as a game each month?",

@@ -37,6 +37,14 @@ vi.mock("@/db/client", () => ({
     transaction: async (work: (tx: unknown) => Promise<unknown>) =>
       work({
         query: { sessions: { findFirst: mocks.source } },
+        select: () => ({
+          from: () => ({
+            where: () =>
+              Object.assign(Promise.resolve([]), {
+                for: async () => [await mocks.source()],
+              }),
+          }),
+        }),
         insert: (table: unknown) => ({
           values: (values: Record<string, unknown>) => {
             mocks.values(table, values);

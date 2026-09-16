@@ -6,25 +6,38 @@ import StarterKit from "@tiptap/starter-kit";
 import { type Ref, useEffect, useImperativeHandle, useRef } from "react";
 import { notify } from "@/components/ui/action-notice";
 import styles from "./answer.module.css";
+import type { AgentCapabilities } from "./capabilities";
 import { agentMessageMaxLength } from "./constants";
+import type { CreationFlow } from "./creation-form-model";
+import { useAgentSlashCommands } from "./slash-commands";
 
-export type AgentComposerHandle = { focus: () => void };
+export type AgentComposerHandle = {
+  focus: () => void;
+  openActions: () => void;
+};
 export function AgentComposerEditor({
   value,
   onChange,
   onSubmit,
   disabled,
+  capabilities,
+  onCreate,
+  onActionsOpenChange,
   ref,
 }: {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   disabled: boolean;
+  capabilities?: AgentCapabilities;
+  onCreate?: (flow: CreationFlow) => void;
+  onActionsOpenChange?: (open: boolean) => void;
   ref?: Ref<AgentComposerHandle>;
 }) {
   const callbacks = useRef({ onChange, onSubmit });
   callbacks.current = { onChange, onSubmit };
   const accepted = useRef(value);
+  const slashKeys = useRef<((event: KeyboardEvent) => boolean) | null>(null);
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
@@ -40,11 +53,11 @@ export function AgentComposerEditor({
         role: "textbox",
         "aria-label": "Message Agent",
         "aria-multiline": "true",
-        "aria-describedby": "agent-message-limit",
         "data-placeholder": "Ask Agent…",
         class: `agent-composer-input agent-rich-composer ${styles.markdown} min-h-12 max-h-48 overflow-y-auto outline-none`,
       },
       handleKeyDown: (view, event) => {
+        if (slashKeys.current?.(event)) return true;
         if (
           event.key === "Enter" &&
           !event.shiftKey &&
@@ -90,6 +103,7 @@ export function AgentComposerEditor({
     },
     onUpdate: ({ editor: instance }) => {
       const markdown = instance.isEmpty ? "" : instance.getMarkdown();
+      if (markdown === accepted.current) return;
       if (markdown.length > agentMessageMaxLength) {
         instance.commands.setContent(accepted.current, {
           contentType: "markdown",
@@ -104,16 +118,22 @@ export function AgentComposerEditor({
       callbacks.current.onChange(markdown);
     },
   });
+  const slash = useAgentSlashCommands(editor, capabilities, disabled, onCreate);
+  slashKeys.current = slash.keyDown;
+  useEffect(() => {
+    onActionsOpenChange?.(slash.isOpen);
+  }, [slash.isOpen, onActionsOpenChange]);
   const editorRef = useRef(editor);
   editorRef.current = editor;
   useImperativeHandle(
     ref,
     () => ({
+      openActions: slash.open,
       focus: () => {
         editor?.commands.focus();
       },
     }),
-    [editor]
+    [editor, slash.open]
   );
   useEffect(() => {
     editor?.setEditable(!disabled);
@@ -127,9 +147,12 @@ export function AgentComposerEditor({
     });
   }, [editor, value]);
   return (
-    <EditorContent
-      editor={editor}
-      className={disabled ? "opacity-50" : undefined}
-    />
+    <div className="relative">
+      {slash.popup}
+      <EditorContent
+        editor={editor}
+        className={disabled ? "opacity-50" : undefined}
+      />
+    </div>
   );
 }
