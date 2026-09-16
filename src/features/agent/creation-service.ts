@@ -23,7 +23,7 @@ import {
   createSessionCommand,
 } from "@/features/sessions/create-session-command";
 import { readAgentSettings } from "./config";
-import { applyReplaySource } from "./creation-form-model";
+import { applyReplaySource } from "./creation-model";
 import {
   type CreationInput,
   type CreationPreparation,
@@ -249,7 +249,10 @@ export async function prepareCreation(
   raw: CreationPreparation
 ) {
   const supplied = creationPreparationSchema.parse(raw);
-  const input = creationInputSchema.parse(supplied);
+  const input = creationInputSchema.parse({
+    ...supplied,
+    interactionMode: "chat",
+  });
   const { config } = await readAgentSettings();
   ensureEnabled(config, input);
   let draft = input;
@@ -291,8 +294,8 @@ export async function prepareCreation(
     if (supplied.requiresApproval !== undefined)
       draft.requiresApproval = supplied.requiresApproval;
   }
-  const readyForApproval =
-    draft.interactionMode === "chat" && validateCreation(draft).length === 0;
+  const issues = validateCreation(draft);
+  const readyForApproval = issues.length === 0;
   return db.transaction(async (tx) => {
     const [conversation] = await tx
       .select()
@@ -332,18 +335,13 @@ export async function prepareCreation(
       })
       .returning();
     return {
-      status: readyForApproval
-        ? "needs_approval"
-        : draft.interactionMode === "chat"
-          ? "needs_answer"
-          : "needs_form",
+      status: readyForApproval ? "needs_approval" : "needs_answer",
+      issues,
       title: proposal.preview.title,
       details: proposal.preview.lines,
       message: readyForApproval
         ? "All required details are ready for review. Explain the exact preview and defaults, then ask the user to press the explicit approval button. Nothing has been created; a text reply is never approval."
-        : draft.interactionMode === "chat"
-          ? "Saved chat setup. Ask exactly one missing question in your reply, retain all existing answers, and do not ask the user to open a panel. Nothing has been created."
-          : "A guided form is ready in the chat, prefilled with known details. Ask the user to complete the named fields there and review before approving. Do not ask a numbered list of questions. Nothing has been created.",
+        : "Saved chat setup. Use the validation issues to ask exactly one missing or corrective question in your reply, retain all existing answers, and do not ask the user to open a form or panel. Nothing has been created.",
     };
   });
 }
@@ -384,7 +382,7 @@ export async function confirmCreation(userId: string, id: string) {
   if (original.preview.collecting)
     throw new AgentHistoryError(
       409,
-      "Complete the form and review it before approving."
+      "Finish the details in chat and review them before approving."
     );
   const input = creationInputSchema.parse(original.input);
   const hooks: CreationHooks = {
@@ -551,7 +549,7 @@ export async function creationOptions(userId: string, includeCourts = false) {
 }
 
 function creationFormDraft(raw: CreationInput) {
-  const input = creationInputSchema.parse(raw);
+  const input = creationInputSchema.parse({ ...raw, interactionMode: "chat" });
   return {
     input,
     preview: {
@@ -564,7 +562,7 @@ function creationFormDraft(raw: CreationInput) {
             ? "Create group"
             : "Create game"),
       lines: [
-        "Complete the guided setup, then review and approve. Nothing has been created.",
+        "Answer one question at a time in chat, then review and approve. Nothing has been created.",
       ],
       people: [],
     } satisfies CreationPreview,
@@ -646,7 +644,7 @@ export async function updateCreationForm(
     if (original?.status !== "pending")
       throw new AgentHistoryError(
         409,
-        "This setup is no longer active. Open a new creation form."
+        "This setup is no longer active. Start a new creation request in chat."
       );
     const conversation = await tx.query.agentConversations.findFirst({
       where: ownedConversation(userId, original.conversationId),
@@ -659,7 +657,7 @@ export async function updateCreationForm(
     if (input.kind !== original.input.kind)
       throw new AgentHistoryError(
         400,
-        "Start a separate form for a different action."
+        "Start a separate creation request for a different action."
       );
     const prepared = review
       ? await previewCreation(tx, userId, input)

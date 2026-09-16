@@ -84,7 +84,7 @@ vi.mock("@/db/client", () => {
   return { db };
 });
 
-import { inputForCreation } from "./creation-form-model";
+import { inputForCreation } from "./creation-model";
 import { listCreationProposals, updateCreationForm } from "./creation-service";
 
 beforeEach(() => {

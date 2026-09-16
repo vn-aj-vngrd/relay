@@ -10,6 +10,7 @@ const state = vi.hoisted(() => ({
   saved: null as CreationInput | null,
   preview: null as CreationPreview | null,
   expiresAt: null as Date | null,
+  busy: true,
 }));
 vi.mock("./config", () => ({
   readAgentSettings: async () => ({
@@ -55,7 +56,7 @@ vi.mock("@/db/client", () => {
           for: async () => [
             {
               activeRequestId: "request",
-              activeUntil: new Date(Date.now() + 60_000),
+              activeUntil: state.busy ? new Date(Date.now() + 60_000) : null,
             },
           ],
         }),
@@ -74,7 +75,9 @@ vi.mock("@/db/client", () => {
           state.saved = row.input;
           state.preview = row.preview;
           state.expiresAt = row.expiresAt;
-          return [row];
+          return [
+            { ...row, id: "proposal", status: "pending", destination: null },
+          ];
         },
       }),
     }),
@@ -83,20 +86,34 @@ vi.mock("@/db/client", () => {
 });
 
 import { createGroupCommand } from "@/features/groups/create-group-command";
-import { prepareCreation } from "./creation-service";
+import { inputForCreation } from "./creation-model";
+import { prepareCreation, startCreationForm } from "./creation-service";
 
 beforeEach(() => {
   state.saved = null;
   state.preview = null;
   state.expiresAt = null;
+  state.busy = true;
   vi.clearAllMocks();
 });
 
 describe("Conversational replay preparation", () => {
+  it("starts a chat draft even for a legacy question-mode request", async () => {
+    state.busy = false;
+    const result = await startCreationForm("owner", "chat", {
+      ...inputForCreation("group"),
+      interactionMode: "questions",
+    });
+    expect(result.status).toBe("collecting");
+    expect(result.input.interactionMode).toBe("chat");
+    expect(createGroupCommand).not.toHaveBeenCalled();
+  });
   it.each([
     ["chat", undefined, "needs_answer", true],
     ["chat", "Friday crew", "needs_approval", undefined],
-    ["questions", "Friday crew", "needs_form", true],
+    ["questions", "Friday crew", "needs_approval", undefined],
+    [undefined, "Friday crew", "needs_approval", undefined],
+    ["questions", undefined, "needs_answer", true],
   ] as const)(
     "retains %s interaction and prepares only complete chat drafts for approval",
     async (interactionMode, title, status, collecting) => {
@@ -111,7 +128,7 @@ describe("Conversational replay preparation", () => {
           title,
         })
       );
-      expect(state.saved?.interactionMode).toBe(interactionMode);
+      expect(state.saved?.interactionMode).toBe("chat");
       expect(result.status).toBe(status);
       expect(state.preview?.collecting).toBe(collecting);
       expect(createGroupCommand).not.toHaveBeenCalled();
@@ -124,8 +141,10 @@ describe("Conversational replay preparation", () => {
           30 * 60_000
         );
         expect(result.message).toContain("explicit approval button");
-      } else if (interactionMode === "chat") {
-        expect(result.message).toContain("exactly one missing question");
+      } else {
+        expect(result.message).toContain(
+          "exactly one missing or corrective question"
+        );
       }
     }
   );
@@ -164,4 +183,21 @@ describe("Conversational replay preparation", () => {
       });
     }
   );
+});
+
+it("returns corrective guidance for complete but invalid Quick Play details", async () => {
+  const { prepareCreation } = await import("./creation-service");
+  const result = await prepareCreation(
+    "user",
+    "chat",
+    "message",
+    "request",
+    creationPreparationSchema.parse({
+      kind: "quickPlay",
+      players: ["A", "B", "C", "D"],
+      courts: 2,
+    })
+  );
+  expect(result.status).toBe("needs_answer");
+  expect(result.issues.join(" ")).toContain("Add 4 more players");
 });

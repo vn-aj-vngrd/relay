@@ -1,19 +1,10 @@
-import {
-  act,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
-import { type RefObject, useEffect } from "react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   load: vi.fn(),
   send: vi.fn(),
-  saveDraft: vi.fn(),
-  withCreation: false,
 }));
 vi.mock("@ai-sdk/react", async (original) => ({
   ...(await original<typeof import("@ai-sdk/react")>()),
@@ -48,25 +39,11 @@ vi.mock("./composer-editor", () => ({
 }));
 vi.mock("./creation-cards", () => ({
   useCreationProposals: () => ({
-    proposals: mocks.withCreation
-      ? [{ id: "setup", messageId: "setup-message", status: "collecting" }]
-      : [],
+    proposals: [],
     error: "",
     reload: vi.fn(),
   }),
-  AgentCreationCard: ({
-    beforeChat,
-  }: {
-    beforeChat: RefObject<(() => Promise<void>) | null>;
-  }) => {
-    useEffect(() => {
-      beforeChat.current = mocks.saveDraft;
-      return () => {
-        beforeChat.current = null;
-      };
-    }, [beforeChat]);
-    return <p>Creation setup</p>;
-  },
+  AgentCreationCard: () => null,
 }));
 
 import { AgentChat } from "./chat";
@@ -75,62 +52,8 @@ import { AgentSessionProvider } from "./session";
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();
-  mocks.withCreation = false;
 });
 describe("conversation creation during navigation", () => {
-  it("does not send after navigating away during an existing conversation's setup save", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
-    window.history.replaceState(null, "", "/agent?chat=existing");
-    mocks.withCreation = true;
-    mocks.load.mockResolvedValue({
-      id: "existing",
-      title: "Game setup",
-      messages: [],
-      pending: false,
-    });
-    let finishSave!: () => void;
-    mocks.saveDraft.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          finishSave = resolve;
-        })
-    );
-    const view = render(
-      <AgentSessionProvider>
-        <AgentChat available />
-      </AgentSessionProvider>
-    );
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "New chat" })
-      ).not.toBeDisabled()
-    );
-    fireEvent.change(screen.getByRole("textbox", { name: "Draft" }), {
-      target: { value: "Make it Saturday instead" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
-    expect(mocks.saveDraft).toHaveBeenCalledOnce();
-    expect(mocks.create).not.toHaveBeenCalled();
-    view.rerender(
-      <AgentSessionProvider>
-        <p>Games</p>
-      </AgentSessionProvider>
-    );
-    window.history.replaceState(null, "", "/games");
-    await act(async () => {
-      finishSave();
-    });
-    expect(mocks.send).not.toHaveBeenCalled();
-    window.history.replaceState(null, "", "/agent");
-    view.rerender(
-      <AgentSessionProvider>
-        <AgentChat available />
-      </AgentSessionProvider>
-    );
-    expect(screen.getByRole("textbox", { name: "Draft" })).toHaveValue(
-      "Make it Saturday instead"
-    );
-  });
   it("cancels late creation and restores the unsent draft while preserving the session", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
     window.history.replaceState(null, "", "/agent");

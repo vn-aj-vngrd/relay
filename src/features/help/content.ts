@@ -92,10 +92,10 @@ export const helpArticles: readonly HelpArticle[] = [
       "Available capabilities and monthly message allowance depend on your account and the current Agent settings.",
     ],
     steps: [
-      "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks open guided forms; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to open its form or insert its prompt. Escape closes the menu without changing your draft.",
+      "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks start a conversation with one question at a time; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to start setup in chat or insert its prompt. Escape closes the menu without changing your draft.",
       "Explore your upcoming games, players, invitations, groups, and open games when game answers are enabled. Ask follow-up questions to narrow the results.",
       "Ask for courts near you. Agent asks which city or neighborhood to search in Relay's directory. It does not access device location or reserve a court.",
-      "When game creation is enabled, ask to create a game, save a draft, replay a completed game you hosted, or create a game for your group. Agent prefills a question panel above the input with details already supplied and asks for missing information one step at a time.",
+      "When game creation is enabled, ask to create a game, save a draft, replay a completed game you hosted, or create a game for your group. Agent retains details already supplied and asks for one missing detail per reply.",
       "Quick Play is a local session on your device. Ask to set it up with player names, courts, and a play mode. A quick hosted game is a saved game instead; Agent clarifies which you want.",
       "When group creation is enabled, create a group or save an eligible game's crew as a group. Review the people included before confirming.",
       "Open All capabilities & help from the + or / menu for these instructions. Current Agent creation does not edit existing games, RSVP, change roles, confirm payments, or send external messages; use those features' regular Relay pages.",
@@ -120,17 +120,16 @@ export const helpArticles: readonly HelpArticle[] = [
     category: "hosting",
     title: "Create games and groups with Agent",
     summary:
-      "Complete a guided form, review the details, and explicitly approve what Agent creates.",
+      "Answer one question at a time in chat, review the details, and explicitly approve what Agent creates.",
     audience: "Signed-in hosts and group creators",
     prerequisites: [
       "An administrator must enable the relevant Agent creation capability.",
       "Normal game creation limits and permissions apply. You must host a completed game to replay it; saving a crew requires a completed game you hosted that is not already linked to a group. Replaying preserves the source game’s court, eligible group, and access settings for review.",
     ],
     steps: [
-      "Choose a creation task from Agent’s + or / menu to open its form, or describe it in chat so Agent can prefill known details. Complete the named fields; there is no need to answer a numbered questionnaire.",
-      "Choose how to create: Guided questions opens by default in the popover above the input, with progress, question tabs, Next, and Back. Answer in chat switches to a normal conversation where Agent asks one missing question at a time. Answer with choices reopens the panel; both modes retain your details and require final approval. Choose suggested answers or enter your own details; you can also tell Agent a correction in chat. Current answers are saved before your message is sent. Games ask about the name, court, schedule, players, access, payment, and publishing. Replays, group games, and saved crews start with a source question. Groups ask for a name and optional description. Quick Play asks for player names, courts, and format. Select Review and check Philippine time, location, capacity, participation, visibility, payment choice, and draft or publication intent. New games do not mark a court booking as confirmed.",
+      "Choose a Create action or tell Agent what you want to create. Agent asks one missing question at a time in chat and keeps the details you already supplied. A progress indicator shows how many details have been collected and what comes next. Games need a name, court, schedule, capacity, and court count. Replays, group games, and saved crews also need an eligible source. Groups need a name; Quick Play needs player names and courts. Optional settings are shown in the review. Check Philippine time, location, participation, visibility, payment choice, and draft or publication intent. New games do not mark a court booking as confirmed.",
       "For group games or replays, expand Players to invite and review the audience. A saved crew includes linked Going players and you as owner, and links the source game to the new group. Guests without accounts are not added.",
-      "Use the question tabs on the review to change any answer. Editing invalidates the previous approval and requires a fresh review. Clicking outside leaves the popover and answers open; Save and close setup saves your answers so you can select Continue setup later. Cancel ends the setup. If saving fails, Keep answers and close preserves your unsaved fields while you stay on the Agent page; reopen Continue setup to retry. Completed creations keep their resource links when you return to the chat, even after many setup edits. Next, Review, and typing yes never create anything.",
+      "Tell Agent what to change, or select Edit details to start a correction in chat. Changes require a fresh review and approval. Saved setup answers return when you reopen the conversation; Continue in chat resumes the next question, and Cancel ends setup. Completed creations retain their resource links. Collected details still need validation. Typing yes never creates anything; use the explicit approval button on the final review.",
       "Select Approve & create game, Approve & save draft, or Approve & create group on the final review. Wait for the result, then use Open game or Open group. Collect payment records your intent; finish setup in Game settings → Payments. Public discovery requires Free or a stated player price.",
       "For Quick Play, choose Paddle Stack, Mix It Up, Balanced Mix, or Court Climb; use regular Quick Play setup for Team Round Robin, skill inputs, and fixed pairs. Review player names, courts, and mode, then select Approve & start Quick Play. Confirm replacement if this device already has a local session. It opens Play locally without creating an account game or inviting anyone.",
       "Return to the chat to recover the result if you navigate away or lose connection. Confirmation retries recover the same created game or group. Stop response stops generation; it does not undo a creation that already completed.",
@@ -138,7 +137,7 @@ export const helpArticles: readonly HelpArticle[] = [
     outcome:
       "A confirmed game or group is saved through the normal Relay creation rules, or Quick Play opens on your device.",
     troubleshooting: [
-      "Approval previews expire after 30 minutes; saved setup forms can be resumed and reviewed again. Use Edit details or Prepare a fresh preview if a review expires, the member list changes, or permissions change.",
+      "Approval previews expire after 30 minutes; saved chat setups can be resumed and reviewed again. Use Edit details or Prepare a fresh preview if a review expires, the member list changes, or permissions change.",
       "If creation reports a connection error, reload action status before trying again. A Created result is authoritative even if the assistant's text was interrupted.",
       "If your hosting limit is reached, use an existing game or wait for the reset shown in your plan. Agent does not bypass account limits.",
       "Quick Play needs browser storage and remains local to the device. Starting it again may replace an existing local session after confirmation.",
@@ -146,7 +145,7 @@ export const helpArticles: readonly HelpArticle[] = [
     related: ["agent-capabilities", "create-a-game", "quick-play", "payments"],
     sources: [
       "src/features/agent/creation-service.ts",
-      "src/features/agent/creation-wizard.tsx",
+      "src/features/agent/creation-progress.ts",
       "src/features/agent/creation-cards.tsx",
       "src/features/sessions/create-session-command.ts",
       "src/features/groups/create-group-command.ts",

@@ -97,3 +97,69 @@ describe("Agent creation review", () => {
     ).toBeVisible();
   });
 });
+
+describe("Chat-only creation setup", () => {
+  it("shows saved progress and resumes chat without rendering a form", async () => {
+    const { AgentCreationCard: Setup } = await import("./creation-cards");
+    const resume = vi.fn();
+    render(
+      <Setup
+        proposal={{
+          ...proposal,
+          status: "collecting",
+          input: creationInputSchema.parse({
+            kind: "game",
+            title: "Friday game",
+          }),
+        }}
+        disabled={false}
+        onContinue={resume}
+        onChange={vi.fn()}
+      />
+    );
+    expect(screen.getByRole("progressbar")).toHaveAttribute("value", "1");
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Continue in chat" }));
+    expect(resume).toHaveBeenCalledWith(
+      expect.stringContaining("next missing question")
+    );
+  });
+});
+
+describe("Creation result recovery", () => {
+  it("uses the completed POST result without depending on a subsequent reload", async () => {
+    const { AgentCreationCard: Card } = await import("./creation-cards");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          ...proposal,
+          status: "completed",
+          destination: "/groups/friday",
+        }),
+      })
+    );
+    render(
+      <Card
+        proposal={proposal}
+        disabled={false}
+        onContinue={vi.fn()}
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve & create group" })
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: "Open group" })).toHaveAttribute(
+        "href",
+        "/groups/friday"
+      )
+    );
+    expect(
+      screen.queryByRole("button", { name: "Approve & create group" })
+    ).toBeNull();
+  });
+});

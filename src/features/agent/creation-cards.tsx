@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
-import { type RefObject, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { creationRequest } from "./creation-client";
+import { creationProgress } from "./creation-progress";
 import type { CreationProposal } from "./creation-schema";
-import { AgentCreationWizard } from "./creation-wizard";
 export function useCreationProposals(
   conversationId: string | null,
   busy: boolean,
@@ -47,15 +47,11 @@ export function AgentCreationReview({
   disabled,
   onEdit,
   onChange,
-  onPendingChange,
-  embedded = false,
 }: {
   proposal: CreationProposal;
   disabled: boolean;
   onEdit: () => void;
   onChange: (saved?: CreationProposal) => void;
-  onPendingChange?: (pending: boolean) => void;
-  embedded?: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -100,7 +96,6 @@ export function AgentCreationReview({
   async function act(action: "confirm" | "cancel") {
     if (pending) return;
     setPending(true);
-    onPendingChange?.(true);
     setError("");
     try {
       if (
@@ -132,7 +127,6 @@ export function AgentCreationReview({
       );
     } finally {
       setPending(false);
-      onPendingChange?.(false);
     }
   }
   const expired =
@@ -142,7 +136,7 @@ export function AgentCreationReview({
   return (
     <section
       aria-label={`${proposal.preview.title} preview`}
-      className={embedded ? "mt-4" : "mt-4 rounded-xl border border-line p-4"}
+      className="mt-4 rounded-xl border border-line p-4"
     >
       <p className="text-xs text-muted">
         {proposal.status === "completed"
@@ -208,24 +202,20 @@ export function AgentCreationReview({
                       ? "Approve & save draft"
                       : "Approve & create game"}
             </Button>
-            {!embedded ? (
-              <Button
-                variant="quiet"
-                disabled={disabled || pending}
-                onClick={onEdit}
-              >
-                Edit details
-              </Button>
-            ) : null}
-            {!embedded ? (
-              <Button
-                variant="quiet"
-                disabled={disabled || pending}
-                onClick={() => void act("cancel")}
-              >
-                Cancel
-              </Button>
-            ) : null}
+            <Button
+              variant="quiet"
+              disabled={disabled || pending}
+              onClick={onEdit}
+            >
+              Edit details
+            </Button>
+            <Button
+              variant="quiet"
+              disabled={disabled || pending}
+              onClick={() => void act("cancel")}
+            >
+              Cancel
+            </Button>
           </>
         ) : null}
         {proposal.status === "completed" &&
@@ -274,94 +264,103 @@ export function AgentCreationReview({
 }
 
 export function AgentCreationCard({
-  onChatMode,
-  panelHost,
-  beforeChat,
-  proposal,
+  proposal: supplied,
   disabled,
   onChange,
+  onContinue,
 }: {
-  onChatMode?: () => void;
-  panelHost?: HTMLElement | null;
-  beforeChat?: RefObject<(() => Promise<void>) | null>;
   proposal: CreationProposal;
   disabled: boolean;
-  onEdit?: () => void;
   onChange: () => void;
+  onContinue: (prompt: string) => void;
 }) {
-  const [open, setOpen] = useState(
-    proposal.status === "collecting" &&
-      proposal.input.interactionMode !== "chat"
-  );
-  const [started, setStarted] = useState(
-    proposal.status === "collecting" &&
-      proposal.input.interactionMode !== "chat"
-  );
-  function showSetup() {
-    setStarted(true);
-    setOpen(true);
+  const [proposal, setProposal] = useState(supplied);
+  useEffect(() => setProposal(supplied), [supplied]);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
+  async function cancel() {
+    setPending(true);
+    setError("");
+    try {
+      const saved = await creationRequest<CreationProposal>(
+        "/api/agent/creations",
+        {
+          method: "POST",
+          body: JSON.stringify({ id: proposal.id, action: "cancel" }),
+        }
+      );
+      setProposal(saved);
+      onChange();
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : "Couldn’t cancel. Try again."
+      );
+    } finally {
+      setPending(false);
+    }
   }
-  const [current, setCurrent] = useState(proposal);
-  useEffect(() => {
-    setCurrent(proposal);
-  }, [proposal]);
+  if (proposal.status !== "collecting")
+    return (
+      <AgentCreationReview
+        proposal={proposal}
+        disabled={disabled}
+        onEdit={() =>
+          onContinue(
+            "I want to revise my creation setup. Ask me what I want to change, one question at a time."
+          )
+        }
+        onChange={(saved) => {
+          if (saved) setProposal(saved);
+          onChange();
+        }}
+      />
+    );
+  const progress = creationProgress(proposal.input);
   return (
-    <>
-      {current.status === "collecting" ? (
-        <section
-          aria-label="Creation setup"
-          className="mt-4 rounded-xl border border-line p-4"
-        >
-          <h3 className="font-semibold">{current.preview.title}</h3>
-          <p className="mt-1 text-sm text-muted">
-            {current.input.interactionMode === "chat"
-              ? "Continue in chat—Agent will ask one question at a time."
-              : "Answer a few questions above the input, or tell Agent what to change."}{" "}
-            Nothing is created until you approve.
-          </p>
-          <Button className="mt-3" disabled={disabled} onClick={showSetup}>
-            {current.input.interactionMode === "chat"
-              ? "Answer with choices"
-              : "Continue setup"}
-          </Button>
-        </section>
-      ) : (
-        <AgentCreationReview
-          proposal={current}
-          disabled={disabled}
-          onEdit={showSetup}
-          onChange={(result) => {
-            if (result) setCurrent(result);
-            onChange();
-          }}
-        />
-      )}
-      {started ? (
-        <AgentCreationWizard
-          proposal={current}
-          panelHost={panelHost}
-          beforeChat={beforeChat}
-          onChatMode={onChatMode}
-          open={open}
-          onDismiss={() => setOpen(false)}
-          disabled={disabled}
-          onClose={(saved) => {
-            setCurrent(saved);
-            setOpen(false);
-            onChange();
-          }}
-          renderReview={(saved, edit, changed, pendingChanged, formBusy) => (
-            <AgentCreationReview
-              embedded
-              proposal={saved}
-              disabled={disabled || formBusy}
-              onEdit={edit}
-              onChange={changed}
-              onPendingChange={pendingChanged}
-            />
-          )}
-        />
+    <section aria-label="Creation progress" className="mt-3 text-sm text-muted">
+      <p>
+        {proposal.preview.title} · {progress.completed} of {progress.total}{" "}
+        details collected
+      </p>
+      <progress
+        className="mt-2 h-1 w-full accent-primary"
+        aria-label="Creation details collected"
+        value={progress.completed}
+        max={progress.total}
+      />
+      <p className="mt-2">
+        {progress.next
+          ? `Next: ${progress.next}`
+          : "Checking details before review"}
+        . Approval required before creation.
+      </p>
+      {error ? (
+        <p role="alert" className="mt-2 text-danger">
+          {error}
+        </p>
       ) : null}
-    </>
+      <div className="mt-2 flex gap-2">
+        <Button
+          variant="quiet"
+          disabled={disabled || pending}
+          onClick={() =>
+            onContinue(
+              "Continue my creation setup using my saved answers. Ask me only the next missing question."
+            )
+          }
+        >
+          Continue in chat
+        </Button>
+        <Button
+          variant="quiet"
+          disabled={disabled || pending}
+          onClick={() => void cancel()}
+        >
+          {pending ? "Cancelling…" : "Cancel"}
+        </Button>
+      </div>
+    </section>
   );
 }

@@ -8,7 +8,7 @@ import { notify } from "@/components/ui/action-notice";
 import styles from "./answer.module.css";
 import type { AgentCapabilities } from "./capabilities";
 import { agentMessageMaxLength } from "./constants";
-import type { CreationFlow } from "./creation-form-model";
+import type { CreationFlow } from "./creation-model";
 import { useAgentSlashCommands } from "./slash-commands";
 
 export type AgentComposerHandle = {

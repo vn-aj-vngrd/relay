@@ -18,12 +18,7 @@ import {
 } from "./composer-editor";
 import { agentMessageMaxLength } from "./constants";
 import { AgentCreationCard, useCreationProposals } from "./creation-cards";
-import { creationRequest } from "./creation-client";
-import {
-  type CreationFlow,
-  creationFlowLabels,
-  inputForCreation,
-} from "./creation-form-model";
+import { type CreationFlow, creationFlowLabels } from "./creation-model";
 import {
   conversationMessages,
   createConversation,
@@ -103,9 +98,6 @@ export function AgentChat({
   };
   const [usage, setUsage] = useState(initialUsage);
   const [actionsOpen, setActionsOpen] = useState(false);
-  const [creationPanelHost, setCreationPanelHost] =
-    useState<HTMLDivElement | null>(null);
-  const beforeCreationChat = useRef<(() => Promise<void>) | null>(null);
   const session = useAgentSession();
   const [chat] = useState(() => {
     session.chat ??= new Chat({ transport: createTransport(session) });
@@ -175,37 +167,7 @@ export function AgentChat({
     reload: reloadProposals,
   } = useCreationProposals(activeId, busy, Boolean(capabilities));
   async function startCreation(flow: CreationFlow) {
-    if (busy || prepareLock.current || !available) return;
-    prepareLock.current = true;
-    setPreparing(true);
-    try {
-      if (!session.conversationId) {
-        const saved = await createConversation(creationFlowLabels[flow]);
-        session.conversationId = saved.id;
-        session.title = saved.title;
-        setActiveId(saved.id);
-        setActiveTitle(saved.title);
-        setConversationUrl(saved.id);
-      }
-      await creationRequest("/api/agent/creations", {
-        method: "PUT",
-        body: JSON.stringify({
-          action: "start",
-          conversationId: session.conversationId,
-          input: inputForCreation(flow),
-        }),
-      });
-      reloadProposals();
-    } catch (failure) {
-      notify(
-        failure instanceof Error
-          ? failure.message
-          : "Couldn’t open setup. Try again."
-      );
-    } finally {
-      prepareLock.current = false;
-      setPreparing(false);
-    }
+    await send(`${creationFlowLabels[flow]}. Ask me one question at a time.`);
   }
   const errorCopy =
     error?.message === "AGENT_HTTP_402"
@@ -361,7 +323,6 @@ export function AgentChat({
     follow.current = true;
     setInput("");
     try {
-      if (beforeCreationChat.current) await beforeCreationChat.current();
       if (controller.signal.aborted) return;
       if (!session.conversationId) {
         const saved = await createConversation(text, controller.signal);
@@ -508,13 +469,7 @@ export function AgentChat({
                     )
                     .map((proposal) => (
                       <AgentCreationCard
-                        panelHost={creationPanelHost}
-                        onChatMode={() =>
-                          void send(
-                            "Let’s finish this in chat. Ask me one question at a time."
-                          )
-                        }
-                        beforeChat={beforeCreationChat}
+                        onContinue={(prompt) => void send(prompt)}
                         key={proposal.id}
                         proposal={proposal}
                         disabled={busy || !available}
@@ -574,13 +529,7 @@ export function AgentChat({
             )
             .map((proposal) => (
               <AgentCreationCard
-                panelHost={creationPanelHost}
-                onChatMode={() =>
-                  void send(
-                    "Let’s finish this in chat. Ask me one question at a time."
-                  )
-                }
-                beforeChat={beforeCreationChat}
+                onContinue={(prompt) => void send(prompt)}
                 key={proposal.id}
                 proposal={proposal}
                 disabled={busy || !available}
@@ -642,10 +591,6 @@ export function AgentChat({
           </div>
         ) : null}
         <div className="relative">
-          <div
-            ref={setCreationPanelHost}
-            className={`absolute inset-x-0 bottom-full z-40 mb-3 ${actionsOpen ? "hidden" : ""}`}
-          />
           <form
             noValidate
             onSubmit={(event) => {

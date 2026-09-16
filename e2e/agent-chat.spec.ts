@@ -3,9 +3,9 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
-import type {
-  CreationInput,
-  CreationProposal,
+import {
+  type CreationProposal,
+  creationInputSchema,
 } from "../src/features/agent/creation-schema";
 
 let bundle: string;
@@ -51,30 +51,7 @@ for (const width of [390, 1440]) {
       const action =
         request.method() === "GET"
           ? null
-          : (request.postDataJSON() as {
-              action: string;
-              input: CreationInput;
-            });
-      if (
-        action?.action === "start" ||
-        action?.action === "save" ||
-        action?.action === "review"
-      ) {
-        creation = {
-          id: crypto.randomUUID(),
-          messageId: "form",
-          input: action.input,
-          status: action.action === "review" ? "pending" : "collecting",
-          preview: {
-            title: action.input.title ?? "Create group",
-            collecting: action.action !== "review",
-            lines: ["You are the owner."],
-            people: [],
-          },
-          destination: null,
-          expiresAt: "2099-01-01T00:00:00Z",
-        };
-      }
+          : (request.postDataJSON() as { action: string });
       if (action?.action === "confirm" && creation) {
         approvals++;
         creation = {
@@ -120,8 +97,45 @@ for (const width of [390, 1440]) {
         ),
       })
     );
-    await page.route("**/api/agent", (route) =>
-      route.fulfill(
+    await page.route("**/api/agent", (route) => {
+      if (route.request().method() !== "GET") {
+        const body = route.request().postDataJSON() as {
+          messageId: string;
+          messages: { content: string }[];
+        };
+        const text = body.messages.at(-1)?.content ?? "";
+        if (
+          text.startsWith("Create group") ||
+          creation?.status === "collecting"
+        ) {
+          const ready = text === "Synthetic crew";
+          creation = {
+            id: "creation",
+            messageId: body.messageId,
+            input: creationInputSchema.parse({
+              kind: "group",
+              title: ready ? text : undefined,
+              interactionMode: "chat",
+            }),
+            status: ready ? "pending" : "collecting",
+            preview: {
+              title: ready ? text : "Create group",
+              collecting: !ready,
+              lines: ["You are the owner."],
+              people: [],
+            },
+            destination: null,
+            expiresAt: "2099-01-01T00:00:00Z",
+          };
+          return route.fulfill({
+            contentType: "text/plain",
+            body: ready
+              ? "Review your group before approving."
+              : "What would you like to name your group?",
+          });
+        }
+      }
+      return route.fulfill(
         route.request().method() === "GET"
           ? {
               contentType: "application/json",
@@ -138,8 +152,8 @@ for (const width of [390, 1440]) {
               contentType: "text/plain",
               body: "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
             }
-      )
-    );
+      );
+    });
     await page.goto("/__synthetic-agent");
     await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });
@@ -176,16 +190,20 @@ for (const width of [390, 1440]) {
     await page
       .getByRole("option", { name: /Create a group Help me create a group/ })
       .click();
-    const setup = page.getByRole("region", { name: "Creation questions" });
-    await expect(setup).toBeVisible();
-    await setup.getByLabel("Group name").fill("Synthetic crew");
-    await setup.getByRole("button", { name: "Review", exact: true }).click();
     await expect(
-      setup.getByRole("button", { name: "Approve & create group" })
+      page.getByRole("region", { name: "Creation progress" })
+    ).toBeVisible();
+    await expect(page.getByRole("log")).toContainText(
+      "What would you like to name your group?"
+    );
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await slashComposer.fill("Synthetic crew");
+    await page.getByRole("button", { name: "Send message" }).click();
+    await expect(
+      page.getByRole("button", { name: "Approve & create group" })
     ).toBeVisible();
     expect(approvals).toBe(0);
-    await setup.getByRole("button", { name: "Approve & create group" }).click();
-    await expect(setup).toHaveCount(0);
+    await page.getByRole("button", { name: "Approve & create group" }).click();
     await expect(page.getByRole("link", { name: "Open group" })).toBeVisible();
     expect(approvals).toBe(1);
     creation = null;

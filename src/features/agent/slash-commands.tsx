@@ -4,8 +4,7 @@ import type { Editor } from "@tiptap/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
-import type { CreationFlow } from "./creation-form-model";
-import { agentPopoverSurface } from "./popover-surface";
+import type { CreationFlow } from "./creation-model";
 
 export function slashQuery(beforeCursor: string) {
   return /(?:^|\s)\/([\p{L}\p{N} -]*)$/u.exec(beforeCursor)?.[1] ?? null;
@@ -211,7 +210,9 @@ export function useAgentSlashCommands(
   const popup =
     range && !disabled ? (
       <div
-        className={`absolute -inset-x-[13px] bottom-full z-40 mb-6 ${agentPopoverSurface}`}
+        className={
+          "absolute -inset-x-[13px] bottom-full z-40 mb-6 overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
+        }
       >
         <div
           ref={list}

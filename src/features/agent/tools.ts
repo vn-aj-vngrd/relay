@@ -127,8 +127,10 @@ export function createAgentTools(
     });
     tools.prepareCreation = tool({
       description:
-        "Prepare a game, group, or browser-local Quick Play. Call as soon as the kind is known, including only supplied details. By default missing fields use the question panel. If the user requests chat-only answers, set interactionMode chat, retain it across turns, read creationStatus to merge existing answers, and ask one missing question at a time. Complete chat drafts produce a review card requiring an explicit approval button; no text reply can execute creation. Never ask a numbered questionnaire. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
-      inputSchema: creationPreparationSchema,
+        "Prepare a game, group, or browser-local Quick Play through chat. Call as soon as the kind is known, including only supplied details or supported source defaults. Before each continuation, read creationStatus and merge the saved answers with new details. Ask exactly one missing question per response; never a numbered questionnaire or a form/panel. Complete drafts produce a final review card requiring an explicit approval button; no text reply can execute creation. Set flow for draft, replay, groupGame, or crew when appropriate. Send known corrected details for edits. This does not execute a creation. Only the user can confirm the preview. Hosted game and Quick Play require game creation enabled; groups require group creation enabled.",
+      inputSchema: creationPreparationSchema.safeExtend({
+        interactionMode: z.literal("chat").optional(),
+      }),
       execute: (input) =>
         read(async () => {
           try {

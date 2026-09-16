@@ -22,7 +22,7 @@
   "src/features/agent/usage.test.ts",
   "src/features/agent/creation-service.test.ts",
   "src/features/agent/creation-prepare.test.ts",
-  "src/features/agent/creation-wizard.test.tsx",
+  "src/features/agent/creation-progress.test.ts",
   "src/features/agent/chat-lifecycle.test.tsx",
   "src/features/groups/create-group-command.test.ts",
   "src/app/api/agent/route.test.ts"
