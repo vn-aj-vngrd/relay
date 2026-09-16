@@ -50,15 +50,18 @@ const creationBaseSchema = z
   })
   .strict();
 const matchesCreationFlow = (
-  input: Pick<z.infer<typeof creationBaseSchema>, "kind" | "flow">
+  input: Pick<z.infer<typeof creationBaseSchema>, "kind" | "flow"> & {
+    intent?: "draft" | "published";
+  }
 ) =>
-  !input.flow ||
-  input.kind ===
-    (input.flow === "quickPlay"
-      ? "quickPlay"
-      : input.flow === "group" || input.flow === "crew"
-        ? "group"
-        : "game");
+  (!input.flow ||
+    input.kind ===
+      (input.flow === "quickPlay"
+        ? "quickPlay"
+        : input.flow === "group" || input.flow === "crew"
+          ? "group"
+          : "game")) &&
+  (input.flow !== "draft" || input.intent !== "published");
 const flowError = {
   message: "Choose a creation flow matching this action.",
   path: ["flow"],
@@ -71,6 +74,7 @@ export type CreationInput = z.infer<typeof creationInputSchema>;
 // Preparation must distinguish omitted replay settings from explicit user choices.
 export const creationPreparationSchema = creationBaseSchema
   .extend({
+    intent: creationBaseSchema.shape.intent.unwrap().optional(),
     visibility: creationBaseSchema.shape.visibility.unwrap().optional(),
     requiresApproval: creationBaseSchema.shape.requiresApproval
       .unwrap()

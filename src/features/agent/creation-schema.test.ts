@@ -18,6 +18,20 @@ const game = {
   courts: 1,
 };
 describe("Agent creation drafts", () => {
+  it("rejects contradictory draft flow and publication intent", () => {
+    expect(
+      creationPreparationSchema.parse({ kind: "game", flow: "draft" }).intent
+    ).toBeUndefined();
+    for (const schema of [creationPreparationSchema, creationInputSchema]) {
+      expect(
+        schema.safeParse({ kind: "game", flow: "draft", intent: "published" })
+          .success
+      ).toBe(false);
+      expect(
+        schema.parse({ kind: "game", flow: "draft", intent: "draft" }).intent
+      ).toBe("draft");
+    }
+  });
   it("distinguishes omitted replay access settings from explicit defaults", () => {
     const omitted = creationPreparationSchema.parse({ kind: "game" });
     expect(omitted.visibility).toBeUndefined();

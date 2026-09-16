@@ -201,3 +201,15 @@ it("returns corrective guidance for complete but invalid Quick Play details", as
   expect(result.status).toBe("needs_answer");
   expect(result.issues.join(" ")).toContain("Add 4 more players");
 });
+
+it("binds a draft flow without explicit intent to a saved draft", async () => {
+  const result = await prepareCreation(
+    "owner",
+    "chat",
+    "message",
+    "request",
+    creationPreparationSchema.parse({ kind: "game", flow: "draft" })
+  );
+  expect(result.status).toBe("needs_answer");
+  expect(state.saved?.intent).toBe("draft");
+});

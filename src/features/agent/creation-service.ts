@@ -251,6 +251,7 @@ export async function prepareCreation(
   const supplied = creationPreparationSchema.parse(raw);
   const input = creationInputSchema.parse({
     ...supplied,
+    intent: supplied.flow === "draft" ? "draft" : supplied.intent,
     interactionMode: "chat",
   });
   const { config } = await readAgentSettings();
