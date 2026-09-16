@@ -207,7 +207,25 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole("link", { name: "Open group" })).toBeVisible();
     expect(approvals).toBe(1);
     creation = null;
-    await page.getByRole("button", { name: "New chat", exact: true }).click();
+    const newChat = page.getByRole("button", { name: "New chat", exact: true });
+    if (width < 1024) {
+      const bounds = await newChat.boundingBox();
+      const historyBounds = await page
+        .getByRole("button", { name: /^Chat history:/ })
+        .boundingBox();
+      expect(bounds).not.toBeNull();
+      expect(historyBounds).not.toBeNull();
+      await expect(
+        newChat.locator("span", { hasText: "New chat" }).first()
+      ).toBeVisible();
+      expect(bounds!.height).toBeGreaterThanOrEqual(36);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width - 12);
+      expect(historyBounds!.x + historyBounds!.width).toBeLessThanOrEqual(
+        bounds!.x
+      );
+      await expect(newChat).toBeInViewport();
+    }
+    await newChat.click();
 
     if (width < 1024) {
       await expect(

@@ -246,7 +246,7 @@ it.each(["public", "link", "private"] as const)(
     const caption = screen.getByRole("textbox", { name: "Your caption" });
     fireEvent.change(caption, { target: { value: "Our Saturday crew." } });
     fireEvent.click(screen.getByRole("button", { name: "Look" }));
-    fireEvent.click(screen.getByRole("button", { name: "Coquette" }));
+    fireEvent.click(screen.getByRole("button", { name: "Soft Serve" }));
     const photoInput = screen.getByLabelText("Choose story photo file");
     fireEvent.click(screen.getByRole("button", { name: "Photos, 0" }));
     expect(screen.queryByRole("textbox", { name: "Your caption" })).toBeNull();
@@ -260,7 +260,7 @@ it.each(["public", "link", "private"] as const)(
       "Our Saturday crew."
     );
     fireEvent.click(screen.getByRole("button", { name: "Look" }));
-    expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Soft Serve" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );

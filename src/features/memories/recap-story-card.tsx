@@ -8,6 +8,7 @@ import type {
 import {
   type StoryCollageLayout,
   type StorySelectedPhoto,
+  storyCollageDecorations,
   storyPhotoSlots,
 } from "./story-collage";
 import {
@@ -116,6 +117,7 @@ function StoryContent({
   onAddPhoto,
   selectedPhotos,
   collageLayout = "editorial",
+  showMemoryStats = true,
 }: {
   title: string;
   venue: string;
@@ -143,6 +145,7 @@ function StoryContent({
   onAddPhoto?: () => void;
   selectedPhotos?: StorySelectedPhoto[];
   collageLayout?: StoryCollageLayout;
+  showMemoryStats?: boolean;
 }) {
   const isInvitation = template === "invitation" || template === "spots";
   const framedCopy =
@@ -189,6 +192,8 @@ function StoryContent({
     customNote,
     theme,
     hasPhoto: Boolean(background.imageUrl) || photoPlaceholder,
+    photoCount: background.imageUrl ? selectedPhotos?.length || 1 : 0,
+    showMemoryStats,
     photoRole: photoPlaceholder ? "foreground" : photoRole,
     photoPlacement,
   });
@@ -359,6 +364,29 @@ function StoryContent({
                     />
                   </div>
                 ))}
+                {scene.framed ? (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 1080 1920"
+                    className="pointer-events-none absolute inset-0 h-full w-full"
+                    data-story-collage={collageLayout}
+                  >
+                    {storyCollageDecorations(
+                      scene.photo,
+                      images.length,
+                      collageLayout,
+                      selectedSurface.color ?? "#635bde"
+                    ).map((part, index) => (
+                      <path
+                        key={index}
+                        d={part.path}
+                        fill={part.fill ?? "none"}
+                        stroke={part.stroke}
+                        strokeWidth={part.strokeWidth}
+                      />
+                    ))}
+                  </svg>
+                ) : null}
                 {!scene.framed ? (
                   <span
                     aria-hidden
@@ -372,6 +400,43 @@ function StoryContent({
             );
           })()
         : null}
+      {background.imageUrl && recapCopy?.photoStats ? (
+        <svg
+          role="img"
+          aria-label={recapCopy.photoStats.metrics
+            .map((metric) => `${metric.value} ${metric.label}`)
+            .join(". ")}
+          viewBox="0 0 1080 1920"
+          className="pointer-events-none absolute inset-0 z-1 h-full w-full"
+          data-story-region="photo-stats"
+        >
+          <rect {...recapCopy.photoStats.band} fill="#11131a" />
+          {recapCopy.photoStats.metrics.map((metric) => (
+            <g
+              key={metric.label}
+              fill="#ffffff"
+              fontFamily="Inter, Arial, sans-serif"
+            >
+              <text
+                x={metric.x}
+                y={metric.baseline}
+                fontSize={metric.size}
+                fontWeight="800"
+              >
+                {metric.value}
+              </text>
+              <text
+                x={metric.x}
+                y={metric.labelBaseline}
+                fontSize={metric.labelSize}
+                fontWeight="500"
+              >
+                {metric.label}
+              </text>
+            </g>
+          ))}
+        </svg>
+      ) : null}
       <svg
         aria-hidden="true"
         viewBox="0 0 1080 1920"
@@ -443,8 +508,9 @@ function StoryContent({
           </text>
         ))}
       </svg>
-      {theme !== "minimal" ? (
+      {theme !== "minimal" && (!background.imageUrl || scene.frame) ? (
         <svg
+          data-story-region="theme-art"
           aria-hidden="true"
           viewBox="0 0 1080 1920"
           className="pointer-events-none absolute inset-0 h-full w-full"

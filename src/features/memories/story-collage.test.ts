@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   defaultPhotoCrop,
+  storyCollageDecorations,
   storyPhotoGeometry,
   storyPhotoSlots,
 } from "./story-collage";
 
 describe("Story collage composition", () => {
   const box = { x: 112, y: 360, width: 856, height: 1020 };
-  it.each(["editorial", "grid"] as const)(
+  it.each(["editorial", "grid", "callouts", "scrapbook", "camera"] as const)(
     "keeps every selected photo within a distinct %s slot",
     (layout) => {
       for (let count = 1; count <= 4; count += 1) {
@@ -39,6 +40,24 @@ describe("Story collage composition", () => {
   it("uses the full existing photo window for one photo and none for an empty selection", () => {
     expect(storyPhotoSlots(box, 1)).toEqual([box]);
     expect(storyPhotoSlots(box, 0)).toEqual([]);
+  });
+  it("keeps creative decorations out of empty and single-photo stories", () => {
+    for (const layout of ["callouts", "scrapbook", "camera"] as const) {
+      expect(storyCollageDecorations(box, 0, layout, "#635bde")).toEqual([]);
+      expect(storyCollageDecorations(box, 1, layout, "#635bde")).toEqual([]);
+      expect(
+        storyCollageDecorations(box, 4, layout, "#635bde").length
+      ).toBeGreaterThan(4);
+    }
+  });
+  it("reserves a camera body outside each photo screen", () => {
+    const screens = storyPhotoSlots(box, 4, "camera");
+    const bodies = storyPhotoSlots(box, 4, "grid");
+    screens.forEach((screen, index) => {
+      expect(screen.x).toBeGreaterThan(bodies[index].x);
+      expect(screen.width).toBeLessThan(bodies[index].width);
+      expect(screen.height).toBeLessThan(bodies[index].height);
+    });
   });
   it("matches cover sizing and independently aligns zoomed overflow on both axes", () => {
     const square = { x: 20, y: 30, width: 500, height: 500 };

@@ -38,7 +38,18 @@ describe("Photo collage editor", () => {
       ).toHaveTextContent(/^RELAY$/);
     }
   );
-  it.each(["Minimal", "Scrapbook", "Coquette", "Court Pop", "Retro Rally"])(
+  it.each([
+    ["published", "court-pop"],
+    ["live", "court-pop"],
+    ["completed", "court-pop"],
+  ] as const)("starts %s with the matching %s theme", (phase, theme) => {
+    const { container } = render(<RecapShareCard {...props} phase={phase} />);
+    expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
+      "data-story-theme",
+      theme
+    );
+  });
+  it.each(["Studio", "Scrapbook", "Soft Serve", "Court Pop", "Clubhouse"])(
     "applies color changes to the %s story with and without collage photos",
     (theme) => {
       const { container } = render(<RecapShareCard {...props} />);
@@ -54,13 +65,13 @@ describe("Photo collage editor", () => {
           screen.getByRole("button", { name: "Court blue background" })
         );
         expect(container.querySelector("[data-story-theme]")).toHaveStyle({
-          backgroundColor: theme === "Minimal" ? "#2563eb" : "#eaf1ff",
+          backgroundColor: theme === "Studio" ? "#2563eb" : "#eaf1ff",
         });
         fireEvent.click(
           screen.getByRole("button", { name: "Coral background" })
         );
         expect(container.querySelector("[data-story-theme]")).toHaveStyle({
-          backgroundColor: theme === "Minimal" ? "#bd4545" : "#ffeded",
+          backgroundColor: theme === "Studio" ? "#bd4545" : "#ffeded",
         });
         expect(
           screen.getByRole("button", { name: "Coral background" })
@@ -150,9 +161,9 @@ describe("Photo collage editor", () => {
     fireEvent.click(screen.getByRole("button", { name: "Look" }));
     for (const name of [
       "Court Pop",
-      "Minimal",
-      "Coquette",
-      "Retro Rally",
+      "Studio",
+      "Soft Serve",
+      "Clubhouse",
       "Scrapbook",
     ]) {
       fireEvent.click(
@@ -170,6 +181,82 @@ describe("Photo collage editor", () => {
       });
     }
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
+  });
+  it("reveals extra layouts without losing photos or captions", () => {
+    const { container } = render(<RecapShareCard {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Use Moment 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Use Moment 2" }));
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    fireEvent.change(screen.getByLabelText("Your caption"), {
+      target: { value: "Our crew" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Look" }));
+    expect(
+      screen.queryByRole("button", { name: "Apply suggested look" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+    expect(
+      screen.queryByRole("button", { name: "Camera roll" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More layouts" }));
+    for (const [label, value] of [
+      ["Photo callouts", "callouts"],
+      ["Star scrapbook", "scrapbook"],
+      ["Camera roll", "camera"],
+    ]) {
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      expect(container.querySelector("[data-story-collage]")).toHaveAttribute(
+        "data-story-collage",
+        value
+      );
+      expect(
+        container.querySelectorAll('[data-story-region="photo"]')
+      ).toHaveLength(2);
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    expect(screen.getByLabelText("Your caption")).toHaveValue("Our crew");
+  });
+  it("lets photo memories opt out of stats and restores them without losing the photo", () => {
+    const { container } = render(
+      <RecapShareCard
+        {...props}
+        recap={{ ...props.recap, matchCount: 1, totalPoints: 19 }}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Use Moment 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    const toggle = screen.getByRole("checkbox", { name: "Show game stats" });
+    expect(toggle).toBeChecked();
+    expect(
+      container.querySelector('[data-story-region="photo-stats"]')
+    ).not.toBeNull();
+    fireEvent.click(toggle);
+    expect(
+      container.querySelector('[data-story-region="photo-stats"]')
+    ).toBeNull();
+    expect(
+      container.querySelectorAll('[data-story-region="photo"]')
+    ).toHaveLength(1);
+    fireEvent.click(toggle);
+    expect(
+      container.querySelector('[data-story-region="photo-stats"]')
+    ).not.toBeNull();
+  });
+  it("lets the photo lead when using a full background", () => {
+    const { container } = render(<RecapShareCard {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Use Moment 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Full background" }));
+    expect(
+      container.querySelector('[data-story-region="theme-art"]')
+    ).toBeNull();
+    expect(
+      container.querySelector('[data-story-region="photo"]')
+    ).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Framed foreground" }));
+    expect(
+      container.querySelector('[data-story-region="theme-art"]')
+    ).not.toBeNull();
   });
   it("returns to a poster and then the empty placeholder as photos are removed", () => {
     const { container } = render(<RecapShareCard {...props} />);

@@ -228,19 +228,22 @@ export function prepareStoryPoster<T extends CopyBlock>(
   const top = 180;
   const gap = 40;
   const minimumArt = 160;
-  const budget = bottom - top - minimumArt - gap * 2;
+  const fullBudget = bottom - top;
+  const artworkBudget = fullBudget - minimumArt - gap * 2;
   const height = (blocks: ReturnType<typeof prepareInvitationBlocks<T>>) =>
     blocks.reduce((sum, block) => sum + block.height, 0);
   let factor = 1;
   let head = prepareInvitationBlocks(heading, factor);
   let body = prepareInvitationBlocks(details, factor);
+  const keepArt = height(head) + height(body) <= artworkBudget;
+  const budget = keepArt ? artworkBudget : fullBudget;
   while (height(head) + height(body) > budget) {
     factor *= 0.96;
     head = prepareInvitationBlocks(heading, factor);
     body = prepareInvitationBlocks(details, factor);
   }
   const bodyTop = bottom - height(body);
-  const artTop = top + height(head) + gap;
+  const artTop = top + height(head) + (keepArt ? gap : 0);
   const availableArt = bodyTop - gap - artTop;
   const scene = storyScene("court-pop", false, "background", "center", true, {
     bottom,
@@ -251,7 +254,7 @@ export function prepareStoryPoster<T extends CopyBlock>(
     x: 72,
     y: artTop,
     width: 936,
-    height: availableArt,
+    height: keepArt ? availableArt : 0,
   };
   const position = (blocks: typeof head, start: number) => {
     let y = start;

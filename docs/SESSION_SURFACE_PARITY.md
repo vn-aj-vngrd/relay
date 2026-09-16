@@ -115,3 +115,53 @@ Story Make and Photos are both available from publication through live play and 
 
 
 Story collage composer: both authenticated and shared routes use the same RecapShareCard through SessionMemories. Photos/Layout/Look/Details controls and the updated MemoriesSkeleton share the same mobile structure. The personal draft supports 1–4 device/album photos, independent crops and order, and both collage arrangements across all five themes. It survives Make/Photos switches in memory only. This does not change pregame upload permissions, album limits, storage accounting or the shared gallery. Regression coverage is authored; validation deferred to pre-commit.
+
+
+Story creative layouts (2026-09-17): the shared composer starts with Hero +
+moments, Contact sheet, and Star scrapbook for two to four photos. More layouts
+reveals Photo callouts and Camera roll; the current choice stays visible when
+collapsed. Layout thumbnails reuse the canonical slot and vector geometry.
+Look retains theme and color selection without an extra suggested-look step.
+Framed custom photo stories put recorded points and match totals in one opaque
+high-contrast band on the photograph, removing the duplicate totals below it.
+Captions, personal results, and game context retain their own space. Empty games
+have no overlay. Both preview and PNG share overlay geometry and values.
+Game recap leads with the recorded match count. Validation deferred to pre-commit.
+
+
+Mobile Story export actions stay in normal page flow below the editor on both
+account and shared-link routes. They have no sticky bottom offset or elevated
+layer over fields. Expanded-preview actions retain their existing scrollable
+layout. Validation deferred to pre-commit.
+
+
+Story reassessment: a single framed custom photo uses the recorded-stats band;
+collages keep totals in the factual text area so no image is covered. Full-photo
+backgrounds use a continuous text composition without an allocated artwork gap
+or decorative theme artwork. Empty photo memories omit zero-match summaries;
+unrecorded court time is explicit, and standings retain the existing result order.
+The recap label is Game recap at every time of day. Validation deferred to pre-commit.
+
+
+Scrapbook refinement: one clean mat and a single tape detail replace layered
+paper, torn edges, dotted borders, and detached stickers. Handwritten captions
+use the normal foreground ink at a quieter size. Theme thumbnails reuse selected
+photos, crop values and collage geometry. Your story offers Show game stats in
+Details, preserving the selection across editing; off removes both session totals
+and the personal result from preview/export. Dense no-photo posters discard the
+artwork allocation before reducing type. Validation deferred to pre-commit.
+
+
+## Curated Story themes
+
+The user-facing set is Court Pop (default), Studio, Scrapbook, Soft Serve, and
+Clubhouse. Internal IDs remain `court-pop`, `minimal`, `scrapbook`, `coquette`,
+and `retro-rally` for compatibility. Court Pop uses emphatic type and graphic
+court fields; Studio uses precise numerals and open space; Scrapbook uses clean
+mats and one handwritten caption; Soft Serve pairs serif captions and softer
+numerals with one ribbon detail; Clubhouse uses sans-serif sporting type, ticket
+borders and restrained stripes. All retain complete game facts and existing color
+choices. Theme descriptions come from `storyThemes` in both editor and landing
+examples. The landing gallery renders all five with labeled sample data using
+RecapStoryCard, without obsolete mock editor controls. Validation deferred to
+pre-commit; rendering and exported images remain unverified.

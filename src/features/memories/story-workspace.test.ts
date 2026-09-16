@@ -7,6 +7,12 @@ const stylesheet = readFileSync(
 );
 
 describe("Story workspace responsive layout contract", () => {
+  it("keeps mobile export actions in flow rather than covering editor controls", () => {
+    const actions = stylesheet.match(/\.shareActions\s*\{([^}]+)\}/)?.[1];
+    expect(actions).toContain("position: static");
+    expect(actions).not.toMatch(/(?:^|[;\n])\s*(?:bottom|z-index)\s*:/);
+  });
+
   it("keeps mobile centered and stacked with bounded desktop columns", () => {
     const mobile = stylesheet.match(/^\.workspace\s*\{([^}]+)\}/m)?.[1];
     expect(mobile).toContain("max-width: 40rem");

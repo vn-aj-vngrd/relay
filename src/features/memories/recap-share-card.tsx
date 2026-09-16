@@ -25,7 +25,12 @@ import {
   type StoryPhase,
 } from "./recap-share";
 import { type RecapBackground, RecapStoryCard } from "./recap-story-card";
-import { type StoryCollageLayout, storyPhotoSlots } from "./story-collage";
+import {
+  type StoryCollageLayout,
+  storyCollageDecorations,
+  storyCollageLayouts,
+  storyPhotoSlots,
+} from "./story-collage";
 import { storyColorsForGame } from "./story-color";
 import {
   drawFramedInvitation,
@@ -45,6 +50,7 @@ import {
 import { StoryJoinHelp } from "./story-join-help";
 import { drawStoryPhoto } from "./story-photo";
 import { StoryPhotoEditor } from "./story-photo-editor";
+import { drawStoryPhotoStats } from "./story-photo-stats";
 import { drawStoryRecap, storyRecapLayout } from "./story-recap-layout";
 import {
   type StoryPhotoPlacement,
@@ -140,6 +146,7 @@ export function RecapShareCard({
   const [backgroundId, setBackgroundId] = useState(`accent:${gameAccent.id}`);
   const [overlay, setOverlay] = useState(55);
   const [moreStoriesOpen, setMoreStoriesOpen] = useState(false);
+  const [moreLayoutsOpen, setMoreLayoutsOpen] = useState(false);
   const storyOptionsId = useId();
   const photoEditorId = useId();
   const photoPosition = 50;
@@ -150,6 +157,7 @@ export function RecapShareCard({
   const [surfaceId, setSurfaceId] = useState(`accent:${gameAccent.id}`);
   const [customHeadline, setCustomHeadline] = useState("Same court next week?");
   const [customNote, setCustomNote] = useState("");
+  const [showMemoryStats, setShowMemoryStats] = useState(true);
   const [joinMode, setJoinMode] = useState<StoryJoinMode>("qr");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
@@ -167,6 +175,7 @@ export function RecapShareCard({
     backgrounds.find((item) => item.id === surfaceId) ?? backgrounds[0];
   const templateIndex = templates.findIndex((item) => item.id === template);
   const activeTemplate = templates[templateIndex] ?? templates[0];
+
   const eligibleJoinUrl =
     phase === "published" &&
     (activeTemplate.id === "invitation" || activeTemplate.id === "spots")
@@ -314,6 +323,8 @@ export function RecapShareCard({
       customNote,
       theme,
       hasPhoto: Boolean(background.imageUrl),
+      photoCount: photoSelection.photos.length,
+      showMemoryStats,
       photoRole,
       photoPlacement,
     });
@@ -372,6 +383,17 @@ export function RecapShareCard({
       } catch (error) {
         throw new Error("Selected photo unavailable", { cause: error });
       }
+      if (scene.framed) {
+        drawStoryDecorations(
+          context,
+          storyCollageDecorations(
+            scene.photo,
+            photoSelection.photos.length,
+            collageLayout,
+            selectedSurface.color ?? "#635bde"
+          )
+        );
+      }
       if (!scene.framed) {
         context.fillStyle = `rgba(8,10,16,${overlay / 100})`;
         context.fillRect(0, 0, canvas.width, canvas.height);
@@ -423,7 +445,7 @@ export function RecapShareCard({
     }
     if (scene.frame) {
       drawStoryTheme(context, theme, scene.frame, artOptions);
-    } else if (theme !== "minimal") {
+    } else if (theme !== "minimal" && !background.imageUrl) {
       if (theme === "court-pop" && !background.imageUrl)
         drawStoryDecorations(context, storyPosterPanel(scene.art));
       const art = storyArtTransform(scene.art);
@@ -432,8 +454,11 @@ export function RecapShareCard({
       context.scale(art.scale, art.scale);
       drawStoryTheme(context, theme, undefined, artOptions);
       context.restore();
-    } else {
+    } else if (!background.imageUrl) {
       drawStoryTheme(context, theme);
+    }
+    if (recapCopy?.photoStats) {
+      drawStoryPhotoStats(context, recapCopy.photoStats);
     }
     context.restore();
     if (currentJoinKey.current !== joinKey)
@@ -591,6 +616,7 @@ export function RecapShareCard({
             background={background}
             selectedPhotos={photoSelection.photos}
             collageLayout={collageLayout}
+            showMemoryStats={showMemoryStats}
             photoPlaceholder={photoRequired}
             onAddPhoto={() => {
               setEditorSection("photos");
@@ -682,26 +708,53 @@ export function RecapShareCard({
                   <div className="mt-3">
                     <TabChipRail
                       label="Collage layout"
-                      items={[
-                        { value: "editorial", label: "Hero + moments" },
-                        { value: "grid", label: "Contact sheet" },
-                      ]}
+                      className={styles.collageRail}
+                      itemClassName={styles.collageOption}
+                      items={storyCollageLayouts.filter(
+                        (item) =>
+                          moreLayoutsOpen ||
+                          [
+                            "editorial",
+                            "grid",
+                            "scrapbook",
+                            collageLayout,
+                          ].includes(item.value)
+                      )}
                       value={collageLayout}
                       onChange={setCollageLayout}
                       renderItem={({ value, label }) => (
-                        <span className="flex items-center gap-2">
+                        <span className="flex flex-col items-center gap-2">
                           <svg
                             aria-hidden
-                            viewBox="0 0 120 140"
-                            className="h-6 w-5"
+                            viewBox="0 0 936 1120"
+                            className={styles.collageThumbnail}
                             fill="currentColor"
                           >
+                            <rect width="936" height="1120" fill="#f5f3ee" />
                             {storyPhotoSlots(
-                              { x: 0, y: 0, width: 120, height: 140 },
+                              { x: 40, y: 40, width: 856, height: 1040 },
                               Math.max(2, photoSelection.photos.length),
                               value
                             ).map((slot, index) => (
-                              <rect key={index} {...slot} rx="3" />
+                              <rect
+                                key={index}
+                                {...slot}
+                                fill={index === 0 ? "#34544f" : "#8a9e94"}
+                              />
+                            ))}
+                            {storyCollageDecorations(
+                              { x: 40, y: 40, width: 856, height: 1040 },
+                              photoSelection.photos.length,
+                              value,
+                              sceneBackground.color ?? accent
+                            ).map((part, index) => (
+                              <path
+                                key={index}
+                                d={part.path}
+                                fill={part.fill ?? "none"}
+                                stroke={part.stroke}
+                                strokeWidth={part.strokeWidth}
+                              />
                             ))}
                           </svg>
                           {label}
@@ -709,6 +762,14 @@ export function RecapShareCard({
                       )}
                     />
                   </div>
+                  <button
+                    type="button"
+                    className="mt-2 min-h-9 rounded-lg px-1 text-sm font-semibold text-primary hover:underline"
+                    aria-expanded={moreLayoutsOpen}
+                    onClick={() => setMoreLayoutsOpen((open) => !open)}
+                  >
+                    {moreLayoutsOpen ? "Fewer layouts" : "More layouts"}
+                  </button>
                   <p className="mt-2 text-xs text-muted">
                     All your photos stay selected. Put your favorite first in
                     Photos.
@@ -759,6 +820,8 @@ export function RecapShareCard({
                 theme={theme}
                 subject={storyArtSubject(template)}
                 photoUrl={background.imageUrl}
+                photos={photoSelection.photos}
+                collageLayout={collageLayout}
                 onChange={setTheme}
                 light={(scene.framed ? sceneBackground : background).light}
                 accent={
@@ -869,9 +932,25 @@ export function RecapShareCard({
                     {moreStoriesOpen ? "Fewer stories" : "More stories"}
                   </button>
                 ) : null}
+                <p className="mt-2 text-sm leading-5 text-muted">
+                  {activeTemplate.description}
+                </p>
               </fieldset>
               {template === "custom" ? (
                 <>
+                  {recap.matchCount > 0 ? (
+                    <label className="flex min-h-9 cursor-pointer items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={showMemoryStats}
+                        onChange={(event) =>
+                          setShowMemoryStats(event.target.checked)
+                        }
+                        className="size-4 accent-primary"
+                      />
+                      Show game stats
+                    </label>
+                  ) : null}
                   <label className="mt-3 block text-sm font-semibold">
                     Your caption
                     <input
@@ -949,7 +1028,11 @@ export function RecapShareCard({
             </div>
           ) : null}
         </section>
-        <div className={`${styles.actions} ${styles.shareActions}`}>
+        <div
+          role="group"
+          aria-label="Story export actions"
+          className={`${styles.actions} ${styles.shareActions}`}
+        >
           <Button
             type="button"
             onClick={share}
@@ -1040,6 +1123,7 @@ export function RecapShareCard({
                 background={background}
                 selectedPhotos={photoSelection.photos}
                 collageLayout={collageLayout}
+                showMemoryStats={showMemoryStats}
                 photoPlaceholder={photoRequired}
                 onAddPhoto={() => {
                   setEditorSection("photos");

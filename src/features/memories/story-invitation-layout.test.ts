@@ -174,7 +174,7 @@ describe("nonframed footer-aware invitation rows", () => {
     );
   }
 
-  it("only rewraps overflow copy after exhausting the art-safe region, preserving complete words and captions", () => {
+  it("drops artwork before rewrapping overflow copy, preserving complete words and captions", () => {
     const title = "W".repeat(200);
     const customNote = "Bring your friends and paddles. ".repeat(20).trim();
     const layout = storyInvitationLayout({
@@ -201,7 +201,7 @@ describe("nonframed footer-aware invitation rows", () => {
       ).toBe(true);
       expect(block.y + block.height).toBeLessThanOrEqual(1504.001);
     }
-    expect(layout.scene.art.height).toBeGreaterThanOrEqual(159.999);
+    expect(layout.scene.art.height).toBe(0);
   });
 
   it("draws shared full-width baselines and fonts with no Canvas maxWidth or transforms", () => {

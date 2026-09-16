@@ -27,11 +27,11 @@ const mocks = vi.hoisted(() => ({ toCanvas: vi.fn() }));
 // These scenarios exercise invitation/export controls after opening the editor.
 function clickStoryButton(name: string) {
   const panel = [
-    "Minimal",
+    "Studio",
     "Scrapbook",
-    "Coquette",
+    "Soft Serve",
     "Court Pop",
-    "Retro Rally",
+    "Clubhouse",
   ].includes(name)
     ? "Look"
     : ["Full background", "Framed foreground"].includes(name)
@@ -217,7 +217,7 @@ describe("invitation join details", () => {
         ...props,
         template: focus === "Invitation" ? "invitation" : "spots",
         customNote: "",
-        theme: "scrapbook",
+        theme: "court-pop",
         placement: "center",
         joinMode: "qr",
       });

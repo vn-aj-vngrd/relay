@@ -228,7 +228,7 @@ Chat occupies the remaining viewport below session navigation. The message histo
 
 **Story** is the expressive destination throughout the session. Before play it exports a truthful invitation; during live play it uses only safe aggregate progress; after completion it offers factual recap focuses. Make and Photos are visible from publication, with game-photo uploads available to authorized contributors before, during and after play. Public and authenticated URLs use the same Story label and order.
 
-The completed Overview uses one non-dismissible **Game ended** banner above its details, shared across account and shared-link routes. **View recap** is primary; only the original host gets **Play again**, authorized participants retain relevant personal payment follow-up, and authorized nonparticipants may browse Open games. Destinations preserve the viewer’s access path. Final roster counts describe Going responses, never inferred attendance. Recap remains accessible without completed scores; Recap retains the fuller Play again, Save this crew, and Share recap continuation section. A participant may turn the night into a manually controlled 9:16 story. Available focuses include Night recap, My game, Winning team, Top of the table, Session Standings, Closest finish, Busiest court, Points played, Court time, The crew, and a photo-first custom story; a focus renders only when persisted session data supports it. The portrait never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct selection.
+The completed Overview uses one non-dismissible **Game ended** banner above its details, shared across account and shared-link routes. **View recap** is primary; only the original host gets **Play again**, authorized participants retain relevant personal payment follow-up, and authorized nonparticipants may browse Open games. Destinations preserve the viewer’s access path. Final roster counts describe Going responses, never inferred attendance. Recap remains accessible without completed scores; Recap retains the fuller Play again, Save this crew, and Share recap continuation section. A participant may turn the night into a manually controlled 9:16 story. Available focuses include Game recap, My game, Winning team, Top of the table, Session Standings, Closest finish, Busiest court, Points played, Court time, The crew, and a photo-first custom story; a focus renders only when persisted session data supports it. The portrait never auto-advances and supports swipe, Previous/Next controls, keyboard arrows, and direct selection.
 
 Customization is broad but bounded: Story themes, Relay palettes, persisted session photos, a local device photo, independent photo crop, background-photo contrast, a short custom headline, and one personal line. Theme selection lives in a visible thumbnail rail using the existing chip-selection semantics. Customize contains Background and Message; no duplicate Theme tab, structural Layout selector or layout summary remains, including for Minimal. One low-aligned factual baseline serves no-photo and full-background stories; framed photo placement alone allocates the photo and separate fitted factual region. Five Story themes now open in Scrapbook; Minimal remains a restrained opt-in scorecard with fine court corners. Scrapbook uses a taped court print and paddle; Coquette ties a ribbon around a paddle with a blush perforated ball and restrained scalloping; Court Pop uses a large ball across a court print; Retro Rally uses sporting stripes and a paddle print. No invented awards, decorative words, or proprietary artwork. Story-only **Baby Pink** (`story:pink`, `#ffe0eb`) uses dark text without changing game/app accents.
 
@@ -246,7 +246,7 @@ Five lightweight vector theme covers are visible outside Customize and preserve 
 
 ### Live and recap story hierarchy
 
-All remaining story focuses use shared canonical text rows, line breaks, font families, separators and baselines in SVG preview and Canvas export. Use one focal subject or result: We’re playing and Night recap lead with the game; Match pulse, Points played and Court time lead with a labeled total; My game and Top of the table lead with the player and wins–losses; Winning team leads with full pair names; Closest finish leads with the score and keeps the two teams distinct; Busiest court leads with the court. Standings uses ranked names with compact record lines, explicitly saying Top 5 of N when applicable; The crew keeps every name on its own wrapping row. Your story leads with the custom headline.
+All remaining story focuses use shared canonical text rows, line breaks, font families, separators and baselines in SVG preview and Canvas export. Use one focal subject or result: We’re playing and Game recap lead with the game; Match pulse, Points played and Court time lead with a labeled total; My game and Top of the table lead with the player and wins–losses; Winning team leads with full pair names; Closest finish leads with the score and keeps the two teams distinct; Busiest court leads with the court. Standings uses ranked names with compact record lines, explicitly saying Top 5 of N when applicable; The crew keeps every name on its own wrapping row. Your story leads with the custom headline.
 
 Use 72px canonical subject headings (88px custom headlines), 144px focal numbers, 40–48px supporting emphasis and 32–36px practical details. These are nominal sizes before dense-copy fallback, not a claim of device verification. Shared spacing uses 12px within groups, 24–32px between related sections and one 64px gap containing a subtle separator before session context. No repeated border boxes, decorative all-caps kickers or tiny three-column metric grids. Every story retains the game, schedule and venue; personal notes wrap completely. Live snapshots never expose provisional leaders or player records. Full-width coordinates stay stable; photo crop and theme artwork retain their shared geometry. Ordinary stories do not rely on Enlarge preview for reading. Very long names, captions or crews may require smaller text within the finite portrait; later browser and compressed-image review remain necessary.
 
@@ -298,7 +298,7 @@ All four expressive themes distinguish invitation/poster, people/crew, and resul
 
 ### Photo memories — courtside diary
 
-The selected direction is B, courtside diary. Completed games open in Your story with Scrapbook selected. A framed photo placeholder is visible immediately and opens the existing device-photo input. The editor exposes Add your photo, available game photos, Your caption and caption ideas before customization. The placeholder is preview-only: photo memories require a selected photograph before Share Story or Download PNG enables. Other statistical focuses remain usable without photos.
+The selected direction is B, courtside diary. Completed games open in Your story with Court Pop selected. All new Story composers use Court Pop, including invitations and live updates. A framed photo placeholder is visible immediately and opens the existing device-photo input. The editor exposes Add your photo, available game photos, Your caption and caption ideas before customization. The placeholder is preview-only: photo memories require a selected photograph before Share Story or Download PNG enables. Other statistical focuses remain usable without photos.
 
 The photograph fills the shared mat with a 40px inset and up to 1120px of height, subject to complete factual copy. Thin tape, ribbon, sporting stripes and pickleball details stay at the edges. Scrapbook and Coquette captions use the locally hosted, OFL-licensed Caveat face; PNG export waits for it. Real match/point totals and the viewer's recorded wins/losses accompany the caption, then game context. No result is invented for spectators. The five existing themes, crop, placement and background contrast controls remain available. Removing a photograph preserves theme and caption and restores the placeholder. Device photographs reuse the existing local decoding flow and are not uploaded.
 
@@ -321,7 +321,7 @@ Story gallery photos open in a shared fullscreen Dialog on both routes. The view
 Story photo crops are independent per selected photo: horizontal and vertical alignment plus zoom. Preview uses cover-fit images with matching scale origins; PNG uses the same crop values. Exact-fit photos can be repositioned after zooming. Reset restores centered alignment at 1×.
 
 
-Story Make editor hierarchy: Photos, Layout, Look and Details disclose one editing area at a time. Photos accepts up to four local and/or album images, preserves selection order and exposes crop, reorder and removal per thumbnail. Layout offers a hero-led collage or contact sheet plus photo placement; one photo uses the existing poster frame. Look retains all five theme previews in one dedicated panel. Details contains story focus, caption, personal line and eligible invitation links. Look groups themes, paper colors and photo contrast. Photo role and placement live in Layout. There are no Customize story or Story and caption accordions. Both routes reuse the same composer, TabChipRail and Button components. Preview and PNG share collage slot geometry; device files remain local and object URLs are released on removal/unmount. This four-photo composition capacity does not alter album/storage quotas. Multiple-photo compositions use foreground frames to keep facts separate. Mobile export actions retain the existing sticky row.
+Story Make editor hierarchy: Photos, Layout, Look and Details disclose one editing area at a time. Photos accepts up to four local and/or album images, preserves selection order and exposes crop, reorder and removal per thumbnail. Layout offers a hero-led collage or contact sheet plus photo placement; one photo uses the existing poster frame. Look retains all five theme previews in one dedicated panel. Details contains story focus, caption, personal line and eligible invitation links. Look groups themes, paper colors and photo contrast. Photo role and placement live in Layout. There are no Customize story or Story and caption accordions. Both routes reuse the same composer, TabChipRail and Button components. Preview and PNG share collage slot geometry; device files remain local and object URLs are released on removal/unmount. This four-photo composition capacity does not alter album/storage quotas. Multiple-photo compositions use foreground frames to keep facts separate. Mobile export actions follow the editor in normal document flow, so they never cover controls on short screens or assume bottom navigation is present.
 
 Private and public Story loading routes reuse MemoriesSkeleton and the live editor's workspace, portrait and action sizing. Preserve the static introduction and Photos/Layout/Look/Details labels, with noninteractive placeholders for pending photo choices and export actions. Do not show the former always-visible five-theme row. The loading region announces its busy state.
 
@@ -370,3 +370,54 @@ The Agent title picker uses a small anchored dropdown with only recent names and
 
 
 Agent creation stays in the conversation: one missing question per reply, supplied answers retained, and a compact passive indicator for collected details. The + actions popover remains discovery only. Final review shows exact effects and requires explicit approval. Corrections happen in chat and produce a fresh review.
+
+
+Story creative layouts (2026-09-17): the shared composer starts with Hero +
+moments, Contact sheet, and Star scrapbook for two to four photos. More layouts
+reveals Photo callouts and Camera roll; the current choice stays visible when
+collapsed. Layout thumbnails reuse the canonical slot and vector geometry.
+Look retains theme and color selection without an extra suggested-look step.
+Framed custom photo stories put recorded points and match totals in one opaque
+high-contrast band on the photograph, removing the duplicate totals below it.
+Captions, personal results, and game context retain their own space. Empty games
+have no overlay. Both preview and PNG share overlay geometry and values.
+Game recap leads with the recorded match count. Validation deferred to pre-commit.
+
+
+Story reassessment: a single framed custom photo uses the recorded-stats band;
+collages keep totals in the factual text area so no image is covered. Full-photo
+backgrounds use a continuous text composition without an allocated artwork gap
+or decorative theme artwork. Empty photo memories omit zero-match summaries;
+unrecorded court time is explicit, and standings retain the existing result order.
+The recap label is Game recap at every time of day. Validation deferred to pre-commit.
+
+
+Agent mobile header is 48px tall with 12px side insets and a compact, transparent New chat action showing both the plus icon and text label. Desktop retains its filled treatment.
+The conversation-title control truncates within the remaining width. Next.js's
+development indicator is disabled so it cannot overlay product controls during
+local mobile review; compile/runtime errors remain available. Validation deferred
+to pre-commit.
+
+
+Scrapbook refinement: one clean mat and a single tape detail replace layered
+paper, torn edges, dotted borders, and detached stickers. Handwritten captions
+use the normal foreground ink at a quieter size. Theme thumbnails reuse selected
+photos, crop values and collage geometry. Your story offers Show game stats in
+Details, preserving the selection across editing; off removes both session totals
+and the personal result from preview/export. Dense no-photo posters discard the
+artwork allocation before reducing type. Validation deferred to pre-commit.
+
+
+## Curated Story themes
+
+The user-facing set is Court Pop (default), Studio, Scrapbook, Soft Serve, and
+Clubhouse. Internal IDs remain `court-pop`, `minimal`, `scrapbook`, `coquette`,
+and `retro-rally` for compatibility. Court Pop uses emphatic type and graphic
+court fields; Studio uses precise numerals and open space; Scrapbook uses clean
+mats and one handwritten caption; Soft Serve pairs serif captions and softer
+numerals with one ribbon detail; Clubhouse uses sans-serif sporting type, ticket
+borders and restrained stripes. All retain complete game facts and existing color
+choices. Theme descriptions come from `storyThemes` in both editor and landing
+examples. The landing gallery renders all five with labeled sample data using
+RecapStoryCard, without obsolete mock editor controls. Validation deferred to
+pre-commit; rendering and exported images remain unverified.

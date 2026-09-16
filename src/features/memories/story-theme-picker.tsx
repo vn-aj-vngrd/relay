@@ -1,6 +1,12 @@
 import Image from "next/image";
-
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
+import {
+  type StoryCollageLayout,
+  type StorySelectedPhoto,
+  storyCollageDecorations,
+  storyPhotoSlots,
+} from "./story-collage";
+import { StoryPhotoPreview } from "./story-photo-preview";
 
 import {
   type StoryArtOptions,
@@ -21,6 +27,8 @@ export function StoryThemePicker({
   accent,
   subject,
   photoUrl,
+  photos,
+  collageLayout = "editorial",
   light,
   onChange,
 }: {
@@ -28,6 +36,8 @@ export function StoryThemePicker({
   accent: string;
   subject: StoryArtOptions["subject"];
   photoUrl?: string;
+  photos?: StorySelectedPhoto[];
+  collageLayout?: StoryCollageLayout;
   light?: boolean;
   onChange: (theme: StoryTheme) => void;
 }) {
@@ -87,7 +97,7 @@ export function StoryThemePicker({
                   ))}
                 </text>
                 <g transform="translate(0 480)">
-                  {subject === "people" ? (
+                  {subject === "people" || photos?.length ? (
                     <>
                       <path d="M110 170H970V690H110Z" fill="#fffdf7" />
                       <path d="M144 204H936V646H144Z" fill="#dce2d5" />
@@ -99,10 +109,7 @@ export function StoryThemePicker({
                         />
                       ) : null}
                       {value === "scrapbook" ? (
-                        <path
-                          d="M180 162l200 -12 2 36 -200 12ZM730 652l200 12 -2 36 -200 -12Z"
-                          fill="#dac398"
-                        />
+                        <path d="M450 166H630V194H450Z" fill="#dac398" />
                       ) : null}
                     </>
                   ) : (
@@ -125,19 +132,65 @@ export function StoryThemePicker({
                   strokeWidth="20"
                 />
               </svg>
-              {subject === "people" && photoUrl ? (
+              {(subject === "people" || photos?.length) && photoUrl ? (
                 <span
                   className="absolute left-[13.333%] top-[47.5%] h-[30.694%] w-[73.333%] overflow-hidden"
                   aria-hidden
                 >
-                  <Image
-                    src={photoUrl}
-                    alt=""
-                    fill
-                    sizes="52px"
-                    unoptimized
-                    className="object-cover"
-                  />
+                  {photos?.length ? (
+                    storyPhotoSlots(
+                      { x: 0, y: 0, width: 792, height: 442 },
+                      photos.length,
+                      collageLayout
+                    ).map((slot, index) => (
+                      <span
+                        key={photos[index].id}
+                        className="absolute overflow-hidden"
+                        style={{
+                          left: `${slot.x / 7.92}%`,
+                          top: `${slot.y / 4.42}%`,
+                          width: `${slot.width / 7.92}%`,
+                          height: `${slot.height / 4.42}%`,
+                        }}
+                      >
+                        <StoryPhotoPreview
+                          src={photos[index].imageUrl}
+                          crop={photos[index].crop}
+                        />
+                      </span>
+                    ))
+                  ) : (
+                    <Image
+                      src={photoUrl}
+                      alt=""
+                      fill
+                      sizes="52px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  )}
+                  {photos?.length ? (
+                    <svg
+                      aria-hidden
+                      viewBox="0 0 792 442"
+                      className="pointer-events-none absolute inset-0 h-full w-full"
+                    >
+                      {storyCollageDecorations(
+                        { x: 0, y: 0, width: 792, height: 442 },
+                        photos.length,
+                        collageLayout,
+                        accent
+                      ).map((part, index) => (
+                        <path
+                          key={index}
+                          d={part.path}
+                          fill={part.fill ?? "none"}
+                          stroke={part.stroke}
+                          strokeWidth={part.strokeWidth}
+                        />
+                      ))}
+                    </svg>
+                  ) : null}
                 </span>
               ) : null}
             </span>
@@ -145,6 +198,9 @@ export function StoryThemePicker({
           </>
         )}
       />
+      <p className="mt-3 text-sm leading-5 text-muted" aria-live="polite">
+        {storyThemes.find((item) => item.id === theme)?.description}
+      </p>
     </div>
   );
 }

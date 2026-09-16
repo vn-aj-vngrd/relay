@@ -400,18 +400,21 @@ export default async function MarketingPage() {
               After the last point
             </p>
             <h2 className="mt-4 text-3xl font-[620] tracking-[-0.038em] sm:text-4xl">
-              Save the scores and photos.
+              Your game. Your kind of story.
             </h2>
             <p className="mt-5 leading-7 text-muted">
-              End Play to save the final scores. Make a vertical image from the
-              results and your photos, then share it to Instagram, Facebook, or
-              your group chat.
+              Make an invitation, a photo memory, or a recap from recorded
+              results. Start with Court Pop, or choose Studio, Scrapbook, Soft
+              Serve, or Clubhouse to match the moment.
             </p>
             <ul className="mt-7 divide-y divide-line border-y border-line text-sm">
               <li className="py-3">
-                Choose from the results available for that game
+                Five distinct looks, using your real game details
               </li>
-              <li className="py-3">Pick a layout, color, and photo</li>
+              <li className="py-3">
+                Add your photos and caption; keep stats optional in photo
+                stories
+              </li>
               <li className="py-3">Share or download a 1080 × 1920 image</li>
             </ul>
           </div>

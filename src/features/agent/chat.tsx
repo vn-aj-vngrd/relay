@@ -371,7 +371,7 @@ export function AgentChat({
       aria-label="Agent chat"
       className="agent-chat-page mx-auto flex h-full min-h-0 w-full flex-col"
     >
-      <header className="-mx-4 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:mx-0 lg:h-auto lg:px-0 lg:pb-4">
+      <header className="-mx-4 flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line px-3 sm:-mx-8 sm:px-7 lg:mx-0 lg:h-auto lg:px-0 lg:pb-4">
         <div className="flex min-w-0 flex-1 items-center gap-1">
           <FocusedBackLink isAuthenticated className="lg:hidden" />
           <h1 className="sr-only">Agent conversation</h1>
@@ -384,12 +384,14 @@ export function AgentChat({
         </div>
         <Button
           variant="quiet"
-          className="rounded-full bg-surface-strong!"
+          aria-label="New chat"
+          className="shrink-0 rounded-full bg-transparent! px-2! lg:bg-surface-strong! lg:px-3!"
           disabled={busy || (!messages.length && !activeId)}
           onClick={newConversation}
         >
           <Plus size={16} aria-hidden />
-          New chat
+          <span>New chat</span>
+          <Tooltip content="New chat" side="bottom" />
         </Button>
       </header>
       <div

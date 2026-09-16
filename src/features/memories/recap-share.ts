@@ -58,7 +58,7 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   },
   overview: {
     id: "overview",
-    label: "Night recap",
+    label: "Game recap",
     description: "Matches, points, and court time",
   },
   personal: {
@@ -84,7 +84,7 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   closest: {
     id: "closest",
     label: "Closest finish",
-    description: "The tightest score of the night",
+    description: "The tightest score of the game",
   },
   court: {
     id: "court",
@@ -94,7 +94,7 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   points: {
     id: "points",
     label: "Points played",
-    description: "One big number from the night",
+    description: "Total points from completed matches",
   },
   "court-time": {
     id: "court-time",
@@ -104,7 +104,7 @@ const templates: Record<RecapShareTemplateId, RecapShareTemplate> = {
   crew: {
     id: "crew",
     label: "The crew",
-    description: "The names that made the night",
+    description: "The players who took part",
   },
   custom: {
     id: "custom",
