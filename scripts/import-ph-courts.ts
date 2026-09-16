@@ -81,12 +81,17 @@ const courtSchema = z.object({
   listingStatus: z.enum(["unverified", "verified"]),
   sourceUrl: z.url(),
   lastSeenAt: z.iso.datetime({ offset: true }),
+  verifiedAt: z.iso.datetime({ offset: true }).optional(),
+  verificationNote: z.string().min(10).optional(),
+  locationSourceUrl: z.url().optional(),
 });
 
 const sourceSchema = z.object({
   source: z.string().min(1),
   sourceUrl: z.url(),
   publishedAt: z.iso.date(),
+  archiveMissing: z.boolean().default(true),
+  verificationRequired: z.boolean().default(false),
   records: z.array(courtSchema).min(1),
 });
 
@@ -104,6 +109,15 @@ const sourceFiles = [
   new URL("../data/courts/sm-active-hub-2026.json", import.meta.url),
   new URL("../data/courts/ppf-places-to-play-2025-09-01.json", import.meta.url),
   new URL("../data/courts/picklepoint-iloilo-2026.json", import.meta.url),
+  new URL("../data/courts/metro-booking-2026-09-16.json", import.meta.url),
+  new URL(
+    "../data/courts/sparrk-metro-manila-2026-09-16.json",
+    import.meta.url
+  ),
+  new URL("../data/courts/cebu-booking-2026-09-16.json", import.meta.url),
+  new URL("../data/courts/skedna-2026-09-16.json", import.meta.url),
+  new URL("../data/courts/manila-booking-2026-09-16.json", import.meta.url),
+  new URL("../data/courts/manila-operators-2026-09-16.json", import.meta.url),
 ];
 const apply = process.argv.includes("--apply");
 
@@ -125,6 +139,10 @@ function isLikelyDuplicate(
 }
 
 function verificationNote(source: CourtSource, record: CourtRecord) {
+  if (record.verificationNote)
+    return record.locationSourceUrl
+      ? `${record.verificationNote} Location evidence: ${record.locationSourceUrl}`
+      : record.verificationNote;
   if (source.source === "smsupermalls.com") {
     return "Verified against the current first-party SM Active Hub court directory on 2026-09-01.";
   }
@@ -146,6 +164,14 @@ for (const source of sources) {
   const externalIds = new Set<string>();
   const slugs = new Set<string>();
   for (const record of source.records) {
+    if (
+      source.verificationRequired &&
+      record.listingStatus === "verified" &&
+      (!record.verifiedAt ||
+        !record.verificationNote ||
+        !record.locationSourceUrl)
+    )
+      throw new Error(`Missing reviewed location evidence: ${record.name}`);
     if (externalIds.has(record.sourceExternalId))
       throw new Error(`Duplicate source ID: ${record.sourceExternalId}`);
     if (slugs.has(record.slug))
@@ -271,6 +297,7 @@ try {
   } else {
     await sql.begin(async (transaction) => {
       for (const source of sources) {
+        if (!source.archiveMissing) continue;
         const activeIds = source.records.map(
           (record) => record.sourceExternalId
         );
@@ -286,7 +313,7 @@ try {
       for (const { source, record, slug } of planned) {
         const verifiedAt =
           record.listingStatus === "verified"
-            ? new Date("2026-09-01T00:00:00+08:00")
+            ? new Date(record.verifiedAt ?? record.lastSeenAt)
             : null;
         const saved = await transaction<{ id: string }[]>`
           INSERT INTO venues (

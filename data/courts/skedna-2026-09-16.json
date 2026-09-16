@@ -1,0 +1,2135 @@
+{
+  "source": "skedna.com",
+  "sourceUrl": "https://skedna.com/courts",
+  "publishedAt": "2026-09-16",
+  "archiveMissing": false,
+  "verificationRequired": true,
+  "records": [
+    {
+      "sourceExternalId": "skedna-5jdinkanddrink",
+      "slug": "5jdinkanddrink",
+      "name": "5J Dink and Drink",
+      "address": "Dumaguete-Palinpinon Road, Candau-ay, Dumaguete City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/5jdinkanddrink",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/5jdinkanddrink",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: published directions resolve to a road, broad district, or residential property rather than an independently identifiable pickleball venue marker. Exact facility pin needs confirmation."
+    },
+    {
+      "sourceExternalId": "skedna-balicourt",
+      "slug": "balicourt",
+      "name": "BALICOurt",
+      "address": "Garcia st. Balico Poblacion, Talibon, Bohol, Poblacion, Talibon, Philippines",
+      "latitude": 10.1500716,
+      "longitude": 124.3255806,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/balicourt",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/balicourt",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/balicourt",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-bbk-court",
+      "slug": "bbk-court",
+      "name": "BBK Court",
+      "address": "Zamora Street, South Poblacion, Valencia, Philippines",
+      "latitude": 9.2811535,
+      "longitude": 123.2446465,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/bbk-court",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/bbk-court",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/bbk-court",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-beas-pickleball-court",
+      "slug": "beas-pickleball-court",
+      "name": "Bea's Pickleball Court",
+      "address": "Diversion Road, Batinguel, Dumaguete City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/beas-pickleball-court",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/beas-pickleball-court",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: venue structured coordinates conflict with its directions destination by more than 800m. Exact facility marker needs confirmation; neither conflicting pin is published."
+    },
+    {
+      "sourceExternalId": "skedna-club-rufino",
+      "slug": "club-rufino",
+      "name": "CLUB RUFINO",
+      "address": "Purok 3, Mahayahay, San Isidro, Talibon, Bohol, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/club-rufino",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/club-rufino",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: published directions resolve to a road, broad district, or residential property rather than an independently identifiable pickleball venue marker. Exact facility pin needs confirmation."
+    },
+    {
+      "sourceExternalId": "skedna-court-a-pickleball",
+      "slug": "court-a-pickleball",
+      "name": "Court A Pickleball",
+      "address": "Phase 13 Ext., Martinez Subdivision, Dahican, Mati City, Philippines",
+      "latitude": 6.9342836,
+      "longitude": 126.2589477,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/court-a-pickleball",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/court-a-pickleball",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is Court A Pickleball Mati, Dahican, Martinez Ave, Subdivision, City of Mati, 8200 Davao Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps?q=Court+A+Pickleball+Mati%2C+Dahican%2C+Martinez+Ave%2C+Subdivision%2C+City+of+Mati%2C+8200+Davao+Oriental&ftid=0x32fbc9fa98e3db8b%3A0xb1370a84ffd709f9",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-dinkseven",
+      "slug": "dinkseven",
+      "name": "DINK_SEV7EN",
+      "address": "7th Lacson St., Brgy. 7, Bacolod City, Philippines",
+      "latitude": 10.6803039,
+      "longitude": 122.9565566,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/dinkseven",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/dinkseven",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/dinkseven",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-matchpoint-pickleball-center-baganga",
+      "slug": "matchpoint-pickleball-center-baganga",
+      "name": "Matchpoint Pickleball Center - Baganga",
+      "address": "Block 9, Brgy. Lambajon, Baganga, Philippines",
+      "latitude": 7.6085275,
+      "longitude": 126.5576383,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/matchpoint-pickleball-center-baganga",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/matchpoint-pickleball-center-baganga",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/matchpoint-pickleball-center-baganga",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-paddle-jackpot-tandayag",
+      "slug": "paddle-jackpot-tandayag",
+      "name": "PADDLE JACKPOT-TANDAYAG",
+      "address": "ALONG NATIONAL HIGHWAY, BESIDE CONCEPCION FOODHOUSE, TANDAYAG, AMLAN, Philippines",
+      "latitude": 9.4552796,
+      "longitude": 123.2322408,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/paddle-jackpot-tandayag",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/paddle-jackpot-tandayag",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/paddle-jackpot-tandayag",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-paddle-lounge",
+      "slug": "paddle-lounge",
+      "name": "Paddle Lounge",
+      "address": "Purok Mahayahay, Dao, Pagadian City, Brgy. Dao, Pagadian City, Philippines",
+      "latitude": 7.8848915,
+      "longitude": 123.4445448,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "02:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/paddle-lounge",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/paddle-lounge",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/paddle-lounge",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-pickle-point",
+      "slug": "pickle-point",
+      "name": "Pickle Point",
+      "address": "Tanauan, 005 Barangay Pagaspas, Batangas, Philippines",
+      "latitude": 14.0896626,
+      "longitude": 121.1474816,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/pickle-point",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/pickle-point",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/pickle-point",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-picklepop",
+      "slug": "picklepop",
+      "name": "PicklePop",
+      "address": "Beside Lutao Barangay Hall, Lutao, Bacong, Philippines",
+      "latitude": 9.2480399,
+      "longitude": 123.2836115,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "23:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/picklepop",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/picklepop",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Named Google Maps venue search resolves an actual point-of-interest marker: PicklePop Pickleball Courts, Picklepop, Beside Lutao Barangay Hall, Bacong, 6216 Negros Oriental. Identity/location cross-checked with primary SKEDNA venue name and address. This is the named marker, not the operator page viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps?q=PicklePop+Pickleball+Courts+Bacong",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-pickleshots-hideout",
+      "slug": "pickleshots-hideout",
+      "name": "PickleShots Hideout",
+      "address": "Mabini Compound, Purok Matahimik, Barangay Matiao, Mati City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "04:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/pickleshots-hideout",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/pickleshots-hideout",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Exact map location requires review: two differently named Mati facilities publish the identical coordinate pair."
+    },
+    {
+      "sourceExternalId": "skedna-picklebase-pickleball-center-mati",
+      "slug": "picklebase-pickleball-center-mati",
+      "name": "Picklebase - Pickleball Center Mati",
+      "address": "Don Mariano Marcos Avenue, City of Mati, Davao Oriental, Sainz, Mati City, Philippines",
+      "latitude": 6.958638,
+      "longitude": 126.2198736,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "16:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/picklebase-pickleball-center-mati",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/picklebase-pickleball-center-mati",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is The Picklebase - Pickleball Center Mati, 745 Don Mariano Marcos Avenue, City of Mati, Davao Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/The+Picklebase+-+Pickleball+Center+Mati/@6.9586939,126.2198582,21z/data=!4m6!3m5!1s0x32fbc900207c5d0f:0xdb8eba773e952233!8m2!3d6.958638!4d126.2198736!16s%2Fg%2F11nr8t46y5",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-prekayball-dumaguete",
+      "slug": "prekayball-dumaguete",
+      "name": "Prekayball Dumaguete",
+      "address": "Jose Romero Road, Junob, Dumaguete City, Philippines",
+      "latitude": 9.2968245,
+      "longitude": 123.2863897,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "03:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/prekayball-dumaguete",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/prekayball-dumaguete",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is Prekayball, Jose Romero Road, Dumaguete City, 6200 Negros Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/Prekayball/@9.2968245,123.2838148,17z/data=!3m1!4b1!4m6!3m5!1s0x33ab6faf9d817b17:0xfba2d4919cb3bf32!8m2!3d9.2968245!4d123.2863897!16s%2Fg%2F11y16gsr0c",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-prekayball-manjuyod",
+      "slug": "prekayball-manjuyod",
+      "name": "Prekayball Manjuyod",
+      "address": "Corner Juan Luna & Malvar Street, Tupas, Manjuyod, Philippines",
+      "latitude": 9.679177,
+      "longitude": 123.145444,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/prekayball-manjuyod",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/prekayball-manjuyod",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Reviewed the venue-hosted SKEDNA booking page, published street address, and its GeoCoordinates/map. Source pin retained without geocoding. Remote documentary verification, not an on-site survey; prices and physical court count require confirmation.",
+      "locationSourceUrl": "https://skedna.com/courts/prekayball-manjuyod",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-quantum-pickleball-courts",
+      "slug": "quantum-pickleball-courts",
+      "name": "Quantum Pickleball Courts",
+      "address": "Washington St, Sundo-an, Manjuyod, Philippines",
+      "latitude": 9.6808897,
+      "longitude": 123.149606,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/quantum-pickleball-courts",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/quantum-pickleball-courts",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is Quantum Courts, Washington Street, Manjuyod, 6208 Negros Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps?q=Quantum+Courts%2C+Washington+Street%2C+Manjuyod%2C+6208+Negros+Oriental&ftid=0x33ab870021844db1%3A0xd5247ec8e7b51d24",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-rdpicklezone",
+      "slug": "rdpicklezone",
+      "name": "RD Pickle Zone",
+      "address": "Nabulagan, Pob. VI, Tanjay City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/rdpicklezone",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/rdpicklezone",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Exact map location requires review: booking page does not publish a complete coordinate pair."
+    },
+    {
+      "sourceExternalId": "skedna-teacool-bulls-pickleball-courts",
+      "slug": "teacool-bulls-pickleball-courts",
+      "name": "Teacool Bulls Pickleball Courts",
+      "address": "San Lorenzo Street, Talay, Dumaguete City, Philippines",
+      "latitude": 9.2937333,
+      "longitude": 123.261675,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/teacool-bulls-pickleball-courts",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/teacool-bulls-pickleball-courts",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is 77V6+9J3 Teacool Bulls Pickleball Court, Dumaguete City, Negros Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/Teacool+Bulls+Pickleball+Court/@9.2937333,123.2529203,16z/data=!4m7!3m6!1s0x33ab6f006635d35d:0x4c3c0e3fad4c5198!8m2!3d9.2937333!4d123.261675!15sChJ0ZWFjb29sIHBpY2tsZWJhbGySAQtzcG9ydHNfY2x1YuABAA!16s%2Fg%2F11njzj9xb_",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-thecompound",
+      "slug": "thecompound",
+      "name": "The Compound - Mati Pickleball",
+      "address": "Lower Sudlon, Mati, Cara 3, Davao Oriental, Philippines",
+      "latitude": 6.9634626,
+      "longitude": 126.2010638,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "05:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/thecompound",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/thecompound",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is The Compound (Pickleball Court), Cara Subdivision, City of Mati, 8200 Davao Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/The+Compound+(Pickleball+Court)/@6.9634679,126.1984889,998m/data=!3m2!1e3!4b1!4m6!3m5!1s0x32fbc95961d24c91:0x7a4328c6318fb953!8m2!3d6.9634626!4d126.2010638!16s%2Fg%2F11njcwnmmw",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-the-family-court-pickleball-center",
+      "slug": "the-family-court-pickleball-center",
+      "name": "The Family Court - Pickleball Center",
+      "address": "Bilawan Street, Mati, Davao Oriental, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/the-family-court-pickleball-center",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/the-family-court-pickleball-center",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: venue structured coordinates conflict with its directions destination by more than 800m. Exact facility marker needs confirmation; neither conflicting pin is published."
+    },
+    {
+      "sourceExternalId": "skedna-thefitscape",
+      "slug": "thefitscape",
+      "name": "The FitScape",
+      "address": "Tua-tua Drive, Prk Mangga, Brgy. Matiao, Mati City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/thefitscape",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/thefitscape",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Exact map location requires review: two differently named Mati facilities publish the identical coordinate pair."
+    },
+    {
+      "sourceExternalId": "skedna-the-glass-house",
+      "slug": "the-glass-house",
+      "name": "The Glass House",
+      "address": "Hacienda Verde Utap Road, Brgy. 110 Utap, Tacloban City, Philippines",
+      "latitude": 11.226564,
+      "longitude": 124.992138,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "03:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/the-glass-house",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/the-glass-house",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is Glass House by LGK, Hacienda Verde, Brgy. Utap, Tacloban City, Leyte. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/Glass+House+by+LGK/@11.2265693,124.9895631,1087m/data=!3m2!1e3!4b1!4m6!3m5!1s0x3308770018f320e5:0xf01eea69a798a2dd!8m2!3d11.226564!4d124.992138!16s%2Fg%2F11y169lvjt",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-the-grounds-co-pickle-park",
+      "slug": "the-grounds-co-pickle-park",
+      "name": "The Grounds Co. Pickle Park",
+      "address": "Purok  2 , San Antonio, Sibulan, Negros Oriental., SIBULAN, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "08:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/the-grounds-co-pickle-park",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/the-grounds-co-pickle-park",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Exact map location requires review: booking page does not publish a complete coordinate pair."
+    },
+    {
+      "sourceExternalId": "skedna-the-pickledome-courts",
+      "slug": "the-pickledome-courts",
+      "name": "The Pickledome Courts",
+      "address": "Larena Drive, Taclobo, Dumaguete City, Philippines",
+      "latitude": 9.3093927,
+      "longitude": 123.2945498,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/the-pickledome-courts",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/the-pickledome-courts",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Named Google Maps venue search resolves an actual point-of-interest marker: 875V+QR3 The Pickledome Courts, Larena Drive, Dumaguete City, Negros Oriental. Identity/location cross-checked with primary SKEDNA venue name and address. This is the named marker, not the operator page viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps?q=The+Pickledome+Courts+Dumaguete",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-the-yard",
+      "slug": "the-yard",
+      "name": "The Yard",
+      "address": "Sto. Rosario Heights (near chapel), Junob, Dumaguete City, Philippines",
+      "latitude": 9.2997514,
+      "longitude": 123.2845887,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "07:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/the-yard",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/the-yard",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Resolved the exact place ID from the operator-linked directions URL through Google Maps embed; actual named marker is The Yard sto rosario heights, Sto rosario, Junob, Dumaguete City, 6200 Negros Oriental. This is the place marker, not the viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps/place/The+Yard+sto+rosario+heights,+Sto+rosario,+Junob,+Dumaguete+City,+6200+Negros+Oriental/data=!4m2!3m1!1s0x33ab6f6bc5648b91:0xba7be8956c1559f7!18m1!1e1",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    },
+    {
+      "sourceExternalId": "skedna-thetopfloorpicklrs",
+      "slug": "thetopfloorpicklrs",
+      "name": "Thetopfloorpicklrs",
+      "address": "Pardo, Quiot, Cebu City, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "09:00",
+          "closesAt": "21:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/thetopfloorpicklrs",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/thetopfloorpicklrs",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: published directions resolve to a road, broad district, or residential property rather than an independently identifiable pickleball venue marker. Exact facility pin needs confirmation."
+    },
+    {
+      "sourceExternalId": "skedna-tropical-pickle",
+      "slug": "tropical-pickle",
+      "name": "Tropical Pickle",
+      "address": "Brgy. Road, Tambojangin, Amlan, Philippines",
+      "latitude": null,
+      "longitude": null,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "06:00",
+          "closesAt": "00:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/tropical-pickle",
+      "listingStatus": "unverified",
+      "sourceUrl": "https://skedna.com/courts/tropical-pickle",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Held: venue structured coordinates conflict with its directions destination by more than 800m. Exact facility marker needs confirmation; neither conflicting pin is published."
+    },
+    {
+      "sourceExternalId": "skedna-zoepicklehub",
+      "slug": "zoepicklehub",
+      "name": "Zoe Picklehub",
+      "address": "Dicen Road, Purok 6, Amihan, Batinguel, Dumaguete City, Philippines",
+      "latitude": 9.3161329,
+      "longitude": 123.2840228,
+      "environment": null,
+      "courtCount": null,
+      "accessType": "commercial",
+      "reservationPolicy": "contact",
+      "operationalStatus": "operating",
+      "operatingHours": [
+        {
+          "dayOfWeek": 1,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 2,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 3,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 4,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 5,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 6,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        },
+        {
+          "dayOfWeek": 7,
+          "sequence": 0,
+          "opensAt": "15:00",
+          "closesAt": "22:00"
+        }
+      ],
+      "priceStatus": "unknown",
+      "priceAmountCents": null,
+      "priceMaxCents": null,
+      "priceUnit": null,
+      "parkingStatus": null,
+      "amenities": [],
+      "paddleRental": false,
+      "contact": null,
+      "websiteUrl": null,
+      "socialUrl": null,
+      "bookingUrl": "https://skedna.com/courts/zoepicklehub",
+      "listingStatus": "verified",
+      "sourceUrl": "https://skedna.com/courts/zoepicklehub",
+      "lastSeenAt": "2026-09-16T00:00:00+08:00",
+      "verificationNote": "Named Google Maps venue search resolves an actual point-of-interest marker: 878M+FJ2 Zoe Picklehub, Dumaguete City, Negros Oriental. Identity/location cross-checked with primary SKEDNA venue name and address. This is the named marker, not the operator page viewport. Operator booking page confirms current pickleball use. Remote documentary verification, not an on-site survey.",
+      "locationSourceUrl": "https://www.google.com/maps?q=Zoe+Picklehub+Dumaguete",
+      "verifiedAt": "2026-09-16T00:00:00+08:00"
+    }
+  ]
+}

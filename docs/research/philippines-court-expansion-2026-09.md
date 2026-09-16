@@ -1,5 +1,7 @@
 # Philippines court directory expansion — September 2026
 
+September 16 update: the live directory now contains 305 verified venues after 187 additions. See the [expansion and verification report](philippines-court-expansion-2026-09-16.md). Counts below describe the earlier September snapshot.
+
 ## Outcome
 
 Relay now has a reviewable nationwide import rather than an unbounded scraper:
