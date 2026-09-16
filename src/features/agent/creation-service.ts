@@ -221,12 +221,12 @@ export async function listCreationProposals(
     .where(
       and(
         eq(agentCreationProposals.userId, userId),
-        eq(agentCreationProposals.conversationId, conversationId)
+        eq(agentCreationProposals.conversationId, conversationId),
+        inArray(agentCreationProposals.status, ["pending", "completed"])
       )
     )
-    .orderBy(desc(agentCreationProposals.createdAt))
-    .limit(100);
-  return rows.reverse().map(project);
+    .orderBy(asc(agentCreationProposals.createdAt));
+  return rows.map(project);
 }
 
 export async function prepareCreation(

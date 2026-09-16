@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   },
   inserts: [] as Record<string, unknown>[],
   enabled: true,
+  history: [] as Record<string, unknown>[],
 }));
 vi.mock("./config", () => ({
   readAgentSettings: async () => ({
@@ -42,7 +43,15 @@ vi.mock("@/db/client", () => {
     },
     select: () => ({
       from: () => ({
-        where: () => ({ for: async () => (state.row ? [state.row] : []) }),
+        where: () => ({
+          for: async () => (state.row ? [state.row] : []),
+          orderBy: () => {
+            const rows = Promise.resolve(state.history);
+            return Object.assign(rows, {
+              limit: async (count: number) => state.history.slice(0, count),
+            });
+          },
+        }),
       }),
     }),
     update: () => ({
@@ -72,7 +81,7 @@ vi.mock("@/db/client", () => {
 });
 
 import { inputForCreation } from "./creation-form-model";
-import { updateCreationForm } from "./creation-service";
+import { listCreationProposals, updateCreationForm } from "./creation-service";
 
 beforeEach(() => {
   state.inserts = [];
@@ -147,4 +156,19 @@ describe("Server-owned guided form review", () => {
       expect(state.inserts).toHaveLength(0);
     }
   );
+});
+
+describe("Creation result restoration", () => {
+  it("retains completed destinations beyond 100 proposals", async () => {
+    state.history = Array.from({ length: 125 }, (_, index) => ({
+      ...state.row,
+      id: `completed-${index}`,
+      status: "completed",
+      destination: `/groups/group-${index}`,
+    }));
+    const restored = await listCreationProposals("owner", "chat");
+    expect(restored).toHaveLength(125);
+    expect(restored[0].destination).toBe("/groups/group-0");
+    expect(restored[124].destination).toBe("/groups/group-124");
+  });
 });
