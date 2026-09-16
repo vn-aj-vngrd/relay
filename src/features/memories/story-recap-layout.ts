@@ -5,6 +5,7 @@ import {
   prepareInvitationBlocks,
   prepareStoryPoster,
 } from "./story-framed-invitation";
+import { storyPhotoStats } from "./story-photo-stats";
 import {
   type StoryPhotoPlacement,
   type StoryPhotoRole,
@@ -28,6 +29,8 @@ export type RecapStoryInput = {
   customNote: string;
   theme: StoryTheme;
   hasPhoto: boolean;
+  photoCount?: number;
+  showMemoryStats?: boolean;
   photoRole: StoryPhotoRole;
   photoPlacement: StoryPhotoPlacement;
 };
@@ -97,16 +100,18 @@ function recapCopy(input: RecapStoryInput) {
       ];
       break;
     case "overview":
-      head = [heading(input.title)];
-      titleInHeading = true;
-      body = [
-        row("focus", "Night recap", 48, { weight: 600, gapAfter: 32 }),
+      head = [
+        heading(input.title),
+        number(String(recap.matchCount)),
         row(
           "matches",
-          `${recap.matchCount} ${plural(recap.matchCount, "match", "matches")} played`,
-          48,
-          { weight: 600 }
+          plural(recap.matchCount, "match played", "matches played"),
+          40
         ),
+      ];
+      titleInHeading = true;
+      body = [
+        row("focus", "Game recap", 36, { secondary: true, gapAfter: 24 }),
         row(
           "points",
           `${recap.totalPoints} ${plural(recap.totalPoints, "point")} played`,
@@ -252,6 +257,11 @@ function recapCopy(input: RecapStoryInput) {
       ];
       break;
     case "court-time":
+      if (!recap.playMinutes) {
+        head = [heading("Court time")];
+        body = [row("unavailable", "Court time not recorded", 40)];
+        break;
+      }
       head = [
         number(String(recap.playMinutes)),
         row("focus", "Minutes of court time", 40, { weight: 600 }),
@@ -279,14 +289,23 @@ function recapCopy(input: RecapStoryInput) {
       ];
       break;
     case "custom":
-      head = [{ ...heading(input.customHeadline || input.title), size: 104 }];
+      head = [
+        {
+          ...heading(input.customHeadline || input.title),
+          size: input.theme === "scrapbook" ? 88 : 104,
+        },
+      ];
       body = [
-        row(
-          "memory-stats",
-          `${recap.matchCount} ${plural(recap.matchCount, "match", "matches")} · ${recap.totalPoints} ${plural(recap.totalPoints, "point")} played`,
-          38,
-          { weight: 600 }
-        ),
+        ...(recap.matchCount > 0
+          ? [
+              row(
+                "memory-stats",
+                `${recap.matchCount} ${plural(recap.matchCount, "match", "matches")} · ${recap.totalPoints} ${plural(recap.totalPoints, "point")} played`,
+                38,
+                { weight: 600 }
+              ),
+            ]
+          : []),
         ...(personal
           ? [
               row(
@@ -335,6 +354,20 @@ export function storyRecapLayout(input: RecapStoryInput) {
     return null;
   const copy = recapCopy(input);
   const framed = input.hasPhoto && input.photoRole === "foreground";
+  const photoStats =
+    framed &&
+    (input.photoCount ?? 1) === 1 &&
+    input.template === "custom" &&
+    input.showMemoryStats !== false &&
+    input.recap.matchCount > 0;
+  if (input.template === "custom" && input.showMemoryStats === false) {
+    copy.body = copy.body.filter(
+      (block) => block.id !== "memory-stats" && block.id !== "memory-result"
+    );
+  }
+  if (photoStats) {
+    copy.body = copy.body.filter((block) => block.id !== "memory-stats");
+  }
   if (input.theme !== "minimal") {
     const bold = input.theme === "court-pop";
     const emphasize = (block: StoryRow): StoryRow => ({
@@ -345,10 +378,16 @@ export function storyRecapLayout(input: RecapStoryInput) {
             ? 144
             : bold
               ? 240
-              : 192
+              : input.theme === "coquette"
+                ? 160
+                : input.theme === "retro-rally"
+                  ? 176
+                  : 192
           : block.id === "headline"
             ? input.template === "custom"
-              ? 104
+              ? input.theme === "scrapbook"
+                ? 88
+                : 104
               : framed
                 ? 72
                 : bold
@@ -360,7 +399,7 @@ export function storyRecapLayout(input: RecapStoryInput) {
     });
     copy.head = copy.head.map(emphasize);
     copy.body = copy.body.map(emphasize);
-    if (!framed) {
+    if (!framed && !input.hasPhoto) {
       // Keep a player's name and record together above the art.
       if (copy.body[0]?.id === "result") {
         copy.head.push(...copy.body.splice(0, 2));
@@ -379,8 +418,18 @@ export function storyRecapLayout(input: RecapStoryInput) {
         ...poster,
         blocks,
         separators: recapSeparators(blocks),
+        photoStats: null,
       };
     }
+  }
+  if (input.theme === "minimal" && !framed) {
+    const emphasize = (block: StoryRow): StoryRow => ({
+      ...block,
+      size: block.numeric ? 192 : block.size,
+      weight: block.numeric ? 800 : block.weight,
+    });
+    copy.head = copy.head.map(emphasize);
+    copy.body = copy.body.map(emphasize);
   }
   const center = framed && input.photoPlacement === "center";
   const initialScene = storyScene(
@@ -452,7 +501,13 @@ export function storyRecapLayout(input: RecapStoryInput) {
     ...position(prepared.head, scene.heading?.y ?? 160),
     ...position(prepared.body, bodyTop),
   ];
-  return { scene, blocks, separators: recapSeparators(blocks), factor };
+  return {
+    scene,
+    blocks,
+    separators: recapSeparators(blocks),
+    factor,
+    photoStats: photoStats ? storyPhotoStats(scene.photo, input.recap) : null,
+  };
 }
 
 function recapSeparators(blocks: Array<StoryRow & { y: number; gap: number }>) {

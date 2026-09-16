@@ -54,11 +54,11 @@ const baseProps: ComponentProps<typeof RecapShareCard> = {
 // Follow the visible editor controls when exercising older export scenarios.
 function clickButton(name: string | RegExp) {
   const themes = [
-    "Minimal",
+    "Studio",
     "Scrapbook",
-    "Coquette",
+    "Soft Serve",
     "Court Pop",
-    "Retro Rally",
+    "Clubhouse",
   ];
   let label = name;
   const panel = (value: string) =>
@@ -115,8 +115,8 @@ function renderCard(overrides: Partial<typeof baseProps> = {}) {
   if (moreStories) fireEvent.click(moreStories);
   clickButton("Add your photo");
   openStoryDetails();
-  // Explicitly exercise Night recap / Court Pop.
-  const recapFocus = screen.queryByRole("button", { name: "Night recap" });
+  // Explicitly exercise Game recap / Court Pop.
+  const recapFocus = screen.queryByRole("button", { name: "Game recap" });
   if (recapFocus) fireEvent.click(recapFocus);
   clickButton("Court Pop");
   return result;
@@ -162,7 +162,7 @@ describe("RecapShareCard", () => {
     ).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByText("Customize story")).not.toBeInTheDocument();
     expect(container.querySelectorAll("[data-story-theme]")).toHaveLength(1);
-    fireEvent.click(within(themes).getByRole("button", { name: "Minimal" }));
+    fireEvent.click(within(themes).getByRole("button", { name: "Studio" }));
     clickButton("Points played");
     expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
       "data-story-theme",
@@ -280,7 +280,7 @@ describe("RecapShareCard", () => {
   it("offers many truthful portrait stories", () => {
     renderCard();
 
-    expect(screen.getByText("Night recap · 1 of 11")).toBeInTheDocument();
+    expect(screen.getByText("Game recap · 1 of 11")).toBeInTheDocument();
     clickButton("Details");
     expect(screen.getByRole("button", { name: "Points played" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Court time" })).toBeEnabled();
@@ -348,7 +348,7 @@ describe("RecapShareCard", () => {
     fireEvent.touchEnd(preview, {
       changedTouches: [{ clientX: 100, clientY: 260 }],
     });
-    expect(screen.getByText("Night recap · 1 of 11")).toBeVisible();
+    expect(screen.getByText("Game recap · 1 of 11")).toBeVisible();
     fireEvent.touchStart(preview, {
       touches: [{ clientX: 180, clientY: 100 }],
     });
@@ -356,7 +356,7 @@ describe("RecapShareCard", () => {
     fireEvent.touchEnd(preview, {
       changedTouches: [{ clientX: 50, clientY: 100 }],
     });
-    expect(screen.getByText("Night recap · 1 of 11")).toBeVisible();
+    expect(screen.getByText("Game recap · 1 of 11")).toBeVisible();
     fireEvent.touchStart(preview, {
       touches: [{ clientX: 180, clientY: 100 }],
     });
@@ -379,7 +379,7 @@ describe("RecapShareCard", () => {
       ...theme,
       pink: theme.id === "coquette",
     })),
-    { id: "coquette" as const, label: "Coquette", pink: false },
+    { id: "coquette" as const, label: "Soft Serve", pink: false },
   ])(
     "exports $label (Pink: $pink) with the same selected theme and full PNG dimensions",
     async ({ id, label, pink }) => {
@@ -475,7 +475,9 @@ describe("RecapShareCard", () => {
         )
       );
       expect(dimensions).toEqual([[1080, 1920]]);
-      if (id !== "minimal") {
+      if (id !== "minimal" && !pink) {
+        expect(decoration).not.toHaveBeenCalled();
+      } else if (id !== "minimal") {
         expect(decoration).toHaveBeenCalledWith(context, id, undefined, {
           subject: "poster",
           accent: pink ? "#ffe0eb" : undefined,
@@ -709,7 +711,7 @@ describe("RecapShareCard", () => {
       clickButton(placement[0].toUpperCase() + placement.slice(1));
       clickButton("Baby Pink background");
       expect(screen.queryByLabelText("Text contrast")).not.toBeInTheDocument();
-      clickButton("Coquette");
+      clickButton("Soft Serve");
       const preview = container.querySelector("[data-story-theme]");
       expect(preview).toHaveAttribute("data-photo-placement", placement);
       expect(preview).toHaveStyle({ backgroundColor: "#ffe0eb" });
@@ -874,11 +876,11 @@ describe("RecapShareCard", () => {
 });
 
 describe("photo-memory entry", () => {
-  it("starts with a Scrapbook photo placeholder and visible attachment action", () => {
+  it("starts with a Court Pop photo placeholder and visible attachment action", () => {
     const { container } = render(<RecapShareCard {...baseProps} />);
     expect(container.querySelector("[data-story-theme]")).toHaveAttribute(
       "data-story-theme",
-      "scrapbook"
+      "court-pop"
     );
     openStoryDetails();
     expect(screen.getByRole("button", { name: "Your story" })).toHaveAttribute(
@@ -948,7 +950,7 @@ describe("photo-memory entry", () => {
         photos={[{ id: "crew", url: "/crew.jpg", alt: "Our crew" }]}
       />
     );
-    clickButton("Coquette");
+    clickButton("Soft Serve");
     expect(
       screen.queryByRole("button", { name: "Use Our crew" })
     ).not.toBeInTheDocument();
@@ -959,7 +961,7 @@ describe("photo-memory entry", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Share Story" })).toBeEnabled();
     clickButton("Look");
-    expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Soft Serve" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
@@ -968,7 +970,7 @@ describe("photo-memory entry", () => {
       screen.getByRole("button", { name: "Add your photo to this memory" })
     ).toBeVisible();
     clickButton("Look");
-    expect(screen.getByRole("button", { name: "Coquette" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Soft Serve" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );

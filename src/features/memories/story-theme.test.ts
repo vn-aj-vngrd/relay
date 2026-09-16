@@ -5,8 +5,10 @@ import {
   drawStoryDecorations,
   drawStoryTheme,
   storyArtSubject,
+  storyMemoryFont,
   storyPhotoDecorations,
   storyPosterEdges,
+  storyScoreFont,
   storySurface,
   storyThemeDecorations,
   storyThemePaper,
@@ -17,7 +19,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe("Story themes", () => {
   it("applies selected palette colors to Court Pop paper while preserving light paper and full photos", () => {
-    expect(defaultStoryTheme).toBe("scrapbook");
+    expect(defaultStoryTheme).toBe("court-pop");
     expect(storySurface("court-pop", { color: "#635bde" })).toEqual({
       color: "#eeecff",
       light: true,
@@ -147,11 +149,11 @@ describe("Story themes", () => {
   });
   it("offers five distinct requested styles, retaining Minimal without a hero illustration", () => {
     expect(storyThemes.map(({ label }) => label)).toEqual([
-      "Minimal",
+      "Studio",
       "Scrapbook",
-      "Coquette",
+      "Soft Serve",
       "Court Pop",
-      "Retro Rally",
+      "Clubhouse",
     ]);
     expect(storyThemeDecorations("minimal")).toEqual([]);
     const save = vi.fn();
@@ -171,7 +173,7 @@ describe("Story themes", () => {
     for (const { id, description } of storyThemes) {
       expect(description.length).toBeGreaterThan(0);
       if (id !== "minimal")
-        expect(storyThemeDecorations(id).length).toBeGreaterThan(8);
+        expect(storyThemeDecorations(id).length).toBeGreaterThan(0);
     }
   });
 
@@ -243,3 +245,10 @@ it.each(storyThemes.filter(({ id }) => id !== "minimal"))(
     expect(storyArtSubject("winning-team")).toBe("people");
   }
 );
+
+it("distinguishes diary, soft editorial and sporting typography", () => {
+  expect(storyMemoryFont("scrapbook")).toContain("Relay Hand");
+  expect(storyMemoryFont("coquette")).toBe("Georgia, serif");
+  expect(storyScoreFont("retro-rally")).toBe("Inter, Arial, sans-serif");
+  expect(storyScoreFont("minimal")).toContain("monospace");
+});

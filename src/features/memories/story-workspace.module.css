@@ -233,12 +233,29 @@
 
 @media (max-width: 47.999rem) {
   .shareActions {
-    position: sticky;
-    /* Match the shared shells’ reserved space above mobile navigation. */
-    bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-    z-index: 20;
+    /* Export follows the editor; a sticky bottom offset covers its controls
+       on short phones and shared pages without bottom navigation. */
+    position: static;
     background: var(--surface);
     padding-block: 0.75rem;
     border-top: 1px solid var(--line);
   }
+}
+
+/* Layouts are visual choices; keep names beneath comparable portrait previews. */
+.collageRail {
+  padding-block: 0.25rem;
+}
+
+.collageRail .collageOption {
+  min-height: 44px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.collageThumbnail {
+  width: 5rem;
+  aspect-ratio: 936 / 1120;
+  border-radius: 5px;
 }

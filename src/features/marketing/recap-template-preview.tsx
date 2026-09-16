@@ -1,7 +1,7 @@
-import Image from "next/image";
-
 import { buildSessionRecap } from "@/features/memories/recap";
+import type { RecapShareTemplateId } from "@/features/memories/recap-share";
 import { RecapStoryCard } from "@/features/memories/recap-story-card";
+import { type StoryTheme, storyThemes } from "@/features/memories/story-theme";
 
 const players = [
   { id: "van", name: "Van" },
@@ -62,11 +62,35 @@ export function HeroStoryPreview() {
       {...common}
       date="Aug 22, 2026"
       template="winning-team"
+      theme="court-pop"
       background={{ id: "ink", label: "Ink", color: "#11131a" }}
       className="w-full"
     />
   );
 }
+
+const examples: Array<{
+  theme: StoryTheme;
+  template: RecapShareTemplateId;
+  photo?: string;
+  caption?: string;
+}> = [
+  { theme: "court-pop", template: "overview" },
+  { theme: "minimal", template: "personal" },
+  {
+    theme: "scrapbook",
+    template: "custom",
+    photo: "/images/story/pickleball-court.webp",
+    caption: "Same court next week?",
+  },
+  {
+    theme: "coquette",
+    template: "custom",
+    photo: "/images/story/paddles-fence.webp",
+    caption: "Good games. Better company.",
+  },
+  { theme: "retro-rally", template: "invitation" },
+];
 
 export function RecapTemplatePreview({
   cardsOnly = false,
@@ -79,125 +103,66 @@ export function RecapTemplatePreview({
         role="region"
         aria-label="Memory story template examples"
         tabIndex={0}
-        className="flex snap-x snap-mandatory items-center gap-3 overflow-x-auto rounded-xl border border-line bg-surface-strong p-4 outline-none [scrollbar-width:none] focus-visible:ring-3 focus-visible:ring-[#5962d9]/25 [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-3 sm:overflow-hidden sm:p-5"
+        className="flex snap-x snap-mandatory items-start gap-4 overflow-x-auto pb-3 outline-none focus-visible:ring-3 focus-visible:ring-primary/25"
       >
-        <RecapStoryCard
-          {...common}
-          template="personal"
-          overlay={46}
-          photoPosition={58}
-          customNote="Same time next Saturday?"
-          viewerPlayerId="van"
-          background={{
-            id: "court-photo",
-            label: "Court photo",
-            imageUrl: "/images/story/pickleball-court.webp",
-          }}
-          className="w-full min-w-[190px] snap-center border border-black/10 shadow-[0_4px_8px_rgb(20_24_34_/_0.1)] sm:min-w-0 sm:-rotate-2"
-        />
-        <RecapStoryCard
-          {...common}
-          template="winning-team"
-          overlay={62}
-          photoPosition={45}
-          background={{
-            id: "paddles",
-            label: "Paddles",
-            imageUrl: "/images/story/paddles-fence.webp",
-          }}
-          className="z-10 w-full min-w-[190px] snap-center shadow-[0_5px_10px_rgb(20_24_34_/_0.14)] sm:min-w-0"
-        />
-        <RecapStoryCard
-          {...common}
-          template="standings"
-          background={{ id: "ink", label: "Ink", color: "#11131a" }}
-          className="w-full min-w-[190px] snap-center border border-white/10 shadow-[0_4px_8px_rgb(20_24_34_/_0.1)] sm:min-w-0 sm:rotate-2"
-        />
+        {examples.map((example) => {
+          const theme = storyThemes.find((item) => item.id === example.theme)!;
+          return (
+            <div
+              key={theme.id}
+              className="w-[220px] shrink-0 snap-start sm:w-[240px]"
+            >
+              <RecapStoryCard
+                {...common}
+                theme={theme.id}
+                template={example.template}
+                viewerPlayerId="van"
+                customHeadline={example.caption}
+                showMemoryStats={theme.id !== "coquette"}
+                photoRole="foreground"
+                photoPlacement="center"
+                sceneBackground={{
+                  id: "violet",
+                  label: "Violet",
+                  color: "#635bde",
+                }}
+                background={
+                  example.photo
+                    ? {
+                        id: theme.id,
+                        label: "Example game photo",
+                        imageUrl: example.photo,
+                      }
+                    : { id: "violet", label: "Violet", color: "#635bde" }
+                }
+                invitation={
+                  example.template === "invitation"
+                    ? {
+                        hostName: "Van",
+                        priceLabel: "Free",
+                        goingCount: 4,
+                        capacity: 8,
+                        requiresApproval: false,
+                        waitlistOpen: false,
+                      }
+                    : undefined
+                }
+                className="w-full"
+              />
+              <p className="mt-3 text-sm font-semibold">{theme.label}</p>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                {theme.description}
+              </p>
+            </div>
+          );
+        })}
       </div>
-      {cardsOnly ? null : (
-        <>
-          <div className="mt-3 rounded-xl border border-line bg-surface-strong p-4 text-ink">
-            <div className="grid gap-4 sm:grid-cols-[1fr_1fr]">
-              <div>
-                <p className="text-[10px] font-semibold text-muted">LAYOUT</p>
-                <div className="mt-2 grid grid-cols-4 gap-1.5 text-center text-[9px] font-semibold">
-                  <span className="rounded-md border border-line py-2">
-                    Low
-                  </span>
-                  <span className="rounded-md border border-line py-2">
-                    Center
-                  </span>
-                  <span className="rounded-md border border-line py-2">
-                    Poster
-                  </span>
-                  <span className="rounded-md border border-primary bg-primary-soft py-2 text-primary-hover">
-                    Snapshot
-                  </span>
-                </div>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-muted">
-                  BACKGROUND
-                </p>
-                <div className="mt-2 flex gap-2">
-                  <span className="relative h-9 w-9 overflow-hidden rounded-md border-2 border-primary">
-                    <Image
-                      src="/images/story/pickleball-court.webp"
-                      alt=""
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
-                  </span>
-                  <span className="relative h-9 w-9 overflow-hidden rounded-md">
-                    <Image
-                      src="/images/story/paddles-fence.webp"
-                      alt=""
-                      fill
-                      sizes="36px"
-                      className="object-cover"
-                    />
-                  </span>
-                  <span className="h-9 w-9 rounded-md bg-[#18233b]" />
-                  <span className="h-9 w-9 rounded-md bg-[#b7d62e]" />
-                  <span className="grid h-9 w-9 place-items-center rounded-md border border-dashed border-muted text-base text-muted">
-                    +
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-[1fr_1fr]">
-              <div>
-                <div className="flex justify-between text-[9px] font-semibold">
-                  <span>Photo position</span>
-                  <span className="text-muted">58%</span>
-                </div>
-                <div className="mt-2 h-1.5 rounded-full bg-line">
-                  <span className="block h-full w-[58%] rounded-full bg-primary" />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-[9px] font-semibold">
-                  <span>Text contrast</span>
-                  <span className="text-muted">46%</span>
-                </div>
-                <div className="mt-2 h-1.5 rounded-full bg-line">
-                  <span className="block h-full w-[46%] rounded-full bg-primary" />
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 rounded-md border border-line bg-surface px-3 py-2 text-[10px]">
-              <span className="text-muted">Personal line</span>
-              <strong className="ml-2">Same time next Saturday?</strong>
-            </div>
-          </div>
-          <figcaption className="mt-3 flex items-center gap-2 text-xs text-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#b7d62e]" />
-            Choose the focus, layout, background, and words · actual Relay story
-            templates
-          </figcaption>
-        </>
-      )}
+      {!cardsOnly ? (
+        <figcaption className="mt-3 text-xs leading-5 text-muted">
+          Sample game data · Real Relay templates. Scroll to explore all five.
+          Choose your look, add photos, then share or download.
+        </figcaption>
+      ) : null}
     </figure>
   );
 }

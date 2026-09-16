@@ -4,6 +4,14 @@
 
 - Describe the problem and resulting behavior.
 
+## Actions and decisions
+
+<!-- Required for every PR. Follow docs/DEVELOPMENT_WORKFLOW.md. Include meaningful changes, investigated no-change decisions, and blocked/deferred work; replace the placeholder row with actual outcomes. -->
+
+| Area / finding | Decision and reason | Change / action | Result / evidence |
+| --- | --- | --- | --- |
+| Area or finding | Fix, keep, defer, or blocked — with reason | What changed or the next required action | Actual verification result or explicit limitation |
+
 ## Changes
 
 - List the meaningful changes.

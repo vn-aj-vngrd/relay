@@ -1,7 +1,7 @@
 import { storyColors } from "./story-color";
 import type { StoryRegion } from "./story-scene";
 
-export const defaultStoryTheme = "scrapbook" as const;
+export const defaultStoryTheme = "court-pop" as const;
 export type StoryArtOptions = {
   subject?: "poster" | "people" | "result";
   accent?: string;
@@ -32,7 +32,7 @@ export function storyThemePaper(theme: StoryTheme) {
     case "coquette":
       return "#fff1f6";
     case "retro-rally":
-      return "#f4dfae";
+      return "#f5f2e9";
     default:
       return "#f4f1e8";
   }
@@ -82,42 +82,46 @@ export const storyThemes: Array<{
 }> = [
   {
     id: "minimal",
-    label: "Minimal",
-    description: "Clean scorecard type and fine court-line corners.",
+    label: "Studio",
+    description:
+      "Precise numerals and generous space. A clean performance report.",
   },
   {
     id: "scrapbook",
     label: "Scrapbook",
-    description: "Taped court keepsakes for your crew and game highlights.",
+    description:
+      "Clean photo mats, one tape detail, and a handwritten caption. Best for your story and the crew.",
   },
   {
     id: "coquette",
-    label: "Coquette",
-    description: "Blush paper, ribbon-tied paddles, and keepsake scores.",
+    label: "Soft Serve",
+    description:
+      "Soft paper, elegant serif captions, and a single ribbon detail. A playful photo story.",
   },
   {
     id: "court-pop",
     label: "Court Pop",
     description:
-      "Big type, courtside collage, and a little pickleball attitude.",
+      "Bold result typography and photo callouts. Best for game highlights and winning moments.",
   },
   {
     id: "retro-rally",
-    label: "Retro Rally",
+    label: "Clubhouse",
     description:
-      "Vintage court tickets, sporting stripes, and match-day memories.",
+      "Sports-club typography, ticket borders, and restrained stripes. Made for invitations.",
   },
 ];
 
 export function storyScoreFont(theme: StoryTheme) {
-  if (theme === "coquette" || theme === "retro-rally") return "Georgia, serif";
+  if (theme === "coquette") return "Georgia, serif";
+  if (theme === "retro-rally") return "Inter, Arial, sans-serif";
   if (theme === "court-pop") return "Inter, Arial, sans-serif";
   return "ui-monospace, SFMono-Regular, monospace";
 }
 
 export function storyMemoryInk(theme: StoryTheme, foreground: string) {
   if (foreground !== "#17181d") return foreground;
-  if (theme === "scrapbook") return "#2454b8";
+
   if (theme === "coquette") return "#9b365e";
   return foreground;
 }
@@ -127,7 +131,7 @@ export function storySecondaryInk(light: boolean) {
 }
 
 export function storyMemoryFont(theme: StoryTheme) {
-  return theme === "scrapbook" || theme === "coquette"
+  return theme === "scrapbook"
     ? '"Relay Hand", Georgia, serif'
     : storyScoreFont(theme);
 }
@@ -203,33 +207,22 @@ function scrapbook({
   subject = "poster",
 }: StoryArtOptions = {}): Decoration[] {
   return [
-    { path: "M96 212L904 164L940 598L128 636Z", fill: "#d9c49b" },
-    { path: "M112 252L974 196L998 570L140 628Z", fill: "#e5a07b" },
-    { path: "M188 180H916V610H188Z", fill: "#fff8e9" },
-    { path: "M214 206H890V554H214Z", fill: "#477462" },
+    { path: "M160 188H920V612H160Z", fill: "#fff8e9" },
+    { path: "M184 212H896V560H184Z", fill: accent },
     {
-      path: "M238 230H866V530H238ZM550 230V530M238 380H866M422 230V530M678 230V530",
-      stroke: "#d8e7bd",
-      strokeWidth: 4,
-    },
-    {
-      path: "M262 492C218 288 442 224 628 302",
-      stroke: "#d8e7bd",
-      strokeWidth: 7,
+      path: "M208 236H872V536H208ZM540 236V536M208 386H872",
+      stroke: "#fff8e9",
+      strokeWidth: 3,
     },
     ...(subject === "result"
-      ? pickleball(550, 380, 158, accent, "#d8e7bd")
+      ? pickleball(540, 386, 104, "#fff8e9", accent)
       : [
-          ...paddle(310, 234, accent, "#263b35", 1.9),
+          ...paddle(390, 260, "#fff8e9", "#263b35", 1.55),
           ...(subject === "people"
-            ? paddle(524, 234, "#f6d2be", "#263b35", 1.9)
+            ? paddle(568, 260, "#fff8e9", "#263b35", 1.55)
             : []),
-          ...pickleball(756, 440, 88, "#d0dd81", "#263b35"),
         ]),
-    {
-      path: "M254 164L430 180L424 218L248 202ZM752 568L934 548L940 586L758 606Z",
-      fill: "#d9c49b",
-    },
+    { path: "M440 176H640V204H440Z", fill: "#dac398" },
   ];
 }
 
@@ -238,55 +231,24 @@ function coquette({
   subject = "poster",
 }: StoryArtOptions = {}): Decoration[] {
   return [
+    { path: "M164 396C164 104 916 104 916 396V594H164Z", fill: "#fff8f0" },
     {
-      path: "M156 402C156 124 924 124 924 402V578H156Z",
-      fill: "#fff1f6",
-      stroke: "#a65072",
-      strokeWidth: 4,
-    },
-    {
-      path: "M188 402C188 166 892 166 892 402V550H188Z",
-      stroke: "#d18aa6",
+      path: "M194 396C194 150 886 150 886 396V564H194Z",
+      stroke: accent,
       strokeWidth: 3,
     },
-    {
-      path: "M224 464H856M310 346V550M770 346V550",
-      stroke: "#e8b5c9",
-      strokeWidth: 3,
-    },
-    // Scallops belong to the print edge, not the factual copy.
-    ...Array.from({ length: 11 }, (_, index) => ({
-      path: `M${188 + index * 64} 592q16 24 32 0`,
-      stroke: "#a65072",
-      strokeWidth: 3,
-    })),
     ...(subject === "result"
-      ? pickleball(560, 332, 146, "#f8c8db", "#813f5a")
-      : subject === "people"
-        ? [
-            ...paddle(382, 216, "#ffe0eb", "#813f5a", 1.75),
-            ...paddle(592, 216, "#ffe0eb", "#813f5a", 1.75),
-          ]
-        : [
-            ...paddle(462, 192, "#ffe0eb", "#813f5a", 2.2),
-            ...pickleball(344, 450, 82, "#eaa7c0", "#813f5a"),
-          ]),
-    // Bow tied across the paddle's throat; tails follow its handle.
+      ? pickleball(540, 374, 120, "#fff8f0", accent)
+      : [
+          ...paddle(392, 244, "#fff8f0", accent, 1.65),
+          ...(subject === "people"
+            ? paddle(574, 244, "#fff8f0", accent, 1.65)
+            : []),
+        ]),
     {
-      path: "M552 428L500 566L540 546L561 574L590 430M574 428L680 558L641 548L625 578L552 430",
-      fill: "#eaa7c0",
-      stroke: "#813f5a",
+      path: "M700 516c-68 -44 -68 44 0 0c68 44 68 -44 0 0M700 516l-20 40M700 516l24 40",
+      stroke: accent,
       strokeWidth: 4,
-    },
-    {
-      path: "M563 430C328 252 364 568 563 430C776 568 800 252 563 430Z",
-      fill: "#f8c8db",
-      stroke: "#813f5a",
-      strokeWidth: 5,
-    },
-    {
-      path: "M549 408Q563 398 581 408L583 446Q563 459 547 446Z",
-      fill: accent,
     },
   ];
 }
@@ -372,44 +334,25 @@ export function storyPosterEdges(
   if (theme === "scrapbook")
     return [
       {
-        path: "M0 144L34 156L22 298L38 474L20 658L34 860L18 1084L32 1320L20 1574L36 1776L24 1920H0ZM1080 144L1046 156L1058 298L1042 474L1060 658L1046 860L1062 1084L1048 1320L1060 1574L1044 1776L1056 1920H1080Z",
-        fill: "#d9c49b",
+        path: "M40 204V156H88M992 1884H1040V1836",
+        stroke: "#d6c8a5",
+        strokeWidth: 2,
       },
-      {
-        path: "M66 160L238 144L242 184L70 200ZM834 1866L1006 1850L1010 1890L838 1906Z",
-        fill: "#d9c49b",
-      },
-      ...Array.from({ length: 18 }, (_, index) => ({
-        path: circle(46, 230 + index * 86, 5),
-        fill: "#b79e76",
-      })),
     ];
   if (theme === "coquette")
     return [
       {
-        path: "M44 180Q44 148 76 148H1004Q1036 148 1036 180V1856Q1036 1888 1004 1888H76Q44 1888 44 1856Z",
+        path: "M44 232V180Q44 148 76 148H220M860 1888H1004Q1036 1888 1036 1856V1804",
         stroke: "#a65072",
-        strokeWidth: 3,
-      },
-      ...Array.from({ length: 24 }, (_, index) => ({
-        path: `M44 ${180 + index * 70}q-28 17 0 34M1036 ${180 + index * 70}q28 17 0 34`,
-        stroke: "#d18aa6",
-        strokeWidth: 3,
-      })),
-      {
-        path: "M468 1882Q418 1824 410 1866Q412 1902 468 1882Q524 1902 526 1866Q518 1824 468 1882M468 1882L448 1916M468 1882L492 1916",
-        stroke: "#a65072",
-        strokeWidth: 4,
+        strokeWidth: 2,
       },
     ];
   if (theme === "retro-rally")
     return [
-      { path: "M20 148H34V1890H20ZM1046 148H1060V1890H1046Z", fill: "#683d32" },
-      { path: "M42 148H54V1890H42ZM1026 148H1038V1890H1026Z", fill: "#b96236" },
-      { path: "M64 148H1016M64 1888H1016", stroke: "#683d32", strokeWidth: 4 },
-      ...Array.from({ length: 20 }, (_, index) => ({
-        path: circle(82 + index * 48, 1908, 6),
-        fill: "#683d32",
+      { path: "M40 160V1880M1040 160V1880", stroke: "#263b35", strokeWidth: 2 },
+      ...Array.from({ length: 8 }, (_, index) => ({
+        path: circle(414 + index * 36, 1900, 3),
+        fill: "#263b35",
       })),
     ];
   return [
@@ -438,29 +381,27 @@ function retroRally({
   return [
     {
       path: "M108 180H972V618H108Z",
-      fill: "#f4dfae",
-      stroke: "#683d32",
+      fill: "#f5f2e9",
+      stroke: "#263b35",
       strokeWidth: 5,
     },
-    { path: "M128 200H952V598H128Z", stroke: "#683d32", strokeWidth: 3 },
-    { path: "M148 268H932V308H148ZM148 324H932V364H148Z", fill: "#b96236" },
-    { path: "M148 420H932V460H148ZM148 476H932V516H148Z", fill: "#527562" },
-    { path: "M396 218H684V580H396Z", fill: "#f4dfae" },
+    { path: "M128 200H952V598H128Z", stroke: "#263b35", strokeWidth: 3 },
+    { path: "M148 218H932V234H148Z", fill: accent },
     ...Array.from({ length: 12 }, (_, index) => ({
       path: circle(164 + index * 68, 594, 5),
-      fill: "#683d32",
+      fill: "#263b35",
     })),
-    { path: "M360 218H720V578H360Z", stroke: "#683d32", strokeWidth: 3 },
+
     ...(subject === "result"
-      ? pickleball(540, 398, 154, accent, "#f4dfae")
+      ? pickleball(540, 398, 154, accent, "#f5f2e9")
       : subject === "people"
         ? [
-            ...paddle(362, 250, accent, "#683d32", 1.8),
-            ...paddle(566, 250, "#df9851", "#683d32", 1.8),
+            ...paddle(362, 250, accent, "#263b35", 1.8),
+            ...paddle(566, 250, "#fff8f0", "#263b35", 1.8),
           ]
         : [
-            ...paddle(434, 226, accent, "#683d32", 2.2),
-            ...pickleball(680, 509, 64, "#df9851", "#683d32"),
+            ...paddle(434, 226, accent, "#263b35", 2.2),
+            ...pickleball(680, 509, 64, "#fff8f0", "#263b35"),
           ]),
   ];
 }
@@ -501,32 +442,26 @@ export function storyPhotoDecorations(
   if (theme === "scrapbook")
     return [
       {
-        path: `M${x + 8} ${y + 8}H${right - 8}V${bottom - 8}H${x + 8}Z`,
-        stroke: "#d6c8a5",
+        path: `M${x + 12} ${y + 12}H${right - 12}V${bottom - 12}H${x + 12}Z`,
+        stroke: accent,
         strokeWidth: 2,
       },
       {
-        path: `M${x + 86} ${y + 4}l190 -12 2 28 -190 12ZM${right - 282} ${bottom - 32}l190 12 -2 28 -190 -12Z`,
+        path: `M${x + width / 2 - 90} ${y + 4}h180v24h-180Z`,
         fill: "#dac398",
       },
-      { path: `M${x + 34} ${bottom - 16}h76`, stroke: accent, strokeWidth: 5 },
-      ...pickleball(right - 26, bottom - 20, 14, "#dcec69", "#263b35"),
     ];
   if (theme === "coquette")
     return [
       {
-        path: `M${x + 14} ${y + 14}H${right - 14}V${bottom - 14}H${x + 14}Z`,
-        stroke: "#a65072",
-        strokeWidth: 3,
+        path: `M${x + 16} ${y + 36}Q${x + 16} ${y + 16} ${x + 36} ${y + 16}H${right - 36}Q${right - 16} ${y + 16} ${right - 16} ${y + 36}V${bottom - 16}H${x + 16}Z`,
+        stroke: accent,
+        strokeWidth: 2,
       },
-      ...Array.from({ length: 11 }, (_, index) => ({
-        path: `M${x + 60 + index * 76} ${bottom - 20}q18 20 36 0`,
-        stroke: "#d18aa6",
-        strokeWidth: 3,
-      })),
       {
-        path: `M${right - 108} ${y + 22}c-60 -38 -64 38 0 0c60 38 64 -38 0 0`,
-        fill: accent,
+        path: `M${right - 112} ${y + 22}c-44 -26 -44 26 0 0c44 26 44 -26 0 0`,
+        stroke: accent,
+        strokeWidth: 3,
       },
     ];
   if (theme === "court-pop")

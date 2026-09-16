@@ -20,6 +20,8 @@ const baselineContentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Keep the development overlay from covering mobile product controls.
+  devIndicators: false,
   experimental: {
     serverActions: { bodySizeLimit: "11mb" },
     sri: { algorithm: "sha256" },

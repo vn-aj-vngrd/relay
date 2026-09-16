@@ -15,15 +15,13 @@ describe("StoryThemePicker photo previews", () => {
         onChange={vi.fn()}
       />
     );
-    for (const theme of ["Scrapbook", "Coquette", "Court Pop", "Retro Rally"]) {
+    for (const theme of ["Scrapbook", "Soft Serve", "Court Pop", "Clubhouse"]) {
       expect(
         screen.getByRole("button", { name: theme }).querySelector("svg > path")
       ).toHaveAttribute("fill", "#ffeded");
     }
     expect(
-      screen
-        .getByRole("button", { name: "Minimal" })
-        .querySelector("svg > path")
+      screen.getByRole("button", { name: "Studio" }).querySelector("svg > path")
     ).toHaveAttribute("fill", "#bd4545");
   });
   it("renders device photos as images without SVG URL references", () => {
@@ -62,4 +60,38 @@ describe("StoryThemePicker photo previews", () => {
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getAllByRole("button")).toHaveLength(5);
   });
+});
+
+it("uses the selected collage photos and crops in every theme thumbnail", () => {
+  const { container } = render(
+    <StoryThemePicker
+      theme="scrapbook"
+      accent="#347571"
+      subject="result"
+      photoUrl="/one.jpg"
+      collageLayout="grid"
+      onChange={vi.fn()}
+      photos={[
+        {
+          id: "one",
+          label: "One",
+          imageUrl: "/one.jpg",
+          crop: { x: 20, y: 70, zoom: 2 },
+        },
+        {
+          id: "two",
+          label: "Two",
+          imageUrl: "/two.jpg",
+          crop: { x: 50, y: 50, zoom: 1 },
+        },
+      ]}
+    />
+  );
+  expect(container.querySelectorAll("img")).toHaveLength(10);
+  for (const image of container.querySelectorAll('img[src="/one.jpg"]')) {
+    expect(image).toHaveStyle({
+      objectPosition: "20% 70%",
+      transform: "scale(2)",
+    });
+  }
 });

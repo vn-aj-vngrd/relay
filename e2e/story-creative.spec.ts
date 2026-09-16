@@ -118,7 +118,7 @@ test("expressive real Story components fit long facts and export every theme", a
   ).toBeDisabled();
   await section("Look");
   await expect(
-    page.getByRole("button", { name: "Scrapbook", exact: true })
+    page.getByRole("button", { name: "Court Pop", exact: true })
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
     page.getByRole("group", { name: "Story theme" }).getByRole("button")
@@ -175,7 +175,16 @@ test("expressive real Story components fit long facts and export every theme", a
   await expect(
     page.getByRole("button", { name: "Add your photo to this memory" })
   ).toHaveCount(0);
+  await expect(page.locator('[data-story-region="photo-stats"]')).toBeVisible();
+  await section("Details");
+  await page.getByRole("checkbox", { name: "Show game stats" }).uncheck();
+  await expect(page.locator('[data-story-region="photo-stats"]')).toHaveCount(
+    0
+  );
+  await downloadStory("photo-memory-without-stats.png");
+  await page.getByRole("checkbox", { name: "Show game stats" }).check();
   await downloadStory("photo-memory.png");
+  await section("Photos");
   await page.getByRole("button", { name: /^Edit photo 1:/ }).click();
   await page.getByRole("button", { name: "Remove photo", exact: true }).click();
   await expect(
@@ -185,13 +194,13 @@ test("expressive real Story components fit long facts and export every theme", a
   await expect(page.getByLabel("Your caption", { exact: true })).toHaveValue(
     "Our Saturday crew."
   );
-  await page.getByRole("button", { name: "Night recap", exact: true }).click();
+  await page.getByRole("button", { name: "Game recap", exact: true }).click();
   for (const look of [
-    "Minimal",
+    "Studio",
     "Scrapbook",
-    "Coquette",
+    "Soft Serve",
     "Court Pop",
-    "Retro Rally",
+    "Clubhouse",
   ]) {
     await section("Photos");
     if (await page.getByRole("button", { name: /^Edit photo 1:/ }).count()) {
@@ -243,6 +252,9 @@ test("expressive real Story components fit long facts and export every theme", a
       await downloadStory(`${look}-${placement}.png`);
     }
     await page.getByRole("button", { name: "Full background" }).click();
+    await expect(page.locator('[data-story-region="theme-art"]')).toHaveCount(
+      0
+    );
     await downloadStory(`${look}-background.png`);
   }
   await upload(["action", "crew", "paddles"]);
@@ -258,18 +270,62 @@ test("expressive real Story components fit long facts and export every theme", a
   for (const look of [
     "Court Pop",
     "Scrapbook",
-    "Minimal",
-    "Coquette",
-    "Retro Rally",
+    "Studio",
+    "Soft Serve",
+    "Clubhouse",
   ]) {
     await page.getByRole("button", { name: look, exact: true }).click();
     await expect(page.locator('[data-story-region="photo"]')).toHaveCount(4);
     await downloadStory(`collage-${look}.png`);
   }
+  await section("Layout");
+  await page.getByRole("button", { name: "More layouts", exact: true }).click();
+  for (const [label, layout] of [
+    ["Photo callouts", "callouts"],
+    ["Star scrapbook", "scrapbook"],
+    ["Camera roll", "camera"],
+  ]) {
+    await page.getByRole("button", { name: label, exact: true }).click();
+    await expect(page.locator(`[data-story-collage="${layout}"]`)).toHaveCount(
+      1
+    );
+    await expect(page.locator('[data-story-region="photo"]')).toHaveCount(4);
+    await downloadStory(`creative-${layout}.png`);
+  }
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth)
   ).toBeLessThanOrEqual(page.viewportSize()!.width);
-  await page.setViewportSize({ width: 667, height: 375 });
+  const exportActions = page.getByRole("group", {
+    name: "Story export actions",
+  });
+  const editorControls = page.getByRole("region", {
+    name: "Story editor controls",
+  });
+  for (const viewport of [
+    { width: 375, height: 667 },
+    { width: 390, height: 844 },
+    { width: 667, height: 375 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const panel of ["Photos", "Layout", "Look", "Details"]) {
+      await section(panel);
+      await editor.scrollIntoViewIfNeeded();
+      const controlsBounds = await editorControls.boundingBox();
+      const actionsBounds = await exportActions.boundingBox();
+      expect(controlsBounds).not.toBeNull();
+      expect(actionsBounds).not.toBeNull();
+      expect(actionsBounds!.y).toBeGreaterThanOrEqual(
+        controlsBounds!.y + controlsBounds!.height
+      );
+      await exportActions.scrollIntoViewIfNeeded();
+      await expect(
+        exportActions.getByRole("button", { name: "Share Story", exact: true })
+      ).toBeInViewport();
+      await expect(
+        exportActions.getByRole("button", { name: "Download PNG", exact: true })
+      ).toBeInViewport();
+    }
+  }
   await page.getByRole("button", { name: "Expand story preview" }).click();
   const dialog = page.getByRole("dialog");
   await page.screenshot({

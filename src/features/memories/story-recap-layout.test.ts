@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { buildSessionRecap } from "./recap";
 import { recapShareTemplates } from "./recap-share";
+import { prepareStoryPoster } from "./story-framed-invitation";
 import {
   drawStoryRecap,
   type RecapStoryInput,
@@ -74,7 +75,10 @@ describe("shared social-story recap layout", () => {
         },
       })!;
       expect(layout.blocks.find((block) => block.id === "matches")?.text).toBe(
-        `${count} ${count === 1 ? "match" : "matches"} played`
+        `${count === 1 ? "match" : "matches"} played`
+      );
+      expect(layout.blocks.find((block) => block.id === "result")?.text).toBe(
+        String(count)
       );
       expect(layout.blocks.find((block) => block.id === "points")?.text).toBe(
         `${count} ${count === 1 ? "point" : "points"} played`
@@ -109,7 +113,7 @@ describe("shared social-story recap layout", () => {
                 block.y + block.height <= frame.y ||
                   block.y >= frame.y + frame.height + 31.999
               ).toBe(true);
-            } else if (theme !== "minimal") {
+            } else if (theme !== "minimal" && !photo.hasPhoto) {
               const art = layout.scene.art;
               expect(
                 block.y + block.height <= art.y || block.y >= art.y + art.height
@@ -271,7 +275,7 @@ it.each(storyThemes)(
 );
 
 it.each(storyThemes)(
-  "$label places real memory statistics beside a framed photo",
+  "$label overlays recorded totals on a framed photo without repeating them",
   ({ id: theme }) => {
     const layout = storyRecapLayout({
       ...base,
@@ -281,8 +285,11 @@ it.each(storyThemes)(
       photoRole: "foreground",
     })!;
     expect(
-      layout.blocks.find(({ id }) => id === "memory-stats")?.lines.join(" ")
-    ).toBe("1 match · 19 points played");
+      layout.blocks.find(({ id }) => id === "memory-stats")
+    ).toBeUndefined();
+    expect(
+      layout.photoStats?.metrics.map(({ value, label }) => `${value} ${label}`)
+    ).toEqual(["19 points played", "1 match played"]);
     expect(
       layout.blocks.find(({ id }) => id === "memory-result")?.lines.join(" ")
     ).toBe("Van · 1–0 wins–losses");
@@ -306,4 +313,90 @@ it("does not invent a player result for a spectator memory", () => {
     viewerPlayerId: "spectator",
   })!;
   expect(layout.blocks.some(({ id }) => id === "memory-result")).toBe(false);
+});
+
+it("keeps totals below collages instead of covering the selected photographs", () => {
+  const layout = storyRecapLayout({
+    ...base,
+    template: "custom",
+    hasPhoto: true,
+    photoRole: "foreground",
+    photoCount: 4,
+  })!;
+  expect(layout.photoStats).toBeNull();
+  expect(layout.blocks.filter(({ id }) => id === "memory-stats")).toHaveLength(
+    1
+  );
+});
+
+it("keeps an unscored photo memory focused on its caption and game context", () => {
+  const layout = storyRecapLayout({
+    ...base,
+    template: "custom",
+    recap: buildSessionRecap([], []),
+    hasPhoto: true,
+    photoRole: "foreground",
+  })!;
+  expect(layout.photoStats).toBeNull();
+  expect(layout.blocks.some(({ id }) => id === "memory-stats")).toBe(false);
+  expect(layout.blocks.find(({ id }) => id === "headline")?.text).toBe(
+    base.customHeadline
+  );
+  expect(layout.blocks.find(({ id }) => id === "location")?.text).toBe(
+    base.venue
+  );
+});
+
+it("presents missing court time as unavailable rather than a numeric result", () => {
+  const layout = storyRecapLayout({
+    ...base,
+    template: "court-time",
+    recap: buildSessionRecap([], []),
+  })!;
+  expect(layout.blocks.some(({ id }) => id === "result")).toBe(false);
+  expect(layout.blocks.find(({ id }) => id === "unavailable")?.text).toBe(
+    "Court time not recorded"
+  );
+});
+
+it("can hide photo-memory stats without losing the photo, caption or context", () => {
+  const layout = storyRecapLayout({
+    ...base,
+    template: "custom",
+    hasPhoto: true,
+    photoRole: "foreground",
+    showMemoryStats: false,
+  })!;
+  expect(layout.photoStats).toBeNull();
+  expect(
+    layout.blocks.some(
+      ({ id }) => id === "memory-stats" || id === "memory-result"
+    )
+  ).toBe(false);
+  expect(layout.blocks.find(({ id }) => id === "headline")?.text).toBe(
+    base.customHeadline
+  );
+  expect(layout.blocks.find(({ id }) => id === "location")?.text).toBe(
+    base.venue
+  );
+  expect(layout.scene.frame).not.toBeNull();
+});
+
+it("reclaims decorative space before shrinking a dense poster", () => {
+  const layout = prepareStoryPoster(
+    [{ id: "headline", text: "The crew", size: 72, weight: 700, gapAfter: 0 }],
+    Array.from({ length: 30 }, (_, index) => ({
+      id: `player-${index}`,
+      text: `Player ${index + 1}`,
+      size: 36,
+      weight: 500,
+      gapAfter: 0,
+    })),
+    1810
+  );
+  expect(layout.factor).toBe(1);
+  expect(layout.scene.art.height).toBe(0);
+  expect(
+    layout.blocks.at(-1)!.y + layout.blocks.at(-1)!.height
+  ).toBeLessThanOrEqual(1810);
 });

@@ -90,3 +90,45 @@ Story Make and Photos are both available from publication through live play and 
 | A04 — Continue an Agent conversation | In-app navigation preserves messages and draft; new chat starts a separate conversation; refresh restores the selected saved chat; owner-only rename/delete; account changes isolate state; Markdown renders without HTML or unsafe links | Agent history/auth/stream, session and answer unit regressions; synthetic Agent navigation fixture. Execution deferred. |
 | A05 — Ask Agent about courts | Verified Relay directory only; named-place search; manual city/neighborhood follow-up; no device-location access; admin toggle removes capability; no booking | Court/tool/manual-location/action regressions added; execution deferred. |
 | A06 — Conversational Agent creation and approval | Create actions start chat; one missing question per reply; saved answers and collected-detail progress survive restoration; corrections require fresh review; only explicit approval creates | Progress, preparation, route and confirmation regressions; synthetic desktop/mobile Agent fixture. Execution deferred; real database concurrency and live provider handoff unverified. |
+
+
+J13 creative-layout acceptance: all five arrangements retain two to four selected
+photos and their crops; callouts, scrapbook, and camera frames share paths between
+preview and export; revealing extra layouts retains the caption and photos. Photo memories show recorded totals once, inside the photo overlay.
+Regression coverage: `story-collage.test.ts`, `story-collage-editor.test.tsx`,
+`story-photo-stats.test.ts`, `story-recap-layout.test.ts`, and the three creative PNG
+branches in `e2e/story-creative.spec.ts`. Authored, not executed. Validation deferred
+to pre-commit; browser and social-app handoff remain unverified.
+
+
+J13 mobile export regression: Share Story and Download PNG follow every editing
+panel without overlap at narrow portrait and landscape sizes. The responsive
+contract is covered by `story-workspace.test.ts`; the real composer geometry is
+covered by `e2e/story-creative.spec.ts`. Coverage authored; validation deferred
+to pre-commit. No native sharing or download failure was inferred from the layout
+screenshot.
+
+
+J13 template clarity: `story-recap-layout.test.ts` covers single-photo versus
+collage totals, empty photo memories, missing court time, and factual
+copy bounds across photo modes. Full-photo theme artwork is omitted in preview
+and export. Coverage authored; validation deferred to pre-commit.
+
+
+Agent mobile New chat spacing: `e2e/agent-chat.spec.ts` checks the action's right
+inset and separation from chat history before starting a new conversation.
+Coverage authored; validation deferred to pre-commit.
+
+
+J13 scrapbook refinement: regression cases in `story-recap-layout.test.ts`,
+`story-collage-editor.test.tsx`, and `story-theme-picker.test.tsx` cover optional
+stats, retained photos and captions, and crop-aware collage thumbnails. Shared
+poster fitting gives text the artwork space before shrinking. Validation deferred
+to pre-commit; rendered review and PNG inspection remain unverified.
+
+
+J13 curated theme set: editor tests use Studio, Soft Serve and Clubhouse labels
+while preserving theme IDs. `recap-template-preview.test.tsx` checks the landing
+examples render all five real themes with sample-data labeling. Existing theme
+path, photo-preview, fitting, and export scenarios cover the revised artwork.
+Validation deferred to pre-commit.

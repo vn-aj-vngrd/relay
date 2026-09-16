@@ -1382,8 +1382,10 @@ export const helpArticles: readonly HelpArticle[] = [
     ],
     steps: [
       "After the host ends the game, open Play, now Recap, for completed results and standings. No scored matches means no invented winner.",
-      "Open Story to create an invitation before play, a safe live update during play, or a completed-game portrait afterward.",
-      "Choose the available focus, layout, background, crop, contrast, and words. Preview the image and use supported native sharing or download the PNG.",
+      "Open Story to create an invitation before play, a safe live update during play, or a completed-game portrait afterward. All new Stories start in Court Pop. In Look, choose Court Pop for bold highlights, Studio for precise performance stats, Scrapbook for clean photo journals, Soft Serve for soft colors and elegant captions, or Clubhouse for sports-club invitations. Studio, Soft Serve, and Clubhouse are the updated names for Minimal, Coquette, and Retro Rally. Every theme supports the available Story types; these are suggested uses, not restrictions.",
+      "In Make, use Details to choose the Story type and read what it includes. Look changes the theme and color without replacing your photos, crops, or words. Its previews use your selected photos and crops. Scrapbook uses a clean photo mat, a single tape detail, and a handwritten caption. In Your story, turn off Show game stats in Details for a photo-and-caption memory. This hides both session totals and your personal result, without changing the recorded game. In a single framed photo story with recorded matches, points and match totals appear directly on the photo; your caption and game details stay outside it. Collages place totals below the photos. Stories without scored matches keep the photo and caption without a zero-results summary. Full-background photos keep text and contrast controls without decorative artwork.",
+      "In Photos, select up to four device or game photos and adjust each crop or order. With two or more photos, Layout starts with Hero + moments, Contact sheet, and Star scrapbook. More layouts reveals Photo callouts and Camera roll. Callouts connect photo moments; scrapbook adds star accents; Camera roll places photos inside compact-camera frames. One photo keeps the standard frame. Removing photos preserves your words.",
+      "Use Look for theme and color, and Details for your caption and eligible joining details. Preview the image, then scroll below the editing controls to Share Story or Download PNG. Your story needs a photo before export; result stories use available recorded stats. The unfinished Make draft survives a switch to Photos, but not a reload or leaving the game.",
       "Use Story’s Photos surface to add shared game memories. Upload JPG, PNG, or WebP within the size shown on the form and confirm the photo saved.",
     ],
     outcome:
@@ -1399,6 +1401,8 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/memories/permissions.ts",
       "src/features/memories/actions.ts",
       "src/features/memories/recap-share-card.tsx",
+      "src/features/memories/story-collage.ts",
+      "src/features/memories/story-photo-stats.ts",
     ],
   },
   {
