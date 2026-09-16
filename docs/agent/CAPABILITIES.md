@@ -12,7 +12,7 @@ Read before adding or changing Agent tools, creation, discovery, confirmation, o
 ## First release: implemented scope
 
 - Hosted game creation, including draft intent, completed-game replay, and group games.
-- Group creation and saving an eligible hosted game's linked Going crew as a group.
+- Group creation and saving a completed hosted game’s linked Going crew as a group, only when the source has no existing group.
 - Local Quick Play setup with named players, courts, and supported mode. It opens browser-local Play; it is not an account game.
 - Court lookup, group/source selection, conversational corrections, cancellation, preview restoration, and authoritative result links.
 - Separately default-off game/Quick Play and group creation flags. Normal permissions, hosting quotas, and strict-by-default privacy routing remain enforced.

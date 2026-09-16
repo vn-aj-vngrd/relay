@@ -16,12 +16,14 @@ import {
 } from "@/db/schema";
 import { requireUser } from "@/features/auth/session";
 import { createGroupCommand } from "@/features/groups/create-group-command";
+import { sessionAccent } from "@/features/sessions/accent";
 import {
   type CreationDatabase,
   type CreationHooks,
   createSessionCommand,
 } from "@/features/sessions/create-session-command";
 import { readAgentSettings } from "./config";
+import { applyReplaySource } from "./creation-form-model";
 import {
   type CreationInput,
   type CreationPreview,
@@ -35,6 +37,12 @@ import type { AgentConfig } from "./validation";
 
 const ownedConversation = (userId: string, id: string) =>
   and(eq(agentConversations.id, id), eq(agentConversations.userId, userId));
+const replayTime = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "Asia/Manila",
+});
 function ensureEnabled(
   config: Pick<
     AgentConfig,
@@ -85,8 +93,7 @@ async function previewCreation(
       ),
     });
     if (
-      !source ||
-      (input.kind === "game" && source.status !== "completed") ||
+      source?.status !== "completed" ||
       (input.kind === "group" && source.groupId)
     )
       throw new AgentHistoryError(
@@ -152,6 +159,9 @@ async function previewCreation(
       `${input.venue}${input.venueAddress ? ` · ${input.venueAddress}` : ""}`,
       `${input.capacity} players · ${input.courts} courts · ${input.hostPlaying ? "You are playing" : "You are organizing only"}`,
       `Visibility: ${input.visibility === "link" ? "Link only" : input.visibility} · ${input.requiresApproval ? "Approval required" : "No approval required"}`,
+      ...(input.accentColor
+        ? [`Game color: ${sessionAccent(input.accentColor).label}`]
+        : []),
       `Payment: ${input.costKind === "free" ? "Free" : input.costKind === "collect" ? "Set up collection after creation" : "Decide later"}`,
       input.intent === "draft"
         ? "Save as a draft; no invitations sent."
@@ -238,7 +248,42 @@ export async function prepareCreation(
 ) {
   const { config } = await readAgentSettings();
   ensureEnabled(config, input);
-  const prepared = creationFormDraft(input);
+  let draft = input;
+  if (input.kind === "game" && input.sourceSessionId) {
+    const source = await db.query.sessions.findFirst({
+      where: and(
+        eq(sessions.id, input.sourceSessionId),
+        eq(sessions.hostId, userId),
+        eq(sessions.status, "completed")
+      ),
+    });
+    if (!source)
+      throw new AgentHistoryError(400, "Choose a completed game you hosted.");
+    const membership = source.groupId
+      ? await db.query.groupMembers.findFirst({
+          where: and(
+            eq(groupMembers.groupId, source.groupId),
+            eq(groupMembers.userId, userId)
+          ),
+        })
+      : null;
+    draft = applyReplaySource(input, undefined, {
+      id: source.id,
+      title: source.title,
+      venue: source.venueName,
+      venueId: source.venueId,
+      venueAddress: source.venueAddress,
+      capacity: source.capacity,
+      courts: source.courtCount,
+      start: replayTime.format(source.startsAt),
+      end: replayTime.format(source.endsAt),
+      visibility: source.visibility,
+      requiresApproval: source.requiresApproval,
+      accentColor: sessionAccent(source.accentColor).id,
+      replayGroupId: membership?.groupId,
+    });
+  }
+  const prepared = creationFormDraft(draft);
   return db.transaction(async (tx) => {
     const [conversation] = await tx
       .select()
@@ -441,11 +486,26 @@ export async function creationOptions(userId: string, includeCourts = false) {
       title: sessions.title,
       status: sessions.status,
       groupId: sessions.groupId,
+      replayGroupId: groupMembers.groupId,
       venue: sessions.venueName,
+      venueId: sessions.venueId,
+      venueAddress: sessions.venueAddress,
       capacity: sessions.capacity,
       courts: sessions.courtCount,
+      startsAt: sessions.startsAt,
+      endsAt: sessions.endsAt,
+      visibility: sessions.visibility,
+      requiresApproval: sessions.requiresApproval,
+      accentColor: sessions.accentColor,
     })
     .from(sessions)
+    .leftJoin(
+      groupMembers,
+      and(
+        eq(groupMembers.groupId, sessions.groupId),
+        eq(groupMembers.userId, userId)
+      )
+    )
     .where(eq(sessions.hostId, userId))
     .orderBy(desc(sessions.createdAt), desc(sessions.id))
     .limit(30);
@@ -459,8 +519,13 @@ export async function creationOptions(userId: string, includeCourts = false) {
           .limit(100)
       : [],
     groups: groupRows,
-    hostedGames: games,
-    note: "Up to 30 items. Replay requires completed status. Saving a crew requires no existing group. Ask for a game URL if the target is absent.",
+    hostedGames: games.map(({ startsAt, endsAt, accentColor, ...game }) => ({
+      ...game,
+      start: replayTime.format(startsAt),
+      end: replayTime.format(endsAt),
+      accentColor: sessionAccent(accentColor).id,
+    })),
+    note: "Up to 30 items. Replay requires completed status. Saving a crew requires completed status and no existing group. Ask for a game URL if the target is absent.",
   };
 }
 

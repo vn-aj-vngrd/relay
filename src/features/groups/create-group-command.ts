@@ -46,6 +46,8 @@ export async function createGroupCommand(
     });
     if (!source)
       return { error: "Only the session host can save this crew as a group." };
+    if (source.status !== "completed")
+      return { error: "Finish the game before saving its crew as a group." };
     if (source.groupId)
       return { error: "This session already belongs to a group." };
     const players = await db
@@ -75,9 +77,9 @@ export async function createGroupCommand(
           )
         )
         .for("update");
-      if (!current || current.groupId)
+      if (!current || current.groupId || current.status !== "completed")
         throw new Error(
-          "This game already belongs to a group or is unavailable."
+          "This game must be completed, available, and not already in a group."
         );
       const currentPlayers = await tx
         .select({ id: sessionPlayers.userId })

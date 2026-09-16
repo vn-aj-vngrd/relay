@@ -18,6 +18,7 @@ export const creationInputSchema = z
       ])
       .optional(),
     title: z.string().trim().max(80).optional(),
+    accentColor: createSessionSchema().shape.accentColor.unwrap().optional(),
     description: z.string().trim().max(300).optional(),
     venue: z.string().trim().max(120).optional(),
     venueId: z.uuid().optional(),
@@ -125,6 +126,7 @@ export function validateCreation(input: CreationInput, now = new Date()) {
   }
   const parsed = createSessionSchema(now).safeParse({
     title: input.title,
+    accentColor: input.accentColor,
     venueName: input.venue,
     venueId: input.venueId,
     venueAddress: input.venueAddress,

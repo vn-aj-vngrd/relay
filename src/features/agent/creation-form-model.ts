@@ -5,12 +5,20 @@ import {
 } from "./creation-schema";
 
 export type CreationFlow = NonNullable<CreationInput["flow"]>;
-type ReplaySource = {
+export type ReplaySource = {
   id: string;
   title: string;
   venue: string;
   capacity: number;
   courts: number;
+  replayGroupId?: string | null;
+  venueId?: string | null;
+  venueAddress?: string | null;
+  start?: string;
+  end?: string;
+  visibility?: CreationInput["visibility"];
+  requiresApproval?: boolean;
+  accentColor?: CreationInput["accentColor"];
 };
 
 export function applyReplaySource(
@@ -19,15 +27,29 @@ export function applyReplaySource(
   nextSource: ReplaySource | undefined
 ): CreationInput {
   const next = { ...input, sourceSessionId: nextSource?.id };
-  for (const key of ["title", "venue"] as const) {
+  for (const key of ["title", "venue", "start", "end"] as const) {
     if (input[key] === undefined || input[key] === previousSource?.[key]) {
       next[key] = nextSource?.[key];
       if (key === "venue") {
-        next.venueId = undefined;
-        next.venueAddress = undefined;
+        next.venueId = nextSource?.venueId ?? undefined;
+        next.venueAddress = nextSource?.venueAddress ?? undefined;
       }
     }
   }
+  if (
+    input.accentColor === undefined ||
+    input.accentColor === previousSource?.accentColor
+  )
+    next.accentColor = nextSource?.accentColor;
+  if (
+    input.groupId === undefined ||
+    input.groupId === previousSource?.replayGroupId
+  )
+    next.groupId = nextSource?.replayGroupId ?? undefined;
+  if (input.visibility === (previousSource?.visibility ?? "link"))
+    next.visibility = nextSource?.visibility ?? "link";
+  if (input.requiresApproval === (previousSource?.requiresApproval ?? false))
+    next.requiresApproval = nextSource?.requiresApproval ?? false;
   for (const key of ["capacity", "courts"] as const) {
     if (input[key] === undefined || input[key] === previousSource?.[key])
       next[key] = nextSource?.[key];

@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   },
   inserts: [] as Record<string, unknown>[],
   enabled: true,
+  sourceStatus: "completed",
   history: [] as Record<string, unknown>[],
 }));
 vi.mock("./config", () => ({
@@ -38,6 +39,9 @@ vi.mock("@/db/client", () => {
     transaction: async <T>(work: (tx: unknown) => Promise<T>): Promise<T> =>
       work(db),
     query: {
+      sessions: {
+        findFirst: async () => ({ status: state.sourceStatus, groupId: null }),
+      },
       agentCreationProposals: { findFirst: async () => state.inserts.at(-1) },
       agentConversations: { findFirst: async () => ({ activeUntil: null }) },
     },
@@ -171,4 +175,26 @@ describe("Creation result restoration", () => {
     expect(restored[0].destination).toBe("/groups/group-0");
     expect(restored[124].destination).toBe("/groups/group-124");
   });
+});
+
+describe("Crew preparation eligibility", () => {
+  it.each(["draft", "published", "live", "cancelled"])(
+    "rejects a %s source before review",
+    async (status) => {
+      state.sourceStatus = status;
+      await expect(
+        updateCreationForm(
+          "owner",
+          "old-id",
+          {
+            ...state.row!.input,
+            flow: "crew",
+            sourceSessionId: "59c6fa3f-3f6f-45f2-bbea-b85bc90aa3a7",
+          },
+          true
+        )
+      ).rejects.toThrow("no longer eligible");
+      expect(state.inserts).toHaveLength(0);
+    }
+  );
 });

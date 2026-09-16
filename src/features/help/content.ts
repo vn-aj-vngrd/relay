@@ -124,7 +124,7 @@ export const helpArticles: readonly HelpArticle[] = [
     audience: "Signed-in hosts and group creators",
     prerequisites: [
       "An administrator must enable the relevant Agent creation capability.",
-      "Normal game creation limits and permissions apply. You must host a completed game to replay it; saving a crew requires an owned game that is not already linked to a group.",
+      "Normal game creation limits and permissions apply. You must host a completed game to replay it; saving a crew requires a completed game you hosted that is not already linked to a group. Replaying preserves the source game’s court, eligible group, and access settings for review.",
     ],
     steps: [
       "Choose a creation task from Agent’s + or / menu to open its form, or describe it in chat so Agent can prefill known details. Complete the named fields; there is no need to answer a numbered questionnaire.",

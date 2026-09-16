@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/date-time-picker";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
+import { sessionAccents } from "@/features/sessions/accent";
 import {
   type CourtSuggestion,
   VenueCombobox,
@@ -20,20 +21,16 @@ import {
   creationFlowLabels,
   creationStepLabels,
   creationSteps,
+  type ReplaySource,
 } from "./creation-form-model";
 import type { CreationInput, CreationProposal } from "./creation-schema";
 
 type Options = {
   groups: { id: string; name: string }[];
-  hostedGames: {
-    id: string;
-    title: string;
+  hostedGames: (ReplaySource & {
     status: string;
     groupId: string | null;
-    venue: string;
-    capacity: number;
-    courts: number;
-  }[];
+  })[];
   courts: (Omit<CourtSuggestion, "address"> & { address: string | null })[];
 };
 export function AgentCreationWizard({
@@ -264,15 +261,17 @@ export function AgentCreationWizard({
       ) : null}
     </div>
   );
-  const select = <K extends "visibility" | "costKind" | "mode" | "intent">(
+  const select = <
+    K extends "visibility" | "costKind" | "mode" | "intent" | "accentColor",
+  >(
     key: K,
     label: string,
-    values: { value: CreationInput[K]; label: string }[]
+    values: { value: NonNullable<CreationInput[K]>; label: string }[]
   ) => (
     <SelectField
       id={`${id}-${key}`}
       label={label}
-      value={input[key]}
+      value={input[key] ?? (key === "accentColor" ? "violet" : "")}
       options={values}
       onValueChange={(value) => change(key, value as CreationInput[K])}
     />
@@ -389,7 +388,7 @@ export function AgentCreationWizard({
                           .filter((game) =>
                             flow === "replay"
                               ? game.status === "completed"
-                              : !game.groupId
+                              : game.status === "completed" && !game.groupId
                           )
                           .map((game) => ({
                             value: game.id,
@@ -437,7 +436,7 @@ export function AgentCreationWizard({
                           {flow === "replay"
                             ? "Only completed games can be replayed."
                             : flow === "crew"
-                              ? "Only your games without a group are eligible."
+                              ? "Only your completed games without a group are eligible."
                               : "The final review lists everyone who will be invited."}
                         </p>
                         {options && !rows.length ? (
@@ -584,6 +583,14 @@ export function AgentCreationWizard({
                         { value: "private", label: "Private" },
                         { value: "public", label: "Public" },
                       ])}
+                      {select(
+                        "accentColor",
+                        "Game color",
+                        sessionAccents.map((accent) => ({
+                          value: accent.id,
+                          label: accent.label,
+                        }))
+                      )}
                       {select("costKind", "Payment", [
                         { value: "unspecified", label: "Decide later" },
                         { value: "free", label: "Free" },
