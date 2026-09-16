@@ -2,9 +2,9 @@
 
 ## Scope and standard
 
-Reviewed public venue-operated websites and booking pages discovered through Cebu Pickleball Courts. Directory descriptions and coordinates were **not copied** into these records. The research covered 29 records: 12 with checked coordinates and 17 without independent pins. Final reconciliation removed 17 existing venue identities from the additive snapshot; the import contains 8 verified additions and 4 unverified candidates. Existing records are preserved, not downgraded or duplicated. `verificationRequired: true` prevents the latter from qualifying as verified additions.
+Reviewed public venue-operated websites and booking pages discovered through Cebu Pickleball Courts. Directory descriptions and coordinates were **not copied** into these records. The research covered 29 records: 12 with checked coordinates and 17 without independent pins. Final reconciliation removed 17 existing venue identities from the additive snapshot; the import contains 7 verified additions and 5 unverified candidates. Existing records are preserved, not downgraded or duplicated. `verificationRequired: true` prevents the latter from qualifying as verified additions.
 
-The source is additive (`archiveMissing: false`). Existing venue slugs are retained where known so repeated research does not create extra venues. **Do not downgrade an existing verified venue when merging an unverified research record.** Records without independent pins are useful research leads, not additional verified app coverage. Several verified rows also update existing venues; 29 is not the net-addition count.
+The source is additive (`archiveMissing: false`). Existing venue slugs are retained where known so repeated research does not create extra venues. **Do not downgrade an existing verified venue when merging an unverified research record.** Records without independent pins are useful research leads, not additional verified app coverage. The final snapshot excludes all 17 existing identities; 29 is the research count, not the net-addition count.
 
 No booking or payment was submitted. Facts come from public pages checked on 16 September 2026. Dynamic prices and hours are omitted unless needed; the booking links remain authoritative. No directory-wide reproduction was used.
 
