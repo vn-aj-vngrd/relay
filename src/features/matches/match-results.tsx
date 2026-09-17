@@ -74,7 +74,7 @@ function ScoreCorrectionControl({
               htmlFor={`${titleId}-a`}
               className="min-w-0 text-sm font-semibold"
             >
-              <span className="line-clamp-2">{result.teams[0]}</span>
+              <span className="break-words">{result.teams[0]}</span>
             </label>
             <input
               id={`${titleId}-a`}
@@ -91,7 +91,7 @@ function ScoreCorrectionControl({
               htmlFor={`${titleId}-b`}
               className="min-w-0 text-sm font-semibold"
             >
-              <span className="line-clamp-2">{result.teams[1]}</span>
+              <span className="break-words">{result.teams[1]}</span>
             </label>
             <input
               id={`${titleId}-b`}
@@ -145,7 +145,7 @@ export function MatchResults({
         <h2 id={`match-results-${sessionId}`} className="text-xl font-bold">
           {heading}
         </h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 hidden text-sm text-muted lg:block">
           Final scores from this game
           {canCorrect ? " · corrections are recorded in Chat" : ""}.
         </p>
@@ -172,7 +172,7 @@ export function MatchResults({
                     <div key={`${result.id}:${index}`} className="contents">
                       <span className="flex min-w-0 items-center gap-2">
                         <span
-                          className={`truncate ${winner === index ? "font-bold" : "font-medium text-muted"}`}
+                          className={`min-w-0 break-words ${winner === index ? "font-bold" : "font-medium text-muted"}`}
                         >
                           {team}
                         </span>

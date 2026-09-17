@@ -49,7 +49,7 @@ export function EmailSentState({
       <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted">
         Can’t find the email? Check your spam or junk folder.
       </p>
-      <ButtonLink href={primary.href} className="mt-8 h-12 w-full text-[15px]">
+      <ButtonLink href={primary.href} size="large" className="mt-8 w-full">
         {primary.label}
         <ArrowRight aria-hidden size={17} weight="bold" />
       </ButtonLink>

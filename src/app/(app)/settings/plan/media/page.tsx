@@ -83,7 +83,7 @@ export default async function HostedMediaPage({
             href="/settings/plan"
             variant="quiet"
             aria-label="Back to Plan & billing"
-            className="-ml-3 h-11 min-h-11 w-11 shrink-0 px-0"
+            className="back-control -ml-3 h-11 min-h-11 w-11 shrink-0 px-0"
           >
             <CaretLeft aria-hidden size={18} />
             <Tooltip content="Back to Plan & billing" />

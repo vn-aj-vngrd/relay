@@ -44,7 +44,8 @@ export function PasswordMfaForm({
         </div>
         <SubmitButton
           type="submit"
-          className="h-12 w-full text-[15px]"
+          size="large"
+          className="w-full"
           pendingLabel="Verifying code…"
         >
           Verify and continue

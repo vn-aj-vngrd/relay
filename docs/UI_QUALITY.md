@@ -28,7 +28,7 @@ Order content by the decision a person must make. Use type, alignment, whitespac
 
 ### 4. Make interaction explicit
 
-Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Standard actions use the shared Button/ButtonLink 36–40px system at every viewport, including mobile; icon-only actions use the explicit 44px icon size, and score controls remain 64px. Keep spacing between neighboring controls and preserve explicit larger targets.
+Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Standard actions use the shared Button/ButtonLink 36–40px system at every viewport, including mobile; icon-only actions use the explicit 44px icon size, and score controls remain 64px. Standard single-line fields use 44px height, matching selects and autocomplete controls; multiline fields retain automatic height. Keep spacing between neighboring controls and preserve explicit larger targets.
 
 **Complete when:** keyboard, touch, and assistive-technology users can complete the same workflow without guessing.
 
@@ -74,3 +74,11 @@ Record issues as `P0` blocking, `P1` major, `P2` minor, or `P3` polish. Include 
 ### Tooltip interaction timing
 
 Shared tooltips wait 400ms for pointer intent and retain a 180ms close grace period. Keyboard focus reveals help immediately; Escape, activation and scrolling dismiss it. Hovering the tooltip keeps it open. Reentering during the grace period cancels dismissal. Tooltips fade in over 160ms and out over 120ms without scaling text; reduced motion retains the shorter shared fade. History icon actions prefer bottom-center placement with viewport collision handling. These timings are Relay choices, informed by [Radix tooltip delays](https://www.radix-ui.com/primitives/docs/components/tooltip) and the [WAI tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/), not mandated standard durations.
+
+Landing navigation uses the default shared ButtonLink size (36px); landing calls
+to action and authentication submits use the large size (40px). Avoid local
+height overrides for these actions so the mobile fallback cannot enlarge them.
+
+Icon-only back navigation uses `back-control`: a 32px hover/focus surface inside
+a 44px target, with the existing keyboard focus outline retained. Use the same
+treatment in focused headers, game workspaces, profile, billing and admin.

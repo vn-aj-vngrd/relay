@@ -23,6 +23,7 @@ import {
 import { PlaySectionTabs } from "./play-section-tabs";
 import { rotationDescription, rotationName } from "./rotation";
 import { RoundTimer } from "./round-timer";
+import { SessionStandings } from "./session-standings";
 import { StartRotationForm } from "./start-rotation-form";
 
 export type SessionPlayData = Omit<
@@ -256,7 +257,7 @@ export async function SessionPlay({
                       ? "Waiting & resting"
                       : "Paddle stack"}
                 </h2>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 hidden text-sm text-muted lg:block">
                   {data.session.rotationMode === "round_robin"
                     ? "Fixed pairs · next unplayed matchup"
                     : data.pairs.length
@@ -283,7 +284,7 @@ export async function SessionPlay({
                         <span className="score w-5 text-center text-sm font-bold text-muted">
                           {index + 1}
                         </span>
-                        <span className="flex -space-x-2">
+                        <span className="hidden -space-x-2 lg:flex">
                           {pair.players.map(
                             ({ player, profile }, playerIndex) => (
                               <Avatar
@@ -296,7 +297,7 @@ export async function SessionPlay({
                             )
                           )}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                        <span className="min-w-0 flex-1 break-words text-sm font-semibold">
                           {names.join(" + ")}
                           {viewer.playerId &&
                           pair.players.some(
@@ -340,7 +341,7 @@ export async function SessionPlay({
                         index={index + 1}
                         size="sm"
                       />
-                      <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      <span className="min-w-0 flex-1 break-words text-sm font-semibold">
                         {name}
                         {viewer.playerId === player.id ? " · You" : ""}
                       </span>
@@ -362,7 +363,7 @@ export async function SessionPlay({
               </p>
             )}
 
-            <div className="mt-7 rounded-lg bg-primary-soft p-4">
+            <div className="mt-7 hidden rounded-lg bg-primary-soft p-4 lg:block">
               <p className="text-sm font-semibold">
                 {rotationName(data.session.rotationMode)}
               </p>
@@ -388,38 +389,7 @@ export async function SessionPlay({
         }
         standings={
           data.standings.length ? (
-            <section aria-labelledby="live-standings-title">
-              <h2 id="live-standings-title" className="text-lg font-bold">
-                Session Standings
-              </h2>
-              <div className="mt-3 overflow-hidden border-y border-line">
-                <table className="w-full table-fixed text-sm">
-                  <thead className="text-left text-xs text-muted">
-                    <tr>
-                      <th className="w-[55%] py-2 font-medium">Player</th>
-                      <th className="py-2 text-right font-medium">W</th>
-                      <th className="py-2 text-right font-medium">L</th>
-                      <th className="py-2 text-right font-medium">+/−</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line">
-                    {data.standings.map((row) => (
-                      <tr key={row.playerId}>
-                        <td className="break-words py-3 pr-3 font-medium">
-                          {row.name}
-                        </td>
-                        <td className="score py-3 text-right">{row.wins}</td>
-                        <td className="score py-3 text-right">{row.losses}</td>
-                        <td className="score py-3 text-right">
-                          {row.differential > 0 ? "+" : ""}
-                          {row.differential}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <SessionStandings standings={data.standings} />
           ) : undefined
         }
         manage={

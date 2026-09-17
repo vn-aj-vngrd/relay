@@ -53,7 +53,7 @@ export default async function AdminLayout({
           <Link
             href="/home"
             aria-label="Back to Relay"
-            className="pressable grid h-10 w-10 place-items-center text-muted hover:text-ink"
+            className="back-control pressable grid h-11 w-11 place-items-center text-muted hover:text-ink"
           >
             <ArrowLeft aria-hidden size={20} />
           </Link>

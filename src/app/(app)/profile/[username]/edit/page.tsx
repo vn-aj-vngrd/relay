@@ -31,7 +31,7 @@ export default async function EditProfilePage({
         <Link
           href={`/profile/${profile.username}`}
           aria-label="Back to profile"
-          className="pressable -ml-3 grid h-10 w-10 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+          className="back-control pressable -ml-3 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted hover:text-ink"
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>

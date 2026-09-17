@@ -167,20 +167,24 @@ RecapStoryCard, without obsolete mock editor controls. Validation deferred to
 pre-commit; rendering and exported images remain unverified.
 
 
-Quick Play (2026-09-17): signed-in and public `/play` continue sharing
-`PublicQuickPlay` and the adaptive shell. Both use the existing TabChipRail and
-CourtScoreboardCourt, with Courts / Queue / Results sections, a secondary Manage
-courts disclosure, in-step Balanced Mix inputs and a complete review. Browser
-setup drafts and ended recaps remain device-local; ending does not clear results.
-Starting a new session confirms replacement separately. Storage failures retain
-in-memory use with a warning. The roster is fixed during play. No account-save,
-sharing, roster management or Agent capability was added. The full pre-commit
-gate passed. Public mobile/desktop walkthroughs used synthetic players; the
-authenticated browser journey remains unverified.
+Quick Play (2026-09-17): signed-in and public `/play` share `PublicQuickPlay`
+and the adaptive shell. Live Quick Play reuses saved-game `PlaySectionTabs`:
+Courts, Queue, Results, Standings and Manage. Results and Standings appear after
+the first completed match. Manage contains court availability and End Quick Play;
+ending remains disabled until active matches are finished or cancelled.
 
-Mobile Quick Play keeps the compact 36px section rail and End Quick Play in the
-top-right header. Repeated descriptions, queue counts, rotation explanation and
-storage footer are desktop-only; the visible Queue chip retains its count.
-Mobile queue rows keep full names and 44px up/down controls, with top/end
-shortcuts on desktop. First/last boundary moves are disabled. Storage errors,
-empty-state recovery and confirmation consequences remain visible on mobile.
+Ended Quick Play reuses `buildSessionRecap`, `RecapOverview` and `RecapHighlights`
+from saved-game Recap. It shows real match/point/time totals, highlights, completed
+scores and standings, with a separate confirmed Start new session action. Local
+score corrections update the entire recap. No account history, Story upload,
+sharing or roster availability capability is implied. Empty sessions show zero
+results without invented highlights. Browser drafts and recaps remain device-local.
+
+The shared compact tab rail remains horizontally scrollable on phones. Quick
+Play and saved private/shared Play reuse `SessionStandings`, showing names, wins,
+losses and point difference on phones, with played and win percentage on desktop.
+Both recaps order summary, scores, highlights and standings, hide secondary
+descriptions on mobile and keep full names. Both queue controls keep 44px mobile
+targets for up/down; top/end shortcuts are desktop-only. Unlike saved games, its recap has local continuation only and no
+venue/date claims. Regression coverage is updated; lint/types, unit coverage and
+production build passed during PR preparation. Automated E2E remains unrun.

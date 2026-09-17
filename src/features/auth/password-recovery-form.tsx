@@ -103,7 +103,8 @@ export function PasswordRecoveryForm() {
         ) : null}
         <SubmitButton
           type="submit"
-          className="h-12 w-full text-[15px]"
+          size="large"
+          className="w-full"
           pendingLabel="Sending reset link…"
           disabled={!turnstileSiteKey || !captchaToken || captchaNeedsRefresh}
         >

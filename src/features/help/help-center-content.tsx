@@ -43,7 +43,7 @@ export function HelpCenterContent({
               type="search"
               defaultValue={query}
               placeholder="Search help articles…"
-              className="h-12 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+              className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 text-base text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
             <Button type="submit">Search</Button>
           </div>

@@ -29,7 +29,7 @@ import {
 } from "./actions";
 
 const fieldClass =
-  "mt-1.5 h-12 w-full rounded-lg border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
+  "mt-1.5 h-11 w-full rounded-lg border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15";
 
 const phases = ["Identity", "Profile", "Confirm", "All set"] as const;
 

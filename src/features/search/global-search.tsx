@@ -353,7 +353,7 @@ export function GlobalSearch({
         <div className="relative">
           <MagnifyingGlass
             aria-hidden
-            className="pointer-events-none absolute left-3.5 top-3.5 text-muted"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
             size={18}
           />
           <label htmlFor="global-search" className="sr-only">
@@ -370,14 +370,14 @@ export function GlobalSearch({
             autoComplete="off"
             spellCheck={false}
             placeholder="Search games, players, groups, courts…"
-            className="h-12 w-full rounded-[10px] border border-line bg-surface pl-11 pr-12 text-[15px] placeholder:text-muted focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-[10px] border border-line bg-surface pl-11 pr-12 text-[15px] placeholder:text-muted focus:border-primary focus:outline-none"
           />
           {query ? (
             <button
               type="button"
               onClick={() => updateQuery("")}
               aria-label="Clear search"
-              className="pressable absolute right-1 top-1 grid h-10 w-10 place-items-center text-xl text-muted hover:text-ink"
+              className="pressable absolute right-0 top-0 grid h-11 w-11 place-items-center text-xl text-muted hover:text-ink"
             >
               ×
             </button>

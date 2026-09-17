@@ -348,7 +348,7 @@ function CourtResults({
                   className={`pressable relative block w-full px-4 py-3.5 text-left ${active ? "bg-primary-soft/55 before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:bg-primary" : "hover:bg-surface-strong/60"}`}
                 >
                   <span className="flex items-start justify-between gap-3">
-                    <strong className="text-sm font-[650] leading-5 text-ink">
+                    <strong className="min-w-0 break-words text-sm font-[650] leading-5 text-ink">
                       {venue.name}
                     </strong>
                     <span className="shrink-0 text-right">
@@ -365,7 +365,7 @@ function CourtResults({
                       />
                     </span>
                   </span>
-                  <span className="mt-1 block text-xs leading-[18px] text-muted">
+                  <span className="mt-1 block break-words text-xs leading-[18px] text-muted">
                     {venue.address}
                   </span>
                   {venueMeta(venue).length ? (
@@ -727,7 +727,7 @@ export function CourtFinder({
           >
             <div
               role="group"
-              className="flex min-w-max items-center gap-1.5 sm:gap-2"
+              className="flex min-w-max items-center gap-1.5 sm:min-w-0 sm:flex-wrap sm:gap-2"
               aria-label="Court filters"
             >
               <div>
@@ -926,7 +926,7 @@ export function CourtFinder({
       ) : null}
 
       <div
-        className={`court-finder-results-grid grid min-h-0 gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-2 xl:flex-1"}`}
+        className={`court-finder-results-grid grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:gap-4 xl:grid-cols-[360px_minmax(0,1fr)] ${compactPreview ? "mt-3 xl:h-[440px]" : "-mx-4 sm:mx-0 xl:mt-2 xl:flex-1"}`}
       >
         <section
           ref={mapSectionRef}

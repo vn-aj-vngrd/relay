@@ -106,7 +106,7 @@ export function QueueOrderControls({
     <form
       noValidate
       action={action}
-      className="flex flex-wrap items-center justify-end gap-1"
+      className="flex shrink-0 items-center justify-end gap-1"
     >
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="sessionPlayerId" value={sessionPlayerId} />
@@ -123,7 +123,7 @@ export function QueueOrderControls({
           name="move"
           value={move as string}
           variant="quiet"
-          className="h-11 min-h-11 w-11 px-0 sm:h-9 sm:min-h-9 sm:w-9"
+          className={`h-11 min-h-11 w-11 px-0 lg:h-9 lg:min-h-9 lg:w-9 ${move === "top" || move === "end" ? "max-lg:!hidden" : ""}`}
           aria-label={`${label as string}: ${name}`}
         >
           <Icon aria-hidden size={16} />

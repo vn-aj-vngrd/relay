@@ -84,6 +84,15 @@ describe("SessionRecap states", () => {
 
     expect(screen.getByText("Final recap")).toBeInTheDocument();
     expect(screen.getByText("Session highlights")).toBeInTheDocument();
+    const headings = screen
+      .getAllByRole("heading")
+      .map((heading) => heading.textContent);
+    expect(headings.indexOf("Match results")).toBeLessThan(
+      headings.indexOf("Session highlights")
+    );
+    expect(headings.indexOf("Session highlights")).toBeLessThan(
+      headings.indexOf("Session Standings")
+    );
     expect(
       screen.queryByRole("button", { name: "Share Story" })
     ).not.toBeInTheDocument();
