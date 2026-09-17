@@ -217,7 +217,7 @@ export function RsvpControl({
                   maxLength={60}
                   autoComplete="name"
                   placeholder="e.g. Mika Reyes…"
-                  className="mt-1.5 h-12 w-full rounded-[10px] border border-line bg-surface px-3.5 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  className="mt-1.5 h-11 w-full rounded-[10px] border border-line bg-surface px-3.5 placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                 />
                 <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
                   <p className="text-muted">

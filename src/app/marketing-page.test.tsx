@@ -61,8 +61,23 @@ describe("marketing account actions", () => {
     const header = within(screen.getByRole("banner"));
     const login = header.getByRole("link", { name: "Log in" });
     expect(login).toHaveAttribute("href", "/login");
-    expect(login).toHaveClass("inline-flex", "min-h-11");
+    expect(login).toHaveClass("compact-control", "min-h-9");
     expect(login).not.toHaveClass("hidden");
+    expect(header.getByRole("link", { name: "Sign up" })).toHaveClass(
+      "compact-control",
+      "min-h-9"
+    );
+    for (const label of [
+      "Create game",
+      "Start Quick Play",
+      "Find a court",
+      "Explore open games",
+    ]) {
+      expect(screen.getAllByRole("link", { name: label })[0]).toHaveClass(
+        "compact-control",
+        "min-h-10"
+      );
+    }
     expect(header.getByRole("link", { name: "Sign up" })).toHaveAttribute(
       "href",
       "/signup"

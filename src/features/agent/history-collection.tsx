@@ -175,7 +175,7 @@ export function AgentHistoryCollection() {
           <Link
             href="/agent"
             aria-label="Back to chat"
-            className="pressable -ml-3 inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-muted hover:text-ink"
+            className="back-control pressable -ml-3 inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted hover:text-ink"
           >
             <ArrowLeft size={18} aria-hidden />
             <Tooltip content="Back to chat" side="bottom" align="center" />

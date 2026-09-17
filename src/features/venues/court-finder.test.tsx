@@ -160,7 +160,13 @@ describe("CourtFinder", () => {
       screen.getByLabelText("Interactive map of pickleball courts")
     ).toBeVisible();
     expect(document.querySelector(".court-finder-results-grid")).toHaveClass(
-      "xl:flex-1"
+      "xl:flex-1",
+      "min-w-0",
+      "grid-cols-[minmax(0,1fr)]"
+    );
+    expect(screen.getByRole("group", { name: "Court filters" })).toHaveClass(
+      "sm:flex-wrap",
+      "sm:min-w-0"
     );
   });
 

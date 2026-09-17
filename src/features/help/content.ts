@@ -325,8 +325,8 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Open Quick Play and enter distinct player names. Your unfinished setup is kept in this browser, including the current step.",
       "Choose courts and a mode in Game options. Balanced Mix shows each player’s experience here; other formats offer pairs, queue rules, or a timer. Review these choices and use Edit players or Edit game options before starting.",
-      "Use Courts for assignments and scoring, Queue for waiting order, and Results for completed matches and standings. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Expand a scoreboard for courtside viewing. Manage courts is below the courts. The roster stays fixed during play; use a saved game if players need to arrive, rest, or leave.",
-      "Finish or cancel active matches, then choose End Quick Play and confirm End Play. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
+      "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Expand a scoreboard for courtside viewing. Use Manage for court availability and ending Quick Play. The roster stays fixed during play; use a saved game if players need to arrive, rest, or leave.",
+      "Finish or cancel active matches, then open Manage, choose End Quick Play, and confirm End Play. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
     ],
     outcome:
       "Play is stored locally in that browser, not as a shareable Relay game. It cannot be transferred into account history or another device.",
@@ -426,7 +426,7 @@ export const helpArticles: readonly HelpArticle[] = [
     outcome:
       "You have a court choice and a prefilled plan, not a reservation. Operating hours and verification do not prove a court is free at your chosen time.",
     troubleshooting: [
-      "On phones, scroll the court results inside the list. Search, filters and bottom navigation stay in place; the results fill the space above navigation.",
+      "Scroll court results inside the list; search and filters stay in place. On phones, results fill the space above bottom navigation. Wider views keep matching top and bottom spacing, and filter chips wrap rather than widening the page.",
       "If location permission fails, search by city or neighborhood. Location sorting does not continuously track you.",
       "Restricted courts can appear in the directory; respect member, resident, school, or invitation rules. Suggest an update when public evidence is outdated.",
     ],
@@ -1105,7 +1105,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "An active saved-game match and permission to score. Guests and unassigned viewers can read/expand scores but cannot change them.",
     ],
     steps: [
-      "Open Play and confirm the court and both teams before entering points.",
+      "Open Play and confirm the court and both teams before entering points. Courts, Queue, Results, Standings and Manage use the same compact tabs as Quick Play. On phones, move queue entries up or down; desktop also offers move-to-top and move-to-end controls.",
       "Use plus/minus controls for live scoring or enter the final score. Open the full-screen view if needed; move between active courts there and use its close control or Escape to return.",
       "If a version conflict appears, read the restored saved score and deliberately retry only the still-needed change.",
       "Choose Finish match, review the teams and final score, then confirm. A winner is required; a tie cannot be finished.",
@@ -1353,7 +1353,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Access to a published, live, or completed game and host/co-host or Going participant identity, including eligible guests.",
     ],
     steps: [
-      "After the host ends the game, open Play, now Recap, for completed results and standings. No scored matches means no invented winner.",
+      "After the host ends the game, open Play, now Recap, for the summary, match results, highlights and standings, in that order. Quick Play uses the same recap layout. On phones, standings prioritize names, wins, losses and point difference; desktop also shows matches played and win percentage. No scored matches means no invented winner.",
       "Open Story to create an invitation before play, a safe live update during play, or a completed-game portrait afterward. All new Stories start in Court Pop. In Look, choose Court Pop for bold highlights, Studio for precise performance stats, Scrapbook for clean photo journals, Soft Serve for soft colors and elegant captions, or Clubhouse for sports-club invitations. Studio, Soft Serve, and Clubhouse are the updated names for Minimal, Coquette, and Retro Rally. Every theme supports the available Story types; these are suggested uses, not restrictions.",
       "In Make, use Details to choose the Story type and read what it includes. Look changes the theme and color without replacing your photos, crops, or words. Its previews use your selected photos and crops. Scrapbook uses a clean photo mat, a single tape detail, and a handwritten caption. In Your story, turn off Show game stats in Details for a photo-and-caption memory. This hides both session totals and your personal result, without changing the recorded game. In a single framed photo story with recorded matches, points and match totals appear directly on the photo; your caption and game details stay outside it. Collages place totals below the photos. Stories without scored matches keep the photo and caption without a zero-results summary. Full-background photos keep text and contrast controls without decorative artwork.",
       "In Photos, select up to four device or game photos and adjust each crop or order. With two or more photos, Layout starts with Hero + moments, Contact sheet, and Star scrapbook. More layouts reveals Photo callouts and Camera roll. Callouts connect photo moments; scrapbook adds star accents; Camera roll places photos inside compact-camera frames. One photo keeps the standard frame. Removing photos preserves your words.",

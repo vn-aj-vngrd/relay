@@ -161,15 +161,30 @@ test("the public court finder works without an account", async ({ page }) => {
     { width: 320, height: 568 },
     { width: 390, height: 844 },
     { width: 844, height: 390 },
+    { width: 1024, height: 900 },
+    { width: 1440, height: 1000 },
   ]) {
     await page.setViewportSize(viewport);
     const listBounds = await courtList.boundingBox();
-    const navBounds = await page.locator(".app-bottom-nav").boundingBox();
+    const content = page.locator(".app-content");
+    const contentBounds = await content.boundingBox();
+    const bottomPadding = await content.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).paddingBottom)
+    );
     expect(listBounds).not.toBeNull();
-    expect(navBounds).not.toBeNull();
-    // The pane border may occupy one pixel, but no reserved page gap remains.
+    expect(contentBounds).not.toBeNull();
     expect(
-      Math.abs(navBounds!.y - (listBounds!.y + listBounds!.height))
+      Math.abs(
+        contentBounds!.y +
+          contentBounds!.height -
+          bottomPadding -
+          (listBounds!.y + listBounds!.height)
+      )
+    ).toBeLessThanOrEqual(1);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - innerWidth
+      )
     ).toBeLessThanOrEqual(1);
     expect(
       await page
@@ -243,10 +258,18 @@ test("public Quick Play prepares players, rotates, and scores without an account
   const setupViewport = page.viewportSize();
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
+    await expect(
+      page.getByRole("button", { name: "End Quick Play" })
+    ).toBeHidden();
+    await page.getByRole("button", { name: "Manage", exact: true }).click();
     expect(
       (await page.getByRole("button", { name: "End Quick Play" }).boundingBox())
         ?.height
     ).toBe(36);
+    await expect(
+      page.getByRole("button", { name: "End Quick Play" })
+    ).toBeDisabled();
+    await page.getByRole("button", { name: "Courts", exact: true }).click();
     expect(
       (
         await page
@@ -261,7 +284,7 @@ test("public Quick Play prepares players, rotates, and scores without an account
           .boundingBox()
       )?.height
     ).toBeGreaterThanOrEqual(64);
-    await page.getByRole("button", { name: /^Queue,/ }).click();
+    await page.getByRole("button", { name: "Queue", exact: true }).click();
     await expect(
       page.getByText("Everyone is currently playing.")
     ).toBeVisible();
@@ -323,12 +346,19 @@ test("public Quick Play prepares players, rotates, and scores without an account
     .getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
     .getByRole("button", { name: "Finish match" })
     .click();
+  await page.getByRole("button", { name: "Standings", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Session Standings" })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Results", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Standings" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Completed matches" })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Courts", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Start next match" })
   ).toBeVisible();
+  await page.getByRole("button", { name: "Manage", exact: true }).click();
   await page.getByRole("button", { name: "End Quick Play" }).click();
   await page
     .getByRole("dialog", { name: "End this Quick Play session?" })

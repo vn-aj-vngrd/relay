@@ -69,7 +69,7 @@ export function GameDesktopViewControls() {
           aria-label={`${label} view`}
           aria-pressed={mode === value}
           onClick={() => saveView(value)}
-          className={`pressable grid h-8 w-8 place-items-center rounded-md ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
+          className={`compact-control pressable grid h-8 w-8 place-items-center rounded-md ${mode === value ? "bg-surface text-ink shadow-[0_1px_4px_oklch(0.1_0.02_250/.08)]" : "text-muted hover:text-ink"}`}
         >
           <Icon aria-hidden size={value === "grid" ? 17 : 18} />
         </button>

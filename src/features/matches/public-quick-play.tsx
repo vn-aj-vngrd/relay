@@ -31,8 +31,11 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
-import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { Tooltip } from "@/components/ui/tooltip";
+import {
+  RecapHighlights,
+  RecapOverview,
+} from "@/features/memories/recap-summary";
 import {
   type PlayingExperience,
   playingExperienceLabel,
@@ -45,6 +48,7 @@ import {
   type CourtScoreboardNavigation,
 } from "./court-scoreboard";
 import { playModeOptions } from "./play-mode-options";
+import { PlaySectionTabs } from "./play-section-tabs";
 import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
 import {
   cancelQuickPlayMatch,
@@ -57,7 +61,7 @@ import {
   type QuickPlayMatch,
   type QuickPlayPlayer,
   type QuickPlaySession,
-  quickPlayStandings,
+  quickPlayRecap,
   quickPlayStorageKey,
   reorderQuickPlayQueue,
   restoreQuickPlaySession,
@@ -79,6 +83,7 @@ import {
   rotationName,
 } from "./rotation";
 import { RoundTimer } from "./round-timer";
+import { SessionStandings } from "./session-standings";
 
 type DraftPlayer = {
   id: string;
@@ -243,8 +248,8 @@ function QuickScoreCorrectionControl({
             Correct {match.courtLabel} score
           </h2>
           <p id={descriptionId} className="mt-2 text-sm leading-6 text-muted">
-            This updates the result and standings. Later court assignments stay
-            as played.
+            This updates the result, standings, and recap. Later court
+            assignments stay as played.
           </p>
           <div className="mt-6 grid grid-cols-[1fr_5.5rem] items-center gap-x-4 gap-y-4">
             {teamNames.map((name, index) => (
@@ -1091,9 +1096,6 @@ function QuickPlayLive({
   onEdit: () => void;
 }) {
   const ended = session.endedAt != null;
-  const [activeSection, setActiveSection] = useState<
-    "courts" | "queue" | "results"
-  >(ended ? "results" : "courts");
   const liveHeading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     liveHeading.current?.focus({ preventScroll: true });
@@ -1104,7 +1106,8 @@ function QuickPlayLive({
   const names = new Map(
     session.players.map((player) => [player.id, player.name])
   );
-  const standings = quickPlayStandings(session);
+  const recap = quickPlayRecap(session);
+  const standings = recap.standings;
   const canStartNext = canStartNextQuickPlayMatches(session);
   const waiting = session.waitingPlayerIds.map((id) => ({
     id,
@@ -1137,212 +1140,351 @@ function QuickPlayLive({
     onChange(correctQuickPlayMatchScore(session, matchId, scores));
   }
 
+  const sessionAction = (
+    <div className="border-t border-line pt-5">
+      <ConfirmActionButton
+        variant={ended ? "primary" : "secondary"}
+        className="w-full sm:w-auto"
+        confirmTitle={
+          ended
+            ? "Start a new Quick Play session?"
+            : "End this Quick Play session?"
+        }
+        confirmText={
+          ended
+            ? "This replaces the recap and completed results in this browser. There is no account backup."
+            : "Your results and standings will stay in this browser as a recap. No more matches can be started."
+        }
+        confirmLabel={ended ? "Start new session" : "End Play"}
+        cancelLabel={ended ? "Keep recap" : "Keep playing"}
+        onConfirm={() => {
+          if (ended) onEdit();
+          else {
+            onChange(endQuickPlay(session));
+          }
+        }}
+        aria-describedby={
+          session.activeMatches.length ? "quick-end-help" : undefined
+        }
+        disabled={session.activeMatches.length > 0}
+      >
+        <ArrowCounterClockwise aria-hidden size={16} />{" "}
+        {ended ? "Start new session" : "End Quick Play"}
+      </ConfirmActionButton>
+      {session.activeMatches.length ? (
+        <p id="quick-end-help" className="mt-2 text-sm text-muted">
+          Finish or cancel active matches before ending.
+        </p>
+      ) : null}
+    </div>
+  );
+  const results = (
+    <div>
+      {session.completedMatches.length ? (
+        <section aria-labelledby="quick-completed-title" className="min-w-0">
+          <h2 id="quick-completed-title" className="text-xl font-bold">
+            Completed matches
+          </h2>
+          <p className="mt-1 hidden text-sm text-muted lg:block">
+            Final scores from this Quick Play session
+          </p>
+          <ol className="mt-4 divide-y divide-line border-y border-line">
+            {session.completedMatches.toReversed().map((match) => {
+              const teamNames = ([match.teamA, match.teamB] as const).map(
+                (team) =>
+                  team.map((id) => names.get(id) ?? "Player").join(" + ")
+              ) as [string, string];
+              return (
+                <li
+                  key={match.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-muted">
+                      {match.courtLabel}
+                    </p>
+                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
+                      <span className="min-w-0 break-words font-medium">
+                        {teamNames[0]}
+                      </span>
+                      <strong className="score text-base">
+                        {match.scores[0]}
+                      </strong>
+                      <span className="min-w-0 break-words font-medium">
+                        {teamNames[1]}
+                      </span>
+                      <strong className="score text-base">
+                        {match.scores[1]}
+                      </strong>
+                    </div>
+                  </div>
+                  <QuickScoreCorrectionControl
+                    match={match}
+                    players={names}
+                    onCorrect={(scores) => correct(match.id, scores)}
+                  />
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : null}
+      {!session.completedMatches.length ? (
+        <p className="py-6 text-sm text-muted">
+          {ended
+            ? "No matches were completed in this session."
+            : "No completed matches yet. Finished scores will appear here."}
+        </p>
+      ) : null}
+    </div>
+  );
+  const standingsContent = <SessionStandings standings={standings} />;
+
   return (
     <section
       aria-labelledby="quick-play-live"
       className="mx-auto w-full max-w-6xl"
     >
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1
-              ref={liveHeading}
-              tabIndex={-1}
-              id="quick-play-live"
-              className={ended ? "text-xl font-bold sm:text-3xl" : "app-title"}
-            >
-              {ended ? "Quick Play recap" : "Play"}
-            </h1>
-            {!ended ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
-                <span className="h-1.5 w-1.5 rounded-full bg-live" /> Live
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-2 hidden text-sm text-muted lg:block">
-            {ended
-              ? `${session.completedMatches.length} completed ${session.completedMatches.length === 1 ? "match" : "matches"} · saved on this device`
-              : `${rotationName(session.mode)} · scores and rotations stay on this page`}
-          </p>
-        </div>
-        <div className="text-right">
-          <ConfirmActionButton
-            variant="secondary"
-            confirmTitle={
-              ended
-                ? "Start a new Quick Play session?"
-                : "End this Quick Play session?"
+      <h1
+        ref={liveHeading}
+        tabIndex={-1}
+        id="quick-play-live"
+        className="sr-only"
+      >
+        {ended ? "Quick Play recap" : "Play"}
+      </h1>
+      {error ? (
+        <Alert variant="danger" className="mb-4">
+          {error}
+        </Alert>
+      ) : null}
+      {ended ? (
+        <div className="space-y-8 sm:space-y-10">
+          <RecapOverview
+            recap={recap}
+            statusLabel="Final recap"
+            title="Quick Play"
+            context={`${rotationName(session.mode)} · ${session.players.length} players · ${session.courtCount} ${session.courtCount === 1 ? "court" : "courts"}`}
+            description={
+              recap.matchCount
+                ? "The final scores, pairings, and court time from your game."
+                : "No matches were completed in this session."
             }
-            confirmText={
-              ended
-                ? "This replaces the recap and completed results in this browser. There is no account backup."
-                : "Your results and standings will stay in this browser as a recap. No more matches can be started."
-            }
-            confirmLabel={ended ? "Start new session" : "End Play"}
-            cancelLabel={ended ? "Keep recap" : "Keep playing"}
-            onConfirm={() => {
-              if (ended) onEdit();
-              else {
-                onChange(endQuickPlay(session));
-                setActiveSection("results");
-              }
-            }}
-            aria-describedby={
-              session.activeMatches.length ? "quick-end-help" : undefined
-            }
-            disabled={session.activeMatches.length > 0}
-          >
-            <ArrowCounterClockwise aria-hidden size={16} />{" "}
-            {ended ? "Start new session" : "End Quick Play"}
-          </ConfirmActionButton>
-          {session.activeMatches.length ? (
-            <p
-              id="quick-end-help"
-              className="sr-only mt-1 text-xs text-muted lg:not-sr-only"
-            >
-              Finish or cancel active matches before ending.
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="mt-4 sm:mt-6">
-        {!ended ? (
-          <TabChipRail
-            label="Quick Play sections"
-            value={activeSection}
-            onChange={setActiveSection}
-            items={[
-              { value: "courts", label: "Courts" },
-              { value: "queue", label: "Queue", count: waiting.length },
-              { value: "results", label: "Results" },
-            ]}
-            renderItem={(item) => (
-              <>
-                {item.label}
-                {item.count !== undefined ? (
-                  <span className="ml-1.5 text-muted">{item.count}</span>
-                ) : null}
-              </>
-            )}
           />
-        ) : null}
-        <div className="mt-5" hidden={ended || activeSection !== "courts"}>
-          <section aria-labelledby="quick-active-courts">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 id="quick-active-courts" className="text-lg font-bold">
-                  Active courts
+          {results}
+          <RecapHighlights recap={recap} />
+          {standingsContent}
+          <section aria-label="Next Quick Play session">
+            <h2 className="text-lg font-bold">Play again</h2>
+            <p className="mt-2 text-sm text-muted">
+              This recap stays in this browser until you start a new session.
+            </p>
+            {sessionAction}
+            <p className="mt-3 text-xs text-muted">
+              Quick Play is stored on this device, not in your account.
+            </p>
+          </section>
+        </div>
+      ) : (
+        <PlaySectionTabs
+          headerActions={
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-live" />
+              Play in progress
+            </span>
+          }
+          courts={
+            <section aria-labelledby="quick-active-courts">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 id="quick-active-courts" className="text-lg font-bold">
+                    Active courts
+                  </h2>
+                  <p className="mt-1 hidden text-sm text-muted lg:block">
+                    {session.activeMatches.length
+                      ? `${session.activeMatches.length} ${session.activeMatches.length === 1 ? "match" : "matches"} in progress`
+                      : roundRobinComplete
+                        ? "Every pair has played every other pair"
+                        : "Ready for the next rotation"}
+                  </p>
+                </div>
+                {canStartNext ? (
+                  <Button
+                    type="button"
+                    onClick={() => onChange(startNextQuickPlayMatches(session))}
+                  >
+                    <Shuffle aria-hidden size={17} />{" "}
+                    {roundMode ? "Start next round" : "Start next match"}
+                  </Button>
+                ) : null}
+              </div>
+              {session.roundDurationMinutes && roundStartedAt ? (
+                <div className="mt-4">
+                  <RoundTimer
+                    startedAt={new Date(roundStartedAt).toISOString()}
+                    durationMinutes={session.roundDurationMinutes}
+                  />
+                </div>
+              ) : null}
+              {session.activeMatches.length ? (
+                <div className="mt-4 grid gap-5">
+                  {session.activeMatches.map((match, index) => {
+                    const previous =
+                      session.activeMatches[
+                        (index - 1 + session.activeMatches.length) %
+                          session.activeMatches.length
+                      ];
+                    const next =
+                      session.activeMatches[
+                        (index + 1) % session.activeMatches.length
+                      ];
+                    return (
+                      <QuickCourt
+                        key={match.id}
+                        match={match}
+                        players={names}
+                        expanded={selectedMatchId === match.id}
+                        onExpandedChange={(expanded) =>
+                          setSelectedMatchId(expanded ? match.id : null)
+                        }
+                        navigation={
+                          session.activeMatches.length > 1
+                            ? {
+                                position: index + 1,
+                                total: session.activeMatches.length,
+                                previousLabel: previous.courtLabel,
+                                nextLabel: next.courtLabel,
+                                onPrevious: () =>
+                                  setSelectedMatchId(previous.id),
+                                onNext: () => setSelectedMatchId(next.id),
+                              }
+                            : undefined
+                        }
+                        onScore={(side, amount) =>
+                          onChange(
+                            scoreQuickPlayMatch(session, match.id, side, amount)
+                          )
+                        }
+                        onSwap={() =>
+                          onChange(swapQuickPlayMatchSides(session, match.id))
+                        }
+                        onCancel={() =>
+                          onChange(cancelQuickPlayMatch(session, match.id))
+                        }
+                        onFinish={() => finish(match.id)}
+                        cancelWholeRound={roundMode}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-4 border-y border-line py-10">
+                  <h3 className="font-bold">
+                    {roundRobinComplete
+                      ? "Round robin complete"
+                      : "Courts are ready"}
+                  </h3>
+                  <p className="mt-2 text-sm text-muted">
+                    {roundRobinComplete
+                      ? "Review the standings, then end Quick Play in Manage."
+                      : canStartNext
+                        ? "Start the next rotation when everyone is ready."
+                        : session.unavailableCourtIds.length ===
+                            session.courtCount
+                          ? "Reopen a court in Manage to continue."
+                          : "Add more players in a new setup to continue."}
+                  </p>
+                </div>
+              )}
+            </section>
+          }
+          queue={
+            <div className="max-w-2xl space-y-6">
+              <section aria-labelledby="quick-waiting-title">
+                <h2 id="quick-waiting-title" className="text-lg font-bold">
+                  {roundMode ? "Waiting & resting" : "Paddle stack"}
                 </h2>
                 <p className="mt-1 hidden text-sm text-muted lg:block">
-                  {session.activeMatches.length
-                    ? `${session.activeMatches.length} ${session.activeMatches.length === 1 ? "match" : "matches"} in progress`
-                    : roundRobinComplete
-                      ? "Every pair has played every other pair"
-                      : "Ready for the next rotation"}
+                  {waiting.length} {waiting.length === 1 ? "player" : "players"}{" "}
+                  ready
                 </p>
-              </div>
-              {canStartNext ? (
-                <Button
-                  type="button"
-                  onClick={() => onChange(startNextQuickPlayMatches(session))}
-                >
-                  <Shuffle aria-hidden size={17} />{" "}
-                  {roundMode ? "Start next round" : "Start next match"}
-                </Button>
-              ) : null}
-            </div>
-            {session.roundDurationMinutes && roundStartedAt ? (
-              <div className="mt-4">
-                <RoundTimer
-                  startedAt={new Date(roundStartedAt).toISOString()}
-                  durationMinutes={session.roundDurationMinutes}
-                />
-              </div>
-            ) : null}
-            {session.activeMatches.length ? (
-              <div
-                className={`mt-4 grid gap-5 ${session.activeMatches.length > 1 ? "lg:grid-cols-2" : ""}`}
+                {waiting.length ? (
+                  <ol className="mt-3 divide-y divide-line border-y border-line">
+                    {waiting.map((player, index) => (
+                      <li
+                        key={player.id}
+                        className="flex min-h-14 items-center gap-3 py-2"
+                      >
+                        <span className="score w-5 text-center text-sm font-bold text-muted">
+                          {index + 1}
+                        </span>
+                        <span className="min-w-0 flex-1 break-words text-sm font-semibold">
+                          {player.name}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-1">
+                          {[
+                            ["top", "Move to top", ArrowLineUp],
+                            ["up", "Move up", ArrowUp],
+                            ["down", "Move down", ArrowDown],
+                            ["end", "Move to end", ArrowLineDown],
+                          ].map(([move, label, Icon]) => (
+                            <Button
+                              key={move as string}
+                              type="button"
+                              variant="quiet"
+                              className={`h-11 min-h-11 w-11 px-0 lg:h-9 lg:min-h-9 lg:w-9 ${move === "top" || move === "end" ? "max-lg:!hidden" : ""}`}
+                              disabled={
+                                ((move === "top" || move === "up") &&
+                                  index === 0) ||
+                                ((move === "down" || move === "end") &&
+                                  index === waiting.length - 1)
+                              }
+                              aria-label={`${label as string}: ${player.name}`}
+                              onClick={() =>
+                                onChange(
+                                  reorderQuickPlayQueue(
+                                    session,
+                                    player.id,
+                                    move as "top" | "up" | "down" | "end"
+                                  )
+                                )
+                              }
+                            >
+                              <Icon aria-hidden size={16} />
+                              <Tooltip content={label as string} />
+                            </Button>
+                          ))}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="mt-3 border-y border-line py-6 text-sm text-muted">
+                    Everyone is currently playing.
+                  </p>
+                )}
+              </section>
+
+              <section
+                className="hidden rounded-lg bg-primary-soft p-4 lg:block"
+                aria-label="Active rotation rules"
               >
-                {session.activeMatches.map((match, index) => {
-                  const previous =
-                    session.activeMatches[
-                      (index - 1 + session.activeMatches.length) %
-                        session.activeMatches.length
-                    ];
-                  const next =
-                    session.activeMatches[
-                      (index + 1) % session.activeMatches.length
-                    ];
-                  return (
-                    <QuickCourt
-                      key={match.id}
-                      match={match}
-                      players={names}
-                      expanded={selectedMatchId === match.id}
-                      onExpandedChange={(expanded) =>
-                        setSelectedMatchId(expanded ? match.id : null)
-                      }
-                      navigation={
-                        session.activeMatches.length > 1
-                          ? {
-                              position: index + 1,
-                              total: session.activeMatches.length,
-                              previousLabel: previous.courtLabel,
-                              nextLabel: next.courtLabel,
-                              onPrevious: () => setSelectedMatchId(previous.id),
-                              onNext: () => setSelectedMatchId(next.id),
-                            }
-                          : undefined
-                      }
-                      onScore={(side, amount) =>
-                        onChange(
-                          scoreQuickPlayMatch(session, match.id, side, amount)
-                        )
-                      }
-                      onSwap={() =>
-                        onChange(swapQuickPlayMatchSides(session, match.id))
-                      }
-                      onCancel={() =>
-                        onChange(cancelQuickPlayMatch(session, match.id))
-                      }
-                      onFinish={() => finish(match.id)}
-                      cancelWholeRound={roundMode}
-                    />
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="mt-4 border-y border-line py-10">
-                <h3 className="font-bold">
-                  {roundRobinComplete
-                    ? "Round robin complete"
-                    : "Courts are ready"}
-                </h3>
-                <p className="mt-2 text-sm text-muted">
-                  {roundRobinComplete
-                    ? "Review the final standings or start a new setup."
-                    : canStartNext
-                      ? "Start the next rotation when everyone is ready."
-                      : session.unavailableCourtIds.length ===
-                          session.courtCount
-                        ? "Reopen a court in Manage courts to continue."
-                        : "Add more players in a new setup to continue."}
+                <p className="text-sm font-semibold">
+                  {rotationName(session.mode)}
                 </p>
-              </div>
-            )}
-            {error ? (
-              <p role="alert" className="mt-4 text-sm font-medium text-danger">
-                {error}
-              </p>
-            ) : null}
-          </section>
-          <details className="mt-6 border-t border-line pt-4">
-            <summary className="min-h-11 cursor-pointer py-2 text-sm font-semibold">
-              Manage courts
-            </summary>
-            <div className="mt-3">
-              {" "}
+                <p className="mt-1 text-sm leading-5 text-muted">
+                  {rotationDescription(session.mode, {
+                    queueRule: session.queueRule,
+                    partnerPolicy: session.fixedPairs.length ? "fixed" : "mix",
+                  })}
+                </p>
+              </section>
+            </div>
+          }
+          results={session.completedMatches.length ? results : undefined}
+          standings={standings.length ? standingsContent : undefined}
+          manage={
+            <div className="max-w-2xl space-y-8">
               <section aria-labelledby="quick-court-availability-title">
                 <h2
                   id="quick-court-availability-title"
@@ -1406,7 +1548,11 @@ function QuickPlayLive({
                           ) : (
                             <LockSimpleOpen aria-hidden size={16} />
                           )}
-                          {available ? "Close" : "Reopen"}
+                          {available
+                            ? active
+                              ? "Close after match"
+                              : "Close"
+                            : "Reopen"}
                         </Button>
                       </div>
                     );
@@ -1419,203 +1565,20 @@ function QuickPlayLive({
                   </p>
                 ) : null}
               </section>
-            </div>
-          </details>
-        </div>
-        <div
-          className="mt-5 max-w-2xl space-y-6"
-          hidden={ended || activeSection !== "queue"}
-        >
-          <section aria-labelledby="quick-waiting-title">
-            <h2 id="quick-waiting-title" className="text-lg font-bold">
-              {roundMode ? "Waiting & resting" : "Paddle stack"}
-            </h2>
-            <p className="mt-1 hidden text-sm text-muted lg:block">
-              {waiting.length} {waiting.length === 1 ? "player" : "players"}{" "}
-              ready
-            </p>
-            {waiting.length ? (
-              <ol className="mt-3 divide-y divide-line border-y border-line">
-                {waiting.map((player, index) => (
-                  <li
-                    key={player.id}
-                    className="flex min-h-14 items-center gap-3 py-2"
-                  >
-                    <span className="score w-5 text-center text-sm font-bold text-muted">
-                      {index + 1}
-                    </span>
-                    <span className="min-w-0 flex-1 break-words text-sm font-semibold">
-                      {player.name}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1">
-                      {[
-                        ["top", "Move to top", ArrowLineUp],
-                        ["up", "Move up", ArrowUp],
-                        ["down", "Move down", ArrowDown],
-                        ["end", "Move to end", ArrowLineDown],
-                      ].map(([move, label, Icon]) => (
-                        <Button
-                          key={move as string}
-                          type="button"
-                          variant="quiet"
-                          className={`h-11 min-h-11 w-11 px-0 lg:h-9 lg:min-h-9 lg:w-9 ${move === "top" || move === "end" ? "max-lg:!hidden" : ""}`}
-                          disabled={
-                            ((move === "top" || move === "up") &&
-                              index === 0) ||
-                            ((move === "down" || move === "end") &&
-                              index === waiting.length - 1)
-                          }
-                          aria-label={`${label as string}: ${player.name}`}
-                          onClick={() =>
-                            onChange(
-                              reorderQuickPlayQueue(
-                                session,
-                                player.id,
-                                move as "top" | "up" | "down" | "end"
-                              )
-                            )
-                          }
-                        >
-                          <Icon aria-hidden size={16} />
-                          <Tooltip content={label as string} />
-                        </Button>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-3 border-y border-line py-6 text-sm text-muted">
-                Everyone is currently playing.
-              </p>
-            )}
-          </section>
-
-          <section
-            className="hidden rounded-lg bg-primary-soft p-4 lg:block"
-            aria-label="Active rotation rules"
-          >
-            <p className="text-sm font-semibold">
-              {rotationName(session.mode)}
-            </p>
-            <p className="mt-1 text-sm leading-5 text-muted">
-              {rotationDescription(session.mode, {
-                queueRule: session.queueRule,
-                partnerPolicy: session.fixedPairs.length ? "fixed" : "mix",
-              })}
-            </p>
-          </section>
-        </div>
-        <div
-          className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
-          hidden={!ended && activeSection !== "results"}
-        >
-          <div>
-            {" "}
-            {session.completedMatches.length ? (
-              <section
-                aria-labelledby="quick-completed-title"
-                className="min-w-0"
-              >
-                <h2 id="quick-completed-title" className="text-xl font-bold">
-                  Completed matches
+              <section aria-labelledby="quick-end-title">
+                <h2 id="quick-end-title" className="text-lg font-bold">
+                  End Quick Play
                 </h2>
-                <p className="mt-1 hidden text-sm text-muted lg:block">
-                  Final scores from this Quick Play session
+                <p className="mt-1 text-sm text-muted">
+                  Keep the final results and standings as a recap on this
+                  device.
                 </p>
-                <ol className="mt-4 divide-y divide-line border-y border-line">
-                  {session.completedMatches.toReversed().map((match) => {
-                    const teamNames = ([match.teamA, match.teamB] as const).map(
-                      (team) =>
-                        team.map((id) => names.get(id) ?? "Player").join(" + ")
-                    ) as [string, string];
-                    return (
-                      <li
-                        key={match.id}
-                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-4"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-muted">
-                            {match.courtLabel}
-                          </p>
-                          <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
-                            <span className="min-w-0 break-words font-medium">
-                              {teamNames[0]}
-                            </span>
-                            <strong className="score text-base">
-                              {match.scores[0]}
-                            </strong>
-                            <span className="min-w-0 break-words font-medium">
-                              {teamNames[1]}
-                            </span>
-                            <strong className="score text-base">
-                              {match.scores[1]}
-                            </strong>
-                          </div>
-                        </div>
-                        <QuickScoreCorrectionControl
-                          match={match}
-                          players={names}
-                          onCorrect={(scores) => correct(match.id, scores)}
-                        />
-                      </li>
-                    );
-                  })}
-                </ol>
+                {sessionAction}
               </section>
-            ) : null}
-            {!session.completedMatches.length ? (
-              <p className="py-6 text-sm text-muted">
-                {ended
-                  ? "No matches were completed in this session."
-                  : "No completed matches yet. Finished scores will appear here."}
-              </p>
-            ) : null}
-          </div>
-          <div>
-            {" "}
-            {standings.length ? (
-              <section aria-labelledby="quick-standings-title">
-                <h2 id="quick-standings-title" className="text-lg font-bold">
-                  Standings
-                </h2>
-                <div className="mt-3 overflow-hidden border-y border-line">
-                  <table className="w-full text-sm">
-                    <thead className="text-left text-xs text-muted">
-                      <tr>
-                        <th className="py-2 font-medium">Player</th>
-                        <th className="py-2 text-right font-medium">W</th>
-                        <th className="py-2 text-right font-medium">L</th>
-                        <th className="py-2 text-right font-medium">+/−</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-line">
-                      {standings.map((row) => (
-                        <tr key={row.playerId}>
-                          <td className="max-w-40 break-words py-3 pr-3 font-medium">
-                            {row.name}
-                          </td>
-                          <td className="score py-3 text-right">{row.wins}</td>
-                          <td className="score py-3 text-right">
-                            {row.losses}
-                          </td>
-                          <td className="score py-3 text-right">
-                            {row.differential > 0 ? "+" : ""}
-                            {row.differential}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-            ) : null}
-          </div>
-        </div>
-        <p className="mt-6 hidden text-xs leading-5 text-muted lg:block">
-          Quick Play stays in this browser. It is not saved to your account.
-        </p>
-      </div>
+            </div>
+          }
+        />
+      )}
     </section>
   );
 }
@@ -1674,6 +1637,7 @@ function PersistentQuickPlay() {
       ) : null}
       {session ? (
         <QuickPlayLive
+          key={session.endedAt == null ? "live" : "recap"}
           session={session}
           onChange={setSession}
           onEdit={() => showSession(null)}

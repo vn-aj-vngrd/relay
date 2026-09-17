@@ -171,3 +171,32 @@ regression coverage in the public court-finder E2E scenario checks list-to-nav
 adjacency and absence of outer overflow at 320px, 390px and landscape 844px.
 Manual public checks at those sizes found a 1px list-to-nav border and no outer
 overflow. Automated browser execution remains opt-in and unrun.
+
+
+Quick Play Manage and recap follow-up: reuse saved-game PlaySectionTabs with
+separate Results/Standings, court availability and session ending in Manage.
+Ended sessions use the shared recap calculation, summary and highlights; local
+corrections update all facts, while cancelled-only sessions show no highlights.
+Coverage: `public-quick-play.test.tsx`, existing `session-recap.test.tsx` and the
+public Quick Play E2E scenario. Pre-commit lint/types and production build passed;
+the full unit run passed 2,550 tests, and the single failing height assertion was
+corrected and passed on its targeted rerun (2 tests). A local public
+browser walkthrough covered Manage, finishing/ending, recap reload and score
+correction; mobile/desktop widths had no horizontal overflow or browser errors.
+Authenticated, dark-mode and automated browser execution remain unverified.
+
+Mobile parity follow-up: private/shared Play and Quick Play reuse standings and
+recap presentation. Mobile queue controls prioritize up/down, preserve full names,
+and omit rotation explanation cards. Shared recap coverage checks results before
+highlights; standings coverage checks factual records and empty states.
+
+Court Finder responsive follow-up: bound the results grid width, wrap filters
+from tablet widths, and apply the full-height workspace at every breakpoint.
+Phone results meet bottom navigation; tablet/desktop bottom insets match the top.
+Manual public checks at CSS widths 355, 818, 1091 and 1455 found zero page-width
+overflow and zero outer vertical overflow. Unit and E2E geometry coverage updated.
+
+PR review follow-up: Quick Play stores wall-clock completion separately from its
+rotation ordering counter. Legacy recaps omit elapsed time; new timing survives
+reload. Final `pnpm check:full` passed: lint/types, 357 test files / 2,552 tests,
+and production build. Automated E2E remains unrun.

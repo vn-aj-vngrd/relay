@@ -42,7 +42,7 @@ export function PasswordField({
           onClick={() => setVisible((shown) => !shown)}
           aria-label={actionLabel}
           aria-pressed={visible}
-          className="pressable absolute right-1 top-2 grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+          className="pressable absolute right-0 top-1.5 grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
         >
           {visible ? (
             <EyeSlash aria-hidden size={18} />

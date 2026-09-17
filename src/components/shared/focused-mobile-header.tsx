@@ -27,7 +27,7 @@ export function FocusedBackLink({
     <Link
       href={isAuthenticated ? "/home" : "/"}
       aria-label={isAuthenticated ? "Back to Home" : "Back to Relay"}
-      className={`pressable grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink ${className}`}
+      className={`back-control pressable grid size-11 shrink-0 place-items-center rounded-lg text-muted hover:text-ink ${className}`}
     >
       <ArrowLeft aria-hidden size={18} />
     </Link>

@@ -18,6 +18,10 @@ describe("FocusedMobileHeader", () => {
     );
 
     expect(screen.getByText("Quick Play")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: label })).toHaveClass(
+      "back-control",
+      "size-11"
+    );
     expect(screen.getByRole("link", { name: label })).toHaveAttribute(
       "href",
       href

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Brand, RelayMark } from "@/components/shared/brand";
+import { ButtonLink } from "@/components/ui/button";
 import { AgentMark } from "@/features/agent/agent-mark";
 import { getCurrentUser } from "@/features/auth/session";
 import { getBillingOffer } from "@/features/billing/catalog";
@@ -53,11 +54,6 @@ export const metadata: Metadata = {
   },
 };
 
-const primaryAction =
-  "pressable inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-primary px-4 text-[13px] font-semibold leading-none text-white shadow-[inset_0_1px_0_oklch(1_0_0/.22)] hover:bg-primary-hover";
-const secondaryAction =
-  "pressable inline-flex min-h-10 items-center justify-center rounded-lg border border-line bg-surface px-4 text-[13px] font-semibold hover:border-muted hover:bg-surface-strong";
-
 export default async function MarketingPage() {
   await connection();
   const primaryHref = "/games/new";
@@ -79,20 +75,17 @@ export default async function MarketingPage() {
           <MarketingSectionNav />
           <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
             {signedIn ? (
-              <Link href="/home" className={primaryAction}>
-                Open app
-              </Link>
+              <ButtonLink href="/home">Open app</ButtonLink>
             ) : (
               <>
-                <Link
+                <ButtonLink
                   href="/login"
-                  className="pressable inline-flex min-h-11 items-center px-3 text-sm font-medium text-muted hover:text-ink"
+                  variant="quiet"
+                  className="text-muted hover:text-ink"
                 >
                   Log in
-                </Link>
-                <Link href="/signup" className={`${primaryAction} min-h-11`}>
-                  Sign up
-                </Link>
+                </ButtonLink>
+                <ButtonLink href="/signup">Sign up</ButtonLink>
               </>
             )}
           </div>
@@ -115,19 +108,19 @@ export default async function MarketingPage() {
               the cost. Friends can RSVP without an account.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href={primaryHref} className={primaryAction}>
+              <ButtonLink href={primaryHref} size="large">
                 Create game
                 <ArrowRight aria-hidden size={16} />
-              </Link>
-              <Link href="/play" className={secondaryAction}>
+              </ButtonLink>
+              <ButtonLink href="/play" variant="secondary" size="large">
                 Start Quick Play
-              </Link>
-              <Link href="/courts" className={secondaryAction}>
+              </ButtonLink>
+              <ButtonLink href="/courts" variant="secondary" size="large">
                 Find a court
-              </Link>
-              <Link href="/games/open" className={secondaryAction}>
+              </ButtonLink>
+              <ButtonLink href="/games/open" variant="secondary" size="large">
                 Explore open games
-              </Link>
+              </ButtonLink>
             </div>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-muted">
               {signedIn
@@ -477,10 +470,10 @@ export default async function MarketingPage() {
           <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-muted">
             Add the court and time, then send one link to your players.
           </p>
-          <Link href={primaryHref} className={`${primaryAction} mt-9`}>
+          <ButtonLink href={primaryHref} size="large" className="mt-9">
             Create game
             <ArrowRight aria-hidden size={16} />
-          </Link>
+          </ButtonLink>
         </div>
       </section>
 

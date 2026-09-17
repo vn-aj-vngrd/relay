@@ -32,7 +32,8 @@ function AuthSubmit({
   const creating = mode === "create";
   return (
     <Button
-      className="h-12 w-full text-[15px]"
+      size="large"
+      className="w-full"
       disabled={pending || blocked}
       aria-disabled={pending || blocked}
     >

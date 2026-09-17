@@ -20,7 +20,7 @@ export default function NewGameLoading() {
         <Link
           href="/home"
           aria-label="Back to Home"
-          className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+          className="back-control pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:text-ink"
         >
           <ArrowLeft aria-hidden size={18} />
         </Link>
