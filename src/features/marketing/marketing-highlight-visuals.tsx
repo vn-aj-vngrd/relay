@@ -208,9 +208,9 @@ function InviteVisual() {
 
 function OrganizeVisual() {
   const players = [
-    ["Van", "Host", "Going"],
-    ["AJ", "Regular", "Going"],
-    ["Mika", "Casual", "Going"],
+    ["Van AJ", "Host", "Going"],
+    ["Angelika", "Regular", "Going"],
+    ["Dave", "Casual", "Going"],
   ] as const;
   return (
     <div className="h-full bg-surface p-4 text-ink">
@@ -264,14 +264,14 @@ function PlayVisual() {
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-3.5 text-center">
         <div>
-          <p className="text-[10px] font-semibold">Van + AJ</p>
+          <p className="text-[10px] font-semibold">Van AJ + Angelika</p>
           <strong className="mt-2 block font-mono text-5xl leading-none">
             8
           </strong>
         </div>
         <span className="text-[9px] text-white/60">VS</span>
         <div>
-          <p className="text-[10px] font-semibold">Mika + Bea</p>
+          <p className="text-[10px] font-semibold">Dave + Charles</p>
           <strong className="mt-2 block font-mono text-5xl leading-none">
             6
           </strong>
@@ -287,9 +287,9 @@ function PlayVisual() {
 
 function RepayVisual() {
   const payments = [
-    ["Van", "Paid upfront", "₱2,400"],
-    ["AJ", "Confirmed", "₱300"],
-    ["Mika", "Proof sent", "₱300"],
+    ["Van AJ", "Paid upfront", "₱2,400"],
+    ["Angelika", "Confirmed", "₱300"],
+    ["Dave", "Proof sent", "₱300"],
   ] as const;
   return (
     <div className="h-full bg-surface p-4 text-ink">
@@ -326,9 +326,9 @@ function SyncVisual() {
     <div className="flex h-full flex-col bg-surface p-3.5 text-ink">
       <div className="flex items-center gap-2 border-b border-line pb-3">
         <div className="flex -space-x-1">
-          <MiniAvatar name="V" />
-          <MiniAvatar name="A" index={1} />
-          <MiniAvatar name="M" index={2} />
+          <MiniAvatar name="Van AJ" />
+          <MiniAvatar name="Angelika" index={1} />
+          <MiniAvatar name="Dave" index={2} />
         </div>
         <div>
           <p className="text-[10px] font-bold">Saturday Night Pickle</p>
@@ -336,9 +336,11 @@ function SyncVisual() {
         </div>
       </div>
       <div className="flex-1 space-y-3 py-3 text-[9px]">
-        <p className="text-center text-[8px] text-muted">AJ joined the game</p>
+        <p className="text-center text-[8px] text-muted">
+          Angelika joined the game
+        </p>
         <div className="flex items-end gap-2">
-          <MiniAvatar name="M" index={2} />
+          <MiniAvatar name="Dave" index={2} />
           <p className="max-w-[75%] rounded-lg rounded-bl-sm bg-surface-strong px-3 py-2">
             Parking is open beside Court 2.
           </p>
@@ -374,14 +376,16 @@ function RememberVisual() {
         <div className="aspect-[9/16] rounded-md border border-line bg-canvas p-2">
           <p className="text-[6px] text-muted">MY GAME</p>
           <strong className="mt-8 block font-mono text-base">3–1</strong>
-          <p className="mt-1 text-[7px] font-bold">Van</p>
+          <p className="mt-1 text-[7px] font-bold">Van AJ</p>
           <p className="mt-4 border-t border-black/10 pt-2 text-[6px]">
             #2 · +12
           </p>
         </div>
         <div className="aspect-[9/16] rounded-md bg-[#18233b] p-2 text-white shadow-sm">
           <p className="text-[6px] text-white/60">WINNING TEAM</p>
-          <p className="mt-8 text-[9px] font-bold leading-tight">Van + AJ</p>
+          <p className="mt-8 text-[9px] font-bold leading-tight">
+            Van AJ + Angelika
+          </p>
           <strong className="mt-3 block font-mono text-xl">3</strong>
           <p className="text-[6px] text-white/60">wins together</p>
         </div>
@@ -389,15 +393,15 @@ function RememberVisual() {
           <p className="text-[6px] text-white/60">STANDINGS</p>
           <div className="mt-6 space-y-2 text-[6px]">
             <p className="flex justify-between">
-              <span>1 Van</span>
+              <span>1 Van AJ</span>
               <b>3–1</b>
             </p>
             <p className="flex justify-between">
-              <span>2 AJ</span>
+              <span>2 Angelika</span>
               <b>2–2</b>
             </p>
             <p className="flex justify-between">
-              <span>3 Mika</span>
+              <span>3 Dave</span>
               <b>2–2</b>
             </p>
           </div>

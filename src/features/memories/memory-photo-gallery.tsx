@@ -108,6 +108,7 @@ export function MemoryPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
               <Button
                 type="button"
                 variant="secondary"
+                size="icon"
                 aria-label="Close photo viewer"
                 onClick={() => dialog.current?.close()}
               >
@@ -170,6 +171,7 @@ export function MemoryPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
                   <Button
                     type="button"
                     variant="secondary"
+                    size="icon"
                     aria-label="Previous photo"
                     onClick={() => move(-1)}
                   >
@@ -187,6 +189,7 @@ export function MemoryPhotoGallery({ photos }: { photos: GalleryPhoto[] }) {
                   <Button
                     type="button"
                     variant="secondary"
+                    size="icon"
                     aria-label="Next photo"
                     onClick={() => move(1)}
                   >

@@ -132,3 +132,42 @@ while preserving theme IDs. `recap-template-preview.test.tsx` checks the landing
 examples render all five real themes with sample-data labeling. Existing theme
 path, photo-preview, fitting, and export scenarios cover the revised artwork.
 Validation deferred to pre-commit.
+
+
+## Device-local Quick Play (2026-09-17)
+
+Both public and authenticated `/play` use `PublicQuickPlay`. Setup must restore
+names, options and its current step after reload; Balanced Mix experience must
+be editable in Game options. Review exposes relevant pairs, queue rules,
+experience and timer. Courts, Queue and Results remain directly reachable at
+320px, 390px and desktop widths without queue content following match history.
+Ending requires settled courts and retains a reloadable recap; starting a new
+session separately confirms replacement. Storage failures warn without blocking
+in-memory scoring. Quick Play retains a fixed roster and never becomes account
+history.
+
+Regression coverage: `public-quick-play.test.tsx`, `quick-play-session.test.ts`,
+`quick-play-draft.test.ts`, and the public Quick Play scenario in
+`e2e/smoke.spec.ts`. The full unit suite passed (2,547 tests across 356 files),
+alongside formatting/lint, TypeScript and the production build. Manual public
+browser setup, scoring and recap reload passed with synthetic players;
+authenticated browser and automated E2E execution remain unverified.
+
+
+Shared action density: Button/ButtonLink keep 36px defaults and 40px large
+variants below and above the desktop breakpoint. Explicit icon actions keep
+44px targets; existing 48px chat send and 64px scoreboard controls retain their
+sizes. Component contract coverage is in `src/components/ui/button.test.tsx`;
+mobile rendered action/score size assertions extend the public Quick Play E2E
+scenario. Component tests passed; manual public checks measured 36px actions,
+44px swap controls and 64px score controls. Automated E2E remains unrun.
+
+
+Court Finder mobile height: the dedicated public/authenticated Courts workspace
+uses the bottom navigation's actual flex height, including its safe-area inset,
+and removes the ordinary scrolling page's bottom padding. The inner list/map
+fills the remaining height; outer shell scrolling stays locked. Geometry
+regression coverage in the public court-finder E2E scenario checks list-to-nav
+adjacency and absence of outer overflow at 320px, 390px and landscape 844px.
+Manual public checks at those sizes found a 1px list-to-nav border and no outer
+overflow. Automated browser execution remains opt-in and unrun.

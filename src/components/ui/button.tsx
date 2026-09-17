@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
 type Variant = "primary" | "secondary" | "quiet" | "danger";
-type Size = "default" | "large";
+type Size = "default" | "large" | "icon";
 
 const variants: Record<Variant, string> = {
   primary:
@@ -16,10 +16,11 @@ const variants: Record<Variant, string> = {
 const sizes: Record<Size, string> = {
   default: "min-h-9 px-3",
   large: "min-h-10 px-3.5",
+  icon: "min-h-11 min-w-11 px-0",
 };
 
 const base =
-  "pressable inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-[13px] font-[600] leading-none disabled:pointer-events-none disabled:opacity-45 [&>svg]:block [&>svg]:shrink-0";
+  "compact-control pressable inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border text-[13px] font-[600] leading-none disabled:pointer-events-none disabled:opacity-45 [&>svg]:block [&>svg]:shrink-0";
 
 export function ButtonSpinner({ className = "" }: { className?: string }) {
   return (

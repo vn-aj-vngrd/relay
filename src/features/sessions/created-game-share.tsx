@@ -135,6 +135,7 @@ export function CreatedGameShare({
             </div>
             <Button
               type="submit"
+              size="icon"
               form={dismissFormId}
               variant="quiet"
               disabled={pending}

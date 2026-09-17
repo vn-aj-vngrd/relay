@@ -28,7 +28,7 @@ Order content by the decision a person must make. Use type, alignment, whitespac
 
 ### 4. Make interaction explicit
 
-Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Standard actions use the 36–40px button system; score controls remain 64px.
+Use links for navigation and buttons for actions. Keep one solid primary action per decision area. Labels name outcomes. Mutations show pending, success, failure, permission, and reconnecting states. Destructive actions require confirmation or undo. Standard actions use the shared Button/ButtonLink 36–40px system at every viewport, including mobile; icon-only actions use the explicit 44px icon size, and score controls remain 64px. Keep spacing between neighboring controls and preserve explicit larger targets.
 
 **Complete when:** keyboard, touch, and assistive-technology users can complete the same workflow without guessing.
 

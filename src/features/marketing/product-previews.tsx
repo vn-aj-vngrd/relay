@@ -25,7 +25,7 @@ const heroSession = {
   playerPriceCents: 30000,
 };
 
-const heroPlayers = ["Van", "AJ", "Mika", "Bea", "John"];
+const heroPlayers = ["Van AJ", "Angelika", "Dave", "Charles", "John"];
 
 function ProductComponentFrame({
   children,
@@ -57,10 +57,10 @@ function ProductComponentFrame({
 
 function HeroPlayerRows({ limit = 5 }: { limit?: number }) {
   const players = [
-    "Van",
-    "AJ",
-    "Mika",
-    "Bea",
+    "Van AJ",
+    "Angelika",
+    "Dave",
+    "Charles",
     "John",
     "Kara",
     "Luis",
@@ -156,7 +156,7 @@ export function InviteProductShot() {
       <div className="bg-surface">
         <SessionHero
           session={heroSession}
-          hostLabel="Hosted by Van · 8 of 10 going"
+          hostLabel="Hosted by Van AJ · 8 of 10 going"
           headingLevel="h2"
         />
         <div className="mx-auto max-w-md p-5 sm:p-8">
@@ -223,7 +223,7 @@ export function LivePlayProductPreview({
           sessionId="00000000-0000-4000-8000-000000000001"
           matchId="00000000-0000-4000-8000-000000000002"
           number="Court 1"
-          teams={["Van + AJ", "Mika + Bea"]}
+          teams={["Van AJ + Angelika", "Dave + Charles"]}
           scores={[8, 6]}
           version={1}
           canScore
@@ -244,7 +244,7 @@ export function PaymentsProductPreview() {
           <GamePageIntro title="Your payment" />
           <section className="border-y border-line py-5">
             <p className="text-sm text-muted">
-              Court rental · paid upfront by Van
+              Court rental · paid upfront by Van AJ
             </p>
             <p className="score mt-2 text-4xl font-bold">₱300</p>
             <p className="mt-2 text-sm text-muted">
@@ -255,7 +255,7 @@ export function PaymentsProductPreview() {
         </div>
         <section className="self-start border-y border-line py-5">
           <p className="text-sm font-semibold text-primary">Send to the host</p>
-          <h2 className="mt-1 text-lg font-bold">Van · GCash</h2>
+          <h2 className="mt-1 text-lg font-bold">Van AJ · GCash</h2>
           <p className="score mt-4 text-2xl">0917 123 4567</p>
           <p className="mt-2 text-sm text-muted">
             Relay tracks payment status. Your group uses its usual payment
@@ -277,9 +277,11 @@ export function ChatProductPreview() {
         <GamePageIntro title="Chat" />
         <ChatThread messageCount={3}>
           <div className="space-y-5">
-            <p className="text-center text-xs text-muted">AJ joined the game</p>
+            <p className="text-center text-xs text-muted">
+              Angelika joined the game
+            </p>
             <div className="flex items-end gap-2">
-              <Avatar name="Mika" index={2} size="sm" />
+              <Avatar name="Dave" index={2} size="sm" />
               <div className="max-w-[75%] rounded-xl rounded-bl-sm bg-surface-strong px-3 py-2.5 text-sm">
                 Parking is open beside Court 2.
               </div>

@@ -21,14 +21,14 @@ const examples = [
     label: "My next game",
     question: "When is my next game, and who's joining?",
     answer:
-      "Your next game is Saturday doubles at **7 PM**. Alex, Bea and Marco are going. Jamie is waitlisted. The court booking still needs confirmation.",
+      "Your next game is Saturday doubles at **7 PM**. Angelika, Dave and Charles are going. Jamie is waitlisted. The court booking still needs confirmation.",
     source: "Saturday doubles · Game details",
   },
   {
     label: "Who's joining?",
     question: "Who is joining Saturday doubles?",
     answer:
-      "Alex, Bea and Marco are going to Saturday doubles. Jamie is on the waitlist. Open the game to see the current roster before heading to the court.",
+      "Angelika, Dave and Charles are going to Saturday doubles. Jamie is on the waitlist. Open the game to see the current roster before heading to the court.",
     source: "Saturday doubles · Players",
   },
   {

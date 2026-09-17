@@ -1,5 +1,13 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { PublicQuickPlay } from "./public-quick-play";
 
@@ -13,6 +21,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => localStorage.clear());
+afterEach(() => vi.restoreAllMocks());
 
 function namePlayers(names = ["Van", "AJ", "Mika", "John"]) {
   names.forEach((name, index) => {
@@ -80,6 +89,7 @@ describe("PublicQuickPlay", () => {
       within(finishDialog).getByRole("button", { name: "Finish match" })
     );
 
+    fireEvent.click(screen.getByRole("button", { name: "Results" }));
     expect(screen.getByRole("heading", { name: "Standings" })).toBeVisible();
     fireEvent.click(
       screen.getByRole("button", { name: "Correct Court 1 score" })
@@ -187,7 +197,11 @@ describe("PublicQuickPlay", () => {
     namePlayers();
     openOptions();
     fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
-    expect(screen.getAllByLabelText("Playing experience")).toHaveLength(4);
+    for (const name of ["Van", "AJ", "Mika", "John"]) {
+      expect(
+        screen.getByRole("button", { name: `${name} — experience` })
+      ).toBeVisible();
+    }
     fireEvent.click(screen.getByRole("button", { name: "Round timer" }));
     fireEvent.click(screen.getByRole("option", { name: "10 minutes" }));
     startFromOptions();
@@ -216,16 +230,108 @@ describe("PublicQuickPlay", () => {
     openOptions();
     startFromOptions();
 
+    fireEvent.click(screen.getByText("Manage courts"));
     fireEvent.click(screen.getByRole("button", { name: "Close Court 1" }));
     expect(screen.getByText("Closing after match")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /^Queue,/ }));
     fireEvent.click(
-      screen.getByRole("button", { name: "Move to top: Player 5" })
+      screen.getByRole("button", { name: "Move to top: Player 8" })
     );
     expect(
       within(screen.getByRole("region", { name: "Paddle stack" })).getAllByRole(
         "listitem"
       )[0]
-    ).toHaveTextContent("Player 5");
+    ).toHaveTextContent("Player 8");
+  });
+
+  it("restores an unfinished setup at its selected step", () => {
+    const view = render(<PublicQuickPlay />);
+    namePlayers();
+    openOptions();
+    fireEvent.click(screen.getByRole("radio", { name: /Balanced Mix/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Van — experience" }));
+    fireEvent.click(screen.getByRole("option", { name: /Experienced/ }));
+    view.unmount();
+    render(<PublicQuickPlay />);
+    expect(
+      screen.getByRole("heading", { name: "Choose how this game runs" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Van — experience" })
+    ).toHaveTextContent("Experienced");
+    fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
+    expect(
+      within(
+        screen.getByRole("region", { name: "Review Quick Play" })
+      ).getByText("Experienced")
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Edit players" }));
+    expect(screen.getByRole("textbox", { name: "Player 1" })).toHaveValue(
+      "Van"
+    );
+  });
+
+  it("ends into a persistent recap and only clears it after a separate confirmation", () => {
+    const view = render(<PublicQuickPlay />);
+    startDefaultGame();
+    fireEvent.click(screen.getByRole("button", { name: /Add a point to Van/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Finish match" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+      ).getByRole("button", { name: "Finish match" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "End Quick Play" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "End this Quick Play session?" })
+      ).getByRole("button", { name: "End Play" })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Quick Play recap" })
+    ).toBeVisible();
+    view.unmount();
+    render(<PublicQuickPlay />);
+    expect(
+      screen.getByRole("heading", { name: "Quick Play recap" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Completed matches" })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Start next match" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Start new session" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Start a new Quick Play session?" })
+      ).getByRole("button", { name: "Keep recap" })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Quick Play recap" })
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Start new session" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Start a new Quick Play session?" })
+      ).getByRole("button", { name: "Start new session" })
+    );
+    expect(screen.getByRole("textbox", { name: "Player 1" })).toHaveValue("");
+    expect(localStorage.getItem("relay-quick-play-session")).toBeNull();
+  });
+
+  it("keeps scoring usable and warns when browser storage fails", () => {
+    const view = render(<PublicQuickPlay />);
+    startDefaultGame();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new DOMException("Quota exceeded", "QuotaExceededError");
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add a point to Van/ }));
+    expect(screen.getByLabelText("Van + AJ score 1")).toHaveTextContent("1");
+    expect(
+      screen.getByText(/This browser couldn’t save or restore Quick Play/)
+    ).toBeVisible();
+    view.unmount();
   });
 
   it("explains when a corrupt saved session cannot be restored", () => {

@@ -33,13 +33,32 @@ describe("button primitives", () => {
       </>
     );
     expect(screen.getByRole("button", { name: "Compact action" })).toHaveClass(
+      "compact-control",
       "min-h-9",
       "items-center",
       "justify-center",
       "leading-none"
     );
     expect(screen.getByRole("button", { name: "Large action" })).toHaveClass(
+      "compact-control",
       "min-h-10"
+    );
+  });
+  it("uses explicit touch sizing for icon actions", () => {
+    render(
+      <Button size="icon" aria-label="Close viewer">
+        <span aria-hidden>×</span>
+      </Button>
+    );
+    expect(screen.getByRole("button", { name: "Close viewer" })).toHaveClass(
+      "compact-control",
+      "min-h-11",
+      "min-w-11"
+    );
+    render(<ButtonLink href="/games">Browse games</ButtonLink>);
+    expect(screen.getByRole("link", { name: "Browse games" })).toHaveClass(
+      "compact-control",
+      "min-h-9"
     );
   });
   it("keeps the loading spinner decorative", () => {

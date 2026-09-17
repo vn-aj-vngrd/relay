@@ -4,6 +4,7 @@ import {
   cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
   correctQuickPlayMatchScore,
+  endQuickPlay,
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
   quickPlayStandings,
@@ -237,5 +238,27 @@ describe("local Quick Play session", () => {
         })
       )
     ).toThrow("Fixed pairs need an even number of players.");
+  });
+});
+
+describe("Quick Play completion", () => {
+  it("retains results across reload and prevents another rotation", () => {
+    const session = startQuickPlay(
+      configuration({ players: players(4), courtCount: 1 })
+    );
+    const match = session.activeMatches[0];
+    expect(() => endQuickPlay(session)).toThrow(
+      "Finish or cancel active matches"
+    );
+    const finished = finishQuickPlayMatch(
+      scoreQuickPlayMatch(session, match.id, 0, 1),
+      match.id
+    );
+    const ended = endQuickPlay(finished);
+    const restored = restoreQuickPlaySession(serializeQuickPlaySession(ended));
+    expect(restored?.completedMatches).toEqual(finished.completedMatches);
+    expect(restored?.endedAt).toBe(ended.endedAt);
+    expect(canStartNextQuickPlayMatches(ended)).toBe(false);
+    expect(startNextQuickPlayMatches(ended).activeMatches).toEqual([]);
   });
 });

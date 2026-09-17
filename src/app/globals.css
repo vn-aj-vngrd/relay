@@ -361,6 +361,8 @@ p:not(.truncate) {
     padding-inline: 0;
   }
 }
+/* Shared Button/ButtonLink own 36/40px action sizing and explicit 44px icons.
+   Keep the mobile touch fallback for unclassified native controls. */
 @media (max-width: 63.999rem) {
   button:not(.compact-control),
   a.pressable:not(.compact-control),
@@ -383,8 +385,13 @@ p:not(.truncate) {
   .app-scroll-surface:has(.court-finder-workspace) {
     overflow-y: hidden;
   }
+  .app-shell:has(.court-finder-workspace) > .app-bottom-nav {
+    position: static;
+    flex-shrink: 0;
+  }
   .app-scroll-surface:has(.court-finder-workspace) .app-content {
     height: 100%;
+    padding-bottom: 0;
   }
   .court-finder-workspace {
     height: 100%;

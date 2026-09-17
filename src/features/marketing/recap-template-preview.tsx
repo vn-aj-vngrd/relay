@@ -4,10 +4,10 @@ import { RecapStoryCard } from "@/features/memories/recap-story-card";
 import { type StoryTheme, storyThemes } from "@/features/memories/story-theme";
 
 const players = [
-  { id: "van", name: "Van" },
-  { id: "aj", name: "AJ" },
-  { id: "mika", name: "Mika" },
-  { id: "bea", name: "Bea" },
+  { id: "van", name: "Van AJ" },
+  { id: "aj", name: "Angelika" },
+  { id: "mika", name: "Dave" },
+  { id: "bea", name: "Charles" },
 ];
 const recap = buildSessionRecap(
   [
@@ -138,7 +138,7 @@ export function RecapTemplatePreview({
                 invitation={
                   example.template === "invitation"
                     ? {
-                        hostName: "Van",
+                        hostName: "Van AJ",
                         priceLabel: "Free",
                         goingCount: 4,
                         capacity: 8,

@@ -338,6 +338,7 @@ export function GameQrShare({
                     type="button"
                     variant="quiet"
                     onClick={closeDialog}
+                    size="icon"
                     aria-label="Close QR code"
                     className="-mr-2 -mt-2"
                   >

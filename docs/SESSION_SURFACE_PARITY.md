@@ -165,3 +165,22 @@ choices. Theme descriptions come from `storyThemes` in both editor and landing
 examples. The landing gallery renders all five with labeled sample data using
 RecapStoryCard, without obsolete mock editor controls. Validation deferred to
 pre-commit; rendering and exported images remain unverified.
+
+
+Quick Play (2026-09-17): signed-in and public `/play` continue sharing
+`PublicQuickPlay` and the adaptive shell. Both use the existing TabChipRail and
+CourtScoreboardCourt, with Courts / Queue / Results sections, a secondary Manage
+courts disclosure, in-step Balanced Mix inputs and a complete review. Browser
+setup drafts and ended recaps remain device-local; ending does not clear results.
+Starting a new session confirms replacement separately. Storage failures retain
+in-memory use with a warning. The roster is fixed during play. No account-save,
+sharing, roster management or Agent capability was added. The full pre-commit
+gate passed. Public mobile/desktop walkthroughs used synthetic players; the
+authenticated browser journey remains unverified.
+
+Mobile Quick Play keeps the compact 36px section rail and End Quick Play in the
+top-right header. Repeated descriptions, queue counts, rotation explanation and
+storage footer are desktop-only; the visible Queue chip retains its count.
+Mobile queue rows keep full names and 44px up/down controls, with top/end
+shortcuts on desktop. First/last boundary moves are disabled. Storage errors,
+empty-state recovery and confirmation consequences remain visible on mobile.

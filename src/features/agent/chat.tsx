@@ -647,6 +647,7 @@ export function AgentChat({
               ) : (
                 <Button
                   type="submit"
+                  size="icon"
                   aria-label="Send message"
                   disabled={!available || busy || !input.trim()}
                 >
