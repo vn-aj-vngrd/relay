@@ -40,7 +40,7 @@ describe("HeroProductShot", () => {
     const court = screen.getByRole("region", {
       name: "Live scores and rotation",
     });
-    expect(within(court).getByText("Van + AJ")).toBeVisible();
+    expect(within(court).getByText("Van AJ + Angelika")).toBeVisible();
     expect(within(court).getByText("8")).toBeVisible();
     expect(within(court).getByText("6")).toBeVisible();
     expect(within(court).getByText(/Kara \+ Luis/)).toBeVisible();

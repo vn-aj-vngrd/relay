@@ -44,6 +44,7 @@ export type QuickPlaySession = QuickPlayConfiguration & {
   completedMatches: QuickPlayMatch[];
   nextMatchNumber: number;
   unavailableCourtIds: string[];
+  endedAt?: number | null;
 };
 
 export const quickPlayStorageKey = "relay-quick-play-session";
@@ -90,6 +91,7 @@ const quickPlaySessionSchema = z.object({
   completedMatches: z.array(quickPlayMatchSchema),
   nextMatchNumber: z.number().int().min(1),
   unavailableCourtIds: z.array(z.string().min(1)).default([]),
+  endedAt: z.number().finite().nullable().optional(),
 });
 
 const storedQuickPlaySchema = z.object({
@@ -117,6 +119,7 @@ function rotationHistory(session: QuickPlaySession): RotationHistory[] {
 }
 
 function nextPlans(session: QuickPlaySession) {
+  if (session.endedAt != null) return [];
   if (session.mode !== "queue" && session.activeMatches.length) return [];
   const occupiedCourts = new Set(
     session.activeMatches.map((match) => match.courtId)
@@ -465,4 +468,11 @@ export function quickPlayStandings(session: QuickPlaySession) {
     ...standing,
     name: names.get(standing.playerId) ?? "Player",
   }));
+}
+
+export function endQuickPlay(session: QuickPlaySession): QuickPlaySession {
+  if (session.activeMatches.length) {
+    throw new Error("Finish or cancel active matches before ending.");
+  }
+  return { ...session, endedAt: session.endedAt ?? Date.now() };
 }

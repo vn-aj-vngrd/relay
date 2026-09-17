@@ -112,7 +112,7 @@ async function ProfileHeader({
               href={`/profile/${profile.username}/edit`}
               variant="secondary"
               aria-label="Edit profile"
-              className="shrink-0 px-2.5 sm:px-3"
+              className="min-h-11 min-w-11 shrink-0 px-2.5 sm:min-h-9 sm:px-3"
             >
               <PencilSimple aria-hidden size={15} />
               <span className="hidden sm:inline">Edit profile</span>

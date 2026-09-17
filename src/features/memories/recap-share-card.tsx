@@ -1105,6 +1105,7 @@ export function RecapShareCard({
                 type="button"
                 variant="quiet"
                 onClick={closePreview}
+                size="icon"
                 aria-label="Close expanded story"
                 className="shrink-0 text-white hover:bg-white/10 hover:text-white"
               >

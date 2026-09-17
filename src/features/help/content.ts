@@ -323,15 +323,15 @@ export const helpArticles: readonly HelpArticle[] = [
       "One browser/device and at least four players. Quick Play supports up to 24 players and six courts, with four players per selected court.",
     ],
     steps: [
-      "Open Quick Play and enter distinct player names and the number of courts.",
-      "Choose a mode and complete any fixed pairs or timer options shown. Review the setup before starting.",
-      "Use the court assignments and score controls on this device. Finish matches to advance; expand a scoreboard for courtside viewing.",
-      "Return in the same browser to restore valid stored play. Use the end/reset confirmation when you are done.",
+      "Open Quick Play and enter distinct player names. Your unfinished setup is kept in this browser, including the current step.",
+      "Choose courts and a mode in Game options. Balanced Mix shows each player’s experience here; other formats offer pairs, queue rules, or a timer. Review these choices and use Edit players or Edit game options before starting.",
+      "Use Courts for assignments and scoring, Queue for waiting order, and Results for completed matches and standings. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Expand a scoreboard for courtside viewing. Manage courts is below the courts. The roster stays fixed during play; use a saved game if players need to arrive, rest, or leave.",
+      "Finish or cancel active matches, then choose End Quick Play and confirm End Play. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
     ],
     outcome:
       "Play is stored locally in that browser, not as a shareable Relay game. It cannot be transferred into account history or another device.",
     troubleshooting: [
-      "Clearing browser data, private browsing, or invalid storage can remove the local game. There is no account backup or import conversion.",
+      "Clearing browser data, private browsing, or invalid storage can remove the local game. If Relay warns that it cannot save, keep the page open: the current state is usable, but changes may be lost on reload. Allow storage or free space, then make a change to retry. There is no account backup or import conversion.",
       "For invitations, chat, payments, and durable history, create a separate saved game instead. Do not assume cold-start offline navigation will work.",
     ],
     related: ["create-a-game", "rotation-modes", "install-offline"],
@@ -340,35 +340,6 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/matches/public-quick-play.tsx",
     ],
     action: { href: "/play", label: "Open Quick Play" },
-    figures: [
-      {
-        afterStep: 2,
-        src: "/help/quick-play-review.webp",
-        width: 692,
-        height: 600,
-        alt: "Quick Play Review lists four Demo players, one court, Paddle Stack, and This device only",
-        caption:
-          "Actual desktop browser capture, 2026-09-05. Four synthetic names were entered through the real setup. This is temporary Quick Play, not a saved game.",
-      },
-      {
-        afterStep: 3,
-        src: "/help/quick-play-finish.webp",
-        width: 448,
-        height: 198,
-        alt: "Finish Court 1 confirmation showing Demo Alex and Demo Bea winning 3–1 over Demo Casey and Demo Drew",
-        caption:
-          "The demonstration used real point controls to enter 3–1, then confirmed Finish match. This short score demonstrates the interface, not a regulation match. Court 1 was closed before finishing so it would not receive another assignment.",
-      },
-      {
-        afterStep: 4,
-        src: "/help/quick-play-end.webp",
-        width: 448,
-        height: 198,
-        alt: "End Quick Play confirmation warns that local recap and completed results will be removed",
-        caption:
-          "After the match appeared in completed results and standings, End Quick Play opened this warning. End and start over was confirmed and the browser returned to the four empty player fields. Only this device-local cycle was completed.",
-      },
-    ],
   },
   {
     slug: "account-setup",
@@ -455,6 +426,7 @@ export const helpArticles: readonly HelpArticle[] = [
     outcome:
       "You have a court choice and a prefilled plan, not a reservation. Operating hours and verification do not prove a court is free at your chosen time.",
     troubleshooting: [
+      "On phones, scroll the court results inside the list. Search, filters and bottom navigation stay in place; the results fill the space above navigation.",
       "If location permission fails, search by city or neighborhood. Location sorting does not continuously track you.",
       "Restricted courts can appear in the directory; respect member, resident, school, or invitation rules. Suggest an update when public evidence is outdated.",
     ],
@@ -1483,7 +1455,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Open your own Profile and choose Edit profile. Update supported name, bio, city, playing experience, dominant hand, and photo fields.",
       "For an avatar, use JPG, PNG, or WebP smaller than 5 MB. Save and check the updated profile.",
       "Open Settings → Appearance for Light, Dark, or System and app installation. Use Settings → Games for game-view preferences and Settings → Account for password changes.",
-      "Use Games and Groups view controls to choose available list/grid/calendar presentation. These are viewing preferences, not changes to the underlying game order or access.",
+      "Use Games and Groups view controls to choose available list/grid/calendar presentation. These are viewing preferences, not changes to the underlying game order or access. Standard action buttons keep a compact height on phones and desktop; icon-only and courtside scoring controls retain larger touch targets.",
     ],
     outcome:
       "Your profile and preferred presentation are updated. Account playing experience also updates your account roster information; it is not a professional rating.",

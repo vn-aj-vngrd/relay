@@ -45,14 +45,14 @@ export function HeroProductShot() {
               Get the crew in.
             </h3>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <AvatarStack names={["Van", "AJ", "Mika"]} total={8} />
+              <AvatarStack names={["Van AJ", "Angelika", "Dave"]} total={8} />
               <p className="text-sm font-semibold">8 of 10 going</p>
             </div>
             <p className="mt-3 text-sm text-muted">
               Guests can RSVP. No account needed.
             </p>
             <ul className="mt-4 divide-y divide-line border-y border-line">
-              {["AJ", "Mika"].map((name) => (
+              {["Angelika", "Dave"].map((name) => (
                 <li
                   key={name}
                   className="flex items-center justify-between gap-3 py-3 text-sm"
@@ -69,10 +69,10 @@ export function HeroProductShot() {
                 Chat stays with the game
               </h4>
               <div className="mt-3 flex items-start gap-2">
-                <Avatar name="Bea" index={3} size="sm" />
+                <Avatar name="Charles" index={3} size="sm" />
                 <p className="rounded-xl bg-surface-strong px-3 py-2 text-sm leading-5">
-                  <span className="block font-semibold">Bea</span>I’ll bring the
-                  extra balls!
+                  <span className="block font-semibold">Charles</span>I’ll bring
+                  the extra balls!
                 </p>
               </div>
             </div>
@@ -100,8 +100,8 @@ export function HeroProductShot() {
             </p>
             <div className="mt-6 grid grid-cols-2 divide-x divide-court-line/30 border-y border-court-line/30">
               {[
-                { team: "Van + AJ", score: 8 },
-                { team: "Mika + Bea", score: 6 },
+                { team: "Van AJ + Angelika", score: 8 },
+                { team: "Dave + Charles", score: 6 },
               ].map(({ team, score }) => (
                 <div key={team} className="py-5 text-center sm:py-7">
                   <p className="text-sm font-medium">{team}</p>
@@ -148,11 +148,11 @@ export function HeroProductShot() {
               </p>
               <ul className="mt-3 divide-y divide-line text-sm">
                 <li className="flex justify-between gap-3 py-2">
-                  <span>AJ</span>
+                  <span>Angelika</span>
                   <span className="text-muted">Proof sent</span>
                 </li>
                 <li className="flex justify-between gap-3 py-2">
-                  <span>Mika</span>
+                  <span>Dave</span>
                   <span className="inline-flex items-center gap-1 text-success">
                     <CheckCircle aria-hidden size={16} /> Confirmed
                   </span>

@@ -149,7 +149,7 @@ describe("Agent landing demo", () => {
     enter();
     fireEvent.click(screen.getByRole("button", { name: "Who's joining?" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Alex, Bea and Marco are going to Saturday doubles"
+      "Angelika, Dave and Charles are going to Saturday doubles"
     );
     expect(
       screen.queryByRole("button", { name: "Pause demo" })
