@@ -37,6 +37,11 @@ describe("GroupCollection", () => {
     ).toHaveAttribute("href", "/groups/tuesday-dink-club");
     expect(screen.queryByText("1 group")).not.toBeInTheDocument();
 
+    expect(screen.getByRole("button", { name: "Grid view" })).toHaveClass(
+      "compact-control",
+      "h-8",
+      "w-8"
+    );
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("groups-grid")).toBeVisible();
     expect(

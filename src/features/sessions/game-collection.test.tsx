@@ -153,6 +153,11 @@ describe("GameCollection", () => {
     expect(screen.queryByText("67% ready")).not.toBeInTheDocument();
     expect(screen.queryByText("1 game")).not.toBeInTheDocument();
 
+    expect(screen.getByRole("button", { name: "Grid view" })).toHaveClass(
+      "compact-control",
+      "h-8",
+      "w-8"
+    );
     fireEvent.click(screen.getByRole("button", { name: "Grid view" }));
     expect(screen.getByTestId("games-grid")).toBeVisible();
     const chip = within(

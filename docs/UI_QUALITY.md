@@ -82,3 +82,7 @@ height overrides for these actions so the mobile fallback cannot enlarge them.
 Icon-only back navigation uses `back-control`: a 32px hover/focus surface inside
 a 44px target, with the existing keyboard focus outline retained. Use the same
 treatment in focused headers, game workspaces, profile, billing and admin.
+
+Segmented game/group view controls use 32px inner buttons plus 2px container
+padding (36px total), matching filter chips. Mark the inner buttons
+`compact-control` so the mobile native-control fallback does not enlarge them.
