@@ -7,6 +7,7 @@ import {
   endQuickPlay,
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
+  quickPlayRecap,
   quickPlayStandings,
   reorderQuickPlayQueue,
   restoreQuickPlaySession,
@@ -261,4 +262,30 @@ describe("Quick Play completion", () => {
     expect(canStartNextQuickPlayMatches(ended)).toBe(false);
     expect(startNextQuickPlayMatches(ended).activeMatches).toEqual([]);
   });
+});
+
+it("records real recap timing without changing rotation order and handles legacy storage", () => {
+  let session = startQuickPlay(configuration());
+  const match = session.activeMatches[0]!;
+  session = scoreQuickPlayMatch(session, match.id, 0, 1);
+  session = finishQuickPlayMatch(
+    session,
+    match.id,
+    match.startedAt + 12 * 60_000
+  );
+  expect(session.completedMatches[0]?.finishedAt).toBe(1);
+  expect(quickPlayRecap(session).playMinutes).toBe(12);
+  const restored = restoreQuickPlaySession(serializeQuickPlaySession(session));
+  expect(restored).not.toBeNull();
+  expect(quickPlayRecap(restored!).playMinutes).toBe(12);
+  const legacy = {
+    ...session,
+    completedMatches: session.completedMatches.map(
+      ({ completedAt: _completedAt, ...oldMatch }) => oldMatch
+    ),
+  };
+  const legacyRecap = quickPlayRecap(legacy);
+  expect(legacyRecap.playMinutes).toBe(0);
+  expect(legacyRecap.matchCount).toBe(1);
+  expect(legacyRecap.totalPoints).toBe(1);
 });

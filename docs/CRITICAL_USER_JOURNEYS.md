@@ -195,3 +195,8 @@ from tablet widths, and apply the full-height workspace at every breakpoint.
 Phone results meet bottom navigation; tablet/desktop bottom insets match the top.
 Manual public checks at CSS widths 355, 818, 1091 and 1455 found zero page-width
 overflow and zero outer vertical overflow. Unit and E2E geometry coverage updated.
+
+PR review follow-up: Quick Play stores wall-clock completion separately from its
+rotation ordering counter. Legacy recaps omit elapsed time; new timing survives
+reload. Final `pnpm check:full` passed: lint/types, 357 test files / 2,552 tests,
+and production build. Automated E2E remains unrun.

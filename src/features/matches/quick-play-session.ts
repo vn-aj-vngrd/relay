@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { buildSessionRecap } from "@/features/memories/recap";
+
 import { calculateStandings } from "./domain";
 import { moveQueueGroup, type QueueMove } from "./lifecycle";
 import {
@@ -26,7 +28,9 @@ export type QuickPlayMatch = {
   status: "active" | "completed";
   winner: "A" | "B" | null;
   startedAt: number;
+  /** Completion ordering used by rotation; not a wall-clock timestamp. */
   finishedAt: number | null;
+  completedAt?: number;
 };
 
 export type QuickPlayConfiguration = {
@@ -71,6 +75,7 @@ const quickPlayMatchSchema = z.object({
   winner: z.enum(["A", "B"]).nullable(),
   startedAt: z.number().default(0),
   finishedAt: z.number().nullable(),
+  completedAt: z.number().finite().optional(),
 });
 
 const quickPlaySessionSchema = z.object({
@@ -326,7 +331,8 @@ export function swapQuickPlayMatchSides(
 
 export function finishQuickPlayMatch(
   session: QuickPlaySession,
-  matchId: string
+  matchId: string,
+  now = Date.now()
 ): QuickPlaySession {
   const match = session.activeMatches.find((item) => item.id === matchId);
   if (!match) return session;
@@ -355,6 +361,7 @@ export function finishQuickPlayMatch(
     status: "completed",
     winner,
     finishedAt: session.completedMatches.length + 1,
+    completedAt: now,
   };
   return {
     ...session,
@@ -475,4 +482,29 @@ export function endQuickPlay(session: QuickPlaySession): QuickPlaySession {
     throw new Error("Finish or cancel active matches before ending.");
   }
   return { ...session, endedAt: session.endedAt ?? Date.now() };
+}
+
+export function quickPlayRecap(session: QuickPlaySession) {
+  // Older browser sessions have ordering counters only. Avoid a partial or
+  // fabricated duration when any result lacks real start/finish timestamps.
+  const hasCompleteTiming = session.completedMatches.every(
+    (match) =>
+      match.startedAt > 0 &&
+      match.completedAt != null &&
+      match.completedAt >= match.startedAt
+  );
+  return buildSessionRecap(
+    session.completedMatches.map((match) => ({
+      ...match,
+      status: "completed" as const,
+      scoreA: match.scores[0],
+      scoreB: match.scores[1],
+      startedAt: hasCompleteTiming ? new Date(match.startedAt) : null,
+      finishedAt:
+        hasCompleteTiming && match.completedAt != null
+          ? new Date(match.completedAt)
+          : null,
+    })),
+    session.players
+  );
 }

@@ -32,7 +32,6 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
 import { Tooltip } from "@/components/ui/tooltip";
-import { buildSessionRecap } from "@/features/memories/recap";
 import {
   RecapHighlights,
   RecapOverview,
@@ -62,6 +61,7 @@ import {
   type QuickPlayMatch,
   type QuickPlayPlayer,
   type QuickPlaySession,
+  quickPlayRecap,
   quickPlayStorageKey,
   reorderQuickPlayQueue,
   restoreQuickPlaySession,
@@ -1106,17 +1106,7 @@ function QuickPlayLive({
   const names = new Map(
     session.players.map((player) => [player.id, player.name])
   );
-  const recap = buildSessionRecap(
-    session.completedMatches.map((match) => ({
-      ...match,
-      status: "completed" as const,
-      scoreA: match.scores[0],
-      scoreB: match.scores[1],
-      startedAt: new Date(match.startedAt),
-      finishedAt: match.finishedAt === null ? null : new Date(match.finishedAt),
-    })),
-    session.players
-  );
+  const recap = quickPlayRecap(session);
   const standings = recap.standings;
   const canStartNext = canStartNextQuickPlayMatches(session);
   const waiting = session.waitingPlayerIds.map((id) => ({
