@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Copy, Key, Warning } from "@phosphor-icons/react";
+import { Check, Copy, Key } from "@phosphor-icons/react";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
@@ -110,9 +111,9 @@ export function PasswordResetControl({
         >
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">
-              <Warning aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone="danger">
+              <Key size={20} />
+            </ConfirmationIcon>
             <div>
               <h2 className="text-lg font-[680]">Reset this password?</h2>
               <p className="mt-2 text-sm leading-6 text-muted">

@@ -1,8 +1,10 @@
 "use client";
 
+import { MapPin } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button } from "@/components/ui/button";
@@ -80,15 +82,22 @@ export function CourtBookingGate({
         }}
       >
         <div className="p-5 sm:p-6">
-          <h2 id="court-booking-title" className="text-lg font-bold">
-            Is the court ready?
-          </h2>
-          <p
-            id="court-booking-description"
-            className="mt-2 text-sm leading-6 text-muted"
-          >
-            Confirm your court arrangement before setting up Play.
-          </p>
+          <div className="flex items-start gap-3">
+            <ConfirmationIcon>
+              <MapPin size={20} />
+            </ConfirmationIcon>
+            <div>
+              <h2 id="court-booking-title" className="text-lg font-bold">
+                Is the court ready?
+              </h2>
+              <p
+                id="court-booking-description"
+                className="mt-2 text-sm leading-6 text-muted"
+              >
+                Confirm your court arrangement before setting up Play.
+              </p>
+            </div>
+          </div>
           {state.error ? (
             <ActionNotice message={state.error} response={state} />
           ) : null}

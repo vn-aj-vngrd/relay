@@ -317,6 +317,8 @@ export function AgentHistoryCollection() {
                     disabled={loading || mutating}
                     aria-label={`Delete ${row.title}`}
                     confirmTitle="Delete this chat?"
+                    confirmIcon={<Trash size={20} />}
+                    confirmTone="danger"
                     confirmText="This permanently deletes this conversation from your Relay account."
                     confirmLabel="Delete chat"
                     cancelLabel="Keep chat"

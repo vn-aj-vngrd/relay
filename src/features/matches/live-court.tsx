@@ -1,5 +1,7 @@
 "use client";
 
+import { FlagCheckered } from "@phosphor-icons/react";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -242,6 +244,8 @@ function ManagedLiveCourt({
               variant="primary"
               disabled={localScores[0] === localScores[1] || scorePending}
               confirmTitle={`Finish ${number} at ${localScores[0]}–${localScores[1]}?`}
+              confirmIcon={<FlagCheckered size={20} />}
+              confirmTone="primary"
               confirmText={`${teams[0]} ${localScores[0]}, ${teams[1]} ${localScores[1]}. Confirming advances the court rotation.`}
               confirmLabel="Finish match"
             >

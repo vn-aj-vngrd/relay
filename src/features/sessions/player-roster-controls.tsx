@@ -11,6 +11,7 @@ import {
 import type { KeyboardEvent } from "react";
 import { useActionState, useEffect, useId, useRef, useState } from "react";
 import { Avatar } from "@/components/shared/avatar-stack";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -402,9 +403,9 @@ export function RemovePlayerButton({
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="sessionPlayerId" value={playerId} />
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">
-              <UserMinus aria-hidden size={18} />
-            </span>
+            <ConfirmationIcon tone="danger">
+              <UserMinus size={20} />
+            </ConfirmationIcon>
             <div>
               <h2
                 id={`remove-${playerId}-title`}

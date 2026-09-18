@@ -1,5 +1,7 @@
 "use client";
 
+import { Coins } from "@phosphor-icons/react";
+
 import { useActionState, useId, useState } from "react";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { ActionNotice } from "@/components/ui/action-notice";
@@ -237,6 +239,8 @@ export function PaymentChoiceForm({
       {price === 0 && choice === "collect" ? (
         <ConfirmSubmitButton
           confirmTitle="Start collecting payment?"
+          confirmIcon={<Coins size={20} />}
+          confirmTone="primary"
           confirmText={`${review || "Review the price and payment instructions above."} Existing players must agree to new charges. Previous requests stay cancelled; payment history is not a credit or refund.`}
           confirmLabel="Start collecting"
           cancelLabel="Keep game free"

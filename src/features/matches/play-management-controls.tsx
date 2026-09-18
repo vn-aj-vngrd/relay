@@ -7,9 +7,10 @@ import {
   ArrowUp,
   LockSimple,
   LockSimpleOpen,
-  Warning,
+  Prohibit,
 } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -182,9 +183,9 @@ export function MatchCancellationControl({
           <input type="hidden" name="matchId" value={matchId} />
           <input type="hidden" name="version" value={version} />
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
-              <Warning aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone="warning">
+              <Prohibit size={20} />
+            </ConfirmationIcon>
             <div className="min-w-0">
               <h2 id={titleId} className="text-lg font-[680]">
                 Cancel {synchronized ? "this rotation" : `${courtLabel} match`}?

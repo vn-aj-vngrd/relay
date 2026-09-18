@@ -11,6 +11,7 @@ import {
   LockSimple,
   LockSimpleOpen,
   PencilSimple,
+  Prohibit,
   Shuffle,
   Trash,
   UserPlus,
@@ -143,6 +144,7 @@ function QuickCourt({
             variant="primary"
             disabled={match.scores[0] === match.scores[1]}
             confirmTitle={`Finish ${match.courtLabel} at ${match.scores[0]}–${match.scores[1]}?`}
+            confirmIcon={<FlagCheckered size={20} />}
             confirmText={`${teams[0].label} ${match.scores[0]}, ${teams[1].label} ${match.scores[1]}. Confirming advances the rotation.`}
             confirmLabel="Finish match"
             onConfirm={onFinish}
@@ -1118,7 +1120,14 @@ function QuickPlayLive({
         confirmTitle={
           ended ? "Start a new Quick Play session?" : "End this session?"
         }
-        confirmIcon={ended ? undefined : <FlagCheckered size={20} />}
+        confirmIcon={
+          ended ? (
+            <ArrowCounterClockwise size={20} />
+          ) : (
+            <FlagCheckered size={20} />
+          )
+        }
+        confirmTone={ended ? "warning" : "primary"}
         confirmText={
           ended
             ? "This replaces the recap and completed results in this browser. There is no account backup."
@@ -1551,6 +1560,8 @@ function QuickPlayLive({
                               ? "Cancel active round"
                               : `Cancel ${match.courtLabel}`
                           }
+                          confirmIcon={<Prohibit size={20} />}
+                          confirmTone="warning"
                           confirmTitle={
                             roundMode
                               ? "Cancel the active round?"
