@@ -219,7 +219,7 @@ export function AddPlayerForm({ sessionId }: { sessionId: string }) {
             }
             aria-describedby="player-entry-hint"
             placeholder="Guest name or @username"
-            className="h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted sm:text-sm"
+            className="h-11 w-full min-w-0 truncate rounded-lg border border-line bg-surface px-3 text-base placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:bg-surface-strong disabled:text-muted sm:text-sm"
           />
           {isRelayInvite && suggestionsOpen && !isPending ? (
             <div

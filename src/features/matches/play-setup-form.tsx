@@ -484,33 +484,35 @@ export function PlaySetupForm({
       {reviewError && !reviewing ? (
         <Alert className="mt-4">{reviewError}</Alert>
       ) : null}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {playerCount} in rotation · {goingRosterCount} going · {courtCount}{" "}
           {courtCount === 1 ? "court" : "courts"}
         </p>
-        {onBack ? (
-          <Button type="button" variant="secondary" onClick={onBack}>
-            Back
-          </Button>
-        ) : null}
-        {wizardStep === "options" ? (
-          <Button
-            type="button"
-            onClick={reviewSetup}
-            disabled={readiness ? !readiness.ready : false}
-          >
-            Review setup
-          </Button>
-        ) : (
-          <SubmitButton
-            pendingLabel="Starting Play…"
-            disabled={reviewStale || (readiness ? !readiness.ready : false)}
-            className="w-full sm:w-auto"
-          >
-            Start Play
-          </SubmitButton>
-        )}
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+          {onBack ? (
+            <Button type="button" variant="secondary" onClick={onBack}>
+              Back
+            </Button>
+          ) : null}
+          {wizardStep === "options" ? (
+            <Button
+              type="button"
+              onClick={reviewSetup}
+              disabled={readiness ? !readiness.ready : false}
+            >
+              Review setup
+            </Button>
+          ) : (
+            <SubmitButton
+              pendingLabel="Starting Play…"
+              disabled={reviewStale || (readiness ? !readiness.ready : false)}
+              className="w-full sm:w-auto"
+            >
+              Start Play
+            </SubmitButton>
+          )}
+        </div>
         {readiness && !readiness.ready ? (
           onPlayers ? (
             <Button type="button" variant="secondary" onClick={onPlayers}>

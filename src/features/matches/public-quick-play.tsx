@@ -5,7 +5,6 @@ import {
   ArrowDown,
   ArrowLineDown,
   ArrowLineUp,
-  ArrowsLeftRight,
   ArrowUp,
   Lightning,
   LockSimple,
@@ -16,7 +15,6 @@ import {
   Trash,
   UserPlus,
 } from "@phosphor-icons/react";
-import Link from "next/link";
 import {
   type FormEvent,
   useEffect,
@@ -28,7 +26,7 @@ import {
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
 import { WizardProgress } from "@/components/shared/wizard-progress";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -50,6 +48,7 @@ import {
 import { playModeOptions } from "./play-mode-options";
 import { PlaySectionTabs } from "./play-section-tabs";
 import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
+import { QuickPlayPlayers } from "./quick-play-players";
 import {
   cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
@@ -140,20 +139,11 @@ function QuickCourt({
       navigation={navigation}
       onExpandedChange={onExpandedChange}
       onScore={onScore}
-      headerAction={
-        <button
-          type="button"
-          onClick={onSwap}
-          aria-label={`Swap sides on ${match.courtLabel}`}
-          className="pressable grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-        >
-          <ArrowsLeftRight aria-hidden size={18} />
-        </button>
-      }
+      onSwap={onSwap}
       finishControl={
-        <div className="grid grid-cols-[auto_1fr] gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <ConfirmActionButton
-            variant="quiet"
+            variant="secondary"
             aria-label={
               cancelWholeRound
                 ? "Cancel active round"
@@ -176,8 +166,7 @@ function QuickCourt({
             {cancelWholeRound ? "Cancel round" : "Cancel"}
           </ConfirmActionButton>
           <ConfirmActionButton
-            variant="secondary"
-            className="w-full"
+            variant="primary"
             disabled={match.scores[0] === match.scores[1]}
             confirmTitle={`Finish ${match.courtLabel} at ${match.scores[0]}–${match.scores[1]}?`}
             confirmText={`${teams[0].label} ${match.scores[0]}, ${teams[1].label} ${match.scores[1]}. Confirming advances the rotation.`}
@@ -581,15 +570,6 @@ function QuickPlaySetup({
       </header>
 
       <div className="mx-auto w-full max-w-2xl pb-8">
-        <div className="mb-7 flex items-center justify-between gap-4 border-y border-line py-3 text-sm">
-          <p className="text-muted">Want to save and share the game?</p>
-          <Link
-            href="/games/new"
-            className="pressable inline-flex min-h-9 shrink-0 items-center gap-1.5 font-semibold text-primary"
-          >
-            <Lightning aria-hidden size={16} /> Create game
-          </Link>
-        </div>
         <WizardProgress
           ariaLabel="Quick Play setup progress"
           labels={["Players", "Game options", "Review"]}
@@ -1039,7 +1019,18 @@ function QuickPlaySetup({
         </section>
 
         {error ? <Alert className="mt-6">{error}</Alert> : null}
-        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+        {step === 1 ? (
+          <div className="mt-6 space-y-2 text-sm text-muted">
+            <p>
+              Player names stay fixed during play. Use Players to take a break
+              or rejoin. Setup stays on this device.
+            </p>
+            <p>Want to save and share the game? Create a saved game.</p>
+          </div>
+        ) : null}
+        <div
+          className={`mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center ${step === 1 ? "sm:justify-end" : "sm:justify-between"}`}
+        >
           <div>
             {step > 1 ? (
               <Button
@@ -1054,9 +1045,13 @@ function QuickPlaySetup({
                 Back
               </Button>
             ) : (
-              <p className="text-sm text-muted">
-                This roster stays fixed during play. Setup stays on this device.
-              </p>
+              <ButtonLink
+                href="/games/new"
+                variant="secondary"
+                className="w-full sm:w-auto"
+              >
+                <Lightning aria-hidden size={16} /> Create game
+              </ButtonLink>
             )}
           </div>
           {step === 1 ? (
@@ -1118,6 +1113,7 @@ function QuickPlayLive({
     session.mode === "round_robin" &&
     !session.activeMatches.length &&
     !canStartNext &&
+    session.restingPlayerIds.length === 0 &&
     session.completedMatches.length > 0;
   const roundStartedAt = session.activeMatches.length
     ? Math.min(...session.activeMatches.map((match) => match.startedAt))
@@ -1141,21 +1137,19 @@ function QuickPlayLive({
   }
 
   const sessionAction = (
-    <div className="border-t border-line pt-5">
+    <div className="mt-5">
       <ConfirmActionButton
         variant={ended ? "primary" : "secondary"}
-        className="w-full sm:w-auto"
+        className={ended ? "w-full sm:w-auto" : "w-full"}
         confirmTitle={
-          ended
-            ? "Start a new Quick Play session?"
-            : "End this Quick Play session?"
+          ended ? "Start a new Quick Play session?" : "End this session?"
         }
         confirmText={
           ended
             ? "This replaces the recap and completed results in this browser. There is no account backup."
             : "Your results and standings will stay in this browser as a recap. No more matches can be started."
         }
-        confirmLabel={ended ? "Start new session" : "End Play"}
+        confirmLabel={ended ? "Start new session" : "End session"}
         cancelLabel={ended ? "Keep recap" : "Keep playing"}
         onConfirm={() => {
           if (ended) onEdit();
@@ -1168,11 +1162,16 @@ function QuickPlayLive({
         }
         disabled={session.activeMatches.length > 0}
       >
-        <ArrowCounterClockwise aria-hidden size={16} />{" "}
-        {ended ? "Start new session" : "End Quick Play"}
+        {ended ? <ArrowCounterClockwise aria-hidden size={16} /> : null}
+        {ended ? "Start new session" : "End session"}
       </ConfirmActionButton>
+      {!ended ? (
+        <p className="mt-2 text-center text-xs text-muted">
+          Ends play and keeps the recap on this device.
+        </p>
+      ) : null}
       {session.activeMatches.length ? (
-        <p id="quick-end-help" className="mt-2 text-sm text-muted">
+        <p id="quick-end-help" className="mt-2 text-center text-xs text-muted">
           Finish or cancel active matches before ending.
         </p>
       ) : null}
@@ -1288,10 +1287,7 @@ function QuickPlayLive({
       ) : (
         <PlaySectionTabs
           headerActions={
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-live" />
-              Play in progress
-            </span>
+            <QuickPlayPlayers session={session} onChange={onChange} />
           }
           courts={
             <section aria-labelledby="quick-active-courts">
@@ -1386,20 +1382,20 @@ function QuickPlayLive({
                   </h3>
                   <p className="mt-2 text-sm text-muted">
                     {roundRobinComplete
-                      ? "Review the standings, then end Quick Play in Manage."
+                      ? "Review the standings, then choose End session in Manage."
                       : canStartNext
                         ? "Start the next rotation when everyone is ready."
                         : session.unavailableCourtIds.length ===
                             session.courtCount
                           ? "Reopen a court in Manage to continue."
-                          : "Add more players in a new setup to continue."}
+                          : "Open Players and rejoin the queue when ready to continue."}
                   </p>
                 </div>
               )}
             </section>
           }
           queue={
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
               <section aria-labelledby="quick-waiting-title">
                 <h2 id="quick-waiting-title" className="text-lg font-bold">
                   {roundMode ? "Waiting & resting" : "Paddle stack"}
@@ -1460,7 +1456,7 @@ function QuickPlayLive({
                   </ol>
                 ) : (
                   <p className="mt-3 border-y border-line py-6 text-sm text-muted">
-                    Everyone is currently playing.
+                    No players are waiting. Use Players to check availability.
                   </p>
                 )}
               </section>
@@ -1484,7 +1480,7 @@ function QuickPlayLive({
           results={session.completedMatches.length ? results : undefined}
           standings={standings.length ? standingsContent : undefined}
           manage={
-            <div className="max-w-2xl space-y-8">
+            <div className="w-full space-y-8">
               <section aria-labelledby="quick-court-availability-title">
                 <h2
                   id="quick-court-availability-title"
@@ -1565,16 +1561,7 @@ function QuickPlayLive({
                   </p>
                 ) : null}
               </section>
-              <section aria-labelledby="quick-end-title">
-                <h2 id="quick-end-title" className="text-lg font-bold">
-                  End Quick Play
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  Keep the final results and standings as a recap on this
-                  device.
-                </p>
-                {sessionAction}
-              </section>
+              <section aria-label="End session">{sessionAction}</section>
             </div>
           }
         />

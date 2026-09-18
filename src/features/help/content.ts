@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-16";
+export const helpReviewedAt = "2026-09-18";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -323,10 +323,10 @@ export const helpArticles: readonly HelpArticle[] = [
       "One browser/device and at least four players. Quick Play supports up to 24 players and six courts, with four players per selected court.",
     ],
     steps: [
-      "Open Quick Play and enter distinct player names. Your unfinished setup is kept in this browser, including the current step.",
+      "Open Quick Play and enter distinct player names. To save and share a game instead, choose Create game beside Continue to game options at the bottom of the Players step. Your unfinished setup is kept in this browser, including the current step.",
       "Choose courts and a mode in Game options. Balanced Mix shows each player’s experience here; other formats offer pairs, queue rules, or a timer. Review these choices and use Edit players or Edit game options before starting.",
-      "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Expand a scoreboard for courtside viewing. Use Manage for court availability and ending Quick Play. The roster stays fixed during play; use a saved game if players need to arrive, rest, or leave.",
-      "Finish or cancel active matches, then open Manage, choose End Quick Play, and confirm End Play. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
+      "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Use the expand icon (Full screen) in a scoreboard header for courtside viewing. Use Manage for court availability and ending Quick Play. Open Players to take a break or rejoin. Waiting players leave the queue immediately; on-court players finish before resting and can cancel their planned break. Rejoining players go to the end of the queue. Fixed pairs need both partners ready; Court Climb waits for everyone to rejoin. Names stay fixed for the session, and availability is saved only in this browser.",
+      "Finish or cancel active matches, then open Manage, choose End session, and confirm End session. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
     ],
     outcome:
       "Play is stored locally in that browser, not as a shareable Relay game. It cannot be transferred into account history or another device.",
@@ -627,8 +627,8 @@ export const helpArticles: readonly HelpArticle[] = [
       "A court or manual venue, future schedule, and intended capacity. An account is required to publish.",
     ],
     steps: [
-      "Open Create game. In Plan, enter the game name, court/address, date, and start/end times.",
-      "In Players and access, set player capacity, court count, visibility, and approval policy. Choose Decide later, Free, or Collect payment; Collect payment records intent only, with price and instructions set afterward in Game settings → Payments. The form supports 2–40 players and 1–20 courts; actual Play has additional eligibility requirements.",
+      "Open Create game. In Plan, enter the game name, court/address, date, and start/end times. For temporary courtside play instead, choose Start Quick Play beside Continue to players at the bottom of this first step.",
+      "In Players and access, set player capacity, court count, visibility, and approval policy. New games start with a player limit of 4; you can change it. Drafts and replayed games keep their existing limit. Choose Decide later, Free, or Collect payment; Collect payment records intent only, with price and instructions set afterward in Game settings → Payments. The form supports 2–40 players and 1–20 courts; actual Play has additional eligibility requirements.",
       "Use optional Details for color, player notes, and booking information, or continue without them.",
       "Read Review and use Edit to correct an earlier stage. Signed-out hosts choose the authentication option here; return to the restored Review and explicitly publish.",
       "After publication, use Share game, Show QR, or Preview shared link for public/link-only games. Private games direct you to account invitations instead.",
@@ -1106,7 +1106,7 @@ export const helpArticles: readonly HelpArticle[] = [
     ],
     steps: [
       "Open Play and confirm the court and both teams before entering points. Courts, Queue, Results, Standings and Manage use the same compact tabs as Quick Play. On phones, move queue entries up or down; desktop also offers move-to-top and move-to-end controls.",
-      "Use plus/minus controls for live scoring or enter the final score. Open the full-screen view if needed; move between active courts there and use its close control or Escape to return.",
+      "Use plus/minus controls for live scoring or enter the final score. Use Swap sides in the scoreboard header to switch the displayed teams without changing their scores. This view choice applies on your device and resets when the scoreboard reloads. Use the expand icon (Full screen) if needed; move between active courts there and use its close control or Escape to return.",
       "If a version conflict appears, read the restored saved score and deliberately retry only the still-needed change.",
       "Choose Finish match, review the teams and final score, then confirm. A winner is required; a tie cannot be finished.",
       "Read the next assignment. Paddle Stack can rotate a court independently; synchronized modes require every active court to finish.",

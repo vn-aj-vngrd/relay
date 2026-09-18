@@ -50,6 +50,48 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it("lets players rest after a match and rejoin through the Players drawer", () => {
+    render(<PublicQuickPlay />);
+    startDefaultGame();
+    fireEvent.click(screen.getByRole("button", { name: "Players (4)" }));
+    const drawer = screen.getByRole("dialog", { name: "Players (4)" });
+    fireEvent.click(
+      within(drawer).getByRole("button", {
+        name: "Take a break after this match for Van",
+      })
+    );
+    expect(
+      within(drawer).getByText("Taking a break after this match")
+    ).toBeVisible();
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Close players" })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add a point to Van + AJ" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Finish match" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+      ).getByRole("button", { name: "Finish match" })
+    );
+    expect(
+      screen.queryByRole("button", { name: "Start next match" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Players (4)" }));
+    fireEvent.click(
+      within(drawer).getByRole("button", {
+        name: "Rejoin queue for Van",
+      })
+    );
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Close players" })
+    );
+    expect(
+      screen.getByRole("button", { name: "Start next match" })
+    ).toBeVisible();
+  });
+
   it("guides setup through Players, Game options, and Review", () => {
     render(<PublicQuickPlay />);
     expect(
@@ -64,6 +106,9 @@ describe("PublicQuickPlay", () => {
     expect(
       screen.getByRole("heading", { name: "Choose how this game runs" })
     ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: /Create game/ })
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
     expect(screen.getByText("This device only")).toBeVisible();
     expect(
@@ -120,12 +165,10 @@ describe("PublicQuickPlay", () => {
     render(<PublicQuickPlay />);
     startDefaultGame();
     expect(
-      screen.queryByRole("button", { name: "End Quick Play" })
+      screen.queryByRole("button", { name: "End session" })
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
-    expect(
-      screen.getByRole("button", { name: "End Quick Play" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "End session" })).toBeDisabled();
     expect(
       screen.getByText("Finish or cancel active matches before ending.")
     ).toBeVisible();
@@ -287,11 +330,11 @@ describe("PublicQuickPlay", () => {
       ).getByRole("button", { name: "Finish match" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
-    fireEvent.click(screen.getByRole("button", { name: "End Quick Play" }));
+    fireEvent.click(screen.getByRole("button", { name: "End session" }));
     fireEvent.click(
       within(
-        screen.getByRole("dialog", { name: "End this Quick Play session?" })
-      ).getByRole("button", { name: "End Play" })
+        screen.getByRole("dialog", { name: "End this session?" })
+      ).getByRole("button", { name: "End session" })
     );
     expect(
       screen.getByRole("heading", { name: "Quick Play recap" })
@@ -369,11 +412,11 @@ describe("PublicQuickPlay", () => {
       )
     );
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
-    fireEvent.click(screen.getByRole("button", { name: "End Quick Play" }));
+    fireEvent.click(screen.getByRole("button", { name: "End session" }));
     fireEvent.click(
       within(
-        screen.getByRole("dialog", { name: "End this Quick Play session?" })
-      ).getByRole("button", { name: "End Play" })
+        screen.getByRole("dialog", { name: "End this session?" })
+      ).getByRole("button", { name: "End session" })
     );
     expect(
       screen.getByRole("region", { name: "Recap summary" })

@@ -32,6 +32,8 @@ function data(status = "published") {
       id: "game",
       status,
       cancellationReason: null,
+      rotationMode: "queue",
+      rotationConfig: {},
     } as SessionPlayData["session"],
     play: deriveLiveState({
       rotationMode: "queue",
@@ -120,5 +122,50 @@ describe("pre-Play state", () => {
     expect(
       screen.queryByRole("link", { name: "Set up Play" })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("live court summary", () => {
+  it.each([1, 2])("reports %i active matches", async (count) => {
+    const live = data("live");
+    const activeMatches: SessionPlayData["activeMatches"] = Array.from(
+      { length: count },
+      (_, index) => ({
+        id: `match-${index}`,
+        courtLabel: `Court ${index + 1}`,
+        sessionId: "game",
+        courtId: null,
+        format: "doubles",
+        status: "active" as const,
+        winningTeam: null,
+        rotationId: null,
+        cancellationReason: null,
+        cancelledAt: null,
+        cancelledById: null,
+        startedAt: new Date("2026-09-18T12:00:00Z"),
+        finishedAt: null,
+        createdAt: new Date("2026-09-18T12:00:00Z"),
+        updatedAt: new Date("2026-09-18T12:00:00Z"),
+        players: [],
+        teamAScore: 0,
+        teamBScore: 0,
+        version: 1,
+      })
+    );
+    render(
+      await SessionPlay({
+        data: { ...live, activeMatches },
+        viewer,
+        storyHref: "/games/game/story",
+      })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Active courts" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        `${count} ${count === 1 ? "match" : "matches"} in progress`
+      )
+    ).toBeInTheDocument();
   });
 });

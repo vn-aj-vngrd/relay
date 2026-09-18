@@ -163,7 +163,16 @@ export async function SessionPlay({
         courts={
           <section>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-lg font-bold">Active courts</h2>
+              <div>
+                <h2 className="text-lg font-bold">Active courts</h2>
+                <p className="mt-1 hidden text-sm text-muted lg:block">
+                  {data.activeMatches.length
+                    ? `${data.activeMatches.length} ${data.activeMatches.length === 1 ? "match" : "matches"} in progress`
+                    : roundRobinComplete
+                      ? "Every pair has played every other pair"
+                      : "Ready for the next rotation"}
+                </p>
+              </div>
               {viewer.canManagePlay &&
               canStartRotation &&
               data.activeMatches.length > 0 ? (
@@ -467,11 +476,7 @@ export async function SessionPlay({
                 </section>
               ) : null}
               {viewer.canCompleteSession && !data.activeMatches.length ? (
-                <form
-                  noValidate
-                  action={completeSession}
-                  className="border-t border-line pt-5"
-                >
+                <form noValidate action={completeSession}>
                   <input
                     type="hidden"
                     name="sessionId"

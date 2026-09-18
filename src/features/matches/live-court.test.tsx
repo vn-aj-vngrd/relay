@@ -49,6 +49,47 @@ const props = {
 };
 
 describe("LiveCourt", () => {
+  it("keeps scoring attached to the team after swapping sides", async () => {
+    vi.useFakeTimers();
+    try {
+      render(<LiveCourt {...props} canScore />);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Swap sides on Court 2" })
+      );
+      const scores = screen.getAllByLabelText(/ score \d+$/);
+      expect(scores[0]).toHaveAttribute(
+        "aria-label",
+        "AJ Santos + Bea Cruz score 6"
+      );
+      expect(scores[1]).toHaveAttribute(
+        "aria-label",
+        "Van Rivera + Mika Reyes score 8"
+      );
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: "Add a point to AJ Santos + Bea Cruz",
+        })
+      );
+      await act(async () => vi.advanceTimersByTime(421));
+      expect(saveScore).toHaveBeenCalledWith({
+        sessionId: props.sessionId,
+        matchId: props.matchId,
+        teamAScore: 8,
+        teamBScore: 7,
+        version: 1,
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Swap sides on Court 2" })
+      );
+      expect(screen.getAllByLabelText(/ score \d+$/)[0]).toHaveAttribute(
+        "aria-label",
+        "Van Rivera + Mika Reyes score 8"
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps team members readable and exposes scoring controls", () => {
     render(<LiveCourt {...props} canScore />);
 
@@ -163,11 +204,11 @@ describe("LiveCourt", () => {
     vi.useRealTimers();
   });
 
-  it("uses a visible full-screen label without a redundant tooltip", () => {
+  it("labels the icon-only full-screen control", () => {
     render(<LiveCourt {...props} canScore={false} />);
     expect(
       screen.getByRole("button", { name: "Open full-screen scoreboard" })
-    ).toHaveTextContent("Full screen");
+    ).toHaveTextContent(/^$/);
     expect(
       screen.queryByRole("tooltip", { hidden: true })
     ).not.toBeInTheDocument();

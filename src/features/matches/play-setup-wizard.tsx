@@ -86,7 +86,7 @@ export function PlaySetupWizard({
             Add or invite players (opens a new tab)
           </Link>
         ) : null}
-        <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-line pt-5">
+        <div className="mt-6 flex flex-wrap justify-end gap-3">
           {play.playerCount < 4 ? (
             <p role="status" className="w-full text-sm text-muted">
               Mark {4 - play.playerCount} more{" "}

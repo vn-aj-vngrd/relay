@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowsLeftRight,
   ArrowsOutSimple,
   CaretLeft,
   CaretRight,
@@ -11,6 +12,7 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Dialog } from "@/components/ui/dialog";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 
 export type CourtScoreboardTeam = {
   label: string;
@@ -35,7 +37,7 @@ type CourtScoreboardProps = {
   error?: string;
   expanded?: boolean;
   navigation?: CourtScoreboardNavigation;
-  headerAction?: ReactNode;
+  onSwap?: () => void;
   finishControl?: ReactNode;
   closeLabel?: string;
   onScore: (side: 0 | 1, amount: -1 | 1) => void;
@@ -81,7 +83,7 @@ function CourtScoreboard({
   error = "",
   expanded = false,
   navigation,
-  headerAction,
+  onSwap,
   finishControl,
   closeLabel = "Close full-screen scoreboard",
   onScore,
@@ -102,20 +104,29 @@ function CourtScoreboard({
           <p className="mt-0.5 text-xs text-muted">Match in progress</p>
         </div>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-live">
-            <span className="h-1.5 w-1.5 rounded-full bg-live" /> Live
-          </span>
-          {headerAction}
+          {onSwap ? (
+            <IconTooltip label="Swap sides">
+              <button
+                type="button"
+                onClick={onSwap}
+                aria-label={`Swap sides on ${courtLabel}`}
+                className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+              >
+                <ArrowsLeftRight aria-hidden size={18} />
+              </button>
+            </IconTooltip>
+          ) : null}
           {onExpand ? (
-            <button
-              type="button"
-              onClick={onExpand}
-              aria-label="Open full-screen scoreboard"
-              className="pressable inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted hover:bg-surface-strong hover:text-ink"
-            >
-              <ArrowsOutSimple aria-hidden size={19} />
-              <span className="hidden min-[360px]:inline">Full screen</span>
-            </button>
+            <IconTooltip label="Full screen">
+              <button
+                type="button"
+                onClick={onExpand}
+                aria-label="Open full-screen scoreboard"
+                className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
+              >
+                <ArrowsOutSimple aria-hidden size={19} />
+              </button>
+            </IconTooltip>
           ) : null}
           {onClose ? (
             <button
@@ -221,13 +232,14 @@ function CourtScoreboard({
           Saving score…
         </p>
       ) : null}
-      {finishControl ? (
-        <footer
-          className={`shrink-0 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}
-        >
-          {finishControl}
-        </footer>
-      ) : null}
+      <footer
+        className={`flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line ${expanded ? "p-4 sm:px-8" : "p-3"}`}
+      >
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-live">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-live" /> Live
+        </span>
+        {finishControl ? <div className="ml-auto">{finishControl}</div> : null}
+      </footer>
     </article>
   );
 }

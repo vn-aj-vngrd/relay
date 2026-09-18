@@ -170,14 +170,14 @@ pre-commit; rendering and exported images remain unverified.
 Quick Play (2026-09-17): signed-in and public `/play` share `PublicQuickPlay`
 and the adaptive shell. Live Quick Play reuses saved-game `PlaySectionTabs`:
 Courts, Queue, Results, Standings and Manage. Results and Standings appear after
-the first completed match. Manage contains court availability and End Quick Play;
+the first completed match. Manage contains court availability and End session;
 ending remains disabled until active matches are finished or cancelled.
 
 Ended Quick Play reuses `buildSessionRecap`, `RecapOverview` and `RecapHighlights`
 from saved-game Recap. It shows real match/point/time totals, highlights, completed
 scores and standings, with a separate confirmed Start new session action. Local
 score corrections update the entire recap. No account history, Story upload,
-sharing or roster availability capability is implied. Empty sessions show zero
+sharing capability is implied. Quick Play now exposes a device-local Players drawer with the same availability vocabulary: on-court breaks defer until match completion, waiting breaks are immediate, and rejoining appends to the queue. Fixed pairs wait for both partners; Court Climb waits for its full roster. Empty sessions show zero
 results without invented highlights. Browser drafts and recaps remain device-local.
 
 The shared compact tab rail remains horizontally scrollable on phones. Quick

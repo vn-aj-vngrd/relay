@@ -1,11 +1,11 @@
 "use client";
 
-import { MapPin, Minus, Plus } from "@phosphor-icons/react";
+import { Lightning, MapPin, Minus, Plus } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Button, ButtonSpinner } from "@/components/ui/button";
+import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import {
   DatePickerField,
   TimeComboboxField,
@@ -673,14 +673,23 @@ function CreateSessionFormContent({
             />
           </div>
         </div>
-        <div className="flex justify-end border-t border-line pt-6">
-          <Button
-            type="button"
-            onClick={continueFromPlan}
-            className="min-h-11 w-full sm:min-h-9 sm:w-auto"
-          >
-            Continue to players
-          </Button>
+        <div className="space-y-3 border-t border-line pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row-reverse">
+            <Button
+              type="button"
+              onClick={continueFromPlan}
+              className="w-full sm:w-auto"
+            >
+              Continue to players
+            </Button>
+            <ButtonLink
+              href="/play"
+              variant="secondary"
+              className="w-full sm:w-auto"
+            >
+              <Lightning aria-hidden size={16} /> Start Quick Play
+            </ButtonLink>
+          </div>
         </div>
       </section>
 
@@ -750,7 +759,7 @@ function CreateSessionFormContent({
             initialValue={
               value("capacity", defaults.capacity)
                 ? Number(value("capacity", defaults.capacity))
-                : 2
+                : 4
             }
             error={errorFor(state, clientErrors, "capacity")}
           />

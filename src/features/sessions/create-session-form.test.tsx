@@ -35,6 +35,21 @@ describe("CreateSessionForm", () => {
     );
   }
 
+  it("offers Quick Play only from the Plan step", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    expect(
+      screen.getByRole("link", { name: "Start Quick Play" })
+    ).toHaveAttribute("href", "/play");
+    moveToAccess();
+    expect(
+      screen.queryByRole("link", { name: "Start Quick Play" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(
+      screen.getByRole("link", { name: "Start Quick Play" })
+    ).toBeVisible();
+  });
+
   it("starts a new game blank instead of guessing the plan", () => {
     render(<CreateSessionForm defaults={{}} />);
 
@@ -122,7 +137,15 @@ describe("CreateSessionForm", () => {
     expect(screen.getByDisplayValue("21:12")).toHaveAttribute("name", "end");
   });
 
-  it("defaults missing quantities to two players and one court", () => {
+  it("preserves the player limit supplied by a replay", () => {
+    render(<CreateSessionForm defaults={completePlan} now={now} />);
+    moveToAccess();
+    expect(
+      screen.getByRole("spinbutton", { name: "Player limit" })
+    ).toHaveValue(8);
+  });
+
+  it("defaults missing quantities to four players and one court", () => {
     render(
       <CreateSessionForm
         defaults={{ ...completePlan, capacity: undefined, courts: undefined }}
@@ -132,11 +155,11 @@ describe("CreateSessionForm", () => {
     moveToAccess();
     const capacity = screen.getByRole("spinbutton", { name: "Player limit" });
     const courts = screen.getByRole("spinbutton", { name: "Court quantity" });
-    expect(capacity).toHaveValue(2);
+    expect(capacity).toHaveValue(4);
     expect(courts).toHaveValue(1);
     expect(
       screen.getByRole("button", { name: "Decrease player limit" })
-    ).toBeDisabled();
+    ).toBeEnabled();
     expect(
       screen.getByRole("button", { name: "Decrease court quantity" })
     ).toBeDisabled();
@@ -312,6 +335,9 @@ describe("CreateSessionForm", () => {
       await screen.findByRole("heading", { name: "Review your game" })
     ).toBeVisible();
     expect(screen.getByText("Saturday Pickle · Central Pickle")).toBeVisible();
+    expect(
+      screen.getByText("8 players · 2 courts · host playing")
+    ).toBeVisible();
     expect(screen.getByText("No optional details added")).toBeVisible();
     expect(screen.getByText("Free · No payment needed")).toBeVisible();
     expect(screen.queryByDisplayValue("2, 3, Center")).not.toBeInTheDocument();

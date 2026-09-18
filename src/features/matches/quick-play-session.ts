@@ -2,6 +2,11 @@ import { z } from "zod";
 
 import { buildSessionRecap } from "@/features/memories/recap";
 
+import {
+  type PlayAvailabilityIntent,
+  planPlayAvailability,
+  splitFinishedPlayers,
+} from "./availability";
 import { calculateStandings } from "./domain";
 import { moveQueueGroup, type QueueMove } from "./lifecycle";
 import {
@@ -43,6 +48,7 @@ export type QuickPlayConfiguration = {
 };
 
 export type QuickPlaySession = QuickPlayConfiguration & {
+  restingPlayerIds: string[];
   waitingPlayerIds: string[];
   activeMatches: QuickPlayMatch[];
   completedMatches: QuickPlayMatch[];
@@ -91,6 +97,7 @@ const quickPlaySessionSchema = z.object({
     .max(60)
     .nullable()
     .default(null),
+  restingPlayerIds: z.array(z.string().min(1)).default([]),
   waitingPlayerIds: z.array(z.string().min(1)),
   activeMatches: z.array(quickPlayMatchSchema),
   completedMatches: z.array(quickPlayMatchSchema),
@@ -126,6 +133,21 @@ function rotationHistory(session: QuickPlaySession): RotationHistory[] {
 function nextPlans(session: QuickPlaySession) {
   if (session.endedAt != null) return [];
   if (session.mode !== "queue" && session.activeMatches.length) return [];
+  if (session.mode === "king_of_court" && session.restingPlayerIds.length)
+    return [];
+  const eligible = new Set(
+    session.waitingPlayerIds.filter(
+      (id) => !session.restingPlayerIds.includes(id)
+    )
+  );
+  const waitingIds = session.fixedPairs.length
+    ? session.waitingPlayerIds.filter((id) =>
+        session.fixedPairs.some(
+          (pair) =>
+            pair.includes(id) && pair.every((member) => eligible.has(member))
+        )
+      )
+    : [...eligible];
   const occupiedCourts = new Set(
     session.activeMatches.map((match) => match.courtId)
   );
@@ -145,7 +167,7 @@ function nextPlans(session: QuickPlaySession) {
   return planRotation({
     mode: session.mode,
     courts: availableCourts,
-    waiting: session.waitingPlayerIds.map((id, index) => ({
+    waiting: waitingIds.map((id, index) => ({
       id,
       position: index + 1,
       experience: experience.get(id),
@@ -252,6 +274,7 @@ export function startQuickPlay(
       ...player,
       name: player.name.trim(),
     })),
+    restingPlayerIds: [],
     waitingPlayerIds: configuration.players.map((player) => player.id),
     activeMatches: [],
     completedMatches: [],
@@ -365,7 +388,10 @@ export function finishQuickPlayMatch(
   };
   return {
     ...session,
-    waitingPlayerIds: [...finishPlan.orderedPlayerIds, ...remaining],
+    waitingPlayerIds: splitFinishedPlayers(
+      [...finishPlan.orderedPlayerIds, ...remaining],
+      new Set(session.restingPlayerIds)
+    ).waitingPlayerIds,
     activeMatches: session.activeMatches.filter((item) => item.id !== matchId),
     completedMatches: [...session.completedMatches, completed],
   };
@@ -415,15 +441,53 @@ export function cancelQuickPlayMatch(
 
   return {
     ...session,
-    waitingPlayerIds: [
-      ...returnedPlayerIds,
-      ...session.waitingPlayerIds.filter(
-        (id) => !returnedPlayerIds.includes(id)
-      ),
-    ],
+    waitingPlayerIds: splitFinishedPlayers(
+      [
+        ...returnedPlayerIds,
+        ...session.waitingPlayerIds.filter(
+          (id) => !returnedPlayerIds.includes(id)
+        ),
+      ],
+      new Set(session.restingPlayerIds)
+    ).waitingPlayerIds,
     activeMatches: session.activeMatches.filter(
       (item) => !cancelledIds.has(item.id)
     ),
+  };
+}
+
+export function setQuickPlayPlayerAvailability(
+  session: QuickPlaySession,
+  playerId: string,
+  intent: PlayAvailabilityIntent
+): QuickPlaySession {
+  if (
+    session.endedAt != null ||
+    !session.players.some((player) => player.id === playerId)
+  )
+    return session;
+  const playing = session.activeMatches.some((match) =>
+    [...match.teamA, ...match.teamB].includes(playerId)
+  );
+  const resting = new Set(session.restingPlayerIds);
+  if ((intent === "sit_out") === resting.has(playerId)) return session;
+  const plan = planPlayAvailability({
+    intent,
+    queueState: playing
+      ? "playing"
+      : resting.has(playerId)
+        ? "resting"
+        : "waiting",
+    maxQueuePosition: session.waitingPlayerIds.length,
+  });
+  if (plan.playerState === "resting") resting.add(playerId);
+  else resting.delete(playerId);
+  const waiting = session.waitingPlayerIds.filter((id) => id !== playerId);
+  if (plan.queueState === "waiting") waiting.push(playerId);
+  return {
+    ...session,
+    restingPlayerIds: [...resting],
+    waitingPlayerIds: waiting,
   };
 }
 

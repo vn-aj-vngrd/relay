@@ -1,11 +1,12 @@
 "use client";
 
-import { Broadcast } from "@phosphor-icons/react";
+import { Broadcast, X } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 
 import { rosterPanelUrl } from "./players-destination";
 
@@ -39,7 +40,10 @@ export function PlayRosterSurface({
 
   useEffect(() => {
     if (live && open) {
-      if (!dialog.current?.open) dialog.current?.showModal();
+      if (!dialog.current?.open) {
+        dialog.current?.showModal();
+        heading.current?.focus();
+      }
     } else if (dialog.current?.open) {
       dialog.current.close();
       trigger.current?.focus();
@@ -50,7 +54,7 @@ export function PlayRosterSurface({
   if (live) {
     return (
       <section
-        className="flex flex-wrap items-center justify-end gap-3"
+        className="flex flex-wrap items-center justify-start gap-3"
         aria-label="Play roster access"
       >
         <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
@@ -61,6 +65,7 @@ export function PlayRosterSurface({
           ref={trigger}
           type="button"
           variant="secondary"
+          className="ml-auto"
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={() => setOpen(true)}
@@ -83,17 +88,25 @@ export function PlayRosterSurface({
           }}
         >
           <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-6">
-            <h2 id="play-roster-title" className="text-lg font-bold">
+            <h2
+              ref={heading}
+              tabIndex={-1}
+              id="play-roster-title"
+              className="text-lg font-bold outline-none"
+            >
               Players ({count})
             </h2>
-            <Button
-              type="button"
-              variant="quiet"
-              className="min-h-11"
-              onClick={() => setOpen(false)}
-            >
-              Close players
-            </Button>
+            <IconTooltip label="Close players">
+              <Button
+                type="button"
+                variant="quiet"
+                size="icon"
+                aria-label="Close players"
+                onClick={() => setOpen(false)}
+              >
+                <X aria-hidden size={20} />
+              </Button>
+            </IconTooltip>
           </div>
           <div className="px-4 pb-8 sm:px-6">{children}</div>
         </Dialog>
