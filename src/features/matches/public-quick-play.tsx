@@ -593,7 +593,7 @@ function QuickPlaySetup({
             {players.map((player, index) => (
               <div
                 key={player.id}
-                className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-end gap-2 py-3"
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-start gap-2 py-3"
               >
                 <div className="min-w-0">
                   <label
@@ -637,7 +637,7 @@ function QuickPlaySetup({
                   onClick={() => removePlayer(player.id)}
                   disabled={players.length <= 4}
                   aria-label={`Remove player ${index + 1}`}
-                  className="pressable grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-danger disabled:opacity-30"
+                  className="pressable mt-6.5 grid h-11 w-11 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-danger disabled:opacity-30"
                 >
                   <Trash aria-hidden size={17} />
                 </button>
@@ -995,17 +995,8 @@ function QuickPlaySetup({
         </section>
 
         {error ? <Alert className="mt-6">{error}</Alert> : null}
-        {step === 1 ? (
-          <div className="mt-6 space-y-2 text-sm text-muted">
-            <p>
-              Player names stay fixed during play. Use Players to take a break
-              or rejoin. Setup stays on this device.
-            </p>
-            <p>Want to save and share the game? Create a saved game.</p>
-          </div>
-        ) : null}
         <div
-          className={`mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center ${step === 1 ? "sm:justify-end" : "sm:justify-between"}`}
+          className={`mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center ${step === 1 ? "sm:flex-wrap" : "border-t border-line pt-5 sm:justify-between"}`}
         >
           <div>
             {step > 1 ? (
@@ -1051,6 +1042,11 @@ function QuickPlaySetup({
               Start Play
             </Button>
           )}
+          {step === 1 ? (
+            <p className="-order-1 text-sm text-muted sm:mr-auto">
+              Quick Play stays on this device.
+            </p>
+          ) : null}
         </div>
       </div>
     </section>
