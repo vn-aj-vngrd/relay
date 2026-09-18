@@ -221,6 +221,31 @@ test("the court map leaves its loading state when raster tiles stall", async ({
   ).toBeVisible();
 });
 
+test("Quick Play keeps neighboring fields aligned when one player has an error", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await page.goto("/play");
+  for (const [index, name] of ["Alex", "Bea", "Casey", "Alex"].entries()) {
+    await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
+  }
+  await page.getByRole("button", { name: "Continue to game options" }).click();
+  const player3 = page.getByRole("textbox", { name: "Player 3" });
+  const player4 = page.getByRole("textbox", { name: "Player 4" });
+  await expect(player3).toHaveAttribute("aria-invalid", "false");
+  await expect(player4).toHaveAttribute("aria-invalid", "true");
+  const thirdBounds = await player3.boundingBox();
+  const fourthBounds = await player4.boundingBox();
+  const removeBounds = await page
+    .getByRole("button", { name: "Remove player 4" })
+    .boundingBox();
+  expect(thirdBounds).not.toBeNull();
+  expect(fourthBounds).not.toBeNull();
+  expect(removeBounds).not.toBeNull();
+  expect(thirdBounds?.y).toBe(fourthBounds?.y);
+  expect(removeBounds?.y).toBe(fourthBounds?.y);
+});
+
 test("public Quick Play prepares players, rotates, and scores without an account", async ({
   page,
 }) => {

@@ -101,8 +101,19 @@ describe("PublicQuickPlay", () => {
       "href",
       "/games/new"
     );
+    const helper = screen.getByText("Quick Play stays on this device.");
+    expect(helper).toBeVisible();
+    expect(helper.parentElement).toContainElement(
+      screen.getByRole("button", { name: "Continue to game options" })
+    );
+    expect(helper.parentElement).toContainElement(
+      screen.getByRole("link", { name: /Create game/ })
+    );
     namePlayers();
     openOptions();
+    expect(
+      screen.queryByText("Quick Play stays on this device.")
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Choose how this game runs" })
     ).toBeVisible();
@@ -224,6 +235,24 @@ describe("PublicQuickPlay", () => {
     expect(
       screen.queryByRole("heading", { name: "Choose how this game runs" })
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps a valid neighboring player clear when Player 4 has a duplicate name", () => {
+    render(<PublicQuickPlay />);
+    namePlayers(["Alex", "Bea", "Casey", "Alex"]);
+    openOptions();
+    const player3 = screen.getByRole("textbox", { name: "Player 3" });
+    const player4 = screen.getByRole("textbox", { name: "Player 4" });
+    expect(player3).toHaveAttribute("aria-invalid", "false");
+    expect(player3).not.toHaveAttribute("aria-describedby");
+    expect(player4).toHaveAttribute("aria-invalid", "true");
+    expect(player4).toHaveAccessibleDescription("Use a unique player name.");
+    expect(player3).toHaveValue("Casey");
+    fireEvent.change(player4, { target: { value: "Drew" } });
+    openOptions();
+    expect(
+      screen.getByRole("heading", { name: "Choose how this game runs" })
+    ).toBeVisible();
   });
 
   it("offers every saved-game Play mode and Relay listboxes", () => {
