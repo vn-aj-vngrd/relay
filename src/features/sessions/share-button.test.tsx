@@ -94,8 +94,10 @@ describe("game sharing recovery", () => {
     expect(
       await screen.findByRole("dialog", { name: "Copy the game link" })
     ).toBeVisible();
-    expect(screen.getByRole("textbox", { name: "Game link" })).toHaveValue(
-      new URL("/s/friends-night", window.location.origin).toString()
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Game link" })).toHaveValue(
+        new URL("/s/friends-night", window.location.origin).toString()
+      )
     );
     expect(selected).not.toHaveBeenCalled();
   });

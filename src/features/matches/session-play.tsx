@@ -1,4 +1,4 @@
-import { Broadcast } from "@phosphor-icons/react/dist/ssr";
+import { Broadcast, FlagCheckered } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
 import { Avatar } from "@/components/shared/avatar-stack";
@@ -475,7 +475,7 @@ export async function SessionPlay({
                   </div>
                 </section>
               ) : null}
-              {viewer.canCompleteSession && !data.activeMatches.length ? (
+              {viewer.canCompleteSession ? (
                 <form noValidate action={completeSession}>
                   <input
                     type="hidden"
@@ -485,7 +485,12 @@ export async function SessionPlay({
                   <ConfirmSubmitButton
                     variant="secondary"
                     className="w-full"
+                    disabled={data.activeMatches.length > 0}
+                    aria-describedby={
+                      data.activeMatches.length ? "session-end-help" : undefined
+                    }
                     confirmTitle="End this session?"
+                    confirmIcon={<FlagCheckered size={20} />}
                     confirmText="You won’t be able to add more matches or scores. Play will become the final Recap, and Story will keep sharing and game photos available."
                     confirmLabel="End session"
                     cancelLabel="Keep playing"
@@ -493,8 +498,13 @@ export async function SessionPlay({
                   >
                     End session
                   </ConfirmSubmitButton>
-                  <p className="mt-2 text-center text-xs text-muted">
-                    This marks the game as ended and locks the final results.
+                  <p
+                    id="session-end-help"
+                    className="mt-2 text-center text-xs text-muted"
+                  >
+                    {data.activeMatches.length
+                      ? "Finish or cancel active matches before ending."
+                      : "This marks the game as ended and locks the final results."}
                   </p>
                 </form>
               ) : null}

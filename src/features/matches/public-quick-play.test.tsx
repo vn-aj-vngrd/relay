@@ -280,7 +280,7 @@ describe("PublicQuickPlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     fireEvent.click(screen.getByRole("button", { name: "Close Court 1" }));
-    expect(screen.getByText("Closing after match")).toBeVisible();
+    expect(screen.getByText("Closing after this match")).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "Queue" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Move to top: Player 8" })
@@ -404,6 +404,10 @@ describe("PublicQuickPlay", () => {
   it("ends a cancelled game with an honest empty recap", () => {
     render(<PublicQuickPlay />);
     startDefaultGame();
+    expect(
+      screen.queryByRole("button", { name: "Cancel Court 1" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel Court 1" }));
     fireEvent.click(
       within(screen.getByRole("dialog", { name: "Cancel Court 1?" })).getByRole(

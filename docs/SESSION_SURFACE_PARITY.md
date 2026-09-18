@@ -188,3 +188,11 @@ descriptions on mobile and keep full names. Both queue controls keep 44px mobile
 targets for up/down; top/end shortcuts are desktop-only. Unlike saved games, its recap has local continuation only and no
 venue/date claims. Regression coverage is updated; lint/types, unit coverage and
 production build passed during PR preparation. Automated E2E remains unrun.
+
+
+Play control parity: both scoreboards keep Finish match as their only footer
+action; cancellation lives in Manage under Match controls. Quick Play exposes
+the same player availability rows in Manage and its Players drawer. Court states
+share wording, availability actions share 44px icon buttons, and End session
+stays visible but disabled while matches are active. Saved-game permissions and
+Quick Play device-local storage remain distinct.

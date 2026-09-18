@@ -11,7 +11,7 @@ import {
 import { useActionState } from "react";
 import { ActionNotice } from "@/components/ui/action-notice";
 
-import { ButtonSpinner } from "@/components/ui/button";
+import { Button, ButtonSpinner } from "@/components/ui/button";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -110,11 +110,12 @@ export function PlayAvailabilityControl({
         <p className="text-xs font-medium text-muted">{status}</p>
       </div>
       <IconTooltip label={`${actionLabel} for ${name}`} side="top" align="end">
-        <button
+        <Button
           type="submit"
           disabled={pending}
           aria-label={`${actionLabel} for ${name}`}
-          className="pressable inline-flex h-9 min-h-9 w-9 items-center justify-center rounded-lg border border-line bg-surface px-0 text-muted hover:bg-surface-strong hover:text-ink"
+          variant="secondary"
+          size="icon"
         >
           {pending ? (
             <ButtonSpinner />
@@ -123,7 +124,7 @@ export function PlayAvailabilityControl({
           ) : (
             <Pause aria-hidden size={16} weight="fill" />
           )}
-        </button>
+        </Button>
       </IconTooltip>
       {state.error ? (
         <ActionNotice message={state.error} response={state} />

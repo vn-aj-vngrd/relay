@@ -1,7 +1,7 @@
 "use client";
 
 import { Warning } from "@phosphor-icons/react/dist/icons/Warning";
-import { type ComponentProps, useId, useRef } from "react";
+import { type ComponentProps, type ReactNode, useId, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 
 type ConfirmSubmitButtonProps = ComponentProps<typeof Button> & {
   confirmTitle: string;
+  confirmIcon?: ReactNode;
   confirmText: string;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -17,6 +18,7 @@ type ConfirmSubmitButtonProps = ComponentProps<typeof Button> & {
 
 export function ConfirmSubmitButton({
   confirmTitle,
+  confirmIcon,
   confirmText,
   confirmLabel = "Confirm",
   cancelLabel = "Keep playing",
@@ -70,8 +72,11 @@ export function ConfirmSubmitButton({
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
-              <Warning aria-hidden size={19} weight="fill" />
+            <span
+              aria-hidden="true"
+              className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${confirmIcon ? "bg-primary-soft text-primary" : "bg-warning/12 text-warning"}`}
+            >
+              {confirmIcon ?? <Warning size={19} weight="fill" />}
             </span>
             <div>
               <h2 id={titleId} className="text-lg font-[680]">

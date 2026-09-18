@@ -300,7 +300,9 @@ test("public Quick Play prepares players, rotates, and scores without an account
     ).toBeGreaterThanOrEqual(64);
     await page.getByRole("button", { name: "Queue", exact: true }).click();
     await expect(
-      page.getByText("Everyone is currently playing.")
+      page.getByText(
+        "No players are waiting. Use Players to check availability."
+      )
     ).toBeVisible();
     await expect(
       page.getByRole("region", { name: "Active rotation rules" })

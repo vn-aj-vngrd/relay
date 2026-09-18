@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ completeSession: vi.fn() }));
@@ -155,13 +155,23 @@ describe("live court summary", () => {
     render(
       await SessionPlay({
         data: { ...live, activeMatches },
-        viewer,
+        viewer: { ...viewer, canManagePlay: true, canCompleteSession: true },
         storyHref: "/games/game/story",
       })
     );
     expect(
       screen.getByRole("heading", { name: "Active courts" })
     ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    expect(screen.getByRole("button", { name: "End session" })).toBeDisabled();
+    expect(
+      screen.getByText("Finish or cancel active matches before ending.")
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        "This marks the game as ended and locks the final results."
+      )
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText(
         `${count} ${count === 1 ? "match" : "matches"} in progress`
