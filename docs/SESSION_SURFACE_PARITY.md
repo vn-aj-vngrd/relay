@@ -170,14 +170,14 @@ pre-commit; rendering and exported images remain unverified.
 Quick Play (2026-09-17): signed-in and public `/play` share `PublicQuickPlay`
 and the adaptive shell. Live Quick Play reuses saved-game `PlaySectionTabs`:
 Courts, Queue, Results, Standings and Manage. Results and Standings appear after
-the first completed match. Manage contains court availability and End Quick Play;
+the first completed match. Manage contains court availability and End session;
 ending remains disabled until active matches are finished or cancelled.
 
 Ended Quick Play reuses `buildSessionRecap`, `RecapOverview` and `RecapHighlights`
 from saved-game Recap. It shows real match/point/time totals, highlights, completed
 scores and standings, with a separate confirmed Start new session action. Local
 score corrections update the entire recap. No account history, Story upload,
-sharing or roster availability capability is implied. Empty sessions show zero
+sharing capability is implied. Quick Play now exposes a device-local Players drawer with the same availability vocabulary: on-court breaks defer until match completion, waiting breaks are immediate, and rejoining appends to the queue. Fixed pairs wait for both partners; Court Climb waits for its full roster. Empty sessions show zero
 results without invented highlights. Browser drafts and recaps remain device-local.
 
 The shared compact tab rail remains horizontally scrollable on phones. Quick
@@ -188,3 +188,11 @@ descriptions on mobile and keep full names. Both queue controls keep 44px mobile
 targets for up/down; top/end shortcuts are desktop-only. Unlike saved games, its recap has local continuation only and no
 venue/date claims. Regression coverage is updated; lint/types, unit coverage and
 production build passed during PR preparation. Automated E2E remains unrun.
+
+
+Play control parity: both scoreboards keep Finish match as their only footer
+action; cancellation lives in Manage under Match controls. Quick Play exposes
+the same player availability rows in Manage and its Players drawer. Court states
+share wording, availability actions share 44px icon buttons, and End session
+stays visible but disabled while matches are active. Saved-game permissions and
+Quick Play device-local storage remain distinct.

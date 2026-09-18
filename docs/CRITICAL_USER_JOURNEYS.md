@@ -136,6 +136,13 @@ Validation deferred to pre-commit.
 
 ## Device-local Quick Play (2026-09-17)
 
+Scoreboard side swapping: Quick Play and saved-game Play share the labeled
+Swap sides control and tooltip in normal and fullscreen views. Saved-game
+swapping changes local display order only; scoring must still write to the
+original team. `live-court.test.tsx` covers swapping, scoring and swapping back.
+Validation deferred to pre-commit; browser coverage for saved-game swapping
+remains unverified.
+
 Both public and authenticated `/play` use `PublicQuickPlay`. Setup must restore
 names, options and its current step after reload; Balanced Mix experience must
 be editable in Game options. Review exposes relevant pairs, queue rules,
@@ -200,3 +207,14 @@ PR review follow-up: Quick Play stores wall-clock completion separately from its
 rotation ordering counter. Legacy recaps omit elapsed time; new timing survives
 reload. Final `pnpm check:full` passed: lint/types, 357 test files / 2,552 tests,
 and production build. Automated E2E remains unrun.
+
+
+Quick Play availability: player names remain fixed, but the Players drawer allows
+breaks and rejoining. Acceptance covers immediate waiting removal, deferred
+on-court rest on completion/cancellation, undoing a deferred break, queue-tail
+rejoining, reload persistence and legacy restoration, fixed-pair eligibility and
+Court Climb pausing. Reuses planPlayAvailability and splitFinishedPlayers from
+saved-game availability. Coverage: quick-play-session.test.ts,
+public-quick-play.test.tsx and the Quick Play smoke scenario (browser suite not
+executed). End session uses the shared secondary action pattern with truthful
+local-recap copy. Validation results are recorded in the PR.

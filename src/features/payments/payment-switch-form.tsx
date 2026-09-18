@@ -1,5 +1,7 @@
 "use client";
 
+import { Gift } from "@phosphor-icons/react";
+
 import { useActionState, useState } from "react";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
 import { ActionNotice } from "@/components/ui/action-notice";
@@ -42,6 +44,8 @@ export function PaymentSwitchForm({
       {choice === "free" ? (
         <ConfirmSubmitButton
           confirmTitle="Make this game free?"
+          confirmIcon={<Gift size={20} />}
+          confirmTone="primary"
           confirmText="Players will no longer owe outstanding amounts. Expenses, payment records, and proof will stay in history. Submitted proof and previous payments need host follow-up. Relay does not issue refunds."
           confirmLabel="Make game free"
           cancelLabel="Keep collecting"

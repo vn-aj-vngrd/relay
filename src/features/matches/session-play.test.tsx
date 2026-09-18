@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ completeSession: vi.fn() }));
@@ -32,6 +32,8 @@ function data(status = "published") {
       id: "game",
       status,
       cancellationReason: null,
+      rotationMode: "queue",
+      rotationConfig: {},
     } as SessionPlayData["session"],
     play: deriveLiveState({
       rotationMode: "queue",
@@ -120,5 +122,60 @@ describe("pre-Play state", () => {
     expect(
       screen.queryByRole("link", { name: "Set up Play" })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("live court summary", () => {
+  it.each([1, 2])("reports %i active matches", async (count) => {
+    const live = data("live");
+    const activeMatches: SessionPlayData["activeMatches"] = Array.from(
+      { length: count },
+      (_, index) => ({
+        id: `match-${index}`,
+        courtLabel: `Court ${index + 1}`,
+        sessionId: "game",
+        courtId: null,
+        format: "doubles",
+        status: "active" as const,
+        winningTeam: null,
+        rotationId: null,
+        cancellationReason: null,
+        cancelledAt: null,
+        cancelledById: null,
+        startedAt: new Date("2026-09-18T12:00:00Z"),
+        finishedAt: null,
+        createdAt: new Date("2026-09-18T12:00:00Z"),
+        updatedAt: new Date("2026-09-18T12:00:00Z"),
+        players: [],
+        teamAScore: 0,
+        teamBScore: 0,
+        version: 1,
+      })
+    );
+    render(
+      await SessionPlay({
+        data: { ...live, activeMatches },
+        viewer: { ...viewer, canManagePlay: true, canCompleteSession: true },
+        storyHref: "/games/game/story",
+      })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Active courts" })
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Manage" }));
+    expect(screen.getByRole("button", { name: "End session" })).toBeDisabled();
+    expect(
+      screen.getByText("Finish or cancel active matches before ending.")
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        "This marks the game as ended and locks the final results."
+      )
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        `${count} ${count === 1 ? "match" : "matches"} in progress`
+      )
+    ).toBeInTheDocument();
   });
 });

@@ -1,9 +1,11 @@
 "use client";
 
+import { X } from "@phosphor-icons/react";
 import { type ReactNode, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { IconTooltip } from "@/components/ui/icon-tooltip";
 
 /** Illustrative roster access, without writing demo state into the visitor's URL. */
 export function PlayersPreview({
@@ -39,14 +41,17 @@ export function PlayersPreview({
           <h2 id="preview-players-title" className="text-lg font-bold">
             Players (8)
           </h2>
-          <Button
-            type="button"
-            variant="quiet"
-            className="min-h-11"
-            onClick={() => dialog.current?.close()}
-          >
-            Close players
-          </Button>
+          <IconTooltip label="Close players">
+            <Button
+              type="button"
+              variant="quiet"
+              size="icon"
+              aria-label="Close players"
+              onClick={() => dialog.current?.close()}
+            >
+              <X aria-hidden size={20} />
+            </Button>
+          </IconTooltip>
         </div>
         {children}
       </Dialog>

@@ -3,6 +3,7 @@
 import { ArrowCounterClockwise, Compass } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
@@ -58,9 +59,9 @@ export function OnboardingResetControl({
         <form noValidate action={action} className="p-5 sm:p-6">
           <input type="hidden" name="userId" value={targetId} />
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
-              <Compass aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone="primary">
+              <Compass size={20} />
+            </ConfirmationIcon>
             <div>
               <h2 className="text-lg font-[680]">Onboard this user again?</h2>
               <p className="mt-2 text-sm leading-6 text-muted">

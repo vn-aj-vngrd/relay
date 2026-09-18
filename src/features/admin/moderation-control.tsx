@@ -1,13 +1,9 @@
 "use client";
 
-import {
-  PauseCircle,
-  Prohibit,
-  ShieldCheck,
-  Warning,
-} from "@phosphor-icons/react";
+import { PauseCircle, Prohibit, ShieldCheck } from "@phosphor-icons/react";
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button, ButtonSpinner } from "@/components/ui/button";
@@ -126,11 +122,9 @@ export function ModerationControl({
         >
           <input type="hidden" name={details.field} value={targetId} />
           <div className="flex items-start gap-3">
-            <span
-              className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${restore ? "bg-success/12 text-success" : "bg-danger/10 text-danger"}`}
-            >
-              <Warning aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone={restore ? "success" : "danger"}>
+              <Icon size={20} />
+            </ConfirmationIcon>
             <div>
               <h2 className="text-lg font-[680]">{details.title}</h2>
               <p className="mt-2 text-sm leading-6 text-muted">

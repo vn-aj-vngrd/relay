@@ -1,5 +1,7 @@
 "use client";
 
+import { UserMinus } from "@phosphor-icons/react";
+
 import { useActionState } from "react";
 import { Avatar } from "@/components/shared/avatar-stack";
 import { ConfirmSubmitButton } from "@/components/shared/confirm-submit-button";
@@ -49,6 +51,8 @@ function RemoveCohostControl({
         aria-label={`Remove ${organizer.name} as co-host`}
         className="min-h-9 px-3 text-danger"
         confirmTitle={`Remove ${organizer.name} as co-host?`}
+        confirmIcon={<UserMinus size={20} />}
+        confirmTone="warning"
         confirmText="They will lose organizer access. Their game RSVP stays unchanged."
         confirmLabel="Remove co-host"
         cancelLabel="Keep co-host"

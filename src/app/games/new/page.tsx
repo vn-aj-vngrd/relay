@@ -1,4 +1,4 @@
-import { ArrowLeft, Lightning } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -156,15 +156,6 @@ export default async function NewGamePage({
         <h1 className="app-title">{pageTitle}</h1>
         <p className="mt-2 text-sm text-muted">{pageDescription}</p>
       </header>
-      <div className="mx-auto mb-7 flex w-full max-w-2xl items-center justify-between gap-4 border-y border-line py-3 text-sm">
-        <p className="text-muted">Already at the courts?</p>
-        <Link
-          href="/play"
-          className="pressable inline-flex min-h-9 items-center gap-1.5 font-semibold text-primary"
-        >
-          <Lightning aria-hidden size={16} /> Start Quick Play
-        </Link>
-      </div>
       <CreateSessionForm
         defaults={defaults}
         now={new Date().toISOString()}

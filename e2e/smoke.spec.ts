@@ -253,21 +253,35 @@ test("public Quick Play prepares players, rotates, and scores without an account
     page.getByRole("heading", { name: "Review Quick Play" })
   ).toBeVisible();
   await page.getByRole("button", { name: "Start Play" }).click();
+  await page.getByRole("button", { name: "Players (4)" }).click();
+  await page
+    .getByRole("button", {
+      name: "Take a break after this match for Van",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByText("Taking a break after this match", { exact: true })
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Keep me in rotation for Van", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Close players" }).click();
   await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
   await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
   const setupViewport = page.viewportSize();
   for (const width of [320, 390]) {
     await page.setViewportSize({ width, height: 844 });
     await expect(
-      page.getByRole("button", { name: "End Quick Play" })
+      page.getByRole("button", { name: "End session" })
     ).toBeHidden();
     await page.getByRole("button", { name: "Manage", exact: true }).click();
     expect(
-      (await page.getByRole("button", { name: "End Quick Play" }).boundingBox())
+      (await page.getByRole("button", { name: "End session" }).boundingBox())
         ?.height
     ).toBe(36);
     await expect(
-      page.getByRole("button", { name: "End Quick Play" })
+      page.getByRole("button", { name: "End session" })
     ).toBeDisabled();
     await page.getByRole("button", { name: "Courts", exact: true }).click();
     expect(
@@ -286,7 +300,9 @@ test("public Quick Play prepares players, rotates, and scores without an account
     ).toBeGreaterThanOrEqual(64);
     await page.getByRole("button", { name: "Queue", exact: true }).click();
     await expect(
-      page.getByText("Everyone is currently playing.")
+      page.getByText(
+        "No players are waiting. Use Players to check availability."
+      )
     ).toBeVisible();
     await expect(
       page.getByRole("region", { name: "Active rotation rules" })
@@ -359,10 +375,10 @@ test("public Quick Play prepares players, rotates, and scores without an account
     page.getByRole("button", { name: "Start next match" })
   ).toBeVisible();
   await page.getByRole("button", { name: "Manage", exact: true }).click();
-  await page.getByRole("button", { name: "End Quick Play" }).click();
+  await page.getByRole("button", { name: "End session" }).click();
   await page
-    .getByRole("dialog", { name: "End this Quick Play session?" })
-    .getByRole("button", { name: "End Play", exact: true })
+    .getByRole("dialog", { name: "End this session?" })
+    .getByRole("button", { name: "End session", exact: true })
     .click();
   await page.reload();
   await expect(

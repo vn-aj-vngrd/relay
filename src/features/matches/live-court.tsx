@@ -1,5 +1,7 @@
 "use client";
 
+import { FlagCheckered } from "@phosphor-icons/react";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -96,6 +98,7 @@ function ManagedLiveCourt({
   const dirtyRef = useRef(false);
   const savingRef = useRef(false);
   const [localScores, setLocalScores] = useState<[number, number]>(scores);
+  const [swapped, setSwapped] = useState(false);
   const [scorePending, setScorePending] = useState(false);
   const [error, setError] = useState("");
 
@@ -213,12 +216,19 @@ function ManagedLiveCourt({
   return (
     <CourtScoreboardCourt
       courtLabel={number}
-      teams={[scoreboardTeam(teams[0]), scoreboardTeam(teams[1])]}
-      scores={localScores}
+      teams={
+        swapped
+          ? [scoreboardTeam(teams[1]), scoreboardTeam(teams[0])]
+          : [scoreboardTeam(teams[0]), scoreboardTeam(teams[1])]
+      }
+      scores={swapped ? [localScores[1], localScores[0]] : localScores}
       canScore={canScore}
       scorePending={scorePending}
       error={error}
-      onScore={score}
+      onScore={(side, amount) =>
+        score(swapped ? (side === 0 ? 1 : 0) : side, amount)
+      }
+      onSwap={() => setSwapped((current) => !current)}
       expanded={expanded}
       onExpandedChange={onExpandedChange}
       navigation={navigation}
@@ -226,15 +236,16 @@ function ManagedLiveCourt({
       keepExpandedContentMounted
       finishControl={
         canScore ? (
-          <form noValidate action={finishMatch}>
+          <form noValidate action={finishMatch} className="flex justify-end">
             <input type="hidden" name="sessionId" value={sessionId} />
             <input type="hidden" name="matchId" value={matchId} />
             <ConfirmSubmitButton
               pendingLabel="Finishing match…"
-              variant="secondary"
-              className="w-full"
+              variant="primary"
               disabled={localScores[0] === localScores[1] || scorePending}
               confirmTitle={`Finish ${number} at ${localScores[0]}–${localScores[1]}?`}
+              confirmIcon={<FlagCheckered size={20} />}
+              confirmTone="primary"
               confirmText={`${teams[0]} ${localScores[0]}, ${teams[1]} ${localScores[1]}. Confirming advances the court rotation.`}
               confirmLabel="Finish match"
             >

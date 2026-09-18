@@ -5,8 +5,8 @@ import {
   ArrowDown,
   ArrowLineDown,
   ArrowLineUp,
-  ArrowsLeftRight,
   ArrowUp,
+  FlagCheckered,
   Lightning,
   LockSimple,
   LockSimpleOpen,
@@ -16,7 +16,6 @@ import {
   Trash,
   UserPlus,
 } from "@phosphor-icons/react";
-import Link from "next/link";
 import {
   type FormEvent,
   useEffect,
@@ -28,7 +27,7 @@ import {
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
 import { WizardProgress } from "@/components/shared/wizard-progress";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { SelectField } from "@/components/ui/select-field";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -47,9 +46,11 @@ import {
   CourtScoreboardCourt,
   type CourtScoreboardNavigation,
 } from "./court-scoreboard";
+import { MatchResultScores } from "./match-result-scores";
 import { playModeOptions } from "./play-mode-options";
 import { PlaySectionTabs } from "./play-section-tabs";
 import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
+import { QuickPlayAvailability, QuickPlayPlayers } from "./quick-play-players";
 import {
   cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
@@ -105,9 +106,7 @@ type QuickCourtProps = {
   onExpandedChange: (expanded: boolean) => void;
   onScore: (side: 0 | 1, amount: -1 | 1) => void;
   onSwap: () => void;
-  onCancel: () => void;
   onFinish: () => void;
-  cancelWholeRound: boolean;
 };
 
 function QuickCourt({
@@ -118,9 +117,7 @@ function QuickCourt({
   onExpandedChange,
   onScore,
   onSwap,
-  onCancel,
   onFinish,
-  cancelWholeRound,
 }: QuickCourtProps) {
   const teams = ([match.teamA, match.teamB] as const).map((team) => {
     const names = team.map((id) => players.get(id) ?? "Player");
@@ -140,46 +137,14 @@ function QuickCourt({
       navigation={navigation}
       onExpandedChange={onExpandedChange}
       onScore={onScore}
-      headerAction={
-        <button
-          type="button"
-          onClick={onSwap}
-          aria-label={`Swap sides on ${match.courtLabel}`}
-          className="pressable grid h-10 w-10 place-items-center rounded-lg text-muted hover:bg-surface-strong hover:text-ink"
-        >
-          <ArrowsLeftRight aria-hidden size={18} />
-        </button>
-      }
+      onSwap={onSwap}
       finishControl={
-        <div className="grid grid-cols-[auto_1fr] gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <ConfirmActionButton
-            variant="quiet"
-            aria-label={
-              cancelWholeRound
-                ? "Cancel active round"
-                : `Cancel ${match.courtLabel}`
-            }
-            confirmTitle={
-              cancelWholeRound
-                ? "Cancel the active round?"
-                : `Cancel ${match.courtLabel}?`
-            }
-            confirmText={
-              cancelWholeRound
-                ? "No scores will be recorded. Everyone in the active round returns to the waiting list."
-                : "No score will be recorded. The players return to the front of the waiting list."
-            }
-            confirmLabel={cancelWholeRound ? "Cancel round" : "Cancel match"}
-            onConfirm={onCancel}
-          >
-            <Prohibit aria-hidden size={16} />
-            {cancelWholeRound ? "Cancel round" : "Cancel"}
-          </ConfirmActionButton>
-          <ConfirmActionButton
-            variant="secondary"
-            className="w-full"
+            variant="primary"
             disabled={match.scores[0] === match.scores[1]}
             confirmTitle={`Finish ${match.courtLabel} at ${match.scores[0]}–${match.scores[1]}?`}
+            confirmIcon={<FlagCheckered size={20} />}
             confirmText={`${teams[0].label} ${match.scores[0]}, ${teams[1].label} ${match.scores[1]}. Confirming advances the rotation.`}
             confirmLabel="Finish match"
             onConfirm={onFinish}
@@ -581,15 +546,6 @@ function QuickPlaySetup({
       </header>
 
       <div className="mx-auto w-full max-w-2xl pb-8">
-        <div className="mb-7 flex items-center justify-between gap-4 border-y border-line py-3 text-sm">
-          <p className="text-muted">Want to save and share the game?</p>
-          <Link
-            href="/games/new"
-            className="pressable inline-flex min-h-9 shrink-0 items-center gap-1.5 font-semibold text-primary"
-          >
-            <Lightning aria-hidden size={16} /> Create game
-          </Link>
-        </div>
         <WizardProgress
           ariaLabel="Quick Play setup progress"
           labels={["Players", "Game options", "Review"]}
@@ -1039,7 +995,18 @@ function QuickPlaySetup({
         </section>
 
         {error ? <Alert className="mt-6">{error}</Alert> : null}
-        <div className="mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+        {step === 1 ? (
+          <div className="mt-6 space-y-2 text-sm text-muted">
+            <p>
+              Player names stay fixed during play. Use Players to take a break
+              or rejoin. Setup stays on this device.
+            </p>
+            <p>Want to save and share the game? Create a saved game.</p>
+          </div>
+        ) : null}
+        <div
+          className={`mt-6 flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center ${step === 1 ? "sm:justify-end" : "sm:justify-between"}`}
+        >
           <div>
             {step > 1 ? (
               <Button
@@ -1054,9 +1021,13 @@ function QuickPlaySetup({
                 Back
               </Button>
             ) : (
-              <p className="text-sm text-muted">
-                This roster stays fixed during play. Setup stays on this device.
-              </p>
+              <ButtonLink
+                href="/games/new"
+                variant="secondary"
+                className="w-full sm:w-auto"
+              >
+                <Lightning aria-hidden size={16} /> Create game
+              </ButtonLink>
             )}
           </div>
           {step === 1 ? (
@@ -1118,6 +1089,7 @@ function QuickPlayLive({
     session.mode === "round_robin" &&
     !session.activeMatches.length &&
     !canStartNext &&
+    session.restingPlayerIds.length === 0 &&
     session.completedMatches.length > 0;
   const roundStartedAt = session.activeMatches.length
     ? Math.min(...session.activeMatches.map((match) => match.startedAt))
@@ -1141,21 +1113,27 @@ function QuickPlayLive({
   }
 
   const sessionAction = (
-    <div className="border-t border-line pt-5">
+    <div className="mt-5">
       <ConfirmActionButton
         variant={ended ? "primary" : "secondary"}
-        className="w-full sm:w-auto"
+        className={ended ? "w-full sm:w-auto" : "w-full"}
         confirmTitle={
-          ended
-            ? "Start a new Quick Play session?"
-            : "End this Quick Play session?"
+          ended ? "Start a new Quick Play session?" : "End this session?"
         }
+        confirmIcon={
+          ended ? (
+            <ArrowCounterClockwise size={20} />
+          ) : (
+            <FlagCheckered size={20} />
+          )
+        }
+        confirmTone={ended ? "warning" : "primary"}
         confirmText={
           ended
             ? "This replaces the recap and completed results in this browser. There is no account backup."
             : "Your results and standings will stay in this browser as a recap. No more matches can be started."
         }
-        confirmLabel={ended ? "Start new session" : "End Play"}
+        confirmLabel={ended ? "Start new session" : "End session"}
         cancelLabel={ended ? "Keep recap" : "Keep playing"}
         onConfirm={() => {
           if (ended) onEdit();
@@ -1168,12 +1146,14 @@ function QuickPlayLive({
         }
         disabled={session.activeMatches.length > 0}
       >
-        <ArrowCounterClockwise aria-hidden size={16} />{" "}
-        {ended ? "Start new session" : "End Quick Play"}
+        {ended ? <ArrowCounterClockwise aria-hidden size={16} /> : null}
+        {ended ? "Start new session" : "End session"}
       </ConfirmActionButton>
-      {session.activeMatches.length ? (
-        <p id="quick-end-help" className="mt-2 text-sm text-muted">
-          Finish or cancel active matches before ending.
+      {!ended ? (
+        <p id="quick-end-help" className="mt-2 text-center text-xs text-muted">
+          {session.activeMatches.length
+            ? "Finish or cancel active matches before ending."
+            : "Ends play and keeps the recap on this device."}
         </p>
       ) : null}
     </div>
@@ -1203,20 +1183,10 @@ function QuickPlayLive({
                     <p className="text-xs font-semibold text-muted">
                       {match.courtLabel}
                     </p>
-                    <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-sm">
-                      <span className="min-w-0 break-words font-medium">
-                        {teamNames[0]}
-                      </span>
-                      <strong className="score text-base">
-                        {match.scores[0]}
-                      </strong>
-                      <span className="min-w-0 break-words font-medium">
-                        {teamNames[1]}
-                      </span>
-                      <strong className="score text-base">
-                        {match.scores[1]}
-                      </strong>
-                    </div>
+                    <MatchResultScores
+                      teams={teamNames}
+                      scores={match.scores}
+                    />
                   </div>
                   <QuickScoreCorrectionControl
                     match={match}
@@ -1288,10 +1258,7 @@ function QuickPlayLive({
       ) : (
         <PlaySectionTabs
           headerActions={
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-live" />
-              Play in progress
-            </span>
+            <QuickPlayPlayers session={session} onChange={onChange} />
           }
           courts={
             <section aria-labelledby="quick-active-courts">
@@ -1368,11 +1335,7 @@ function QuickPlayLive({
                         onSwap={() =>
                           onChange(swapQuickPlayMatchSides(session, match.id))
                         }
-                        onCancel={() =>
-                          onChange(cancelQuickPlayMatch(session, match.id))
-                        }
                         onFinish={() => finish(match.id)}
-                        cancelWholeRound={roundMode}
                       />
                     );
                   })}
@@ -1386,20 +1349,20 @@ function QuickPlayLive({
                   </h3>
                   <p className="mt-2 text-sm text-muted">
                     {roundRobinComplete
-                      ? "Review the standings, then end Quick Play in Manage."
+                      ? "Review the standings, then choose End session in Manage."
                       : canStartNext
                         ? "Start the next rotation when everyone is ready."
                         : session.unavailableCourtIds.length ===
                             session.courtCount
                           ? "Reopen a court in Manage to continue."
-                          : "Add more players in a new setup to continue."}
+                          : "Open Players and rejoin the queue when ready to continue."}
                   </p>
                 </div>
               )}
             </section>
           }
           queue={
-            <div className="max-w-2xl space-y-6">
+            <div className="w-full space-y-6">
               <section aria-labelledby="quick-waiting-title">
                 <h2 id="quick-waiting-title" className="text-lg font-bold">
                   {roundMode ? "Waiting & resting" : "Paddle stack"}
@@ -1460,7 +1423,7 @@ function QuickPlayLive({
                   </ol>
                 ) : (
                   <p className="mt-3 border-y border-line py-6 text-sm text-muted">
-                    Everyone is currently playing.
+                    No players are waiting. Use Players to check availability.
                   </p>
                 )}
               </section>
@@ -1484,7 +1447,13 @@ function QuickPlayLive({
           results={session.completedMatches.length ? results : undefined}
           standings={standings.length ? standingsContent : undefined}
           manage={
-            <div className="max-w-2xl space-y-8">
+            <div className="w-full space-y-8 sm:space-y-9">
+              <section aria-labelledby="quick-availability-title">
+                <h2 id="quick-availability-title" className="text-lg font-bold">
+                  Player availability
+                </h2>
+                <QuickPlayAvailability session={session} onChange={onChange} />
+              </section>
               <section aria-labelledby="quick-court-availability-title">
                 <h2
                   id="quick-court-availability-title"
@@ -1493,7 +1462,8 @@ function QuickPlayLive({
                   Court availability
                 </h2>
                 <p className="mt-1 text-sm leading-5 text-muted">
-                  Closed courts stay in local history and receive no new match.
+                  Closing an occupied court lets its current match finish and
+                  blocks the next assignment.
                 </p>
                 <div className="mt-3 divide-y divide-line border-y border-line">
                   {Array.from({ length: session.courtCount }, (_, index) => {
@@ -1513,10 +1483,10 @@ function QuickPlayLive({
                           <p className="text-sm font-semibold">{label}</p>
                           <p className="text-xs text-muted">
                             {available
-                              ? "Available"
+                              ? "Available for new matches"
                               : active
-                                ? "Closing after match"
-                                : "Unavailable"}
+                                ? "Closing after this match"
+                                : "Unavailable for new matches"}
                           </p>
                         </div>
                         <Button
@@ -1565,16 +1535,58 @@ function QuickPlayLive({
                   </p>
                 ) : null}
               </section>
-              <section aria-labelledby="quick-end-title">
-                <h2 id="quick-end-title" className="text-lg font-bold">
-                  End Quick Play
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  Keep the final results and standings as a recap on this
-                  device.
-                </p>
-                {sessionAction}
-              </section>
+              {session.activeMatches.length ? (
+                <section aria-labelledby="quick-match-controls-title">
+                  <h2
+                    id="quick-match-controls-title"
+                    className="text-lg font-bold"
+                  >
+                    Match controls
+                  </h2>
+                  <div className="mt-3 divide-y divide-line border-y border-line">
+                    {session.activeMatches.map((match) => (
+                      <div
+                        key={match.id}
+                        className="flex min-h-14 flex-wrap items-center justify-between gap-2 py-2"
+                      >
+                        <span className="mr-auto text-sm font-semibold">
+                          {match.courtLabel}
+                        </span>
+                        <ConfirmActionButton
+                          variant="quiet"
+                          className="text-danger"
+                          aria-label={
+                            roundMode
+                              ? "Cancel active round"
+                              : `Cancel ${match.courtLabel}`
+                          }
+                          confirmIcon={<Prohibit size={20} />}
+                          confirmTone="warning"
+                          confirmTitle={
+                            roundMode
+                              ? "Cancel the active round?"
+                              : `Cancel ${match.courtLabel}?`
+                          }
+                          confirmText={
+                            roundMode
+                              ? "No scores will be recorded. Everyone in the active round returns to the waiting list."
+                              : "No score will be recorded. The players return to the front of the waiting list."
+                          }
+                          confirmLabel={
+                            roundMode ? "Cancel round" : "Cancel match"
+                          }
+                          onConfirm={() =>
+                            onChange(cancelQuickPlayMatch(session, match.id))
+                          }
+                        >
+                          {roundMode ? "Cancel rotation" : "Cancel match"}
+                        </ConfirmActionButton>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+              <section aria-label="End session">{sessionAction}</section>
             </div>
           }
         />

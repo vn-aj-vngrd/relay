@@ -99,7 +99,6 @@ export function GameWorkspaceActions({
               ref={trigger}
               type="button"
               variant="secondary"
-              size="icon"
               aria-label="More game actions"
               aria-expanded={open}
               aria-controls={popoverId}

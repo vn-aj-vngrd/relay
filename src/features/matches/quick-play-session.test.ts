@@ -14,6 +14,7 @@ import {
   scoreQuickPlayMatch,
   serializeQuickPlaySession,
   setQuickPlayCourtAvailability,
+  setQuickPlayPlayerAvailability,
   startNextQuickPlayMatches,
   startQuickPlay,
 } from "./quick-play-session";
@@ -288,4 +289,112 @@ it("records real recap timing without changing rotation order and handles legacy
   expect(legacyRecap.playMinutes).toBe(0);
   expect(legacyRecap.matchCount).toBe(1);
   expect(legacyRecap.totalPoints).toBe(1);
+});
+
+describe("Quick Play availability", () => {
+  it("removes waiting players and rejoins them at the back without duplicates", () => {
+    let session = startQuickPlay(
+      configuration({ mode: "queue", courtCount: 1 })
+    );
+    const id = session.waitingPlayerIds[0];
+    session = setQuickPlayPlayerAvailability(session, id, "sit_out");
+    expect(session.waitingPlayerIds).not.toContain(id);
+    expect(session.restingPlayerIds).toContain(id);
+    session = setQuickPlayPlayerAvailability(session, id, "ready");
+    expect(session.waitingPlayerIds.at(-1)).toBe(id);
+    const same = setQuickPlayPlayerAvailability(session, id, "ready");
+    expect(same).toBe(session);
+    expect(restoreQuickPlaySession(serializeQuickPlaySession(session))).toEqual(
+      session
+    );
+  });
+
+  it.each(["finish", "cancel"])("honors deferred rest after %s", (action) => {
+    let session = startQuickPlay(
+      configuration({ mode: "queue", courtCount: 1 })
+    );
+    const match = session.activeMatches[0];
+    const id = match.teamA[0];
+    session = setQuickPlayPlayerAvailability(session, id, "sit_out");
+    expect(session.activeMatches[0].teamA).toContain(id);
+    expect(
+      restoreQuickPlaySession(serializeQuickPlaySession(session))
+        ?.restingPlayerIds
+    ).toContain(id);
+    session =
+      action === "finish"
+        ? giveSideOneAWin(session, match.id)
+        : cancelQuickPlayMatch(session, match.id);
+    expect(session.waitingPlayerIds).not.toContain(id);
+    session = startNextQuickPlayMatches(session);
+    expect(
+      session.activeMatches.flatMap((item) => [...item.teamA, ...item.teamB])
+    ).not.toContain(id);
+  });
+
+  it("lets active players undo deferred rest without entering the queue twice", () => {
+    let session = startQuickPlay(configuration());
+    const match = session.activeMatches[0];
+    const id = match.teamA[0];
+    session = setQuickPlayPlayerAvailability(session, id, "sit_out");
+    session = setQuickPlayPlayerAvailability(session, id, "ready");
+    expect(session.restingPlayerIds).not.toContain(id);
+    expect(session.waitingPlayerIds).not.toContain(id);
+    session = giveSideOneAWin(session, match.id);
+    expect(
+      session.waitingPlayerIds.filter((player) => player === id)
+    ).toHaveLength(1);
+  });
+
+  it.each(["queue", "round_robin"] as const)(
+    "keeps incomplete fixed pairs out of %s matches",
+    (mode) => {
+      let session = startQuickPlay(
+        configuration({
+          mode,
+          courtCount: 1,
+          fixedPairs: [
+            ["player-1", "player-2"],
+            ["player-3", "player-4"],
+            ["player-5", "player-6"],
+            ["player-7", "player-8"],
+          ],
+        })
+      );
+      session = cancelQuickPlayMatch(session, session.activeMatches[0].id);
+      for (const id of ["player-1", "player-3", "player-5", "player-7"])
+        session = setQuickPlayPlayerAvailability(session, id, "sit_out");
+      expect(canStartNextQuickPlayMatches(session)).toBe(false);
+      session = setQuickPlayPlayerAvailability(session, "player-1", "ready");
+      session = setQuickPlayPlayerAvailability(session, "player-3", "ready");
+      expect(canStartNextQuickPlayMatches(session)).toBe(true);
+    }
+  );
+
+  it("pauses Court Climb until its full roster rejoins", () => {
+    let session = startQuickPlay(configuration({ mode: "king_of_court" }));
+    session = setQuickPlayPlayerAvailability(
+      session,
+      session.players[0].id,
+      "sit_out"
+    );
+    for (const match of session.activeMatches)
+      session = giveSideOneAWin(session, match.id);
+    expect(canStartNextQuickPlayMatches(session)).toBe(false);
+    session = setQuickPlayPlayerAvailability(
+      session,
+      session.players[0].id,
+      "ready"
+    );
+    expect(startNextQuickPlayMatches(session).activeMatches).toHaveLength(2);
+  });
+
+  it("restores legacy sessions with everyone available", () => {
+    const session = startQuickPlay(configuration());
+    const stored = JSON.parse(serializeQuickPlaySession(session));
+    stored.session.restingPlayerIds = undefined;
+    expect(
+      restoreQuickPlaySession(JSON.stringify(stored))?.restingPlayerIds
+    ).toEqual([]);
+  });
 });

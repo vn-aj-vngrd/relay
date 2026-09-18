@@ -1,7 +1,8 @@
 "use client";
 
-import { Warning } from "@phosphor-icons/react";
+import { Prohibit } from "@phosphor-icons/react";
 import { useActionState, useEffect, useId, useRef } from "react";
+import { ConfirmationIcon } from "@/components/shared/confirmation-icon";
 import { ActionNotice } from "@/components/ui/action-notice";
 
 import { Button } from "@/components/ui/button";
@@ -77,9 +78,9 @@ export function CancelSessionControl({
           <input type="hidden" name="sessionId" value={sessionId} />
           <input type="hidden" name="version" value={version} />
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-danger/10 text-danger">
-              <Warning aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone="danger">
+              <Prohibit size={20} />
+            </ConfirmationIcon>
             <div>
               <h2 id={titleId} className="text-lg font-[680]">
                 Cancel this game?

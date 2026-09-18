@@ -1,16 +1,21 @@
 "use client";
 
 import { Warning } from "@phosphor-icons/react/dist/icons/Warning";
-import { type ComponentProps, useId, useRef } from "react";
-
+import { type ComponentProps, type ReactNode, useId, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import {
+  ConfirmationIcon,
+  type ConfirmationIconTone,
+} from "./confirmation-icon";
 
 type ConfirmActionButtonProps = Omit<
   ComponentProps<typeof Button>,
   "onClick"
 > & {
   confirmTitle: string;
+  confirmIcon?: ReactNode;
+  confirmTone?: ConfirmationIconTone;
   confirmText: string;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -19,6 +24,8 @@ type ConfirmActionButtonProps = Omit<
 
 export function ConfirmActionButton({
   confirmTitle,
+  confirmIcon,
+  confirmTone = confirmIcon ? "primary" : "warning",
   confirmText,
   confirmLabel = "Confirm",
   cancelLabel = "Keep playing",
@@ -51,9 +58,9 @@ export function ConfirmActionButton({
       >
         <div className="p-5 sm:p-6">
           <div className="flex items-start gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
-              <Warning aria-hidden size={19} weight="fill" />
-            </span>
+            <ConfirmationIcon tone={confirmTone}>
+              {confirmIcon ?? <Warning size={20} />}
+            </ConfirmationIcon>
             <div>
               <h2 id={titleId} className="text-lg font-[680]">
                 {confirmTitle}
