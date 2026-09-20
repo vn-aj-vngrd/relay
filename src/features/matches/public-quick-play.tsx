@@ -53,7 +53,6 @@ import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
 import { QuickPlayAvailability, QuickPlayPlayers } from "./quick-play-players";
 import {
   cancelQuickPlayMatch,
-  canStartNextQuickPlayMatches,
   correctQuickPlayMatchScore,
   endQuickPlay,
   finishQuickPlayMatch,
@@ -62,6 +61,7 @@ import {
   type QuickPlayMatch,
   type QuickPlayPlayer,
   type QuickPlaySession,
+  quickPlayNextRotation,
   quickPlayRecap,
   quickPlayStorageKey,
   reorderQuickPlayQueue,
@@ -85,6 +85,7 @@ import {
 } from "./rotation";
 import { RoundTimer } from "./round-timer";
 import { SessionStandings } from "./session-standings";
+import { UpNext } from "./up-next";
 
 type DraftPlayer = {
   id: string;
@@ -647,8 +648,8 @@ function QuickPlaySetup({
         </section>
 
         <section aria-labelledby="quick-format-title" hidden={step !== 2}>
-          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="min-w-0 flex-1">
+          <div className="space-y-5">
+            <div>
               <h2
                 id="quick-format-title"
                 tabIndex={-1}
@@ -690,7 +691,7 @@ function QuickPlaySetup({
             </div>
           </div>
 
-          <fieldset className="mt-8">
+          <fieldset className="mt-6">
             <legend className="sr-only">Play mode</legend>
             <div className="divide-y divide-line border-y border-line">
               {playModeOptions.map(
@@ -1027,7 +1028,7 @@ function QuickPlaySetup({
               onClick={continueToOptions}
               className="w-full sm:w-auto"
             >
-              Continue to game options
+              Continue
             </Button>
           ) : step === 2 ? (
             <Button
@@ -1075,7 +1076,8 @@ function QuickPlayLive({
   );
   const recap = quickPlayRecap(session);
   const standings = recap.standings;
-  const canStartNext = canStartNextQuickPlayMatches(session);
+  const nextRotation = quickPlayNextRotation(session);
+  const canStartNext = nextRotation.plans.length > 0;
   const waiting = session.waitingPlayerIds.map((id) => ({
     id,
     name: names.get(id) ?? "Player",
@@ -1084,9 +1086,8 @@ function QuickPlayLive({
   const roundRobinComplete =
     session.mode === "round_robin" &&
     !session.activeMatches.length &&
-    !canStartNext &&
-    session.restingPlayerIds.length === 0 &&
-    session.completedMatches.length > 0;
+    session.completedMatches.length >=
+      (session.fixedPairs.length * (session.fixedPairs.length - 1)) / 2;
   const roundStartedAt = session.activeMatches.length
     ? Math.min(...session.activeMatches.map((match) => match.startedAt))
     : null;
@@ -1271,15 +1272,6 @@ function QuickPlayLive({
                         : "Ready for the next rotation"}
                   </p>
                 </div>
-                {canStartNext ? (
-                  <Button
-                    type="button"
-                    onClick={() => onChange(startNextQuickPlayMatches(session))}
-                  >
-                    <Shuffle aria-hidden size={17} />{" "}
-                    {roundMode ? "Start next round" : "Start next match"}
-                  </Button>
-                ) : null}
               </div>
               {session.roundDurationMinutes && roundStartedAt ? (
                 <div className="mt-4">
@@ -1336,25 +1328,38 @@ function QuickPlayLive({
                     );
                   })}
                 </div>
-              ) : (
-                <div className="mt-4 border-y border-line py-10">
-                  <h3 className="font-bold">
-                    {roundRobinComplete
-                      ? "Round robin complete"
-                      : "Courts are ready"}
-                  </h3>
+              ) : roundRobinComplete ? (
+                <div className="mt-4 border-y border-line py-6">
+                  <h3 className="font-bold">Round robin complete</h3>
                   <p className="mt-2 text-sm text-muted">
-                    {roundRobinComplete
-                      ? "Review the standings, then choose End session in Manage."
-                      : canStartNext
-                        ? "Start the next rotation when everyone is ready."
-                        : session.unavailableCourtIds.length ===
-                            session.courtCount
-                          ? "Reopen a court in Manage to continue."
-                          : "Open Players and rejoin the queue when ready to continue."}
+                    Every pair has played each other once. Review the standings,
+                    then end the session in Manage.
                   </p>
                 </div>
-              )}
+              ) : null}
+              {!roundRobinComplete ? (
+                <UpNext
+                  preview={nextRotation}
+                  names={names}
+                  action={
+                    canStartNext ? (
+                      <Button
+                        type="button"
+                        onClick={() =>
+                          onChange(startNextQuickPlayMatches(session))
+                        }
+                      >
+                        <Shuffle aria-hidden size={17} />
+                        {roundMode
+                          ? "Start next round"
+                          : nextRotation.plans.length > 1
+                            ? `Start ${nextRotation.plans.length} courts`
+                            : "Start next match"}
+                      </Button>
+                    ) : undefined
+                  }
+                />
+              ) : null}
             </section>
           }
           queue={

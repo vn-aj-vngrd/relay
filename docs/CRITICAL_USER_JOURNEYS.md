@@ -218,3 +218,24 @@ saved-game availability. Coverage: quick-play-session.test.ts,
 public-quick-play.test.tsx and the Quick Play smoke scenario (browser suite not
 executed). End session uses the shared secondary action pattern with truthful
 local-recap copy. Validation results are recorded in the PR.
+
+## Up next review (2026-09-20)
+
+J08 and device-local Quick Play: Courts shows one upcoming rotation beneath the
+scoreboards. Paddle Stack previews teams when four waiting players rotate in;
+result-dependent lineups name waiting players without guessing winners or a
+court. Synchronized modes wait for every court. Once ready, the preview and Start use the same planner. Fixed partners,
+breaks, closed courts and completed round robins remain respected. Saved-game
+starts reject a changed lineup under the session lock and refresh both access
+paths; read-only viewers cannot start matches.
+
+Coverage added: `next-rotation.test.ts`, `create-queue-match.test.ts`,
+`quick-play-session.test.ts`, `public-quick-play.test.tsx`,
+`session-play.test.tsx`, and Quick Play/shared Play assertions in
+`e2e/smoke.spec.ts`. Local Quick Play was manually exercised with eight players
+and one court: preview, finish, and start the displayed lineup. Light/dark
+layouts were inspected at 390px and 1440px. Saved-game browser flow and the
+automated browser suite remain unrun. Pre-commit formatting, TypeScript and
+production build passed. The full unit run passed 2,589 tests with one timeout in
+an unchanged Games-header test; all three tests in that file passed on isolated
+retry without code or timeout changes. CI must pass on the PR head before merge.

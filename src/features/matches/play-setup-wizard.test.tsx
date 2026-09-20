@@ -30,9 +30,7 @@ describe("PlaySetupWizard", () => {
     expect(
       screen.queryByRole("button", { name: "Start Play" })
     ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole("button", { name: "Continue to game options" })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     fireEvent.click(screen.getByRole("radio", { name: /Mix It Up/ }));
     fireEvent.click(screen.getByRole("button", { name: "Review setup" }));
     expect(
@@ -51,9 +49,7 @@ describe("PlaySetupWizard", () => {
         play={{ ...play, playerCount: 3 }}
       />
     );
-    expect(
-      screen.getByRole("button", { name: "Continue to game options" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Mark 1 more player here to continue."
     );

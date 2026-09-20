@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-18";
+export const helpReviewedAt = "2026-09-20";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -323,8 +323,9 @@ export const helpArticles: readonly HelpArticle[] = [
       "One browser/device and at least four players. Quick Play supports up to 24 players and six courts, with four players per selected court.",
     ],
     steps: [
-      "Open Quick Play and enter distinct player names. To save and share a game instead, choose Create game beside Continue to game options at the bottom of the Players step. Your unfinished setup is kept in this browser, including the current step.",
+      "Open Quick Play and enter distinct player names. To save and share a game instead, choose Create game beside Continue at the bottom of the Players step. Your unfinished setup is kept in this browser, including the current step.",
       "Choose courts and a mode in Game options. Balanced Mix shows each player’s experience here; other formats offer pairs, queue rules, or a timer. Review these choices and use Edit players or Edit game options before starting.",
+      "In Courts, look below the scoreboards for Up next. Paddle Stack previews the next teams when four waiting players can rotate in; otherwise Get ready names the waiting players while results determine who joins them. Synchronized formats confirm teams after every court finishes. When ready, review the teams and court shown there, then choose Start next match or Start next round. Multiple ready courts start together. Taking a break or changing the queue updates the preview.",
       "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. Completed scores mark the winning team with a Winner label, which updates after score corrections. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Use the expand icon (Full screen) in a scoreboard header for courtside viewing. Use Manage for player and court availability, cancelling matches or rotations, and ending the session. Open Players to take a break or rejoin. Waiting players leave the queue immediately; on-court players finish before resting and can cancel their planned break. Rejoining players go to the end of the queue. Fixed pairs need both partners ready; Court Climb waits for everyone to rejoin. Names stay fixed for the session, and availability is saved only in this browser.",
       "Finish or cancel active matches, then open Manage, choose End session, and confirm End session. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
     ],
@@ -1110,6 +1111,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "If a version conflict appears, read the restored saved score and deliberately retry only the still-needed change.",
       "Choose Finish match, review the teams and final score, then confirm. A winner is required; a tie cannot be finished.",
       "Read the next assignment. Paddle Stack can rotate a court independently; synchronized modes require every active court to finish.",
+      "Check Up next below the active courts while waiting. Paddle Stack shows who should prepare for the next available court without guessing the current winner. Synchronized formats show who is waiting this round and confirm assignments after all courts finish. Hosts and co-hosts start the displayed lineup from Up next; players and shared-link viewers see the same preview without start controls. If another device changes the lineup, review the refreshed teams before trying again.",
     ],
     outcome:
       "A completed match becomes durable history and contributes to standings. Optional timers survive refresh from saved start time but never auto-complete a score.",
@@ -1126,6 +1128,8 @@ export const helpArticles: readonly HelpArticle[] = [
     sources: [
       "src/features/matches/actions.ts",
       "src/features/matches/live-court.tsx",
+      "src/features/matches/up-next.tsx",
+      "src/features/matches/next-rotation.ts",
     ],
   },
   {

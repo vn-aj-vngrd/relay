@@ -35,6 +35,11 @@ import {
   restoreCancelledPlayers,
 } from "./lifecycle";
 import {
+  assertRotationPreview,
+  changedLineupMessage,
+  planNextRotation,
+} from "./next-rotation";
+import {
   type PlaySetup,
   parsePlaySetup,
   planMatchFinish,
@@ -448,12 +453,33 @@ export async function createQueueMatch(
   formData: FormData
 ): Promise<CreateMatchActionState> {
   const sessionId = String(formData.get("sessionId"));
-  const { session } = await requirePlayManager(sessionId);
+  const { session, user } = await requirePlayManager(sessionId);
   try {
     await db.transaction(async (tx) => {
       await tx.execute(
         sql`select id from ${sessions} where id = ${sessionId} for update`
       );
+      const currentSession = await tx.query.sessions.findFirst({
+        where: eq(sessions.id, sessionId),
+      });
+      const membership = await tx.query.sessionPlayers.findFirst({
+        where: and(
+          eq(sessionPlayers.sessionId, sessionId),
+          eq(sessionPlayers.userId, user.id)
+        ),
+      });
+      if (
+        currentSession?.status !== "live" ||
+        !can(
+          sessionActor({
+            userId: user.id,
+            hostId: currentSession.hostId,
+            membership,
+          }),
+          "edit"
+        )
+      )
+        throw new Error("This game is no longer available to start a match.");
       const [active, sessionCourts, waiting, completed, pairRows] =
         await Promise.all([
           tx
@@ -516,20 +542,20 @@ export async function createQueueMatch(
               asc(sessionPairMembers.position)
             ),
         ]);
-      if (session.rotationMode !== "queue" && active.length)
+      if (currentSession.rotationMode !== "queue" && active.length)
         throw new Error("Finish every court before starting the next round.");
       const enabledCourts = sessionCourts.filter(
         (court) => court.availableForPlay
       );
       const used = new Set(active.map((match) => match.courtId));
       const availableCourts =
-        session.rotationMode === "queue"
+        currentSession.rotationMode === "queue"
           ? enabledCourts.filter((court) => !used.has(court.id))
           : enabledCourts;
       if (!availableCourts.length)
         throw new Error("Every court already has an active match.");
       if (
-        session.rotationMode === "king_of_court" &&
+        currentSession.rotationMode === "king_of_court" &&
         waiting.length !== enabledCourts.length * 4
       )
         throw new Error(
@@ -574,15 +600,17 @@ export async function createQueueMatch(
             .map((row) => row.sessionPlayerId) as [string, string]
       );
       const mode =
-        session.rotationMode === "random" ||
-        session.rotationMode === "balanced" ||
-        session.rotationMode === "king_of_court" ||
-        session.rotationMode === "round_robin"
-          ? session.rotationMode
+        currentSession.rotationMode === "random" ||
+        currentSession.rotationMode === "balanced" ||
+        currentSession.rotationMode === "king_of_court" ||
+        currentSession.rotationMode === "round_robin"
+          ? currentSession.rotationMode
           : "queue";
-      const plans = planRotation({
+      const plans = planNextRotation({
         mode,
-        courts: availableCourts,
+        queueRule: queueRuleFromConfig(currentSession.rotationConfig),
+        courts: enabledCourts,
+        activeCourtIds: active.map((match) => match.courtId ?? ""),
         waiting: waiting.map((item) => ({
           id: item.sessionPlayerId,
           position: item.position,
@@ -591,6 +619,7 @@ export async function createQueueMatch(
         history,
         fixedPairs,
       });
+      assertRotationPreview(plans, formData.get("expectedLineup"));
       if (!plans.length)
         throw new Error(
           mode === "round_robin"
@@ -675,6 +704,8 @@ export async function createQueueMatch(
     });
   } catch (error) {
     const expectedMessages = new Set([
+      changedLineupMessage,
+      "This game is no longer available to start a match.",
       "Finish every court before starting the next round.",
       "Every court already has an active match.",
       "Court Climb needs exactly four active players per court.",
@@ -682,8 +713,11 @@ export async function createQueueMatch(
       "Every pair has completed the round robin.",
       "There are not enough waiting players for another match.",
     ]);
-    if (error instanceof Error && expectedMessages.has(error.message))
+    if (error instanceof Error && expectedMessages.has(error.message)) {
+      revalidatePath(`/games/${sessionId}/play`);
+      revalidatePath(`/s/${session.slug}/play`);
       return { error: error.message };
+    }
     console.error(
       "Starting the next Play rotation failed",
       error instanceof Error ? error.name : "UnknownError"
