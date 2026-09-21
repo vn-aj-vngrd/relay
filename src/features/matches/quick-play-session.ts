@@ -58,6 +58,7 @@ export type QuickPlaySession = QuickPlayConfiguration & {
 };
 
 export const quickPlayStorageKey = "relay-quick-play-session";
+export const quickPlayPreviousKey = "relay-quick-play-previous";
 export const maxQuickPlayCourts = 6;
 export const maxQuickPlayPlayers = maxQuickPlayCourts * 4;
 
@@ -245,6 +246,29 @@ export function restoreQuickPlaySession(
 
 export function serializeQuickPlaySession(session: QuickPlaySession) {
   return JSON.stringify({ version: 1, session });
+}
+
+export function addQuickPlayPlayer(
+  session: QuickPlaySession,
+  player: QuickPlayPlayer
+): QuickPlaySession {
+  if (session.endedAt != null) throw new Error("This session has ended.");
+  if (session.mode !== "queue" || session.fixedPairs.length)
+    throw new Error("Add players during mixed-partner Paddle Stack only.");
+  const name = player.name.trim();
+  if (!name || name.length > 50)
+    throw new Error("Enter a player name of 1–50 characters.");
+  if (!player.id || session.players.some((entry) => entry.id === player.id))
+    throw new Error("This player is already in the session.");
+  if (!Number.isFinite(player.experience))
+    throw new Error("Choose a valid playing experience.");
+  const next = {
+    ...session,
+    players: [...session.players, { ...player, name }],
+    waitingPlayerIds: [...session.waitingPlayerIds, player.id],
+  };
+  validateQuickPlayConfiguration(next);
+  return next;
 }
 
 export function startQuickPlay(

@@ -1,13 +1,15 @@
 "use client";
 
 import { ArrowClockwise, Broadcast, Pause, X } from "@phosphor-icons/react";
-import { useRef } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 
 import {
+  addQuickPlayPlayer,
+  maxQuickPlayPlayers,
   type QuickPlaySession,
   setQuickPlayPlayerAvailability,
 } from "./quick-play-session";
@@ -21,6 +23,32 @@ export function QuickPlayPlayers({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const canAdd = session.mode === "queue" && !session.fixedPairs.length;
+  function addPlayer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      onChange(
+        addQuickPlayPlayer(session, {
+          id: crypto.randomUUID(),
+          name,
+          experience: 2,
+        })
+      );
+      setNotice(`${name.trim()} joined the end of the queue.`);
+      setName("");
+      setError("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not add this player. Try again."
+      );
+      setNotice("");
+    }
+  }
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
@@ -66,9 +94,67 @@ export function QuickPlayPlayers({
         </div>
         <div className="px-4 pb-8 sm:px-6">
           <p className="my-4 text-sm text-muted">
-            Take a break or rejoin the queue. Player names stay fixed for this
-            session.
+            Take a break or rejoin the queue.
           </p>
+          {canAdd ? (
+            <form
+              noValidate
+              onSubmit={addPlayer}
+              className="mb-5 border-b border-line pb-5"
+            >
+              <label
+                htmlFor="quick-late-player"
+                className="text-sm font-semibold"
+              >
+                Add a player
+              </label>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  id="quick-late-player"
+                  className="field mt-0 min-w-0 flex-1"
+                  value={name}
+                  maxLength={50}
+                  autoComplete="off"
+                  placeholder="Player name"
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setError("");
+                    setNotice("");
+                  }}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby="quick-late-player-help"
+                  disabled={session.players.length >= maxQuickPlayPlayers}
+                />
+                <Button
+                  type="submit"
+                  disabled={
+                    !name.trim() ||
+                    session.players.length >= maxQuickPlayPlayers
+                  }
+                >
+                  Add player
+                </Button>
+              </div>
+              <p
+                id="quick-late-player-help"
+                className={`mt-2 text-xs ${error ? "text-danger" : "text-muted"}`}
+                role={error ? "alert" : undefined}
+              >
+                {error ||
+                  (session.players.length >= maxQuickPlayPlayers
+                    ? "All 24 player spots are filled."
+                    : "New arrivals join the end. Current matches stay unchanged.")}
+              </p>
+              <p role="status" className="mt-2 text-xs text-muted">
+                {notice}
+              </p>
+            </form>
+          ) : (
+            <p className="mb-4 text-xs text-muted">
+              This format keeps its starting roster. Use mixed-partner Paddle
+              Stack to add players during play.
+            </p>
+          )}
           <QuickPlayAvailability session={session} onChange={onChange} />
         </div>
       </Dialog>

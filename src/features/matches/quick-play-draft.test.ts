@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
+import {
+  loadQuickPlayDraft,
+  parseQuickPlayNames,
+  quickPlayDraftKey,
+  quickPlayReplayDraft,
+} from "./quick-play-draft";
+import { startQuickPlay } from "./quick-play-session";
 import {
   readQuickPlayStorage,
   writeQuickPlayStorage,
@@ -83,5 +89,56 @@ describe("Quick Play draft recovery", () => {
     );
     expect(writeQuickPlayStorage("session", null)).toContain("couldn’t save");
     expect(loadQuickPlayDraft().draft).toBeNull();
+  });
+});
+
+describe("Quick Play roster shortcuts", () => {
+  it("parses newline-separated names without splitting names containing commas", () => {
+    expect(
+      parseQuickPlayNames(" Ana \r\n\nReyes, Ben\nCarlo", ["Van"])
+    ).toEqual(["Ana", "Reyes, Ben", "Carlo"]);
+    expect(() => parseQuickPlayNames("ana\n ANA", [])).toThrow("unique");
+    expect(() => parseQuickPlayNames(" van ", ["Van"])).toThrow("unique");
+    expect(() => parseQuickPlayNames(" ", [])).toThrow("at least one");
+    expect(() => parseQuickPlayNames("a".repeat(51), [])).toThrow("50");
+    expect(() =>
+      parseQuickPlayNames(
+        "Extra",
+        Array.from({ length: 24 }, (_, i) => `Player ${i}`)
+      )
+    ).toThrow("24");
+  });
+
+  it("replays fixed pairs and experience through the normal persisted draft", () => {
+    const session = startQuickPlay({
+      players: ["Ana", "Ben", "Carlo", "Dana"].map((name, index) => ({
+        id: name,
+        name,
+        experience: index + 1,
+      })),
+      courtCount: 1,
+      mode: "round_robin",
+      queueRule: "four_off",
+      fixedPairs: [
+        ["Ana", "Carlo"],
+        ["Ben", "Dana"],
+      ],
+      roundDurationMinutes: 12,
+    });
+    localStorage.setItem(
+      quickPlayDraftKey,
+      JSON.stringify(quickPlayReplayDraft(session))
+    );
+    const restored = loadQuickPlayDraft().draft;
+    expect(restored?.step).toBe(1);
+    expect(restored?.pairOrder).toEqual(["Ana", "Carlo", "Ben", "Dana"]);
+    expect(restored?.players.map((player) => player.experience)).toEqual([
+      "new",
+      "casual",
+      "regular",
+      "experienced",
+    ]);
+    expect(restored?.roundDuration).toBe("12");
+    expect(restored?.partnerPolicy).toBe("fixed");
   });
 });

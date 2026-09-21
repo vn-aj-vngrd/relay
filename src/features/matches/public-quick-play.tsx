@@ -49,7 +49,12 @@ import {
 import { MatchResultScores } from "./match-result-scores";
 import { playModeOptions } from "./play-mode-options";
 import { PlaySectionTabs } from "./play-section-tabs";
-import { loadQuickPlayDraft, quickPlayDraftKey } from "./quick-play-draft";
+import {
+  loadQuickPlayDraft,
+  parseQuickPlayNames,
+  quickPlayDraftKey,
+  quickPlayReplayDraft,
+} from "./quick-play-draft";
 import { QuickPlayAvailability, QuickPlayPlayers } from "./quick-play-players";
 import {
   cancelQuickPlayMatch,
@@ -62,6 +67,7 @@ import {
   type QuickPlayPlayer,
   type QuickPlaySession,
   quickPlayNextRotation,
+  quickPlayPreviousKey,
   quickPlayRecap,
   quickPlayStorageKey,
   reorderQuickPlayQueue,
@@ -361,6 +367,9 @@ function QuickPlaySetup({
   const [playerErrors, setPlayerErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
   const courtCount = Number(courtCountInput);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pastedNames, setPastedNames] = useState("");
+  const [pasteError, setPasteError] = useState("");
   const requiredPlayerCount = courtCount * 4;
   const missingPlayerCount = Math.max(0, requiredPlayerCount - players.length);
   const courtCountValid =
@@ -434,6 +443,52 @@ function QuickPlaySetup({
     setPlayers((current) => [...current, player]);
     setPairOrder((current) => [...current, player.id]);
     setError("");
+  }
+
+  function addPastedNames() {
+    try {
+      const namedPlayers = players.filter((player) => player.name.trim());
+      const names = parseQuickPlayNames(
+        pastedNames,
+        namedPlayers.map((player) => player.name)
+      );
+      const nextPlayers = [
+        ...namedPlayers,
+        ...names.map((name) => ({
+          id: crypto.randomUUID(),
+          name,
+          experience: "casual" as const,
+        })),
+      ];
+      while (nextPlayers.length < 4)
+        nextPlayers.push({
+          id: crypto.randomUUID(),
+          name: "",
+          experience: "casual",
+        });
+      const ids = new Set(nextPlayers.map((player) => player.id));
+      setPairOrder([
+        ...pairOrder.filter((id) => ids.has(id)),
+        ...nextPlayers
+          .filter((player) => !pairOrder.includes(player.id))
+          .map((player) => player.id),
+      ]);
+      setPlayers(nextPlayers);
+      setPlayerErrors({});
+      setError("");
+      setPasteError("");
+      setPastedNames("");
+      setPasteOpen(false);
+      requestAnimationFrame(() => {
+        playerInputRefs.current.get(nextPlayers[0].id)?.focus();
+      });
+    } catch (reason) {
+      setPasteError(
+        reason instanceof Error
+          ? reason.message
+          : "Check the names and try again."
+      );
+    }
   }
 
   function removePlayer(id: string) {
@@ -568,7 +623,7 @@ function QuickPlaySetup({
           </Alert>
         ) : null}
         <section aria-labelledby="quick-players-title" hidden={step !== 1}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
             <div className="min-w-0 flex-1">
               <h2
                 id="quick-players-title"
@@ -581,15 +636,75 @@ function QuickPlaySetup({
                 Add 4–24 players. Each active court needs four.
               </p>
             </div>
-            <Button
-              type="button"
-              variant="quiet"
-              onClick={addPlayer}
-              disabled={players.length >= maxQuickPlayPlayers}
-            >
-              <UserPlus aria-hidden size={17} /> Add player
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                aria-expanded={pasteOpen}
+                aria-controls="quick-paste-names"
+                onClick={() => setPasteOpen(!pasteOpen)}
+              >
+                Paste names
+              </Button>
+              <Button
+                type="button"
+                variant="quiet"
+                onClick={addPlayer}
+                disabled={players.length >= maxQuickPlayPlayers}
+              >
+                <UserPlus aria-hidden size={17} /> Add player
+              </Button>
+            </div>
           </div>
+          {pasteOpen ? (
+            <div
+              id="quick-paste-names"
+              className="mt-4 border-y border-line py-4"
+            >
+              <label
+                htmlFor="quick-names-list"
+                className="text-sm font-semibold"
+              >
+                Names, one per line
+              </label>
+              <p id="quick-names-help" className="mt-1 text-xs text-muted">
+                Adds to the names you already entered. You can edit everyone
+                below.
+              </p>
+              <textarea
+                id="quick-names-list"
+                className="field mt-2 min-h-32"
+                rows={5}
+                value={pastedNames}
+                maxLength={2400}
+                onChange={(event) => {
+                  setPastedNames(event.target.value);
+                  setPasteError("");
+                }}
+                aria-invalid={Boolean(pasteError)}
+                aria-describedby={
+                  pasteError
+                    ? "quick-names-help quick-names-error"
+                    : "quick-names-help"
+                }
+              />
+              {pasteError ? (
+                <p
+                  id="quick-names-error"
+                  role="alert"
+                  className="mt-2 text-sm text-danger"
+                >
+                  {pasteError}
+                </p>
+              ) : null}
+              <div className="mt-3 flex justify-end gap-2">
+                <Button variant="quiet" onClick={() => setPasteOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={addPastedNames}>Add names</Button>
+              </div>
+            </div>
+          ) : null}
           <div className="mt-3 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
             {players.map((player, index) => (
               <div
@@ -734,7 +849,14 @@ function QuickPlaySetup({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center justify-between gap-3">
-                          <strong className="font-[680]">{title}</strong>
+                          <strong className="font-[680]">
+                            {title}
+                            {value === "queue" ? (
+                              <span className="mt-1 block text-xs font-medium text-muted">
+                                Recommended for casual open play
+                              </span>
+                            ) : null}
+                          </strong>
                           <span
                             aria-hidden
                             className={`h-4 w-4 rounded-full border-4 ${selected ? "border-primary bg-surface" : "border-line bg-surface"}`}
@@ -1063,10 +1185,12 @@ function QuickPlayLive({
   session,
   onChange,
   onEdit,
+  archived = false,
 }: {
   session: QuickPlaySession;
   onChange: (session: QuickPlaySession) => void;
-  onEdit: () => void;
+  onEdit: (reusePlayers?: boolean) => void;
+  archived?: boolean;
 }) {
   const ended = session.endedAt != null;
   const liveHeading = useRef<HTMLHeadingElement>(null);
@@ -1117,7 +1241,7 @@ function QuickPlayLive({
   const sessionAction = (
     <div className="mt-5">
       <ConfirmActionButton
-        variant={ended ? "primary" : "secondary"}
+        variant="secondary"
         className={ended ? "w-full sm:w-auto" : "w-full"}
         confirmTitle={
           ended ? "Start a new Quick Play session?" : "End this session?"
@@ -1132,7 +1256,7 @@ function QuickPlayLive({
         confirmTone={ended ? "warning" : "primary"}
         confirmText={
           ended
-            ? "This replaces the recap and completed results in this browser. There is no account backup."
+            ? "Start with a blank roster. This recap becomes Previous recap, replacing any older recap stored on this device. There is no account backup."
             : "Your results and standings will stay in this browser as a recap. No more matches can be started."
         }
         confirmLabel={ended ? "Start new session" : "End session"}
@@ -1160,6 +1284,31 @@ function QuickPlayLive({
       ) : null}
     </div>
   );
+  const prioritizeNext =
+    nextRotation.plans.length > 0 ||
+    nextRotation.preparing.length > 0 ||
+    Boolean(nextRotation.upcomingTeams);
+  const nextMatchContent = !roundRobinComplete ? (
+    <UpNext
+      preview={nextRotation}
+      names={names}
+      action={
+        canStartNext ? (
+          <Button
+            type="button"
+            onClick={() => onChange(startNextQuickPlayMatches(session))}
+          >
+            <Shuffle aria-hidden size={17} />
+            {roundMode
+              ? "Start next round"
+              : nextRotation.plans.length > 1
+                ? `Start ${nextRotation.plans.length} courts`
+                : "Start next match"}
+          </Button>
+        ) : undefined
+      }
+    />
+  ) : null;
   const results = (
     <div>
       {session.completedMatches.length ? (
@@ -1190,11 +1339,13 @@ function QuickPlayLive({
                       scores={match.scores}
                     />
                   </div>
-                  <QuickScoreCorrectionControl
-                    match={match}
-                    players={names}
-                    onCorrect={(scores) => correct(match.id, scores)}
-                  />
+                  {!archived ? (
+                    <QuickScoreCorrectionControl
+                      match={match}
+                      players={names}
+                      onCorrect={(scores) => correct(match.id, scores)}
+                    />
+                  ) : null}
                 </li>
               );
             })}
@@ -1246,16 +1397,29 @@ function QuickPlayLive({
           {results}
           <RecapHighlights recap={recap} />
           {standingsContent}
-          <section aria-label="Next Quick Play session">
-            <h2 className="text-lg font-bold">Play again</h2>
-            <p className="mt-2 text-sm text-muted">
-              This recap stays in this browser until you start a new session.
-            </p>
-            {sessionAction}
-            <p className="mt-3 text-xs text-muted">
-              Quick Play is stored on this device, not in your account.
-            </p>
-          </section>
+          {!archived ? (
+            <section aria-label="Next Quick Play session">
+              <h2 className="text-lg font-bold">Play again</h2>
+              <p className="mt-2 text-sm text-muted">
+                Keep your crew and settings, or start with a new group. Your
+                most recent recap stays on this device as Previous recap.
+              </p>
+              <ConfirmActionButton
+                className="mt-4 w-full sm:w-auto"
+                confirmTitle="Play again with these players?"
+                confirmText="Review the same crew and game options before starting. This recap becomes Previous recap, replacing any older recap on this device."
+                confirmLabel="Review players"
+                cancelLabel="Keep recap"
+                onConfirm={() => onEdit(true)}
+              >
+                Play again with these players
+              </ConfirmActionButton>
+              {sessionAction}
+              <p className="mt-3 text-xs text-muted">
+                Quick Play is stored on this device, not in your account.
+              </p>
+            </section>
+          ) : null}
         </div>
       ) : (
         <PlaySectionTabs
@@ -1278,6 +1442,7 @@ function QuickPlayLive({
                   </p>
                 </div>
               </div>
+              {prioritizeNext ? nextMatchContent : null}
               {session.roundDurationMinutes && roundStartedAt ? (
                 <div className="mt-4">
                   <RoundTimer
@@ -1287,7 +1452,9 @@ function QuickPlayLive({
                 </div>
               ) : null}
               {session.activeMatches.length ? (
-                <div className="mt-4 grid gap-5">
+                <div
+                  className={`mt-4 grid gap-5 ${session.activeMatches.length > 1 ? "lg:grid-cols-2" : ""}`}
+                >
                   {session.activeMatches.map((match, index) => {
                     const previous =
                       session.activeMatches[
@@ -1342,29 +1509,7 @@ function QuickPlayLive({
                   </p>
                 </div>
               ) : null}
-              {!roundRobinComplete ? (
-                <UpNext
-                  preview={nextRotation}
-                  names={names}
-                  action={
-                    canStartNext ? (
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          onChange(startNextQuickPlayMatches(session))
-                        }
-                      >
-                        <Shuffle aria-hidden size={17} />
-                        {roundMode
-                          ? "Start next round"
-                          : nextRotation.plans.length > 1
-                            ? `Start ${nextRotation.plans.length} courts`
-                            : "Start next match"}
-                      </Button>
-                    ) : undefined
-                  }
-                />
-              ) : null}
+              {!prioritizeNext ? nextMatchContent : null}
             </section>
           }
           queue={
@@ -1434,13 +1579,8 @@ function QuickPlayLive({
                 )}
               </section>
 
-              <section
-                className="hidden rounded-lg bg-primary-soft p-4 lg:block"
-                aria-label="Active rotation rules"
-              >
-                <p className="text-sm font-semibold">
-                  {rotationName(session.mode)}
-                </p>
+              <section aria-label="Active rotation rules">
+                <p className="text-sm font-semibold">Rotation rules</p>
                 <p className="mt-1 text-sm leading-5 text-muted">
                   {rotationDescription(session.mode, {
                     queueRule: session.queueRule,
@@ -1605,10 +1745,13 @@ const subscribeToBrowser = () => () => undefined;
 
 function loadStoredQuickPlay() {
   const { value: stored, warning } = readQuickPlayStorage(quickPlayStorageKey);
+  const previous = readQuickPlayStorage(quickPlayPreviousKey);
+  const previousSession = restoreQuickPlaySession(previous.value);
   const session = restoreQuickPlaySession(stored);
   return {
     session,
-    warning,
+    previousSession: previousSession?.endedAt != null ? previousSession : null,
+    warning: warning || previous.warning,
     restoreWarning:
       stored && !session
         ? "The saved Quick Play session could not be restored, so Relay started a fresh setup."
@@ -1623,6 +1766,10 @@ function PersistentQuickPlay() {
   );
   const [restoreWarning, setRestoreWarning] = useState(initial.restoreWarning);
   const [storageWarning, setStorageWarning] = useState(initial.warning);
+  const [previousSession, setPreviousSession] = useState(
+    initial.previousSession
+  );
+  const [viewingPrevious, setViewingPrevious] = useState(false);
 
   useEffect(() => {
     if (session) {
@@ -1646,6 +1793,37 @@ function PersistentQuickPlay() {
     setStorageWarning(warning || sessionWarning);
   }
 
+  function prepareNextSession(reusePlayers = false) {
+    if (!session || session.endedAt == null) return;
+    // Preserve the recap before removing the current session. Failed storage
+    // must leave the current recap available rather than silently discarding it.
+    const archiveWarning = writeQuickPlayStorage(
+      quickPlayPreviousKey,
+      serializeQuickPlaySession(session)
+    );
+    if (archiveWarning) {
+      setStorageWarning(archiveWarning);
+      return;
+    }
+    setPreviousSession(session);
+    const draftWarning = writeQuickPlayStorage(
+      quickPlayDraftKey,
+      reusePlayers ? JSON.stringify(quickPlayReplayDraft(session)) : null
+    );
+    if (draftWarning) {
+      setStorageWarning(draftWarning);
+      return;
+    }
+    const clearWarning = writeQuickPlayStorage(quickPlayStorageKey, null);
+    if (clearWarning) {
+      setStorageWarning(clearWarning);
+      return;
+    }
+    setRestoreWarning("");
+    setStorageWarning("");
+    setSession(null);
+  }
+
   return (
     <>
       {storageWarning ? (
@@ -1653,12 +1831,39 @@ function PersistentQuickPlay() {
           {storageWarning}
         </Alert>
       ) : null}
-      {session ? (
+      {previousSession ? (
+        <div className="mx-auto mb-5 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+          <p className="text-xs text-muted">
+            {viewingPrevious
+              ? "Previous recap · read-only · this device only"
+              : "Your last recap is kept on this device."}
+          </p>
+          <Button
+            variant="quiet"
+            onClick={() => setViewingPrevious(!viewingPrevious)}
+          >
+            {viewingPrevious
+              ? session
+                ? "Back to current game"
+                : "Back to setup"
+              : "Previous recap"}
+          </Button>
+        </div>
+      ) : null}
+      {viewingPrevious && previousSession ? (
+        <QuickPlayLive
+          key="previous"
+          session={previousSession}
+          onChange={() => undefined}
+          onEdit={() => undefined}
+          archived
+        />
+      ) : session ? (
         <QuickPlayLive
           key={session.endedAt == null ? "live" : "recap"}
           session={session}
           onChange={setSession}
-          onEdit={() => showSession(null)}
+          onEdit={prepareNextSession}
         />
       ) : (
         <QuickPlaySetup onStart={showSession} restoreWarning={restoreWarning} />

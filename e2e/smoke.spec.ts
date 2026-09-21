@@ -417,6 +417,71 @@ test("public Quick Play prepares players, rotates, and scores without an account
   ).toHaveCount(0);
 });
 
+test("Quick Play imports a roster, admits a late arrival, and reuses its crew with a preserved recap", async ({
+  page,
+}) => {
+  await page.goto("/play");
+  await page.getByRole("button", { name: "Paste names" }).click();
+  await page
+    .getByRole("textbox", { name: "Names, one per line" })
+    .fill("Van\nAJ\nMika\nJohn");
+  await page.getByRole("button", { name: "Add names" }).click();
+  await expect(page.getByRole("textbox", { name: "Player 4" })).toHaveValue(
+    "John"
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Review setup" }).click();
+  await page.getByRole("button", { name: "Start Play", exact: true }).click();
+  await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
+  await page.getByRole("button", { name: "Players (4)" }).click();
+  const drawer = page.getByRole("dialog", { name: "Players (5)" });
+  await page.getByRole("textbox", { name: "Add a player" }).fill("Ana");
+  await page.getByRole("button", { name: "Add player", exact: true }).click();
+  await expect(drawer.getByRole("status")).toContainText("Ana joined the end");
+  await drawer.getByRole("button", { name: "Close players" }).click();
+  await page.getByRole("button", { name: "Queue", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Active rotation rules" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Paddle stack", exact: true })
+  ).toContainText("Ana");
+  await page.getByRole("button", { name: "Courts", exact: true }).click();
+  await page.getByRole("button", { name: "Finish match", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+    .getByRole("button", { name: "Finish match", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Manage", exact: true }).click();
+  await page.getByRole("button", { name: "End session", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "End this session?" })
+    .getByRole("button", { name: "End session", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Play again with these players" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Play again with these players?" })
+    .getByRole("button", { name: "Review players" })
+    .click();
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Player 5" })).toHaveValue(
+    "Ana"
+  );
+  await page.getByRole("button", { name: "Previous recap" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Completed matches" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Correct Court 1 score" })
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Back to setup" }).click();
+  await expect(page.getByRole("textbox", { name: "Player 1" })).toHaveValue(
+    "Van"
+  );
+});
+
 test("Quick Play shows preparation, refreshes availability, and starts the previewed teams", async ({
   page,
 }) => {

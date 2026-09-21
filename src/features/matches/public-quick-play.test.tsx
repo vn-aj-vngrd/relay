@@ -10,6 +10,35 @@ import {
 } from "vitest";
 
 import { PublicQuickPlay } from "./public-quick-play";
+import {
+  endQuickPlay,
+  finishQuickPlayMatch,
+  quickPlayPreviousKey,
+  quickPlayStorageKey,
+  scoreQuickPlayMatch,
+  serializeQuickPlaySession,
+  startQuickPlay,
+} from "./quick-play-session";
+
+function storeEndedSession() {
+  let session = startQuickPlay({
+    players: ["Van", "AJ", "Mika", "John"].map((name) => ({
+      id: name,
+      name,
+      experience: 2,
+    })),
+    courtCount: 1,
+    mode: "queue",
+    queueRule: "four_off",
+    fixedPairs: [],
+    roundDurationMinutes: null,
+  });
+  session = scoreQuickPlayMatch(session, session.activeMatches[0].id, 0, 1);
+  session = finishQuickPlayMatch(session, session.activeMatches[0].id);
+  session = endQuickPlay(session);
+  localStorage.setItem(quickPlayStorageKey, serializeQuickPlaySession(session));
+  return session;
+}
 
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function showModal() {
@@ -48,6 +77,136 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it("adds pasted names for review and reports duplicates without losing entered players", () => {
+    render(<PublicQuickPlay />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Player 1" }), {
+      target: { value: "Van" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Paste names" }));
+    const input = screen.getByRole("textbox", { name: "Names, one per line" });
+    fireEvent.change(input, { target: { value: "van\nAna" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add names" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("unique name");
+    expect(screen.getByRole("textbox", { name: "Player 1" })).toHaveValue(
+      "Van"
+    );
+    fireEvent.change(input, { target: { value: "Ana\nBen\nCarlo\nDana" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add names" }));
+    expect(screen.getByRole("textbox", { name: "Player 5" })).toHaveValue(
+      "Dana"
+    );
+    openOptions();
+    expect(
+      screen.getByRole("heading", { name: "Choose how this game runs" })
+    ).toBeVisible();
+  });
+
+  it("adds a late arrival from Players and keeps the court score", () => {
+    render(<PublicQuickPlay />);
+    startDefaultGame();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add a point to Van + AJ" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Players (4)" }));
+    const drawer = screen.getByRole("dialog", { name: "Players (4)" });
+    fireEvent.change(
+      within(drawer).getByRole("textbox", { name: "Add a player" }),
+      { target: { value: "Ana" } }
+    );
+    fireEvent.click(within(drawer).getByRole("button", { name: "Add player" }));
+    expect(within(drawer).getByRole("status")).toHaveTextContent(
+      "Ana joined the end"
+    );
+    fireEvent.click(
+      within(drawer).getByRole("button", { name: "Close players" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Queue" }));
+    expect(
+      screen.getByRole("region", { name: "Paddle stack" })
+    ).toHaveTextContent("Ana");
+    expect(
+      screen.getByRole("region", { name: "Active rotation rules" })
+    ).toBeVisible();
+    const stored = JSON.parse(
+      localStorage.getItem(quickPlayStorageKey) ?? "{}"
+    );
+    expect(stored.session.activeMatches[0].scores).toEqual([1, 0]);
+  });
+
+  it("reuses the crew and preserves a read-only previous recap across reloads", () => {
+    const ended = storeEndedSession();
+    const view = render(<PublicQuickPlay />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Play again with these players" })
+    );
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Play again with these players?" })
+      ).getByRole("button", { name: "Review players" })
+    );
+    expect(screen.getByRole("textbox", { name: "Player 1" })).toHaveValue(
+      "Van"
+    );
+    expect(localStorage.getItem(quickPlayPreviousKey)).toBe(
+      serializeQuickPlaySession(ended)
+    );
+    view.unmount();
+    render(<PublicQuickPlay />);
+    expect(screen.getByRole("textbox", { name: "Player 4" })).toHaveValue(
+      "John"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Previous recap" }));
+    expect(
+      screen.getByRole("heading", { name: "Quick Play recap" })
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Correct Court 1 score" })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Start new session" })
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Back to setup" }));
+    openOptions();
+    startFromOptions();
+    expect(localStorage.getItem(quickPlayPreviousKey)).toBe(
+      serializeQuickPlaySession(ended)
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Previous recap" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to current game" })
+    );
+    expect(screen.getByRole("button", { name: "Players (4)" })).toBeVisible();
+  });
+
+  it("keeps the current recap if archiving fails", () => {
+    const ended = storeEndedSession();
+    render(<PublicQuickPlay />);
+    const setItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(function (
+      this: Storage,
+      key,
+      value
+    ) {
+      if (key === quickPlayPreviousKey) throw new Error("Storage full");
+      setItem.call(this, key, value);
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Play again with these players" })
+    );
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Play again with these players?" })
+      ).getByRole("button", { name: "Review players" })
+    );
+    expect(
+      screen.getByRole("heading", { name: "Quick Play recap" })
+    ).toBeVisible();
+    expect(screen.getByText(/This browser couldn’t save/)).toBeVisible();
+    expect(localStorage.getItem(quickPlayStorageKey)).toBe(
+      serializeQuickPlaySession(ended)
+    );
+  });
+
   it("shows who should prepare and starts the teams displayed in Up next", () => {
     render(<PublicQuickPlay />);
     for (let index = 0; index < 4; index += 1)

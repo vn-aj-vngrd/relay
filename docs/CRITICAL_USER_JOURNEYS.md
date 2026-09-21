@@ -150,7 +150,7 @@ experience and timer. Courts, Queue and Results remain directly reachable at
 320px, 390px and desktop widths without queue content following match history.
 Ending requires settled courts and retains a reloadable recap; starting a new
 session separately confirms replacement. Storage failures warn without blocking
-in-memory scoring. Quick Play retains a fixed roster and never becomes account
+in-memory scoring. Quick Play supports late arrivals in mixed-partner Paddle Stack; other formats retain a fixed roster. It never becomes account
 history.
 
 Regression coverage: `public-quick-play.test.tsx`, `quick-play-session.test.ts`,
@@ -209,7 +209,7 @@ reload. Final `pnpm check:full` passed: lint/types, 357 test files / 2,552 tests
 and production build. Automated E2E remains unrun.
 
 
-Quick Play availability: player names remain fixed, but the Players drawer allows
+Quick Play availability: the Players drawer allows
 breaks and rejoining. Acceptance covers immediate waiting removal, deferred
 on-court rest on completion/cancellation, undoing a deferred break, queue-tail
 rejoining, reload persistence and legacy restoration, fixed-pair eligibility and
@@ -238,3 +238,12 @@ layouts were inspected at 390px and 1440px. Saved-game browser flow and the
 automated browser suite remain unrun. Final pre-commit validation on 2026-09-21: `pnpm check:full` passed formatting,
 TypeScript, all 2,590 unit tests across 360 files, and the production build.
 CI must pass on the PR head before merge.
+
+
+## Quick Play repeat-session improvements (2026-09-21)
+
+- Setup accepts newline-separated names without losing existing named players; duplicates, oversized names and the 24-player cap are explicit errors.
+- Mixed-partner Paddle Stack permits late arrivals at the end of the queue while preserving active scores and history. Fixed pairs and scheduled formats retain their roster constraints.
+- Queue exposes rotation rules on mobile. Courts puts actionable Up next before scoreboards and uses two columns for multiple courts on wide screens.
+- Play again with these players seeds a reviewable setup with the roster/settings. Both replay and confirmed blank setup preserve one previous read-only recap locally, and stop if preserving it fails. No account migration or cross-device sharing is implied.
+- Coverage: quick-play-draft.test.ts, quick-play-session.test.ts, public-quick-play.test.tsx and the roster/replay journey in e2e/smoke.spec.ts. Coverage authored; validation deferred to pre-commit. E2E execution remains opt-in.

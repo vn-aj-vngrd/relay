@@ -1,11 +1,63 @@
 import { z } from "zod";
 
-import { playingExperienceValues } from "@/features/players/playing-experience";
+import {
+  playingExperienceValues,
+  playingExperienceWeight,
+} from "@/features/players/playing-experience";
 
-import { maxQuickPlayPlayers } from "./quick-play-session";
+import {
+  maxQuickPlayPlayers,
+  type QuickPlaySession,
+} from "./quick-play-session";
 import { readQuickPlayStorage } from "./quick-play-storage";
 
 export const quickPlayDraftKey = "relay-quick-play-draft";
+
+export function quickPlayReplayDraft(session: QuickPlaySession) {
+  return {
+    step: 1,
+    players: session.players.map((player) => ({
+      ...player,
+      experience:
+        playingExperienceValues.find(
+          (value) => playingExperienceWeight(value) === player.experience
+        ) ?? "casual",
+    })),
+    pairOrder: session.fixedPairs.length
+      ? session.fixedPairs.flat()
+      : session.players.map((player) => player.id),
+    courtCountInput: String(session.courtCount),
+    mode: session.mode,
+    queueRule: session.queueRule,
+    roundDuration:
+      session.roundDurationMinutes == null
+        ? ""
+        : String(session.roundDurationMinutes),
+    partnerPolicy: session.fixedPairs.length ? "fixed" : "mix",
+  };
+}
+
+export function parseQuickPlayNames(value: string, existingNames: string[]) {
+  const names = value
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+  if (!names.length) throw new Error("Enter at least one name, one per line.");
+  if (names.some((name) => name.length > 50))
+    throw new Error("Keep each name to 50 characters or fewer.");
+  const allNames = [...existingNames, ...names].map((name) =>
+    name.trim().toLocaleLowerCase()
+  );
+  if (new Set(allNames).size !== allNames.length)
+    throw new Error(
+      "Use a unique name for each player, including players already entered."
+    );
+  if (allNames.length > maxQuickPlayPlayers)
+    throw new Error(
+      `Quick Play supports up to ${maxQuickPlayPlayers} players.`
+    );
+  return names;
+}
 
 const draftSchema = z
   .object({
