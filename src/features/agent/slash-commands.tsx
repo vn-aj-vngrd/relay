@@ -274,15 +274,15 @@ export function useAgentSlashCommands(
               </div>
             );
           })}
-          {!items.length ? (
-            <EmptyState
-              compact
-              icon="search"
-              title="No available actions match"
-              description="Try another word or press Escape."
-            />
-          ) : null}
         </div>
+        {!items.length ? (
+          <EmptyState
+            compact
+            icon="search"
+            title="No available actions match"
+            description="Try another word or press Escape."
+          />
+        ) : null}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-xs text-muted">
           <p role="status">
             {items.length} {items.length === 1 ? "action" : "actions"} · ↑↓ to

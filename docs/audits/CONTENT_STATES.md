@@ -36,6 +36,8 @@ completion percentages or invent game results.
 
 - Shared component regressions cover visible guidance, decorative icons,
   recovery actions, server rendering, reduced motion and status announcements.
+  Compact titles remain contextual text; standalone heading levels are configurable.
+  Picker regressions keep empty guidance outside listbox option containers.
 - Quick Play hydration coverage still covers empty storage and a saved recap.
 - Court Finder coverage includes clearing filters from the empty result.
 - The local review gallery renders illustrative states using the real shared
@@ -44,7 +46,7 @@ completion percentages or invent game results.
 - Manual browser review: light and dark gallery, including mobile; Court Finder
   search reached the empty state and Clear filters restored the court list.
 - Pre-commit validation: formatting and strict TypeScript passed; all
-  2,605 unit tests passed across 361 files.
+  2,607 unit tests passed across 361 files.
   The default Turbopack build hit a local worker-port restriction; the Webpack
   production build passed with cached font responses. Normal CI remains the
   authority for the default build. Automated E2E execution remains opt-in.

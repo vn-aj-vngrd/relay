@@ -27,6 +27,18 @@ describe("content states", () => {
     expect(clear).toHaveBeenCalledOnce();
   });
 
+  it("uses contextual text for compact states and accepts a section heading level", () => {
+    const { rerender } = render(
+      <EmptyState compact title="No Going responses" />
+    );
+    expect(screen.getByText("No Going responses")).toBeVisible();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    rerender(<EmptyState titleAs="h3" title="No Going responses" />);
+    expect(
+      screen.getByRole("heading", { level: 3, name: "No Going responses" })
+    ).toBeVisible();
+  });
+
   it("provides visible loading guidance and a single live status", () => {
     render(
       <LoadingState

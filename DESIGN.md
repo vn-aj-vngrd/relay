@@ -433,7 +433,9 @@ than invented content placeholders.
 
 Empty content uses a subject-specific icon above a clear title, concise guidance,
 and the existing permitted recovery or creation action. Use the compact variant
-inside history sections and pickers. Do not animate empty states or turn every
+inside history sections and pickers. Compact titles default to contextual text;
+use `titleAs` when a section needs a specific heading level. Keep empty guidance
+outside listbox option containers. Do not animate empty states or turn every
 inline fact, validation message, or zero metric into an empty-state panel.
 Shared public and authenticated session surfaces use the same components;
 permissions and available actions remain authoritative.

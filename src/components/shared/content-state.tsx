@@ -34,6 +34,7 @@ export function EmptyState({
   description,
   children,
   compact = false,
+  titleAs,
   className = "",
 }: {
   icon?: keyof typeof stateIcons;
@@ -41,9 +42,11 @@ export function EmptyState({
   description?: ReactNode;
   children?: ReactNode;
   compact?: boolean;
+  titleAs?: "h2" | "h3" | "h4" | "p";
   className?: string;
 }) {
   const Icon = stateIcons[icon];
+  const Title = titleAs ?? (compact ? "p" : "h2");
   return (
     <div
       className={`flex min-w-0 flex-col items-center text-center ${compact ? "px-3 py-6" : "px-4 py-10 sm:py-12"} ${className}`}
@@ -54,11 +57,11 @@ export function EmptyState({
         weight="regular"
         className="mb-3 shrink-0 text-muted"
       />
-      <h2
+      <Title
         className={`max-w-md break-words font-semibold text-ink ${compact ? "text-sm" : "text-base sm:text-lg"}`}
       >
         {title}
-      </h2>
+      </Title>
       {description ? (
         <p className="mt-2 max-w-md break-words text-sm leading-6 text-muted">
           {description}
