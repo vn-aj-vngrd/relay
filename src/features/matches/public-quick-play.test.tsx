@@ -1,4 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
 import {
   afterEach,
   beforeAll,
@@ -77,6 +79,45 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it.each([false, true])(
+    "shows a readable restoration state before hydrating (saved recap: %s)",
+    async (hasRecap) => {
+      if (hasRecap) storeEndedSession();
+      const container = document.createElement("div");
+      container.innerHTML = renderToString(<PublicQuickPlay />);
+      document.body.append(container);
+      const onRecoverableError = vi.fn();
+      let root: ReturnType<typeof hydrateRoot> | undefined;
+      try {
+        expect(
+          within(container).getByRole("heading", { name: "Quick Play" })
+        ).toBeInTheDocument();
+        expect(within(container).getByRole("status")).toHaveTextContent(
+          "Opening Quick Play on this device…"
+        );
+        expect(container.querySelector(".animate-pulse")).toBeNull();
+        expect(within(container).queryByRole("button")).toBeNull();
+        await act(async () => {
+          root = hydrateRoot(container, <PublicQuickPlay />, {
+            onRecoverableError,
+          });
+        });
+        expect(onRecoverableError).not.toHaveBeenCalled();
+        expect(
+          within(container).getByRole("heading", {
+            name: hasRecap ? "Quick Play recap" : "Who’s playing",
+          })
+        ).toBeInTheDocument();
+        expect(
+          within(container).queryByText("Opening Quick Play on this device…")
+        ).not.toBeInTheDocument();
+      } finally {
+        await act(async () => root?.unmount());
+        container.remove();
+      }
+    }
+  );
+
   it("adds pasted names for review and reports duplicates without losing entered players", () => {
     render(<PublicQuickPlay />);
     fireEvent.change(screen.getByRole("textbox", { name: "Player 1" }), {
