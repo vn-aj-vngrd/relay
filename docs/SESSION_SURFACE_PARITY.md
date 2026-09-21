@@ -206,3 +206,12 @@ the same player availability rows in Manage and its Players drawer. Court states
 share wording, availability actions share 44px icon buttons, and End session
 stays visible but disabled while matches are active. Saved-game permissions and
 Quick Play device-local storage remain distinct.
+
+
+Quick Play review pass (2026-09-21): public and signed-in `/play` still share
+PublicQuickPlay. Paste names, mobile rotation explanations, Paddle Stack late
+arrivals, and previous-recap/replay controls are device-local on both paths.
+Saved-game behavior is unchanged. Quick Play reuses CourtScoreboardCourt,
+PlaySectionTabs, UpNext and recap components; its actionable Up next now precedes scores,
+and multiple courts use a wide-screen two-column layout. One previous recap is
+read-only and local, not account history. Validation deferred to pre-commit.
