@@ -6,11 +6,12 @@ import {
   ArrowLineDown,
   ArrowLineUp,
   ArrowUp,
+  ClipboardText,
   FlagCheckered,
-  Lightning,
   LockSimple,
   LockSimpleOpen,
   PencilSimple,
+  PlusCircle,
   Prohibit,
   Shuffle,
   Trash,
@@ -639,12 +640,12 @@ function QuickPlaySetup({
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
-                variant="secondary"
+                variant="quiet"
                 aria-expanded={pasteOpen}
                 aria-controls="quick-paste-names"
                 onClick={() => setPasteOpen(!pasteOpen)}
               >
-                Paste names
+                <ClipboardText aria-hidden size={17} /> Paste names
               </Button>
               <Button
                 type="button"
@@ -1145,7 +1146,7 @@ function QuickPlaySetup({
                 variant="secondary"
                 className="w-full sm:w-auto"
               >
-                <Lightning aria-hidden size={16} /> Create game
+                <PlusCircle aria-hidden size={16} /> Create game
               </ButtonLink>
             )}
           </div>
