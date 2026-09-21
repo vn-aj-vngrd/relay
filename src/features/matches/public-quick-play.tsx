@@ -1882,13 +1882,20 @@ export function PublicQuickPlay() {
   if (browserReady) return <PersistentQuickPlay />;
   return (
     <section
-      aria-label="Restoring Quick Play"
-      role="status"
+      aria-labelledby="quick-play-restoring"
       className="mx-auto w-full max-w-6xl"
     >
-      <div className="hidden h-9 w-44 animate-pulse rounded-md bg-surface-strong motion-reduce:animate-none lg:block" />
-      <div className="mx-auto h-80 w-full max-w-2xl animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none lg:mt-10" />
-      <span className="sr-only">Restoring Quick Play…</span>
+      <header className="sr-only lg:not-sr-only lg:mb-10 lg:border-b lg:border-line lg:pb-7">
+        <h1 id="quick-play-restoring" className="app-title">
+          Quick Play
+        </h1>
+      </header>
+      <p
+        role="status"
+        className="mx-auto w-full max-w-2xl py-4 text-sm text-muted"
+      >
+        Opening Quick Play on this device…
+      </p>
     </section>
   );
 }

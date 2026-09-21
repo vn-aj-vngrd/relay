@@ -144,7 +144,12 @@ Validation deferred to pre-commit; browser coverage for saved-game swapping
 remains unverified.
 
 Both public and authenticated `/play` use `PublicQuickPlay`. Setup must restore
-names, options and its current step after reload; Balanced Mix experience must
+names, options and its current step after reload. Before hydration, show a real
+Quick Play heading and readable device-opening status, without pulsing blocks
+or actionable fresh setup controls. Hydration must restore an existing recap
+without a mismatch; server-render/hydration cases in `public-quick-play.test.tsx`
+cover empty storage and a saved recap. Validation deferred to pre-commit.
+Balanced Mix experience must
 be editable in Game options. Review exposes relevant pairs, queue rules,
 experience and timer. Courts, Queue and Results remain directly reachable at
 320px, 390px and desktop widths without queue content following match history.
