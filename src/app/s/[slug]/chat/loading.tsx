@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicChatLoading() {
@@ -12,6 +13,12 @@ export default function PublicChatLoading() {
         aria-busy="true"
         className="public-chat-panel game-tab-content mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col bg-surface px-4 pb-4 sm:px-6 sm:pb-8"
       >
+        <LoadingState
+          compact
+          announce={false}
+          label="Loading session chat"
+          className="col-span-full"
+        />
         <div className="min-w-0">
           <h1 className="sr-only">Chat</h1>
         </div>

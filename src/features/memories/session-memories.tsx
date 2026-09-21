@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import {
@@ -202,16 +203,15 @@ export function SessionMemories({
               {photos.length ? (
                 <MemoryPhotoGallery photos={photos} />
               ) : (
-                <div className="rounded-xl bg-surface-strong px-5 py-8">
-                  <p className="text-sm font-semibold">
-                    Your game album starts here
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-muted">
-                    {canContribute && !uploadsDisabled
+                <EmptyState
+                  icon="photos"
+                  title="Your game album starts here"
+                  description={
+                    canContribute && !uploadsDisabled
                       ? "No photos yet. Add the first moment from the game."
-                      : "No photos have been added to this game yet."}
-                  </p>
-                </div>
+                      : "No photos have been added to this game yet."
+                  }
+                />
               )}
               {canContribute && uploadsDisabled ? (
                 <p className="mt-4 text-sm leading-6 text-muted">

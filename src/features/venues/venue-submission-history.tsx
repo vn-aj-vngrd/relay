@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/shared/content-state";
+
 import { venueChangeRequestStatusLabels } from "./request-status";
 
 export type VenueSubmissionHistoryItem = {
@@ -63,12 +65,13 @@ export function VenueSubmissionHistory({
           ))}
         </ol>
       ) : (
-        <div className="mt-4 border-y border-line py-8">
-          <p className="text-sm font-semibold">No suggestions sent yet</p>
-          <p className="mt-1 text-sm text-muted">
-            Submitted courts and corrections will appear here.
-          </p>
-        </div>
+        <EmptyState
+          compact
+          icon="venues"
+          title="No suggestions sent yet"
+          description="Submitted courts and corrections will appear here."
+          className="mt-4 border-y border-line"
+        />
       )}
     </section>
   );

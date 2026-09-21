@@ -2,6 +2,7 @@ export const metadata = { title: "Feedback" };
 
 import { z } from "zod";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { requireUser } from "@/features/auth/session";
 import {
   feedbackAreaLabels,
@@ -90,12 +91,13 @@ export default async function FeedbackPage({
             ))}
           </ol>
         ) : (
-          <div className="mt-4 border-y border-line py-8">
-            <p className="text-sm font-semibold">No feedback sent yet</p>
-            <p className="mt-1 text-sm text-muted">
-              Your submitted reports and requests will appear here.
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon="feedback"
+            title="No feedback sent yet"
+            description="Your submitted reports and requests will appear here."
+            className="mt-4 border-y border-line"
+          />
         )}
       </section>
     </div>

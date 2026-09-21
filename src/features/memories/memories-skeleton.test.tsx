@@ -11,9 +11,8 @@ describe("MemoriesSkeleton", () => {
     expect(
       screen.getByRole("status", { name: "Loading session story" })
     ).toHaveAttribute("aria-busy", "true");
-    expect(screen.getByText("Loading your story editor…")).toHaveClass(
-      "sr-only"
-    );
+    expect(screen.getByText("Loading session story")).toBeVisible();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });

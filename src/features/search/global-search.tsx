@@ -4,13 +4,13 @@ import {
   ClockCounterClockwise,
   MagnifyingGlass,
   MapPin,
-  TennisBall,
   UsersThree,
 } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/shared/avatar-stack";
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { ButtonSpinner } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
@@ -152,6 +152,12 @@ function ResultSkeleton() {
       aria-busy="true"
       className="divide-y divide-line border-y border-line"
     >
+      <LoadingState
+        compact
+        announce={false}
+        label="Searching"
+        className="col-span-full"
+      />
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex min-h-16 items-center gap-3 py-3">
           <span className="h-9 w-9 animate-pulse rounded-full bg-surface-strong" />
@@ -461,14 +467,12 @@ export function GlobalSearch({
               </ul>
             </section>
           ) : (
-            <section className="border-y border-line py-10">
-              <TennisBall aria-hidden size={23} className="text-primary" />
-              <h2 className="mt-4 text-xl font-bold">Find your next game</h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-muted">
-                Search a friend’s name, a regular group, a court, or a game
-                title. Results appear as you type.
-              </p>
-            </section>
+            <EmptyState
+              icon="search"
+              title="Find your next game"
+              description="Search a friend’s name, a regular group, a court, or a game title. Results appear as you type."
+              className="border-y border-line"
+            />
           )
         ) : normalizedQuery.length < minimumSearchLength ? (
           <section className="border-y border-line py-8">
@@ -493,14 +497,12 @@ export function GlobalSearch({
             </button>
           </section>
         ) : status === "ready" && !items.length ? (
-          <section className="border-y border-line py-10">
-            <MagnifyingGlass aria-hidden size={22} className="text-primary" />
-            <h2 className="mt-4 text-xl font-bold">
-              No results for “{debouncedQuery}”
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              Try a player username, court name, or a shorter phrase.
-            </p>
+          <EmptyState
+            icon="search"
+            title={<>No results for “{debouncedQuery}”</>}
+            description="Try a player username, court name, or a shorter phrase."
+            className="border-y border-line"
+          >
             {filter === "courts" ? (
               <Link
                 href="/courts"
@@ -510,7 +512,7 @@ export function GlobalSearch({
                 map
               </Link>
             ) : null}
-          </section>
+          </EmptyState>
         ) : filter === "all" ? (
           <div className="space-y-8">
             {grouped.map((section) => (

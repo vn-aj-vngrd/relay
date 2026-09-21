@@ -1,4 +1,11 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
 import {
@@ -79,6 +86,20 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it("places Add player after the roster and focuses the new name field", async () => {
+    render(<PublicQuickPlay />);
+    const addPlayer = screen.getByRole("button", { name: "Add player" });
+    const lastPlayer = screen.getByRole("textbox", { name: "Player 4" });
+    expect(
+      lastPlayer.compareDocumentPosition(addPlayer) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    fireEvent.click(addPlayer);
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: "Player 5" })).toHaveFocus();
+    });
+  });
+
   it.each([false, true])(
     "shows a readable restoration state before hydrating (saved recap: %s)",
     async (hasRecap) => {
