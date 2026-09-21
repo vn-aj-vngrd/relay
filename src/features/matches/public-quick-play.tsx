@@ -661,10 +661,25 @@ function QuickPlaySetup({
                 Court assignments, queue, and scores stay together on this page.
               </p>
             </div>
-            <div className="w-full sm:w-48">
-              <label htmlFor="quick-court-count" className="text-sm font-[650]">
-                Active courts
-              </label>
+            <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] items-center gap-4">
+              <div className="min-w-0">
+                <label
+                  htmlFor="quick-court-count"
+                  className="text-sm font-[650]"
+                >
+                  Active courts
+                </label>
+                <p
+                  id="quick-court-count-help"
+                  className={`mt-1 text-xs leading-5 ${!courtCountValid || missingPlayerCount > 0 ? "text-warning" : "text-muted"}`}
+                >
+                  {!courtCountValid
+                    ? `Choose 1–${maxQuickPlayCourts} courts.`
+                    : missingPlayerCount > 0
+                      ? `Add ${missingPlayerCount} more ${missingPlayerCount === 1 ? "player" : "players"}.`
+                      : `${requiredPlayerCount} players fill ${courtCount} ${courtCount === 1 ? "court" : "courts"}.`}
+                </p>
+              </div>
               <input
                 id="quick-court-count"
                 type="number"
@@ -676,18 +691,8 @@ function QuickPlaySetup({
                 onChange={(event) => setCourtCountInput(event.target.value)}
                 aria-describedby="quick-court-count-help"
                 aria-invalid={!courtCountValid || missingPlayerCount > 0}
-                className="field h-11"
+                className="field mt-0 h-11 text-center"
               />
-              <p
-                id="quick-court-count-help"
-                className={`mt-1.5 text-xs leading-5 ${!courtCountValid || missingPlayerCount > 0 ? "text-warning" : "text-muted"}`}
-              >
-                {!courtCountValid
-                  ? `Choose 1–${maxQuickPlayCourts} courts.`
-                  : missingPlayerCount > 0
-                    ? `Add ${missingPlayerCount} more ${missingPlayerCount === 1 ? "player" : "players"}.`
-                    : `${requiredPlayerCount} players fill ${courtCount} ${courtCount === 1 ? "court" : "courts"}.`}
-              </p>
             </div>
           </div>
 

@@ -235,7 +235,6 @@ Coverage added: `next-rotation.test.ts`, `create-queue-match.test.ts`,
 `e2e/smoke.spec.ts`. Local Quick Play was manually exercised with eight players
 and one court: preview, finish, and start the displayed lineup. Light/dark
 layouts were inspected at 390px and 1440px. Saved-game browser flow and the
-automated browser suite remain unrun. Pre-commit formatting, TypeScript and
-production build passed. The full unit run passed 2,589 tests with one timeout in
-an unchanged Games-header test; all three tests in that file passed on isolated
-retry without code or timeout changes. CI must pass on the PR head before merge.
+automated browser suite remain unrun. Final pre-commit validation on 2026-09-21: `pnpm check:full` passed formatting,
+TypeScript, all 2,590 unit tests across 360 files, and the production build.
+CI must pass on the PR head before merge.
