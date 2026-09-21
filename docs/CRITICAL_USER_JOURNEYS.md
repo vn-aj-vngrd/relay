@@ -136,6 +136,14 @@ Validation deferred to pre-commit.
 
 ## Device-local Quick Play (2026-09-17)
 
+Application-wide state polish: loading regions expose a readable label and
+reduced-motion-safe indicator without nested status announcements. Empty content
+uses an icon, title, guidance and existing permitted actions. Shared component
+coverage lives in `content-state.test.tsx`; Court Finder also covers clearing
+filters from an empty result. See `audits/CONTENT_STATES.md` for the surface map.
+Validation deferred to pre-commit; authenticated and admin browser coverage is
+not implied by the local review gallery.
+
 Scoreboard side swapping: Quick Play and saved-game Play share the labeled
 Swap sides control and tooltip in normal and fullscreen views. Saved-game
 swapping changes local display order only; scoring must still write to the
@@ -143,8 +151,11 @@ original team. `live-court.test.tsx` covers swapping, scoring and swapping back.
 Validation deferred to pre-commit; browser coverage for saved-game swapping
 remains unverified.
 
-Both public and authenticated `/play` use `PublicQuickPlay`. Setup must restore
-names, options and its current step after reload. Before hydration, show a real
+Both public and authenticated `/play` use `PublicQuickPlay`. Setup displays
+a single-column player list, with Add player below the final row and Paste
+names beside the heading. Adding a player focuses the new name field; component
+and existing Quick Play browser coverage assert this focus behavior.
+Setup must restore names, options and its current step after reload. Before hydration, show a real
 Quick Play heading and readable device-opening status, without pulsing blocks
 or actionable fresh setup controls. Hydration must restore an existing recap
 without a mismatch; server-render/hydration cases in `public-quick-play.test.tsx`

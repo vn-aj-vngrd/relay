@@ -156,6 +156,21 @@ test("the public court finder works without an account", async ({ page }) => {
     )
   ).toBe(true);
 
+  await page
+    .getByRole("textbox", { name: "Search courts" })
+    .fill("no-matching-court-fixture");
+  await expect(
+    page.getByRole("heading", { name: "No courts match" })
+  ).toBeVisible();
+  await page
+    .locator("[data-court-list-pane]")
+    .getByRole("button", { name: "Clear filters" })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Search courts" })
+  ).toHaveValue("");
+  await expect(courtList).toBeVisible();
+
   const originalViewport = page.viewportSize();
   for (const viewport of [
     { width: 320, height: 568 },
@@ -486,8 +501,12 @@ test("Quick Play shows preparation, refreshes availability, and starts the previ
   page,
 }) => {
   await page.goto("/play");
-  for (let index = 0; index < 4; index += 1)
+  for (let index = 0; index < 4; index += 1) {
     await page.getByRole("button", { name: "Add player" }).click();
+    await expect(
+      page.getByRole("textbox", { name: `Player ${index + 5}`, exact: true })
+    ).toBeFocused();
+  }
   const names = ["Van", "AJ", "Mika", "John", "Ana", "Ben", "Carlo", "Dana"];
   for (const [index, name] of names.entries())
     await page

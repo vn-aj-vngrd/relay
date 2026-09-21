@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { EmptyState } from "@/components/shared/content-state";
 
 import { Tooltip } from "./tooltip";
 
@@ -293,7 +294,7 @@ export function ComboboxField({
               </button>
             ))
           ) : (
-            <p className="px-3 py-4 text-sm text-muted">{emptyMessage}</p>
+            <EmptyState compact icon="search" title={emptyMessage} />
           )}
         </div>
       ) : null}

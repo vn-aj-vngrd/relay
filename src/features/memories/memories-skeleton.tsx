@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import styles from "./story-workspace.module.css";
@@ -10,7 +11,13 @@ export function MemoriesSkeleton() {
       aria-busy="true"
       className={`${styles.storySurface} flex flex-col gap-4 sm:gap-6`}
     >
-      <span className="sr-only">Loading your story editor…</span>
+      <LoadingState
+        compact
+        announce={false}
+        label="Loading session story"
+        className="col-span-full"
+      />
+
       {/* The available views depend on the game's phase and album. */}
       <div className="h-9" aria-hidden />
       <div className={styles.workspace}>

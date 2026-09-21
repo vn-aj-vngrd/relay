@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 
 import {
@@ -56,11 +57,16 @@ export function PlanHistory({
         Paid and complimentary terms, plus your latest admin plan assignment.
       </p>
       {!terms.length && !latestAssignment ? (
-        <p className="mt-4 text-sm text-muted">
-          {olderPage
-            ? "No earlier plan terms on this page."
-            : "No plan changes yet. See My plan for your current access."}
-        </p>
+        <EmptyState
+          compact
+          icon="payments"
+          title={
+            olderPage
+              ? "No earlier plan terms on this page."
+              : "No plan changes yet"
+          }
+          description="See My plan for your current access."
+        />
       ) : (
         <ul className="mt-4 divide-y divide-line border-y border-line">
           {latestAssignment && assignment ? (

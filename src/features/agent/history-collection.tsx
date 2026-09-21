@@ -1,4 +1,5 @@
 "use client";
+
 import {
   ArrowLeft,
   ChatCircle,
@@ -9,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -194,30 +196,24 @@ export function AgentHistoryCollection() {
         className="agent-conversation-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain py-2"
       >
         {loading && !rows.length ? (
-          <p
-            role="status"
-            className="text-shimmer px-2 py-6 text-sm text-muted"
-          >
-            Loading chats…
-          </p>
+          <LoadingState
+            label="Loading chats…"
+            description="Finding your saved conversations."
+          />
         ) : null}
         {!loading && !rows.length && !failed ? (
-          <div className="py-12 text-center">
-            <ChatCircle
-              size={28}
-              className="mx-auto mb-3 text-muted"
-              aria-hidden
-            />
-            <p className="text-sm text-muted">
-              Your first conversation will appear here.
-            </p>
+          <EmptyState
+            icon="chat"
+            title="No saved conversations"
+            description="Your first conversation will appear here."
+          >
             <Link
               href="/agent"
-              className="mt-3 inline-flex min-h-10 items-center text-sm text-primary"
+              className="inline-flex min-h-10 items-center text-sm text-primary"
             >
               Start a conversation
             </Link>
-          </div>
+          </EmptyState>
         ) : null}
         <ul aria-label="Saved chats" className="divide-y divide-line">
           {rows.map((row) => (

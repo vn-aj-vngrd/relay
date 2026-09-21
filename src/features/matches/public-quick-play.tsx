@@ -6,8 +6,8 @@ import {
   ArrowLineDown,
   ArrowLineUp,
   ArrowUp,
-  ClipboardText,
   FlagCheckered,
+  ListPlus,
   LockSimple,
   LockSimpleOpen,
   PencilSimple,
@@ -26,6 +26,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { WizardProgress } from "@/components/shared/wizard-progress";
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -444,6 +445,9 @@ function QuickPlaySetup({
     setPlayers((current) => [...current, player]);
     setPairOrder((current) => [...current, player.id]);
     setError("");
+    requestAnimationFrame(() => {
+      playerInputRefs.current.get(player.id)?.focus();
+    });
   }
 
   function addPastedNames() {
@@ -637,30 +641,20 @@ function QuickPlaySetup({
                 Add 4–24 players. Each active court needs four.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="quiet"
-                aria-expanded={pasteOpen}
-                aria-controls="quick-paste-names"
-                onClick={() => setPasteOpen(!pasteOpen)}
-              >
-                <ClipboardText aria-hidden size={17} /> Paste names
-              </Button>
-              <Button
-                type="button"
-                variant="quiet"
-                onClick={addPlayer}
-                disabled={players.length >= maxQuickPlayPlayers}
-              >
-                <UserPlus aria-hidden size={17} /> Add player
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="quiet"
+              aria-expanded={pasteOpen}
+              aria-controls="quick-paste-names"
+              onClick={() => setPasteOpen(!pasteOpen)}
+            >
+              <ListPlus aria-hidden size={17} /> Paste names
+            </Button>
           </div>
           {pasteOpen ? (
             <div
               id="quick-paste-names"
-              className="mt-4 border-y border-line py-4"
+              className="mt-4 border-t border-line pt-4"
             >
               <label
                 htmlFor="quick-names-list"
@@ -706,7 +700,7 @@ function QuickPlaySetup({
               </div>
             </div>
           ) : null}
-          <div className="mt-3 grid divide-y divide-line border-y border-line sm:grid-cols-2 sm:gap-x-6 sm:divide-y-0">
+          <div className="mt-3 grid border-t border-line">
             {players.map((player, index) => (
               <div
                 key={player.id}
@@ -760,6 +754,16 @@ function QuickPlaySetup({
                 </button>
               </div>
             ))}
+          </div>
+          <div className="border-b border-line pb-3">
+            <Button
+              type="button"
+              variant="quiet"
+              onClick={addPlayer}
+              disabled={players.length >= maxQuickPlayPlayers}
+            >
+              <UserPlus aria-hidden size={17} /> Add player
+            </Button>
           </div>
         </section>
 
@@ -1354,11 +1358,15 @@ function QuickPlayLive({
         </section>
       ) : null}
       {!session.completedMatches.length ? (
-        <p className="py-6 text-sm text-muted">
-          {ended
-            ? "No matches were completed in this session."
-            : "No completed matches yet. Finished scores will appear here."}
-        </p>
+        <EmptyState
+          icon="results"
+          title={ended ? "No completed matches" : "No completed matches yet"}
+          description={
+            ended
+              ? "No matches were completed in this session."
+              : "Finished scores will appear here after the first match."
+          }
+        />
       ) : null}
     </div>
   );
@@ -1574,9 +1582,12 @@ function QuickPlayLive({
                     ))}
                   </ol>
                 ) : (
-                  <p className="mt-3 border-y border-line py-6 text-sm text-muted">
-                    No players are waiting. Use Players to check availability.
-                  </p>
+                  <EmptyState
+                    icon="players"
+                    title="No players are waiting"
+                    description="Use Players to check who’s on court or taking a break."
+                    className="mt-3 border-y border-line"
+                  />
                 )}
               </section>
 
@@ -1890,12 +1901,11 @@ export function PublicQuickPlay() {
           Quick Play
         </h1>
       </header>
-      <p
-        role="status"
-        className="mx-auto w-full max-w-2xl py-4 text-sm text-muted"
-      >
-        Opening Quick Play on this device…
-      </p>
+      <LoadingState
+        label="Opening Quick Play on this device…"
+        description="Checking for your saved players, game, or recap."
+        className="mx-auto w-full max-w-2xl"
+      />
     </section>
   );
 }

@@ -23,6 +23,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { Button } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
 import { SelectField } from "@/components/ui/select-field";
@@ -47,10 +48,10 @@ const CourtMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div
-        className="h-full min-h-96 animate-pulse rounded-xl bg-surface-strong motion-reduce:animate-none"
-        role="status"
-        aria-label="Loading map"
+      <LoadingState
+        label="Loading map"
+        description="Preparing court locations and map controls."
+        className="h-full min-h-96"
       />
     ),
   }
@@ -390,23 +391,24 @@ function CourtResults({
           ) : null}
         </ul>
       ) : (
-        <div className="grid min-h-0 flex-1 place-items-center px-6 text-center">
-          <div>
-            <Buildings aria-hidden size={22} className="mx-auto text-primary" />
-            <h3 className="mt-3 font-[680]">No courts match</h3>
-            <p className="mt-2 text-sm text-muted">
-              Try another neighborhood or clear the active filters.
-            </p>
-            {suggestHref ? (
-              <Link
-                href={suggestHref}
-                className="pressable mt-4 inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-primary-soft"
-              >
-                Suggest a court
-              </Link>
-            ) : null}
-          </div>
-        </div>
+        <EmptyState
+          icon="venues"
+          title="No courts match"
+          description="Try another neighborhood or clear the active filters."
+          className="min-h-0 flex-1 justify-center"
+        >
+          <Button variant="secondary" onClick={onClear}>
+            Clear filters
+          </Button>
+          {suggestHref ? (
+            <Link
+              href={suggestHref}
+              className="pressable inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-primary hover:bg-primary-soft"
+            >
+              Suggest a court
+            </Link>
+          ) : null}
+        </EmptyState>
       )}
     </section>
   );

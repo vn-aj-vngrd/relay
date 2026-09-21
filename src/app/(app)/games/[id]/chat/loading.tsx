@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 
@@ -11,6 +12,12 @@ export default function ChatLoading() {
         aria-busy="true"
         className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col overflow-hidden sm:rounded-xl sm:border sm:border-line"
       >
+        <LoadingState
+          compact
+          announce={false}
+          label="Loading chat"
+          className="col-span-full"
+        />
         <div className="min-h-0 flex-1 space-y-5 py-5 sm:px-3">
           <div className="flex items-center gap-3">
             <Skeleton className="h-px flex-1" />

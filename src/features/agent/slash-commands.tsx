@@ -1,8 +1,10 @@
 "use client";
+
 import { CalendarBlank, Compass, Plus } from "@phosphor-icons/react";
 import type { Editor } from "@tiptap/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { EmptyState } from "@/components/shared/content-state";
 import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
 import type { CreationFlow } from "./creation-model";
 
@@ -273,9 +275,12 @@ export function useAgentSlashCommands(
             );
           })}
           {!items.length ? (
-            <p className="px-3 py-4 text-sm text-muted">
-              No available actions match. Try another word or press Escape.
-            </p>
+            <EmptyState
+              compact
+              icon="search"
+              title="No available actions match"
+              description="Try another word or press Escape."
+            />
           ) : null}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2 text-xs text-muted">

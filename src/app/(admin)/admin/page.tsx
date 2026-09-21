@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { ImageUploadLimitsControl } from "@/features/admin/image-upload-limits-control";
 import { AdminDate } from "@/features/admin/presentation";
@@ -199,12 +200,13 @@ export default async function AdminOverviewPage() {
               ))}
             </ol>
           ) : (
-            <div className="mt-3 border-y border-line py-10 text-center">
-              <p className="text-sm font-medium">No admin changes yet</p>
-              <p className="mt-1 text-sm text-muted">
-                Privileged actions will appear here.
-              </p>
-            </div>
+            <EmptyState
+              compact
+              icon="inbox"
+              title="No admin changes yet"
+              description="Privileged actions will appear here."
+              className="mt-3 border-y border-line"
+            />
           )}
         </section>
       </div>

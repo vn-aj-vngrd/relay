@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function PublicPaymentsLoading() {
@@ -12,6 +13,12 @@ export default function PublicPaymentsLoading() {
         aria-busy="true"
         className="public-session-content game-tab-content mx-auto w-full max-w-6xl bg-surface px-4 pb-8 sm:px-6"
       >
+        <LoadingState
+          compact
+          announce={false}
+          label="Loading payment details"
+          className="col-span-full"
+        />
         <h1 className="sr-only">Your payment</h1>
         <section className="public-session-section grid min-w-0 gap-6 border-y border-line lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8">
           <div className="border-b border-line pb-5 lg:col-span-2">

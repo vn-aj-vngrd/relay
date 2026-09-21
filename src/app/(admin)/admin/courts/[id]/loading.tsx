@@ -1,8 +1,15 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function AdminCourtLoading() {
   return (
     <div role="status" aria-label="Loading court record">
+      <LoadingState
+        compact
+        announce={false}
+        label="Loading court record"
+        className="col-span-full"
+      />
       <Skeleton className="h-4 w-44" />
       <Skeleton className="mt-3 h-9 w-72 max-w-full" />
       <Skeleton className="mt-3 h-4 w-48" />
@@ -14,7 +21,6 @@ export default function AdminCourtLoading() {
           </div>
         ))}
       </div>
-      <span className="sr-only">Loading court record</span>
     </div>
   );
 }

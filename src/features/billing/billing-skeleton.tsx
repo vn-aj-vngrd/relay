@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { RowsSkeleton, Skeleton } from "@/components/shared/skeleton";
 
 import type { BillingSection } from "./navigation";
@@ -11,7 +12,7 @@ const loadingLabels = {
 export function BillingSkeleton({ section }: { section: BillingSection }) {
   return (
     <div role="status" aria-label={loadingLabels[section]}>
-      <span className="sr-only">{loadingLabels[section]}</span>
+      <LoadingState compact announce={false} label={loadingLabels[section]} />
       <div aria-hidden>
         {section === "current" ? (
           <div>

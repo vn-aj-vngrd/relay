@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { AdminDate, AdminStatus } from "@/features/admin/presentation";
 import type {
   AdminAuditRecord,
@@ -420,9 +421,12 @@ export function AdminInfiniteRecords({
 
   if (!items.length)
     return (
-      <div className="border-y border-line py-10 text-center">
-        <p className="text-sm font-semibold">{emptyMessage}</p>
-      </div>
+      <EmptyState
+        icon="inbox"
+        title={emptyMessage}
+        description="New records will appear here. If filters are active, try adjusting them."
+        className="border-y border-line"
+      />
     );
 
   return (

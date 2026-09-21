@@ -1,5 +1,6 @@
 import { CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { spotsRemainingLabel } from "./format";
 
@@ -82,11 +83,16 @@ export function OverviewRosterPreview({
           ))}
         </ul>
       ) : (
-        <p className="border-y border-line py-6 text-sm text-muted">
-          {terminal
-            ? "No Going responses were recorded."
-            : "Be the first to join."}
-        </p>
+        <EmptyState
+          compact
+          icon="players"
+          title={
+            terminal
+              ? "No Going responses were recorded."
+              : "Be the first to join."
+          }
+          className="border-y border-line"
+        />
       )}
       <ButtonLink
         href={`${hrefBase}/play?panel=players`}

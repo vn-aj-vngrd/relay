@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -137,9 +138,11 @@ export function HelpCenterContent({
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-                  No articles match. Try fewer words or browse all topics.
-                </p>
+                <EmptyState
+                  icon="search"
+                  title="No articles match"
+                  description="Try fewer words or browse all topics."
+                />
               )}
               <Link
                 href="/help"

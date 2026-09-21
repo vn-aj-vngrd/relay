@@ -16,6 +16,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { z } from "zod";
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { sessionAccentStyle } from "./accent";
 import type {
@@ -227,24 +228,18 @@ function GamePageSentinel({
 
 function EmptyCollection({ past }: { past?: boolean }) {
   return (
-    <div className="border-y border-line py-5 sm:py-8">
-      <p className="font-[650]">
-        {past ? "No game memories yet" : "Nothing scheduled"}
-      </p>
-      <p className="mt-1 text-sm text-muted">
-        {past
+    <EmptyState
+      icon={past ? "photos" : "calendar"}
+      title={past ? "No game memories yet" : "Nothing scheduled"}
+      description={
+        past
           ? "Completed games will stay here with scores and photos."
-          : "Create a game, share the link, and let the roster fill itself."}
-      </p>
-      {!past ? (
-        <Link
-          href="/games/new"
-          className="mt-4 inline-flex min-h-9 items-center rounded-lg bg-primary px-3 text-sm font-[650] text-white hover:bg-primary-hover sm:mt-5"
-        >
-          Create game
-        </Link>
-      ) : null}
-    </div>
+          : "Create a game, share the link, and let the roster fill itself."
+      }
+      className="border-y border-line"
+    >
+      {!past ? <ButtonLink href="/games/new">Create game</ButtonLink> : null}
+    </EmptyState>
   );
 }
 
@@ -873,9 +868,10 @@ function GameCollectionResults({
           className="space-y-10 sm:space-y-12"
         >
           {empty ? (
-            <section className="py-9">
-              <h2 className="text-lg font-bold">
-                {invitationHistory
+            <EmptyState
+              icon={query ? "search" : invitationHistory ? "inbox" : "calendar"}
+              title={
+                invitationHistory
                   ? !hasInvitationHistory
                     ? "No invitations yet"
                     : defaultInvitations
@@ -883,17 +879,18 @@ function GameCollectionResults({
                       : "No invitations match these filters"
                   : query
                     ? "No games match your filters"
-                    : "No upcoming games yet"}
-              </h2>
-              <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-                {invitationHistory
+                    : "No upcoming games yet"
+              }
+              description={
+                invitationHistory
                   ? defaultInvitations || !hasInvitationHistory
                     ? "New invitations will appear here."
                     : "Try another response, date, or search."
                   : query
                     ? "Try another date, role, or search."
-                    : "Create a game or find one in Open games."}
-              </p>
+                    : "Create a game or find one in Open games."
+              }
+            >
               {!defaultInvitations ? (
                 <ButtonLink
                   href={
@@ -903,12 +900,11 @@ function GameCollectionResults({
                         ? "/games"
                         : "/games/new"
                   }
-                  className="mt-4"
                 >
                   {query ? "Clear filters" : "Create game"}
                 </ButtonLink>
               ) : null}
-            </section>
+            </EmptyState>
           ) : null}
           {liveGames.length ? (
             <CollectionSection
