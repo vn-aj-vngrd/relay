@@ -7,6 +7,7 @@ import {
   endQuickPlay,
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
+  quickPlayNextRotation,
   quickPlayRecap,
   quickPlayStandings,
   reorderQuickPlayQueue,
@@ -51,6 +52,30 @@ function giveSideOneAWin(
 }
 
 describe("local Quick Play session", () => {
+  it("prepares the queue, removes resting players, and starts the displayed teams", () => {
+    let session = startQuickPlay(
+      configuration({
+        players: players(8),
+        courtCount: 1,
+        mode: "queue",
+        queueRule: "four_off",
+      })
+    );
+    expect(quickPlayNextRotation(session).preparing).toEqual([
+      "player-5",
+      "player-6",
+      "player-7",
+      "player-8",
+    ]);
+    session = setQuickPlayPlayerAvailability(session, "player-5", "sit_out");
+    expect(quickPlayNextRotation(session).preparing).not.toContain("player-5");
+    session = giveSideOneAWin(session, session.activeMatches[0].id);
+    const preview = quickPlayNextRotation(session);
+    expect(preview.plans).toHaveLength(1);
+    session = startNextQuickPlayMatches(session);
+    expect(session.activeMatches[0]).toMatchObject(preview.plans[0]);
+  });
+
   it("runs a complete Mix It Up round and prepares a new rotation", () => {
     let session = startQuickPlay(configuration());
     expect(session.activeMatches).toHaveLength(2);

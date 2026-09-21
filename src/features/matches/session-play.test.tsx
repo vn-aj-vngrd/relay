@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./actions", () => ({ completeSession: vi.fn() }));
@@ -18,7 +18,19 @@ vi.mock("./play-management-controls", () => ({
   MatchCancellationControl: () => null,
   QueueOrderControls: () => null,
 }));
-vi.mock("./start-rotation-form", () => ({ StartRotationForm: () => null }));
+vi.mock("./start-rotation-form", () => ({
+  StartRotationForm: ({
+    label,
+    expectedLineup,
+  }: {
+    label: string;
+    expectedLineup: string;
+  }) => (
+    <button type="button" data-lineup={expectedLineup}>
+      {label}
+    </button>
+  ),
+}));
 vi.mock("@/features/sessions/attendance-toggle", () => ({
   PlayAvailabilityControl: () => null,
 }));
@@ -60,6 +72,62 @@ const viewer = {
   canScoreAll: false,
   canScoreAssigned: false,
 };
+
+describe("Up next on saved-game Play", () => {
+  it.each(["/games/game", "/s/shared"])(
+    "shares the same lineup and gates the start control on %s",
+    async (hrefBase) => {
+      const live: SessionPlayData = {
+        ...data("live"),
+        courts: [
+          {
+            id: "court",
+            label: "Court 1",
+            position: 1,
+            availableForPlay: true,
+          },
+        ] as SessionPlayData["courts"],
+        queue: ["Ana", "Ben", "Carlo", "Dana"].map((name, position) => ({
+          queue: { state: "waiting", position, sessionPlayerId: name },
+          player: { id: name, guestName: name, skillLevel: "casual" },
+          profile: null,
+        })) as SessionPlayData["queue"],
+      };
+      const { unmount } = render(
+        await SessionPlay({
+          data: live,
+          viewer,
+          storyHref: `${hrefBase}/story`,
+        })
+      );
+      const next = within(screen.getByRole("region", { name: "Up next" }));
+      expect(next.getByText("Ana + Ben")).toBeVisible();
+      expect(next.getByText("Carlo + Dana")).toBeVisible();
+      expect(next.queryByRole("button")).not.toBeInTheDocument();
+      unmount();
+      render(
+        await SessionPlay({
+          data: live,
+          viewer: { ...viewer, canManagePlay: true },
+          storyHref: `${hrefBase}/story`,
+        })
+      );
+      const start = within(
+        screen.getByRole("region", { name: "Up next" })
+      ).getByRole("button");
+      expect(start).toHaveAttribute(
+        "data-lineup",
+        JSON.stringify([
+          {
+            courtId: "court",
+            teamA: ["Ana", "Ben"],
+            teamB: ["Carlo", "Dana"],
+          },
+        ])
+      );
+    }
+  );
+});
 
 describe("pre-Play state", () => {
   it("describes the actual setup sequence and eligibility for organizers", async () => {

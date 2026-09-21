@@ -13,8 +13,10 @@ export function StartRotationForm({
   label,
   pendingLabel,
   secondary = false,
+  expectedLineup,
 }: {
   sessionId: string;
+  expectedLineup: string;
   label: string;
   pendingLabel: string;
   secondary?: boolean;
@@ -24,6 +26,7 @@ export function StartRotationForm({
   return (
     <form noValidate action={action}>
       <input type="hidden" name="sessionId" value={sessionId} />
+      <input type="hidden" name="expectedLineup" value={expectedLineup} />
       <SubmitButton
         pendingLabel={pendingLabel}
         variant={secondary ? "secondary" : "primary"}

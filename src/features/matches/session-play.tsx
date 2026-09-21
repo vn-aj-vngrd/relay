@@ -15,6 +15,7 @@ import type { PostGameContinuation } from "@/features/sessions/post-game";
 
 import { LiveCourtDeck } from "./live-court";
 import { MatchResults } from "./match-results";
+import { rotationPlanKey } from "./next-rotation";
 import {
   CourtAvailabilityControl,
   MatchCancellationControl,
@@ -23,8 +24,10 @@ import {
 import { PlaySectionTabs } from "./play-section-tabs";
 import { rotationDescription, rotationName } from "./rotation";
 import { RoundTimer } from "./round-timer";
+import { sessionNextRotation } from "./session-next-rotation";
 import { SessionStandings } from "./session-standings";
 import { StartRotationForm } from "./start-rotation-form";
+import { UpNext } from "./up-next";
 
 export type SessionPlayData = Omit<
   NonNullable<Awaited<ReturnType<typeof getLiveSession>>>,
@@ -101,7 +104,6 @@ export async function SessionPlay({
   }
 
   const {
-    canStartRotation,
     rotationLabel,
     roundMode,
     roundRobinComplete,
@@ -156,6 +158,14 @@ export async function SessionPlay({
     );
   }
 
+  const nextRotation = sessionNextRotation(data);
+  const playerNames = new Map(
+    data.queue.map(({ player, profile }) => [
+      player.id,
+      playerName(player, profile),
+    ])
+  );
+
   return (
     <div>
       <PlaySectionTabs
@@ -173,16 +183,6 @@ export async function SessionPlay({
                       : "Ready for the next rotation"}
                 </p>
               </div>
-              {viewer.canManagePlay &&
-              canStartRotation &&
-              data.activeMatches.length > 0 ? (
-                <StartRotationForm
-                  sessionId={data.session.id}
-                  label={rotationLabel}
-                  pendingLabel="Creating match…"
-                  secondary
-                />
-              ) : null}
             </div>
             {data.session.roundDurationMinutes && roundStartedAt ? (
               <div className="mb-5">
@@ -222,37 +222,32 @@ export async function SessionPlay({
                   };
                 })}
               />
-            ) : (
-              <div className="border-y border-line py-10">
-                <h3 className="font-bold">
-                  {roundRobinComplete
-                    ? "Round robin complete"
-                    : data.completedMatchCount
-                      ? "Ready for what’s next"
-                      : "Courts are open"}
-                </h3>
+            ) : roundRobinComplete ? (
+              <div className="border-y border-line py-6">
+                <h3 className="font-bold">Round robin complete</h3>
                 <p className="mt-2 text-sm text-muted">
-                  {roundRobinComplete
-                    ? "Every pair has played each other once."
-                    : waiting.length < 4
-                      ? `Waiting for ${4 - waiting.length} more ${4 - waiting.length === 1 ? "player" : "players"}.`
-                      : roundMode
-                        ? "Every court is ready for the next round."
-                        : "The next four players are ready."}
+                  Every pair has played each other once.
                 </p>
-                {viewer.canManagePlay && canStartRotation ? (
-                  <div className="mt-5">
+              </div>
+            ) : null}
+            {!roundRobinComplete ? (
+              <UpNext
+                preview={nextRotation}
+                names={playerNames}
+                action={
+                  viewer.canManagePlay && nextRotation.plans.length ? (
                     <StartRotationForm
                       sessionId={data.session.id}
                       label={rotationLabel}
+                      expectedLineup={rotationPlanKey(nextRotation.plans)}
                       pendingLabel={
                         roundMode ? "Starting round…" : "Starting match…"
                       }
                     />
-                  </div>
-                ) : null}
-              </div>
-            )}
+                  ) : undefined
+                }
+              />
+            ) : null}
           </section>
         }
         queue={

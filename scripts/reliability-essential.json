@@ -10,6 +10,8 @@
   "src/features/matches/start-play.test.ts",
   "src/features/matches/lifecycle.test.ts",
   "src/features/matches/rotation.test.ts",
+  "src/features/matches/next-rotation.test.ts",
+  "src/features/matches/create-queue-match.test.ts",
   "src/features/payments/domain.test.ts",
   "src/features/payments/payment-proof-form.test.tsx",
   "src/features/payments/collection-lifecycle.test.ts",

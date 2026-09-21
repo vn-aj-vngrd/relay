@@ -33,9 +33,7 @@ function namePlayers(names = ["Van", "AJ", "Mika", "John"]) {
 }
 
 function openOptions() {
-  fireEvent.click(
-    screen.getByRole("button", { name: "Continue to game options" })
-  );
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 }
 
 function startFromOptions() {
@@ -50,6 +48,39 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it("shows who should prepare and starts the teams displayed in Up next", () => {
+    render(<PublicQuickPlay />);
+    for (let index = 0; index < 4; index += 1)
+      fireEvent.click(screen.getByRole("button", { name: "Add player" }));
+    namePlayers(["Van", "AJ", "Mika", "John", "Ana", "Ben", "Carlo", "Dana"]);
+    openOptions();
+    startFromOptions();
+    let next = within(screen.getByRole("region", { name: "Up next" }));
+    expect(next.getByText("Ana + Ben")).toBeVisible();
+    expect(next.getByText("Carlo + Dana")).toBeVisible();
+    expect(next.getByText("Next available court")).toBeVisible();
+    expect(next.queryByRole("button")).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Add a point to Van + AJ" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Finish match" }));
+    fireEvent.click(
+      within(
+        screen.getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+      ).getByRole("button", { name: "Finish match" })
+    );
+    next = within(screen.getByRole("region", { name: "Up next" }));
+    expect(next.getByText("Ana + Ben")).toBeVisible();
+    expect(next.getByText("Carlo + Dana")).toBeVisible();
+    fireEvent.click(next.getByRole("button", { name: "Start next match" }));
+    expect(
+      screen.getByRole("button", { name: "Add a point to Ana + Ben" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Add a point to Carlo + Dana" })
+    ).toBeVisible();
+  });
+
   it("lets players rest after a match and rejoin through the Players drawer", () => {
     render(<PublicQuickPlay />);
     startDefaultGame();
@@ -104,7 +135,7 @@ describe("PublicQuickPlay", () => {
     const helper = screen.getByText("Quick Play stays on this device.");
     expect(helper).toBeVisible();
     expect(helper.parentElement).toContainElement(
-      screen.getByRole("button", { name: "Continue to game options" })
+      screen.getByRole("button", { name: "Continue" })
     );
     expect(helper.parentElement).toContainElement(
       screen.getByRole("link", { name: /Create game/ })

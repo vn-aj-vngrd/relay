@@ -9,10 +9,10 @@ import {
 } from "./availability";
 import { calculateStandings } from "./domain";
 import { moveQueueGroup, type QueueMove } from "./lifecycle";
+import { previewNextRotation } from "./next-rotation";
 import {
   type PlayMode,
   planMatchFinish,
-  planRotation,
   type QueueRule,
   type RotationHistory,
 } from "./rotation";
@@ -130,51 +130,34 @@ function rotationHistory(session: QuickPlaySession): RotationHistory[] {
   }));
 }
 
-function nextPlans(session: QuickPlaySession) {
-  if (session.endedAt != null) return [];
-  if (session.mode !== "queue" && session.activeMatches.length) return [];
-  if (session.mode === "king_of_court" && session.restingPlayerIds.length)
-    return [];
-  const eligible = new Set(
-    session.waitingPlayerIds.filter(
-      (id) => !session.restingPlayerIds.includes(id)
-    )
-  );
-  const waitingIds = session.fixedPairs.length
-    ? session.waitingPlayerIds.filter((id) =>
-        session.fixedPairs.some(
-          (pair) =>
-            pair.includes(id) && pair.every((member) => eligible.has(member))
-        )
-      )
-    : [...eligible];
-  const occupiedCourts = new Set(
-    session.activeMatches.map((match) => match.courtId)
-  );
-  const availableCourts =
-    session.mode === "queue"
-      ? courts(session.courtCount).filter(
-          (court) =>
-            !occupiedCourts.has(court.id) &&
-            !session.unavailableCourtIds.includes(court.id)
-        )
-      : courts(session.courtCount).filter(
-          (court) => !session.unavailableCourtIds.includes(court.id)
-        );
+export function quickPlayNextRotation(session: QuickPlaySession) {
   const experience = new Map(
     session.players.map((player) => [player.id, player.experience])
   );
-  return planRotation({
+  return previewNextRotation({
     mode: session.mode,
-    courts: availableCourts,
-    waiting: waitingIds.map((id, index) => ({
-      id,
-      position: index + 1,
-      experience: experience.get(id),
-    })),
+    queueRule: session.queueRule,
+    courts:
+      session.endedAt != null
+        ? []
+        : courts(session.courtCount).filter(
+            (court) => !session.unavailableCourtIds.includes(court.id)
+          ),
+    activeCourtIds: session.activeMatches.map((match) => match.courtId),
+    waiting: session.waitingPlayerIds
+      .filter((id) => !session.restingPlayerIds.includes(id))
+      .map((id, index) => ({
+        id,
+        position: index + 1,
+        experience: experience.get(id),
+      })),
     history: rotationHistory(session),
     fixedPairs: session.fixedPairs,
   });
+}
+
+function nextPlans(session: QuickPlaySession) {
+  return quickPlayNextRotation(session).plans;
 }
 
 export function validateQuickPlayConfiguration(
