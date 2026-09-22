@@ -1019,11 +1019,14 @@ function QuickPlaySetup({
             <p className="mt-3 text-sm leading-6 text-muted">
               {queueRule === "winner_stays"
                 ? fixedPartners
-                  ? "Example: the winning pair stays together; the next pair replaces the losing pair. A pair plays at most two games in a row."
-                  : "Example: the two winners stay, split up, and each team with one of the next two waiting players."
+                  ? "Example: with another pair waiting, eligible winners stay together while the next pair replaces the losers."
+                  : "Example: with two players waiting, eligible winners stay, split up, and each team with one of the waiting players."
                 : queueRule === "four_off"
                   ? "Example: with eight players on one court, all four finish and the four waiting players take the next match."
-                  : "Example: with eight players on one court, all four rotate off. With six players, the winners stay and the two waiting players join."}
+                  : "Example: with eight players on one court, all four rotate off. With six players, eligible winners can stay and the two waiting players join."}
+              {queueRule !== "four_off"
+                ? " The first match on each court returns all four players to the queue. In later matches, if both winners played the previous match on that court, all four return to the queue again."
+                : null}
             </p>
           ) : null}
 

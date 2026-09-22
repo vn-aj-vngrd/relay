@@ -138,6 +138,11 @@ describe("PublicQuickPlay", () => {
     expect(
       screen.getByText(/Example: with eight players on one court/)
     ).toBeVisible();
+    expect(
+      screen.getByText(/Example: with eight players on one court/)
+    ).toHaveTextContent(
+      "The first match on each court returns all four players to the queue."
+    );
   });
 
   it("places Add player after the roster and focuses the new name field", async () => {
