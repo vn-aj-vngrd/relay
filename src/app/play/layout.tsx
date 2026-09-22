@@ -13,6 +13,7 @@ export default async function QuickPlayLayout({
       <div className="quick-play-page w-full">
         <FocusedMobileHeader
           title="Quick Play"
+          actionSlotId="quick-play-header-action"
           isAuthenticated={Boolean(user)}
         />
         {children}

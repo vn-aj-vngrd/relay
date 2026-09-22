@@ -25,6 +25,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { createPortal } from "react-dom";
 import { ConfirmActionButton } from "@/components/shared/confirm-action-button";
 import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { WizardProgress } from "@/components/shared/wizard-progress";
@@ -606,8 +607,9 @@ function QuickPlaySetup({
         </p>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl pb-8">
+      <div className="mx-auto w-full max-w-2xl lg:pb-8">
         <WizardProgress
+          className="mb-6 sm:mb-8"
           ariaLabel="Quick Play setup progress"
           labels={["Players", "Game options", "Review"]}
           step={step}
@@ -646,6 +648,7 @@ function QuickPlaySetup({
               variant="quiet"
               aria-expanded={pasteOpen}
               aria-controls="quick-paste-names"
+              className="-ml-3 sm:ml-0"
               onClick={() => setPasteOpen(!pasteOpen)}
             >
               <ListPlus aria-hidden size={17} /> Paste names
@@ -700,11 +703,11 @@ function QuickPlaySetup({
               </div>
             </div>
           ) : null}
-          <div className="mt-3 grid border-t border-line">
+          <div className="mt-3 grid gap-4 border-t border-line pt-4 sm:gap-0 sm:pt-0">
             {players.map((player, index) => (
               <div
                 key={player.id}
-                className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-start gap-2 py-3"
+                className="grid min-w-0 grid-cols-[minmax(0,1fr)_44px] items-start gap-2 sm:py-3"
               >
                 <div className="min-w-0">
                   <label
@@ -725,6 +728,19 @@ function QuickPlaySetup({
                     }
                     maxLength={50}
                     autoComplete="off"
+                    enterKeyHint={index < players.length - 1 ? "next" : "done"}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key !== "Enter" ||
+                        event.nativeEvent.isComposing
+                      )
+                        return;
+                      event.preventDefault();
+                      const nextPlayer = players[index + 1];
+                      if (nextPlayer)
+                        playerInputRefs.current.get(nextPlayer.id)?.focus();
+                      else continueToOptions();
+                    }}
                     placeholder="Enter name"
                     aria-invalid={Boolean(playerErrors[player.id])}
                     aria-describedby={
@@ -755,11 +771,12 @@ function QuickPlaySetup({
               </div>
             ))}
           </div>
-          <div className="border-b border-line pb-3">
+          <div className="mt-3 sm:mt-0">
             <Button
               type="button"
               variant="quiet"
               onClick={addPlayer}
+              className="-ml-3 sm:ml-0"
               disabled={players.length >= maxQuickPlayPlayers}
             >
               <UserPlus aria-hidden size={17} /> Add player
@@ -998,6 +1015,21 @@ function QuickPlaySetup({
             </div>
           ) : null}
 
+          {mode === "queue" ? (
+            <p className="mt-3 text-sm leading-6 text-muted">
+              {queueRule === "winner_stays"
+                ? fixedPartners
+                  ? "Example: with another pair waiting, eligible winners stay together while the next pair replaces the losers."
+                  : "Example: with two players waiting, eligible winners stay, split up, and each team with one of the waiting players."
+                : queueRule === "four_off"
+                  ? "Example: with eight players on one court, all four finish and the four waiting players take the next match."
+                  : "Example: with eight players on one court, all four rotate off. With six players, eligible winners can stay and the two waiting players join."}
+              {queueRule !== "four_off"
+                ? " The first match on each court returns all four players to the queue. In later matches, if both winners played the previous match on that court, all four return to the queue again."
+                : null}
+            </p>
+          ) : null}
+
           {mode !== "queue" ? (
             <div className="mt-5">
               <SelectField
@@ -1129,8 +1161,14 @@ function QuickPlaySetup({
 
         {error ? <Alert className="mt-6">{error}</Alert> : null}
         <div
-          className={`mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center ${step === 1 ? "sm:flex-wrap" : "border-t border-line pt-5 sm:justify-between"}`}
+          data-quick-play-sticky-actions={step === 1 ? "true" : undefined}
+          className={`mt-4 gap-3 sm:mt-6 sm:flex sm:flex-row sm:items-center ${step === 1 ? "sticky bottom-0 z-10 flex flex-nowrap items-center justify-end border-t border-line bg-surface py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:static" : "flex flex-col-reverse border-t border-line pt-5 sm:justify-between"}`}
         >
+          {step === 1 ? (
+            <p className="mr-auto hidden text-xs text-muted sm:block">
+              Quick Play stays on this device.
+            </p>
+          ) : null}
           <div>
             {step > 1 ? (
               <Button
@@ -1145,11 +1183,7 @@ function QuickPlaySetup({
                 Back
               </Button>
             ) : (
-              <ButtonLink
-                href="/games/new"
-                variant="secondary"
-                className="w-full sm:w-auto"
-              >
+              <ButtonLink href="/games/new" variant="quiet">
                 <PlusCircle aria-hidden size={16} /> Create game
               </ButtonLink>
             )}
@@ -1158,9 +1192,11 @@ function QuickPlaySetup({
             <Button
               type="button"
               onClick={continueToOptions}
-              className="w-full sm:w-auto"
+              aria-label="Choose game options"
+              className="shrink-0"
             >
-              Continue
+              <span className="sm:hidden">Game options</span>
+              <span className="hidden sm:inline">Choose game options</span>
             </Button>
           ) : step === 2 ? (
             <Button
@@ -1175,11 +1211,6 @@ function QuickPlaySetup({
               Start Play
             </Button>
           )}
-          {step === 1 ? (
-            <p className="-order-1 text-sm text-muted sm:mr-auto">
-              Quick Play stays on this device.
-            </p>
-          ) : null}
         </div>
       </div>
     </section>
@@ -1772,6 +1803,11 @@ function loadStoredQuickPlay() {
 }
 
 function PersistentQuickPlay() {
+  const [headerActionTarget, setHeaderActionTarget] =
+    useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setHeaderActionTarget(document.getElementById("quick-play-header-action"));
+  }, []);
   const [initial] = useState(loadStoredQuickPlay);
   const [session, setSession] = useState<QuickPlaySession | null>(
     initial.session
@@ -1843,9 +1879,28 @@ function PersistentQuickPlay() {
           {storageWarning}
         </Alert>
       ) : null}
+      {previousSession && headerActionTarget
+        ? createPortal(
+            <Button
+              variant="quiet"
+              onClick={() => setViewingPrevious(!viewingPrevious)}
+            >
+              {viewingPrevious
+                ? session
+                  ? "Current game"
+                  : "Back to setup"
+                : "Previous recap"}
+            </Button>,
+            headerActionTarget
+          )
+        : null}
       {previousSession ? (
-        <div className="mx-auto mb-5 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
-          <p className="text-xs text-muted">
+        <div
+          className={`mx-auto w-full max-w-6xl flex-wrap items-center justify-between gap-2 border-b border-line mb-5 pb-3 ${headerActionTarget ? "hidden lg:flex" : "flex"}`}
+        >
+          <p
+            className={`text-xs text-muted ${viewingPrevious ? "" : "hidden sm:block"}`}
+          >
             {viewingPrevious
               ? "Previous recap · read-only · this device only"
               : "Your last recap is kept on this device."}
@@ -1853,6 +1908,7 @@ function PersistentQuickPlay() {
           <Button
             variant="quiet"
             onClick={() => setViewingPrevious(!viewingPrevious)}
+            aria-label={viewingPrevious ? undefined : "Previous recap"}
           >
             {viewingPrevious
               ? session

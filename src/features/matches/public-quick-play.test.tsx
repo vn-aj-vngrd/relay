@@ -71,7 +71,7 @@ function namePlayers(names = ["Van", "AJ", "Mika", "John"]) {
 }
 
 function openOptions() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  fireEvent.click(screen.getByRole("button", { name: "Choose game options" }));
 }
 
 function startFromOptions() {
@@ -86,6 +86,65 @@ function startDefaultGame() {
 }
 
 describe("PublicQuickPlay", () => {
+  it("opens the previous recap from the header and returns to setup", () => {
+    const previous = storeEndedSession();
+    localStorage.removeItem(quickPlayStorageKey);
+    localStorage.setItem(
+      quickPlayPreviousKey,
+      serializeQuickPlaySession(previous)
+    );
+    const slot = document.createElement("div");
+    slot.id = "quick-play-header-action";
+    document.body.append(slot);
+    try {
+      const view = render(<PublicQuickPlay />);
+      fireEvent.click(
+        within(slot).getByRole("button", { name: "Previous recap" })
+      );
+      expect(
+        screen.getByRole("heading", { name: "Quick Play recap" })
+      ).toBeVisible();
+      fireEvent.click(
+        within(slot).getByRole("button", { name: "Back to setup" })
+      );
+      expect(
+        screen.getByRole("heading", { name: "Who’s playing" })
+      ).toBeVisible();
+      view.unmount();
+    } finally {
+      slot.remove();
+    }
+  });
+
+  it("moves through player names with Enter and validates before opening options", () => {
+    render(<PublicQuickPlay />);
+    const first = screen.getByRole("textbox", { name: "Player 1" });
+    const second = screen.getByRole("textbox", { name: "Player 2" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "Enter", isComposing: true });
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(first, { key: "Enter" });
+    expect(second).toHaveFocus();
+    const last = screen.getByRole("textbox", { name: "Player 4" });
+    fireEvent.keyDown(last, { key: "Enter" });
+    expect(
+      screen.getByRole("heading", { name: "Who’s playing" })
+    ).toBeVisible();
+    namePlayers();
+    fireEvent.keyDown(last, { key: "Enter" });
+    expect(
+      screen.getByRole("heading", { name: "Choose how this game runs" })
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Example: with eight players on one court/)
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Example: with eight players on one court/)
+    ).toHaveTextContent(
+      "The first match on each court returns all four players to the queue."
+    );
+  });
+
   it("places Add player after the roster and focuses the new name field", async () => {
     render(<PublicQuickPlay />);
     const addPlayer = screen.getByRole("button", { name: "Add player" });
@@ -356,7 +415,7 @@ describe("PublicQuickPlay", () => {
     const helper = screen.getByText("Quick Play stays on this device.");
     expect(helper).toBeVisible();
     expect(helper.parentElement).toContainElement(
-      screen.getByRole("button", { name: "Continue" })
+      screen.getByRole("button", { name: "Choose game options" })
     );
     expect(helper.parentElement).toContainElement(
       screen.getByRole("link", { name: /Create game/ })
