@@ -263,3 +263,5 @@ CI must pass on the PR head before merge.
 - Queue exposes rotation rules on mobile. Courts puts actionable Up next before scoreboards and uses two columns for multiple courts on wide screens.
 - Play again with these players seeds a reviewable setup with the roster/settings. Both replay and confirmed blank setup preserve one previous read-only recap locally, and stop if preserving it fails. No account migration or cross-device sharing is implied.
 - Coverage: quick-play-draft.test.ts, quick-play-session.test.ts, public-quick-play.test.tsx and the roster/replay journey in e2e/smoke.spec.ts. Coverage authored; validation deferred to pre-commit. E2E execution remains opt-in.
+
+Quick Play roster entry: Enter advances to the next name, ignores IME composition, and validates the final name before opening options. Component regression: `src/features/matches/public-quick-play.test.tsx`. Existing Quick Play browser scenarios use the explicit Choose game options action. Manual local browser review covered the ten-player roster, sticky actions and recap header layout. Component coverage includes the recap header round trip. Full automated E2E execution remains opt-in.

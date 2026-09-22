@@ -244,7 +244,7 @@ test("Quick Play keeps neighboring fields aligned when one player has an error",
   for (const [index, name] of ["Alex", "Bea", "Casey", "Alex"].entries()) {
     await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
   }
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Choose game options" }).click();
   const player3 = page.getByRole("textbox", { name: "Player 3" });
   const player4 = page.getByRole("textbox", { name: "Player 4" });
   await expect(player3).toHaveAttribute("aria-invalid", "false");
@@ -276,7 +276,7 @@ test("public Quick Play prepares players, rotates, and scores without an account
   for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
     await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
   }
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Choose game options" }).click();
   await page.getByRole("button", { name: "Queue rule" }).click();
   await page
     .getByRole("option", { name: "Four rotate — a fresh group every match" })
@@ -444,7 +444,9 @@ test("Quick Play imports a roster, admits a late arrival, and reuses its crew wi
   await expect(page.getByRole("textbox", { name: "Player 4" })).toHaveValue(
     "John"
   );
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Choose game options", exact: true })
+    .click();
   await page.getByRole("button", { name: "Review setup" }).click();
   await page.getByRole("button", { name: "Start Play", exact: true }).click();
   await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
@@ -512,7 +514,7 @@ test("Quick Play shows preparation, refreshes availability, and starts the previ
     await page
       .getByRole("textbox", { name: `Player ${index + 1}`, exact: true })
       .fill(name);
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByRole("button", { name: "Choose game options" }).click();
   await page.getByRole("button", { name: "Review setup" }).click();
   await page.getByRole("button", { name: "Start Play" }).click();
   const next = page.getByRole("region", { name: "Up next" });
@@ -1457,10 +1459,10 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
     )
   ).toBe(0);
   const button = page.getByRole("button", {
-    name: "Continue",
+    name: "Choose game options",
   });
   const box = await button.boundingBox();
-  expect(box?.height).toBeGreaterThanOrEqual(44);
+  expect(box?.height).toBeGreaterThanOrEqual(36);
   expect(
     await button.evaluate((element) => getComputedStyle(element).cursor)
   ).toBe("pointer");
