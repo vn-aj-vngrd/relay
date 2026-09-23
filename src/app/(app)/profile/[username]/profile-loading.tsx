@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export function ProfileHeaderSkeleton() {
@@ -8,9 +7,11 @@ export function ProfileHeaderSkeleton() {
       aria-busy="true"
       className="flex items-start gap-4 pb-7"
     >
+      <span role="status" className="sr-only">
+        Loading player details
+      </span>
       <Skeleton className="h-20 w-20 shrink-0 rounded-full" />
       <div className="min-w-0 flex-1 space-y-2 pt-1">
-        <LoadingState compact label="Loading player details" />
         <Skeleton className="h-7 w-48 max-w-full" />
         <Skeleton className="h-3.5 w-32 max-w-full" />
       </div>

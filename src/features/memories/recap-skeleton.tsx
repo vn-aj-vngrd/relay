@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export function RecapSkeleton() {
@@ -9,12 +8,6 @@ export function RecapSkeleton() {
       aria-busy="true"
       className="space-y-10"
     >
-      <LoadingState
-        compact
-        announce={false}
-        label="Loading session recap"
-        className="col-span-full"
-      />
       <section className="rounded-xl bg-surface-strong px-5 py-8 sm:px-8 sm:py-10">
         <Skeleton className="h-3 w-28" />
         <Skeleton className="mt-5 h-10 w-full max-w-xl" />

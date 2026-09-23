@@ -14,8 +14,11 @@ describe("BillingSkeleton", () => {
     "announces %s loading without interactive placeholders",
     (section, label) => {
       render(<BillingSkeleton section={section} />);
-      expect(screen.getByRole("status", { name: label })).toBeInTheDocument();
-      expect(screen.getByText(label)).toBeVisible();
+      expect(screen.getByRole("status", { name: label })).toHaveAttribute(
+        "aria-busy",
+        "true"
+      );
+      expect(screen.queryByText(label)).not.toBeInTheDocument();
       expect(screen.getAllByRole("status")).toHaveLength(1);
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
       expect(screen.queryByRole("button")).not.toBeInTheDocument();

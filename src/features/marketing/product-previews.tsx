@@ -237,7 +237,7 @@ export function PaymentsProductPreview() {
   return (
     <ProductComponentFrame
       caption="The actual proof submission components"
-      detail="Repayment, not payment processing"
+      detail="Track payments sent outside Relay"
     >
       <div className="grid gap-7 bg-surface p-5 sm:p-8 lg:grid-cols-[1fr_340px]">
         <div>

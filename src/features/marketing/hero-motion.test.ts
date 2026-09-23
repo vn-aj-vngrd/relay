@@ -35,6 +35,14 @@ describe("Hero entrance motion contract", () => {
     expect(hero).not.toContain("data-marketing-reveal");
   });
 
+  it("limits focus resets to reveal layers so nested SVG artwork keeps its position", () => {
+    expect(stylesheet).not.toContain(".marketing-reveal-ready:focus-within *");
+    expect(stylesheet).toContain(".marketing-reveal-ready:focus-within:is(");
+    expect(stylesheet).toContain(
+      '.marketing-reveal-ready:focus-within[data-marketing-reveal="workflow"]'
+    );
+  });
+
   it("skips the entrance for reduced motion and keyboard focus", () => {
     const reducedMotion = stylesheet.slice(
       stylesheet.lastIndexOf("@media (prefers-reduced-motion: reduce)")

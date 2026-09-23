@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 import { OverviewLoadingState } from "@/features/sessions/overview-loading-state";
@@ -81,12 +80,6 @@ export default function PublicPlanLoading() {
           aria-busy="true"
           className="game-tab-content mx-auto w-full max-w-6xl pb-12 sm:px-6"
         >
-          <LoadingState
-            compact
-            announce={false}
-            label="Loading game plan"
-            className="col-span-full"
-          />
           <div className="px-4 sm:px-0">
             <GamePageIntro title="Overview" />
           </div>

@@ -1,22 +1,21 @@
 "use client";
 import { Chat, useChat } from "@ai-sdk/react";
-import { ArrowUp, Plus, Stop } from "@phosphor-icons/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FocusedBackLink } from "@/components/shared/focused-mobile-header";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
 import { AgentMark } from "./agent-mark";
 import type { AgentUsageSummary } from "./allowance";
-import { AgentAnswer } from "./answer";
 import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
-import { AgentChatSkeleton } from "./chat-skeleton";
-import composerStyles from "./composer.module.css";
 import {
-  AgentComposerEditor,
-  type AgentComposerHandle,
-} from "./composer-editor";
+  AgentEmptyState,
+  AgentMessage,
+  AgentNewChatButton,
+} from "./chat-presentation";
+import { AgentChatSkeleton } from "./chat-skeleton";
+import { AgentComposer } from "./composer";
+import type { AgentComposerHandle } from "./composer-editor";
 import { agentMessageMaxLength } from "./constants";
 import { AgentCreationCard, useCreationProposals } from "./creation-cards";
 import { type CreationFlow, creationFlowLabels } from "./creation-model";
@@ -27,7 +26,6 @@ import {
   setConversationUrl,
 } from "./history-client";
 import { AgentHistoryPanel } from "./history-panel";
-import messageStyles from "./message.module.css";
 import {
   formatMessageTime,
   messageTimestamp,
@@ -37,7 +35,6 @@ import { AgentReplyActions } from "./reply-actions";
 import { AgentResponseError } from "./response-error";
 import type { AgentSession } from "./session";
 import { useAgentSession } from "./session";
-import { AgentUsageIndicator } from "./usage-indicator";
 import { finishWork, messageWork } from "./work";
 import { AgentWorkLog } from "./work-log";
 import { ensureAgentUIStream } from "./work-stream";
@@ -96,7 +93,6 @@ export function AgentChat({
     allowGroupCreation: false,
   };
   const [usage, setUsage] = useState(initialUsage);
-  const [actionsOpen, setActionsOpen] = useState(false);
   const session = useAgentSession();
   const [chat] = useState(() => {
     session.chat ??= new Chat({
@@ -451,17 +447,10 @@ export function AgentChat({
             onSelect={openConversation}
           />
         </div>
-        <Button
-          variant="quiet"
-          aria-label="New chat"
-          className="shrink-0 rounded-full bg-transparent! px-2! lg:px-3!"
+        <AgentNewChatButton
           disabled={busy || (!messages.length && !activeId)}
           onClick={newConversation}
-        >
-          <Plus size={16} aria-hidden />
-          <span>New chat</span>
-          <Tooltip content="New chat" side="bottom" />
-        </Button>
+        />
       </header>
       <div
         ref={viewport}
@@ -510,37 +499,18 @@ export function AgentChat({
                         </time>
                       </p>
                     ) : null}
-                    <article
-                      aria-label={message.role === "user" ? "You" : "Agent"}
-                      className={
-                        message.role === "user"
-                          ? `${messageStyles.message} ml-auto w-fit min-w-0 max-w-[90%]`
-                          : `${messageStyles.message} max-w-full pr-2`
+                    <AgentMessage
+                      user={message.role === "user"}
+                      text={message.parts
+                        .filter((part) => part.type === "text")
+                        .map((part) => part.text)
+                        .join("")}
+                      beforeAnswer={
+                        message.role === "assistant" && work ? (
+                          <AgentWorkLog key={message.id} work={work} />
+                        ) : null
                       }
                     >
-                      {message.role !== "user" ? (
-                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                          <AgentMark size={18} className="text-primary" />
-                          Agent
-                        </div>
-                      ) : null}
-                      {message.role === "assistant" && work ? (
-                        <AgentWorkLog key={message.id} work={work} />
-                      ) : null}
-                      <div
-                        className={
-                          message.role === "user"
-                            ? "ml-auto w-fit max-w-full rounded-2xl bg-surface-strong px-3.5 py-2"
-                            : undefined
-                        }
-                      >
-                        <AgentAnswer
-                          text={message.parts
-                            .filter((part) => part.type === "text")
-                            .map((part) => part.text)
-                            .join("")}
-                        />
-                      </div>
                       {message.role === "assistant" &&
                       ((error && latest) || failed || stopped) ? (
                         <AgentResponseError
@@ -569,7 +539,7 @@ export function AgentChat({
                           index === messages.length - 1
                         }
                       />
-                    </article>
+                    </AgentMessage>
                     {proposals
                       .filter(
                         (proposal) =>
@@ -592,15 +562,7 @@ export function AgentChat({
           ) : proposals.some(
               (proposal) => proposal.status !== "cancelled"
             ) ? null : (
-            <div className="mx-auto flex max-w-lg flex-col items-start justify-center py-10 sm:py-16">
-              <AgentMark size={36} className="mb-5 text-primary" />
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Your games, a little clearer.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Ask about games, groups and courts. Use + below to see what
-                Agent can help you do.
-              </p>
+            <AgentEmptyState>
               <div className="mt-7 flex w-full flex-col items-start gap-1">
                 {availableAgentPrompts(enabledCapabilities)
                   .filter((item) =>
@@ -627,7 +589,7 @@ export function AgentChat({
                     </button>
                   ))}
               </div>
-            </div>
+            </AgentEmptyState>
           )}
           {proposals
             .filter(
@@ -698,72 +660,23 @@ export function AgentChat({
         ) : null}
 
         <div className="relative">
-          <form
-            noValidate
-            onSubmit={(event) => {
-              event.preventDefault();
-              void send(input);
+          <AgentComposer
+            field={field}
+            input={input}
+            onChange={setInput}
+            onSubmit={(text) => void send(text)}
+            onCreate={(flow) => void startCreation(flow)}
+            onStop={() => {
+              session.activity = "idle";
+              session.notify();
+              void stop();
             }}
-            className={composerStyles.composer}
-          >
-            <AgentComposerEditor
-              ref={field}
-              capabilities={enabledCapabilities}
-              onCreate={(flow) => void startCreation(flow)}
-              onActionsOpenChange={setActionsOpen}
-              value={input}
-              onChange={setInput}
-              onSubmit={(text) => {
-                void send(text);
-              }}
-              disabled={!available || busy}
-            />
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <button
-                type="button"
-                aria-label="Actions"
-                aria-expanded={actionsOpen}
-                aria-haspopup="listbox"
-                disabled={!available || busy}
-                onClick={() => field.current?.openActions()}
-                className={`compact-control pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
-              >
-                <Plus size={20} aria-hidden />
-                <Tooltip content="Actions" side="top" />
-              </button>
-              <div className="flex items-center gap-1">
-                {usage ? <AgentUsageIndicator usage={usage} /> : null}
-                {status === "submitted" || status === "streaming" ? (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon"
-                    className={composerStyles.submit}
-                    aria-label="Stop response"
-                    onClick={() => {
-                      session.activity = "idle";
-                      session.notify();
-                      void stop();
-                    }}
-                  >
-                    <Stop size={14} weight="fill" aria-hidden />
-                    <Tooltip content="Stop response" side="top" />
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className={composerStyles.submit}
-                    aria-label="Send message"
-                    disabled={!available || busy || !input.trim()}
-                  >
-                    <ArrowUp size={18} aria-hidden />
-                    <Tooltip content="Send message" side="top" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </form>
+            available={available}
+            busy={busy}
+            responding={status === "submitted" || status === "streaming"}
+            capabilities={enabledCapabilities}
+            usage={usage}
+          />
         </div>
         <p className="mt-2 text-center text-xs leading-5 text-muted">
           AI can make mistakes. Check sources and don’t share secrets.

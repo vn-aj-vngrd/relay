@@ -29,6 +29,9 @@ describe("authenticated game loading states", () => {
     "keeps %s accessible without a visible loading header or subtitle",
     (title, loadingLabel, Loading) => {
       const { container } = render(<Loading />);
+      expect(screen.queryByText(loadingLabel)).not.toBeInTheDocument();
+      expect(container.querySelector(".animate-spin")).toBeNull();
+      expect(container.querySelector(".animate-pulse")).not.toBeNull();
       expect(screen.getByRole("heading", { name: title })).toHaveClass(
         "sr-only"
       );
@@ -57,6 +60,9 @@ describe("public game loading states", () => {
     "keeps the public %s shell and marks only its content busy",
     (tab, loadingLabel, Loading) => {
       const { container } = render(<Loading />);
+      expect(screen.queryByText(loadingLabel)).not.toBeInTheDocument();
+      expect(container.querySelector(".animate-spin")).toBeNull();
+      expect(container.querySelector(".animate-pulse")).not.toBeNull();
       expect(screen.getByRole("main")).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: tab })).toHaveClass("sr-only");
       expect(

@@ -32,7 +32,7 @@ describe("MarketingHighlights", () => {
     expect(cards).toHaveLength(8);
     expect(cards[0]).toHaveTextContent("Find");
     expect(cards[4]).toHaveTextContent("Play");
-    expect(cards[5]).toHaveTextContent("Repay");
+    expect(cards[5]).toHaveTextContent("Pay");
     expect(
       screen.getByRole("button", { name: "Previous highlight" })
     ).toBeDisabled();

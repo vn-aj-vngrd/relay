@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function GroupLoading() {
@@ -9,12 +8,6 @@ export default function GroupLoading() {
       aria-label="Loading group"
       aria-busy="true"
     >
-      <LoadingState
-        compact
-        announce={false}
-        label="Loading group"
-        className="col-span-full"
-      />
       <header
         data-testid="group-detail-skeleton-header"
         className="flex flex-col gap-5 border-b border-line pb-7 sm:flex-row sm:items-end sm:justify-between"

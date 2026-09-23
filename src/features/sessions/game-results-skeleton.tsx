@@ -1,6 +1,5 @@
 "use client";
 
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 import { useGameViewMode } from "./game-view-menu";
 
@@ -25,17 +24,6 @@ export function GameResultsSkeleton({
       aria-busy="true"
       data-testid="game-results-skeleton"
     >
-      <LoadingState
-        compact
-        announce={false}
-        label={
-          invitations
-            ? "Loading invitations"
-            : discovery
-              ? "Loading open games"
-              : "Loading games"
-        }
-      />
       {mode === "calendar" ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           <div>

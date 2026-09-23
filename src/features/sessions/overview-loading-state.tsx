@@ -2,7 +2,6 @@
 
 import { CheckCircle } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 import { useGameLifecycle } from "./game-lifecycle-context";
@@ -51,11 +50,6 @@ export function OverviewLoadingState({
         aria-label={shared ? "Loading game plan" : "Loading game overview"}
         aria-busy="true"
       >
-        <LoadingState
-          compact
-          announce={false}
-          label={shared ? "Loading game plan" : "Loading game overview"}
-        />
         <div className={`mb-5 sm:mb-6 ${shared ? "px-4 sm:px-0" : ""}`}>
           <section
             aria-label="Game ended"

@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export default function NotificationsLoading() {
@@ -11,12 +10,6 @@ export default function NotificationsLoading() {
       aria-label="Loading notifications"
       aria-busy="true"
     >
-      <LoadingState
-        compact
-        announce={false}
-        label="Loading notifications"
-        className="col-span-full"
-      />
       <header className="border-b border-line pb-6">
         <h1 className="app-title">Notifications</h1>
         <Skeleton className="mt-2 h-3.5 w-24" />

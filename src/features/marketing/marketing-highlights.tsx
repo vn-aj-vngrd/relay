@@ -58,7 +58,7 @@ const highlights: readonly MarketingHighlight[] = [
     dark: true,
   },
   {
-    stage: "Repay",
+    stage: "Pay",
     title: "Split the cost.",
     detail:
       "Share payment details, adjust each share, and review proof of payment.",

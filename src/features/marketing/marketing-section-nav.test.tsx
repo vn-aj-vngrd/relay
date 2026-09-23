@@ -55,7 +55,15 @@ describe("MarketingSectionNav", () => {
       "href",
       "#agent"
     );
+    expect(screen.getByRole("link", { name: "Pay" })).toHaveAttribute(
+      "href",
+      "#payments"
+    );
     const links = screen.getAllByRole("link");
+    expect(
+      screen.queryByRole("link", { name: "Highlights" })
+    ).not.toBeInTheDocument();
+    expect(links[0]).toHaveTextContent("Agent");
     expect(links.slice(-2).map((link) => link.textContent)).toEqual([
       "Story",
       "Pricing",
