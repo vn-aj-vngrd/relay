@@ -10,7 +10,7 @@ const loadingLabels = {
 
 export function BillingSkeleton({ section }: { section: BillingSection }) {
   return (
-    <div role="status" aria-label={loadingLabels[section]}>
+    <div role="status" aria-label={loadingLabels[section]} aria-busy="true">
       <div aria-hidden>
         {section === "current" ? (
           <div>
