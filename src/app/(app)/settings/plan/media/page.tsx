@@ -5,6 +5,7 @@ import { and, desc, eq, lt, ne, or } from "drizzle-orm";
 import Image from "next/image";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { db } from "@/db/client";
@@ -194,9 +195,11 @@ export default async function HostedMediaPage({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">
-          No hosted-game photos are using your storage.
-        </p>
+        <EmptyState
+          icon="photos"
+          title="No stored game photos"
+          description="No hosted-game photos are using your storage."
+        />
       )}
       {rows.length > 24 && last ? (
         <ButtonLink

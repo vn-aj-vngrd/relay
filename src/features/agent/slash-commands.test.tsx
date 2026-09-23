@@ -200,8 +200,11 @@ describe("Agent slash discovery", () => {
     );
     const input = await screen.findByRole("textbox", { name: "Message Agent" });
     paste(input, "/unavailable");
-    await screen.findByText(
-      "No available actions match. Try another word or press Escape."
+    expect(await screen.findByText("No available actions match")).toBeVisible();
+    expect(screen.getByText("Try another word or press Escape.")).toBeVisible();
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    expect(screen.getByRole("listbox")).not.toHaveTextContent(
+      "No available actions match"
     );
     fireEvent.keyDown(input, { key: "Enter" });
     expect(submit).not.toHaveBeenCalled();

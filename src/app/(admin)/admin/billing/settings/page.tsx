@@ -3,6 +3,7 @@ export const metadata = { title: "Settings · Admin" };
 import { asc, eq } from "drizzle-orm";
 import Image from "next/image";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db/client";
 import { billingMethods, billingSettings } from "@/db/schema";
@@ -92,9 +93,12 @@ export default async function BillingSettingsPage() {
             </details>
           ))}
           {!methods.length ? (
-            <p className="mt-4 text-sm text-muted">
-              No payment methods configured. Paid upgrades remain unavailable.
-            </p>
+            <EmptyState
+              compact
+              icon="payments"
+              title="No payment methods configured"
+              description="Paid upgrades remain unavailable. Add a payment method below to get started."
+            />
           ) : null}
         </section>
         <section aria-labelledby="new-method-title">

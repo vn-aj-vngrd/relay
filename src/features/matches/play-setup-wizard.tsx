@@ -98,7 +98,7 @@ export function PlaySetupWizard({
             disabled={play.playerCount < 4}
             onClick={() => goTo(2)}
           >
-            Continue to game options
+            Continue
           </Button>
         </div>
       </section>

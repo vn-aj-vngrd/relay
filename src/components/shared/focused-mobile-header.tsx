@@ -4,14 +4,19 @@ import Link from "next/link";
 export function FocusedMobileHeader({
   title,
   isAuthenticated,
+  actionSlotId,
 }: {
   title: string;
   isAuthenticated: boolean;
+  actionSlotId?: string;
 }) {
   return (
     <div className="-mx-4 mb-6 flex h-14 items-center gap-1 border-b border-line px-1 sm:-mx-8 sm:px-5 lg:hidden">
       <FocusedBackLink isAuthenticated={isAuthenticated} />
       <p className="text-sm font-semibold text-ink">{title}</p>
+      {actionSlotId ? (
+        <div id={actionSlotId} className="ml-auto mr-3 shrink-0" />
+      ) : null}
     </div>
   );
 }

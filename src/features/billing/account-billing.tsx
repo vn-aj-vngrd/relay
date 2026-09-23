@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
+import { EmptyState } from "@/components/shared/content-state";
 import { Alert } from "@/components/ui/alert";
 import { ButtonLink } from "@/components/ui/button";
 import { db } from "@/db/client";
@@ -375,11 +376,16 @@ export async function AccountBilling({
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-muted">
-              {cursor
-                ? "No earlier payment requests on this page."
-                : "No payment requests yet."}
-            </p>
+            <EmptyState
+              compact
+              icon="payments"
+              title={
+                cursor
+                  ? "No earlier payment requests on this page."
+                  : "No payment requests yet."
+              }
+              description="Your plan payment requests and their status will appear here."
+            />
           )}
           <div className="mt-4 flex flex-wrap gap-3">
             {cursor ? (

@@ -16,6 +16,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
@@ -189,19 +190,19 @@ function GroupGrid({ items }: { items: GroupCollectionItem[] }) {
 
 function EmptyGroups({ filtered }: { filtered: boolean }) {
   return (
-    <section className="py-9">
-      <h2 className="text-lg font-bold">
-        {filtered ? "No groups match these filters" : "No groups yet"}
-      </h2>
-      <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-        {filtered
+    <EmptyState
+      icon={filtered ? "search" : "players"}
+      title={filtered ? "No groups match these filters" : "No groups yet"}
+      description={
+        filtered
           ? "Try another name or role."
-          : "Create a group for your regular crew."}
-      </p>
-      <ButtonLink href={filtered ? "/groups" : "/groups/new"} className="mt-4">
+          : "Create a group for your regular crew."
+      }
+    >
+      <ButtonLink href={filtered ? "/groups" : "/groups/new"}>
         {filtered ? "Clear filters" : "Create group"}
       </ButtonLink>
-    </section>
+    </EmptyState>
   );
 }
 
@@ -219,6 +220,12 @@ export function GroupResultsSkeleton() {
           : "divide-y divide-line border-y border-line"
       }
     >
+      <LoadingState
+        compact
+        announce={false}
+        label="Loading groups"
+        className="col-span-full"
+      />
       {Array.from({ length: mode === "grid" ? 6 : 4 }, (_, index) => (
         <div
           key={index}

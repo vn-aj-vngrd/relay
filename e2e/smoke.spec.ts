@@ -156,6 +156,21 @@ test("the public court finder works without an account", async ({ page }) => {
     )
   ).toBe(true);
 
+  await page
+    .getByRole("textbox", { name: "Search courts" })
+    .fill("no-matching-court-fixture");
+  await expect(
+    page.getByRole("heading", { name: "No courts match" })
+  ).toBeVisible();
+  await page
+    .locator("[data-court-list-pane]")
+    .getByRole("button", { name: "Clear filters" })
+    .click();
+  await expect(
+    page.getByRole("textbox", { name: "Search courts" })
+  ).toHaveValue("");
+  await expect(courtList).toBeVisible();
+
   const originalViewport = page.viewportSize();
   for (const viewport of [
     { width: 320, height: 568 },
@@ -229,7 +244,7 @@ test("Quick Play keeps neighboring fields aligned when one player has an error",
   for (const [index, name] of ["Alex", "Bea", "Casey", "Alex"].entries()) {
     await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
   }
-  await page.getByRole("button", { name: "Continue to game options" }).click();
+  await page.getByRole("button", { name: "Choose game options" }).click();
   const player3 = page.getByRole("textbox", { name: "Player 3" });
   const player4 = page.getByRole("textbox", { name: "Player 4" });
   await expect(player3).toHaveAttribute("aria-invalid", "false");
@@ -261,7 +276,7 @@ test("public Quick Play prepares players, rotates, and scores without an account
   for (const [index, name] of ["Van", "AJ", "Mika", "John"].entries()) {
     await page.getByRole("textbox", { name: `Player ${index + 1}` }).fill(name);
   }
-  await page.getByRole("button", { name: "Continue to game options" }).click();
+  await page.getByRole("button", { name: "Choose game options" }).click();
   await page.getByRole("button", { name: "Queue rule" }).click();
   await page
     .getByRole("option", { name: "Four rotate — a fresh group every match" })
@@ -415,6 +430,119 @@ test("public Quick Play prepares players, rotates, and scores without an account
   await expect(
     page.getByRole("button", { name: "Start next match" })
   ).toHaveCount(0);
+});
+
+test("Quick Play imports a roster, admits a late arrival, and reuses its crew with a preserved recap", async ({
+  page,
+}) => {
+  await page.goto("/play");
+  await page.getByRole("button", { name: "Paste names" }).click();
+  await page
+    .getByRole("textbox", { name: "Names, one per line" })
+    .fill("Van\nAJ\nMika\nJohn");
+  await page.getByRole("button", { name: "Add names" }).click();
+  await expect(page.getByRole("textbox", { name: "Player 4" })).toHaveValue(
+    "John"
+  );
+  await page
+    .getByRole("button", { name: "Choose game options", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Review setup" }).click();
+  await page.getByRole("button", { name: "Start Play", exact: true }).click();
+  await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
+  await page.getByRole("button", { name: "Players (4)" }).click();
+  const drawer = page.getByRole("dialog", { name: "Players (5)" });
+  await page.getByRole("textbox", { name: "Add a player" }).fill("Ana");
+  await page.getByRole("button", { name: "Add player", exact: true }).click();
+  await expect(drawer.getByRole("status")).toContainText("Ana joined the end");
+  await drawer.getByRole("button", { name: "Close players" }).click();
+  await page.getByRole("button", { name: "Queue", exact: true }).click();
+  await expect(
+    page.getByRole("region", { name: "Active rotation rules" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Paddle stack", exact: true })
+  ).toContainText("Ana");
+  await page.getByRole("button", { name: "Courts", exact: true }).click();
+  await page.getByRole("button", { name: "Finish match", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+    .getByRole("button", { name: "Finish match", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Manage", exact: true }).click();
+  await page.getByRole("button", { name: "End session", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "End this session?" })
+    .getByRole("button", { name: "End session", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Play again with these players" })
+    .click();
+  await page
+    .getByRole("dialog", { name: "Play again with these players?" })
+    .getByRole("button", { name: "Review players" })
+    .click();
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Player 5" })).toHaveValue(
+    "Ana"
+  );
+  await page.getByRole("button", { name: "Previous recap" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Completed matches" })
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Correct Court 1 score" })
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Back to setup" }).click();
+  await expect(page.getByRole("textbox", { name: "Player 1" })).toHaveValue(
+    "Van"
+  );
+});
+
+test("Quick Play shows preparation, refreshes availability, and starts the previewed teams", async ({
+  page,
+}) => {
+  await page.goto("/play");
+  for (let index = 0; index < 4; index += 1) {
+    await page.getByRole("button", { name: "Add player" }).click();
+    await expect(
+      page.getByRole("textbox", { name: `Player ${index + 5}`, exact: true })
+    ).toBeFocused();
+  }
+  const names = ["Van", "AJ", "Mika", "John", "Ana", "Ben", "Carlo", "Dana"];
+  for (const [index, name] of names.entries())
+    await page
+      .getByRole("textbox", { name: `Player ${index + 1}`, exact: true })
+      .fill(name);
+  await page.getByRole("button", { name: "Choose game options" }).click();
+  await page.getByRole("button", { name: "Review setup" }).click();
+  await page.getByRole("button", { name: "Start Play" }).click();
+  const next = page.getByRole("region", { name: "Up next" });
+  await expect(next).toContainText("Ana + Ben");
+  await expect(next).toContainText("Carlo + Dana");
+  await expect(next.getByRole("button")).toHaveCount(0);
+  await page.getByRole("button", { name: "Players (8)" }).click();
+  const drawer = page.getByRole("dialog", { name: "Players (8)" });
+  await drawer
+    .getByRole("button", { name: "Take a break for Ana", exact: true })
+    .click();
+  await drawer.getByRole("button", { name: "Close players" }).click();
+  await expect(next).not.toContainText("Ana");
+  await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
+  await page.getByRole("button", { name: "Finish match", exact: true }).click();
+  await page
+    .getByRole("dialog", { name: "Finish Court 1 at 1–0?" })
+    .getByRole("button", { name: "Finish match", exact: true })
+    .click();
+  const teamNames = [
+    await next.locator("li div > span").first().innerText(),
+    await next.locator("li div > span").last().innerText(),
+  ];
+  await next.getByRole("button", { name: "Start next match" }).click();
+  for (const team of teamNames)
+    await expect(
+      page.getByRole("button", { name: `Add a point to ${team}`, exact: true })
+    ).toBeVisible();
 });
 
 test("an authenticated host and guest can complete the core session flow", async ({
@@ -960,9 +1088,7 @@ test("an authenticated host and guest can complete the core session flow", async
           "4 here · players marked Not here can join the queue when they arrive."
         )
       ).toBeVisible();
-      await page
-        .getByRole("button", { name: "Continue to game options" })
-        .click();
+      await page.getByRole("button", { name: "Continue" }).click();
       await check(
         page.getByRole("heading", { name: "Choose how this game runs" })
       ).toBeVisible();
@@ -1017,6 +1143,15 @@ test("an authenticated host and guest can complete the core session flow", async
       await check(playersTrigger).toBeFocused();
       await check(page).toHaveURL(new RegExp(`/games/${sessionId}/play$`));
       await guestPage.goto(`${publicHref}/play`);
+      await check(
+        guestPage.getByRole("region", { name: "Up next" })
+      ).toBeVisible();
+      await check(
+        guestPage.getByRole("region", { name: "Up next" }).getByRole("button")
+      ).toHaveCount(0);
+      await check(page.getByRole("region", { name: "Up next" })).toHaveText(
+        await guestPage.getByRole("region", { name: "Up next" }).innerText()
+      );
       await check(
         guestPage.getByText("Match in progress").first()
       ).toBeVisible();
@@ -1324,10 +1459,10 @@ test("mobile layout has no horizontal overflow and keeps primary targets usable"
     )
   ).toBe(0);
   const button = page.getByRole("button", {
-    name: "Continue to game options",
+    name: "Choose game options",
   });
   const box = await button.boundingBox();
-  expect(box?.height).toBeGreaterThanOrEqual(44);
+  expect(box?.height).toBeGreaterThanOrEqual(36);
   expect(
     await button.evaluate((element) => getComputedStyle(element).cursor)
   ).toBe("pointer");

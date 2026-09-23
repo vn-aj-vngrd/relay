@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar, AvatarStack } from "@/components/shared/avatar-stack";
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { db } from "@/db/client";
@@ -190,19 +191,19 @@ export default async function GroupPage({
                 ))}
               </div>
             ) : (
-              <div className="border-y border-line py-7">
-                <p className="font-semibold">Nothing scheduled</p>
-                <p className="mt-1 text-sm text-muted">
-                  Plan a game and Relay will invite the group.
-                </p>
+              <EmptyState
+                icon="calendar"
+                title="Nothing scheduled"
+                description="Plan a game and Relay will invite the group."
+                className="border-y border-line"
+              >
                 <ButtonLink
                   href={`/games/new?group=${group.id}`}
                   variant="secondary"
-                  className="mt-5"
                 >
                   Create game
                 </ButtonLink>
-              </div>
+              </EmptyState>
             )}
           </section>
 
@@ -264,13 +265,12 @@ export default async function GroupPage({
                 })}
               </div>
             ) : (
-              <div className="mt-4 border-y border-line py-7">
-                <p className="font-semibold">No shared memories yet</p>
-                <p className="mt-1 text-sm text-muted">
-                  Photos and results appear after the group’s first completed
-                  game.
-                </p>
-              </div>
+              <EmptyState
+                icon="photos"
+                title="No shared memories yet"
+                description="Photos and results appear after the group’s first completed game."
+                className="mt-4 border-y border-line"
+              />
             )}
           </section>
         </div>

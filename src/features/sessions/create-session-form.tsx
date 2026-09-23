@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { LoadingState } from "@/components/shared/content-state";
 import { Button, ButtonLink, ButtonSpinner } from "@/components/ui/button";
 import {
   DatePickerField,
@@ -1196,9 +1197,10 @@ export function CreateSessionForm({
 
   if (restoredValues === undefined)
     return (
-      <p role="status" className="py-12 text-center text-sm text-muted">
-        Restoring your game draft…
-      </p>
+      <LoadingState
+        label="Restoring your game draft…"
+        description="Bringing back the details you entered on this device."
+      />
     );
 
   return (

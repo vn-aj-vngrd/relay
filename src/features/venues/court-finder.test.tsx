@@ -267,6 +267,13 @@ describe("CourtFinder", () => {
     });
 
     expect(screen.getByText("No courts match")).toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByText("No courts match").parentElement as HTMLElement
+      ).getByRole("button", { name: "Clear filters" })
+    );
+    expect(screen.getByLabelText("Search courts")).toHaveValue("");
+    expect(screen.queryByText("No courts match")).not.toBeInTheDocument();
   });
 
   it("sorts by distance without sending location to the server", async () => {

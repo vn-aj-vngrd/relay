@@ -136,6 +136,14 @@ Validation deferred to pre-commit.
 
 ## Device-local Quick Play (2026-09-17)
 
+Application-wide state polish: loading regions expose a readable label and
+reduced-motion-safe indicator without nested status announcements. Empty content
+uses an icon, title, guidance and existing permitted actions. Shared component
+coverage lives in `content-state.test.tsx`; Court Finder also covers clearing
+filters from an empty result. See `audits/CONTENT_STATES.md` for the surface map.
+Validation deferred to pre-commit; authenticated and admin browser coverage is
+not implied by the local review gallery.
+
 Scoreboard side swapping: Quick Play and saved-game Play share the labeled
 Swap sides control and tooltip in normal and fullscreen views. Saved-game
 swapping changes local display order only; scoring must still write to the
@@ -143,14 +151,22 @@ original team. `live-court.test.tsx` covers swapping, scoring and swapping back.
 Validation deferred to pre-commit; browser coverage for saved-game swapping
 remains unverified.
 
-Both public and authenticated `/play` use `PublicQuickPlay`. Setup must restore
-names, options and its current step after reload; Balanced Mix experience must
+Both public and authenticated `/play` use `PublicQuickPlay`. Setup displays
+a single-column player list, with Add player below the final row and Paste
+names beside the heading. Adding a player focuses the new name field; component
+and existing Quick Play browser coverage assert this focus behavior.
+Setup must restore names, options and its current step after reload. Before hydration, show a real
+Quick Play heading and readable device-opening status, without pulsing blocks
+or actionable fresh setup controls. Hydration must restore an existing recap
+without a mismatch; server-render/hydration cases in `public-quick-play.test.tsx`
+cover empty storage and a saved recap. Validation deferred to pre-commit.
+Balanced Mix experience must
 be editable in Game options. Review exposes relevant pairs, queue rules,
 experience and timer. Courts, Queue and Results remain directly reachable at
 320px, 390px and desktop widths without queue content following match history.
 Ending requires settled courts and retains a reloadable recap; starting a new
 session separately confirms replacement. Storage failures warn without blocking
-in-memory scoring. Quick Play retains a fixed roster and never becomes account
+in-memory scoring. Quick Play supports late arrivals in mixed-partner Paddle Stack; other formats retain a fixed roster. It never becomes account
 history.
 
 Regression coverage: `public-quick-play.test.tsx`, `quick-play-session.test.ts`,
@@ -209,7 +225,7 @@ reload. Final `pnpm check:full` passed: lint/types, 357 test files / 2,552 tests
 and production build. Automated E2E remains unrun.
 
 
-Quick Play availability: player names remain fixed, but the Players drawer allows
+Quick Play availability: the Players drawer allows
 breaks and rejoining. Acceptance covers immediate waiting removal, deferred
 on-court rest on completion/cancellation, undoing a deferred break, queue-tail
 rejoining, reload persistence and legacy restoration, fixed-pair eligibility and
@@ -218,3 +234,34 @@ saved-game availability. Coverage: quick-play-session.test.ts,
 public-quick-play.test.tsx and the Quick Play smoke scenario (browser suite not
 executed). End session uses the shared secondary action pattern with truthful
 local-recap copy. Validation results are recorded in the PR.
+
+## Up next review (2026-09-20)
+
+J08 and device-local Quick Play: Courts shows one upcoming rotation beneath the
+scoreboards. Paddle Stack previews teams when four waiting players rotate in;
+result-dependent lineups name waiting players without guessing winners or a
+court. Synchronized modes wait for every court. Once ready, the preview and Start use the same planner. Fixed partners,
+breaks, closed courts and completed round robins remain respected. Saved-game
+starts reject a changed lineup under the session lock and refresh both access
+paths; read-only viewers cannot start matches.
+
+Coverage added: `next-rotation.test.ts`, `create-queue-match.test.ts`,
+`quick-play-session.test.ts`, `public-quick-play.test.tsx`,
+`session-play.test.tsx`, and Quick Play/shared Play assertions in
+`e2e/smoke.spec.ts`. Local Quick Play was manually exercised with eight players
+and one court: preview, finish, and start the displayed lineup. Light/dark
+layouts were inspected at 390px and 1440px. Saved-game browser flow and the
+automated browser suite remain unrun. Final pre-commit validation on 2026-09-21: `pnpm check:full` passed formatting,
+TypeScript, all 2,590 unit tests across 360 files, and the production build.
+CI must pass on the PR head before merge.
+
+
+## Quick Play repeat-session improvements (2026-09-21)
+
+- Setup accepts newline-separated names without losing existing named players; duplicates, oversized names and the 24-player cap are explicit errors.
+- Mixed-partner Paddle Stack permits late arrivals at the end of the queue while preserving active scores and history. Fixed pairs and scheduled formats retain their roster constraints.
+- Queue exposes rotation rules on mobile. Courts puts actionable Up next before scoreboards and uses two columns for multiple courts on wide screens.
+- Play again with these players seeds a reviewable setup with the roster/settings. Both replay and confirmed blank setup preserve one previous read-only recap locally, and stop if preserving it fails. No account migration or cross-device sharing is implied.
+- Coverage: quick-play-draft.test.ts, quick-play-session.test.ts, public-quick-play.test.tsx and the roster/replay journey in e2e/smoke.spec.ts. Coverage authored; validation deferred to pre-commit. E2E execution remains opt-in.
+
+Quick Play roster entry: Enter advances to the next name, ignores IME composition, and validates the final name before opening options. Component regression: `src/features/matches/public-quick-play.test.tsx`. Existing Quick Play browser scenarios use the explicit Choose game options action. Manual local browser review covered the ten-player roster, sticky actions and recap header layout. Component coverage includes the recap header round trip. Full automated E2E execution remains opt-in.

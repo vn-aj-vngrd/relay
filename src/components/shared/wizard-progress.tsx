@@ -6,13 +6,15 @@ export function WizardProgress({
   ariaLabel,
   labels,
   step,
+  className = "mb-8",
 }: {
   ariaLabel: string;
   labels: readonly string[];
   step: number;
+  className?: string;
 }) {
   return (
-    <nav aria-label={ariaLabel} className="mb-8">
+    <nav aria-label={ariaLabel} className={className}>
       <p className="text-sm font-semibold text-muted">
         Step {step} of {labels.length}
       </p>

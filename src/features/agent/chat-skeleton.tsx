@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 export function AgentChatSkeleton() {
@@ -7,7 +8,13 @@ export function AgentChatSkeleton() {
       aria-label="Restoring chat"
       className="space-y-7 motion-reduce:[&_*]:animate-none"
     >
-      <span className="sr-only">Restoring chat…</span>
+      <LoadingState
+        compact
+        announce={false}
+        label="Restoring chat"
+        className="col-span-full"
+      />
+
       <Skeleton className="mx-auto h-3 w-24" />
       <Skeleton className="ml-auto h-10 w-48 max-w-[75%] rounded-2xl" />
       <div className="space-y-3" aria-hidden>

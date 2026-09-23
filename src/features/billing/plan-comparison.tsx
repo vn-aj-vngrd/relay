@@ -3,6 +3,7 @@ import {
   Clock,
   PauseCircle,
 } from "@phosphor-icons/react/dist/ssr";
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import {
   agentMessageLimit,
@@ -37,10 +38,11 @@ export function PlanCards({
   const catalog = publicBillingPlans(inputCatalog);
   if (!catalog.length)
     return (
-      <p className="text-sm text-muted">
-        No public plans are listed right now. Your current account access is
-        unchanged.
-      </p>
+      <EmptyState
+        icon="payments"
+        title="Plans aren’t available right now"
+        description="No public plans are listed right now. Your current account access is unchanged."
+      />
     );
   return (
     <div className="grid gap-4 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">

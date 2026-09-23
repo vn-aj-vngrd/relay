@@ -363,6 +363,13 @@ p:not(.truncate) {
 }
 /* Shared Button/ButtonLink own 36/40px action sizing and explicit 44px icons.
    Keep the mobile touch fallback for unclassified native controls. */
+@media (max-width: 39.999rem) {
+  /* The sticky actions own bottom spacing, including the device safe area. */
+  .app-content:has(.quick-play-page [data-quick-play-sticky-actions="true"]) {
+    padding-bottom: 0;
+  }
+}
+
 @media (max-width: 63.999rem) {
   button:not(.compact-control),
   a.pressable:not(.compact-control),

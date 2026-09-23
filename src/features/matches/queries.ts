@@ -170,13 +170,16 @@ async function getLiveDetails(sessionId: string, rotationMode: string) {
           .join(" + ");
       return {
         id: match.id,
+        courtId: match.courtId,
         courtLabel: match.courtLabel,
         teams: [names("A"), names("B")] as [string, string],
         teamAPlayerIds: matchMembers
           .filter((item) => item.matchPlayer.team === "A")
+          .toSorted((a, b) => a.matchPlayer.position - b.matchPlayer.position)
           .map((item) => item.player.id),
         teamBPlayerIds: matchMembers
           .filter((item) => item.matchPlayer.team === "B")
+          .toSorted((a, b) => a.matchPlayer.position - b.matchPlayer.position)
           .map((item) => item.player.id),
         scores: [match.teamAScore, match.teamBScore] as [number, number],
         winningTeam: match.winningTeam,
