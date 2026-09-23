@@ -26,7 +26,7 @@ export function ButtonSpinner({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent ${className}`}
+      className={`inline-block h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none rounded-full border-2 border-current border-r-transparent ${className}`}
     />
   );
 }

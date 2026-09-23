@@ -1,7 +1,7 @@
 import { ThumbsUp } from "@phosphor-icons/react/dist/ssr";
 import { desc, eq, inArray } from "drizzle-orm";
-
 import { Avatar } from "@/components/shared/avatar-stack";
+import { EmptyState } from "@/components/shared/content-state";
 import { db } from "@/db/client";
 import {
   messageReactions,
@@ -217,13 +217,11 @@ export async function SessionChatView({
             );
           })
         ) : (
-          <div className="py-16 text-center">
-            <h2 className="font-bold">Start the conversation</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted">
-              Share arrival plans, parking tips, payment reminders, or anything
-              the group needs before game time.
-            </p>
-          </div>
+          <EmptyState
+            icon="chat"
+            title="Start the conversation"
+            description="Share arrival plans, parking tips, payment reminders, or anything the group needs before game time."
+          />
         )}
       </ChatThread>
       {viewer.canWrite ? (

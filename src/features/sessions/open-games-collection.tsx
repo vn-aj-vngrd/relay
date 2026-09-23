@@ -17,6 +17,7 @@ import {
 } from "react";
 import { z } from "zod";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
 import { sessionAccentStyle } from "./accent";
@@ -494,24 +495,21 @@ export function OpenGamesCollection({
 
   if (!items.length)
     return (
-      <section className="py-9">
-        <h2 className="text-lg font-bold">
-          {hasFilters
-            ? "No open games match these filters"
-            : "No open games yet"}
-        </h2>
-        <p className="mt-2 max-w-lg text-sm leading-6 text-muted">
-          {hasFilters
+      <EmptyState
+        icon={hasFilters ? "search" : "calendar"}
+        title={
+          hasFilters ? "No open games match these filters" : "No open games yet"
+        }
+        description={
+          hasFilters
             ? "Try fewer filters or another location."
-            : "Check back later, or host a game."}
-        </p>
-        <ButtonLink
-          href={hasFilters ? "/games/open" : "/games/new"}
-          className="mt-4"
-        >
+            : "Check back later, or host a game."
+        }
+      >
+        <ButtonLink href={hasFilters ? "/games/open" : "/games/new"}>
           {hasFilters ? "Clear filters" : "Create game"}
         </ButtonLink>
-      </section>
+      </EmptyState>
     );
 
   if (mode === "calendar")

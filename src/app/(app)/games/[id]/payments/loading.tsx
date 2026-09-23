@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 
@@ -11,6 +12,12 @@ export default function PaymentsLoading() {
         aria-busy="true"
         className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:gap-8"
       >
+        <LoadingState
+          compact
+          announce={false}
+          label="Loading payments"
+          className="col-span-full"
+        />
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-5 lg:col-span-2">
           <div>
             <Skeleton className="h-3.5 w-16" />

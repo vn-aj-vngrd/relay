@@ -8,6 +8,29 @@ import {
   creationInputSchema,
 } from "../src/features/agent/creation-schema";
 
+function activityReply(text: string) {
+  const startedAt = Date.now() - 2000;
+  const work = {
+    startedAt,
+    finishedAt: startedAt + 2000,
+    status: "completed",
+    entries: [{ step: "games", status: "complete" }],
+  };
+  return `${[
+    {
+      type: "start",
+      messageId: "synthetic-answer",
+      messageMetadata: { work, createdAt: new Date().toISOString() },
+    },
+    { type: "text-start", id: "answer" },
+    { type: "text-delta", id: "answer", delta: text },
+    { type: "text-end", id: "answer" },
+    { type: "finish" },
+  ]
+    .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+    .join("")}data: [DONE]\n\n`;
+}
+
 let bundle: string;
 let markdownStyles: string;
 test.beforeAll(async () => {
@@ -46,6 +69,8 @@ for (const width of [390, 1440]) {
     );
     let creation: CreationProposal | null = null;
     let approvals = 0;
+    let releaseReply: (() => void) | undefined;
+    let holdReply = false;
     await page.route("**/api/agent/creations**", async (route) => {
       const request = route.request();
       const action =
@@ -97,7 +122,7 @@ for (const width of [390, 1440]) {
         ),
       })
     );
-    await page.route("**/api/agent", (route) => {
+    await page.route("**/api/agent", async (route) => {
       if (route.request().method() !== "GET") {
         const body = route.request().postDataJSON() as {
           messageId: string;
@@ -135,6 +160,11 @@ for (const width of [390, 1440]) {
           });
         }
       }
+      if (holdReply && route.request().method() !== "GET") {
+        await new Promise<void>((resolve) => {
+          releaseReply = resolve;
+        });
+      }
       return route.fulfill(
         route.request().method() === "GET"
           ? {
@@ -149,8 +179,10 @@ for (const width of [390, 1440]) {
               }),
             }
           : {
-              contentType: "text/plain",
-              body: "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
+              contentType: "text/event-stream",
+              body: activityReply(
+                "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)"
+              ),
             }
       );
     });
@@ -238,11 +270,34 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("button", { name: "Find courts near me." })
     ).toBeVisible();
+    holdReply = true;
     await page
       .getByRole("button", { name: "When is my next game?", exact: true })
       .click();
+    await expect.poll(() => Boolean(releaseReply)).toBe(true);
+    await page.getByRole("button", { name: "Toggle Agent page" }).click();
+    await expect(page.getByText("Another app page")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Agent, working", exact: true })
+    ).toBeVisible();
+    releaseReply!();
+    holdReply = false;
+    await expect(
+      page.getByRole("link", { name: "Agent, reply ready", exact: true })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Toggle Agent page" }).click();
+    await expect(
+      page.getByRole("link", { name: "Agent", exact: true })
+    ).toBeVisible();
     await expect(page.getByRole("log")).toContainText("Synthetic answer");
-    await expect(page.getByText(/1 of 50 messages used/)).toBeVisible();
+    const allowance = page.getByRole("button", {
+      name: /Message allowance: 1 of 50/,
+    });
+    await allowance.click();
+    await expect(
+      page.getByRole("region", { name: "Message allowance details" })
+    ).toContainText("1 of 50 messages used");
+    await page.keyboard.press("Escape");
     await expect(page.getByRole("link", { name: "Guide" })).toHaveAttribute(
       "href",
       "/help/create-game"
@@ -250,9 +305,57 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("button", { name: "Send message" })
     ).toBeDisabled();
+    const sendBounds = await page
+      .getByRole("button", { name: "Send message" })
+      .boundingBox();
+    const actionBounds = await page
+      .getByRole("button", { name: "Actions", exact: true })
+      .boundingBox();
+    expect(sendBounds).not.toBeNull();
+    expect(actionBounds).not.toBeNull();
+    expect(sendBounds!.width).toBe(sendBounds!.height);
+    expect(sendBounds!.height).toBe(actionBounds!.height);
+    expect(sendBounds!.y).toBe(actionBounds!.y);
     await expect(page.getByRole("log").locator("strong")).toHaveText(
       "Synthetic answer:"
     );
+    const workSummary = page.getByRole("button", { name: "Worked for 2s" });
+    await expect(workSummary).toHaveAttribute("aria-expanded", "false");
+    await workSummary.click();
+    await expect(
+      page.getByRole("list", { name: "Agent activity" })
+    ).toContainText("Searching games");
+    await workSummary.click();
+    await expect(workSummary).toHaveAttribute("aria-expanded", "false");
+    // Actions reserve their row, reveal on hover/focus, and remain available
+    // without hover on touch devices (regardless of viewport width).
+    for (const [author, label] of [
+      ["You", "Copy message"],
+      ["Agent", "Copy reply"],
+    ] as const) {
+      const message = page.getByRole("article", { name: author, exact: true });
+      const copy = message.getByRole("button", { name: label });
+      const actions = copy.locator("..");
+      await page.getByRole("textbox", { name: "Message Agent" }).focus();
+      await page.mouse.move(0, 0);
+      const hover = await page.evaluate(
+        () => matchMedia("(hover: hover) and (pointer: fine)").matches
+      );
+      await expect(actions).toHaveCSS("opacity", hover ? "0" : "1");
+      const before = await message.boundingBox();
+      if (hover) {
+        await message.hover();
+        await expect(actions).toHaveCSS("opacity", "1");
+        await page.mouse.move(0, 0);
+      }
+      await copy.focus();
+      await expect(actions).toHaveCSS("opacity", "1");
+      await expect(actions.locator("time")).toHaveCount(1);
+      expect(await message.boundingBox()).toEqual(before);
+      await expect(message.getByRole("button", { name: /edit/i })).toHaveCount(
+        0
+      );
+    }
     await page
       .getByRole("textbox", { name: "Message Agent" })
       .fill("Draft question");
@@ -297,7 +400,12 @@ for (const width of [390, 1440]) {
       .getByRole("textbox", { name: "Message Agent" })
       .fill("Show open games tomorrow");
     await page.getByRole("button", { name: "Send message" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.getByRole("log").getByRole("alert")).toBeVisible();
+    await expect(
+      page
+        .getByRole("article", { name: "Agent", exact: true })
+        .getByRole("button", { name: "Retry" })
+    ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);

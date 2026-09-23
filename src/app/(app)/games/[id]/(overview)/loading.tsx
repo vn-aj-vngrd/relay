@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 import { OverviewLoadingState } from "@/features/sessions/overview-loading-state";
@@ -13,6 +14,12 @@ export default function SessionLoading() {
         aria-busy="true"
         className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
+        <LoadingState
+          compact
+          announce={false}
+          label="Loading game overview"
+          className="col-span-full"
+        />
         <article className="public-session-panel -mx-4 min-w-0 overflow-hidden border-y border-line bg-surface sm:mx-0 sm:rounded-xl sm:border">
           <div
             className="relative overflow-hidden px-4 pb-6 pt-5 sm:px-8 sm:pb-10 sm:pt-7"

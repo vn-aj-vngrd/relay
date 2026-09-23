@@ -73,6 +73,8 @@ Record issues as `P0` blocking, `P1` major, `P2` minor, or `P3` polish. Include 
 
 ### Tooltip interaction timing
 
+Top and bottom tooltips center over their trigger by default across Tooltip and IconTooltip. Keep the 8px viewport gutter and flip sides when needed; edge clamping may shift a tooltip off-center to prevent clipping. Left/right sidebar tooltips retain their explicit alignment.
+
 Shared tooltips wait 400ms for pointer intent and retain a 180ms close grace period. Keyboard focus reveals help immediately; Escape, activation and scrolling dismiss it. Hovering the tooltip keeps it open. Reentering during the grace period cancels dismissal. Tooltips fade in over 160ms and out over 120ms without scaling text; reduced motion retains the shorter shared fade. History icon actions prefer bottom-center placement with viewport collision handling. These timings are Relay choices, informed by [Radix tooltip delays](https://www.radix-ui.com/primitives/docs/components/tooltip) and the [WAI tooltip pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tooltip/), not mandated standard durations.
 
 Landing navigation uses the default shared ButtonLink size (36px); landing calls

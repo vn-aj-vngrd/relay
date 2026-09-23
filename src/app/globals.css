@@ -363,6 +363,13 @@ p:not(.truncate) {
 }
 /* Shared Button/ButtonLink own 36/40px action sizing and explicit 44px icons.
    Keep the mobile touch fallback for unclassified native controls. */
+@media (max-width: 39.999rem) {
+  /* The sticky actions own bottom spacing, including the device safe area. */
+  .app-content:has(.quick-play-page [data-quick-play-sticky-actions="true"]) {
+    padding-bottom: 0;
+  }
+}
+
 @media (max-width: 63.999rem) {
   button:not(.compact-control),
   a.pressable:not(.compact-control),
@@ -578,6 +585,13 @@ html[data-density="compact"] .collection-row {
     justify-content: center;
     width: 2.5rem;
     padding-inline: 0;
+  }
+  html[data-sidebar="compact"] .agent-activity-indicator {
+    position: absolute;
+    right: -0.125rem;
+    top: 0;
+    border-radius: 999px;
+    background: var(--canvas);
   }
   html[data-sidebar="compact"] .sidebar-badge {
     position: absolute;
@@ -850,6 +864,32 @@ html.lenis.lenis-smooth iframe {
   }
   .relay-dialog[open]::backdrop {
     opacity: 0;
+  }
+}
+/* Drawers follow their edge instead of scaling like a centered dialog. */
+.relay-drawer {
+  margin: 0 0 0 auto;
+  width: min(32rem, calc(100vw - 1.5rem));
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  transform: translateX(100%);
+  transition-duration: 180ms;
+}
+.relay-drawer[open] {
+  transform: translateX(0);
+  transition-duration: 220ms;
+}
+.relay-drawer::backdrop {
+  transition-duration: 180ms;
+}
+.relay-drawer[open]::backdrop {
+  transition-duration: 220ms;
+}
+@starting-style {
+  .relay-drawer[open] {
+    transform: translateX(100%);
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -179,18 +179,29 @@ describe("CourtFinder", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Change court view, currently List" })
+      screen.getByRole("button", {
+        name: "Change court view, currently List View",
+      })
     ).toBeVisible();
     expect(map).toHaveClass("hidden", "xl:flex");
     expect(listPane).toHaveClass("block");
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Change court view, currently List" })
+      screen.getByRole("button", {
+        name: "Change court view, currently List View",
+      })
     );
-    fireEvent.click(screen.getByRole("menuitemradio", { name: "Map" }));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Map View" }));
+    expect(
+      screen.getByRole("button", {
+        name: "Change court view, currently Map View",
+      })
+    ).toHaveTextContent("Map View");
 
     expect(
-      screen.getByRole("button", { name: "Change court view, currently Map" })
+      screen.getByRole("button", {
+        name: "Change court view, currently Map View",
+      })
     ).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(listPane).toHaveClass("hidden", "xl:block");
@@ -202,7 +213,9 @@ describe("CourtFinder", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Change court view, currently Map" })
+      screen.getByRole("button", {
+        name: "Change court view, currently Map View",
+      })
     ).toBeVisible();
     expect(map).toHaveClass("flex");
     expect(screen.getByText("Verified by Relay")).toBeInTheDocument();
@@ -267,17 +280,33 @@ describe("CourtFinder", () => {
     });
 
     expect(screen.getByText("No courts match")).toBeInTheDocument();
+    fireEvent.click(
+      within(
+        screen.getByText("No courts match").parentElement as HTMLElement
+      ).getByRole("button", { name: "Clear filters" })
+    );
+    expect(screen.getByLabelText("Search courts")).toHaveValue("");
+    expect(screen.queryByText("No courts match")).not.toBeInTheDocument();
   });
 
   it("sorts by distance without sending location to the server", async () => {
     render(<CourtFinder venues={[fartherVenue, venue]} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Use my location" }));
+    const filters = screen.getByRole("group", { name: "Court filters" });
+    const location = within(filters).getByRole("button", {
+      name: "Use my location",
+    });
+    expect(location).toHaveTextContent("Use my location");
+    expect(location).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(location);
 
     expect(await screen.findByText(/sorted by distance/)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Nearest courts" })
     ).toBeInTheDocument();
+    expect(
+      within(filters).getByRole("button", { name: "Stop sorting by distance" })
+    ).toHaveAttribute("aria-pressed", "true");
     const list = screen.getByRole("region", { name: "Nearest courts" });
     expect(
       within(list)
@@ -287,6 +316,12 @@ describe("CourtFinder", () => {
       expect.stringMatching(/^NiceServe Pickleball Court/),
       expect.stringMatching(/^Farther Court/),
     ]);
+    fireEvent.click(
+      within(filters).getByRole("button", { name: "Stop sorting by distance" })
+    );
+    expect(
+      within(filters).getByRole("button", { name: "Use my location" })
+    ).toHaveAttribute("aria-pressed", "false");
   });
 
   it("never presents unverified court suggestions", () => {

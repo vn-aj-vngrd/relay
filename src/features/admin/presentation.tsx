@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/shared/content-state";
+
 const statusStyles: Record<string, string> = {
   active: "bg-success/10 text-success",
   suspended: "bg-danger/10 text-danger",
@@ -60,11 +62,8 @@ export function EmptyAdminRows({
 }) {
   return (
     <tr>
-      <td
-        colSpan={colSpan}
-        className="px-4 py-12 text-center text-sm text-muted"
-      >
-        {message}
+      <td colSpan={colSpan} className="px-4 text-center">
+        <EmptyState compact title={message} />
       </td>
     </tr>
   );

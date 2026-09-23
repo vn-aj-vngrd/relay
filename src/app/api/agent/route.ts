@@ -1,4 +1,9 @@
-import { isStepCount, streamText } from "ai";
+import {
+  createUIMessageStreamResponse,
+  isStepCount,
+  streamText,
+  type UIMessageChunk,
+} from "ai";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
@@ -20,6 +25,11 @@ import {
   releaseAgentMessage,
   reserveAgentMessage,
 } from "@/features/agent/usage";
+import {
+  type AgentWork,
+  finishWork,
+  toolWorkStep,
+} from "@/features/agent/work";
 import { getCurrentUser } from "@/features/auth/session";
 import { checkRateLimit, rateLimitHeaders } from "@/lib/rate-limit";
 
@@ -43,6 +53,7 @@ export async function POST(request: Request) {
   let answer = "";
   let interrupted = false;
   let charged = false;
+  let work: AgentWork | undefined;
   async function saveTurn() {
     if (!savedTurn) return;
     await finishAgentTurn(
@@ -50,7 +61,8 @@ export async function POST(request: Request) {
       savedTurn.conversationId,
       savedTurn.requestId,
       answer,
-      interrupted
+      interrupted,
+      work
     );
     savedTurn = null;
   }
@@ -158,19 +170,74 @@ export async function POST(request: Request) {
         /* Provider errors can contain request bodies. Never log them. */
       },
     });
-    // Text-only transport: reasoning, tool payloads and provider metadata never
-    // cross the client boundary. Fixed error copy prevents upstream disclosure.
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream<Uint8Array>({
+    // Only authored activity labels cross this boundary, never raw tool data,
+    // provider metadata or reasoning. Older clients retain text-only responses.
+    work = {
+      startedAt: Date.now(),
+      status: "working",
+      entries: [{ step: "reviewing", status: "running" }],
+    };
+    const activityStream =
+      request.headers.get("x-relay-agent-stream") === "activity-v1";
+    const toolEntries = new Map<string, number>();
+    let cancelled = false;
+    const stream = new ReadableStream<UIMessageChunk>({
       cancel() {
+        cancelled = true;
         cancellation.abort();
       },
       async start(controller) {
+        const emit = (chunk: UIMessageChunk) => {
+          if (!cancelled) controller.enqueue(chunk);
+        };
+        const metadata = () => ({ work: structuredClone(work) });
+        const update = () =>
+          emit({ type: "message-metadata", messageMetadata: metadata() });
+        const completePhase = () => {
+          for (const entry of work!.entries) {
+            if (
+              (entry.step === "reviewing" || entry.step === "writing") &&
+              entry.status === "running"
+            )
+              entry.status = "complete";
+          }
+        };
+        emit({
+          type: "start",
+          messageId: `${requestId}-answer`,
+          messageMetadata: metadata(),
+        });
+        emit({ type: "text-start", id: "answer" });
         try {
           let wrote = false;
           for await (const part of result.fullStream) {
             if (part.type === "error" || part.type === "abort")
               throw new Error("Agent unavailable");
+            if (part.type === "tool-call") {
+              const step = toolWorkStep(part.toolName);
+              if (step && work!.entries.length < 30) {
+                completePhase();
+                toolEntries.set(part.toolCallId, work!.entries.length);
+                work!.entries.push({ step, status: "running" });
+                update();
+              }
+            }
+            if (part.type === "tool-result" || part.type === "tool-error") {
+              const index = toolEntries.get(part.toolCallId);
+              if (index !== undefined) {
+                const output = part.type === "tool-result" ? part.output : null;
+                const unavailable =
+                  output &&
+                  typeof output === "object" &&
+                  "unavailable" in output &&
+                  output.unavailable === true;
+                work!.entries[index].status =
+                  part.type === "tool-error" || unavailable
+                    ? "failed"
+                    : "complete";
+                update();
+              }
+            }
             if (
               part.type === "finish" &&
               part.finishReason === "length" &&
@@ -179,7 +246,7 @@ export async function POST(request: Request) {
               const note =
                 "\n\nThis answer reached its length limit. Ask a narrower follow-up for the remaining details.";
               answer += note;
-              controller.enqueue(encoder.encode(note));
+              emit({ type: "text-delta", id: "answer", delta: note });
             }
             if (part.type === "text-delta" && part.text.length) {
               if (signal.aborted) throw new Error("Response stopped");
@@ -188,25 +255,50 @@ export async function POST(request: Request) {
                 await chargeAgentMessage(user.id, requestId);
                 charged = true;
               }
+              if (
+                !work!.entries.some(
+                  (entry) =>
+                    entry.step === "writing" && entry.status === "running"
+                )
+              ) {
+                completePhase();
+                if (work!.entries.length < 32)
+                  work!.entries.push({ step: "writing", status: "running" });
+                update();
+              }
               answer += part.text;
-              controller.enqueue(encoder.encode(part.text));
+              emit({ type: "text-delta", id: "answer", delta: part.text });
               wrote = true;
             }
           }
-          if (!wrote && !signal.aborted) throw new Error("Empty response");
+          if (signal.aborted || !wrote) throw new Error("Response interrupted");
+          work = finishWork(work!, "completed");
           await saveTurn();
           await release();
-          controller.close();
+          emit({ type: "text-end", id: "answer" });
+          emit({
+            type: "finish",
+            messageMetadata: {
+              ...metadata(),
+              createdAt: new Date().toISOString(),
+            },
+          });
+          if (!cancelled) controller.close();
         } catch {
           interrupted = true;
+          work = finishWork(
+            work!,
+            request.signal.aborted || cancelled ? "stopped" : "failed"
+          );
           try {
             await saveTurn();
           } catch {
-            /* Fixed public error below; no transcript logging. */
+            /* No transcript or upstream diagnostics are logged. */
           }
           await release();
-          // A failed stream becomes a client error, never a fabricated assistant turn.
-          controller.error(new Error("Agent response interrupted"));
+          update();
+          emit({ type: "error", errorText: "Agent response interrupted" });
+          if (!cancelled) controller.close();
         } finally {
           try {
             await saveTurn();
@@ -217,12 +309,25 @@ export async function POST(request: Request) {
         }
       },
     });
-    return new Response(stream, {
-      headers: {
-        ...privateHeaders,
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
+    if (activityStream)
+      return createUIMessageStreamResponse({ stream, headers: privateHeaders });
+    return new Response(
+      stream.pipeThrough(
+        new TransformStream<UIMessageChunk, Uint8Array>({
+          transform(chunk, controller) {
+            if (chunk.type === "text-delta")
+              controller.enqueue(new TextEncoder().encode(chunk.delta));
+            if (chunk.type === "error") throw new Error(chunk.errorText);
+          },
+        })
+      ),
+      {
+        headers: {
+          ...privateHeaders,
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      }
+    );
   } catch (error) {
     interrupted = true;
     try {

@@ -54,7 +54,7 @@ export function AgentComposerEditor({
         "aria-label": "Message Agent",
         "aria-multiline": "true",
         "data-placeholder": "Ask Agent…",
-        class: `agent-composer-input agent-rich-composer ${styles.markdown} min-h-12 max-h-48 overflow-y-auto outline-none`,
+        class: `agent-composer-input agent-rich-composer ${styles.markdown} min-h-10 max-h-48 overflow-y-auto px-2 py-1 outline-none`,
       },
       handleKeyDown: (view, event) => {
         if (slashKeys.current?.(event)) return true;

@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EmptyState } from "@/components/shared/content-state";
 import { Tooltip } from "@/components/ui/tooltip";
 
 import { markNotificationRead, openNotification } from "./actions";
@@ -198,7 +199,7 @@ export function NotificationFeed({
                       />
                       <button
                         type="submit"
-                        className="pressable flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
+                        className="pressable flex h-full min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
                       >
                         <span
                           className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
@@ -226,7 +227,7 @@ export function NotificationFeed({
                             {presentation.body}
                           </span>
                         </span>
-                        <span className="flex shrink-0 items-center gap-2 pt-0.5">
+                        <span className="flex shrink-0 self-center items-center gap-2">
                           <time
                             dateTime={item.createdAt}
                             className="score text-[11px] text-muted"
@@ -301,26 +302,24 @@ export function NotificationFeed({
 
 function NotificationEmpty({ filter }: { filter: NotificationFilter }) {
   return (
-    <section className="mt-8 border-y border-line py-12 text-center">
-      <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-surface-strong text-muted">
-        <Bell aria-hidden size={19} />
-      </span>
-      <h2 className="mt-4 text-lg font-bold">
-        {filter === "unread" ? "No unread updates" : "Nothing here yet"}
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-        {filter === "unread"
+    <EmptyState
+      icon="notifications"
+      className="mt-8 border-y border-line"
+      title={filter === "unread" ? "No unread updates" : "Nothing here yet"}
+      description={
+        filter === "unread"
           ? "New invites, roster changes, payment updates, and court assignments will appear here."
-          : "Game invites, roster changes, payments, and court assignments will appear here."}
-      </p>
+          : "Game invites, roster changes, payments, and court assignments will appear here."
+      }
+    >
       {filter === "unread" ? (
         <Link
           href="/notifications"
-          className="mt-5 inline-flex min-h-10 items-center font-semibold text-primary"
+          className="inline-flex min-h-10 items-center font-semibold text-primary"
         >
           View all notifications
         </Link>
       ) : null}
-    </section>
+    </EmptyState>
   );
 }

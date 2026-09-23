@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { EmptyState } from "@/components/shared/content-state";
 
 import { Tooltip } from "./tooltip";
 
@@ -251,14 +252,9 @@ export function ComboboxField({
         />
       </div>
       {open ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-label={`${label} options`}
-          className="menu-popover absolute inset-x-0 top-[calc(100%+.5rem)] z-40 max-h-72 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)]"
-        >
-          {matches.length ? (
-            matches.map((option, index) => (
+        <div className="menu-popover absolute inset-x-0 top-[calc(100%+.5rem)] z-40 max-h-72 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-[0_8px_24px_rgb(13_15_20/.14)]">
+          <div id={listboxId} role="listbox" aria-label={`${label} options`}>
+            {matches.map((option, index) => (
               <button
                 key={option.value}
                 id={`${listboxId}-${index}`}
@@ -291,10 +287,13 @@ export function ComboboxField({
                   />
                 ) : null}
               </button>
-            ))
-          ) : (
-            <p className="px-3 py-4 text-sm text-muted">{emptyMessage}</p>
-          )}
+            ))}
+          </div>
+          {!matches.length ? (
+            <div role="status">
+              <EmptyState compact icon="search" title={emptyMessage} />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

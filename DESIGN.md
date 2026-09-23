@@ -421,3 +421,21 @@ choices. Theme descriptions come from `storyThemes` in both editor and landing
 examples. The landing gallery renders all five with labeled sample data using
 RecapStoryCard, without obsolete mock editor controls. Validation deferred to
 pre-commit; rendering and exported images remain unverified.
+
+## Loading and empty content
+
+Use shared `LoadingState` and `EmptyState` for page and section states. Loading
+shows a small rotating icon, visible task label, and optional explanation;
+reduced motion leaves the icon still. Existing data skeletons retain their
+content geometry and gain a compact visible label. Keep one status announcement
+per loading region. Device restoration uses an honest loading message rather
+than invented content placeholders.
+
+Empty content uses a subject-specific icon above a clear title, concise guidance,
+and the existing permitted recovery or creation action. Use the compact variant
+inside history sections and pickers. Compact titles default to contextual text;
+use `titleAs` when a section needs a specific heading level. Keep empty guidance
+outside listbox option containers. Do not animate empty states or turn every
+inline fact, validation message, or zero metric into an empty-state panel.
+Shared public and authenticated session surfaces use the same components;
+permissions and available actions remain authoritative.

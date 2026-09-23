@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addQuickPlayPlayer,
   cancelQuickPlayMatch,
   canStartNextQuickPlayMatches,
   correctQuickPlayMatchScore,
   endQuickPlay,
   finishQuickPlayMatch,
   type QuickPlayConfiguration,
+  quickPlayNextRotation,
   quickPlayRecap,
   quickPlayStandings,
   reorderQuickPlayQueue,
@@ -51,6 +53,89 @@ function giveSideOneAWin(
 }
 
 describe("local Quick Play session", () => {
+  it("appends a late arrival without changing matches, scores, or existing queue order", () => {
+    const session = startQuickPlay(
+      configuration({ mode: "queue", courtCount: 1 })
+    );
+    const scored = scoreQuickPlayMatch(
+      session,
+      session.activeMatches[0].id,
+      0,
+      1
+    );
+    const next = addQuickPlayPlayer(scored, {
+      id: "late",
+      name: "  Ana  ",
+      experience: 2,
+    });
+    expect(next.waitingPlayerIds).toEqual([...scored.waitingPlayerIds, "late"]);
+    expect(next.activeMatches).toEqual(scored.activeMatches);
+    expect(next.completedMatches).toEqual(scored.completedMatches);
+    expect(next.players.at(-1)?.name).toBe("Ana");
+    expect(restoreQuickPlaySession(serializeQuickPlaySession(next))).toEqual(
+      next
+    );
+    expect(scored.players).toHaveLength(8);
+  });
+
+  it("rejects unsupported arrivals, duplicate names, full rosters, and ended games", () => {
+    const player = { id: "late", name: "Ana", experience: 2 };
+    const session = startQuickPlay(
+      configuration({ mode: "queue", courtCount: 1 })
+    );
+    expect(() =>
+      addQuickPlayPlayer(session, { ...player, name: " player 1 " })
+    ).toThrow("different name");
+    expect(() => addQuickPlayPlayer(session, { ...player, name: " " })).toThrow(
+      "player name"
+    );
+    expect(() =>
+      addQuickPlayPlayer(session, { ...player, id: session.players[0].id })
+    ).toThrow("already");
+    expect(() =>
+      addQuickPlayPlayer({ ...session, endedAt: 1 }, player)
+    ).toThrow("ended");
+    expect(() =>
+      addQuickPlayPlayer({ ...session, mode: "random" }, player)
+    ).toThrow("mixed-partner");
+    expect(() =>
+      addQuickPlayPlayer(
+        { ...session, fixedPairs: [["player-1", "player-2"]] },
+        player
+      )
+    ).toThrow("mixed-partner");
+    expect(() =>
+      addQuickPlayPlayer(
+        startQuickPlay(configuration({ players: players(24), mode: "queue" })),
+        player
+      )
+    ).toThrow("24 players");
+  });
+
+  it("prepares the queue, removes resting players, and starts the displayed teams", () => {
+    let session = startQuickPlay(
+      configuration({
+        players: players(8),
+        courtCount: 1,
+        mode: "queue",
+        queueRule: "four_off",
+      })
+    );
+    expect(quickPlayNextRotation(session).preparing).toEqual([
+      "player-5",
+      "player-6",
+      "player-7",
+      "player-8",
+    ]);
+    session = setQuickPlayPlayerAvailability(session, "player-5", "sit_out");
+    expect(quickPlayNextRotation(session).preparing).not.toContain("player-5");
+    session = giveSideOneAWin(session, session.activeMatches[0].id);
+    const preview = quickPlayNextRotation(session);
+    expect(preview.plans).toHaveLength(1);
+    session = startNextQuickPlayMatches(session);
+    expect(session.activeMatches[0]).toMatchObject(preview.plans[0]);
+  });
+
   it("runs a complete Mix It Up round and prepares a new rotation", () => {
     let session = startQuickPlay(configuration());
     expect(session.activeMatches).toHaveLength(2);

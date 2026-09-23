@@ -1,13 +1,15 @@
 "use client";
 
 import { ArrowClockwise, Broadcast, Pause, X } from "@phosphor-icons/react";
-import { useRef } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { IconTooltip } from "@/components/ui/icon-tooltip";
 
 import {
+  addQuickPlayPlayer,
+  maxQuickPlayPlayers,
   type QuickPlaySession,
   setQuickPlayPlayerAvailability,
 } from "./quick-play-session";
@@ -20,7 +22,33 @@ export function QuickPlayPlayers({
   onChange: (session: QuickPlaySession) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const canAdd = session.mode === "queue" && !session.fixedPairs.length;
+  function addPlayer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      onChange(
+        addQuickPlayPlayer(session, {
+          id: crypto.randomUUID(),
+          name,
+          experience: 2,
+        })
+      );
+      setNotice(`${name.trim()} joined the end of the queue.`);
+      setName("");
+      setError("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not add this player. Try again."
+      );
+      setNotice("");
+    }
+  }
   return (
     <div className="flex flex-wrap items-center gap-3">
       <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-live">
@@ -33,7 +61,7 @@ export function QuickPlayPlayers({
         aria-haspopup="dialog"
         onClick={() => {
           dialog.current?.showModal();
-          heading.current?.focus();
+          closeButton.current?.focus();
         }}
       >
         Players ({session.players.length})
@@ -42,33 +70,85 @@ export function QuickPlayPlayers({
         ref={dialog}
         variant="drawer"
         aria-labelledby="quick-players-title"
+        onDismiss={() => dialog.current?.close()}
       >
-        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-6">
-          <h2
-            ref={heading}
-            tabIndex={-1}
-            id="quick-players-title"
-            className="text-lg font-bold outline-none"
-          >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 sm:px-5">
+          <h2 id="quick-players-title" className="text-base font-semibold">
             Players ({session.players.length})
           </h2>
           <IconTooltip label="Close players">
             <Button
+              ref={closeButton}
               type="button"
               variant="quiet"
               size="icon"
+              className="rounded-full"
               aria-label="Close players"
               onClick={() => dialog.current?.close()}
             >
-              <X aria-hidden size={20} />
+              <X aria-hidden size={18} />
             </Button>
           </IconTooltip>
         </div>
-        <div className="px-4 pb-8 sm:px-6">
+        <div className="px-4 pb-8 sm:px-5">
           <p className="my-4 text-sm text-muted">
-            Take a break or rejoin the queue. Player names stay fixed for this
-            session.
+            Take a break or rejoin the queue.
           </p>
+          {canAdd ? (
+            <form noValidate onSubmit={addPlayer} className="mb-5">
+              <label
+                htmlFor="quick-late-player"
+                className="text-sm font-semibold"
+              >
+                Add a player
+              </label>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  id="quick-late-player"
+                  className="field mt-0 min-w-0 flex-1"
+                  value={name}
+                  maxLength={50}
+                  autoComplete="off"
+                  placeholder="Player name"
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setError("");
+                    setNotice("");
+                  }}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby="quick-late-player-help"
+                  disabled={session.players.length >= maxQuickPlayPlayers}
+                />
+                <Button
+                  type="submit"
+                  disabled={
+                    !name.trim() ||
+                    session.players.length >= maxQuickPlayPlayers
+                  }
+                >
+                  Add player
+                </Button>
+              </div>
+              <p
+                id="quick-late-player-help"
+                className={`mt-2 text-xs ${error ? "text-danger" : "text-muted"}`}
+                role={error ? "alert" : undefined}
+              >
+                {error ||
+                  (session.players.length >= maxQuickPlayPlayers
+                    ? "All 24 player spots are filled."
+                    : "New arrivals join the end. Current matches stay unchanged.")}
+              </p>
+              <p role="status" className="mt-2 text-xs text-muted">
+                {notice}
+              </p>
+            </form>
+          ) : (
+            <p className="mb-4 text-xs text-muted">
+              This format keeps its starting roster. Use mixed-partner Paddle
+              Stack to add players during play.
+            </p>
+          )}
           <QuickPlayAvailability session={session} onChange={onChange} />
         </div>
       </Dialog>
@@ -89,7 +169,7 @@ export function QuickPlayAvailability({
   const resting = new Set(session.restingPlayerIds);
   return (
     <div>
-      <p className="mt-1 mb-3 text-sm leading-5 text-muted">
+      <p className="mt-1 mb-3 text-xs leading-5 text-muted">
         {session.players.length - resting.size} of {session.players.length}{" "}
         available · returning players join the end.
       </p>
@@ -123,7 +203,7 @@ export function QuickPlayAvailability({
           return (
             <div
               key={player.id}
-              className="flex min-h-16 items-center gap-3 py-2"
+              className="flex min-h-14 items-center gap-3 py-2"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{player.name}</p>
@@ -132,8 +212,9 @@ export function QuickPlayAvailability({
               <IconTooltip label={`${action} for ${player.name}`} side="top">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="quiet"
                   size="icon"
+                  className="rounded-full"
                   aria-label={`${action} for ${player.name}`}
                   onClick={() =>
                     onChange(

@@ -1,7 +1,9 @@
 "use client";
+
 import { CaretDown } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { EmptyState } from "@/components/shared/content-state";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -142,9 +144,12 @@ export function AgentHistoryPanel({
                 ))}
               </ul>
             ) : (
-              <p className="px-3 py-3 text-sm text-muted">
-                No saved chats yet.
-              </p>
+              <EmptyState
+                compact
+                icon="chat"
+                title="No saved chats yet."
+                description="Your conversations will appear here."
+              />
             )}
           </div>
           <div className="mt-1 shrink-0 border-t border-line pt-1">

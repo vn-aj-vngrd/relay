@@ -8,6 +8,7 @@ import type {
 } from "maplibre-gl";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
+import { EmptyState, LoadingState } from "@/components/shared/content-state";
 import { DomTooltips } from "@/components/ui/dom-tooltips";
 
 import { courtDirectoryCoverage } from "./coverage";
@@ -401,12 +402,11 @@ export function CourtMap({
           className="absolute inset-0 grid place-items-center bg-surface-raised"
           role="status"
         >
-          <div className="text-center">
-            <span className="mx-auto block h-5 w-5 animate-spin rounded-full border-2 border-line border-t-primary motion-reduce:animate-none" />
-            <p className="mt-3 text-sm font-medium text-muted">
-              Loading interactive map…
-            </p>
-          </div>
+          <LoadingState
+            announce={false}
+            label="Loading interactive map…"
+            description="Preparing court locations and map controls."
+          />
         </div>
       ) : null}
       {failed ? (
@@ -414,12 +414,11 @@ export function CourtMap({
           className="absolute inset-0 grid place-items-center bg-surface-raised px-6 text-center"
           role="status"
         >
-          <div>
-            <p className="font-[650] text-ink">Map unavailable</p>
-            <p className="mt-1 text-sm leading-5 text-muted">
-              Use the court list below while the map reconnects.
-            </p>
-          </div>
+          <EmptyState
+            icon="venues"
+            title="Map unavailable"
+            description="Use the court list below while the map reconnects."
+          />
         </div>
       ) : null}
       {children}

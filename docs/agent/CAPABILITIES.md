@@ -33,7 +33,7 @@ The model prepares; the user confirms through the first-party endpoint. Neither 
 
 `agent_creation_proposals` owns status, payload, expiry, and result. Game/group command hooks lock and validate the proposal inside the creation transaction and store its result in that transaction. Confirmation rechecks current settings, ownership, eligibility, and audience. A completed result remains recoverable after a response or analytics failure. Stop generation is separate from cancelling a pending proposal. Quick Play replacement requires explicit device-local confirmation.
 
-Text streaming is preserved; safe creation cards are hydrated separately by conversation and original user-message ID. Provider tool payloads and arbitrary model-generated UI are not persisted as authorization. New capabilities should extend this small boundary rather than introduce a second workflow engine.
+Answer text streams alongside server-authored activity summaries for the Agent UI; legacy text-only clients remain supported. Activity summarizes tool calls without exposing arguments, results or reasoning. Completed and interrupted summaries are saved with the reply. Safe creation cards are hydrated separately by conversation and original user-message ID. Provider tool payloads and arbitrary model-generated UI are not persisted as authorization. New capabilities should extend this small boundary rather than introduce a second workflow engine.
 
 ## Second phase: proposed, not implemented
 

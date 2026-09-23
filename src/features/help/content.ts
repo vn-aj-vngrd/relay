@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-18";
+export const helpReviewedAt = "2026-09-23";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -105,12 +105,22 @@ export const helpArticles: readonly HelpArticle[] = [
     troubleshooting: [
       "Missing creation options mean that capability is disabled. Contact an administrator or use Create game, Groups, or Quick Play directly.",
       "Check linked records: answers can be mistaken. Questions and relevant data are sent to the configured AI provider, so keep secrets out of chat.",
-      "Chats are saved to your account. Use the session name menu to reopen a conversation, or See all chats to rename or delete saved chats.",
+      "Chats are saved to your account. Agent keeps processing while you visit other Relay pages in the same tab, including Quick Play, Courts and Help. The sidebar and mobile header Agent icon show a working ring while a response is in progress. A blue dot means a reply is ready; a warning means the response needs attention. These indicators clear when you return to Agent. Return to Agent to continue the latest conversation with its progress, reply and unsent draft intact. Stop, signing out or switching accounts ends active work. Reloading or closing the tab may interrupt a response; saved replies remain in History. Use the session name menu to reopen a conversation, or See all chats to rename or delete saved chats.",
+      "Hover over your message or an Agent reply to see its time and Copy control, or use Tab to focus Copy. On touch devices these controls stay visible. Hover or focus an icon for its centered tooltip; near a screen edge, the tooltip shifts to stay visible. Copy includes the full message text; replies can be copied once streaming finishes. Older messages may not have a saved time.",
+      "Write in the message box and select the circular up-arrow button to send, or press Enter. Shift+Enter adds a new line. While Agent responds, the same button becomes a square Stop control. The + button opens available actions.",
+      "The small ring beside Send shows how much of your monthly message allowance is used or reserved for replies in progress. Hover, keyboard-focus or tap it to see the exact message count and reset date in Philippine time. This is your message allowance, not the model's context window.",
+      "While Agent responds, Working for shows elapsed time and current activity, such as searching games or reading a guide. When finished, Worked for collapses above the answer; select it to expand or close the activity log. Saved replies retain their activity after refresh; older replies may not have a log. These are activity summaries, not the model's private reasoning.",
+      "If a reply fails, its error appears in the conversation with Retry underneath. Any partial answer remains visible. Retry regenerates the latest response without sending your question twice. Stopped or interrupted work is labeled in its activity summary. A response still running in another session shows a waiting message until its saved result is available.",
     ],
     related: ["agent-create", "create-a-game", "quick-play", "find-a-court"],
     sources: [
       "src/features/agent/capabilities.ts",
       "src/features/agent/slash-commands.tsx",
+      "src/features/agent/chat.tsx",
+      "src/features/agent/reply-actions.tsx",
+      "src/features/agent/work-log.tsx",
+      "src/features/agent/response-error.tsx",
+      "src/features/agent/usage-indicator.tsx",
       "src/features/agent/tools.ts",
     ],
     action: { href: "/agent", label: "Open Agent" },
@@ -323,10 +333,11 @@ export const helpArticles: readonly HelpArticle[] = [
       "One browser/device and at least four players. Quick Play supports up to 24 players and six courts, with four players per selected court.",
     ],
     steps: [
-      "Open Quick Play and enter distinct player names. To save and share a game instead, choose Create game beside Continue to game options at the bottom of the Players step. Your unfinished setup is kept in this browser, including the current step.",
+      "Open Quick Play. You may briefly see a loading icon and Opening Quick Play on this device while Relay checks for your saved setup, game, or recap. For a new setup, enter distinct player names, one player per row. Choose Add player below the list to add another name; the new field is focused automatically. For bulk entry, choose Paste names beside Who’s playing and enter one name per line. Add names keeps your existing named players, replaces blank slots, and checks duplicates and the 24-player limit. Press Enter or the keyboard Next action to move to the next player; Enter on the last name validates the roster and opens game options. The Choose game options action (Game options on mobile) stays accessible at the bottom while scrolling a long roster on mobile. Review or edit the roster before continuing. To save and share a game instead, use the quieter Create game link at the bottom of the Players step. Game options includes a concrete example of the selected Paddle Stack rotation rule. Your unfinished setup is kept in this browser, including the current step.",
       "Choose courts and a mode in Game options. Balanced Mix shows each player’s experience here; other formats offer pairs, queue rules, or a timer. Review these choices and use Edit players or Edit game options before starting.",
-      "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. Completed scores mark the winning team with a Winner label, which updates after score corrections. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Use the expand icon (Full screen) in a scoreboard header for courtside viewing. Use Manage for player and court availability, cancelling matches or rotations, and ending the session. Open Players to take a break or rejoin. Waiting players leave the queue immediately; on-court players finish before resting and can cancel their planned break. Rejoining players go to the end of the queue. Fixed pairs need both partners ready; Court Climb waits for everyone to rejoin. Names stay fixed for the session, and availability is saved only in this browser.",
-      "Finish or cancel active matches, then open Manage, choose End session, and confirm End session. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Start new session requires a separate confirmation before replacing the recap with a fresh setup.",
+      "In Courts, Up next moves above the scoreboards when players can prepare or a match is ready. Otherwise its waiting message stays below. Multiple courts appear side by side on wide screens. Paddle Stack previews the next teams when four waiting players can rotate in; otherwise Get ready names the waiting players while results determine who joins them. Synchronized formats confirm teams after every court finishes. When ready, review the teams and court shown there, then choose Start next match or Start next round. Multiple ready courts start together. Taking a break or changing the queue updates the preview.",
+      "Use Courts for assignments and scoring, Queue for waiting order, Results for completed matches, and Standings for player records. Results and Standings appear after the first completed match. Completed scores mark the winning team with a Winner label, which updates after score corrections. On phones, use the up/down arrows to reorder players; desktop also has move-to-top/end shortcuts. Use the expand icon (Full screen) in a scoreboard header for courtside viewing. Use Manage for player and court availability, cancelling matches or rotations, and ending the session. Open Players to take a break or rejoin. The compact panel slides in from the right and leaves a dimmed area outside it, including on phones. Close it with the X, Escape, or by clicking the dimmed area outside; your player changes remain in place. Waiting players leave the queue immediately; on-court players finish before resting and can cancel their planned break. Rejoining players go to the end of the queue. Fixed pairs need both partners ready; Court Climb waits for everyone to rejoin. For mixed-partner Paddle Stack, use Add a player inside Players for late arrivals; they join the end without changing active matches. Other formats keep their starting roster. The current rotation rules are shown in Queue on phones and desktop. Names and availability stay only in this browser.",
+      "Finish or cancel active matches, then open Manage, choose End session, and confirm End session. The recap shows match and point totals, court time, highlights, results and standings from recorded scores. You can correct a completed score from the recap; its highlights and standings update together. Older saved sessions without recorded finish times show court time as unavailable. The recap stays in this browser after reloading. Choose Play again with these players, then confirm Review players to review the same crew, courts, format, pairs, and timer before starting again. Start new session instead opens a blank setup after confirmation. Both keep this recap as Previous recap on this device, replacing any older previous recap. On mobile, choose Previous recap at the right of the Quick Play header. Previous recap is read-only; Back to setup or Current game (Back to current game on desktop) returns you to your current work. Relay keeps only the current game and one previous recap. If storing the previous recap fails, the current recap stays open.",
     ],
     outcome:
       "Play is stored locally in that browser, not as a shareable Relay game. It cannot be transferred into account history or another device.",
@@ -418,8 +429,8 @@ export const helpArticles: readonly HelpArticle[] = [
       "None. Location access is optional; directory coverage is Philippines only.",
     ],
     steps: [
-      "Open Courts and search by court or location. Narrow results using the setting, parking, starting-price, hours, and other available filters.",
-      "Use my location if you want on-device nearest-first sorting, or search manually. Switch between results and map; select a row or pin.",
+      "Open Courts and search by court or location. Narrow results using the setting, parking, starting-price, hours, and other available filters. If no courts match, choose Clear filters in the empty result to see the directory again.",
+      "Choose Use my location at the start of the filter row for on-device nearest-first sorting, or search manually. The chip changes to Nearest first when active; choose it again to stop sorting by distance. On smaller screens, use the labeled List View or Map View menu to switch between results and the map; select a row or pin. Wide screens show both side by side.",
       "Read court details, access restrictions, operating hours, listed prices, verification date, and external booking information. Not listed is missing information, not a promise that a facility is unavailable.",
       "Use Create game from the detail page to prefill the court and address. Confirm access, availability, and reservation directly with the venue.",
     ],
@@ -1105,11 +1116,12 @@ export const helpArticles: readonly HelpArticle[] = [
       "An active saved-game match and permission to score. Guests and unassigned viewers can read/expand scores but cannot change them.",
     ],
     steps: [
-      "Open Play and confirm the court and both teams before entering points. Courts, Queue, Results, Standings and Manage use the same compact tabs as Quick Play. On phones, move queue entries up or down; desktop also offers move-to-top and move-to-end controls.",
+      "Open Play and confirm the court and both teams before entering points. While live, Players opens a compact roster panel. Close it with the X, Escape, or the dimmed area outside without resetting scores or roster inputs. Courts, Queue, Results, Standings and Manage use the same compact tabs as Quick Play. On phones, move queue entries up or down; desktop also offers move-to-top and move-to-end controls.",
       "Use plus/minus controls for live scoring or enter the final score. Use Swap sides in the scoreboard header to switch the displayed teams without changing their scores. This view choice applies on your device and resets when the scoreboard reloads. Use the expand icon (Full screen) if needed; move between active courts there and use its close control or Escape to return.",
       "If a version conflict appears, read the restored saved score and deliberately retry only the still-needed change.",
       "Choose Finish match, review the teams and final score, then confirm. A winner is required; a tie cannot be finished.",
       "Read the next assignment. Paddle Stack can rotate a court independently; synchronized modes require every active court to finish.",
+      "Check Up next below the active courts while waiting. Paddle Stack shows who should prepare for the next available court without guessing the current winner. Synchronized formats show who is waiting this round and confirm assignments after all courts finish. Hosts and co-hosts start the displayed lineup from Up next; players and shared-link viewers see the same preview without start controls. If another device changes the lineup, review the refreshed teams before trying again.",
     ],
     outcome:
       "A completed match becomes durable history and contributes to standings. Optional timers survive refresh from saved start time but never auto-complete a score.",
@@ -1126,6 +1138,8 @@ export const helpArticles: readonly HelpArticle[] = [
     sources: [
       "src/features/matches/actions.ts",
       "src/features/matches/live-court.tsx",
+      "src/features/matches/up-next.tsx",
+      "src/features/matches/next-rotation.ts",
     ],
   },
   {
@@ -1419,7 +1433,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "A signed-in account. Push needs a supported browser and permission on each device.",
     ],
     steps: [
-      "Open Notifications and follow a row to its game/action. Resolve requests in Play’s roster rather than assuming that reading a notification approves them.",
+      "Open Notifications and follow a row to its game/action. The date and arrow sit at the middle of the row; use the check beside an unread notification to mark it as read without opening it. Resolve requests in Play’s roster rather than assuming that reading a notification approves them.",
       "Open Settings → Notifications and choose email/push categories, reminder timing, time zone, and quiet hours.",
       "Choose to enable push on this device, then respond to the browser permission prompt. Repeat on each device you want to register.",
       "Review registered devices and disable a device when no longer needed. Check delivery preferences after changing browsers.",

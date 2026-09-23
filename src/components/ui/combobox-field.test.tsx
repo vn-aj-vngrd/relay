@@ -43,6 +43,21 @@ function ControlledCombobox({
 }
 
 describe("ComboboxField", () => {
+  it("announces empty guidance outside the option list without adding a heading", () => {
+    render(<ControlledCombobox />);
+    const input = screen.getByRole("combobox", { name: "Court" });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "no matching court" } });
+    const list = screen.getByRole("listbox", { name: "Court options" });
+    expect(within(list).queryByRole("option")).not.toBeInTheDocument();
+    const status = screen.getByRole("status");
+    expect(status).toBeVisible();
+    expect(list).not.toContainElement(status);
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
   it("narrows options as the player types and selects with the keyboard", () => {
     const onChange = vi.fn();
     render(<ControlledCombobox onChange={onChange} />);

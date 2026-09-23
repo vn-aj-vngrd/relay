@@ -7,7 +7,7 @@ export function IconTooltip({
   label,
   children,
   id,
-  align = "end",
+  align = "center",
   side = "responsive",
   disabled = false,
 }: {

@@ -1,6 +1,6 @@
 import { Clock, UserCheck, UsersThree } from "@phosphor-icons/react/dist/ssr";
-
 import { Avatar } from "@/components/shared/avatar-stack";
+import { EmptyState } from "@/components/shared/content-state";
 import type { SessionPlayData } from "@/features/matches/session-play";
 import { profileAvatarUrl } from "@/features/players/avatar";
 import { playingExperienceLabel } from "@/features/players/playing-experience";
@@ -133,7 +133,16 @@ export function SessionRoster({
           ) : null}
         </div>
         {!going.length ? (
-          <p className="mt-3 text-sm text-muted">No Going responses.</p>
+          <EmptyState
+            compact
+            icon="players"
+            title="No Going responses."
+            description={
+              ended
+                ? "This is the final response record for this game."
+                : "Players will appear here when they respond Going."
+            }
+          />
         ) : null}
         <ul className="mt-4 divide-y divide-line border-y border-line">
           {going.map(({ player, profile }, index) => {
@@ -229,11 +238,18 @@ export function SessionRoster({
             })}
           </ol>
         ) : (
-          <p className="mt-2 text-sm text-muted">
-            {ended
-              ? "No final waitlisted responses."
-              : "No one is waiting. New players move here automatically when the game is full."}
-          </p>
+          <EmptyState
+            compact
+            icon="players"
+            title={
+              ended ? "No final waitlisted responses." : "No one is waiting"
+            }
+            description={
+              ended
+                ? undefined
+                : "New players move here automatically when the game is full."
+            }
+          />
         )}
       </section>
 

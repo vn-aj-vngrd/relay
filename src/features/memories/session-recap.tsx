@@ -6,6 +6,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonLink } from "@/components/ui/button";
 import { MatchResults } from "@/features/matches/match-results";
 import { SessionStandings } from "@/features/matches/session-standings";
@@ -105,18 +106,20 @@ export function SessionRecap({
       {recap.matchCount ? (
         <RecapHighlights recap={recap} completed={completed} />
       ) : (
-        <section className="border-y border-line py-8">
-          <h2 className="text-lg font-bold">
-            {completed
+        <EmptyState
+          icon="results"
+          title={
+            completed
               ? "The scores stayed off—and that’s okay"
-              : "No completed matches yet"}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {completed
+              : "No completed matches yet"
+          }
+          description={
+            completed
               ? "The crew can still keep photos in Story without inventing results."
-              : "This space will update after the first final score. Nothing needs to be prepared here."}
-          </p>
-        </section>
+              : "This space will update after the first final score. Nothing needs to be prepared here."
+          }
+          className="border-y border-line"
+        />
       )}
 
       <SessionStandings standings={recap.standings} />

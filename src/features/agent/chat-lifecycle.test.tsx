@@ -54,9 +54,15 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("conversation creation during navigation", () => {
-  it("cancels late creation and restores the unsent draft while preserving the session", async () => {
+  it("finishes chat creation and sends once after leaving the Agent page", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
     window.history.replaceState(null, "", "/agent");
+    mocks.load.mockResolvedValue({
+      id: "late",
+      title: "Next game?",
+      messages: [],
+      pending: false,
+    });
     let resolve!: (value: { id: string; title: string }) => void;
     mocks.create.mockImplementation(
       () =>
@@ -79,11 +85,11 @@ describe("conversation creation during navigation", () => {
       </AgentSessionProvider>
     );
     window.history.replaceState(null, "", "/games");
-    expect(signal.aborted).toBe(true);
+    expect(signal.aborted).toBe(false);
     await act(async () => {
       resolve({ id: "late", title: "Next game?" });
     });
-    expect(mocks.send).not.toHaveBeenCalled();
+    expect(mocks.send).toHaveBeenCalledOnce();
     expect(window.location.search).toBe("");
     window.history.replaceState(null, "", "/agent");
     view.rerender(
@@ -91,8 +97,13 @@ describe("conversation creation during navigation", () => {
         <AgentChat available />
       </AgentSessionProvider>
     );
-    expect(screen.getByRole("textbox", { name: "Draft" })).toHaveValue(
-      "When is my next game?"
+    expect(screen.getByRole("textbox", { name: "Draft" })).toHaveValue("");
+    expect(window.location.search).toBe("?chat=late");
+    expect(mocks.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parts: [{ type: "text", text: "When is my next game?" }],
+      }),
+      undefined
     );
   });
 });
@@ -130,7 +141,9 @@ it("preserves an unsent draft when a creation action starts chat", async () => {
     )
   );
   expect(mocks.send).toHaveBeenCalledWith(
-    expect.objectContaining({ text: expect.stringContaining("Create game") }),
+    expect.objectContaining({
+      parts: [{ type: "text", text: expect.stringContaining("Create game") }],
+    }),
     undefined
   );
   expect(screen.getByRole("textbox", { name: "Draft" })).toHaveValue(
