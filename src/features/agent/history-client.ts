@@ -44,6 +44,7 @@ export function conversationMessages(saved: AgentConversation): UIMessage[] {
     role: message.role,
     metadata: {
       interrupted: message.interrupted === true,
+      ...(message.work ? { work: message.work } : {}),
       ...(message.createdAt ? { createdAt: message.createdAt } : {}),
     },
     parts: [{ type: "text", text: message.content }],

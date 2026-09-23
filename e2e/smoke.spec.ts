@@ -222,11 +222,11 @@ test("the court map leaves its loading state when raster tiles stall", async ({
 
   await page.goto("/courts");
   const listViewToggle = page.getByRole("button", {
-    name: "Change court view, currently List",
+    name: "Change court view, currently List View",
   });
   if (await listViewToggle.isVisible()) {
     await listViewToggle.click();
-    await page.getByRole("menuitemradio", { name: "Map" }).click();
+    await page.getByRole("menuitemradio", { name: "Map View" }).click();
   }
   await expect(page.getByText("Loading interactive map…")).toHaveCount(0, {
     timeout: 5_000,
@@ -307,6 +307,23 @@ test("public Quick Play prepares players, rotates, and scores without an account
     .getByRole("button", { name: "Keep me in rotation for Van", exact: true })
     .click();
   await page.getByRole("button", { name: "Close players" }).click();
+  await page.getByRole("button", { name: "Players (4)" }).click();
+  const playersDrawer = page.getByRole("dialog", { name: "Players (4)" });
+  await expect(playersDrawer).toHaveCSS(
+    "transform",
+    "matrix(1, 0, 0, 1, 0, 0)"
+  );
+  await expect(
+    playersDrawer.getByRole("heading", { name: "Players (4)" })
+  ).toHaveCSS("font-size", "16px");
+  const drawerBounds = await playersDrawer.boundingBox();
+  expect(drawerBounds).not.toBeNull();
+  await page.mouse.click(
+    drawerBounds!.x > 0 ? drawerBounds!.x / 2 : 10,
+    drawerBounds!.x > 0 ? 100 : drawerBounds!.y / 2
+  );
+  await expect(playersDrawer).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Players (4)" })).toBeFocused();
   await page.getByRole("button", { name: "Add a point to Van + AJ" }).click();
   await expect(page.getByLabel("Van + AJ score 1")).toHaveText("1");
   const setupViewport = page.viewportSize();

@@ -28,6 +28,7 @@ export function PlayRosterSurface({
   const ended = status === "completed" || status === "cancelled";
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
   function setOpen(next: boolean) {
@@ -42,7 +43,7 @@ export function PlayRosterSurface({
     if (live && open) {
       if (!dialog.current?.open) {
         dialog.current?.showModal();
-        heading.current?.focus();
+        closeButton.current?.focus();
       }
     } else if (dialog.current?.open) {
       dialog.current.close();
@@ -81,34 +82,32 @@ export function PlayRosterSurface({
           ref={dialog}
           variant="drawer"
           aria-labelledby="play-roster-title"
+          onDismiss={() => setOpen(false)}
           onCancel={(event) => {
             if (event.target !== event.currentTarget) return;
             event.preventDefault();
             setOpen(false);
           }}
         >
-          <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-6">
-            <h2
-              ref={heading}
-              tabIndex={-1}
-              id="play-roster-title"
-              className="text-lg font-bold outline-none"
-            >
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 sm:px-5">
+            <h2 id="play-roster-title" className="text-base font-semibold">
               Players ({count})
             </h2>
             <IconTooltip label="Close players">
               <Button
+                ref={closeButton}
                 type="button"
                 variant="quiet"
                 size="icon"
+                className="rounded-full"
                 aria-label="Close players"
                 onClick={() => setOpen(false)}
               >
-                <X aria-hidden size={20} />
+                <X aria-hidden size={18} />
               </Button>
             </IconTooltip>
           </div>
-          <div className="px-4 pb-8 sm:px-6">{children}</div>
+          <div className="px-4 pb-8 sm:px-5">{children}</div>
         </Dialog>
       </section>
     );

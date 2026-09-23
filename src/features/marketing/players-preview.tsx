@@ -33,12 +33,13 @@ export function PlayersPreview({
         ref={dialog}
         variant="drawer"
         aria-labelledby="preview-players-title"
+        onDismiss={() => dialog.current?.close()}
         onClose={(event) => {
           if (event.target === event.currentTarget) onOpenChange(false);
         }}
       >
-        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3">
-          <h2 id="preview-players-title" className="text-lg font-bold">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 sm:px-5">
+          <h2 id="preview-players-title" className="text-base font-semibold">
             Players (8)
           </h2>
           <IconTooltip label="Close players">
@@ -46,10 +47,11 @@ export function PlayersPreview({
               type="button"
               variant="quiet"
               size="icon"
+              className="rounded-full"
               aria-label="Close players"
               onClick={() => dialog.current?.close()}
             >
-              <X aria-hidden size={20} />
+              <X aria-hidden size={18} />
             </Button>
           </IconTooltip>
         </div>

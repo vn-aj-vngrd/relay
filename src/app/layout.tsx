@@ -5,6 +5,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { BootstrapScripts } from "@/components/shared/bootstrap-scripts";
 import { ToastViewport } from "@/components/ui/action-notice";
+import { AgentRuntimeProvider } from "@/features/agent/runtime";
 
 import { OfflineIndicator } from "@/features/pwa/offline-indicator";
 import { PwaManager } from "@/features/pwa/pwa-manager";
@@ -102,7 +103,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
-        {children}
+        <AgentRuntimeProvider>{children}</AgentRuntimeProvider>
         <ToastViewport />
         <OfflineIndicator />
         <PwaManager enabled={process.env.NODE_ENV === "production"} />

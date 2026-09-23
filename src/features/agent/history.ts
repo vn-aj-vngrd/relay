@@ -8,6 +8,7 @@ import type {
   AgentConversationSummary,
   SavedAgentMessage,
 } from "./history-types";
+import type { AgentWork } from "./work";
 
 export class AgentHistoryError extends Error {
   status: number;
@@ -177,10 +178,13 @@ export async function beginAgentTurn(
         updatedAt: new Date(),
       })
       .where(owned(userId, id));
-    return messages.slice(-24).map(({ role, content }) => ({
-      role,
-      content: content.slice(0, agentMessageMaxLength),
-    }));
+    return messages
+      .filter((message) => message.content.trim())
+      .slice(-24)
+      .map(({ role, content }) => ({
+        role,
+        content: content.slice(0, agentMessageMaxLength),
+      }));
   });
 }
 export async function finishAgentTurn(
@@ -188,7 +192,8 @@ export async function finishAgentTurn(
   id: string,
   requestId: string,
   answer: string,
-  interrupted = false
+  interrupted = false,
+  work?: AgentWork
 ) {
   await db.transaction(async (tx) => {
     const [row] = await tx
@@ -198,18 +203,20 @@ export async function finishAgentTurn(
       .for("update");
     // Deletion must not resurrect a transcript; stale workers must not overwrite newer turns.
     if (!row || row.activeRequestId !== requestId) return;
-    const messages: SavedAgentMessage[] = answer.trim()
-      ? [
-          ...row.messages,
-          {
-            id: `${requestId}-answer`,
-            role: "assistant",
-            content: answer.slice(0, 32_000),
-            interrupted,
-            createdAt: new Date().toISOString(),
-          },
-        ]
-      : row.messages;
+    const messages: SavedAgentMessage[] =
+      answer.trim() || work
+        ? [
+            ...row.messages,
+            {
+              id: `${requestId}-answer`,
+              role: "assistant",
+              content: answer.slice(0, 32_000),
+              interrupted,
+              createdAt: new Date().toISOString(),
+              ...(work ? { work } : {}),
+            },
+          ]
+        : row.messages;
     await tx
       .update(agentConversations)
       .set({

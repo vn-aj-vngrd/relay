@@ -42,6 +42,47 @@ function Fixture() {
 }
 
 describe("IconTooltip", () => {
+  it.each(["top", "bottom"] as const)(
+    "centers %s tooltips by default and clamps at the viewport edge",
+    (side) => {
+      vi.stubGlobal("innerWidth", 1024);
+      vi.stubGlobal("innerHeight", 768);
+      let x = 100;
+      const bounds = vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          const tooltip = this.getAttribute("role") === "tooltip";
+          return {
+            x: tooltip ? 0 : x,
+            y: 300,
+            left: tooltip ? 0 : x,
+            top: 300,
+            width: tooltip ? 120 : 40,
+            height: 40,
+            right: tooltip ? 120 : x + 40,
+            bottom: 340,
+            toJSON: () => ({}),
+          };
+        });
+      try {
+        render(
+          <IconTooltip label="Centered help" side={side}>
+            <button type="button">Help</button>
+          </IconTooltip>
+        );
+        const trigger = screen.getByRole("button", { name: "Help" });
+        fireEvent.focus(trigger);
+        expect(screen.getByRole("tooltip")).toHaveStyle({ left: "60px" });
+        fireEvent.blur(trigger);
+        advance(300);
+        x = 0;
+        fireEvent.focus(trigger);
+        expect(screen.getByRole("tooltip")).toHaveStyle({ left: "8px" });
+      } finally {
+        bounds.mockRestore();
+      }
+    }
+  );
   it("keeps the tooltip steady when the pointer returns during the close delay", () => {
     render(<Fixture />);
     const trigger = screen.getByRole("button", { name: "Coverage" });

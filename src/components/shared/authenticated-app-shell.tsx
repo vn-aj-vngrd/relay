@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { db } from "@/db/client";
 import { notifications } from "@/db/schema";
 import { isAdminEmail } from "@/features/admin/auth";
-import { AgentMark } from "@/features/agent/agent-mark";
+import { AgentMobileLink } from "@/features/agent/activity";
 import { getAccountPlanSummary } from "@/features/billing/account-plan";
 import { NotificationRealtimeRefresh } from "@/features/notifications/realtime-refresh";
 import { ApplicationTour } from "@/features/onboarding/application-tour";
@@ -79,14 +79,7 @@ export async function AuthenticatedAppShell({
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
           <Brand href="/home" />
           <div className="flex items-center">
-            <Link
-              href="/agent"
-              prefetch={false}
-              aria-label="Agent"
-              className="pressable grid h-11 w-11 place-items-center text-muted hover:text-ink"
-            >
-              <AgentMark aria-hidden size={20} />
-            </Link>
+            <AgentMobileLink />
             <Link
               href="/search"
               data-tour="search"

@@ -1,43 +1,79 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ToastViewport } from "../../src/components/ui/action-notice";
+import {
+  AgentActivityContext,
+  AgentMobileLink,
+} from "../../src/features/agent/activity";
 import { AgentChat } from "../../src/features/agent/chat";
-import { AgentSessionProvider } from "../../src/features/agent/session";
+import {
+  AgentRuntimeContext,
+  AgentSessionProvider,
+  createAgentSession,
+} from "../../src/features/agent/session";
 
 const root = document.getElementById("agent-fixture");
 if (!root) throw new Error("Missing Agent fixture root");
 function Fixture() {
   const [show, setShow] = useState(true);
+  const [runtime] = useState(() => {
+    const session = createAgentSession();
+    return {
+      get: () => session,
+      subscribe: session.subscribe,
+      snapshot: () => session.activity,
+    };
+  });
+  useEffect(() => {
+    const session = runtime.get();
+    const acknowledge = () => {
+      if (
+        show &&
+        session.activity !== "working" &&
+        session.activity !== "idle"
+      ) {
+        session.activity = "idle";
+        session.notify();
+      }
+    };
+    acknowledge();
+    return session.subscribe(acknowledge);
+  }, [show, runtime]);
   return (
-    <AgentSessionProvider>
-      <div className="flex h-full flex-col">
-        <button
-          className="shrink-0"
-          type="button"
-          onClick={() => setShow(!show)}
-        >
-          Toggle Agent page
-        </button>
-        <div className="min-h-0 flex-1">
-          {show ? (
-            <AgentChat
-              available
-              allowCourtSearch
-              capabilities={{
-                allowGameData: true,
-                allowCourtSearch: true,
-                allowHelp: true,
-                allowGameCreation: true,
-                allowGroupCreation: true,
-              }}
-            />
-          ) : (
-            <p>Another app page</p>
-          )}
+    <AgentActivityContext value={runtime}>
+      <AgentRuntimeContext value={runtime}>
+        <div className="flex h-full flex-col">
+          <AgentMobileLink />
+          <button
+            className="shrink-0"
+            type="button"
+            onClick={() => setShow(!show)}
+          >
+            Toggle Agent page
+          </button>
+          <div className="min-h-0 flex-1">
+            {show ? (
+              <AgentSessionProvider userId="fixture-user">
+                <AgentChat
+                  available
+                  allowCourtSearch
+                  capabilities={{
+                    allowGameData: true,
+                    allowCourtSearch: true,
+                    allowHelp: true,
+                    allowGameCreation: true,
+                    allowGroupCreation: true,
+                  }}
+                />
+              </AgentSessionProvider>
+            ) : (
+              <p>Another app page</p>
+            )}
+          </div>
         </div>
-      </div>
-      <ToastViewport />
-    </AgentSessionProvider>
+        <ToastViewport />
+      </AgentRuntimeContext>
+    </AgentActivityContext>
   );
 }
 createRoot(root).render(

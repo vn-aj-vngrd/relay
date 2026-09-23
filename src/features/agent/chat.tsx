@@ -1,8 +1,8 @@
 "use client";
 import { Chat, useChat } from "@ai-sdk/react";
 import { ArrowUp, Plus, Stop } from "@phosphor-icons/react";
-import { TextStreamChatTransport, type UIMessage } from "ai";
-import { useEffect, useRef, useState } from "react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FocusedBackLink } from "@/components/shared/focused-mobile-header";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import type { AgentUsageSummary } from "./allowance";
 import { AgentAnswer } from "./answer";
 import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
 import { AgentChatSkeleton } from "./chat-skeleton";
+import composerStyles from "./composer.module.css";
 import {
   AgentComposerEditor,
   type AgentComposerHandle,
@@ -26,31 +27,29 @@ import {
   setConversationUrl,
 } from "./history-client";
 import { AgentHistoryPanel } from "./history-panel";
+import messageStyles from "./message.module.css";
 import {
   formatMessageTime,
   messageTimestamp,
   showMessageTime,
 } from "./message-time";
 import { AgentReplyActions } from "./reply-actions";
+import { AgentResponseError } from "./response-error";
 import type { AgentSession } from "./session";
 import { useAgentSession } from "./session";
-import { AgentUsageSummaryView } from "./usage-summary";
+import { AgentUsageIndicator } from "./usage-indicator";
+import { finishWork, messageWork } from "./work";
+import { AgentWorkLog } from "./work-log";
+import { ensureAgentUIStream } from "./work-stream";
 
-const loadingLabels = [
-  "Thinking…",
-  "Pondering…",
-  "Considering…",
-  "Working it through…",
-  "Putting it together…",
-  "Connecting the dots…",
-];
 const createTransport = (session: AgentSession) =>
-  new TextStreamChatTransport({
+  new DefaultChatTransport({
+    headers: { "x-relay-agent-stream": "activity-v1" },
     api: "/api/agent",
     fetch: async (input, init) => {
       const response = await fetch(input, init);
       if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
-      return response;
+      return ensureAgentUIStream(response);
     },
     prepareSendMessagesRequest: ({ messages, trigger }) => ({
       body: {
@@ -100,38 +99,86 @@ export function AgentChat({
   const [actionsOpen, setActionsOpen] = useState(false);
   const session = useAgentSession();
   const [chat] = useState(() => {
-    session.chat ??= new Chat({ transport: createTransport(session) });
+    session.chat ??= new Chat({
+      transport: createTransport(session),
+      onError: () => {
+        session.activity = "error";
+        session.notify();
+      },
+      onFinish: ({ message, isAbort, isError, isDisconnect }) => {
+        if (!session.chat) return;
+        session.activity = isAbort
+          ? "idle"
+          : isError || isDisconnect
+            ? "error"
+            : "completed";
+        session.notify();
+        const work = messageWork(message);
+        session.chat.messages = session.chat.messages.map((item) =>
+          item.id === message.id
+            ? {
+                ...item,
+                metadata: {
+                  ...(typeof item.metadata === "object" ? item.metadata : {}),
+                  createdAt:
+                    messageTimestamp(message)?.toISOString() ??
+                    new Date().toISOString(),
+                  ...(work?.status === "working"
+                    ? {
+                        work: finishWork(
+                          work,
+                          isAbort
+                            ? "stopped"
+                            : isError || isDisconnect
+                              ? "failed"
+                              : "completed"
+                        ),
+                      }
+                    : {}),
+                },
+              }
+            : item
+        );
+      },
+    });
     return session.chat;
   });
   const [activeTitle, setActiveTitle] = useState(session.title);
   const [activeId, setActiveId] = useState(session.conversationId);
-  const [preparing, setPreparing] = useState(false);
-  const [pendingQuestion, setPendingQuestion] = useState<UIMessage | null>(
-    null
-  );
-  const [restoring, setRestoring] = useState(true);
-  const [remotePending, setRemotePending] = useState(false);
-  const prepareLock = useRef(false);
-  const preparation = useRef<{
-    controller: AbortController;
-    question: string;
-    preserveDraft: boolean;
-  } | null>(null);
-  useEffect(
-    () => () => {
-      const pending = preparation.current;
-      if (!pending) return;
-      pending.controller.abort();
-      if (!pending.preserveDraft) session.draft = pending.question;
-      preparation.current = null;
+  const preparing = Boolean(session.preparation);
+  const pendingQuestion = session.preparation?.question ?? null;
+  const [restoring, setRestoring] = useState(() => {
+    const id =
+      typeof window === "undefined"
+        ? null
+        : new URL(window.location.href).searchParams.get("chat");
+    return (
+      Boolean(id && id !== session.conversationId) ||
+      (!chat.messages.length && !session.preparation)
+    );
+  });
+  const remotePending = session.remotePending;
+  const setRemotePending = useCallback(
+    (pending: boolean) => {
+      if (session.remotePending === pending) return;
+      session.remotePending = pending;
+      session.notify();
     },
     [session]
   );
+  const prepareLock = useRef(false);
+  useEffect(() => {
+    setActiveTitle(session.title);
+    setActiveId(session.conversationId);
+  }, [session, session.title, session.conversationId]);
   const [input, setInput] = useState(session.draft);
   useEffect(() => {
     session.draft = input;
   }, [input, session]);
-  const [loadingLabel, setLoadingLabel] = useState(loadingLabels[0]);
+  useEffect(() => {
+    setInput(session.draft);
+  }, [session, session.draft]);
+  const [workStartedAt, setWorkStartedAt] = useState(Date.now);
   const {
     messages,
     sendMessage,
@@ -241,8 +288,10 @@ export function AgentChat({
     if (
       !id ||
       (session.conversationId === id &&
-        (chat.status === "submitted" || chat.status === "streaming"))
+        (chat.messages.length > 0 || session.preparation))
     ) {
+      if (!id && session.conversationId)
+        setConversationUrl(session.conversationId);
       setRestoring(false);
       return;
     }
@@ -270,7 +319,7 @@ export function AgentChat({
     return () => {
       cancelled = true;
     };
-  }, [session, setMessages, chat]);
+  }, [session, setMessages, chat, setRemotePending]);
   useEffect(() => {
     if (!remotePending || !activeId) return;
     let cancelled = false;
@@ -294,17 +343,13 @@ export function AgentChat({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [activeId, remotePending, setMessages]);
+  }, [activeId, remotePending, setMessages, setRemotePending]);
   function limitInput(text: string) {
     if (text.length <= agentMessageMaxLength) return text;
     notify(
       "Messages can contain up to 4,000 characters. Extra text was removed; review your message before sending."
     );
     return text.slice(0, agentMessageMaxLength).replace(/[\uD800-\uDBFF]$/, "");
-  }
-  function chooseLoadingLabel() {
-    const choices = loadingLabels.filter((label) => label !== loadingLabel);
-    setLoadingLabel(choices[Math.floor(Math.random() * choices.length)]);
   }
   async function send(text: string, preserveDraft = false) {
     if (text.length > agentMessageMaxLength) {
@@ -314,18 +359,22 @@ export function AgentChat({
     if (!text.trim() || busy || prepareLock.current || !available) return;
     prepareLock.current = true;
     const controller = new AbortController();
-    preparation.current = { controller, question: text, preserveDraft };
-    setPreparing(true);
     const createdAt = new Date().toISOString();
-    setPendingQuestion({
+    const question: UIMessage = {
       metadata: { createdAt },
       id: crypto.randomUUID(),
       role: "user",
       parts: [{ type: "text", text: text.trim() }],
-    });
-    chooseLoadingLabel();
+    };
+    session.activity = "working";
+    session.preparation = { controller, question };
+    session.notify();
+    setWorkStartedAt(Date.now());
     follow.current = true;
-    if (!preserveDraft) setInput("");
+    if (!preserveDraft) {
+      session.draft = "";
+      setInput("");
+    }
     try {
       if (controller.signal.aborted) return;
       if (!session.conversationId) {
@@ -336,36 +385,56 @@ export function AgentChat({
         setActiveTitle(saved.title);
         setActiveId(saved.id);
         setConversationUrl(saved.id);
+        session.notify();
       }
     } catch {
       if (controller.signal.aborted) return;
-      preparation.current = null;
+      session.preparation = null;
+      session.activity = "error";
       notify(
         preserveDraft
           ? "Couldn’t start this action. Your draft is unchanged; please try again."
           : "Couldn’t save this chat. Your question is still here; please try again."
       );
-      setPreparing(false);
-      setPendingQuestion(null);
-      if (!preserveDraft) setInput(text);
+      if (!preserveDraft) {
+        session.draft = text;
+        setInput(text);
+      }
+      session.notify();
       prepareLock.current = false;
       return;
     }
-    // Preparation is cancellable while navigating; established streams remain
-    // owned by the authenticated session and continue across page changes.
-    preparation.current = null;
-    setPreparing(false);
-    setPendingQuestion(null);
+    // The persistent SDK instance owns the request even if this page unmounts.
     clearError();
     try {
-      await sendMessage(
-        { text: text.trim(), metadata: { createdAt } },
-        undefined
-      );
+      const request = sendMessage(question, undefined);
+      session.preparation = null;
+      session.notify();
+      await request;
     } finally {
+      session.preparation = null;
+      if (session.activity === "working") session.activity = "idle";
+      session.notify();
       prepareLock.current = false;
     }
   }
+  async function retryResponse() {
+    if (busy || prepareLock.current || !available) return;
+    prepareLock.current = true;
+    setWorkStartedAt(Date.now());
+    follow.current = true;
+    clearError();
+    try {
+      session.activity = "working";
+      session.notify();
+      await regenerate();
+    } finally {
+      if (session.activity === "working") session.activity = "idle";
+      session.notify();
+      prepareLock.current = false;
+    }
+  }
+  const lastMessage = visibleMessages.at(-1);
   return (
     <section
       aria-label="Agent chat"
@@ -385,7 +454,7 @@ export function AgentChat({
         <Button
           variant="quiet"
           aria-label="New chat"
-          className="shrink-0 rounded-full bg-transparent! px-2! lg:bg-surface-strong! lg:px-3!"
+          className="shrink-0 rounded-full bg-transparent! px-2! lg:px-3!"
           disabled={busy || (!messages.length && !activeId)}
           onClick={newConversation}
         >
@@ -419,73 +488,106 @@ export function AgentChat({
             <AgentChatSkeleton />
           ) : visibleMessages.length ? (
             <div className="space-y-7">
-              {visibleMessages.map((message, index) => (
-                <div key={message.id}>
-                  {showMessageTime(visibleMessages, index) ? (
-                    <p className="mb-6 text-center text-xs leading-5 text-muted">
-                      <time dateTime={messageTimestamp(message)?.toISOString()}>
-                        {formatMessageTime(messageTimestamp(message)!)}
-                      </time>
-                    </p>
-                  ) : null}
-                  <article
-                    aria-label={message.role === "user" ? "You" : "Agent"}
-                    className={
-                      message.role === "user"
-                        ? "ml-auto w-fit min-w-0 max-w-[90%] rounded-2xl bg-surface-strong px-3.5 py-2"
-                        : "max-w-full pr-2"
-                    }
-                  >
-                    {message.role !== "user" ? (
-                      <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                        <AgentMark size={18} className="text-primary" />
-                        Agent
-                      </div>
-                    ) : null}
-                    <AgentAnswer
-                      text={message.parts
-                        .filter((part) => part.type === "text")
-                        .map((part) => part.text)
-                        .join("")}
-                    />
-                    {message.metadata &&
+              {visibleMessages.map((message, index) => {
+                const work = messageWork(message);
+                const latest = index === visibleMessages.length - 1;
+                const interrupted = Boolean(
+                  message.metadata &&
                     typeof message.metadata === "object" &&
                     "interrupted" in message.metadata &&
-                    message.metadata.interrupted === true ? (
-                      <p className="mt-2 text-xs text-muted">
-                        This reply was interrupted. Ask a follow-up to continue.
+                    message.metadata.interrupted === true
+                );
+                const failed = work?.status === "failed" || interrupted;
+                const stopped = work?.status === "stopped";
+                return (
+                  <div key={message.id}>
+                    {showMessageTime(visibleMessages, index) ? (
+                      <p className="mb-6 text-center text-xs leading-5 text-muted">
+                        <time
+                          dateTime={messageTimestamp(message)?.toISOString()}
+                        >
+                          {formatMessageTime(messageTimestamp(message)!)}
+                        </time>
                       </p>
                     ) : null}
-                    {message.role === "assistant" ? (
+                    <article
+                      aria-label={message.role === "user" ? "You" : "Agent"}
+                      className={
+                        message.role === "user"
+                          ? `${messageStyles.message} ml-auto w-fit min-w-0 max-w-[90%]`
+                          : `${messageStyles.message} max-w-full pr-2`
+                      }
+                    >
+                      {message.role !== "user" ? (
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                          <AgentMark size={18} className="text-primary" />
+                          Agent
+                        </div>
+                      ) : null}
+                      {message.role === "assistant" && work ? (
+                        <AgentWorkLog key={message.id} work={work} />
+                      ) : null}
+                      <div
+                        className={
+                          message.role === "user"
+                            ? "ml-auto w-fit max-w-full rounded-2xl bg-surface-strong px-3.5 py-2"
+                            : undefined
+                        }
+                      >
+                        <AgentAnswer
+                          text={message.parts
+                            .filter((part) => part.type === "text")
+                            .map((part) => part.text)
+                            .join("")}
+                        />
+                      </div>
+                      {message.role === "assistant" &&
+                      ((error && latest) || failed || stopped) ? (
+                        <AgentResponseError
+                          message={
+                            error && latest
+                              ? errorCopy
+                              : stopped
+                                ? "Response stopped."
+                                : "This reply was interrupted. Try again to continue."
+                          }
+                          stopped={stopped && !error}
+                          disabled={busy || !available}
+                          onRetry={latest ? retryResponse : undefined}
+                        />
+                      ) : null}
                       <AgentReplyActions
+                        timestamp={messageTimestamp(message)}
+                        user={message.role === "user"}
                         text={message.parts
                           .filter((part) => part.type === "text")
                           .map((part) => part.text)
                           .join("")}
                         disabled={
+                          message.role === "assistant" &&
                           status === "streaming" &&
                           index === messages.length - 1
                         }
                       />
-                    ) : null}
-                  </article>
-                  {proposals
-                    .filter(
-                      (proposal) =>
-                        proposal.messageId === message.id &&
-                        proposal.status !== "cancelled"
-                    )
-                    .map((proposal) => (
-                      <AgentCreationCard
-                        onContinue={(prompt) => void send(prompt, true)}
-                        key={proposal.id}
-                        proposal={proposal}
-                        disabled={busy || !available}
-                        onChange={reloadProposals}
-                      />
-                    ))}
-                </div>
-              ))}
+                    </article>
+                    {proposals
+                      .filter(
+                        (proposal) =>
+                          proposal.messageId === message.id &&
+                          proposal.status !== "cancelled"
+                      )
+                      .map((proposal) => (
+                        <AgentCreationCard
+                          onContinue={(prompt) => void send(prompt, true)}
+                          key={proposal.id}
+                          proposal={proposal}
+                          disabled={busy || !available}
+                          onChange={reloadProposals}
+                        />
+                      ))}
+                  </div>
+                );
+              })}
             </div>
           ) : proposals.some(
               (proposal) => proposal.status !== "cancelled"
@@ -544,12 +646,35 @@ export function AgentChat({
                 onChange={reloadProposals}
               />
             ))}
-          {status === "submitted" || preparing || remotePending ? (
-            <p
-              role="status"
-              className="text-shimmer mt-5 inline-block text-sm text-muted"
-            >
-              {loadingLabel}
+          {error && lastMessage?.role !== "assistant" ? (
+            <article aria-label="Agent" className="mt-7 max-w-full pr-2">
+              <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                <AgentMark size={18} className="text-primary" />
+                Agent
+              </div>
+              <AgentResponseError
+                message={errorCopy}
+                disabled={busy || !available}
+                onRetry={retryResponse}
+              />
+            </article>
+          ) : null}
+          {(status === "submitted" || preparing) &&
+          lastMessage?.role !== "assistant" ? (
+            <div className="mt-5">
+              <AgentWorkLog
+                work={{
+                  startedAt:
+                    messageTimestamp(pendingQuestion ?? undefined)?.getTime() ??
+                    workStartedAt,
+                  status: "working",
+                  entries: [{ step: "reviewing", status: "running" }],
+                }}
+              />
+            </div>
+          ) : remotePending ? (
+            <p role="status" className="mt-5 text-sm text-muted">
+              Agent is working in another session. Waiting for the saved reply…
             </p>
           ) : null}
         </div>
@@ -566,38 +691,12 @@ export function AgentChat({
             </Button>
           </div>
         ) : null}
-        {usage ? <AgentUsageSummaryView usage={usage} /> : null}
         {!available ? (
           <p role="status" className="mb-3 text-sm text-muted">
             {unavailableReason}
           </p>
         ) : null}
-        {error ? (
-          <div
-            role="alert"
-            className="mb-3 flex flex-wrap items-center gap-3 text-sm"
-          >
-            <p className="text-danger">{errorCopy}</p>
-            <Button
-              variant="secondary"
-              disabled={busy || !available}
-              onClick={async () => {
-                if (busy || prepareLock.current || !available) return;
-                prepareLock.current = true;
-                chooseLoadingLabel();
-                follow.current = true;
-                clearError();
-                try {
-                  await regenerate();
-                } finally {
-                  prepareLock.current = false;
-                }
-              }}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : null}
+
         <div className="relative">
           <form
             noValidate
@@ -605,7 +704,7 @@ export function AgentChat({
               event.preventDefault();
               void send(input);
             }}
-            className="rounded-xl border border-line bg-surface p-3 focus-within:border-primary"
+            className={composerStyles.composer}
           >
             <AgentComposerEditor
               ref={field}
@@ -619,7 +718,7 @@ export function AgentChat({
               }}
               disabled={!available || busy}
             />
-            <div className="mt-2 flex items-center justify-between gap-3">
+            <div className="mt-3 flex items-center justify-between gap-3">
               <button
                 type="button"
                 aria-label="Actions"
@@ -627,33 +726,42 @@ export function AgentChat({
                 aria-haspopup="listbox"
                 disabled={!available || busy}
                 onClick={() => field.current?.openActions()}
-                className={`pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
+                className={`compact-control pressable flex size-9 items-center justify-center rounded-full transition-colors motion-reduce:transition-none hover:bg-surface-strong hover:text-ink disabled:opacity-45 ${actionsOpen ? "bg-surface-strong text-ink" : "text-muted"}`}
               >
-                <Plus size={18} aria-hidden />
+                <Plus size={20} aria-hidden />
                 <Tooltip content="Actions" side="top" />
               </button>
-              {status === "submitted" || status === "streaming" ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  aria-label="Stop response"
-                  onClick={() => {
-                    void stop();
-                  }}
-                >
-                  <Stop size={16} aria-hidden />
-                  Stop
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  size="icon"
-                  aria-label="Send message"
-                  disabled={!available || busy || !input.trim()}
-                >
-                  <ArrowUp size={18} aria-hidden />
-                </Button>
-              )}
+              <div className="flex items-center gap-1">
+                {usage ? <AgentUsageIndicator usage={usage} /> : null}
+                {status === "submitted" || status === "streaming" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    className={composerStyles.submit}
+                    aria-label="Stop response"
+                    onClick={() => {
+                      session.activity = "idle";
+                      session.notify();
+                      void stop();
+                    }}
+                  >
+                    <Stop size={14} weight="fill" aria-hidden />
+                    <Tooltip content="Stop response" side="top" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="icon"
+                    className={composerStyles.submit}
+                    aria-label="Send message"
+                    disabled={!available || busy || !input.trim()}
+                  >
+                    <ArrowUp size={18} aria-hidden />
+                    <Tooltip content="Send message" side="top" />
+                  </Button>
+                )}
+              </div>
             </div>
           </form>
         </div>

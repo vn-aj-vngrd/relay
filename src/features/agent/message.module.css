@@ -1,0 +1,17 @@
+.actions {
+  opacity: 1;
+}
+
+/* Reserve the row so revealing actions never moves the conversation. */
+@media (hover: hover) and (pointer: fine) {
+  .message .actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .message:hover .actions,
+  .message:focus-within .actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}

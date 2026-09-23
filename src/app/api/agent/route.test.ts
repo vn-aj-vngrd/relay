@@ -35,7 +35,8 @@ vi.mock("@/lib/rate-limit", () => ({
 vi.mock("@openrouter/ai-sdk-provider", () => ({
   createOpenRouter: mocks.provider,
 }));
-vi.mock("ai", () => ({
+vi.mock("ai", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("ai")>()),
   streamText: mocks.stream,
   isStepCount: () => () => true,
 }));
@@ -90,6 +91,57 @@ beforeEach(() => {
   mocks.release.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
+  it("streams safe activity metadata, preserves the answer and excludes tool payloads", async () => {
+    mocks.stream.mockReturnValue({
+      fullStream: (async function* () {
+        yield {
+          type: "tool-call",
+          toolCallId: "call",
+          toolName: "searchGames",
+          input: { private: "PRIVATE_INPUT" },
+        };
+        yield {
+          type: "tool-result",
+          toolCallId: "call",
+          toolName: "searchGames",
+          output: { secret: "PRIVATE_OUTPUT" },
+        };
+        yield { type: "reasoning-delta", text: "PRIVATE_REASONING" };
+        yield { type: "text-delta", text: "Your game is tomorrow." };
+      })(),
+    });
+    const req = request();
+    req.headers.set("x-relay-agent-stream", "activity-v1");
+    const response = await POST(req);
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    const body = await response.text();
+    expect(body).toContain('"step":"games"');
+    expect(body).toContain('"status":"completed"');
+    expect(body).toContain("Your game is tomorrow.");
+    expect(body).not.toContain("PRIVATE_");
+    expect(mocks.charge).toHaveBeenCalledOnce();
+  });
+  it("ends failed work with a fixed error and releases an uncharged turn", async () => {
+    mocks.stream.mockReturnValue({
+      fullStream: (async function* () {
+        yield {
+          type: "tool-call",
+          toolCallId: "call",
+          toolName: "readHelp",
+          input: {},
+        };
+        yield { type: "error", error: "PRIVATE_ERROR" };
+      })(),
+    });
+    const req = request();
+    req.headers.set("x-relay-agent-stream", "activity-v1");
+    const body = await (await POST(req)).text();
+    expect(body).toContain('"status":"failed"');
+    expect(body).toContain('"type":"error"');
+    expect(body).not.toContain("PRIVATE_ERROR");
+    expect(mocks.charge).not.toHaveBeenCalled();
+    expect(mocks.release).toHaveBeenCalledOnce();
+  });
   it.each([false, true])(
     "uses server-owned history and saves only the visible response (retry: %s)",
     async (retry) => {
@@ -129,7 +181,8 @@ describe("Agent streaming boundary", () => {
         conversationId,
         requestId,
         "Visible reply",
-        false
+        false,
+        expect.objectContaining({ status: "completed" })
       );
     }
   );

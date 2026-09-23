@@ -199,7 +199,7 @@ export function NotificationFeed({
                       />
                       <button
                         type="submit"
-                        className="pressable flex min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
+                        className="pressable flex h-full min-h-20 w-full items-start gap-3 px-1 py-4 text-left sm:px-3"
                       >
                         <span
                           className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full ${unread ? "bg-primary-soft text-primary" : "bg-surface-strong text-muted"}`}
@@ -227,7 +227,7 @@ export function NotificationFeed({
                             {presentation.body}
                           </span>
                         </span>
-                        <span className="flex shrink-0 items-center gap-2 pt-0.5">
+                        <span className="flex shrink-0 self-center items-center gap-2">
                           <time
                             dateTime={item.createdAt}
                             className="score text-[11px] text-muted"

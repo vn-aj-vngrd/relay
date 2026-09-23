@@ -69,8 +69,8 @@ type AvailabilityFilter = "all" | "open" | "24-hours" | "during";
 type BookingDayFilter = "today" | `${CourtDay}`;
 
 const courtViewOptions = [
-  { value: "map" as const, label: "Map", icon: MapTrifold },
-  { value: "list" as const, label: "List", icon: List },
+  { value: "map" as const, label: "Map View", icon: MapTrifold },
+  { value: "list" as const, label: "List View", icon: List },
 ];
 
 function createHref(venue: CourtListing) {
@@ -651,7 +651,7 @@ export function CourtFinder({
         aria-label="Find and filter courts"
         className={`${showFilterTopBorder ? "lg:border-t lg:pt-4" : ""} border-line pb-3 lg:pb-4`}
       >
-        <div className="grid grid-cols-[minmax(0,1fr)_44px] items-end gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-3">
+        <div className="min-w-0">
           <div>
             <label
               htmlFor="court-search"
@@ -659,7 +659,7 @@ export function CourtFinder({
             >
               Search courts
             </label>
-            <div className="relative max-w-2xl lg:mt-1.5">
+            <div className="relative lg:mt-1.5">
               <MagnifyingGlass
                 aria-hidden
                 className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
@@ -691,30 +691,6 @@ export function CourtFinder({
               ) : null}
             </div>
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={useLocation}
-            disabled={locationStatus === "loading"}
-            aria-pressed={Boolean(userLocation)}
-            aria-label={
-              locationStatus === "loading"
-                ? "Finding your location"
-                : userLocation
-                  ? "Stop sorting by distance"
-                  : "Use my location"
-            }
-            className="compact-control h-11 min-h-11 w-11 px-0 lg:w-auto lg:px-3"
-          >
-            <Crosshair aria-hidden size={17} />
-            <span className="hidden lg:inline">
-              {locationStatus === "loading"
-                ? "Finding you…"
-                : userLocation
-                  ? "Nearest first"
-                  : "Use my location"}
-            </span>
-          </Button>
         </div>
 
         <div className="mt-3">
@@ -732,6 +708,30 @@ export function CourtFinder({
               className="flex min-w-max items-center gap-1.5 sm:min-w-0 sm:flex-wrap sm:gap-2"
               aria-label="Court filters"
             >
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={useLocation}
+                disabled={locationStatus === "loading"}
+                aria-pressed={Boolean(userLocation)}
+                aria-label={
+                  locationStatus === "loading"
+                    ? "Finding your location"
+                    : userLocation
+                      ? "Stop sorting by distance"
+                      : "Use my location"
+                }
+                className="h-9 shrink-0 rounded-full! px-3 text-xs! sm:text-[13px]! aria-pressed:border-primary/30 aria-pressed:bg-primary-soft aria-pressed:text-primary"
+              >
+                <Crosshair aria-hidden size={14} className="text-muted" />
+                <span>
+                  {locationStatus === "loading"
+                    ? "Finding you…"
+                    : userLocation
+                      ? "Nearest first"
+                      : "Use my location"}
+                </span>
+              </Button>
               <div>
                 <SelectField
                   id="court-setting-filter"
@@ -913,12 +913,13 @@ export function CourtFinder({
             <p className="truncate text-sm font-[680]">
               {userLocation ? "Nearest courts" : "Courts"}
             </p>
-            <p className="mt-0.5 text-xs text-muted">
+            <p className="mt-0.5 hidden text-xs text-muted sm:block">
               {results.length} {results.length === 1 ? "place" : "places"}
             </p>
           </div>
           <MobileViewMenu
             label="Court view"
+            showLabel
             value={mobileView}
             options={courtViewOptions}
             onChange={setMobileView}

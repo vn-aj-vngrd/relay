@@ -26,11 +26,11 @@ flowchart LR
   Tools --> Reads[Authorized services and explicit projections]
   Tools --> Help[Existing Help Center content]
   Reads --> DB[(Relay database)]
-  SDK --> Text[Text-only response / safe source links]
+  SDK --> Text[Safe activity + answer stream / source links]
   Text --> UI
 ```
 
-Files under `src/features/agent` separate request validation, configuration/credential handling, read services, tools, instructions and client UI. The installed AI SDK 7 uses `isStepCount`, `inputSchema` and `TextStreamChatTransport`; use the installed declarations when extending it. OpenRouter uses its official AI SDK provider.
+Files under `src/features/agent` separate request validation, configuration/credential handling, read services, tools, instructions and client UI. The installed AI SDK 7 uses `isStepCount`, `inputSchema` and `DefaultChatTransport`; use the installed declarations when extending it. OpenRouter uses its official AI SDK provider.
 
 The registry binds the authenticated user ID in its closure. No tool accepts a user ID or a connection/query/provider setting. Queries use Drizzle parameters and fixed predicates; the model supplies only validated filters or a record ID. `gameLibraryMembership`, `publicDiscoveryCondition` and `getSessionForWorkspace` are the existing reference implementations. Group queries mirror the membership gate on `/groups/[slug]`.
 
@@ -74,9 +74,9 @@ Backend authorization and narrow data projections are the security boundary. Pro
 - PostgreSQL-backed monthly plan allowances plus per-user hourly rate limits (default 30, configurable 1–120); no process-local quota state.
 - Maximum 600 KB request body (including worst-case JSON escaping for the bounded conversation), 24 text messages and 4,000 characters per message. Clients cannot supply system/developer/tool roles, tool results, attachments, identity or provider settings. The optional UUID request identifier provides replay protection and does not grant access. Client assistant history is untrusted; tool reads establish current facts. The UI sends the latest 24 nonempty text messages and bounds each to 4,000 characters.
 - At most six model steps, twelve tool executions, a 50-second generation deadline and no model retries. Output tokens are capped per step (default 1,200; 256–4,000). OpenRouter account spending limits remain the global monetary safeguard.
-- Response streams contain text only. Reasoning, raw tool results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
+- The Agent UI requests an SDK message stream with server-authored activity labels, elapsed time and answer text. Legacy clients still receive text-only responses. Reasoning, raw tool inputs/results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
 - Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help/court links become navigation; destination routes enforce authorization again.
-- Responses are private/no-store. Relay saves conversation titles, user questions and visible answers for the account owner until deletion. It does not store raw provider tool payloads, reasoning or prompt/response telemetry. Reviewed creation inputs and results are stored separately in owner-scoped proposal records; unsent composer drafts remain in browser memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
+- Responses are private/no-store. Relay saves conversation titles, user questions, visible answers and bounded activity summaries for the account owner until deletion. Activity records contain only known step labels, statuses and start/finish times; they survive refresh and identify interrupted work. It does not store raw provider tool payloads, reasoning or prompt/response telemetry. Reviewed creation inputs and results are stored separately in owner-scoped proposal records; unsent composer drafts remain in browser memory. Questions and selected data are processed by OpenRouter and the selected model provider; the UI discloses this.
 - Stop/disconnect/deadline cancel model work. An already executing database read may finish; cancellation prevents subsequent tool reads.
 
 Titles/names and previous assistant text can contain prompt injection. They cannot create new tools or change authorization, but model answers may still be misleading. Users must check source records. The UI renders server-owned creation previews; a first-party confirmation endpoint executes reviewed creations. It does not execute model text, HTML or remote resources. User-supplied text can itself contain sensitive data; do not submit secrets to the assistant.
@@ -251,3 +251,9 @@ and [Poolside endpoint metadata](https://openrouter.ai/api/v1/models/poolside/la
 The first creation release uses `creation-service.ts` for durable expiring previews and confirmation, shared game/group commands for writes, and a separate authenticated `/api/agent/creations` endpoint. Text streaming remains intact; cards load from owner-scoped server records after a turn and on chat restoration. Historical text is never execution authority. Migration 0062 adds default-off capability flags and a server-only proposal table. Applying the migration and enabling flags are deployment steps; local implementation alone does not establish availability.
 
 Keep user guidance synchronized through [Help Center maintenance](../HELP_CENTER_MAINTENANCE.md). The Actions catalog is in `capabilities.ts`; current and deferred scope is in [Capabilities](CAPABILITIES.md).
+
+## In-app navigation
+
+The root Agent runtime retains one account-scoped session across route layouts, including Quick Play, Courts and Help. The authenticated provider binds the server-verified user ID to that session. Pending conversation creation and the SDK stream outlive the Agent page; returning restores the latest conversation URL without replacing an active or completed in-memory reply. Browser auth changes and server sign-out redirects clear the session; full document reload/close can still interrupt work. This is browser-session continuity, not a durable background job.
+
+The Agent navigation entry and mobile header share the root runtime activity state: a primary ring while working, a primary unread dot when a reply completes away from Agent, and a warning icon on failure. Returning to Agent acknowledges the terminal state; stopping or signing out clears it. No separate polling or provider request is used.
