@@ -1,0 +1,32 @@
+.composer {
+  border: 1px solid var(--line);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.composer:focus-within {
+  border-color: var(--primary);
+}
+
+.composer .submit {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  box-shadow: none;
+}
+
+.composer .submit:hover {
+  background: var(--primary-hover);
+}
+
+.composer .submit:disabled {
+  background: var(--surface-strong);
+  color: var(--muted);
+  opacity: 1;
+}

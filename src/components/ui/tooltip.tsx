@@ -26,7 +26,7 @@ export function Tooltip({
   content,
   id,
   anchor = "parent",
-  align = "end",
+  align = "center",
   side = "responsive",
   disabled = false,
   compactSidebarOnly = false,

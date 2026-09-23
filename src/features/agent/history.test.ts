@@ -202,4 +202,21 @@ describe("private Agent history", () => {
       })
     );
   });
+  it("retains failed activity even when no answer was generated", async () => {
+    mocks.rows.push({ ...row(), activeRequestId: "request" });
+    const work = {
+      startedAt: 1000,
+      finishedAt: 2000,
+      status: "failed" as const,
+      entries: [],
+    };
+    await finishAgentTurn("owner", "conversation", "request", "", true, work);
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          expect.objectContaining({ content: "", interrupted: true, work }),
+        ],
+      })
+    );
+  });
 });

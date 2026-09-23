@@ -109,7 +109,11 @@ export function PlayAvailabilityControl({
         <p className="truncate text-sm font-medium">{name}</p>
         <p className="text-xs font-medium text-muted">{status}</p>
       </div>
-      <IconTooltip label={`${actionLabel} for ${name}`} side="top" align="end">
+      <IconTooltip
+        label={`${actionLabel} for ${name}`}
+        side="top"
+        align="center"
+      >
         <Button
           type="submit"
           disabled={pending}
