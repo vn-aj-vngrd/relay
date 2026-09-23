@@ -71,6 +71,10 @@ describe("Agent landing demo", () => {
       screen.getByRole("button", { name: "Choose sample chat" })
     ).toHaveTextContent("Your chats");
     expect(screen.getByRole("status")).toHaveTextContent("Choose an example");
+    expect(
+      screen.getByText(/Choose a sample conversation below/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Use \+ below/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Choose sample chat" }));
     fireEvent.click(
       screen.getByRole("button", { name: "Find courts near me." })

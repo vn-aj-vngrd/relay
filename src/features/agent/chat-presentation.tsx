@@ -71,7 +71,13 @@ export function AgentMessage({
   );
 }
 
-export function AgentEmptyState({ children }: { children?: ReactNode }) {
+export function AgentEmptyState({
+  children,
+  guidance = "Use + below to see what Agent can help you do.",
+}: {
+  children?: ReactNode;
+  guidance?: string;
+}) {
   return (
     <div className="mx-auto flex max-w-lg flex-col items-start justify-center py-10 sm:py-16">
       <AgentMark size={36} className="mb-5 text-primary" />
@@ -79,8 +85,7 @@ export function AgentEmptyState({ children }: { children?: ReactNode }) {
         Your games, a little clearer.
       </h2>
       <p className="mt-3 text-sm leading-6 text-muted">
-        Ask about games, groups and courts. Use + below to see what Agent can
-        help you do.
+        Ask about games, groups and courts. {guidance}
       </p>
       {children}
     </div>

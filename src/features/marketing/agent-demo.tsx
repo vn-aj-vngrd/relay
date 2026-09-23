@@ -246,7 +246,7 @@ export function AgentDemo({
             inert
           >
             {idle || composing ? (
-              <AgentEmptyState />
+              <AgentEmptyState guidance="Choose a sample conversation below to see how Agent responds." />
             ) : (
               <>
                 <div key={example.question} className={styles.question}>
