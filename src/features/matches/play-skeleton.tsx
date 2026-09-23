@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 
 import { LiveCourtSkeleton } from "./live-court-skeleton";
@@ -12,7 +11,6 @@ export function PlaySkeleton({
 }) {
   return (
     <div role="status" aria-label={label} aria-busy="true">
-      <LoadingState compact announce={false} label={label} />
       <div className="mb-5 flex justify-end">
         <Skeleton className="h-9 w-28" />
       </div>

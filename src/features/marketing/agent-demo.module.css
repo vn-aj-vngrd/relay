@@ -1,16 +1,5 @@
-.reducedResponse {
-  display: none;
-}
 .question {
   animation: send 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.caret {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 3px;
-  vertical-align: -0.1em;
-  background: var(--ink);
 }
 @keyframes send {
   from {
@@ -23,12 +12,6 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .response {
-    display: none;
-  }
-  .reducedResponse {
-    display: block;
-  }
   .question {
     animation: none;
   }

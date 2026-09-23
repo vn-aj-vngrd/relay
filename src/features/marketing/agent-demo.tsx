@@ -1,19 +1,19 @@
 "use client";
 
-import {
-  ArrowCounterClockwise,
-  ArrowUp,
-  CaretDown,
-  Copy,
-  Pause,
-  Play,
-  Plus,
-} from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Pause, Play } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
-import { AgentMark } from "@/features/agent/agent-mark";
-import { AgentAnswer } from "@/features/agent/answer";
+import { defaultAgentLimits } from "@/features/agent/allowance";
+import {
+  AgentChatPickerTrigger,
+  AgentEmptyState,
+  AgentMessage,
+  AgentNewChatButton,
+} from "@/features/agent/chat-presentation";
+import { AgentComposer } from "@/features/agent/composer";
+import type { AgentComposerHandle } from "@/features/agent/composer-editor";
+import { AgentReplyActions } from "@/features/agent/reply-actions";
 import styles from "./agent-demo.module.css";
 
 const examples = [
@@ -49,8 +49,13 @@ const examples = [
 const thinkingFrames = 12;
 const charactersPerFrame = 8;
 
-export function AgentDemo() {
+export function AgentDemo({
+  messageLimit = defaultAgentLimits.freeMessages,
+}: {
+  messageLimit?: number;
+}) {
   const root = useRef<HTMLElement>(null);
+  const field = useRef<AgentComposerHandle>(null);
   const transcript = useRef<HTMLDivElement>(null);
   const started = useRef(false);
   const picker = useRef<HTMLDivElement>(null);
@@ -179,7 +184,7 @@ export function AgentDemo() {
   return (
     <figure
       ref={root}
-      className="min-w-0 overflow-hidden rounded-xl border border-line bg-canvas"
+      className="min-w-0 overflow-hidden rounded-xl border border-line bg-surface"
       aria-label="Interactive Agent demo"
     >
       <figcaption className="sr-only">
@@ -202,18 +207,12 @@ export function AgentDemo() {
               }
             }}
           >
-            <button
-              type="button"
+            <AgentChatPickerTrigger
+              title={idle ? "Your chats" : example.label}
               aria-label="Choose sample chat"
               aria-expanded={pickerOpen}
-              className="pressable flex min-h-9 max-w-full items-center gap-1.5 rounded-full text-[13px] font-medium"
               onClick={() => setPickerOpen(!pickerOpen)}
-            >
-              <span className="truncate py-0.5 leading-5">
-                {idle ? "Your chats" : example.label}
-              </span>
-              <CaretDown size={13} className="shrink-0" aria-hidden />
-            </button>
+            />
             {pickerOpen ? (
               <div className="absolute left-0 top-full z-10 mt-1 max-h-60 w-64 max-w-[calc(100vw-6rem)] overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-md">
                 {examples.map((item, index) => (
@@ -229,48 +228,32 @@ export function AgentDemo() {
               </div>
             ) : null}
           </div>
-          <Button
-            variant="quiet"
-            className="shrink-0 rounded-full bg-surface-strong!"
+          <AgentNewChatButton
+            disabled={idle}
             onClick={() => {
               started.current = true;
               setPickerOpen(false);
               setFrame(-1);
               setPlaying(false);
             }}
-          >
-            <Plus size={16} aria-hidden />
-            New chat
-          </Button>
+          />
         </div>
         <div className="mx-auto max-w-lg">
           <div
             ref={transcript}
             className="agent-conversation-scroll h-[320px] overflow-y-auto overscroll-contain py-5 sm:h-[340px]"
             aria-hidden="true"
+            inert
           >
             {idle || composing ? (
-              <div className="px-1 py-5">
-                <AgentMark size={32} className="mb-4" />
-                <h3 className="text-xl font-semibold tracking-tight">
-                  Your games, a little clearer.
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  Ask about your next game, who's joining, your groups, or how
-                  Relay works.
-                </p>
-                <p className="mt-6 text-sm text-muted">
-                  Choose a sample conversation below.
-                </p>
-              </div>
+              <AgentEmptyState />
             ) : (
               <>
-                <p
-                  key={example.question}
-                  className={`${styles.question} ml-auto w-fit min-w-0 max-w-[90%] rounded-2xl bg-surface-strong px-3.5 py-2 text-sm leading-6`}
-                >
-                  {example.question}
-                </p>
+                <div key={example.question} className={styles.question}>
+                  <AgentMessage user text={example.question}>
+                    <AgentReplyActions user text={example.question} />
+                  </AgentMessage>
+                </div>
                 {thinking ? (
                   <p
                     className="text-shimmer mt-6 inline-block text-sm text-muted"
@@ -279,52 +262,42 @@ export function AgentDemo() {
                     Thinking…
                   </p>
                 ) : (
-                  <div className="mt-6">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                      <AgentMark size={18} />
-                      Agent
-                    </div>
-                    <div className={styles.response}>
-                      <AgentAnswer text={answer} />
-                    </div>
-                    <div className={styles.reducedResponse}>
-                      <AgentAnswer text={example.answer} />
-                    </div>
-                    {complete ? (
-                      <>
-                        <p className="mt-3 text-sm text-primary">
-                          {example.source}
-                        </p>
-                        <span className="mt-3 inline-flex min-h-9 items-center text-muted">
-                          <Copy size={15} />
-                        </span>
-                      </>
-                    ) : null}
+                  <div className="mt-7">
+                    <AgentMessage
+                      text={
+                        complete
+                          ? `${example.answer}\n\n${example.source}`
+                          : answer
+                      }
+                    >
+                      {complete ? (
+                        <AgentReplyActions text={example.answer} />
+                      ) : null}
+                    </AgentMessage>
                   </div>
                 )}
               </>
             )}
           </div>
-          <div
-            aria-hidden="true"
-            className="rounded-xl border border-line bg-surface p-3"
-          >
-            <div className="min-h-12 text-[15px] leading-6">
-              <span className={draft ? "text-ink" : "text-muted"}>
-                {draft || "Ask Agent…"}
-              </span>
-              {composing ? <span className={styles.caret} /> : null}
-            </div>
-            <div className="mt-2 flex items-center justify-between gap-3">
-              <span className="text-xs tabular-nums text-muted">
-                {draft.length} / 4,000 characters
-              </span>
-              <span
-                className={`inline-flex size-9 items-center justify-center rounded-lg bg-primary text-white ${draft ? "" : "opacity-45"}`}
-              >
-                <ArrowUp size={18} />
-              </span>
-            </div>
+          <div aria-hidden="true" inert>
+            <AgentComposer
+              usage={{
+                plan: "free",
+                limit: messageLimit,
+                used: 0,
+                reserved: 0,
+                remaining: messageLimit,
+                resetsAt: "2026-10-01T00:00:00+08:00",
+              }}
+              field={field}
+              input={draft}
+              onChange={() => {}}
+              onSubmit={() => {}}
+              onStop={() => {}}
+              available
+              busy={thinking || (!idle && !composing && !complete)}
+              responding={thinking || (!idle && !composing && !complete)}
+            />
           </div>
           <p className="mt-2 text-center text-xs leading-5 text-muted">
             AI can make mistakes. Check sources and don’t share secrets.
@@ -350,7 +323,7 @@ export function AgentDemo() {
                 : "Agent demo is answering the selected question."}
         </div>
       </div>
-      <div className="mt-4 border-t border-line px-4 py-3 sm:px-6">
+      <div className="mt-4 border-t border-line bg-canvas px-4 py-3 sm:px-6">
         <div
           className="flex flex-wrap gap-1"
           role="group"

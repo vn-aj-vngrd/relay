@@ -24,11 +24,14 @@ describe("collection loading boundaries", () => {
     ["Groups", GroupsLoading],
     ["Notifications", NotificationsLoading],
   ] as const)("keeps the %s title as real UI", (title, Loading) => {
-    render(<Loading />);
+    const { container } = render(<Loading />);
     expect(
       screen.getByRole("heading", { name: title, level: 1 })
     ).toBeVisible();
     expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText(/^Loading /)).not.toBeInTheDocument();
+    expect(container.querySelector(".animate-spin")).toBeNull();
+    expect(container.querySelector(".animate-pulse")).not.toBeNull();
   });
 
   it("uses the create shell instead of the parent Games fallback", () => {

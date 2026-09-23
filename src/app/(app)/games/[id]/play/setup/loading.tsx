@@ -1,4 +1,3 @@
-import { LoadingState } from "@/components/shared/content-state";
 import { GamePageIntro } from "@/components/shared/game-page-intro";
 import { Skeleton } from "@/components/shared/skeleton";
 
@@ -12,12 +11,6 @@ export default function PlaySetupLoading() {
         aria-busy="true"
         className="mx-auto w-full max-w-2xl pb-8 sm:pt-6"
       >
-        <LoadingState
-          compact
-          announce={false}
-          label="Loading Play setup"
-          className="col-span-full"
-        />
         <section>
           <Skeleton className="h-5 w-24" />
           <Skeleton className="mt-2 h-3.5 w-80 max-w-full" />

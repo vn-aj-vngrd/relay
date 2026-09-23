@@ -10,7 +10,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/shared/avatar-stack";
-import { EmptyState, LoadingState } from "@/components/shared/content-state";
+import { EmptyState } from "@/components/shared/content-state";
 import { ButtonSpinner } from "@/components/ui/button";
 import { TabChipRail } from "@/components/ui/tab-chip-rail";
 import { trackDiscoveryEvent } from "@/features/analytics/actions";
@@ -152,12 +152,6 @@ function ResultSkeleton() {
       aria-busy="true"
       className="divide-y divide-line border-y border-line"
     >
-      <LoadingState
-        compact
-        announce={false}
-        label="Searching"
-        className="col-span-full"
-      />
       {Array.from({ length: 6 }, (_, index) => (
         <div key={index} className="flex min-h-16 items-center gap-3 py-3">
           <span className="h-9 w-9 animate-pulse rounded-full bg-surface-strong" />

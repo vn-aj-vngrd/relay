@@ -1,7 +1,6 @@
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 
-import { LoadingState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 import { CreateGameProgress } from "@/features/sessions/create-game-progress";
 
@@ -49,12 +48,6 @@ export default function NewGameLoading() {
           aria-busy="true"
           className="space-y-6"
         >
-          <LoadingState
-            compact
-            announce={false}
-            label="Loading game details"
-            className="col-span-full"
-          />
           <div>
             <h2 className="text-xl font-[680]">The plan</h2>
             <p className="mt-1 text-sm text-muted">

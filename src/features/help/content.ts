@@ -1510,12 +1510,16 @@ export const helpArticles: readonly HelpArticle[] = [
     outcome:
       "Relay can open like an app, but installation does not create an offline copy of private game data or a guarantee of queued score synchronization.",
     troubleshooting: [
+      "Games, groups and other data views show placeholder rows or cards while content loads. Agent shows Restoring chat when reopening a saved conversation. If loading does not finish, check your connection and reopen the page.",
       "A dismissed, unsupported, or already-installed prompt may need the browser’s manual path.",
       "The service worker provides an offline fallback and static assets, not cached private workspaces, APIs, media, or maps. Browser-local Quick Play persistence is separate and does not guarantee a cold offline launch.",
     ],
     related: ["quick-play", "notifications", "live-recovery"],
     sources: [
       "src/features/pwa/install-app-control.tsx",
+      "src/features/sessions/game-results-skeleton.tsx",
+      "src/features/groups/group-collection.tsx",
+      "src/features/agent/chat-skeleton.tsx",
       "public/sw.js",
       "src/app/(app)/settings/page.tsx",
     ],

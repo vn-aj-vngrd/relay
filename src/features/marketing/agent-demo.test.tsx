@@ -40,6 +40,28 @@ async function finish() {
     });
 }
 describe("Agent landing demo", () => {
+  it("keeps the sample composer decorative and clears its send state after playback", async () => {
+    render(<AgentDemo />);
+    const send = screen.getByRole("button", {
+      name: "Send message",
+      hidden: true,
+    });
+    expect(send.closest("[inert]")).toHaveAttribute("aria-hidden", "true");
+    expect(send).toBeDisabled();
+    expect(screen.queryByText(/4,000 characters/)).not.toBeInTheDocument();
+    enter();
+    expect(send).not.toBeDisabled();
+    await finish();
+    expect(
+      screen.getByRole("button", { name: "Send message", hidden: true })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("textbox", { name: "Message Agent", hidden: true })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Actions", hidden: true })
+    ).toBeInTheDocument();
+  });
   it("matches the chat header and resets to a clean conversation", async () => {
     render(<AgentDemo />);
     enter();
@@ -143,7 +165,7 @@ describe("Agent landing demo", () => {
       else Reflect.deleteProperty(document, "hidden");
     }
   });
-  it("shows complete answers immediately with reduced motion", () => {
+  it("shows complete answers immediately with reduced motion", async () => {
     reduced = true;
     render(<AgentDemo />);
     enter();
@@ -154,6 +176,14 @@ describe("Agent landing demo", () => {
     expect(
       screen.queryByRole("button", { name: "Pause demo" })
     ).not.toBeInTheDocument();
-    expect(vi.getTimerCount()).toBe(0);
+    // The real editor has its own lifecycle timers; reduced motion must stop
+    // demo playback, not unrelated editor initialization.
+    await finish();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Angelika, Dave and Charles are going to Saturday doubles"
+    );
+    expect(
+      screen.queryByRole("button", { name: "Stop response", hidden: true })
+    ).not.toBeInTheDocument();
   });
 });

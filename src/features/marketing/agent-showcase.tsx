@@ -59,7 +59,7 @@ export function AgentShowcase({
             </span>
           </div>
         </div>
-        <AgentDemo />
+        <AgentDemo messageLimit={agent.freeMessages} />
       </div>
     </section>
   );

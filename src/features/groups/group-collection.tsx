@@ -16,7 +16,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { EmptyState, LoadingState } from "@/components/shared/content-state";
+import { EmptyState } from "@/components/shared/content-state";
 import { Skeleton } from "@/components/shared/skeleton";
 import { ButtonLink } from "@/components/ui/button";
 import { MobileViewMenu } from "@/components/ui/mobile-view-menu";
@@ -220,12 +220,6 @@ export function GroupResultsSkeleton() {
           : "divide-y divide-line border-y border-line"
       }
     >
-      <LoadingState
-        compact
-        announce={false}
-        label="Loading groups"
-        className="col-span-full"
-      />
       {Array.from({ length: mode === "grid" ? 6 : 4 }, (_, index) => (
         <div
           key={index}

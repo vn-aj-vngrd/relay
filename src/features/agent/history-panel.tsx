@@ -1,12 +1,12 @@
 "use client";
 
-import { CaretDown } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/content-state";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
+import { AgentChatPickerTrigger } from "./chat-presentation";
 import { chatAge } from "./history-age";
 import { historyRequest } from "./history-client";
 import type { AgentConversationSummary } from "./history-types";
@@ -71,23 +71,19 @@ export function AgentHistoryPanel({
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
     >
-      <button
+      <AgentChatPickerTrigger
+        title={activeTitle}
         ref={trigger}
         type="button"
         disabled={disabled}
         aria-label={`Chat history: ${activeTitle}`}
         aria-expanded={open}
         aria-controls={panelId}
-        className="pressable inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full bg-transparent px-3 text-[13px] font-medium disabled:opacity-45"
         onClick={() => {
           setOpen(!open);
           if (!open) void load();
         }}
-      >
-        <span className="truncate py-0.5 leading-5">{activeTitle}</span>
-        <Tooltip content={activeTitle} side="bottom" align="center" />
-        <CaretDown size={13} className="shrink-0" aria-hidden />
-      </button>
+      />
       {open ? (
         <div
           id={panelId}
