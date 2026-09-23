@@ -17,7 +17,7 @@ export default async function AppLayout({
   const profile = await ensureProfile(user);
   if (!profile.onboardingCompletedAt) redirect("/onboarding");
   return (
-    <AgentSessionProvider key={user.id}>
+    <AgentSessionProvider key={user.id} userId={user.id}>
       <AuthenticatedAppShell user={user}>{children}</AuthenticatedAppShell>
     </AgentSessionProvider>
   );

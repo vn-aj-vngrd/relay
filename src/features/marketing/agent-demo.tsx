@@ -411,7 +411,7 @@ export function AgentDemo() {
                         : "Resume demo"
                 }
                 side="top"
-                align="end"
+                align="center"
               />
             </button>
           ) : null}

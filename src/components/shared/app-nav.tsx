@@ -9,6 +9,11 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  AgentActivityIndicator,
+  agentActivityLabel,
+  useAgentActivity,
+} from "@/features/agent/activity";
 import { AgentMark } from "@/features/agent/agent-mark";
 import { SidebarItemTooltip } from "./sidebar-item-tooltip";
 
@@ -66,6 +71,7 @@ export function AppNav({
   invitationCount?: number;
 }) {
   const pathname = usePathname();
+  const agentActivity = useAgentActivity();
   const isActive = (href: string) => {
     if (href === "/home") return pathname === "/home";
     if (href === "/games")
@@ -101,7 +107,9 @@ export function AppNav({
                   aria-label={
                     label === "Games" && invitationCount
                       ? `Games, ${invitationCount} invites`
-                      : label
+                      : label === "Agent"
+                        ? agentActivityLabel(agentActivity)
+                        : label
                   }
                   aria-current={active ? "page" : undefined}
                   className={`sidebar-row sidebar-nav-item pressable group relative flex min-h-9 items-center gap-2.5 rounded-md px-2 text-[14px] font-medium ${primary ? "bg-primary text-white hover:bg-primary-hover" : active ? "bg-surface-strong text-ink" : "text-muted hover:bg-surface-strong/70 hover:text-ink"}`}
@@ -120,10 +128,15 @@ export function AppNav({
                       </span>
                     ) : null}
                   </span>
+                  {label === "Agent" ? (
+                    <AgentActivityIndicator activity={agentActivity} />
+                  ) : null}
                   <SidebarItemTooltip>
                     {label === "Games" && invitationCount
                       ? `${label}, ${invitationCount} invites`
-                      : label}
+                      : label === "Agent"
+                        ? agentActivityLabel(agentActivity)
+                        : label}
                   </SidebarItemTooltip>
                 </Link>
               </li>

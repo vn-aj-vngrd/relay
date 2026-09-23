@@ -71,6 +71,9 @@ describe("NotificationFeed", () => {
       />
     );
 
+    for (const time of document.querySelectorAll("time")) {
+      expect(time.parentElement).toHaveClass("self-center");
+    }
     fireEvent.click(
       screen.getByRole("button", { name: "Mark Friday Pickle as read" })
     );

@@ -17,6 +17,30 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("Agent reply copy", () => {
+  it("shows the supplied message time and copies a user's message", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    const timestamp = new Date("2026-09-23T07:39:00.000Z");
+    const { container } = render(
+      <AgentReplyActions text="My question" user timestamp={timestamp} />
+    );
+    expect(container.querySelector("time")).toHaveAttribute(
+      "datetime",
+      timestamp.toISOString()
+    );
+    expect(container.querySelector("time")).not.toBeEmptyDOMElement();
+    fireEvent.click(screen.getByRole("button", { name: "Copy message" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("My question"));
+    expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
+  });
+  it("does not invent a timestamp for older messages without one", () => {
+    const { container } = render(<AgentReplyActions text="Saved reply" />);
+    expect(container.querySelector("time")).toBeNull();
+    expect(screen.getByRole("button", { name: "Copy reply" })).toBeEnabled();
+  });
   it("shows an icon-only control with a tooltip on focus", async () => {
     render(<AgentReplyActions text="Next game" />);
     const button = screen.getByRole("button", { name: "Copy reply" });

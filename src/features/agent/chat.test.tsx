@@ -6,6 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import composerStyles from "./composer.module.css";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -192,7 +193,9 @@ describe("Agent chat controls", () => {
     );
     await waitFor(() =>
       expect(mocks.send).toHaveBeenCalledWith(
-        expect.objectContaining({ text: "Find courts near me." }),
+        expect.objectContaining({
+          parts: [{ type: "text", text: "Find courts near me." }],
+        }),
         undefined
       )
     );
@@ -213,7 +216,7 @@ describe("Agent chat controls", () => {
     render(<AgentChat available />);
     const input = await screen.findByRole("textbox", { name: "Message Agent" });
     expect(input).toHaveClass("agent-composer-input");
-    expect(input.closest("form")).toHaveClass("focus-within:border-primary");
+    expect(input.closest("form")).toHaveClass(composerStyles.composer);
   });
   it("caps oversized pastes and asks the user to review before sending", async () => {
     render(<AgentChat available />);
@@ -229,38 +232,25 @@ describe("Agent chat controls", () => {
     expect(input.textContent).toHaveLength(4000);
     expect(screen.queryByText("4,000 / 4,000 characters")).toBeNull();
   });
-  it("uses shimmer text while waiting for the first response", () => {
+  it("shows elapsed work and request activity while waiting for a response", () => {
     mocks.status = "submitted";
     render(<AgentChat available />);
-    expect(screen.getByText("Thinking…")).toHaveClass("text-shimmer");
+    expect(screen.getByText("Working for 0s")).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: "Agent activity" })
+    ).toHaveTextContent("Reviewing your request");
   });
-  it("picks a fresh label per request and keeps it stable during loading", async () => {
-    const random = vi.spyOn(Math, "random").mockReturnValue(0);
-    try {
-      const { rerender } = render(<AgentChat available />);
-      const ask = () =>
-        fireEvent.click(
-          screen.getByRole("button", { name: "When is my next game?" })
-        );
-      ask();
-      await waitFor(() => expect(mocks.send).toHaveBeenCalled());
-      mocks.send.mockClear();
-      mocks.status = "submitted";
-      rerender(<AgentChat available />);
-      expect(screen.getByText("Pondering…")).toHaveClass("text-shimmer");
-      rerender(<AgentChat available />);
-      expect(screen.getByText("Pondering…")).toBeInTheDocument();
-      mocks.status = "ready";
-      rerender(<AgentChat available />);
-      ask();
-      await waitFor(() => expect(mocks.send).toHaveBeenCalled());
-      mocks.send.mockClear();
-      mocks.status = "submitted";
-      rerender(<AgentChat available />);
-      expect(screen.getByText("Thinking…")).toBeInTheDocument();
-    } finally {
-      random.mockRestore();
-    }
+  it("places a failed response and Retry inside the Agent conversation", () => {
+    mocks.error = new Error("AGENT_HTTP_502");
+    render(<AgentChat available />);
+    const alert = screen.getByRole("alert");
+    expect(screen.getByRole("log")).toContainElement(alert);
+    expect(screen.getByRole("article", { name: "Agent" })).toContainElement(
+      alert
+    );
+    expect(screen.getByRole("article", { name: "Agent" })).toContainElement(
+      screen.getByRole("button", { name: "Retry" })
+    );
   });
   it("submits a natural-language suggestion", async () => {
     render(<AgentChat available />);
@@ -269,7 +259,9 @@ describe("Agent chat controls", () => {
     );
     await waitFor(() =>
       expect(mocks.send).toHaveBeenCalledWith(
-        expect.objectContaining({ text: "When is my next game?" }),
+        expect.objectContaining({
+          parts: [{ type: "text", text: "When is my next game?" }],
+        }),
         undefined
       )
     );
@@ -284,10 +276,17 @@ describe("Agent chat controls", () => {
     );
     expect(mocks.send).not.toHaveBeenCalled();
   });
-  it("stops streaming and prevents duplicate submission", () => {
+  it("labels the icon-only Stop control and prevents duplicate submission", async () => {
     mocks.status = "streaming";
     render(<AgentChat available />);
-    fireEvent.click(screen.getByRole("button", { name: "Stop response" }));
+    const stop = screen.getByRole("button", { name: "Stop response" });
+    expect(stop).not.toHaveTextContent("Stop");
+    expect(screen.queryByRole("button", { name: "Send message" })).toBeNull();
+    fireEvent.focus(stop);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Stop response"
+    );
+    fireEvent.click(stop);
     expect(mocks.stop).toHaveBeenCalledOnce();
     fireEvent.click(
       screen.getByRole("button", { name: "When is my next game?" })

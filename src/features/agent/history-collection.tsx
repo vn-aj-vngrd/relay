@@ -281,7 +281,7 @@ export function AgentHistoryCollection() {
                     <span className="min-w-0 truncate py-0.5 font-medium leading-5">
                       {row.title}
                     </span>
-                    <Tooltip content={row.title} side="top" align="start" />
+                    <Tooltip content={row.title} side="top" align="center" />
                   </button>
                   <time
                     aria-label={chatAge(row.updatedAt, undefined, true)}

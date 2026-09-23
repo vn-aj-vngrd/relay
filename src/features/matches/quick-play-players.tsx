@@ -22,7 +22,7 @@ export function QuickPlayPlayers({
   onChange: (session: QuickPlaySession) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -61,7 +61,7 @@ export function QuickPlayPlayers({
         aria-haspopup="dialog"
         onClick={() => {
           dialog.current?.showModal();
-          heading.current?.focus();
+          closeButton.current?.focus();
         }}
       >
         Players ({session.players.length})
@@ -70,38 +70,32 @@ export function QuickPlayPlayers({
         ref={dialog}
         variant="drawer"
         aria-labelledby="quick-players-title"
+        onDismiss={() => dialog.current?.close()}
       >
-        <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3 sm:px-6">
-          <h2
-            ref={heading}
-            tabIndex={-1}
-            id="quick-players-title"
-            className="text-lg font-bold outline-none"
-          >
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-2 sm:px-5">
+          <h2 id="quick-players-title" className="text-base font-semibold">
             Players ({session.players.length})
           </h2>
           <IconTooltip label="Close players">
             <Button
+              ref={closeButton}
               type="button"
               variant="quiet"
               size="icon"
+              className="rounded-full"
               aria-label="Close players"
               onClick={() => dialog.current?.close()}
             >
-              <X aria-hidden size={20} />
+              <X aria-hidden size={18} />
             </Button>
           </IconTooltip>
         </div>
-        <div className="px-4 pb-8 sm:px-6">
+        <div className="px-4 pb-8 sm:px-5">
           <p className="my-4 text-sm text-muted">
             Take a break or rejoin the queue.
           </p>
           {canAdd ? (
-            <form
-              noValidate
-              onSubmit={addPlayer}
-              className="mb-5 border-b border-line pb-5"
-            >
+            <form noValidate onSubmit={addPlayer} className="mb-5">
               <label
                 htmlFor="quick-late-player"
                 className="text-sm font-semibold"
@@ -175,7 +169,7 @@ export function QuickPlayAvailability({
   const resting = new Set(session.restingPlayerIds);
   return (
     <div>
-      <p className="mt-1 mb-3 text-sm leading-5 text-muted">
+      <p className="mt-1 mb-3 text-xs leading-5 text-muted">
         {session.players.length - resting.size} of {session.players.length}{" "}
         available · returning players join the end.
       </p>
@@ -209,7 +203,7 @@ export function QuickPlayAvailability({
           return (
             <div
               key={player.id}
-              className="flex min-h-16 items-center gap-3 py-2"
+              className="flex min-h-14 items-center gap-3 py-2"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{player.name}</p>
@@ -218,8 +212,9 @@ export function QuickPlayAvailability({
               <IconTooltip label={`${action} for ${player.name}`} side="top">
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="quiet"
                   size="icon"
+                  className="rounded-full"
                   aria-label={`${action} for ${player.name}`}
                   onClick={() =>
                     onChange(
