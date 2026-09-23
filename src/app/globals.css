@@ -758,8 +758,17 @@ html.lenis.lenis-smooth iframe {
   animation: none;
 }
 
+/* Reset only reveal layers; nested SVG transforms position Story artwork. */
 .marketing-reveal-ready:focus-within,
-.marketing-reveal-ready:focus-within * {
+.marketing-reveal-ready:focus-within:is(
+    [data-marketing-reveal="sequence"],
+    [data-marketing-reveal="split"],
+    [data-marketing-reveal="split-reverse"]
+  )
+  > *,
+.marketing-reveal-ready:focus-within[data-marketing-reveal="workflow"]
+  > div
+  > * {
   opacity: 1;
   transform: none;
   clip-path: none;
