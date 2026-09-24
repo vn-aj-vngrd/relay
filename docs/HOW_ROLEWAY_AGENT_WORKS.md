@@ -18,7 +18,7 @@ sequenceDiagram
     participant Model as OpenRouter model
     Player->>UI: Send a question
     UI->>API: POST /api/agent
-    API->>DB: Check account, settings, limits; save turn
+    API->>DB: Check account, settings, limits and save turn
     API->>Model: Stream with bounded tools
     Model->>API: Request a read or creation preparation
     API->>DB: Read authorized data or save proposal
@@ -26,7 +26,7 @@ sequenceDiagram
     API->>DB: Save visible reply and activity
     Player->>UI: Approve a review card
     UI->>API: POST /api/agent/creations with proposal ID
-    API->>DB: Recheck and lock proposal; run product command
+    API->>DB: Recheck and lock proposal and run product command
     API-->>UI: Return saved result or current proposal state
 ```
 
