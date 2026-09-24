@@ -9,26 +9,85 @@ Relay Agent answers questions about a signed-in player's games, groups, courts, 
 3. Agent streams an answer and displays a short activity log. A creation setup asks for one missing detail at a time and saves the answers in the conversation. A completed setup shows a server-owned review card.
 4. Review the exact details and select the approval button to create the result, or edit/cancel the proposal. Typing “yes” does not approve it. History lets the player reopen, rename, or delete saved conversations.
 
+## Agent pipeline
+
+Relay uses Vercel AI SDK's `streamText` to run a bounded tool loop inside `POST /api/agent`. OpenRouter connects that loop to the configured model. The model chooses a tool and supplies arguments, while the SDK validates those arguments and invokes Relay's server-side `execute` function. Relay's services enforce access and return the data used in the next model step.
+
+### What goes into the model context
+
+```mermaid
+flowchart TD
+    Prompt["Latest user message"] --> History["beginAgentTurn: save prompt and load owned conversation"]
+    History --> Messages["Last 24 nonempty user and assistant messages<br/>Up to 4000 characters per message"]
+    Rules["agentInstructions<br/>Relay rules, current time, capability flags<br/>and administrator tone preferences"] --> System["system"]
+    Config["Administrator capability switches"] --> Tools["createAgentTools<br/>Enabled tool names, descriptions and Zod input schemas"]
+    Messages --> Stream["AI SDK streamText"]
+    System --> Stream
+    Tools --> Stream
+    Stream --> Provider["OpenRouter provider and configured model"]
+    Identity["Authenticated user ID and conversation IDs"] --> Execute["Server-side execute closures"]
+    Tools -.-> Execute
+    Execute --> Results["Authorized tool results from this request"]
+    Results --> Next["SDK appends tool calls and results<br/>to the next model step"]
+    Next --> Stream
+```
+
+For a saved chat, the server rebuilds message context from its owned conversation record and the latest submitted prompt. A request without `conversationId` uses the validated client text messages instead. Neither path accepts client system messages or tool results. Identity and conversation IDs are bound into server functions for authorization and proposal storage, rather than accepted as model-selected authorization arguments.
+
+Creation tools also require both conversation and message IDs, plus an enabled creation capability.
+
+Raw tool calls and results stay in the current request's model context. History stores visible user/assistant text and safe activity metadata, and only the text is fed back as conversation context on a later turn. The model must fetch current application facts again through tools. Creation drafts are stored separately and recovered with `creationStatus`.
+
+### One request and its tool loop
+
 ```mermaid
 sequenceDiagram
-    actor Player
-    participant UI as Agent chat
-    participant API as Next.js server
-    participant DB as Supabase PostgreSQL
-    participant Model as OpenRouter model
-    Player->>UI: Send a question
-    UI->>API: POST /api/agent
-    API->>DB: Check account, settings, limits; save turn
-    API->>Model: Stream with bounded tools
-    Model->>API: Request a read or creation preparation
-    API->>DB: Read authorized data or save proposal
-    API-->>UI: Stream answer and safe activity labels
-    API->>DB: Save visible reply and activity
-    Player->>UI: Approve a review card
-    UI->>API: POST /api/agent/creations with proposal ID
-    API->>DB: Recheck and lock proposal; run product command
-    API-->>UI: Return saved result or current proposal state
+    participant UI as Chat and useChat
+    participant API as POST /api/agent
+    participant SDK as Vercel AI SDK streamText
+    participant Model as Model via OpenRouter
+    participant Tool as Relay tool execute
+    participant Data as Relay services and storage
+    UI->>API: DefaultChatTransport sends text and request IDs
+    API->>API: Validate origin, account, settings, request and limits
+    API->>Data: Reserve usage and begin saved conversation turn
+    Data-->>API: Bounded conversation text
+    API->>SDK: Model, system, messages, tools and stop controls
+    SDK->>Model: Instructions, messages and enabled tool schemas
+    opt Model requests tools
+        loop While tool results permit another step within limits
+            Model-->>SDK: Tool call with name, call ID and JSON arguments
+            SDK->>SDK: Validate arguments against inputSchema
+            SDK-->>API: fullStream tool-call event
+            API-->>UI: Mark tool activity running
+            SDK->>Tool: Invoke execute with validated input
+            Tool->>Tool: Check abort signal and shared execution allowance
+            Tool->>Data: Authorized read or creation preparation
+            Data-->>Tool: Bounded records or saved proposal state
+            Tool-->>SDK: Structured result or safe unavailable response
+            SDK-->>API: fullStream tool-result event
+            API-->>UI: Server-authored activity labels
+            SDK->>Model: Next step includes tool calls and results
+        end
+    end
+    Model-->>SDK: Answer text deltas
+    SDK-->>API: fullStream text-delta events
+    API->>Data: Charge usage on first non-whitespace answer text
+    API-->>UI: Text and safe metadata via UI message stream
+    API->>Data: Save visible reply and activity when turn ends
 ```
+
+This is the successful saved-chat path. A step is one model generation and may contain multiple tool calls, so six steps does not mean six tools. `stopWhen: isStepCount(6)` caps model steps, and `prepareStep` removes tools on step six so the model can answer. A shared wrapper permits at most twelve tool operations, and the abort signal combines client cancellation with a 50-second deadline. `maxOutputTokens` comes from settings and `maxRetries` is zero. Text can also stream during earlier steps, not only after the last tool result.
+
+For example, “Which games am I joining this weekend?” can produce `searchGames` with `scope: "joining"` and a date range. The SDK validates the input, then `execute` calls `searchAgentGames(userId, input)` using the server-bound identity. Its results enter the next model step, where the model can answer with the returned game links or request more permitted details. The model chooses this sequence dynamically.
+
+The route consumes `result.fullStream` and constructs its own `createUIMessageStreamResponse`. It forwards answer text and safe activity labels to `useChat`, while keeping raw tool arguments, results, provider metadata and reasoning out of the browser stream. On failure or cancellation it saves available text/activity, marks the turn interrupted, and releases an uncharged usage reservation.
+
+### Creation approval is a separate request
+
+`prepareCreation` can save setup answers and a review proposal during the tool loop. Its `execute` function cannot create the final game or group. The player presses the review card's approval button, which calls `POST /api/agent/creations` with the proposal ID. That endpoint rechecks ownership, expiry, capabilities and eligibility before executing the product command. This is Relay's persisted proposal workflow, not the SDK's built-in tool-approval mechanism. Quick Play starts in the browser after confirmation.
+
+Source: [`route.ts`](../src/app/api/agent/route.ts), [`chat.tsx`](../src/features/agent/chat.tsx), [`instructions.ts`](../src/features/agent/instructions.ts), [`history.ts`](../src/features/agent/history.ts), [`tools.ts`](../src/features/agent/tools.ts), and [`provider.ts`](../src/features/agent/provider.ts). SDK loop behavior was checked against the installed `ai` package's tool-calling docs and `stream-text.ts` implementation.
 
 An activity label or model answer is not proof that a game or group was created. The saved proposal's completed status and destination link establish the result. If a reply is interrupted, History and the creation card show the saved state.
 
