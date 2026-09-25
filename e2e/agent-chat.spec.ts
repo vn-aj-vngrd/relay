@@ -8,6 +8,9 @@ import {
   creationInputSchema,
 } from "../src/features/agent/creation-schema";
 
+// This fixture relies on route interception, including after a reload.
+test.use({ serviceWorkers: "block" });
+
 function activityReply(text: string) {
   const startedAt = Date.now() - 2000;
   const work = {
@@ -41,6 +44,8 @@ test.beforeAll(async () => {
     "--bundle",
     `--outfile=${file}`,
     "--platform=browser",
+    // Preserve initialization across the SDK’s mixed Zod entry points.
+    "--ignore-annotations",
     "--jsx=automatic",
     "--alias:@=./src",
     '--define:process.env.NODE_ENV="production"',
@@ -55,17 +60,19 @@ for (const width of [390, 1440]) {
     page,
   }) => {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/");
+    await page.goto("/login");
     const styles = await page
       .locator('link[rel="stylesheet"], style')
       .evaluateAll((elements) =>
         elements.map((element) => element.outerHTML).join("")
       );
-    await page.route("**/__synthetic-agent**", (route) =>
-      route.fulfill({
-        contentType: "text/html",
-        body: `<html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles}</head><body><div id="agent-fixture"></div></body></html>`,
-      })
+    await page.route(
+      (url) => url.pathname === "/agent",
+      (route) =>
+        route.fulfill({
+          contentType: "text/html",
+          body: `<html><head><meta name="viewport" content="width=device-width, initial-scale=1">${styles}</head><body><div id="agent-fixture"></div></body></html>`,
+        })
     );
     let creation: CreationProposal | null = null;
     let approvals = 0;
@@ -186,7 +193,7 @@ for (const width of [390, 1440]) {
             }
       );
     });
-    await page.goto("/__synthetic-agent");
+    await page.goto("/agent");
     await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });
     await page.getByRole("button", { name: "Actions", exact: true }).click();
@@ -207,6 +214,20 @@ for (const width of [390, 1440]) {
       page.getByRole("button", { name: "Actions", exact: true })
     ).toHaveAttribute("aria-expanded", "false");
     const slashComposer = page.getByRole("textbox", { name: "Message Agent" });
+    await slashComposer.fill("/past");
+    await expect(
+      page.getByRole("option", { name: /Explore past games/ })
+    ).toBeVisible();
+    await slashComposer.press("Enter");
+    await expect(slashComposer).toHaveText(
+      "Show my past games and help me explore their recaps."
+    );
+    await expect(page.getByRole("log")).not.toContainText("Show my past games");
+    await slashComposer.fill("/invitations");
+    await expect(
+      page.getByRole("option", { name: /My invitations/ })
+    ).toBeVisible();
+    await slashComposer.press("Escape");
     await slashComposer.fill("/court");
     await expect(
       page.getByRole("listbox", { name: "Available Agent actions" })
@@ -370,6 +391,9 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("textbox", { name: "Message Agent" }).locator("strong")
     ).toHaveText("Draft question");
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("chat"))
+      .toBe(conversation.id);
     await page.reload();
     await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });

@@ -5,10 +5,16 @@ const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   member: vi.fn(),
   workspace: vi.fn(),
+  group: vi.fn(),
+  groupMember: vi.fn(),
+  select: vi.fn(),
 }));
 vi.mock("@/db/client", () => ({
   db: {
+    select: mocks.select,
     query: {
+      groups: { findFirst: mocks.group },
+      groupMembers: { findFirst: mocks.groupMember },
       sessions: { findFirst: mocks.session },
       sessionPlayers: { findFirst: mocks.member },
     },
@@ -18,7 +24,7 @@ vi.mock("@/features/sessions/queries", () => ({
   getSessionForWorkspace: mocks.workspace,
 }));
 
-import { readAgentGame } from "./reads";
+import { readAgentGame, readAgentGroup } from "./reads";
 
 const session = {
   id: "game",
@@ -28,7 +34,8 @@ const session = {
   endsAt: new Date("2030-01-01"),
   playerPriceCents: 0,
   title: "Game",
-  notes: "CONFIDENTIAL",
+  notes: "Bring water",
+  bookingReference: "HOST_BOOKING",
   rotationConfig: { secret: "INTERNAL" },
 };
 beforeEach(() => {
@@ -85,11 +92,11 @@ describe("Agent record authorization and projections", () => {
     });
     const result = await readAgentGame("host", "game");
     expect(mocks.workspace).toHaveBeenCalledWith("game", "host");
+    expect(result).toHaveProperty("notes", "Bring water");
     expect(result).toHaveProperty("players", [
       { name: "Alex", rsvp: "going", role: "player" },
     ]);
     for (const forbidden of [
-      "CONFIDENTIAL",
       "INTERNAL",
       "MEMBERSHIP",
       "TOKEN",
@@ -132,6 +139,7 @@ describe("Agent record authorization and projections", () => {
       ],
     });
     const result = await readAgentGame("participant", "game");
+    expect(JSON.stringify(result)).not.toContain("HOST_BOOKING");
     expect(result).toHaveProperty("players", [
       { name: "Visible", rsvp: "going", role: "player" },
     ]);
@@ -143,5 +151,72 @@ describe("Agent record authorization and projections", () => {
       unavailable: true,
     });
     expect(mocks.workspace).toHaveBeenCalledWith("game", "discoverer");
+  });
+});
+
+describe("Agent group detail authorization", () => {
+  it("does not disclose group information or members to outsiders", async () => {
+    mocks.group.mockResolvedValue({ id: "group", name: "PRIVATE" });
+    mocks.groupMember.mockResolvedValue(undefined);
+    expect(await readAgentGroup("outsider", "private-group", 0)).toEqual({
+      unavailable: true,
+    });
+    expect(mocks.select).not.toHaveBeenCalled();
+  });
+  it("makes missing groups indistinguishable from unauthorized groups", async () => {
+    mocks.group.mockResolvedValue(undefined);
+    expect(await readAgentGroup("viewer", "missing", 0)).toEqual({
+      unavailable: true,
+    });
+    expect(mocks.select).not.toHaveBeenCalled();
+  });
+  it("returns paginated member names and roles with group game discovery", async () => {
+    mocks.group.mockResolvedValue({
+      id: "group",
+      slug: "crew",
+      name: "Crew",
+      description: "Weekly games",
+      ownerId: "SECRET",
+    });
+    mocks.groupMember.mockResolvedValue({ role: "member", userId: "SECRET" });
+    const query = {
+      from: vi.fn().mockReturnThis(),
+      innerJoin: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      offset: vi
+        .fn()
+        .mockResolvedValue(
+          Array.from({ length: 21 }, () => ({ name: "Alex", role: "member" }))
+        ),
+    };
+    mocks.select.mockReturnValue(query);
+    const result = await readAgentGroup("viewer", "crew", 0);
+    expect(result).toMatchObject({
+      href: "/groups/crew",
+      description: "Weekly games",
+      nextOffset: 20,
+      truncated: true,
+      games: { groupId: "group", when: "all" },
+    });
+    expect(JSON.stringify(result)).not.toContain("SECRET");
+  });
+});
+
+it("reads an authorized completed game and offers the existing host continuation", async () => {
+  const completed = { ...session, status: "completed", groupId: null };
+  mocks.session.mockResolvedValue(completed);
+  mocks.workspace.mockResolvedValue({
+    session: completed,
+    access: "host",
+    roster: [],
+  });
+  expect(await readAgentGame("host", "game")).toMatchObject({
+    status: "completed",
+    continuation: {
+      replayHref: "/games/new?from=game",
+      saveCrewHref: "/groups/new?from=game",
+    },
   });
 });

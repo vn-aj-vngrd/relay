@@ -19,6 +19,37 @@ Read before adding or changing Agent tools, creation, discovery, confirmation, o
 
 Discovery shares one enabled-capability catalog between the composer + button and the `/` autocomplete. Both entry points open the same menu; creation selection sends a conversational setup prompt and Explore selection inserts a prompt without sending; arrow keys, Enter, Escape, and touch work while retaining the draft. The menu groups enabled tasks under Create and Explore, hides empty sections, uses single-line icon, title, and description rows, and links to `/help/agent-capabilities`. User guidance is authored in the shared Help Center catalog read by Agent's help tools. Future scope below stays out of the available-action menu.
 
+## Game and group exploration
+
+When game answers are enabled, `searchGames` supports upcoming, current, past,
+all-time and draft searches, with status, date, venue, group, role and RSVP filters.
+My Games and Invitations reuse the game-library predicates; invitation history
+is distinct from unanswered invitations. Cancelled games require explicit inclusion.
+Open games retain public-discovery eligibility even for all-time requests. Group
+summaries require current membership; group drafts additionally require ownership.
+
+`myGroups` reuses group-list name/role filters. `groupDetails` resolves an exact
+slug or UUID and returns the description and paginated member names/roles only
+after membership authorization. Group membership does not grant private game access.
+
+`gameDetails` returns the authorized overview, RSVP, permitted roster, attendance,
+play settings, booking state and existing post-game continuation links. Booking
+references, totals and notes are organizer-only. `gameSection` reads Play, Recap,
+payments, chat or Story captions using the existing workspace/permission boundary.
+Play and Recap reuse the UI query and calculation functions. Payment rows are
+organizer-wide or viewer-only as on Payments; expense collection summaries retain
+archived state. No financial credentials, proof/media URLs, raw profiles, tokens,
+or browser-local Quick Play data are returned. Story reads captions, not image
+contents. Reads do not authorize mutations.
+
+Lists are bounded and report truncation and continuation. A read-budget or paging
+limit means partial results, never absence of history. Past includes ended games;
+only status completed proves completion. Existing assistant claims that history is
+unavailable must not override the current tools. The Explore menu and Help Center
+share these capabilities. A01 regression coverage includes lifecycle queries,
+collection boundaries, group membership, section authorization and safe projections;
+live-provider and authenticated browser execution remain separate evidence.
+
 ## Conversational creation
 
 Creation uses normal chat. Ask one missing question per reply, reuse supplied details, and fetch creationStatus before continuing so saved answers survive reloads and corrections. A passive indicator shows collected details and the next missing detail; it is not validation or approval. Selecting a Create action starts this conversation. Restored setups offer Continue in chat and Cancel.

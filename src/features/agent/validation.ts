@@ -83,9 +83,28 @@ export const gameSearchSchema = z
       "hosting",
       "joining",
       "attention",
+      "invitations",
       "open",
       "groups",
     ]),
+    when: z
+      .enum(["upcoming", "current", "past", "all", "drafts"])
+      .default("upcoming"),
+    status: z.enum(["published", "live", "completed", "cancelled"]).optional(),
+    role: z.enum(["any", "player", "host", "cohost"]).default("any"),
+    response: z
+      .enum([
+        "any",
+        "invited",
+        "going",
+        "maybe",
+        "pending",
+        "waitlisted",
+        "declined",
+      ])
+      .default("any"),
+    includeCancelled: z.boolean().default(false),
+    venue: z.string().max(300).default(""),
     query: z.string().max(100).default(""),
     groupId: z
       .uuid()

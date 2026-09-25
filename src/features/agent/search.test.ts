@@ -62,3 +62,90 @@ describe("Agent database query boundaries", () => {
     ).toHaveLength(2);
   });
 });
+
+describe("Agent game lifecycle and collection parity", () => {
+  it("searches past games without the upcoming-only end-time restriction", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "mine", when: "past" })
+    );
+    const [query, parameters] = mocks.query.mock.calls[0];
+    expect(query).toContain('"sessions"."ends_at" <=');
+    const filter = query.slice(query.indexOf(' from "sessions" where '));
+    expect(filter).not.toContain('"sessions"."ends_at" >');
+    expect(parameters).toContain("completed");
+    expect(query).toContain('"sessions"."starts_at" desc');
+  });
+  it("keeps all-time searches free of a time cutoff", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({
+        scope: "mine",
+        when: "all",
+        includeCancelled: true,
+      })
+    );
+    const [query, parameters] = mocks.query.mock.calls[0];
+    const filter = query.slice(query.indexOf(' from "sessions" where '));
+    expect(filter).not.toMatch(/"ends_at" [<>]=?/);
+    expect(parameters).toContain("cancelled");
+  });
+  it("finds ongoing scheduled games as well as live games", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "mine", when: "current" })
+    );
+    const [query, parameters] = mocks.query.mock.calls[0];
+    expect(query).toContain('"sessions"."starts_at" <=');
+    expect(query).toContain('"sessions"."ends_at" >');
+    expect(parameters).toContain("live");
+  });
+  it("uses received invitations rather than conflating invitations with attention", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "invitations", when: "all" })
+    );
+    const [query] = mocks.query.mock.calls[0];
+    expect(query).toContain(
+      '"session_players"."invitation_received_at" is not null'
+    );
+    expect(query).toContain('"session_players"."left_at" is null');
+  });
+  it("never turns Open games into access to completed public history", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "open", when: "all" })
+    );
+    const [query, parameters] = mocks.query.mock.calls[0];
+    expect(query).toContain('"sessions"."ends_at" >');
+    expect(parameters).toContain("public");
+  });
+  it("restricts group drafts to an owner with current group membership", async () => {
+    await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "groups", when: "drafts" })
+    );
+    const [query, parameters] = mocks.query.mock.calls[0];
+    expect(query).toContain('"groups"."owner_id"');
+    expect(query).toContain('"group_members"."user_id"');
+    expect(parameters).toContain("draft");
+  });
+  it("returns bounded pages and an honest continuation for historical results", async () => {
+    mocks.query.mockResolvedValue({
+      rows: Array.from({ length: 21 }, (_, index) => [
+        String(index),
+        "Past game",
+      ]),
+    });
+    const result = await searchAgentGames(
+      "viewer",
+      gameSearchSchema.parse({ scope: "mine", when: "past" })
+    );
+    expect(result.games).toHaveLength(20);
+    expect(result).toMatchObject({
+      when: "past",
+      nextOffset: 20,
+      truncated: true,
+    });
+  });
+});
