@@ -3,6 +3,21 @@ import { describe, expect, it } from "vitest";
 import { AgentAnswer } from "./answer";
 
 describe("untrusted Agent answers", () => {
+  it("updates streamed text and keeps newly completed unsafe links inert", () => {
+    const view = render(
+      <AgentAnswer text="A partial answer [link](https://" />
+    );
+    view.rerender(
+      <AgentAnswer text="A complete answer [link](https://evil.test)" />
+    );
+    expect(view.container).toHaveTextContent("A complete answer link");
+    expect(view.container.querySelector("a")).toBeNull();
+    view.rerender(<AgentAnswer text="Read [Help](/help/create-game)" />);
+    expect(screen.getByRole("link", { name: "Help" })).toHaveAttribute(
+      "href",
+      "/help/create-game"
+    );
+  });
   it("formats emphasis, lists, headings, code and tables", () => {
     const { container } = render(
       <AgentAnswer

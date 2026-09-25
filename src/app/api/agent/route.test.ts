@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => ({
@@ -75,8 +75,13 @@ function request(
     body: JSON.stringify(body),
   });
 }
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+});
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubEnv("AGENT_PERFORMANCE_LOGGING", "false");
   mocks.user.mockResolvedValue({ id: "server-user", app_metadata: {} });
   mocks.account.mockResolvedValue({ suspendedAt: null });
   mocks.config.mockResolvedValue({
@@ -91,6 +96,51 @@ beforeEach(() => {
   mocks.release.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
+  it.each(["true", "false"])(
+    "logs only aggregate timing when enabled=%s",
+    async (enabled) => {
+      vi.stubEnv("AGENT_PERFORMANCE_LOGGING", enabled);
+      const log = vi.spyOn(console, "info").mockImplementation(() => {});
+      mocks.stream.mockReturnValue({
+        fullStream: (async function* () {
+          yield { type: "start-step", request: { body: "PRIVATE_REQUEST" } };
+          yield {
+            type: "tool-call",
+            toolName: "searchGames",
+            toolCallId: "PRIVATE_ID",
+          };
+          yield {
+            type: "tool-result",
+            toolName: "searchGames",
+            toolCallId: "PRIVATE_ID",
+            output: { secret: "PRIVATE_OUTPUT" },
+          };
+          yield { type: "text-delta", text: "PRIVATE_ANSWER" };
+        })(),
+      });
+      const response = await POST(request());
+      expect(response.headers.get("Server-Timing")).toMatch(
+        /^setup;dur=\d+\.\d$/
+      );
+      expect(await response.text()).toBe("PRIVATE_ANSWER");
+      if (enabled === "true") {
+        expect(log).toHaveBeenCalledOnce();
+        expect(log).toHaveBeenCalledWith("[agent-performance]", {
+          setupMs: expect.any(Number),
+          firstTextMs: expect.any(Number),
+          chargeMs: expect.any(Number),
+          generationMs: expect.any(Number),
+          saveMs: expect.any(Number),
+          totalMs: expect.any(Number),
+          modelSteps: 1,
+          toolCalls: 1,
+          toolMs: expect.any(Number),
+          interrupted: false,
+        });
+        expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_");
+      } else expect(log).not.toHaveBeenCalled();
+    }
+  );
   it("streams safe activity metadata, preserves the answer and excludes tool payloads", async () => {
     mocks.stream.mockReturnValue({
       fullStream: (async function* () {

@@ -148,3 +148,14 @@ The confirmation request contains a proposal ID, not model-authored fields. The 
 - Agent answers are untrusted text. Markdown rendering skips raw HTML and images and only turns permitted relative Relay source paths into links; destination pages check authorization again.
 
 Source and unit tests establish the implemented contract. `e2e/agent-chat.spec.ts` uses a synthetic browser fixture and does not prove a live OpenRouter call or cross-account permissions in a deployed environment. A configured-provider smoke test and authenticated journey remain separate verification steps.
+
+## Performance
+
+Saved-chat requests send the latest user prompt; the server still rebuilds the
+same bounded conversation context from owned history. React batches stream updates
+at 50 ms and reuses unchanged rendered answers. Help search can include one matching
+authoritative article so the model need not request that same guide again.
+
+The [performance assessment](agent/PERFORMANCE.md) explains the latency boundaries,
+opt-in aggregate timing diagnostics, preserved guarantees and remaining live
+measurement gaps.
