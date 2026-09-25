@@ -11,7 +11,9 @@ describe("Agent message action motion", () => {
     const motion = stylesheet.match(
       /@media \(hover: hover\) and \(pointer: fine\) and \(\s*prefers-reduced-motion: no-preference\s*\)\s*\{\s*\.actions\s*\{([^}]+)\}/
     );
-    expect(motion?.[1]).toMatch(/transition:\s*opacity 180ms ease/);
+    expect(motion?.[1]).toContain(
+      "transition: opacity 180ms cubic-bezier(0.16, 1, 0.3, 1)"
+    );
     // The transition belongs to the row, not just its hovered state, so exit fades too.
     expect(stylesheet.match(/transition:/g)).toHaveLength(1);
   });
