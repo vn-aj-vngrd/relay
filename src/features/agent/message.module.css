@@ -2,6 +2,14 @@
   opacity: 1;
 }
 
+@media (hover: hover) and (pointer: fine) and (
+    prefers-reduced-motion: no-preference
+  ) {
+  .actions {
+    transition: opacity 180ms ease;
+  }
+}
+
 /* Reserve the row so revealing actions never moves the conversation. */
 @media (hover: hover) and (pointer: fine) {
   .message .actions {
