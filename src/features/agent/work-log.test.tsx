@@ -16,6 +16,21 @@ const work: AgentWork = {
   entries: [{ step: "games", status: "running" }],
 };
 describe("Agent work activity", () => {
+  it("animates only the running step and stops when work finishes", () => {
+    const { container, rerender } = render(<AgentWorkLog work={work} />);
+    const spinner = container.querySelector(".animate-spin");
+    expect(spinner).toHaveClass(
+      "border-r-transparent",
+      "motion-reduce:animate-none"
+    );
+    expect(spinner).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("listitem")).toHaveTextContent("running");
+
+    for (const status of ["completed", "stopped", "failed"] as const) {
+      rerender(<AgentWorkLog work={finishWork(work, status)} />);
+      expect(container.querySelector(".animate-spin")).toBeNull();
+    }
+  });
   it("ticks while working, collapses on completion and expands the saved log", () => {
     vi.useFakeTimers();
     vi.setSystemTime(0);

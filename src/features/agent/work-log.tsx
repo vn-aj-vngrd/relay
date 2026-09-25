@@ -7,6 +7,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useEffect, useId, useState } from "react";
+import { ButtonSpinner } from "@/components/ui/button";
 import { type AgentWork, formatWorkDuration, workLabels } from "./work";
 
 export function AgentWorkLog({ work }: { work: AgentWork }) {
@@ -63,16 +64,10 @@ export function AgentWorkLog({ work }: { work: AgentWork }) {
                   aria-hidden
                   className="shrink-0 text-danger"
                 />
+              ) : entry.status === "running" ? (
+                <ButtonSpinner className="text-primary" />
               ) : (
-                <Circle
-                  size={15}
-                  aria-hidden
-                  className={
-                    entry.status === "running"
-                      ? "shrink-0 text-primary"
-                      : "shrink-0"
-                  }
-                />
+                <Circle size={15} aria-hidden className="shrink-0" />
               )}
               <span>{workLabels[entry.step]}</span>
               <span className="sr-only">{entry.status}</span>
