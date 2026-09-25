@@ -1,10 +1,17 @@
 import "server-only";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
+import { groupFiltersSchema } from "@/features/groups/filters";
 import { readAgentCourt, searchAgentCourts } from "./courts";
 import { creationPreparationSchema } from "./creation-schema";
+import { readAgentGameSection } from "./game-sections";
 import { agentHelpIndex, readAgentHelp, searchAgentHelp } from "./help";
-import { readAgentGame, readAgentGroups, searchAgentGames } from "./reads";
+import {
+  readAgentGame,
+  readAgentGroup,
+  readAgentGroups,
+  searchAgentGames,
+} from "./reads";
 import {
   type AgentConfig,
   agentCourtSearchSchema,
@@ -37,23 +44,45 @@ export function createAgentTools(
   if (config.allowGameData) {
     tools.searchGames = tool({
       description:
-        "Read upcoming games: mine, hosting, joining (Going), attention (invitations/pending requests or host booking/roster/pending approvals), open or groups. Paginated; never imply truncated results are complete. Dates use Asia/Manila. Group results do not grant roster access. For a named group, resolve its ID with myGroups and pass groupId.",
+        "Read games across upcoming, current, past, all or drafts with when; narrow by status, role, response, venue or dates. Mine matches My Games; invitations includes invitation history (response invited selects unanswered upcoming invitations); hosting, joining (Going), attention, open and groups are separate scopes. Drafts require hosting or group-owner access. Open keeps the UI public discovery rules and does not expose public history. Paginated; never imply truncated results are complete. Dates use Asia/Manila. Group results do not grant roster access. For a named group, resolve its ID with myGroups and pass groupId.",
       inputSchema: gameSearchSchema,
       execute: (input) => read(() => searchAgentGames(userId, input)),
     });
     tools.gameDetails = tool({
       description:
-        "Read an authorized game's details and permitted roster, using its ID from a game result or user's game URL. Unavailable also means unauthorized; do not distinguish.",
+        "Read an authorized game's overview, lifecycle, booking state, play settings, own RSVP and permitted roster, using its ID from a game result or user's game URL. Unavailable also means unauthorized; do not distinguish.",
       inputSchema: z.object({ id: z.uuid() }),
       execute: ({ id }) => read(() => readAgentGame(userId, id)),
     });
     tools.myGroups = tool({
       description:
-        "List this user's groups and their role. Use searchGames scope groups for their upcoming games.",
-      inputSchema: z.object({
+        "Search this user's group list by name and owner/member role. Read groupDetails for description and members; use searchGames scope groups with groupId and when for current, upcoming or past group games.",
+      inputSchema: groupFiltersSchema.extend({
         offset: z.number().int().min(0).max(200).default(0),
       }),
-      execute: ({ offset }) => read(() => readAgentGroups(userId, offset)),
+      execute: ({ offset, ...filters }) =>
+        read(() => readAgentGroups(userId, offset, filters)),
+    });
+    tools.groupDetails = tool({
+      description:
+        "Read a group you belong to: description, your role and paginated member names/roles. Use its UUID or slug from myGroups or the user's group URL. This does not grant access to private game details.",
+      inputSchema: z.object({
+        reference: z.string().trim().min(1).max(200),
+        offset: z.number().int().min(0).max(200).default(0),
+      }),
+      execute: ({ reference, offset }) =>
+        read(() => readAgentGroup(userId, reference, offset)),
+    });
+    tools.gameSection = tool({
+      description:
+        "Explore an authorized game's UI information: play (courts, live scores, queue, results and standings), recap (recorded match totals and highlights), payments (organizers see player payments; other participants see only their own), chat (latest first), or story (photo captions). Paginate each returned collection with nextOffset. Amounts are cents; never infer money was transferred. No payment credentials, proofs, photos or device-local Quick Play are sent. Read only, no actions.",
+      inputSchema: z.object({
+        id: z.uuid(),
+        section: z.enum(["play", "recap", "payments", "chat", "story"]),
+        offset: z.number().int().min(0).max(200).default(0),
+      }),
+      execute: ({ id, section, offset }) =>
+        read(() => readAgentGameSection(userId, id, section, offset)),
     });
   }
   if (config.allowCourtSearch) {

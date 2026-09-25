@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   search: vi.fn(),
   game: vi.fn(),
   groups: vi.fn(),
+  group: vi.fn(),
+  section: vi.fn(),
   creationOptions: vi.fn(),
 }));
 vi.mock("./creation-service", () => ({
@@ -16,7 +18,10 @@ vi.mock("./reads", () => ({
   searchAgentGames: mocks.search,
   readAgentGame: mocks.game,
   readAgentGroups: mocks.groups,
+  readAgentGroup: mocks.group,
 }));
+
+vi.mock("./game-sections", () => ({ readAgentGameSection: mocks.section }));
 
 vi.mock("./courts", () => ({
   searchAgentCourts: mocks.courts,
@@ -91,6 +96,8 @@ describe("Agent read-only registry", () => {
       "searchGames",
       "gameDetails",
       "myGroups",
+      "groupDetails",
+      "gameSection",
       "searchCourts",
       "courtDetails",
       "helpIndex",
@@ -185,4 +192,23 @@ it("exposes preparation only when enabled and tied to a persisted conversation",
   expect(tools.prepareCreation).toBeDefined();
   expect(tools.creationStatus).toBeDefined();
   expect(tools.confirmCreation).toBeUndefined();
+});
+
+it("binds new group and game-section reads to the authenticated account", async () => {
+  const tools = createAgentTools(
+    "viewer",
+    defaultAgentConfig,
+    new AbortController().signal
+  );
+  const options = { toolCallId: "read", messages: [], context: {} };
+  await tools.groupDetails.execute!(
+    { reference: "crew", offset: 20, userId: "other" },
+    options
+  );
+  await tools.gameSection.execute!(
+    { id: "game", section: "payments", offset: 0, userId: "other" },
+    options
+  );
+  expect(mocks.group).toHaveBeenCalledWith("viewer", "crew", 20);
+  expect(mocks.section).toHaveBeenCalledWith("viewer", "game", "payments", 0);
 });

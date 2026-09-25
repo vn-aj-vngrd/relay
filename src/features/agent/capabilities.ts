@@ -62,6 +62,24 @@ export const agentCapabilityPrompts = [
     category: "Explore",
   },
   {
+    label: "Explore past games",
+    prompt: "Show my past games and help me explore their recaps.",
+    capability: "allowGameData",
+    category: "Explore",
+  },
+  {
+    label: "Games happening now",
+    prompt: "Show my current games and their play status.",
+    capability: "allowGameData",
+    category: "Explore",
+  },
+  {
+    label: "My invitations",
+    prompt: "Show my game invitations.",
+    capability: "allowGameData",
+    category: "Explore",
+  },
+  {
     label: "Games needing attention",
     prompt: "What games need my attention?",
     capability: "allowGameData",
@@ -75,7 +93,7 @@ export const agentCapabilityPrompts = [
   },
   {
     label: "My groups and players",
-    prompt: "Show my groups and help me find who's joining my next game.",
+    prompt: "Show my groups, their members, and their upcoming and past games.",
     capability: "allowGameData",
     category: "Explore",
   },

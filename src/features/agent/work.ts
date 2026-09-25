@@ -41,6 +41,8 @@ const toolSteps: Record<string, keyof typeof workLabels> = {
   searchGames: "games",
   gameDetails: "game",
   myGroups: "groups",
+  groupDetails: "groups",
+  gameSection: "game",
   searchCourts: "courts",
   courtDetails: "court",
   helpIndex: "guides",

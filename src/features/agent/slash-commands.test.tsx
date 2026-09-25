@@ -210,3 +210,14 @@ describe("Agent slash discovery", () => {
     expect(submit).not.toHaveBeenCalled();
   });
 });
+
+it("discovers history, current games and invitations only when game reads are enabled", () => {
+  for (const query of ["past", "happening", "invitations"]) {
+    expect(matchingSlashCommands(capabilities, query).length).toBeGreaterThan(
+      0
+    );
+    expect(
+      matchingSlashCommands({ ...capabilities, allowGameData: false }, query)
+    ).toEqual([]);
+  }
+});
