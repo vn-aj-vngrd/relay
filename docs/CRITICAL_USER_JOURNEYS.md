@@ -273,3 +273,15 @@ Navigation status and clarity follow-up: A04 has shared sidebar/mobile Agent wor
 Court Finder location action now leads the existing scrollable filter row, retains its visible label on mobile, and shows its active nearest-first state. Existing distance-sorting coverage also checks placement and toggling off (`court-finder.test.tsx`); validation deferred to pre-commit.
 
 2026-09-23 pre-commit verification for Agent continuity and UI polish: repository lint and strict types passed; all 2,628 unit tests across 364 files passed; the production build passed after retrying outside the restricted sandbox. Earlier deferred notes above describe implementation-stage status. Updated browser scenarios remain unrun, and authenticated live-provider navigation remains unverified.
+
+2026-09-25 Agent performance follow-up (A01/A04/A06): saved-chat transport sends
+only the latest prompt while the server retains owned history; streaming renders
+are throttled and unchanged Markdown is memoized; Help search can include one safe
+matching guide. Transport, Help, answer-update and aggregate-timing regressions
+added. Full suite passed 2,670 tests; after the ranking refinement the focused
+Agent/API suite passed 297 tests, and all six Agent browser scenarios passed.
+Live synthetic Help benchmarking reduced model steps from three to two; Chromium
+rendering benchmarks preserved final text while reducing Markdown work. After explicit user approval, the dedicated-account live smoke also passed game
+reads, group setup/continuation to a pending approval, and real-page restoration at
+390 px and 1440 px. The temporary chat was deleted; no group was approved or created. See [performance assessment](agent/PERFORMANCE.md)
+for measured values, build evidence and limits.

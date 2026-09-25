@@ -35,6 +35,7 @@ import { AgentReplyActions } from "./reply-actions";
 import { AgentResponseError } from "./response-error";
 import type { AgentSession } from "./session";
 import { useAgentSession } from "./session";
+import { agentTransportMessages } from "./transport-messages";
 import { finishWork, messageWork } from "./work";
 import { AgentWorkLog } from "./work-log";
 import { ensureAgentUIStream } from "./work-stream";
@@ -54,20 +55,7 @@ const createTransport = (session: AgentSession) =>
         messageId: messages.findLast((message) => message.role === "user")?.id,
         retry: trigger === "regenerate-message",
         conversationId: session.conversationId ?? undefined,
-        messages: messages
-          .filter(
-            (message) => message.role === "user" || message.role === "assistant"
-          )
-          .map((message) => ({
-            role: message.role,
-            content: message.parts
-              .filter((part) => part.type === "text")
-              .map((part) => part.text)
-              .join("")
-              .slice(0, agentMessageMaxLength),
-          }))
-          .filter((message) => message.content.trim())
-          .slice(-24),
+        messages: agentTransportMessages(messages, session.conversationId),
       },
     }),
   });
@@ -184,7 +172,7 @@ export function AgentChat({
     stop,
     setMessages,
     clearError,
-  } = useChat({ chat });
+  } = useChat({ chat, throttle: 50 });
   const visibleMessages = pendingQuestion
     ? [...messages, pendingQuestion]
     : messages;

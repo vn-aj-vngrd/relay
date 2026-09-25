@@ -64,7 +64,14 @@ for (const width of [390, 1440]) {
     const styles = await page
       .locator('link[rel="stylesheet"], style')
       .evaluateAll((elements) =>
-        elements.map((element) => element.outerHTML).join("")
+        // Playwright pierces Next's dev-tool shadow root; its reset stylesheet
+        // must stay scoped there instead of overriding the app fixture's CSS.
+        elements
+          .filter(
+            (element) => !element.hasAttribute("data-nextjs-dev-tool-style")
+          )
+          .map((element) => element.outerHTML)
+          .join("")
       );
     await page.route(
       (url) => url.pathname === "/agent",
@@ -135,6 +142,7 @@ for (const width of [390, 1440]) {
           messageId: string;
           messages: { content: string }[];
         };
+        expect(body.messages).toHaveLength(1);
         const text = body.messages.at(-1)?.content ?? "";
         if (
           text.startsWith("Create group") ||
@@ -430,6 +438,30 @@ for (const width of [390, 1440]) {
         .getByRole("article", { name: "Agent", exact: true })
         .getByRole("button", { name: "Retry" })
     ).toBeVisible();
+    await page.route("**/api/agent", async (route) => {
+      if (route.request().method() === "GET") {
+        return route.fulfill({ status: 503, body: "Unavailable" });
+      }
+      const body = route.request().postDataJSON();
+      expect(body.retry).toBe(true);
+      expect(body.messages).toEqual([
+        { role: "user", content: "Show open games tomorrow" },
+      ]);
+      return route.fulfill({
+        contentType: "text/event-stream",
+        body: activityReply("Synthetic retry completed."),
+      });
+    });
+    await page.getByRole("button", { name: "Retry", exact: true }).click();
+    await expect(page.getByRole("log")).toContainText(
+      "Synthetic retry completed."
+    );
+    await expect(
+      page.getByRole("article", { name: "You", exact: true })
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole("button", { name: "Retry", exact: true })
+    ).toHaveCount(0);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);

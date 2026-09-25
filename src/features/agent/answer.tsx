@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { memo } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import styles from "./answer.module.css";
@@ -9,7 +10,11 @@ const sourcePath =
 
 // Both user and model content are untrusted. No raw HTML, remote resources,
 // arbitrary routes, or executable URLs are rendered.
-export function AgentAnswer({ text }: { text: string }) {
+export const AgentAnswer = memo(function AgentAnswer({
+  text,
+}: {
+  text: string;
+}) {
   return (
     <div className={styles.markdown}>
       <Markdown
@@ -41,4 +46,4 @@ export function AgentAnswer({ text }: { text: string }) {
       </Markdown>
     </div>
   );
-}
+});

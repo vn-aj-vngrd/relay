@@ -44,6 +44,17 @@ function failure(status: number, message: string) {
 }
 
 export async function POST(request: Request) {
+  const startedAt = performance.now();
+  const timing = {
+    setupMs: 0,
+    firstTextMs: null as number | null,
+    chargeMs: 0,
+    generationMs: 0,
+    saveMs: 0,
+    modelSteps: 0,
+    toolCalls: 0,
+    toolMs: 0,
+  };
   let reservation: { userId: string; id: string } | null = null;
   let savedTurn: {
     userId: string;
@@ -56,6 +67,7 @@ export async function POST(request: Request) {
   let work: AgentWork | undefined;
   async function saveTurn() {
     if (!savedTurn) return;
+    const saveStartedAt = performance.now();
     await finishAgentTurn(
       savedTurn.userId,
       savedTurn.conversationId,
@@ -64,6 +76,7 @@ export async function POST(request: Request) {
       interrupted,
       work
     );
+    timing.saveMs += performance.now() - saveStartedAt;
     savedTurn = null;
   }
   let released = false;
@@ -138,6 +151,8 @@ export async function POST(request: Request) {
       cancellation.signal,
       AbortSignal.timeout(50_000),
     ]);
+    const generationStartedAt = performance.now();
+    timing.setupMs = generationStartedAt - startedAt;
     const result = streamText({
       model: agentModel(
         config.model,
@@ -180,6 +195,7 @@ export async function POST(request: Request) {
     const activityStream =
       request.headers.get("x-relay-agent-stream") === "activity-v1";
     const toolEntries = new Map<string, number>();
+    const toolStartedAt = new Map<string, number>();
     let cancelled = false;
     const stream = new ReadableStream<UIMessageChunk>({
       cancel() {
@@ -211,9 +227,13 @@ export async function POST(request: Request) {
         try {
           let wrote = false;
           for await (const part of result.fullStream) {
+            if (part.type === "start-step") timing.modelSteps++;
+
             if (part.type === "error" || part.type === "abort")
               throw new Error("Agent unavailable");
             if (part.type === "tool-call") {
+              timing.toolCalls++;
+              toolStartedAt.set(part.toolCallId, performance.now());
               const step = toolWorkStep(part.toolName);
               if (step && work!.entries.length < 30) {
                 completePhase();
@@ -223,6 +243,11 @@ export async function POST(request: Request) {
               }
             }
             if (part.type === "tool-result" || part.type === "tool-error") {
+              const toolStart = toolStartedAt.get(part.toolCallId);
+              if (toolStart !== undefined) {
+                timing.toolMs += performance.now() - toolStart;
+                toolStartedAt.delete(part.toolCallId);
+              }
               const index = toolEntries.get(part.toolCallId);
               if (index !== undefined) {
                 const output = part.type === "tool-result" ? part.output : null;
@@ -252,7 +277,10 @@ export async function POST(request: Request) {
               if (signal.aborted) throw new Error("Response stopped");
               if (!charged && !part.text.trim()) continue;
               if (!charged) {
+                timing.firstTextMs = performance.now() - generationStartedAt;
+                const chargeStartedAt = performance.now();
                 await chargeAgentMessage(user.id, requestId);
+                timing.chargeMs = performance.now() - chargeStartedAt;
                 charged = true;
               }
               if (
@@ -272,6 +300,7 @@ export async function POST(request: Request) {
             }
           }
           if (signal.aborted || !wrote) throw new Error("Response interrupted");
+          timing.generationMs = performance.now() - generationStartedAt;
           work = finishWork(work!, "completed");
           await saveTurn();
           await release();
@@ -285,6 +314,7 @@ export async function POST(request: Request) {
           });
           if (!cancelled) controller.close();
         } catch {
+          timing.generationMs = performance.now() - generationStartedAt;
           interrupted = true;
           work = finishWork(
             work!,
@@ -306,11 +336,27 @@ export async function POST(request: Request) {
             /* The saved prompt remains; no raw transcript is logged. */
           }
           await release();
+          if (process.env.AGENT_PERFORMANCE_LOGGING === "true") {
+            // Fixed numeric fields only: never transcripts, IDs, tool inputs,
+            // provider bodies, credentials, or model reasoning.
+            console.info("[agent-performance]", {
+              ...timing,
+              totalMs: performance.now() - startedAt,
+              interrupted,
+            });
+          }
         }
       },
     });
+    const responseHeaders = {
+      ...privateHeaders,
+      "Server-Timing": `setup;dur=${timing.setupMs.toFixed(1)}`,
+    };
     if (activityStream)
-      return createUIMessageStreamResponse({ stream, headers: privateHeaders });
+      return createUIMessageStreamResponse({
+        stream,
+        headers: responseHeaders,
+      });
     return new Response(
       stream.pipeThrough(
         new TransformStream<UIMessageChunk, Uint8Array>({
@@ -323,7 +369,7 @@ export async function POST(request: Request) {
       ),
       {
         headers: {
-          ...privateHeaders,
+          ...responseHeaders,
           "Content-Type": "text/plain; charset=utf-8",
         },
       }

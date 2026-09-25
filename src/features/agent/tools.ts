@@ -114,7 +114,7 @@ export function createAgentTools(
     });
     tools.searchHelp = tool({
       description:
-        "Search Help Center using a few keywords, not an entire question. All words must match. Try helpIndex if no matches.",
+        "Search Help Center using a few keywords, not an entire question. All words must match. A clear first match includes its authoritative article; use it directly if relevant. Read other matching guides with readHelp. Try helpIndex if no matches.",
       inputSchema: z.object({ query: z.string().max(100) }),
       execute: ({ query }) => read(() => searchAgentHelp(query)),
     });
