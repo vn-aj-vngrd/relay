@@ -22,10 +22,12 @@ import { type CreationFlow, creationFlowLabels } from "./creation-model";
 import {
   conversationMessages,
   createConversation,
+  historyRequest,
   loadConversation,
   setConversationUrl,
 } from "./history-client";
 import { AgentHistoryPanel } from "./history-panel";
+import type { AgentConversationSummary } from "./history-types";
 import {
   formatMessageTime,
   messageTimestamp,
@@ -129,6 +131,8 @@ export function AgentChat({
   });
   const [activeTitle, setActiveTitle] = useState(session.title);
   const [activeId, setActiveId] = useState(session.conversationId);
+  const [activeArchived, setActiveArchived] = useState(false);
+  const [accountWorking, setAccountWorking] = useState(false);
   const preparing = Boolean(session.preparation);
   const pendingQuestion = session.preparation?.question ?? null;
   const [restoring, setRestoring] = useState(() => {
@@ -193,6 +197,27 @@ export function AgentChat({
     preparing ||
     restoring ||
     remotePending;
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = () => {
+      void historyRequest<{ conversations: AgentConversationSummary[] }>()
+        .then((recent) => {
+          if (!cancelled)
+            setAccountWorking(
+              recent.conversations.some((row) => row.status === "working")
+            );
+        })
+        .catch(() => {});
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [busy]);
   const {
     proposals,
     error: proposalError,
@@ -232,8 +257,8 @@ export function AgentChat({
   useEffect(() => {
     if (follow.current && viewport.current)
       viewport.current.scrollTop = viewport.current.scrollHeight;
-  }, [messages, status]);
-  function newConversation() {
+  }, [messages, status, proposals.length]);
+  function resetConversation() {
     session.conversationId = null;
     session.title = "Your chats";
     setActiveTitle("Your chats");
@@ -241,10 +266,26 @@ export function AgentChat({
     session.draft = "";
     setConversationUrl(null);
     setActiveId(null);
+    setActiveArchived(false);
     setMessages([]);
     clearError();
     setInput("");
     field.current?.focus();
+  }
+  async function newConversation() {
+    if (busy) return;
+    try {
+      const recent = await historyRequest<{
+        conversations: AgentConversationSummary[];
+      }>();
+      if (recent.conversations.some((row) => row.status === "working")) {
+        notify("Wait for Agent to finish before starting another chat.");
+        return;
+      }
+      resetConversation();
+    } catch {
+      notify("Couldn’t check Agent’s progress. Please try again.");
+    }
   }
   async function openConversation(id: string) {
     setRestoring(true);
@@ -255,6 +296,7 @@ export function AgentChat({
       session.title = saved.title;
       setActiveTitle(saved.title);
       setActiveId(id);
+      setActiveArchived(Boolean(saved.archivedAt));
       setRemotePending(saved.pending);
       clearError();
       setInput("");
@@ -290,6 +332,7 @@ export function AgentChat({
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(id);
+        setActiveArchived(Boolean(saved.archivedAt));
         setRemotePending(saved.pending);
         setMessages(conversationMessages(saved));
       })
@@ -340,7 +383,15 @@ export function AgentChat({
       setInput(limitInput(text));
       return;
     }
-    if (!text.trim() || busy || prepareLock.current || !available) return;
+    if (
+      !text.trim() ||
+      busy ||
+      accountWorking ||
+      activeArchived ||
+      prepareLock.current ||
+      !available
+    )
+      return;
     prepareLock.current = true;
     const controller = new AbortController();
     const createdAt = new Date().toISOString();
@@ -368,6 +419,7 @@ export function AgentChat({
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(saved.id);
+        setActiveArchived(false);
         setConversationUrl(saved.id);
         session.notify();
       }
@@ -403,7 +455,14 @@ export function AgentChat({
     }
   }
   async function retryResponse() {
-    if (busy || prepareLock.current || !available) return;
+    if (
+      busy ||
+      accountWorking ||
+      activeArchived ||
+      prepareLock.current ||
+      !available
+    )
+      return;
     prepareLock.current = true;
     setWorkStartedAt(Date.now());
     follow.current = true;
@@ -432,12 +491,13 @@ export function AgentChat({
             disabled={busy}
             activeId={activeId}
             activeTitle={activeTitle}
+            activeWorking={session.activity === "working"}
             onSelect={openConversation}
           />
         </div>
         <AgentNewChatButton
-          disabled={busy || (!messages.length && !activeId)}
-          onClick={newConversation}
+          disabled={busy || accountWorking || (!messages.length && !activeId)}
+          onClick={() => void newConversation()}
         />
       </header>
       <div
@@ -528,21 +588,6 @@ export function AgentChat({
                         }
                       />
                     </AgentMessage>
-                    {proposals
-                      .filter(
-                        (proposal) =>
-                          proposal.messageId === message.id &&
-                          proposal.status !== "cancelled"
-                      )
-                      .map((proposal) => (
-                        <AgentCreationCard
-                          onContinue={(prompt) => void send(prompt, true)}
-                          key={proposal.id}
-                          proposal={proposal}
-                          disabled={busy || !available}
-                          onChange={reloadProposals}
-                        />
-                      ))}
                   </div>
                 );
               })}
@@ -579,23 +624,6 @@ export function AgentChat({
               </div>
             </AgentEmptyState>
           )}
-          {proposals
-            .filter(
-              (proposal) =>
-                proposal.status !== "cancelled" &&
-                !visibleMessages.some(
-                  (message) => message.id === proposal.messageId
-                )
-            )
-            .map((proposal) => (
-              <AgentCreationCard
-                onContinue={(prompt) => void send(prompt, true)}
-                key={proposal.id}
-                proposal={proposal}
-                disabled={busy || !available}
-                onChange={reloadProposals}
-              />
-            ))}
           {error && lastMessage?.role !== "assistant" ? (
             <article aria-label="Agent" className="mt-7 max-w-full pr-2">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -627,6 +655,17 @@ export function AgentChat({
               Agent is working in another session. Waiting for the saved reply…
             </p>
           ) : null}
+          {proposals
+            .filter((proposal) => proposal.status !== "cancelled")
+            .map((proposal) => (
+              <AgentCreationCard
+                onContinue={(prompt) => void send(prompt, true)}
+                key={proposal.id}
+                proposal={proposal}
+                disabled={busy || !available}
+                onChange={reloadProposals}
+              />
+            ))}
         </div>
       </div>
       <div className="mx-auto w-full max-w-3xl shrink-0 pt-3">
@@ -646,6 +685,16 @@ export function AgentChat({
             {unavailableReason}
           </p>
         ) : null}
+        {activeArchived ? (
+          <p role="status" className="mb-3 text-sm text-muted">
+            This chat is archived. Restore it from Chat history to continue.
+          </p>
+        ) : null}
+        {accountWorking && !busy && !activeArchived ? (
+          <p role="status" className="mb-3 text-sm text-muted">
+            Agent is replying in another chat. Wait for it to finish.
+          </p>
+        ) : null}
 
         <div className="relative">
           <AgentComposer
@@ -659,7 +708,7 @@ export function AgentChat({
               session.notify();
               void stop();
             }}
-            available={available}
+            available={available && !activeArchived && !accountWorking}
             busy={busy}
             responding={status === "submitted" || status === "streaming"}
             capabilities={enabledCapabilities}

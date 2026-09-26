@@ -5,12 +5,15 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { UIMessage } from "ai";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import composerStyles from "./composer.module.css";
+import { creationInputSchema } from "./creation-schema";
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   load: vi.fn(),
+  history: vi.fn(),
   send: vi.fn(),
   stop: vi.fn(),
   clear: vi.fn(),
@@ -18,11 +21,12 @@ const mocks = vi.hoisted(() => ({
   retry: vi.fn(),
   status: "ready",
   error: undefined as Error | undefined,
+  messages: [] as UIMessage[],
 }));
 vi.mock("@ai-sdk/react", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@ai-sdk/react")>()),
   useChat: () => ({
-    messages: [],
+    messages: mocks.messages,
     sendMessage: mocks.send,
     stop: mocks.stop,
     clearError: mocks.clear,
@@ -37,6 +41,7 @@ vi.mock("./history-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./history-client")>()),
   createConversation: mocks.create,
   loadConversation: mocks.load,
+  historyRequest: mocks.history,
   setConversationUrl: vi.fn(),
 }));
 
@@ -56,10 +61,105 @@ beforeEach(() => {
     title: "Next game?",
     updatedAt: new Date().toISOString(),
   });
+  mocks.history.mockResolvedValue({ conversations: [] });
   mocks.status = "ready";
   mocks.error = undefined;
+  mocks.messages = [];
 });
 describe("Agent chat controls", () => {
+  it("places saved creation setup after Agent's latest reply", async () => {
+    const userMessage: UIMessage = {
+      id: "question",
+      role: "user",
+      parts: [{ type: "text", text: "Help me create a game" }],
+    };
+    const answer: UIMessage = {
+      id: "answer",
+      role: "assistant",
+      parts: [{ type: "text", text: "When should the game be?" }],
+    };
+    mocks.messages = [userMessage, answer];
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    mocks.load.mockResolvedValue({
+      id: "saved",
+      title: "Create game",
+      messages: [userMessage, answer],
+      pending: false,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) =>
+        Promise.resolve(
+          url.startsWith("/api/agent/creations?")
+            ? {
+                ok: true,
+                json: async () => ({
+                  proposals: [
+                    {
+                      id: "proposal",
+                      messageId: "question",
+                      status: "collecting",
+                      input: creationInputSchema.parse({ kind: "game" }),
+                      preview: {
+                        title: "Create game",
+                        lines: [],
+                        people: [],
+                      },
+                      destination: null,
+                      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+                    },
+                  ],
+                }),
+              }
+            : { ok: false }
+        )
+      )
+    );
+    render(
+      <AgentChat
+        available
+        capabilities={{
+          allowGameData: true,
+          allowCourtSearch: false,
+          allowHelp: true,
+          allowGameCreation: true,
+          allowGroupCreation: false,
+        }}
+      />
+    );
+    const card = await screen.findByRole("region", {
+      name: "Creation progress",
+    });
+    const reply = screen.getByText("When should the game be?");
+    expect(
+      reply.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(
+      screen.getAllByRole("region", { name: "Creation progress" })
+    ).toHaveLength(1);
+  });
+  it("keeps New chat from replacing a conversation while another reply is active", async () => {
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    mocks.load.mockResolvedValue({
+      id: "saved",
+      title: "Saved chat",
+      messages: [],
+      pending: false,
+    });
+    mocks.history.mockResolvedValue({
+      conversations: [{ id: "other", status: "working" }],
+    });
+    render(<AgentChat available />);
+    await screen.findByRole("button", { name: "Chat history: Saved chat" });
+    const restoredCount = mocks.reset.mock.calls.length;
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "New chat" })).toBeDisabled()
+    );
+    expect(mocks.reset).toHaveBeenCalledTimes(restoredCount);
+    expect(
+      screen.getByRole("button", { name: "Chat history: Saved chat" })
+    ).toBeInTheDocument();
+  });
   it("retries the existing turn instead of sending another question", async () => {
     mocks.error = new Error("AGENT_HTTP_502");
     render(<AgentChat available />);
@@ -121,6 +221,25 @@ describe("Agent chat controls", () => {
         screen.queryByRole("status", { name: "Restoring chat" })
       ).not.toBeInTheDocument()
     );
+  });
+  it("opens an archived chat for reading without allowing a new reply", async () => {
+    window.history.replaceState(null, "", "/agent?chat=archived");
+    mocks.load.mockResolvedValue({
+      id: "archived",
+      title: "Old chat",
+      archivedAt: new Date().toISOString(),
+      messages: [],
+      pending: false,
+    });
+    render(<AgentChat available />);
+    expect(
+      await screen.findByText(
+        "This chat is archived. Restore it from Chat history to continue."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Message Agent" })
+    ).toHaveAttribute("contenteditable", "false");
   });
   it("shows the question immediately while a suggested chat is being created", async () => {
     let finish!: (value: { id: string; title: string }) => void;

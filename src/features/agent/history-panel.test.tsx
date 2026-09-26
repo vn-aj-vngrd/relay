@@ -6,12 +6,13 @@ vi.mock("./history-client", () => ({ historyRequest: mocks.read }));
 
 import { AgentHistoryPanel } from "./history-panel";
 
-it("shows a minimal recent-chat dropdown with a full-history link", async () => {
+it("shows recent-chat progress and a full-history link without row actions", async () => {
   mocks.read.mockResolvedValue({
     conversations: Array.from({ length: 8 }, (_, index) => ({
       id: String(index),
       title: `Chat ${index}`,
       updatedAt: new Date(Date.now() - 11 * 86_400_000).toISOString(),
+      status: index === 0 ? "working" : "done",
     })),
   });
   render(
@@ -29,6 +30,13 @@ it("shows a minimal recent-chat dropdown with a full-history link", async () => 
   const list = await screen.findByRole("list", { name: "Recent chats" });
   expect(within(list).getAllByRole("listitem")).toHaveLength(6);
   expect(within(list).getAllByText("1w")).toHaveLength(6);
+  expect(
+    within(list).getByRole("img", { name: "Working" })
+  ).toBeInTheDocument();
+  expect(within(list).getAllByRole("img", { name: "Done" })).toHaveLength(5);
+  expect(
+    screen.queryByRole("button", { name: /Archive Chat/ })
+  ).not.toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /Rename/ })
   ).not.toBeInTheDocument();

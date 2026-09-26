@@ -8,8 +8,15 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), push: vi.fn() }));
-vi.mock("./history-client", () => ({ historyRequest: mocks.read }));
+const mocks = vi.hoisted(() => ({
+  read: vi.fn(),
+  load: vi.fn(),
+  push: vi.fn(),
+}));
+vi.mock("./history-client", () => ({
+  historyRequest: mocks.read,
+  loadConversation: mocks.load,
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/components/ui/action-notice", () => ({ notify: vi.fn() }));
 
@@ -41,6 +48,7 @@ const scroll = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.read.mockReset();
+  mocks.load.mockReset();
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -57,6 +65,26 @@ beforeEach(() => {
   );
 });
 afterEach(() => vi.unstubAllGlobals());
+it("shows row skeletons while Chats and Archived load", () => {
+  mocks.read.mockImplementation(() => new Promise(() => {}));
+  const { container } = mount();
+  expect(screen.getByRole("status", { name: "Loading chats" })).toHaveAttribute(
+    "aria-busy",
+    "true"
+  );
+  expect(container.querySelectorAll(".animate-pulse")).toHaveLength(25);
+  expect(screen.queryByText("Loading chats…")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  expect(screen.getByRole("tab", { name: "Archived" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  expect(
+    screen.getByRole("status", { name: "Loading chats" })
+  ).toBeInTheDocument();
+  expect(container.querySelectorAll(".animate-pulse")).toHaveLength(25);
+});
 it("loads older summaries on scroll once, deduplicates rows and stops at the end", async () => {
   mocks.read.mockResolvedValueOnce({
     conversations: [row("a")],
@@ -71,11 +99,7 @@ it("loads older summaries on scroll once, deduplicates rows and stops at the end
   );
   mount();
   await screen.findByRole("button", { name: "Chat a" });
-  await waitFor(() =>
-    expect(options?.root).toBe(
-      screen.getByRole("region", { name: "Chat history list" })
-    )
-  );
+  await waitFor(() => expect(options?.root).toBe(screen.getByRole("tabpanel")));
   scroll();
   scroll();
   expect(mocks.read).toHaveBeenCalledTimes(2);
@@ -139,7 +163,10 @@ it("stops automatic pagination if a response makes no cursor progress", async ()
 it("opens a focused rename field from an accessible icon action", async () => {
   mocks.read.mockResolvedValue({ conversations: [row("a")], hasMore: false });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: "Rename Chat a" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
   const title = screen.getByRole("textbox", { name: "Chat title" });
   expect(title).toHaveFocus();
   expect(title).toHaveValue("Chat a");
@@ -147,4 +174,54 @@ it("opens a focused rename field from an accessible icon action", async () => {
   expect(
     screen.queryByRole("textbox", { name: "Chat title" })
   ).not.toBeInTheDocument();
+});
+it("moves chats between Chats and Archived without losing the other list", async () => {
+  mocks.read.mockImplementation((path: string, init?: RequestInit) => {
+    if (init?.method === "PATCH")
+      return Promise.resolve({
+        ...row("a"),
+        archivedAt: new Date().toISOString(),
+        status: "idle",
+      });
+    return Promise.resolve({
+      conversations: path.includes("archived=true")
+        ? [
+            {
+              ...row("b"),
+              archivedAt: new Date().toISOString(),
+              status: "done",
+            },
+          ]
+        : [row("a")],
+      hasMore: false,
+    });
+  });
+  mount();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Archive" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Chat a" })
+    ).not.toBeInTheDocument()
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  expect(
+    await screen.findByRole("button", { name: "Chat b" })
+  ).toBeInTheDocument();
+  expect(
+    mocks.read.mock.calls.some(([path]) =>
+      String(path).includes("archived=true")
+    )
+  ).toBe(true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "More actions for Chat b" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Restore" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Chat b" })
+    ).not.toBeInTheDocument()
+  );
 });

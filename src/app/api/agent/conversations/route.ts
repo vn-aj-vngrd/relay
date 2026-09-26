@@ -21,7 +21,10 @@ export async function GET(request: Request) {
       : null;
     if (cursor && !cursor.success)
       throw new AgentHistoryError(400, "Invalid history cursor.");
-    return listAgentConversations(userId, cursor?.data);
+    const archived = params.get("archived");
+    if (archived !== null && archived !== "true")
+      throw new AgentHistoryError(400, "Invalid history filter.");
+    return listAgentConversations(userId, cursor?.data, archived === "true");
   });
 }
 export async function POST(request: Request) {

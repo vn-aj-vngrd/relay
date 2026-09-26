@@ -1297,6 +1297,7 @@ input[type="checkbox"]:disabled {
 }
 @media (min-width: 64rem) {
   .app-content:has(:is(.agent-chat-page, .agent-history-page)) {
+    padding-top: 1.5rem;
     padding-bottom: 1.5rem;
   }
 }

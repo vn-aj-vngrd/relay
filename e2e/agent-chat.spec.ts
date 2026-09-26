@@ -125,17 +125,27 @@ for (const width of [390, 1440]) {
         },
       ],
     };
-    await page.route("**/api/agent/conversations**", (route) =>
-      route.fulfill({
+    let archived = false;
+    await page.route("**/api/agent/conversations**", (route) => {
+      const request = route.request();
+      if (request.method() === "PATCH")
+        archived = (request.postDataJSON() as { archived: boolean }).archived;
+      const summary = {
+        ...conversation,
+        archivedAt: archived ? new Date().toISOString() : null,
+        status: holdReply ? "working" : "done",
+        pending: holdReply,
+      };
+      return route.fulfill({
         contentType: "application/json",
         body: JSON.stringify(
-          route.request().method() === "GET" &&
-            new URL(route.request().url()).pathname.endsWith("conversations")
-            ? { conversations: [conversation], hasMore: false }
-            : conversation
+          request.method() === "GET" &&
+            new URL(request.url()).pathname.endsWith("conversations")
+            ? { conversations: archived ? [] : [summary], hasMore: false }
+            : summary
         ),
-      })
-    );
+      });
+    });
     await page.route("**/api/agent", async (route) => {
       if (route.request().method() !== "GET") {
         const body = route.request().postDataJSON() as {
@@ -304,6 +314,12 @@ for (const width of [390, 1440]) {
       .getByRole("button", { name: "When is my next game?", exact: true })
       .click();
     await expect.poll(() => Boolean(releaseReply)).toBe(true);
+    await expect(newChat).toBeDisabled();
+    await page.getByRole("button", { name: /^Chat history:/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Recent chats" })
+    ).toContainText("Working");
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Toggle Agent page" }).click();
     await expect(page.getByText("Another app page")).toBeVisible();
     await expect(
@@ -462,6 +478,16 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("button", { name: "Retry", exact: true })
     ).toHaveCount(0);
+    await page.getByRole("button", { name: /^Chat history:/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Recent chats" })
+    ).toContainText("Done");
+    await page
+      .getByRole("button", { name: `Archive ${conversation.title}` })
+      .click();
+    await expect(page.getByRole("list", { name: "Recent chats" })).toHaveCount(
+      0
+    );
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);
