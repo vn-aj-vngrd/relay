@@ -1,3 +1,7 @@
+import {
+  AppRouterContext,
+  type AppRouterInstance,
+} from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ToastViewport } from "../../src/components/ui/action-notice";
@@ -6,6 +10,7 @@ import {
   AgentMobileLink,
 } from "../../src/features/agent/activity";
 import { AgentChat } from "../../src/features/agent/chat";
+import { AgentHistoryCollection } from "../../src/features/agent/history-collection";
 import {
   AgentRuntimeContext,
   AgentSessionProvider,
@@ -14,6 +19,15 @@ import {
 
 const root = document.getElementById("agent-fixture");
 if (!root) throw new Error("Missing Agent fixture root");
+const router: AppRouterInstance = {
+  bfcacheId: "fixture",
+  back: () => window.history.back(),
+  forward: () => window.history.forward(),
+  refresh: () => window.location.reload(),
+  push: (href) => window.location.assign(href),
+  replace: (href) => window.location.replace(href),
+  prefetch: () => {},
+};
 function Fixture() {
   const [show, setShow] = useState(true);
   const [runtime] = useState(() => {
@@ -54,17 +68,21 @@ function Fixture() {
           <div className="min-h-0 flex-1">
             {show ? (
               <AgentSessionProvider userId="fixture-user">
-                <AgentChat
-                  available
-                  allowCourtSearch
-                  capabilities={{
-                    allowGameData: true,
-                    allowCourtSearch: true,
-                    allowHelp: true,
-                    allowGameCreation: true,
-                    allowGroupCreation: true,
-                  }}
-                />
+                {window.location.pathname === "/agent/history" ? (
+                  <AgentHistoryCollection />
+                ) : (
+                  <AgentChat
+                    available
+                    allowCourtSearch
+                    capabilities={{
+                      allowGameData: true,
+                      allowCourtSearch: true,
+                      allowHelp: true,
+                      allowGameCreation: true,
+                      allowGroupCreation: true,
+                    }}
+                  />
+                )}
               </AgentSessionProvider>
             ) : (
               <p>Another app page</p>
@@ -77,7 +95,9 @@ function Fixture() {
   );
 }
 createRoot(root).render(
-  <main className="h-dvh bg-canvas p-4 text-ink">
-    <Fixture />
-  </main>
+  <AppRouterContext.Provider value={router}>
+    <main className="h-dvh bg-canvas p-4 text-ink">
+      <Fixture />
+    </main>
+  </AppRouterContext.Provider>
 );

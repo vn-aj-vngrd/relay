@@ -22,10 +22,13 @@ import { type CreationFlow, creationFlowLabels } from "./creation-model";
 import {
   conversationMessages,
   createConversation,
+  historyRequest,
   loadConversation,
+  loadConversationSummary,
   setConversationUrl,
 } from "./history-client";
 import { AgentHistoryPanel } from "./history-panel";
+import type { AgentConversationSummary } from "./history-types";
 import {
   formatMessageTime,
   messageTimestamp,
@@ -49,15 +52,26 @@ const createTransport = (session: AgentSession) =>
       if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
       return ensureAgentUIStream(response);
     },
-    prepareSendMessagesRequest: ({ messages, trigger }) => ({
-      body: {
-        requestId: crypto.randomUUID(),
-        messageId: messages.findLast((message) => message.role === "user")?.id,
-        retry: trigger === "regenerate-message",
-        conversationId: session.conversationId ?? undefined,
-        messages: agentTransportMessages(messages, session.conversationId),
-      },
-    }),
+    prepareSendMessagesRequest: ({ messages, trigger }) => {
+      const question = messages.findLast((message) => message.role === "user");
+      const requestId =
+        trigger !== "regenerate-message" &&
+        question?.metadata &&
+        typeof question.metadata === "object" &&
+        "requestId" in question.metadata &&
+        typeof question.metadata.requestId === "string"
+          ? question.metadata.requestId
+          : crypto.randomUUID();
+      return {
+        body: {
+          requestId,
+          messageId: question?.id,
+          retry: trigger === "regenerate-message",
+          conversationId: session.conversationId ?? undefined,
+          messages: agentTransportMessages(messages, session.conversationId),
+        },
+      };
+    },
   });
 
 export function AgentChat({
@@ -129,6 +143,8 @@ export function AgentChat({
   });
   const [activeTitle, setActiveTitle] = useState(session.title);
   const [activeId, setActiveId] = useState(session.conversationId);
+  const [activeArchived, setActiveArchived] = useState(session.archived);
+  const [accountWorking, setAccountWorking] = useState(false);
   const preparing = Boolean(session.preparation);
   const pendingQuestion = session.preparation?.question ?? null;
   const [restoring, setRestoring] = useState(() => {
@@ -177,6 +193,7 @@ export function AgentChat({
     ? [...messages, pendingQuestion]
     : messages;
   const viewport = useRef<HTMLDivElement>(null);
+  const knownUpdatedAt = useRef<string | null>(null);
   const follow = useRef(true);
   const [scrolling, setScrolling] = useState(false);
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -193,6 +210,64 @@ export function AgentChat({
     preparing ||
     restoring ||
     remotePending;
+  useEffect(() => {
+    let cancelled = false;
+    const localWorkStarted = () => session.activity === "working";
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
+      void historyRequest<{ conversations: AgentConversationSummary[] }>()
+        .then((recent) => {
+          if (!cancelled)
+            setAccountWorking(
+              recent.conversations.some((row) => row.status === "working")
+            );
+        })
+        .catch(() => {});
+      if (activeId)
+        void loadConversationSummary(activeId)
+          .then((saved) => {
+            if (cancelled || session.conversationId !== activeId) return;
+            const archived = Boolean(saved.archivedAt);
+            session.archived = archived;
+            setActiveArchived(archived);
+            if (
+              typeof saved.title === "string" &&
+              session.title !== saved.title
+            ) {
+              session.title = saved.title;
+              setActiveTitle(saved.title);
+            }
+            if (busy || localWorkStarted()) return;
+            if (
+              saved.status === "working" ||
+              (typeof saved.updatedAt === "string" &&
+                saved.updatedAt !== knownUpdatedAt.current)
+            )
+              setRemotePending(true);
+          })
+          .catch((error: unknown) => {
+            if (
+              cancelled ||
+              session.conversationId !== activeId ||
+              !(error instanceof Error) ||
+              !error.message.startsWith("Chat not found.")
+            )
+              return;
+            resetConversation();
+            notify("This chat was deleted in another tab.");
+          });
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [activeId, busy, session, setRemotePending]);
   const {
     proposals,
     error: proposalError,
@@ -232,29 +307,50 @@ export function AgentChat({
   useEffect(() => {
     if (follow.current && viewport.current)
       viewport.current.scrollTop = viewport.current.scrollHeight;
-  }, [messages, status]);
-  function newConversation() {
+  }, [messages, status, proposals.length]);
+  function resetConversation() {
     session.conversationId = null;
+    knownUpdatedAt.current = null;
+    session.archived = false;
     session.title = "Your chats";
     setActiveTitle("Your chats");
     setRemotePending(false);
     session.draft = "";
     setConversationUrl(null);
     setActiveId(null);
+    setActiveArchived(false);
     setMessages([]);
     clearError();
     setInput("");
     field.current?.focus();
+  }
+  async function newConversation() {
+    if (busy) return;
+    try {
+      const recent = await historyRequest<{
+        conversations: AgentConversationSummary[];
+      }>();
+      if (recent.conversations.some((row) => row.status === "working")) {
+        notify("Wait for Agent to finish before starting another chat.");
+        return;
+      }
+      resetConversation();
+    } catch {
+      notify("Couldn’t check Agent’s progress. Please try again.");
+    }
   }
   async function openConversation(id: string) {
     setRestoring(true);
     try {
       const saved = await loadConversation(id);
       setMessages(conversationMessages(saved));
+      knownUpdatedAt.current = saved.updatedAt;
       session.conversationId = id;
+      session.archived = Boolean(saved.archivedAt);
       session.title = saved.title;
       setActiveTitle(saved.title);
       setActiveId(id);
+      setActiveArchived(Boolean(saved.archivedAt));
       setRemotePending(saved.pending);
       clearError();
       setInput("");
@@ -287,9 +383,12 @@ export function AgentChat({
           session.draft = "";
         }
         session.conversationId = id;
+        knownUpdatedAt.current = saved.updatedAt;
+        session.archived = Boolean(saved.archivedAt);
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(id);
+        setActiveArchived(Boolean(saved.archivedAt));
         setRemotePending(saved.pending);
         setMessages(conversationMessages(saved));
       })
@@ -307,27 +406,38 @@ export function AgentChat({
   useEffect(() => {
     if (!remotePending || !activeId) return;
     let cancelled = false;
-    const timer = window.setInterval(() => {
+    let notified = false;
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
       void loadConversation(activeId)
         .then((saved) => {
-          if (cancelled) return;
+          if (cancelled || session.conversationId !== activeId) return;
           setMessages(conversationMessages(saved));
+          knownUpdatedAt.current = saved.updatedAt;
+          if (typeof saved.title === "string") {
+            session.title = saved.title;
+            setActiveTitle(saved.title);
+          }
           setRemotePending(saved.pending);
         })
         .catch(() => {
-          if (!cancelled) {
-            setRemotePending(false);
+          if (!cancelled && !notified) {
+            notified = true;
             notify(
               "Couldn’t refresh this reply. Reopen the chat from History."
             );
           }
         });
-    }, 3000);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 3000);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
     };
-  }, [activeId, remotePending, setMessages, setRemotePending]);
+  }, [activeId, remotePending, session, setMessages, setRemotePending]);
   function limitInput(text: string) {
     if (text.length <= agentMessageMaxLength) return text;
     notify(
@@ -340,12 +450,21 @@ export function AgentChat({
       setInput(limitInput(text));
       return;
     }
-    if (!text.trim() || busy || prepareLock.current || !available) return;
+    if (
+      !text.trim() ||
+      busy ||
+      accountWorking ||
+      activeArchived ||
+      prepareLock.current ||
+      !available
+    )
+      return;
     prepareLock.current = true;
     const controller = new AbortController();
+    const requestId = crypto.randomUUID();
     const createdAt = new Date().toISOString();
     const question: UIMessage = {
-      metadata: { createdAt },
+      metadata: { createdAt, requestId },
       id: crypto.randomUUID(),
       role: "user",
       parts: [{ type: "text", text: text.trim() }],
@@ -362,12 +481,19 @@ export function AgentChat({
     try {
       if (controller.signal.aborted) return;
       if (!session.conversationId) {
-        const saved = await createConversation(text, controller.signal);
+        const saved = await createConversation(
+          text,
+          requestId,
+          controller.signal
+        );
         if (controller.signal.aborted) return;
         session.conversationId = saved.id;
+        knownUpdatedAt.current = saved.updatedAt;
+        session.archived = false;
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(saved.id);
+        setActiveArchived(false);
         setConversationUrl(saved.id);
         session.notify();
       }
@@ -403,7 +529,14 @@ export function AgentChat({
     }
   }
   async function retryResponse() {
-    if (busy || prepareLock.current || !available) return;
+    if (
+      busy ||
+      accountWorking ||
+      activeArchived ||
+      prepareLock.current ||
+      !available
+    )
+      return;
     prepareLock.current = true;
     setWorkStartedAt(Date.now());
     follow.current = true;
@@ -419,6 +552,8 @@ export function AgentChat({
     }
   }
   const lastMessage = visibleMessages.at(-1);
+  const interactionsDisabled =
+    busy || accountWorking || activeArchived || !available;
   return (
     <section
       aria-label="Agent chat"
@@ -432,12 +567,13 @@ export function AgentChat({
             disabled={busy}
             activeId={activeId}
             activeTitle={activeTitle}
+            activeWorking={session.activity === "working"}
             onSelect={openConversation}
           />
         </div>
         <AgentNewChatButton
-          disabled={busy || (!messages.length && !activeId)}
-          onClick={newConversation}
+          disabled={busy || accountWorking || (!messages.length && !activeId)}
+          onClick={() => void newConversation()}
         />
       </header>
       <div
@@ -510,7 +646,7 @@ export function AgentChat({
                                 : "This reply was interrupted. Try again to continue."
                           }
                           stopped={stopped && !error}
-                          disabled={busy || !available}
+                          disabled={interactionsDisabled}
                           onRetry={latest ? retryResponse : undefined}
                         />
                       ) : null}
@@ -528,21 +664,6 @@ export function AgentChat({
                         }
                       />
                     </AgentMessage>
-                    {proposals
-                      .filter(
-                        (proposal) =>
-                          proposal.messageId === message.id &&
-                          proposal.status !== "cancelled"
-                      )
-                      .map((proposal) => (
-                        <AgentCreationCard
-                          onContinue={(prompt) => void send(prompt, true)}
-                          key={proposal.id}
-                          proposal={proposal}
-                          disabled={busy || !available}
-                          onChange={reloadProposals}
-                        />
-                      ))}
                   </div>
                 );
               })}
@@ -566,7 +687,7 @@ export function AgentChat({
                     <button
                       key={item.prompt}
                       type="button"
-                      disabled={!available || busy}
+                      disabled={interactionsDisabled}
                       onClick={() => {
                         if ("flow" in item) void startCreation(item.flow);
                         else void send(item.prompt);
@@ -579,23 +700,6 @@ export function AgentChat({
               </div>
             </AgentEmptyState>
           )}
-          {proposals
-            .filter(
-              (proposal) =>
-                proposal.status !== "cancelled" &&
-                !visibleMessages.some(
-                  (message) => message.id === proposal.messageId
-                )
-            )
-            .map((proposal) => (
-              <AgentCreationCard
-                onContinue={(prompt) => void send(prompt, true)}
-                key={proposal.id}
-                proposal={proposal}
-                disabled={busy || !available}
-                onChange={reloadProposals}
-              />
-            ))}
           {error && lastMessage?.role !== "assistant" ? (
             <article aria-label="Agent" className="mt-7 max-w-full pr-2">
               <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
@@ -604,7 +708,7 @@ export function AgentChat({
               </div>
               <AgentResponseError
                 message={errorCopy}
-                disabled={busy || !available}
+                disabled={interactionsDisabled}
                 onRetry={retryResponse}
               />
             </article>
@@ -627,6 +731,17 @@ export function AgentChat({
               Agent is working in another session. Waiting for the saved reply…
             </p>
           ) : null}
+          {proposals
+            .filter((proposal) => proposal.status !== "cancelled")
+            .map((proposal) => (
+              <AgentCreationCard
+                onContinue={(prompt) => void send(prompt, true)}
+                key={proposal.id}
+                proposal={proposal}
+                disabled={interactionsDisabled}
+                onChange={reloadProposals}
+              />
+            ))}
         </div>
       </div>
       <div className="mx-auto w-full max-w-3xl shrink-0 pt-3">
@@ -646,6 +761,16 @@ export function AgentChat({
             {unavailableReason}
           </p>
         ) : null}
+        {activeArchived ? (
+          <p role="status" className="mb-3 text-sm text-muted">
+            This chat is archived. Restore it from Chat history to continue.
+          </p>
+        ) : null}
+        {accountWorking && !busy && !activeArchived ? (
+          <p role="status" className="mb-3 text-sm text-muted">
+            Agent is replying in another chat. Wait for it to finish.
+          </p>
+        ) : null}
 
         <div className="relative">
           <AgentComposer
@@ -659,7 +784,7 @@ export function AgentChat({
               session.notify();
               void stop();
             }}
-            available={available}
+            available={available && !activeArchived && !accountWorking}
             busy={busy}
             responding={status === "submitted" || status === "streaming"}
             capabilities={enabledCapabilities}

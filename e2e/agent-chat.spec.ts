@@ -74,7 +74,7 @@ for (const width of [390, 1440]) {
           .join("")
       );
     await page.route(
-      (url) => url.pathname === "/agent",
+      (url) => ["/agent", "/agent/history"].includes(url.pathname),
       (route) =>
         route.fulfill({
           contentType: "text/html",
@@ -85,6 +85,7 @@ for (const width of [390, 1440]) {
     let approvals = 0;
     let releaseReply: (() => void) | undefined;
     let holdReply = false;
+    let reservedRequestId: string | null = null;
     await page.route("**/api/agent/creations**", async (route) => {
       const request = route.request();
       const action =
@@ -125,23 +126,50 @@ for (const width of [390, 1440]) {
         },
       ],
     };
-    await page.route("**/api/agent/conversations**", (route) =>
-      route.fulfill({
+    let archived = false;
+    await page.route("**/api/agent/conversations**", (route) => {
+      const request = route.request();
+      if (request.method() === "POST") {
+        reservedRequestId = (request.postDataJSON() as { requestId: string })
+          .requestId;
+        expect(reservedRequestId).toMatch(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i);
+      }
+      if (request.method() === "PATCH")
+        archived = (request.postDataJSON() as { archived: boolean }).archived;
+      const summary = {
+        ...conversation,
+        archivedAt: archived ? new Date().toISOString() : null,
+        status: holdReply ? "working" : "done",
+        pending: holdReply,
+      };
+      return route.fulfill({
         contentType: "application/json",
         body: JSON.stringify(
-          route.request().method() === "GET" &&
-            new URL(route.request().url()).pathname.endsWith("conversations")
-            ? { conversations: [conversation], hasMore: false }
-            : conversation
+          request.method() === "GET" &&
+            new URL(request.url()).pathname.endsWith("conversations")
+            ? {
+                conversations:
+                  new URL(request.url()).searchParams.has("archived") ===
+                  archived
+                    ? [summary]
+                    : [],
+                hasMore: false,
+              }
+            : summary
         ),
-      })
-    );
+      });
+    });
     await page.route("**/api/agent", async (route) => {
       if (route.request().method() !== "GET") {
         const body = route.request().postDataJSON() as {
+          requestId: string;
           messageId: string;
           messages: { content: string }[];
         };
+        if (reservedRequestId) {
+          expect(body.requestId).toBe(reservedRequestId);
+          reservedRequestId = null;
+        }
         expect(body.messages).toHaveLength(1);
         const text = body.messages.at(-1)?.content ?? "";
         if (
@@ -304,6 +332,14 @@ for (const width of [390, 1440]) {
       .getByRole("button", { name: "When is my next game?", exact: true })
       .click();
     await expect.poll(() => Boolean(releaseReply)).toBe(true);
+    await expect(newChat).toBeDisabled();
+    await page.getByRole("button", { name: /^Chat history:/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Recent chats" }).getByRole("img", {
+        name: "Working",
+      })
+    ).toBeVisible();
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Toggle Agent page" }).click();
     await expect(page.getByText("Another app page")).toBeVisible();
     await expect(
@@ -462,6 +498,28 @@ for (const width of [390, 1440]) {
     await expect(
       page.getByRole("button", { name: "Retry", exact: true })
     ).toHaveCount(0);
+    await page.getByRole("button", { name: /^Chat history:/ }).click();
+    await expect(
+      page.getByRole("list", { name: "Recent chats" }).getByRole("img", {
+        name: "Done",
+      })
+    ).toBeVisible();
+    await page.getByRole("link", { name: "See all chats" }).click();
+    await expect(page).toHaveURL(/\/agent\/history$/);
+    await page.addStyleTag({ content: markdownStyles });
+    await page.addScriptTag({ content: bundle });
+    await expect(
+      page.getByRole("heading", { name: "Chat history" })
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: `More actions for ${conversation.title}` })
+      .click();
+    await page.getByRole("menuitem", { name: "Archive" }).click();
+    await expect(page.getByRole("list", { name: "Saved chats" })).toBeEmpty();
+    await page.getByRole("tab", { name: "Archived" }).click();
+    await expect(
+      page.getByRole("list", { name: "Archived chats" })
+    ).toContainText(conversation.title);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);

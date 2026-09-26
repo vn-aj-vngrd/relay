@@ -8,13 +8,28 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ read: vi.fn(), push: vi.fn() }));
-vi.mock("./history-client", () => ({ historyRequest: mocks.read }));
+const mocks = vi.hoisted(() => ({
+  read: vi.fn(),
+  load: vi.fn(),
+  summary: vi.fn(),
+  summaries: vi.fn(),
+  push: vi.fn(),
+}));
+vi.mock("./history-client", () => ({
+  historyRequest: mocks.read,
+  loadConversation: mocks.load,
+  loadConversationSummary: mocks.summary,
+  loadConversationSummaries: mocks.summaries,
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/components/ui/action-notice", () => ({ notify: vi.fn() }));
 
 import { AgentHistoryCollection } from "./history-collection";
-import { AgentSessionProvider } from "./session";
+import {
+  AgentRuntimeContext,
+  AgentSessionProvider,
+  createAgentSession,
+} from "./session";
 
 let intersect: IntersectionObserverCallback;
 let options: IntersectionObserverInit | undefined;
@@ -41,6 +56,12 @@ const scroll = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.read.mockReset();
+  mocks.load.mockReset();
+  mocks.summary.mockReset();
+  mocks.summaries.mockReset();
+  mocks.summaries.mockImplementation(async (ids: string[]) => ({
+    conversations: ids.map(row),
+  }));
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -57,6 +78,26 @@ beforeEach(() => {
   );
 });
 afterEach(() => vi.unstubAllGlobals());
+it("shows row skeletons while Chats and Archived load", () => {
+  mocks.read.mockImplementation(() => new Promise(() => {}));
+  const { container } = mount();
+  expect(screen.getByRole("status", { name: "Loading chats" })).toHaveAttribute(
+    "aria-busy",
+    "true"
+  );
+  expect(container.querySelectorAll(".animate-pulse")).toHaveLength(25);
+  expect(screen.queryByText("Loading chats…")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  expect(screen.getByRole("tab", { name: "Archived" })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
+  expect(
+    screen.getByRole("status", { name: "Loading chats" })
+  ).toBeInTheDocument();
+  expect(container.querySelectorAll(".animate-pulse")).toHaveLength(25);
+});
 it("loads older summaries on scroll once, deduplicates rows and stops at the end", async () => {
   mocks.read.mockResolvedValueOnce({
     conversations: [row("a")],
@@ -71,11 +112,7 @@ it("loads older summaries on scroll once, deduplicates rows and stops at the end
   );
   mount();
   await screen.findByRole("button", { name: "Chat a" });
-  await waitFor(() =>
-    expect(options?.root).toBe(
-      screen.getByRole("region", { name: "Chat history list" })
-    )
-  );
+  await waitFor(() => expect(options?.root).toBe(screen.getByRole("tabpanel")));
   scroll();
   scroll();
   expect(mocks.read).toHaveBeenCalledTimes(2);
@@ -136,10 +173,251 @@ it("stops automatic pagination if a response makes no cursor progress", async ()
   ).toHaveLength(1);
 });
 
+it("updates a finished row when another tab starts a reply", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read
+    .mockResolvedValueOnce({
+      conversations: [{ ...row("a"), status: "done" }],
+      hasMore: false,
+    })
+    .mockResolvedValueOnce({
+      conversations: [
+        {
+          ...row("a"),
+          updatedAt: "2026-09-15T12:05:00.000Z",
+          status: "working",
+        },
+      ],
+      hasMore: false,
+    });
+  mount();
+  await screen.findByText("Done");
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    (refresh as () => void)();
+  });
+  expect(screen.getByText("Working")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Chat a" })).toBeInTheDocument();
+  intervals.mockRestore();
+});
+
+it("polls a working row without downloading its transcript", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read.mockResolvedValue({
+    conversations: [{ ...row("a"), status: "working" }],
+    hasMore: false,
+  });
+  mocks.summary.mockResolvedValue({
+    ...row("a"),
+    archivedAt: null,
+    status: "done",
+  });
+  mount();
+  await screen.findByText("Working");
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 3000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    (refresh as () => void)();
+  });
+  expect(mocks.summary).toHaveBeenCalledWith("a");
+  expect(mocks.load).not.toHaveBeenCalled();
+  expect(screen.getByText("Done")).toBeInTheDocument();
+  intervals.mockRestore();
+});
+
+it("pauses working-row polling while history is hidden", async () => {
+  const visibility = vi.spyOn(document, "visibilityState", "get");
+  const intervals = vi.spyOn(window, "setInterval");
+  visibility.mockReturnValue("visible");
+  mocks.read.mockResolvedValue({
+    conversations: [{ ...row("a"), status: "working" }],
+    hasMore: false,
+  });
+  mocks.summary.mockResolvedValue({ ...row("a"), status: "done" });
+  try {
+    mount();
+    await screen.findByText("Working");
+    const refresh = intervals.mock.calls.find(
+      ([, delay]) => delay === 3000
+    )?.[0];
+    expect(refresh).toBeDefined();
+    visibility.mockReturnValue("hidden");
+    await act(async () => {
+      (refresh as () => void)();
+      fireEvent(document, new Event("visibilitychange"));
+    });
+    expect(mocks.summary).not.toHaveBeenCalled();
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    await waitFor(() => expect(mocks.summary).toHaveBeenCalledWith("a"));
+  } finally {
+    visibility.mockRestore();
+    intervals.mockRestore();
+  }
+});
+
+it("reconciles chats archived or restored in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read
+    .mockResolvedValueOnce({ conversations: [row("a")], hasMore: false })
+    .mockResolvedValueOnce({ conversations: [], hasMore: false })
+    .mockResolvedValueOnce({
+      conversations: [{ ...row("a"), archivedAt: new Date().toISOString() }],
+      hasMore: false,
+    })
+    .mockResolvedValueOnce({ conversations: [], hasMore: false });
+  mount();
+  await screen.findByRole("button", { name: "Chat a" });
+  const activeRefresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(activeRefresh).toBeDefined();
+  await act(async () => {
+    (activeRefresh as () => void)();
+  });
+  expect(
+    screen.queryByRole("button", { name: "Chat a" })
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  await screen.findByRole("button", { name: "Chat a" });
+  const archivedRefresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(archivedRefresh).toBeDefined();
+  await act(async () => {
+    (archivedRefresh as () => void)();
+  });
+  expect(
+    screen.queryByRole("button", { name: "Chat a" })
+  ).not.toBeInTheDocument();
+  expect(mocks.read.mock.calls[3][0]).toBe("?archived=true");
+  intervals.mockRestore();
+});
+
+it("keeps a first-page chat displaced by a new chat when older rows are loaded", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  const firstPage = Array.from({ length: 30 }, (_, index) =>
+    row(String(index))
+  );
+  mocks.read
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true })
+    .mockResolvedValueOnce({ conversations: [row("30")], hasMore: false })
+    .mockResolvedValueOnce({
+      conversations: [row("new"), ...firstPage.slice(0, 29)],
+      hasMore: true,
+    });
+  mocks.summary.mockResolvedValue({ ...row("29"), archivedAt: null });
+  mount();
+  await screen.findByRole("button", { name: "Chat 29" });
+  const initialIntervals = intervals.mock.calls.filter(
+    ([, delay]) => delay === 5000
+  ).length;
+  fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
+  await screen.findByRole("button", { name: "Chat 30" });
+  await waitFor(() =>
+    expect(
+      intervals.mock.calls.filter(([, delay]) => delay === 5000).length
+    ).toBeGreaterThan(initialIntervals)
+  );
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    (refresh as () => void)();
+  });
+  expect(screen.getByRole("button", { name: "Chat new" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Chat 29" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Chat 30" })).toBeInTheDocument();
+  expect(mocks.summary).toHaveBeenCalledWith("29");
+  intervals.mockRestore();
+});
+
+it("drops a displaced first-page chat deleted in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  const firstPage = Array.from({ length: 30 }, (_, index) =>
+    row(String(index))
+  );
+  mocks.read
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true })
+    .mockResolvedValueOnce({ conversations: [row("30")], hasMore: false })
+    .mockResolvedValueOnce({
+      conversations: [row("new"), ...firstPage.slice(0, 29)],
+      hasMore: true,
+    });
+  mocks.summary.mockRejectedValue(
+    new Error("Chat not found. It may have been deleted.")
+  );
+  mount();
+  await screen.findByRole("button", { name: "Chat 29" });
+  const initialIntervals = intervals.mock.calls.filter(
+    ([, delay]) => delay === 5000
+  ).length;
+  fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
+  await screen.findByRole("button", { name: "Chat 30" });
+  await waitFor(() =>
+    expect(
+      intervals.mock.calls.filter(([, delay]) => delay === 5000).length
+    ).toBeGreaterThan(initialIntervals)
+  );
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    await Promise.resolve();
+    (refresh as () => void)();
+  });
+  expect(mocks.summary).toHaveBeenCalledWith("29");
+  expect(
+    screen.queryByRole("button", { name: "Chat 29" })
+  ).not.toBeInTheDocument();
+  intervals.mockRestore();
+});
+
+it("removes an older loaded chat archived in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  const firstPage = Array.from({ length: 30 }, (_, index) =>
+    row(String(index))
+  );
+  mocks.read
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true })
+    .mockResolvedValueOnce({ conversations: [row("30")], hasMore: false })
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true });
+  mocks.summaries.mockResolvedValue({
+    conversations: [{ ...row("30"), archivedAt: new Date().toISOString() }],
+  });
+  mount();
+  await screen.findByRole("button", { name: "Chat 29" });
+  fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
+  await screen.findByRole("button", { name: "Chat 30" });
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    await Promise.resolve();
+    (refresh as () => void)();
+  });
+  expect(mocks.summaries).toHaveBeenCalledWith(["30"]);
+  expect(
+    screen.queryByRole("button", { name: "Chat 30" })
+  ).not.toBeInTheDocument();
+  intervals.mockRestore();
+});
+
 it("opens a focused rename field from an accessible icon action", async () => {
   mocks.read.mockResolvedValue({ conversations: [row("a")], hasMore: false });
   mount();
-  fireEvent.click(await screen.findByRole("button", { name: "Rename Chat a" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Rename" }));
   const title = screen.getByRole("textbox", { name: "Chat title" });
   expect(title).toHaveFocus();
   expect(title).toHaveValue("Chat a");
@@ -147,4 +425,82 @@ it("opens a focused rename field from an accessible icon action", async () => {
   expect(
     screen.queryByRole("textbox", { name: "Chat title" })
   ).not.toBeInTheDocument();
+});
+it("moves chats between Chats and Archived without losing the other list", async () => {
+  mocks.read.mockImplementation((path: string, init?: RequestInit) => {
+    if (init?.method === "PATCH")
+      return Promise.resolve({
+        ...row("a"),
+        archivedAt: new Date().toISOString(),
+        status: "idle",
+      });
+    return Promise.resolve({
+      conversations: path.includes("archived=true")
+        ? [
+            {
+              ...row("b"),
+              archivedAt: new Date().toISOString(),
+              status: "done",
+            },
+          ]
+        : [row("a")],
+      hasMore: false,
+    });
+  });
+  mount();
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Archive" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Chat a" })
+    ).not.toBeInTheDocument()
+  );
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  expect(
+    await screen.findByRole("button", { name: "Chat b" })
+  ).toBeInTheDocument();
+  expect(
+    mocks.read.mock.calls.some(([path]) =>
+      String(path).includes("archived=true")
+    )
+  ).toBe(true);
+  fireEvent.click(
+    screen.getByRole("button", { name: "More actions for Chat b" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Restore" }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("button", { name: "Chat b" })
+    ).not.toBeInTheDocument()
+  );
+});
+it("clears remote-pending state when archiving the selected chat", async () => {
+  const session = createAgentSession();
+  session.conversationId = "a";
+  session.remotePending = true;
+  mocks.read.mockImplementation((_path: string, init?: RequestInit) =>
+    Promise.resolve(
+      init?.method === "PATCH"
+        ? { ...row("a"), archivedAt: new Date().toISOString() }
+        : { conversations: [{ ...row("a"), status: "done" }], hasMore: false }
+    )
+  );
+  render(
+    <div className="app-scroll-surface">
+      <AgentRuntimeContext value={{ get: () => session }}>
+        <AgentSessionProvider userId="owner">
+          <AgentHistoryCollection />
+        </AgentSessionProvider>
+      </AgentRuntimeContext>
+    </div>
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Archive" }));
+  await waitFor(() => expect(session.conversationId).toBeNull());
+  expect(session.remotePending).toBe(false);
+  expect(session.activity).toBe("idle");
 });

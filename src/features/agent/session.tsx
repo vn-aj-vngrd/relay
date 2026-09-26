@@ -16,6 +16,7 @@ export type AgentSession = {
   chat: Chat<UIMessage> | null;
   draft: string;
   conversationId: string | null;
+  archived: boolean;
   title: string;
   remotePending: boolean;
   preparation: { controller: AbortController; question: UIMessage } | null;
@@ -33,6 +34,7 @@ export function createAgentSession(): AgentSession {
     chat: null,
     draft: "",
     conversationId: null,
+    archived: false,
     title: "Your chats",
     preparation: null,
     remotePending: false,
@@ -59,6 +61,7 @@ export function disposeAgentSession(session: AgentSession) {
   }
   session.draft = "";
   session.conversationId = null;
+  session.archived = false;
   session.title = "Your chats";
   session.remotePending = false;
   session.activity = "idle";

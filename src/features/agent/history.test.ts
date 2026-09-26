@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 const mocks = vi.hoisted(() => {
   const rows: unknown[] = [];
+  const activeRows: unknown[] = [];
   const where = vi.fn();
   const set = vi.fn();
   const query: Promise<unknown[]> & {
@@ -13,22 +14,25 @@ const mocks = vi.hoisted(() => {
     orderBy: ReturnType<typeof vi.fn>;
     limit: ReturnType<typeof vi.fn>;
     set: ReturnType<typeof vi.fn>;
+    values: ReturnType<typeof vi.fn>;
     returning: ReturnType<typeof vi.fn>;
   } = Object.assign(Promise.resolve(rows), {
     from: vi.fn(() => query),
     where: where.mockImplementation(() => query),
     for: vi.fn(() => query),
     orderBy: vi.fn(() => query),
-    limit: vi.fn(() => query),
+    limit: vi.fn(() => Promise.resolve(activeRows)),
     set: set.mockImplementation(() => query),
+    values: vi.fn(() => query),
     returning: vi.fn(() => query),
   });
   const database = {
     select: vi.fn(() => query),
     update: vi.fn(() => query),
     delete: vi.fn(() => query),
+    insert: vi.fn(() => query),
   };
-  return { rows, where, set, query, database };
+  return { rows, activeRows, where, set, query, database };
 });
 vi.mock("@/db/client", () => ({
   db: {
@@ -40,10 +44,16 @@ vi.mock("@/db/client", () => ({
 
 import {
   beginAgentTurn,
+  createAgentConversation,
   deleteAgentConversation,
   finishAgentTurn,
+  listAgentConversationSummaries,
+  listAgentConversations,
   readAgentConversation,
+  readAgentConversationSummary,
+  releaseUnstartedAgentTurn,
   renameAgentConversation,
+  setAgentConversationArchived,
 } from "./history";
 
 const row = () => ({
@@ -58,9 +68,42 @@ const row = () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.rows.splice(0);
+  mocks.activeRows.splice(0);
 });
 
 describe("private Agent history", () => {
+  it("separates Chats and Archived within the authenticated account", async () => {
+    await listAgentConversations("owner");
+    const current = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(current.sql).toContain('"archived_at" is null');
+    await listAgentConversations("owner", undefined, true);
+    const archived = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(archived.sql).toContain('"archived_at" is not null');
+    expect(archived.params).toEqual(["owner"]);
+  });
+  it("reads a bounded set of summaries for the authenticated owner", async () => {
+    mocks.activeRows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: "assistant",
+      lastInterrupted: false,
+    });
+    const result = await listAgentConversationSummaries("owner", [
+      "conversation",
+    ]);
+    expect(result.conversations[0].status).toBe("done");
+    const predicate = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(predicate.sql).toContain('"user_id"');
+    expect(predicate.sql).toContain('"id" in');
+    expect(predicate.params).toEqual(["owner", "conversation"]);
+    expect(mocks.query.limit).toHaveBeenCalledWith(1);
+  });
   it.each([readAgentConversation, deleteAgentConversation])(
     "scopes lookup and deletion to the authenticated owner",
     async (operation) => {
@@ -91,6 +134,100 @@ describe("private Agent history", () => {
     ).rejects.toMatchObject({ status: 409 });
     expect(mocks.query.for).toHaveBeenCalledWith("update");
     expect(mocks.set).not.toHaveBeenCalled();
+  });
+  it("allows only one active reply across an account's conversations", async () => {
+    mocks.rows.push(row());
+    mocks.activeRows.push({ id: "another-chat" });
+    await expect(
+      beginAgentTurn("owner", "conversation", "new", "Question")
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+  it("does not create a second chat while an account reply is active", async () => {
+    mocks.activeRows.push({ id: "working" });
+    await expect(
+      createAgentConversation("owner", "New chat", "request-one")
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.database.insert).not.toHaveBeenCalled();
+  });
+  it("reserves a first turn before another tab can create a chat", async () => {
+    mocks.rows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: null,
+      lastInterrupted: false,
+    });
+    await createAgentConversation("owner", "New chat", "request-one");
+    expect(mocks.query.values).toHaveBeenCalledWith({
+      userId: "owner",
+      title: "New chat",
+      activeRequestId: "request-one",
+      activeUntil: expect.any(Date),
+    });
+    mocks.activeRows.push({ id: "conversation" });
+    await expect(
+      createAgentConversation("owner", "Another chat", "request-two")
+    ).rejects.toMatchObject({ status: 409 });
+  });
+  it("allows the matching reserved first turn once", async () => {
+    mocks.rows.push({
+      ...row(),
+      activeRequestId: "request-one",
+      activeUntil: new Date(Date.now() + 30_000),
+    });
+    await beginAgentTurn("owner", "conversation", "request-one", "Question");
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({ activeRequestId: "request-one" })
+    );
+  });
+  it("only releases an owned, unstarted matching first-turn reservation", async () => {
+    await releaseUnstartedAgentTurn("owner", "conversation", "request-one");
+    const predicate = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(predicate.sql).toContain('"user_id"');
+    expect(predicate.sql).toContain('"active_request_id"');
+    expect(predicate.sql).toContain("jsonb_array_length");
+    expect(predicate.params).toEqual(["conversation", "owner", "request-one"]);
+    expect(mocks.set).toHaveBeenCalledWith({
+      activeRequestId: null,
+      activeUntil: null,
+    });
+  });
+  it("reads one owned summary without loading messages", async () => {
+    mocks.rows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: "assistant",
+      lastInterrupted: false,
+    });
+    const result = await readAgentConversationSummary("owner", "conversation");
+    expect(result.status).toBe("done");
+    expect(mocks.database.select).toHaveBeenCalledWith(
+      expect.objectContaining({ id: expect.anything() })
+    );
+  });
+  it("does not archive a chat with a live reply", async () => {
+    mocks.rows.push({
+      ...row(),
+      activeRequestId: "working",
+      activeUntil: new Date(Date.now() + 60_000),
+    });
+    await expect(
+      setAgentConversationArchived("owner", "conversation", true)
+    ).rejects.toMatchObject({ status: 409 });
+    expect(mocks.set).not.toHaveBeenCalled();
+  });
+  it("archives an idle owner chat without deleting its messages", async () => {
+    mocks.rows.push(row());
+    await setAgentConversationArchived("owner", "conversation", true);
+    expect(mocks.set).toHaveBeenCalledWith({ archivedAt: expect.any(Date) });
+    expect(mocks.database.delete).not.toHaveBeenCalled();
+  });
+  it("restores an archived chat", async () => {
+    mocks.rows.push({ ...row(), archivedAt: new Date() });
+    await setAgentConversationArchived("owner", "conversation", false);
+    expect(mocks.set).toHaveBeenCalledWith({ archivedAt: null });
   });
   it("bounds history and recovers an expired request lease", async () => {
     mocks.rows.push({

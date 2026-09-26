@@ -72,7 +72,7 @@ function Toast({ notice }: { notice: Notice }) {
         type="button"
         aria-label="Dismiss notification"
         onClick={() => dismiss(notice.id)}
-        className="absolute right-1 top-1 flex size-9 items-center justify-center rounded-lg text-muted hover:bg-surface-strong focus-visible:outline-2 focus-visible:outline-primary"
+        className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted hover:bg-surface-strong focus-visible:outline-2 focus-visible:outline-primary"
       >
         <X size={16} aria-hidden />
       </button>

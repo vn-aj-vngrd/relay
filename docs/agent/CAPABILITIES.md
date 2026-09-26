@@ -52,7 +52,7 @@ live-provider and authenticated browser execution remain separate evidence.
 
 ## Conversational creation
 
-Creation uses normal chat. Ask one missing question per reply, reuse supplied details, and fetch creationStatus before continuing so saved answers survive reloads and corrections. A passive indicator shows collected details and the next missing detail; it is not validation or approval. Selecting a Create action starts this conversation. Restored setups offer Continue in chat and Cancel.
+Creation uses normal chat. Ask one missing question per reply, reuse supplied details, and fetch creationStatus before continuing so saved answers survive reloads and corrections. A passive setup card below the conversation shows the number of collected details; Agent asks for the next missing detail in its reply. The count is not validation or approval. Selecting a Create action starts this conversation. Restored setups offer Continue in chat and Cancel.
 
 Setup is an owner-scoped proposal with a server-owned `preview.collecting` marker and cannot execute. Once details pass domain validation, preparation creates an immutable review proposal. Corrections replace the old proposal and require fresh approval. Final approval uses the existing ID-only confirmation endpoint; typed yes never authorizes execution. Legacy stored interaction modes normalize to chat.
 

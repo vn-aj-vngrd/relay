@@ -117,7 +117,19 @@ describe("Chat-only creation setup", () => {
         onChange={vi.fn()}
       />
     );
-    expect(screen.getByRole("progressbar")).toHaveAttribute("value", "1");
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuenow",
+      "1"
+    );
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuemax",
+      "7"
+    );
+    expect(screen.getByText("1 of 7 details")).toBeVisible();
+    expect(
+      screen.getByText("Nothing is created until you approve the review.")
+    ).toBeVisible();
+    expect(screen.queryByText(/Next: Name/)).toBeNull();
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Continue in chat" }));

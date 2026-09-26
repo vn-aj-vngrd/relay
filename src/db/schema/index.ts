@@ -1443,6 +1443,7 @@ export const agentConversations = pgTable(
       .default([]),
     activeRequestId: uuid("active_request_id"),
     activeUntil: timestamp("active_until", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (table) => [

@@ -1,25 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/content-state";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
-import { Tooltip } from "@/components/ui/tooltip";
 import { AgentChatPickerTrigger } from "./chat-presentation";
 import { chatAge } from "./history-age";
 import { historyRequest } from "./history-client";
+import { AgentHistoryStatus } from "./history-status";
 import type { AgentConversationSummary } from "./history-types";
 
 export function AgentHistoryPanel({
   disabled,
   activeId,
   activeTitle,
+  activeWorking = false,
   onSelect,
 }: {
   disabled: boolean;
   activeId: string | null;
   activeTitle: string;
+  activeWorking?: boolean;
   onSelect: (id: string) => Promise<void>;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -47,8 +49,8 @@ export function AgentHistoryPanel({
       document.removeEventListener("keydown", escape);
     };
   }, [open]);
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setFailed(false);
     try {
       const result = await historyRequest<{
@@ -57,11 +59,23 @@ export function AgentHistoryPanel({
       setRows(result.conversations.slice(0, 6));
     } catch {
       setFailed(true);
-      notify("Couldn’t load recent chats. Please try again.");
+      if (!silent) notify("Couldn’t load recent chats. Please try again.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }
+  }, []);
+  useEffect(() => {
+    if (!open) return;
+    const refresh = () => {
+      if (document.visibilityState !== "hidden") void load(true);
+    };
+    const timer = window.setInterval(refresh, 3000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [open, load]);
   return (
     <div
       ref={root}
@@ -75,7 +89,6 @@ export function AgentHistoryPanel({
         title={activeTitle}
         ref={trigger}
         type="button"
-        disabled={disabled}
         aria-label={`Chat history: ${activeTitle}`}
         aria-expanded={open}
         aria-controls={panelId}
@@ -109,11 +122,15 @@ export function AgentHistoryPanel({
             ) : rows.length ? (
               <ul aria-label="Recent chats">
                 {rows.map((row) => (
-                  <li key={row.id}>
+                  <li
+                    key={row.id}
+                    className="rounded-lg hover:bg-surface-strong focus-within:bg-surface-strong"
+                  >
                     <button
                       type="button"
                       aria-current={row.id === activeId ? "true" : undefined}
-                      className="flex min-h-10 w-full items-center gap-4 rounded-lg px-3 py-2 text-left text-sm hover:bg-surface-strong"
+                      disabled={disabled}
+                      className="flex min-h-10 w-full min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm disabled:opacity-45"
                       onClick={() => {
                         setOpen(false);
                         trigger.current?.focus();
@@ -123,11 +140,6 @@ export function AgentHistoryPanel({
                       <span className="min-w-0 flex-1 truncate py-0.5 leading-5">
                         {row.title}
                       </span>
-                      <Tooltip
-                        content={row.title}
-                        side="bottom"
-                        align="center"
-                      />
                       <time
                         aria-label={chatAge(row.updatedAt, undefined, true)}
                         dateTime={row.updatedAt}
@@ -135,6 +147,14 @@ export function AgentHistoryPanel({
                       >
                         {chatAge(row.updatedAt)}
                       </time>
+                      <AgentHistoryStatus
+                        iconOnly
+                        status={
+                          activeWorking && row.id === activeId
+                            ? "working"
+                            : (row.status ?? "idle")
+                        }
+                      />
                     </button>
                   </li>
                 ))}

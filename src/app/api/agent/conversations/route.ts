@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AgentHistoryError,
   createAgentConversation,
+  listAgentConversationSummaries,
   listAgentConversations,
 } from "@/features/agent/history";
 import { withAgentHistory } from "@/features/agent/history-api";
@@ -9,11 +10,21 @@ import { readAgentJson } from "@/features/agent/request";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const titleSchema = z
-  .object({ title: z.string().trim().min(1).max(100) })
+  .object({ title: z.string().trim().min(1).max(100), requestId: z.uuid() })
   .strict();
 export async function GET(request: Request) {
   return withAgentHistory(request, async (userId) => {
     const params = new URL(request.url).searchParams;
+    if (params.has("ids")) {
+      const ids = z
+        .array(z.uuid())
+        .min(1)
+        .max(100)
+        .safeParse(params.get("ids")?.split(","));
+      if (!ids.success || params.size !== 1)
+        throw new AgentHistoryError(400, "Invalid chat summary request.");
+      return listAgentConversationSummaries(userId, ids.data);
+    }
     const cursor = params.has("before")
       ? z
           .object({ at: z.iso.datetime(), id: z.uuid() })
@@ -21,7 +32,10 @@ export async function GET(request: Request) {
       : null;
     if (cursor && !cursor.success)
       throw new AgentHistoryError(400, "Invalid history cursor.");
-    return listAgentConversations(userId, cursor?.data);
+    const archived = params.get("archived");
+    if (archived !== null && archived !== "true")
+      throw new AgentHistoryError(400, "Invalid history filter.");
+    return listAgentConversations(userId, cursor?.data, archived === "true");
   });
 }
 export async function POST(request: Request) {
@@ -38,6 +52,10 @@ export async function POST(request: Request) {
         429,
         "Chat creation limit reached. Try again later."
       );
-    return createAgentConversation(userId, input.data.title);
+    return createAgentConversation(
+      userId,
+      input.data.title,
+      input.data.requestId
+    );
   });
 }

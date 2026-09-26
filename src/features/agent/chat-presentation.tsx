@@ -103,7 +103,6 @@ export function AgentChatPickerTrigger({
       {...props}
     >
       <span className="truncate py-0.5 leading-5">{title}</span>
-      <Tooltip content={title} side="bottom" align="center" />
       <CaretDown size={13} className="shrink-0" aria-hidden />
     </button>
   );

@@ -64,6 +64,11 @@ function ensureEnabled(
     );
 }
 
+function ensureNotArchived(conversation: { archivedAt: Date | null }) {
+  if (conversation.archivedAt)
+    throw new AgentHistoryError(409, "Restore this chat before continuing.");
+}
+
 async function previewCreation(
   database: CreationDatabase,
   userId: string,
@@ -310,6 +315,7 @@ export async function prepareCreation(
       conversation.activeUntil <= new Date()
     )
       throw new AgentHistoryError(409, "This turn is no longer active.");
+    ensureNotArchived(conversation);
     const prepared = readyForApproval
       ? await previewCreation(tx, userId, draft)
       : creationFormDraft(draft);
@@ -348,23 +354,52 @@ export async function prepareCreation(
 }
 
 export async function cancelCreation(userId: string, id: string) {
-  const rows = await db
-    .update(agentCreationProposals)
-    .set({ status: "cancelled", updatedAt: new Date() })
-    .where(
-      and(
+  return db.transaction(async (tx) => {
+    const original = await tx.query.agentCreationProposals.findFirst({
+      where: and(
         eq(agentCreationProposals.id, id),
-        eq(agentCreationProposals.userId, userId),
-        eq(agentCreationProposals.status, "pending")
+        eq(agentCreationProposals.userId, userId)
+      ),
+    });
+    if (!original) throw new AgentHistoryError(404, "Action not found.");
+    const [conversation] = await tx
+      .select()
+      .from(agentConversations)
+      .where(ownedConversation(userId, original.conversationId))
+      .for("update");
+    if (!conversation) throw new AgentHistoryError(404, "Chat not found.");
+    ensureNotArchived(conversation);
+    const [proposal] = await tx
+      .select()
+      .from(agentCreationProposals)
+      .where(
+        and(
+          eq(agentCreationProposals.id, id),
+          eq(agentCreationProposals.userId, userId)
+        )
       )
+      .for("update");
+    if (
+      proposal?.status !== "pending" ||
+      proposal.conversationId !== original.conversationId
     )
-    .returning();
-  if (!rows.length)
-    throw new AgentHistoryError(
-      409,
-      "This action has already changed. Reload its status."
-    );
-  return project(rows[0]);
+      throw new AgentHistoryError(
+        409,
+        "This action has already changed. Reload its status."
+      );
+    const [row] = await tx
+      .update(agentCreationProposals)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(
+        and(
+          eq(agentCreationProposals.id, id),
+          eq(agentCreationProposals.userId, userId),
+          eq(agentCreationProposals.status, "pending")
+        )
+      )
+      .returning();
+    return project(row);
+  });
 }
 
 class AlreadyCreated extends Error {}
@@ -388,6 +423,20 @@ export async function confirmCreation(userId: string, id: string) {
   const input = creationInputSchema.parse(original.input);
   const hooks: CreationHooks = {
     async beforeCreate(tx) {
+      const [conversation] = await tx
+        .select()
+        .from(agentConversations)
+        .where(ownedConversation(userId, original.conversationId))
+        .for("update");
+      if (
+        !conversation ||
+        (conversation.activeUntil && conversation.activeUntil > new Date())
+      )
+        throw new AgentHistoryError(
+          409,
+          "Wait for Agent to finish before confirming."
+        );
+      ensureNotArchived(conversation);
       const [row] = await tx
         .select()
         .from(agentCreationProposals)
@@ -399,6 +448,11 @@ export async function confirmCreation(userId: string, id: string) {
         )
         .for("update");
       if (!row) throw new AgentHistoryError(404, "Action not found.");
+      if (row.conversationId !== original.conversationId)
+        throw new AgentHistoryError(
+          409,
+          "This action has changed. Reload its status."
+        );
       if (row.status === "completed") throw new AlreadyCreated();
       if (
         row.status !== "pending" ||
@@ -408,17 +462,6 @@ export async function confirmCreation(userId: string, id: string) {
         throw new AgentHistoryError(
           409,
           "This preview is cancelled or expired. Ask Agent for a fresh preview."
-        );
-      const conversation = await tx.query.agentConversations.findFirst({
-        where: ownedConversation(userId, row.conversationId),
-      });
-      if (
-        !conversation ||
-        (conversation.activeUntil && conversation.activeUntil > new Date())
-      )
-        throw new AgentHistoryError(
-          409,
-          "Wait for Agent to finish before confirming."
         );
       const [config] = await tx
         .select()
@@ -607,6 +650,7 @@ export async function startCreationForm(
       .where(ownedConversation(userId, conversationId))
       .for("update");
     if (!conversation) throw new AgentHistoryError(404, "Chat not found.");
+    ensureNotArchived(conversation);
     if (conversation.activeUntil && conversation.activeUntil > new Date())
       throw new AgentHistoryError(409, "Wait for the current reply to finish.");
     await tx
@@ -643,6 +687,22 @@ export async function updateCreationForm(
   const { config } = await readAgentSettings();
   ensureEnabled(config, input);
   return db.transaction(async (tx) => {
+    const reference = await tx.query.agentCreationProposals.findFirst({
+      where: and(
+        eq(agentCreationProposals.id, id),
+        eq(agentCreationProposals.userId, userId)
+      ),
+    });
+    if (!reference)
+      throw new AgentHistoryError(
+        409,
+        "This setup is no longer active. Start a new creation request in chat."
+      );
+    const [conversation] = await tx
+      .select()
+      .from(agentConversations)
+      .where(ownedConversation(userId, reference.conversationId))
+      .for("update");
     const [original] = await tx
       .select()
       .from(agentCreationProposals)
@@ -653,6 +713,17 @@ export async function updateCreationForm(
         )
       )
       .for("update");
+    if (original?.conversationId !== reference.conversationId)
+      throw new AgentHistoryError(
+        409,
+        "This setup has changed. Reload its status."
+      );
+    if (
+      !conversation ||
+      (conversation.activeUntil && conversation.activeUntil > new Date())
+    )
+      throw new AgentHistoryError(409, "Wait for the current reply to finish.");
+    ensureNotArchived(conversation);
     if (
       original?.status === "cancelled" &&
       original.preview.replacement?.requestId === requestId
@@ -670,14 +741,6 @@ export async function updateCreationForm(
         409,
         "This setup is no longer active. Start a new creation request in chat."
       );
-    const conversation = await tx.query.agentConversations.findFirst({
-      where: ownedConversation(userId, original.conversationId),
-    });
-    if (
-      !conversation ||
-      (conversation.activeUntil && conversation.activeUntil > new Date())
-    )
-      throw new AgentHistoryError(409, "Wait for the current reply to finish.");
     if (input.kind !== original.input.kind)
       throw new AgentHistoryError(
         400,

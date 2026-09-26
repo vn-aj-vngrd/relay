@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   preview: null as CreationPreview | null,
   expiresAt: null as Date | null,
   busy: true,
+  archivedAt: null as Date | null,
 }));
 vi.mock("./config", () => ({
   readAgentSettings: async () => ({
@@ -57,6 +58,7 @@ vi.mock("@/db/client", () => {
             {
               activeRequestId: "request",
               activeUntil: state.busy ? new Date(Date.now() + 60_000) : null,
+              archivedAt: state.archivedAt,
             },
           ],
         }),
@@ -94,6 +96,7 @@ beforeEach(() => {
   state.preview = null;
   state.expiresAt = null;
   state.busy = true;
+  state.archivedAt = null;
   vi.clearAllMocks();
 });
 
@@ -107,6 +110,14 @@ describe("Conversational replay preparation", () => {
     expect(result.status).toBe("collecting");
     expect(result.input.interactionMode).toBe("chat");
     expect(createGroupCommand).not.toHaveBeenCalled();
+  });
+  it("rejects starting a setup in an archived chat", async () => {
+    state.busy = false;
+    state.archivedAt = new Date();
+    await expect(
+      startCreationForm("owner", "chat", inputForCreation("group"))
+    ).rejects.toThrow("Restore this chat before continuing.");
+    expect(state.saved).toBeNull();
   });
   it.each([
     ["chat", undefined, "needs_answer", true],

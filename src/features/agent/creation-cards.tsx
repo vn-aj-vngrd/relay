@@ -136,7 +136,7 @@ export function AgentCreationReview({
   return (
     <section
       aria-label={`${proposal.preview.title} preview`}
-      className="mt-4 rounded-xl border border-line p-4"
+      className="mt-5 w-full max-w-xl rounded-xl border border-line bg-surface p-4 sm:p-5"
     >
       <p className="text-xs text-muted">
         {proposal.status === "completed"
@@ -319,31 +319,42 @@ export function AgentCreationCard({
     );
   const progress = creationProgress(proposal.input);
   return (
-    <section aria-label="Creation progress" className="mt-3 text-sm text-muted">
-      <p>
-        {proposal.preview.title} · {progress.completed} of {progress.total}{" "}
-        details collected
-      </p>
-      <progress
-        className="mt-2 h-1 w-full accent-primary"
+    <section
+      aria-label="Creation progress"
+      className="mt-5 w-full max-w-xl rounded-xl border border-line bg-surface p-4 sm:p-5"
+    >
+      <div className="flex items-baseline justify-between gap-3">
+        <h3 className="text-sm font-semibold text-ink">
+          {proposal.preview.title}
+        </h3>
+        <span className="shrink-0 text-xs tabular-nums text-muted">
+          {progress.completed} of {progress.total} details
+        </span>
+      </div>
+      <div
+        className="mt-3 h-1 overflow-hidden rounded-full bg-surface-strong"
+        role="progressbar"
         aria-label="Creation details collected"
-        value={progress.completed}
-        max={progress.total}
-      />
-      <p className="mt-2">
-        {progress.next
-          ? `Next: ${progress.next}`
-          : "Checking details before review"}
-        . Approval required before creation.
+        aria-valuemin={0}
+        aria-valuemax={progress.total}
+        aria-valuenow={progress.completed}
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-200 motion-reduce:transition-none"
+          style={{ width: `${(progress.completed / progress.total) * 100}%` }}
+        />
+      </div>
+      <p className="mt-3 text-[13px] leading-5 text-muted">
+        Nothing is created until you approve the review.
       </p>
       {error ? (
-        <p role="alert" className="mt-2 text-danger">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {error}
         </p>
       ) : null}
-      <div className="mt-2 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button
-          variant="quiet"
+          variant="secondary"
           disabled={disabled || pending}
           onClick={() =>
             onContinue(

@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   writes: 0,
   actor: "actor",
   activeUntil: null as Date | null,
+  archivedAt: null as Date | null,
+  lockOrder: [] as string[],
 }));
 vi.mock("@/features/auth/session", () => ({
   requireUser: async () => ({ id: mocks.actor }),
@@ -24,7 +26,7 @@ vi.mock("./config", () => ({
   readAgentSettings: async () => ({ config: mocks.config }),
 }));
 vi.mock("@/db/client", async () => {
-  const { agentSettings } = await import("@/db/schema");
+  const { agentConversations, agentSettings } = await import("@/db/schema");
   const database = {
     query: {
       users: { findFirst: async () => ({ suspendedAt: null }) },
@@ -36,8 +38,22 @@ vi.mock("@/db/client", async () => {
     select: () => ({
       from: (table: unknown) => ({
         where: () => ({
-          for: async () =>
-            table === agentSettings ? [mocks.config] : [mocks.proposal],
+          for: async () => {
+            if (table !== agentSettings)
+              mocks.lockOrder.push(
+                table === agentConversations ? "conversation" : "proposal"
+              );
+            return table === agentSettings
+              ? [mocks.config]
+              : table === agentConversations
+                ? [
+                    {
+                      activeUntil: mocks.activeUntil,
+                      archivedAt: mocks.archivedAt,
+                    },
+                  ]
+                : [mocks.proposal];
+          },
         }),
       }),
     }),
@@ -60,6 +76,8 @@ beforeEach(() => {
   mocks.actor = "actor";
   mocks.writes = 0;
   mocks.activeUntil = null;
+  mocks.archivedAt = null;
+  mocks.lockOrder = [];
   mocks.config = {
     enabled: true,
     allowGameCreation: true,
@@ -100,12 +118,17 @@ describe("Agent confirmation lifecycle", () => {
     );
     expect(mocks.writes).toBe(1);
   });
+  it("locks the conversation before the proposal when confirming", async () => {
+    await confirmCreation("actor", "proposal");
+    expect(mocks.lockOrder.slice(0, 2)).toEqual(["conversation", "proposal"]);
+  });
   it.each([
     "collecting",
     "cancelled",
     "expired",
     "disabled",
     "busy",
+    "archived",
     "changed",
   ])("denies %s previews before a domain write", async (state) => {
     if (state === "collecting")
@@ -114,6 +137,7 @@ describe("Agent confirmation lifecycle", () => {
     if (state === "expired") mocks.proposal!.expiresAt = new Date(0);
     if (state === "disabled") mocks.config.allowGroupCreation = false;
     if (state === "busy") mocks.activeUntil = new Date(Date.now() + 60_000);
+    if (state === "archived") mocks.archivedAt = new Date();
     if (state === "changed")
       mocks.proposal!.preview = { title: "Different", lines: [], people: [] };
     await expect(confirmCreation("actor", "proposal")).rejects.toThrow();

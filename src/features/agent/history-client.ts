@@ -24,11 +24,23 @@ export async function historyRequest<T>(
 }
 export const loadConversation = (id: string) =>
   historyRequest<AgentConversation>(`/${encodeURIComponent(id)}`);
-export const createConversation = (prompt: string, signal?: AbortSignal) =>
+export const loadConversationSummary = (id: string) =>
+  historyRequest<AgentConversationSummary>(
+    `/${encodeURIComponent(id)}?summary=true`
+  );
+export const loadConversationSummaries = (ids: string[]) =>
+  historyRequest<{ conversations: AgentConversationSummary[] }>(
+    `?ids=${ids.map(encodeURIComponent).join(",")}`
+  );
+export const createConversation = (
+  prompt: string,
+  requestId: string,
+  signal?: AbortSignal
+) =>
   historyRequest<AgentConversationSummary>("", {
     method: "POST",
     signal,
-    body: JSON.stringify({ title: agentChatTitle(prompt) }),
+    body: JSON.stringify({ title: agentChatTitle(prompt), requestId }),
   });
 export function setConversationUrl(id: string | null) {
   const url = new URL(window.location.href);

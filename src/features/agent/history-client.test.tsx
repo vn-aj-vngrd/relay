@@ -8,6 +8,8 @@ describe("restored conversation metadata", () => {
       id: "chat",
       title: "Courts",
       updatedAt: "2026-09-16T03:00:00Z",
+      archivedAt: null,
+      status: "done",
       pending: false,
       messages: [
         { id: "old", role: "user", content: "Hello" },

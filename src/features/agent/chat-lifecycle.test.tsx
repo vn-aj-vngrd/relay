@@ -78,7 +78,8 @@ describe("conversation creation during navigation", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "When is my next game?" })
     );
-    const signal = mocks.create.mock.calls[0][1] as AbortSignal;
+    const signal = mocks.create.mock.calls[0][2] as AbortSignal;
+    expect(mocks.create.mock.calls[0][1]).toEqual(expect.any(String));
     view.rerender(
       <AgentSessionProvider>
         <p>Games</p>
