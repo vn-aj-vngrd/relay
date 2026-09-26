@@ -131,7 +131,7 @@ export function AgentChat({
   });
   const [activeTitle, setActiveTitle] = useState(session.title);
   const [activeId, setActiveId] = useState(session.conversationId);
-  const [activeArchived, setActiveArchived] = useState(false);
+  const [activeArchived, setActiveArchived] = useState(session.archived);
   const [accountWorking, setAccountWorking] = useState(false);
   const preparing = Boolean(session.preparation);
   const pendingQuestion = session.preparation?.question ?? null;
@@ -260,6 +260,7 @@ export function AgentChat({
   }, [messages, status, proposals.length]);
   function resetConversation() {
     session.conversationId = null;
+    session.archived = false;
     session.title = "Your chats";
     setActiveTitle("Your chats");
     setRemotePending(false);
@@ -293,6 +294,7 @@ export function AgentChat({
       const saved = await loadConversation(id);
       setMessages(conversationMessages(saved));
       session.conversationId = id;
+      session.archived = Boolean(saved.archivedAt);
       session.title = saved.title;
       setActiveTitle(saved.title);
       setActiveId(id);
@@ -329,6 +331,7 @@ export function AgentChat({
           session.draft = "";
         }
         session.conversationId = id;
+        session.archived = Boolean(saved.archivedAt);
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(id);
@@ -416,6 +419,7 @@ export function AgentChat({
         const saved = await createConversation(text, controller.signal);
         if (controller.signal.aborted) return;
         session.conversationId = saved.id;
+        session.archived = false;
         session.title = saved.title;
         setActiveTitle(saved.title);
         setActiveId(saved.id);

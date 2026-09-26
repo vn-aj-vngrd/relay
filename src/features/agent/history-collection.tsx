@@ -68,8 +68,11 @@ export function AgentHistoryCollection() {
         session.chat.clearError();
       }
       session.conversationId = null;
+      session.archived = false;
       session.draft = "";
     }
+    const selected = rows.find((row) => row.id === id);
+    if (selected) session.archived = Boolean(selected.archivedAt);
     router.push(`/agent?chat=${id}`);
   }
   function onDelete(id: string) {
@@ -77,6 +80,7 @@ export function AgentHistoryCollection() {
     void session.chat?.stop();
     if (session.chat) session.chat.messages = [];
     session.conversationId = null;
+    session.archived = false;
     session.draft = "";
     session.title = "Your chats";
   }
@@ -290,6 +294,7 @@ export function AgentHistoryCollection() {
       });
       setRows((current) => current.filter((item) => item.id !== id));
       if (archived && session.conversationId === id) onDelete(id);
+      if (!archived && session.conversationId === id) session.archived = false;
       notify(archived ? "Chat archived." : "Chat restored.", "success");
     } catch {
       notify(

@@ -1,3 +1,4 @@
+import { Chat } from "@ai-sdk/react";
 import {
   act,
   fireEvent,
@@ -46,7 +47,11 @@ vi.mock("./history-client", async (importOriginal) => ({
 }));
 
 import { AgentChat } from "./chat";
-import { AgentSessionProvider } from "./session";
+import {
+  AgentRuntimeContext,
+  AgentSessionProvider,
+  createAgentSession,
+} from "./session";
 
 const render = (ui: React.ReactNode) =>
   renderComponent(ui, { wrapper: AgentSessionProvider });
@@ -256,6 +261,40 @@ describe("Agent chat controls", () => {
     expect(
       screen.getByRole("button", { name: "When is my next game?" })
     ).toBeDisabled();
+  });
+  it("keeps an archived chat read only after its page remounts", async () => {
+    const session = createAgentSession();
+    session.conversationId = "archived";
+    session.archived = true;
+    session.title = "Old chat";
+    session.chat = new Chat({});
+    session.chat.messages = [
+      {
+        id: "question",
+        role: "user",
+        parts: [{ type: "text", text: "My games?" }],
+      },
+    ];
+    mocks.messages = session.chat.messages;
+    window.history.replaceState(null, "", "/agent?chat=archived");
+    const page = (show: boolean) => (
+      <AgentRuntimeContext value={{ get: () => session }}>
+        {show ? (
+          <AgentSessionProvider userId="owner">
+            <AgentChat available />
+          </AgentSessionProvider>
+        ) : (
+          <p>Another page</p>
+        )}
+      </AgentRuntimeContext>
+    );
+    const view = renderComponent(page(true));
+    view.rerender(page(false));
+    view.rerender(page(true));
+    expect(
+      screen.getByRole("textbox", { name: "Message Agent" })
+    ).toHaveAttribute("contenteditable", "false");
+    expect(mocks.load).not.toHaveBeenCalled();
   });
   it("shows the question immediately while a suggested chat is being created", async () => {
     let finish!: (value: { id: string; title: string }) => void;
