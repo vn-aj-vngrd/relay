@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
   enabled: true,
   sourceStatus: "completed",
   history: [] as Record<string, unknown>[],
+  archivedAt: null as Date | null,
 }));
 vi.mock("./config", () => ({
   readAgentSettings: async () => ({
@@ -34,7 +35,8 @@ vi.mock("@/features/groups/create-group-command", () => ({
 vi.mock("@/features/sessions/create-session-command", () => ({
   createSessionCommand: vi.fn(),
 }));
-vi.mock("@/db/client", () => {
+vi.mock("@/db/client", async () => {
+  const { agentConversations } = await import("@/db/schema");
   const db = {
     transaction: async <T>(work: (tx: unknown) => Promise<T>): Promise<T> =>
       work(db),
@@ -43,12 +45,22 @@ vi.mock("@/db/client", () => {
         findFirst: async () => ({ status: state.sourceStatus, groupId: null }),
       },
       agentCreationProposals: { findFirst: async () => state.inserts.at(-1) },
-      agentConversations: { findFirst: async () => ({ activeUntil: null }) },
+      agentConversations: {
+        findFirst: async () => ({
+          activeUntil: null,
+          archivedAt: state.archivedAt,
+        }),
+      },
     },
     select: () => ({
-      from: () => ({
+      from: (table: unknown) => ({
         where: () => ({
-          for: async () => (state.row ? [state.row] : []),
+          for: async () =>
+            table === agentConversations
+              ? [{ activeUntil: null, archivedAt: state.archivedAt }]
+              : state.row
+                ? [state.row]
+                : [],
           orderBy: () => {
             const rows = Promise.resolve(state.history);
             return Object.assign(rows, {
@@ -85,11 +97,16 @@ vi.mock("@/db/client", () => {
 });
 
 import { inputForCreation } from "./creation-model";
-import { listCreationProposals, updateCreationForm } from "./creation-service";
+import {
+  cancelCreation,
+  listCreationProposals,
+  updateCreationForm,
+} from "./creation-service";
 
 beforeEach(() => {
   state.inserts = [];
   state.enabled = true;
+  state.archivedAt = null;
   state.row = {
     id: "old-id",
     userId: "owner",
@@ -160,6 +177,17 @@ describe("Server-owned guided form review", () => {
       expect(state.inserts).toHaveLength(0);
     }
   );
+  it("rejects edits and cancellation after archiving the chat", async () => {
+    state.archivedAt = new Date();
+    await expect(
+      updateCreationForm("owner", "old-id", state.row!.input, true)
+    ).rejects.toThrow("Restore this chat before continuing.");
+    await expect(cancelCreation("owner", "old-id")).rejects.toThrow(
+      "Restore this chat before continuing."
+    );
+    expect(state.row!.status).toBe("pending");
+    expect(state.inserts).toHaveLength(0);
+  });
 });
 
 describe("Creation result restoration", () => {

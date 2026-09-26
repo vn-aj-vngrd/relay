@@ -493,7 +493,8 @@ for (const width of [390, 1440]) {
         name: "Done",
       })
     ).toBeVisible();
-    await page.goto("/agent/history");
+    await page.getByRole("link", { name: "See all chats" }).click();
+    await expect(page).toHaveURL(/\/agent\/history$/);
     await page.addStyleTag({ content: markdownStyles });
     await page.addScriptTag({ content: bundle });
     await expect(

@@ -210,6 +210,44 @@ export function AgentHistoryCollection() {
     }, 3000);
     return () => window.clearInterval(timer);
   }, [rows, activeId, session.activity]);
+  useEffect(() => {
+    if (tab !== "active" || !rows.length) return;
+    let cancelled = false;
+    let refreshing = false;
+    const refresh = () => {
+      if (
+        document.visibilityState === "hidden" ||
+        request.current ||
+        refreshing ||
+        mutating ||
+        editing
+      )
+        return;
+      refreshing = true;
+      void historyRequest<HistoryPage>()
+        .then((page) => {
+          if (cancelled) return;
+          const fresh = new Map(page.conversations.map((row) => [row.id, row]));
+          setRows((current) =>
+            current.map((row) => {
+              const update = fresh.get(row.id);
+              return update
+                ? { ...row, status: update.status, updatedAt: update.updatedAt }
+                : row;
+            })
+          );
+        })
+        .catch(() => {})
+        .finally(() => {
+          refreshing = false;
+        });
+    };
+    const timer = window.setInterval(refresh, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [tab, rows.length, mutating, editing]);
   async function rename(id: string) {
     if (!title.trim()) return;
     setMutating(true);

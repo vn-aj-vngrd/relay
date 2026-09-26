@@ -1,3 +1,7 @@
+import {
+  AppRouterContext,
+  type AppRouterInstance,
+} from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ToastViewport } from "../../src/components/ui/action-notice";
@@ -15,6 +19,15 @@ import {
 
 const root = document.getElementById("agent-fixture");
 if (!root) throw new Error("Missing Agent fixture root");
+const router: AppRouterInstance = {
+  bfcacheId: "fixture",
+  back: () => window.history.back(),
+  forward: () => window.history.forward(),
+  refresh: () => window.location.reload(),
+  push: (href) => window.location.assign(href),
+  replace: (href) => window.location.replace(href),
+  prefetch: () => {},
+};
 function Fixture() {
   const [show, setShow] = useState(true);
   const [runtime] = useState(() => {
@@ -82,7 +95,9 @@ function Fixture() {
   );
 }
 createRoot(root).render(
-  <main className="h-dvh bg-canvas p-4 text-ink">
-    <Fixture />
-  </main>
+  <AppRouterContext.Provider value={router}>
+    <main className="h-dvh bg-canvas p-4 text-ink">
+      <Fixture />
+    </main>
+  </AppRouterContext.Provider>
 );

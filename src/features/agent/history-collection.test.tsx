@@ -160,6 +160,35 @@ it("stops automatic pagination if a response makes no cursor progress", async ()
   ).toHaveLength(1);
 });
 
+it("updates a finished row when another tab starts a reply", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read
+    .mockResolvedValueOnce({
+      conversations: [{ ...row("a"), status: "done" }],
+      hasMore: false,
+    })
+    .mockResolvedValueOnce({
+      conversations: [
+        {
+          ...row("a"),
+          updatedAt: "2026-09-15T12:05:00.000Z",
+          status: "working",
+        },
+      ],
+      hasMore: false,
+    });
+  mount();
+  await screen.findByText("Done");
+  const refresh = intervals.mock.calls.find(([, delay]) => delay === 5000)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    (refresh as () => void)();
+  });
+  expect(screen.getByText("Working")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Chat a" })).toBeInTheDocument();
+  intervals.mockRestore();
+});
+
 it("opens a focused rename field from an accessible icon action", async () => {
   mocks.read.mockResolvedValue({ conversations: [row("a")], hasMore: false });
   mount();

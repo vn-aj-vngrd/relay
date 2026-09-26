@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   writes: 0,
   actor: "actor",
   activeUntil: null as Date | null,
+  archivedAt: null as Date | null,
 }));
 vi.mock("@/features/auth/session", () => ({
   requireUser: async () => ({ id: mocks.actor }),
@@ -24,7 +25,7 @@ vi.mock("./config", () => ({
   readAgentSettings: async () => ({ config: mocks.config }),
 }));
 vi.mock("@/db/client", async () => {
-  const { agentSettings } = await import("@/db/schema");
+  const { agentConversations, agentSettings } = await import("@/db/schema");
   const database = {
     query: {
       users: { findFirst: async () => ({ suspendedAt: null }) },
@@ -37,7 +38,16 @@ vi.mock("@/db/client", async () => {
       from: (table: unknown) => ({
         where: () => ({
           for: async () =>
-            table === agentSettings ? [mocks.config] : [mocks.proposal],
+            table === agentSettings
+              ? [mocks.config]
+              : table === agentConversations
+                ? [
+                    {
+                      activeUntil: mocks.activeUntil,
+                      archivedAt: mocks.archivedAt,
+                    },
+                  ]
+                : [mocks.proposal],
         }),
       }),
     }),
@@ -60,6 +70,7 @@ beforeEach(() => {
   mocks.actor = "actor";
   mocks.writes = 0;
   mocks.activeUntil = null;
+  mocks.archivedAt = null;
   mocks.config = {
     enabled: true,
     allowGameCreation: true,
@@ -106,6 +117,7 @@ describe("Agent confirmation lifecycle", () => {
     "expired",
     "disabled",
     "busy",
+    "archived",
     "changed",
   ])("denies %s previews before a domain write", async (state) => {
     if (state === "collecting")
@@ -114,6 +126,7 @@ describe("Agent confirmation lifecycle", () => {
     if (state === "expired") mocks.proposal!.expiresAt = new Date(0);
     if (state === "disabled") mocks.config.allowGroupCreation = false;
     if (state === "busy") mocks.activeUntil = new Date(Date.now() + 60_000);
+    if (state === "archived") mocks.archivedAt = new Date();
     if (state === "changed")
       mocks.proposal!.preview = { title: "Different", lines: [], people: [] };
     await expect(confirmCreation("actor", "proposal")).rejects.toThrow();
