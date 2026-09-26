@@ -74,7 +74,7 @@ for (const width of [390, 1440]) {
           .join("")
       );
     await page.route(
-      (url) => url.pathname === "/agent",
+      (url) => ["/agent", "/agent/history"].includes(url.pathname),
       (route) =>
         route.fulfill({
           contentType: "text/html",
@@ -141,7 +141,14 @@ for (const width of [390, 1440]) {
         body: JSON.stringify(
           request.method() === "GET" &&
             new URL(request.url()).pathname.endsWith("conversations")
-            ? { conversations: archived ? [] : [summary], hasMore: false }
+            ? {
+                conversations:
+                  new URL(request.url()).searchParams.has("archived") ===
+                  archived
+                    ? [summary]
+                    : [],
+                hasMore: false,
+              }
             : summary
         ),
       });
@@ -317,8 +324,10 @@ for (const width of [390, 1440]) {
     await expect(newChat).toBeDisabled();
     await page.getByRole("button", { name: /^Chat history:/ }).click();
     await expect(
-      page.getByRole("list", { name: "Recent chats" })
-    ).toContainText("Working");
+      page.getByRole("list", { name: "Recent chats" }).getByRole("img", {
+        name: "Working",
+      })
+    ).toBeVisible();
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Toggle Agent page" }).click();
     await expect(page.getByText("Another app page")).toBeVisible();
@@ -480,14 +489,25 @@ for (const width of [390, 1440]) {
     ).toHaveCount(0);
     await page.getByRole("button", { name: /^Chat history:/ }).click();
     await expect(
-      page.getByRole("list", { name: "Recent chats" })
-    ).toContainText("Done");
+      page.getByRole("list", { name: "Recent chats" }).getByRole("img", {
+        name: "Done",
+      })
+    ).toBeVisible();
+    await page.goto("/agent/history");
+    await page.addStyleTag({ content: markdownStyles });
+    await page.addScriptTag({ content: bundle });
+    await expect(
+      page.getByRole("heading", { name: "Chat history" })
+    ).toBeVisible();
     await page
-      .getByRole("button", { name: `Archive ${conversation.title}` })
+      .getByRole("button", { name: `More actions for ${conversation.title}` })
       .click();
-    await expect(page.getByRole("list", { name: "Recent chats" })).toHaveCount(
-      0
-    );
+    await page.getByRole("menuitem", { name: "Archive" }).click();
+    await expect(page.getByRole("list", { name: "Saved chats" })).toBeEmpty();
+    await page.getByRole("tab", { name: "Archived" }).click();
+    await expect(
+      page.getByRole("list", { name: "Archived chats" })
+    ).toContainText(conversation.title);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth)
     ).toBeLessThanOrEqual(width);

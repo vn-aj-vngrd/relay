@@ -42,7 +42,7 @@ function HistoryRowsSkeleton() {
             <div className="shrink-0 px-1">
               <Skeleton className="h-3 w-[26px]" />
             </div>
-            <div className="flex size-9 shrink-0 items-center justify-center">
+            <div className="flex size-11 shrink-0 items-center justify-center">
               <Skeleton className="h-1 w-4" />
             </div>
           </div>

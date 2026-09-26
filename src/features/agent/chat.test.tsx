@@ -160,6 +160,19 @@ describe("Agent chat controls", () => {
       screen.getByRole("button", { name: "Chat history: Saved chat" })
     ).toBeInTheDocument();
   });
+  it("disables retry and suggested prompts while another chat is working", async () => {
+    mocks.error = new Error("AGENT_HTTP_502");
+    mocks.history.mockResolvedValue({
+      conversations: [{ id: "other", status: "working" }],
+    });
+    render(<AgentChat available />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Retry" })).toBeDisabled()
+    );
+    expect(
+      screen.getByRole("button", { name: "When is my next game?" })
+    ).toBeDisabled();
+  });
   it("retries the existing turn instead of sending another question", async () => {
     mocks.error = new Error("AGENT_HTTP_502");
     render(<AgentChat available />);
@@ -240,6 +253,9 @@ describe("Agent chat controls", () => {
     expect(
       screen.getByRole("textbox", { name: "Message Agent" })
     ).toHaveAttribute("contenteditable", "false");
+    expect(
+      screen.getByRole("button", { name: "When is my next game?" })
+    ).toBeDisabled();
   });
   it("shows the question immediately while a suggested chat is being created", async () => {
     let finish!: (value: { id: string; title: string }) => void;

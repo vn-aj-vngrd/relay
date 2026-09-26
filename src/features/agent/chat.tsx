@@ -478,6 +478,8 @@ export function AgentChat({
     }
   }
   const lastMessage = visibleMessages.at(-1);
+  const interactionsDisabled =
+    busy || accountWorking || activeArchived || !available;
   return (
     <section
       aria-label="Agent chat"
@@ -570,7 +572,7 @@ export function AgentChat({
                                 : "This reply was interrupted. Try again to continue."
                           }
                           stopped={stopped && !error}
-                          disabled={busy || !available}
+                          disabled={interactionsDisabled}
                           onRetry={latest ? retryResponse : undefined}
                         />
                       ) : null}
@@ -611,7 +613,7 @@ export function AgentChat({
                     <button
                       key={item.prompt}
                       type="button"
-                      disabled={!available || busy}
+                      disabled={interactionsDisabled}
                       onClick={() => {
                         if ("flow" in item) void startCreation(item.flow);
                         else void send(item.prompt);
@@ -632,7 +634,7 @@ export function AgentChat({
               </div>
               <AgentResponseError
                 message={errorCopy}
-                disabled={busy || !available}
+                disabled={interactionsDisabled}
                 onRetry={retryResponse}
               />
             </article>
@@ -662,7 +664,7 @@ export function AgentChat({
                 onContinue={(prompt) => void send(prompt, true)}
                 key={proposal.id}
                 proposal={proposal}
-                disabled={busy || !available}
+                disabled={interactionsDisabled}
                 onChange={reloadProposals}
               />
             ))}

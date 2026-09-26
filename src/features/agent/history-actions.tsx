@@ -64,7 +64,7 @@ export function AgentHistoryActions({
     };
   }, [hide, open]);
   const actionClass =
-    "pressable flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-surface-strong";
+    "pressable flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-left text-sm hover:bg-surface-strong";
   return (
     <div ref={root} className="relative shrink-0">
       <button
@@ -74,7 +74,7 @@ export function AgentHistoryActions({
         aria-label={`More actions for ${row.title}`}
         aria-expanded={open}
         aria-controls={menuId}
-        className="pressable inline-flex size-9 items-center justify-center rounded-lg text-muted hover:text-ink disabled:opacity-45"
+        className="pressable inline-flex size-11 items-center justify-center rounded-lg text-muted hover:text-ink disabled:opacity-45"
         onClick={toggle}
       >
         <DotsThree size={18} weight="bold" aria-hidden />

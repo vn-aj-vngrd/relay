@@ -6,6 +6,7 @@ import {
   AgentMobileLink,
 } from "../../src/features/agent/activity";
 import { AgentChat } from "../../src/features/agent/chat";
+import { AgentHistoryCollection } from "../../src/features/agent/history-collection";
 import {
   AgentRuntimeContext,
   AgentSessionProvider,
@@ -54,17 +55,21 @@ function Fixture() {
           <div className="min-h-0 flex-1">
             {show ? (
               <AgentSessionProvider userId="fixture-user">
-                <AgentChat
-                  available
-                  allowCourtSearch
-                  capabilities={{
-                    allowGameData: true,
-                    allowCourtSearch: true,
-                    allowHelp: true,
-                    allowGameCreation: true,
-                    allowGroupCreation: true,
-                  }}
-                />
+                {window.location.pathname === "/agent/history" ? (
+                  <AgentHistoryCollection />
+                ) : (
+                  <AgentChat
+                    available
+                    allowCourtSearch
+                    capabilities={{
+                      allowGameData: true,
+                      allowCourtSearch: true,
+                      allowHelp: true,
+                      allowGameCreation: true,
+                      allowGroupCreation: true,
+                    }}
+                  />
+                )}
               </AgentSessionProvider>
             ) : (
               <p>Another app page</p>
