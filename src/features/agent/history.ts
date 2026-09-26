@@ -4,6 +4,7 @@ import {
   desc,
   eq,
   gt,
+  inArray,
   isNotNull,
   isNull,
   lt,
@@ -95,6 +96,23 @@ export async function listAgentConversations(
     conversations: rows.slice(0, 30).map(summary),
     hasMore: rows.length > 30,
   };
+}
+export async function listAgentConversationSummaries(
+  userId: string,
+  ids: string[]
+) {
+  if (!ids.length) return { conversations: [] };
+  const rows = await db
+    .select(summaryColumns)
+    .from(agentConversations)
+    .where(
+      and(
+        eq(agentConversations.userId, userId),
+        inArray(agentConversations.id, ids)
+      )
+    )
+    .limit(ids.length);
+  return { conversations: rows.map(summary) };
 }
 export async function createAgentConversation(
   userId: string,

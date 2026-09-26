@@ -12,12 +12,14 @@ const mocks = vi.hoisted(() => ({
   read: vi.fn(),
   load: vi.fn(),
   summary: vi.fn(),
+  summaries: vi.fn(),
   push: vi.fn(),
 }));
 vi.mock("./history-client", () => ({
   historyRequest: mocks.read,
   loadConversation: mocks.load,
   loadConversationSummary: mocks.summary,
+  loadConversationSummaries: mocks.summaries,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/components/ui/action-notice", () => ({ notify: vi.fn() }));
@@ -56,6 +58,10 @@ beforeEach(() => {
   mocks.read.mockReset();
   mocks.load.mockReset();
   mocks.summary.mockReset();
+  mocks.summaries.mockReset();
+  mocks.summaries.mockImplementation(async (ids: string[]) => ({
+    conversations: ids.map(row),
+  }));
   vi.stubGlobal(
     "IntersectionObserver",
     class {
@@ -264,6 +270,37 @@ it("keeps a first-page chat displaced by a new chat when older rows are loaded",
   expect(screen.getByRole("button", { name: "Chat 29" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Chat 30" })).toBeInTheDocument();
   expect(mocks.summary).toHaveBeenCalledWith("29");
+  intervals.mockRestore();
+});
+
+it("removes an older loaded chat archived in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  const firstPage = Array.from({ length: 30 }, (_, index) =>
+    row(String(index))
+  );
+  mocks.read
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true })
+    .mockResolvedValueOnce({ conversations: [row("30")], hasMore: false })
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true });
+  mocks.summaries.mockResolvedValue({
+    conversations: [{ ...row("30"), archivedAt: new Date().toISOString() }],
+  });
+  mount();
+  await screen.findByRole("button", { name: "Chat 29" });
+  fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
+  await screen.findByRole("button", { name: "Chat 30" });
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    await Promise.resolve();
+    (refresh as () => void)();
+  });
+  expect(mocks.summaries).toHaveBeenCalledWith(["30"]);
+  expect(
+    screen.queryByRole("button", { name: "Chat 30" })
+  ).not.toBeInTheDocument();
   intervals.mockRestore();
 });
 

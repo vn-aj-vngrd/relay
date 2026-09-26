@@ -237,7 +237,17 @@ export function AgentChat({
             )
               setRemotePending(true);
           })
-          .catch(() => {});
+          .catch((error: unknown) => {
+            if (
+              cancelled ||
+              session.conversationId !== activeId ||
+              !(error instanceof Error) ||
+              !error.message.startsWith("Chat not found.")
+            )
+              return;
+            resetConversation();
+            notify("This chat was deleted in another tab.");
+          });
     };
     refresh();
     const timer = window.setInterval(refresh, 5000);

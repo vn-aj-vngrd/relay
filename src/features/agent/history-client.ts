@@ -28,6 +28,10 @@ export const loadConversationSummary = (id: string) =>
   historyRequest<AgentConversationSummary>(
     `/${encodeURIComponent(id)}?summary=true`
   );
+export const loadConversationSummaries = (ids: string[]) =>
+  historyRequest<{ conversations: AgentConversationSummary[] }>(
+    `?ids=${ids.map(encodeURIComponent).join(",")}`
+  );
 export const createConversation = (
   prompt: string,
   requestId: string,

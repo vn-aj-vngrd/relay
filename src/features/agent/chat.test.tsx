@@ -326,6 +326,30 @@ describe("Agent chat controls", () => {
       ).toHaveAttribute("contenteditable", "true")
     );
   });
+  it("clears the selected chat after another tab deletes it", async () => {
+    const session = createAgentSession();
+    session.conversationId = "saved";
+    session.title = "Saved chat";
+    session.chat = new Chat({});
+    session.chat.messages = [
+      { id: "question", role: "user", parts: [{ type: "text", text: "Hi" }] },
+    ];
+    mocks.messages = session.chat.messages;
+    mocks.summary.mockRejectedValue(
+      new Error("Chat not found. It may have been deleted.")
+    );
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    renderComponent(
+      <AgentRuntimeContext value={{ get: () => session }}>
+        <AgentSessionProvider userId="owner">
+          <AgentChat available />
+        </AgentSessionProvider>
+      </AgentRuntimeContext>
+    );
+    await waitFor(() => expect(session.conversationId).toBeNull());
+    expect(session.title).toBe("Your chats");
+    expect(mocks.reset).toHaveBeenCalledWith([]);
+  });
   it("reloads a selected chat when another tab completes a reply between polls", async () => {
     const session = createAgentSession();
     session.conversationId = "saved";

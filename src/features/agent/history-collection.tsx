@@ -14,6 +14,7 @@ import { chatAge } from "./history-age";
 import {
   historyRequest,
   loadConversation,
+  loadConversationSummaries,
   loadConversationSummary,
 } from "./history-client";
 import { AgentHistoryStatus } from "./history-status";
@@ -114,6 +115,7 @@ export function AgentHistoryCollection() {
   }, [editing]);
   const cursor = useRef<AgentConversationSummary | null>(null);
   const firstPageIds = useRef<Set<string>>(new Set());
+  const tailOffset = useRef(0);
   const request = useRef<AbortController | null>(null);
   const load = useCallback(
     async (more = false) => {
@@ -170,6 +172,7 @@ export function AgentHistoryCollection() {
   useEffect(() => {
     cursor.current = null;
     firstPageIds.current = new Set();
+    tailOffset.current = 0;
     setRows([]);
     setHasMore(false);
     void load();
@@ -269,6 +272,27 @@ export function AgentHistoryCollection() {
             })
           );
           if (cancelled) return;
+          const tail = rows.filter((row) => !previousFirst.has(row.id));
+          const start = tail.length ? tailOffset.current % tail.length : 0;
+          const batch = tail.slice(start, start + 100);
+          tailOffset.current = tail.length
+            ? (start + batch.length) % tail.length
+            : 0;
+          let checked = new Set<string>();
+          let tailSummaries = new Map<string, AgentConversationSummary>();
+          if (batch.length)
+            try {
+              const result = await loadConversationSummaries(
+                batch.map((row) => row.id)
+              );
+              checked = new Set(batch.map((row) => row.id));
+              tailSummaries = new Map(
+                result.conversations.map((row) => [row.id, row])
+              );
+            } catch {
+              /* Retain loaded rows until the next bounded summary refresh. */
+            }
+          if (cancelled) return;
           firstPageIds.current = new Set([...freshIds, ...failed]);
           if (rows.length <= 30) {
             cursor.current = page.conversations.at(-1) ?? null;
@@ -281,6 +305,13 @@ export function AgentHistoryCollection() {
               if (previousFirst.has(row.id)) {
                 const saved = retained.get(row.id);
                 return saved ? [saved] : [];
+              }
+              if (checked.has(row.id)) {
+                const saved = tailSummaries.get(row.id);
+                return saved &&
+                  Boolean(saved.archivedAt) === (tab === "archived")
+                  ? [saved]
+                  : [];
               }
               return [row];
             }),

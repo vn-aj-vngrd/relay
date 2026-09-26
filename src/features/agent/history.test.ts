@@ -47,6 +47,7 @@ import {
   createAgentConversation,
   deleteAgentConversation,
   finishAgentTurn,
+  listAgentConversationSummaries,
   listAgentConversations,
   readAgentConversation,
   readAgentConversationSummary,
@@ -83,6 +84,25 @@ describe("private Agent history", () => {
     );
     expect(archived.sql).toContain('"archived_at" is not null');
     expect(archived.params).toEqual(["owner"]);
+  });
+  it("reads a bounded set of summaries for the authenticated owner", async () => {
+    mocks.activeRows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: "assistant",
+      lastInterrupted: false,
+    });
+    const result = await listAgentConversationSummaries("owner", [
+      "conversation",
+    ]);
+    expect(result.conversations[0].status).toBe("done");
+    const predicate = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(predicate.sql).toContain('"user_id"');
+    expect(predicate.sql).toContain('"id" in');
+    expect(predicate.params).toEqual(["owner", "conversation"]);
+    expect(mocks.query.limit).toHaveBeenCalledWith(1);
   });
   it.each([readAgentConversation, deleteAgentConversation])(
     "scopes lookup and deletion to the authenticated owner",

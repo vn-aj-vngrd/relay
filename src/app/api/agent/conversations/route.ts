@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   AgentHistoryError,
   createAgentConversation,
+  listAgentConversationSummaries,
   listAgentConversations,
 } from "@/features/agent/history";
 import { withAgentHistory } from "@/features/agent/history-api";
@@ -14,6 +15,16 @@ const titleSchema = z
 export async function GET(request: Request) {
   return withAgentHistory(request, async (userId) => {
     const params = new URL(request.url).searchParams;
+    if (params.has("ids")) {
+      const ids = z
+        .array(z.uuid())
+        .min(1)
+        .max(100)
+        .safeParse(params.get("ids")?.split(","));
+      if (!ids.success || params.size !== 1)
+        throw new AgentHistoryError(400, "Invalid chat summary request.");
+      return listAgentConversationSummaries(userId, ids.data);
+    }
     const cursor = params.has("before")
       ? z
           .object({ at: z.iso.datetime(), id: z.uuid() })
