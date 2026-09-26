@@ -48,7 +48,19 @@ beforeEach(() => {
     groupBy: () => ({
       orderBy: () => ({
         limit: async () => [
-          { id: "game-1", title: "Friday play", matches: 2, wins: 1 },
+          {
+            id: "game-1",
+            title: "Friday play",
+            hostId: "host-1",
+            visibility: "private",
+            status: "completed",
+            endsAt: new Date("2026-09-25T12:00:00Z"),
+            playerPriceCents: null,
+            playerRole: "player",
+            playerRsvp: "going",
+            matches: 2,
+            wins: 1,
+          },
         ],
       }),
     }),
@@ -68,7 +80,7 @@ describe("player insights", () => {
       winRate: 60,
       pointsFor: 52,
       pointsAgainst: 45,
-      recentGames: [{ id: "game-1", wins: 1, losses: 1 }],
+      recentGames: [{ id: "game-1", wins: 1, losses: 1, canOpen: true }],
     });
     const dialect = new PgDialect();
     const hosted = dialect.sqlToQuery(mocks.hostedCount.mock.calls[0][1]);
@@ -81,6 +93,34 @@ describe("player insights", () => {
       expect(query.sql).toContain("team_a_score");
       expect(query.sql).toContain("team_b_score");
     }
+  });
+
+  it("keeps departed players' results without linking to an inaccessible game", async () => {
+    mocks.recentWhere.mockReturnValueOnce({
+      groupBy: () => ({
+        orderBy: () => ({
+          limit: async () => [
+            {
+              id: "game-2",
+              title: "Past game",
+              hostId: "host-1",
+              visibility: "private",
+              status: "completed",
+              endsAt: new Date("2026-09-25T12:00:00Z"),
+              playerPriceCents: null,
+              playerRole: "player",
+              playerRsvp: "declined",
+              matches: 1,
+              wins: 1,
+            },
+          ],
+        }),
+      }),
+    });
+
+    expect((await getPlayerInsights("player-1")).recentGames).toMatchObject([
+      { id: "game-2", canOpen: false, matches: 1, wins: 1 },
+    ]);
   });
 
   it("shows zero rather than an invented record when no match is scored", async () => {

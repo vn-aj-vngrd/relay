@@ -151,12 +151,9 @@ export default async function PlayerInsightsPage({
           </h2>
           {insights.recentGames.length ? (
             <ul className="mt-4 divide-y divide-line border-y border-line">
-              {insights.recentGames.map((game) => (
-                <li key={game.id}>
-                  <Link
-                    href={`/games/${game.id}/play`}
-                    className="pressable flex min-h-16 items-center gap-4 py-3 hover:text-primary"
-                  >
+              {insights.recentGames.map((game) => {
+                const details = (
+                  <>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold">
                         {game.title}
@@ -173,14 +170,30 @@ export default async function PlayerInsightsPage({
                     >
                       {game.wins}–{game.losses}
                     </span>
-                    <ArrowUpRight
-                      aria-hidden
-                      size={16}
-                      className="shrink-0 text-muted"
-                    />
-                  </Link>
-                </li>
-              ))}
+                  </>
+                );
+                return (
+                  <li key={game.id}>
+                    {game.canOpen ? (
+                      <Link
+                        href={`/games/${game.id}/play`}
+                        className="pressable flex min-h-16 items-center gap-4 py-3 hover:text-primary"
+                      >
+                        {details}
+                        <ArrowUpRight
+                          aria-hidden
+                          size={16}
+                          className="shrink-0 text-muted"
+                        />
+                      </Link>
+                    ) : (
+                      <div className="flex min-h-16 items-center gap-4 py-3">
+                        {details}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <EmptyState

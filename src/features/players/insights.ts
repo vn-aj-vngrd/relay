@@ -4,6 +4,7 @@ import { and, count, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { matches, matchPlayers, sessionPlayers, sessions } from "@/db/schema";
+import { resolveSessionWorkspaceAccess } from "@/features/sessions/session-access";
 
 const scoredMatch = and(
   eq(matches.status, "completed"),
@@ -41,6 +42,13 @@ export async function getPlayerInsights(userId: string) {
         title: sessions.title,
         startsAt: sessions.startsAt,
         timezone: sessions.timezone,
+        hostId: sessions.hostId,
+        visibility: sessions.visibility,
+        status: sessions.status,
+        endsAt: sessions.endsAt,
+        playerPriceCents: sessions.playerPriceCents,
+        playerRole: sessionPlayers.role,
+        playerRsvp: sessionPlayers.rsvp,
         matches: sql<number>`count(*)::int`,
         wins: sql<number>`count(*) filter (where ${matches.winningTeam} = ${matchPlayers.team})::int`,
       })
@@ -52,7 +60,7 @@ export async function getPlayerInsights(userId: string) {
       )
       .innerJoin(sessions, eq(matches.sessionId, sessions.id))
       .where(and(eq(sessionPlayers.userId, userId), scoredMatch))
-      .groupBy(sessions.id)
+      .groupBy(sessions.id, sessionPlayers.role, sessionPlayers.rsvp)
       .orderBy(desc(sessions.startsAt), desc(sessions.id))
       .limit(5),
   ]);
@@ -70,10 +78,24 @@ export async function getPlayerInsights(userId: string) {
     pointsFor: Number(totals?.pointsFor ?? 0),
     pointsAgainst: Number(totals?.pointsAgainst ?? 0),
     recentGames: recentGames.map((game) => ({
-      ...game,
+      id: game.id,
+      title: game.title,
+      startsAt: game.startsAt,
+      timezone: game.timezone,
       matches: Number(game.matches),
       wins: Number(game.wins),
       losses: Number(game.matches) - Number(game.wins),
+      canOpen: Boolean(
+        resolveSessionWorkspaceAccess({
+          userId,
+          hostId: game.hostId,
+          visibility: game.visibility,
+          status: game.status,
+          endsAt: game.endsAt,
+          playerPriceCents: game.playerPriceCents,
+          membership: { role: game.playerRole, rsvp: game.playerRsvp },
+        })
+      ),
     })),
   };
 }

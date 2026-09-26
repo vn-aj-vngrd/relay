@@ -64,6 +64,7 @@ describe("personal insights access", () => {
           matches: 3,
           wins: 2,
           losses: 1,
+          canOpen: true,
         },
       ],
     });
@@ -85,5 +86,43 @@ describe("personal insights access", () => {
       screen.getByRole("link", { name: /Friday doubles/ })
     ).toHaveAttribute("href", "/games/game-1/play");
     expect(mocks.getInsights).toHaveBeenCalledWith("viewer");
+  });
+
+  it("shows a departed player's result without an inaccessible game link", async () => {
+    mocks.findProfile.mockResolvedValueOnce({
+      userId: "viewer",
+      username: "my-profile",
+    });
+    mocks.getInsights.mockResolvedValueOnce({
+      hostedGames: 0,
+      gamesPlayed: 1,
+      matchesPlayed: 1,
+      wins: 1,
+      losses: 0,
+      winRate: 100,
+      pointsFor: 11,
+      pointsAgainst: 8,
+      recentGames: [
+        {
+          id: "game-2",
+          title: "Past game",
+          startsAt: new Date("2026-09-25T10:00:00Z"),
+          timezone: "Asia/Manila",
+          matches: 1,
+          wins: 1,
+          losses: 0,
+          canOpen: false,
+        },
+      ],
+    });
+
+    render(
+      await PlayerInsightsPage({
+        params: Promise.resolve({ username: "my-profile" }),
+      })
+    );
+
+    expect(screen.getByText("Past game")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Past game/ })).toBeNull();
   });
 });
