@@ -13,7 +13,6 @@ import { AgentHistoryActions } from "./history-actions";
 import { chatAge } from "./history-age";
 import {
   historyRequest,
-  loadConversation,
   loadConversationSummaries,
   loadConversationSummary,
 } from "./history-client";
@@ -212,18 +211,10 @@ export function AgentHistoryCollection() {
     const timer = window.setInterval(() => {
       for (const row of rows) {
         if (!needsRefresh(row)) continue;
-        void loadConversation(row.id)
+        void loadConversationSummary(row.id)
           .then((saved) => {
             setRows((current) =>
-              current.map((item) =>
-                item.id === saved.id
-                  ? {
-                      ...item,
-                      status: saved.status,
-                      updatedAt: saved.updatedAt,
-                    }
-                  : item
-              )
+              current.map((item) => (item.id === saved.id ? saved : item))
             );
           })
           .catch(() => {});

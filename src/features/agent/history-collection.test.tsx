@@ -204,6 +204,32 @@ it("updates a finished row when another tab starts a reply", async () => {
   intervals.mockRestore();
 });
 
+it("polls a working row without downloading its transcript", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read.mockResolvedValue({
+    conversations: [{ ...row("a"), status: "working" }],
+    hasMore: false,
+  });
+  mocks.summary.mockResolvedValue({
+    ...row("a"),
+    archivedAt: null,
+    status: "done",
+  });
+  mount();
+  await screen.findByText("Working");
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 3000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    (refresh as () => void)();
+  });
+  expect(mocks.summary).toHaveBeenCalledWith("a");
+  expect(mocks.load).not.toHaveBeenCalled();
+  expect(screen.getByText("Done")).toBeInTheDocument();
+  intervals.mockRestore();
+});
+
 it("reconciles chats archived or restored in another tab", async () => {
   const intervals = vi.spyOn(window, "setInterval");
   mocks.read

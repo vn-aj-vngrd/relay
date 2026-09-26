@@ -364,6 +364,7 @@ describe("Agent chat controls", () => {
     mocks.summary.mockResolvedValue({
       archivedAt: null,
       status: "done",
+      title: "Saved chat",
       updatedAt: previous,
     });
     mocks.load.mockResolvedValue({
@@ -386,11 +387,12 @@ describe("Agent chat controls", () => {
     mocks.summary.mockResolvedValue({
       archivedAt: null,
       status: "done",
+      title: "Renamed chat",
       updatedAt: latest,
     });
     mocks.load.mockResolvedValue({
       id: "saved",
-      title: "Saved chat",
+      title: "Renamed chat",
       updatedAt: latest,
       archivedAt: null,
       pending: false,
@@ -405,6 +407,10 @@ describe("Agent chat controls", () => {
         expect.arrayContaining([expect.objectContaining({ id: "answer" })])
       )
     );
+    expect(session.title).toBe("Renamed chat");
+    expect(
+      screen.getByRole("button", { name: "Chat history: Renamed chat" })
+    ).toBeInTheDocument();
   });
   it("keeps a stale selected chat read only when transcript refresh fails", async () => {
     const session = createAgentSession();

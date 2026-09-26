@@ -229,6 +229,13 @@ export function AgentChat({
             const archived = Boolean(saved.archivedAt);
             session.archived = archived;
             setActiveArchived(archived);
+            if (
+              typeof saved.title === "string" &&
+              session.title !== saved.title
+            ) {
+              session.title = saved.title;
+              setActiveTitle(saved.title);
+            }
             if (busy || localWorkStarted()) return;
             if (
               saved.status === "working" ||
@@ -403,6 +410,10 @@ export function AgentChat({
           if (cancelled || session.conversationId !== activeId) return;
           setMessages(conversationMessages(saved));
           knownUpdatedAt.current = saved.updatedAt;
+          if (typeof saved.title === "string") {
+            session.title = saved.title;
+            setActiveTitle(saved.title);
+          }
           setRemotePending(saved.pending);
         })
         .catch(() => {
