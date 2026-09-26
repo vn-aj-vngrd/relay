@@ -15,7 +15,7 @@ import { HelpSupportLinks } from "./help-support-links";
 export function HelpArticleContent({ article }: { article: HelpArticle }) {
   const category = helpCategories.find((item) => item.id === article.category);
   return (
-    <article className="mx-auto w-full max-w-6xl">
+    <article className="help-article-content mx-auto w-full max-w-6xl">
       <nav
         aria-label="Breadcrumb"
         className="mb-3 text-sm leading-6 text-muted"

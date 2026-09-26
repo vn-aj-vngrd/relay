@@ -18,6 +18,7 @@ import { AppBreadcrumbs } from "./app-breadcrumbs";
 import { AppNav } from "./app-nav";
 import { Avatar } from "./avatar-stack";
 import { Brand } from "./brand";
+import { SecondaryMobileHeader } from "./secondary-mobile-header";
 import { SidebarAccount } from "./sidebar-account";
 import { SidebarCollapseToggle } from "./sidebar-collapse-toggle";
 import { SidebarSupportNav } from "./sidebar-support-nav";
@@ -133,6 +134,7 @@ export async function AuthenticatedAppShell({
             data-tour="workspace"
             className="app-content mx-auto flex w-full max-w-6xl flex-col px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:pt-8 lg:px-10 lg:pb-16 lg:pt-10"
           >
+            <SecondaryMobileHeader username={profile.username} />
             <AppBreadcrumbs />
             <div className="min-h-0 flex-1">{children}</div>
           </main>

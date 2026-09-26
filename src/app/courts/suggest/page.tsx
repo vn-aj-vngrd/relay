@@ -30,7 +30,7 @@ export default async function SuggestCourtPage({
   ]);
   return (
     <div className="w-full">
-      <header className="mb-8 border-b border-line pb-7">
+      <header className="mb-8 hidden border-b border-line pb-7 lg:block">
         <h1 className="app-title">Suggest a court</h1>
         <p className="mt-2 text-sm text-muted">
           Share a missing court or request an update to an existing listing.

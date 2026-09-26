@@ -28,6 +28,7 @@ const labels: Record<string, string> = {
   help: "Help Center",
   home: "Home",
   invitations: "Invitations",
+  insights: "Game insights",
   live: "Play",
   more: "More",
   new: "Create",

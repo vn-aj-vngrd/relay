@@ -52,10 +52,16 @@ export default async function PaymentRequestPage({
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <header>
-        <ButtonLink href="/settings/plan" variant="secondary">
+        <ButtonLink
+          href="/settings/plan"
+          variant="secondary"
+          className="hidden lg:inline-flex"
+        >
           Back to Plan & billing
         </ButtonLink>
-        <h1 className="app-title mt-5">{planName} payment request</h1>
+        <h1 className="app-title mt-5 hidden lg:block">
+          {planName} payment request
+        </h1>
         <p className="mt-2 text-sm text-muted">
           {requestStatusLabels[request.status]}
         </p>

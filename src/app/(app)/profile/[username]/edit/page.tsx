@@ -27,7 +27,7 @@ export default async function EditProfilePage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="flex items-center gap-2 border-b border-line pb-5">
+      <header className="hidden items-center gap-2 border-b border-line pb-5 lg:flex">
         <Link
           href={`/profile/${profile.username}`}
           aria-label="Back to profile"

@@ -91,7 +91,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8 sm:space-y-16">
-      <section className="flex items-end justify-between gap-4">
+      <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="mb-1 text-sm text-muted">
             Good to see you, {profile.name.split(" ")[0]}
@@ -108,6 +108,16 @@ export default async function HomePage() {
               Your upcoming responses are still pending or tentative.
             </p>
           ) : null}
+        </div>
+        <div className="hidden lg:block">
+          <ButtonLink
+            href={`/profile/${profile.username}/insights`}
+            variant="quiet"
+            className="min-h-11 shrink-0"
+          >
+            View game insights
+            <ArrowRight aria-hidden size={16} />
+          </ButtonLink>
         </div>
       </section>
 

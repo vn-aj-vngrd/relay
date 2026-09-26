@@ -24,7 +24,7 @@ export function HelpCenterContent({
   const isFiltered = isSearching || Boolean(selectedCategory);
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
+    <div className="help-center-content mx-auto w-full max-w-6xl">
       <header className="flex flex-col gap-4 border-b border-line pb-5 xl:flex-row xl:items-end xl:justify-between">
         <h1 className="app-title">Help Center</h1>
         <form

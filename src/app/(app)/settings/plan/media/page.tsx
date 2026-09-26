@@ -79,7 +79,7 @@ export default async function HostedMediaPage({
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
       <header>
-        <div className="flex min-h-11 items-center gap-2">
+        <div className="hidden min-h-11 items-center gap-2 lg:flex">
           <ButtonLink
             href="/settings/plan"
             variant="quiet"
