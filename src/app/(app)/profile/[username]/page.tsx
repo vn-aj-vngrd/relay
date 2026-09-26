@@ -176,6 +176,25 @@ async function ProfileStat({
   return <strong className="score block text-2xl">{history[stat]}</strong>;
 }
 
+async function ProfileInsightsLink({
+  profilePromise,
+}: {
+  profilePromise: Promise<ProfileData>;
+}) {
+  const { profile, ownProfile } = await profilePromise;
+  if (!ownProfile) return null;
+  return (
+    <ButtonLink
+      href={`/profile/${profile.username}/insights`}
+      variant="quiet"
+      className="min-h-11 shrink-0"
+    >
+      View game insights
+      <CaretRight aria-hidden size={15} />
+    </ButtonLink>
+  );
+}
+
 async function AccountSection({
   profilePromise,
 }: {
@@ -224,12 +243,13 @@ async function AccountSection({
             <CaretRight size={15} className="text-muted" />
           </Link>
         ) : null}
-        <form noValidate action={signOut}>
+        <form noValidate action={signOut} className="w-full">
           <PendingSubmit
             pendingLabel="Signing out…"
-            className="flex min-h-12 w-full items-center gap-3 py-2 text-sm"
+            className="pressable min-h-12 w-full gap-3 py-2 text-left text-sm font-medium text-danger hover:bg-danger/8 disabled:opacity-50"
+            style={{ justifyContent: "flex-start" }}
           >
-            <SignOut size={18} className="text-muted" />
+            <SignOut aria-hidden size={18} />
             Sign out
           </PendingSubmit>
         </form>
@@ -249,35 +269,45 @@ export default function ProfilePage({ params }: { params: ProfileParams }) {
       </Suspense>
 
       <section
-        aria-label="Playing history"
-        className="grid grid-cols-3 border-y border-line py-5 text-center"
+        aria-labelledby="playing-history-title"
+        className="border-y border-line"
       >
-        <div>
-          <Suspense fallback={<ProfileStatSkeleton />}>
-            <ProfileStat historyPromise={historyPromise} stat="sessions" />
+        <div className="flex items-center justify-between gap-3 pb-2 pt-3">
+          <h2 id="playing-history-title" className="text-sm font-semibold">
+            Playing history
+          </h2>
+          <Suspense fallback={null}>
+            <ProfileInsightsLink profilePromise={profilePromise} />
           </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">
-            Sessions
-          </span>
         </div>
-        <div className="border-x border-line">
-          <Suspense fallback={<ProfileStatSkeleton />}>
-            <ProfileStat historyPromise={historyPromise} stat="matches" />
-          </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">
-            Matches
-          </span>
-        </div>
-        <div>
-          <Suspense fallback={<ProfileStatSkeleton />}>
-            <ProfileStat historyPromise={historyPromise} stat="wins" />
-          </Suspense>
-          <span className="text-xs font-medium text-muted sm:text-sm">
-            Wins
-          </span>
+        <div className="grid grid-cols-3 pb-5 pt-2 text-center">
+          <div>
+            <Suspense fallback={<ProfileStatSkeleton />}>
+              <ProfileStat historyPromise={historyPromise} stat="sessions" />
+            </Suspense>
+            <span className="text-xs font-medium text-muted sm:text-sm">
+              Sessions
+            </span>
+          </div>
+          <div className="border-x border-line">
+            <Suspense fallback={<ProfileStatSkeleton />}>
+              <ProfileStat historyPromise={historyPromise} stat="matches" />
+            </Suspense>
+            <span className="text-xs font-medium text-muted sm:text-sm">
+              Matches
+            </span>
+          </div>
+          <div>
+            <Suspense fallback={<ProfileStatSkeleton />}>
+              <ProfileStat historyPromise={historyPromise} stat="wins" />
+            </Suspense>
+            <span className="text-xs font-medium text-muted sm:text-sm">
+              Wins
+            </span>
+          </div>
         </div>
       </section>
-      <p className="pt-3 text-center text-xs leading-5 text-muted">
+      <p className="pt-3 text-xs leading-5 text-muted">
         For fun, not a competitive rating.
       </p>
 

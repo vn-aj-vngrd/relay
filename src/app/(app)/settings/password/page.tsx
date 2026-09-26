@@ -18,7 +18,7 @@ export default async function ChangePasswordPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="border-b border-line pb-6">
+      <header className="hidden border-b border-line pb-6 lg:block">
         <p className="mb-3 text-sm">
           <Link
             href="/settings"

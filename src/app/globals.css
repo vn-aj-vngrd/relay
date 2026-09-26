@@ -433,16 +433,34 @@ p:not(.truncate) {
 @media (max-width: 63.999rem) {
   .app-shell:has(.game-workspace) > .app-mobile-header,
   .app-shell:has(.create-game-page) > .app-mobile-header,
+  .app-shell:has(.player-insights-page) > .app-mobile-header,
+  .app-shell:has(.secondary-mobile-header) > .app-mobile-header,
   .app-shell:has(.quick-play-page) > .app-mobile-header,
   .app-shell:has(.quick-play-page) > .app-bottom-nav {
     display: none;
   }
   .app-content:has(.create-game-page),
+  .app-content:has(.player-insights-page),
+  .app-content:has(.secondary-mobile-header),
   .app-content:has(.quick-play-page) {
     padding-top: env(safe-area-inset-top);
   }
   .app-content:has(.quick-play-page) {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .app-content:has(.player-insights-page) > nav[aria-label="Breadcrumb"] {
+    display: none;
+  }
+  .app-content:has(.secondary-mobile-header) > nav[aria-label="Breadcrumb"] {
+    display: none;
+  }
+  .app-content:has(.secondary-mobile-header) .help-center-content h1 {
+    display: none;
+  }
+  .app-content:has(.secondary-mobile-header)
+    .help-article-content
+    > nav[aria-label="Breadcrumb"] {
+    display: none;
   }
   .game-workspace {
     padding-top: env(safe-area-inset-top);

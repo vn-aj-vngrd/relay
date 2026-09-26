@@ -37,7 +37,7 @@ export default async function SettingsPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="pb-5">
+      <header className="hidden pb-5 lg:block">
         <h1 className="app-title">Settings</h1>
         <p className="mt-2 text-sm text-muted">
           Manage your account and choose how Relay looks, organizes your games,

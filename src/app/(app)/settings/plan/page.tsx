@@ -21,14 +21,14 @@ export default async function PlanPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="pb-6">
-        <h1 className="app-title">Plan & billing</h1>
-        <p className="mt-2 text-sm text-muted">
+      <header className="pb-2 lg:pb-6">
+        <h1 className="app-title hidden lg:block">Plan & billing</h1>
+        <p className="mt-2 hidden text-sm text-muted lg:block">
           Manage your hosting plan, compare options and review your history.
         </p>
         <Link
           href="/help/subscription-payments"
-          className="mt-2 inline-flex min-h-11 items-center text-sm text-primary hover:underline"
+          className="inline-flex min-h-11 items-center text-sm text-primary hover:underline lg:mt-2"
         >
           How to pay for a Relay subscription
         </Link>

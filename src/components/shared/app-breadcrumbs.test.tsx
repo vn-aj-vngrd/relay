@@ -54,6 +54,14 @@ describe("buildBreadcrumbItems", () => {
     ]);
   });
 
+  it("links back to Profile from personal game insights", () => {
+    expect(buildBreadcrumbItems("/profile/vanajvanguardia/insights")).toEqual([
+      { href: "/home", label: "Home" },
+      { href: "/profile/vanajvanguardia", label: "Profile" },
+      { href: undefined, label: "Game insights" },
+    ]);
+  });
+
   it("labels feedback as an authenticated support destination", () => {
     expect(buildBreadcrumbItems("/feedback")).toEqual([
       { href: "/home", label: "Home" },

@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-25";
+export const helpReviewedAt = "2026-09-27";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -315,6 +315,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Read a public or link-only shared game without an account. RSVP by name to participate as a guest; use an account for cross-game history and account invitations. Private games need authorized access.",
       "Inside a game, use Overview for the plan; Play for roster, arrival, courts, and results (later Recap); Chat for coordination; Payments for repayment; Story for images and memories.",
       "Use Home and Games for account invitations and saved games. Game settings changes a game; account Settings changes your own preferences. Replay the app tour after signing in if you need orientation.",
+      "On phones, account pages such as Search, Profile, Notifications, Settings, Courts, and Help use a compact back-and-title bar. Its back control names the page it opens; Home, Games, and Groups remain in the bottom navigation.",
     ],
     outcome:
       "You can distinguish a court listing, a saved game, a recurring group, and temporary Quick Play. Relay does not reserve courts, transfer money, or assign professional ratings.",
@@ -326,6 +327,7 @@ export const helpArticles: readonly HelpArticle[] = [
     sources: [
       "PRODUCT.md",
       "src/components/shared/app-nav.tsx",
+      "src/components/shared/secondary-mobile-header.tsx",
       "src/features/sessions/viewer.ts",
     ],
     action: { href: "/home?tour=1", label: "Replay app tour (account)" },
@@ -1464,6 +1466,32 @@ export const helpArticles: readonly HelpArticle[] = [
     },
   },
   {
+    slug: "player-insights",
+    category: "settings",
+    title: "See your game insights",
+    summary: "Review the games you hosted and your recorded play results.",
+    audience: "Signed-in account players",
+    prerequisites: ["Sign in to your own Relay profile."],
+    steps: [
+      "Open your own Profile and choose View game insights. On desktop, you can also choose it from Home.",
+      "Read your completed hosted-game count, games with recorded play, matches, wins and losses, win rate, and your team’s points scored and conceded.",
+      "Open a recent game to review its Play results. Only the five most recent games with recorded matches appear here; your totals cover all recorded matches.",
+    ],
+    outcome:
+      "You can review your own playing history without changing any game result.",
+    troubleshooting: [
+      "An RSVP or an unscored game does not count as played. Finish and record a match to include its result.",
+      "Only you can open your detailed game insights. Profile summaries shown to other players are separate.",
+      "Device-local Quick Play results do not appear in account insights.",
+    ],
+    related: ["settings-profile", "run-live-play", "score-corrections"],
+    sources: [
+      "src/app/(app)/home/page.tsx",
+      "src/app/(app)/profile/[username]/insights/page.tsx",
+      "src/features/players/insights.ts",
+    ],
+  },
+  {
     slug: "settings-profile",
     category: "settings",
     title: "Edit your profile and personal preferences",
@@ -1490,6 +1518,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "notifications",
       "install-offline",
       "privacy",
+      "player-insights",
     ],
     sources: [
       "src/features/players/actions.ts",

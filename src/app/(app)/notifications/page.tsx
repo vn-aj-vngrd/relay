@@ -36,7 +36,7 @@ export default async function NotificationsPage({
     <div className="mx-auto w-full max-w-6xl">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
         <div>
-          <h1 className="app-title">Notifications</h1>
+          <h1 className="app-title hidden lg:block">Notifications</h1>
           <p className="mt-2 text-sm text-muted">
             {unreadCount
               ? `${unreadCount} unread ${unreadCount === 1 ? "update" : "updates"}`

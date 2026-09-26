@@ -26,7 +26,7 @@ export default async function FeedbackPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl">
-      <header className="border-b border-line pb-6">
+      <header className="hidden border-b border-line pb-6 lg:block">
         <h1 className="app-title">Send feedback</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
           Report a problem, suggest an improvement, or tell us what makes game
@@ -34,7 +34,10 @@ export default async function FeedbackPage({
         </p>
       </header>
 
-      <section aria-labelledby="feedback-form-title" className="py-8">
+      <section
+        aria-labelledby="feedback-form-title"
+        className="pb-8 pt-2 lg:pt-8"
+      >
         <div className="mb-5">
           <h2 id="feedback-form-title" className="text-lg font-bold">
             Tell Relay what happened
