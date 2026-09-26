@@ -11,7 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Tooltip } from "@/components/ui/tooltip";
 import { AgentHistoryActions } from "./history-actions";
 import { chatAge } from "./history-age";
-import { historyRequest, loadConversation } from "./history-client";
+import {
+  historyRequest,
+  loadConversation,
+  loadConversationSummary,
+} from "./history-client";
 import { AgentHistoryStatus } from "./history-status";
 import type { AgentConversationSummary } from "./history-types";
 import { useAgentSession } from "./session";
@@ -236,20 +240,46 @@ export function AgentHistoryCollection() {
       void historyRequest<HistoryPage>(
         tab === "archived" ? "?archived=true" : ""
       )
-        .then((page) => {
+        .then(async (page) => {
           if (cancelled) return;
           const previousFirst = firstPageIds.current;
           const freshIds = new Set(page.conversations.map((row) => row.id));
-          firstPageIds.current = freshIds;
+          const displaced =
+            rows.length > 30
+              ? rows.filter(
+                  (row) => previousFirst.has(row.id) && !freshIds.has(row.id)
+                )
+              : [];
+          const retained = new Map<string, AgentConversationSummary>();
+          const failed = new Set<string>();
+          await Promise.all(
+            displaced.map(async (row) => {
+              try {
+                const saved = await loadConversationSummary(row.id);
+                if (Boolean(saved.archivedAt) === (tab === "archived"))
+                  retained.set(row.id, saved);
+              } catch {
+                retained.set(row.id, row);
+                failed.add(row.id);
+              }
+            })
+          );
+          if (cancelled) return;
+          firstPageIds.current = new Set([...freshIds, ...failed]);
           if (rows.length <= 30) {
             cursor.current = page.conversations.at(-1) ?? null;
             setHasMore(page.hasMore);
           }
           setRows((current) => [
             ...page.conversations,
-            ...current.filter(
-              (row) => !previousFirst.has(row.id) && !freshIds.has(row.id)
-            ),
+            ...current.flatMap((row) => {
+              if (freshIds.has(row.id)) return [];
+              if (previousFirst.has(row.id)) {
+                const saved = retained.get(row.id);
+                return saved ? [saved] : [];
+              }
+              return [row];
+            }),
           ]);
         })
         .catch(() => {})
