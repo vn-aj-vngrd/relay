@@ -12,6 +12,7 @@ import {
   AgentHistoryError,
   beginAgentTurn,
   finishAgentTurn,
+  releaseUnstartedAgentTurn,
 } from "@/features/agent/history";
 import { agentInstructions } from "@/features/agent/instructions";
 import { agentModel } from "@/features/agent/provider";
@@ -61,6 +62,11 @@ export async function POST(request: Request) {
     conversationId: string;
     requestId: string;
   } | null = null;
+  let unstartedTurn: {
+    userId: string;
+    conversationId: string;
+    requestId: string;
+  } | null = null;
   let answer = "";
   let interrupted = false;
   let charged = false;
@@ -96,6 +102,15 @@ export async function POST(request: Request) {
       return failure(403, "Request not allowed.");
     const user = await getCurrentUser();
     if (!user) return failure(401, "Sign in to use Agent.");
+    const body = await readAgentRequest(request);
+    if (!body) return failure(400, "Start a new chat or shorten your message.");
+    const requestId = body.requestId ?? crypto.randomUUID();
+    if (body.conversationId)
+      unstartedTurn = {
+        userId: user.id,
+        conversationId: body.conversationId,
+        requestId,
+      };
     const account = await db.query.users.findFirst({
       columns: { suspendedAt: true },
       where: eq(users.id, user.id),
@@ -125,9 +140,6 @@ export async function POST(request: Request) {
           headers: { ...privateHeaders, ...rateLimitHeaders(limit) },
         }
       );
-    const body = await readAgentRequest(request);
-    if (!body) return failure(400, "Start a new chat or shorten your message.");
-    const requestId = body.requestId ?? crypto.randomUUID();
     await reserveAgentMessage(user.id, requestId, config);
     reservation = { userId: user.id, id: requestId };
     let modelMessages = body.messages;
@@ -144,6 +156,7 @@ export async function POST(request: Request) {
         conversationId: body.conversationId,
         requestId,
       };
+      unstartedTurn = null;
     }
     const cancellation = new AbortController();
     const signal = AbortSignal.any([
@@ -395,6 +408,17 @@ export async function POST(request: Request) {
         "This request was already received. Send a new message to try again."
       );
     return failure(503, "Agent is temporarily unavailable. Try again later.");
+  } finally {
+    if (unstartedTurn)
+      try {
+        await releaseUnstartedAgentTurn(
+          unstartedTurn.userId,
+          unstartedTurn.conversationId,
+          unstartedTurn.requestId
+        );
+      } catch {
+        /* The short lease still expires if cleanup is unavailable. */
+      }
   }
 }
 

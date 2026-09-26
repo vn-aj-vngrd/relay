@@ -50,6 +50,7 @@ import {
   listAgentConversations,
   readAgentConversation,
   readAgentConversationSummary,
+  releaseUnstartedAgentTurn,
   renameAgentConversation,
   setAgentConversationArchived,
 } from "./history";
@@ -158,6 +159,20 @@ describe("private Agent history", () => {
     expect(mocks.set).toHaveBeenCalledWith(
       expect.objectContaining({ activeRequestId: "request-one" })
     );
+  });
+  it("only releases an owned, unstarted matching first-turn reservation", async () => {
+    await releaseUnstartedAgentTurn("owner", "conversation", "request-one");
+    const predicate = new PgDialect().sqlToQuery(
+      mocks.where.mock.calls.at(-1)![0]
+    );
+    expect(predicate.sql).toContain('"user_id"');
+    expect(predicate.sql).toContain('"active_request_id"');
+    expect(predicate.sql).toContain("jsonb_array_length");
+    expect(predicate.params).toEqual(["conversation", "owner", "request-one"]);
+    expect(mocks.set).toHaveBeenCalledWith({
+      activeRequestId: null,
+      activeUntil: null,
+    });
   });
   it("reads one owned summary without loading messages", async () => {
     mocks.rows.push({

@@ -245,6 +245,7 @@ describe("Agent chat controls", () => {
   });
   it("opens an archived chat for reading without allowing a new reply", async () => {
     window.history.replaceState(null, "", "/agent?chat=archived");
+    mocks.summary.mockResolvedValue({ archivedAt: new Date().toISOString() });
     mocks.load.mockResolvedValue({
       id: "archived",
       title: "Old chat",
@@ -324,6 +325,90 @@ describe("Agent chat controls", () => {
         screen.getByRole("textbox", { name: "Message Agent" })
       ).toHaveAttribute("contenteditable", "true")
     );
+  });
+  it("reloads a selected chat when another tab completes a reply between polls", async () => {
+    const session = createAgentSession();
+    session.conversationId = "saved";
+    session.title = "Saved chat";
+    session.chat = new Chat({});
+    session.chat.messages = [
+      { id: "question", role: "user", parts: [{ type: "text", text: "Hi" }] },
+    ];
+    mocks.messages = session.chat.messages;
+    const previous = "2026-09-26T03:59:00.000Z";
+    const latest = "2026-09-26T04:00:00.000Z";
+    mocks.summary.mockResolvedValue({
+      archivedAt: null,
+      status: "done",
+      updatedAt: previous,
+    });
+    mocks.load.mockResolvedValue({
+      id: "saved",
+      title: "Saved chat",
+      updatedAt: previous,
+      archivedAt: null,
+      pending: false,
+      messages: [{ id: "question", role: "user", content: "Hi" }],
+    });
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    renderComponent(
+      <AgentRuntimeContext value={{ get: () => session }}>
+        <AgentSessionProvider userId="owner">
+          <AgentChat available />
+        </AgentSessionProvider>
+      </AgentRuntimeContext>
+    );
+    await waitFor(() => expect(mocks.reset).toHaveBeenCalledOnce());
+    mocks.summary.mockResolvedValue({
+      archivedAt: null,
+      status: "done",
+      updatedAt: latest,
+    });
+    mocks.load.mockResolvedValue({
+      id: "saved",
+      title: "Saved chat",
+      updatedAt: latest,
+      archivedAt: null,
+      pending: false,
+      messages: [
+        { id: "question", role: "user", content: "Hi" },
+        { id: "answer", role: "assistant", content: "Hello" },
+      ],
+    });
+    fireEvent.focus(window);
+    await waitFor(() =>
+      expect(mocks.reset).toHaveBeenCalledWith(
+        expect.arrayContaining([expect.objectContaining({ id: "answer" })])
+      )
+    );
+  });
+  it("keeps a stale selected chat read only when transcript refresh fails", async () => {
+    const session = createAgentSession();
+    session.conversationId = "saved";
+    session.title = "Saved chat";
+    session.chat = new Chat({});
+    session.chat.messages = [
+      { id: "question", role: "user", parts: [{ type: "text", text: "Hi" }] },
+    ];
+    mocks.messages = session.chat.messages;
+    mocks.summary.mockResolvedValue({
+      archivedAt: null,
+      status: "done",
+      updatedAt: "2026-09-26T04:00:00.000Z",
+    });
+    mocks.load.mockRejectedValue(new Error("Offline"));
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    renderComponent(
+      <AgentRuntimeContext value={{ get: () => session }}>
+        <AgentSessionProvider userId="owner">
+          <AgentChat available />
+        </AgentSessionProvider>
+      </AgentRuntimeContext>
+    );
+    await waitFor(() => expect(mocks.load).toHaveBeenCalled());
+    expect(
+      screen.getByRole("textbox", { name: "Message Agent" })
+    ).toHaveAttribute("contenteditable", "false");
   });
   it("shows the question immediately while a suggested chat is being created", async () => {
     let finish!: (value: { id: string; title: string }) => void;

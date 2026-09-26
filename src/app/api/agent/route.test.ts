@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   reserve: vi.fn(),
   charge: vi.fn(),
   release: vi.fn(),
+  releaseUnstarted: vi.fn(),
   usage: vi.fn(),
 }));
 vi.mock("@/features/auth/session", () => ({ getCurrentUser: mocks.user }));
@@ -59,6 +60,7 @@ vi.mock("@/features/agent/history", () => ({
   },
   beginAgentTurn: mocks.begin,
   finishAgentTurn: mocks.finish,
+  releaseUnstartedAgentTurn: mocks.releaseUnstarted,
 }));
 
 import { AgentQuotaError } from "@/features/agent/usage";
@@ -94,6 +96,7 @@ beforeEach(() => {
   mocks.reserve.mockResolvedValue({});
   mocks.charge.mockResolvedValue(undefined);
   mocks.release.mockResolvedValue(undefined);
+  mocks.releaseUnstarted.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
   it.each(["true", "false"])(
@@ -266,6 +269,25 @@ describe("Agent streaming boundary", () => {
     mocks.reserve.mockRejectedValue(new AgentQuotaError("full"));
     expect((await POST(request())).status).toBe(402);
     expect(mocks.provider).not.toHaveBeenCalled();
+  });
+  it("releases an unstarted first-turn reservation after preflight rejection", async () => {
+    const firstTurn = {
+      requestId: "6d36a1e5-314e-4d7f-9eac-3e68705c17b8",
+      conversationId: "d6bb8798-b1a1-433f-8db5-0d585d5cb9e5",
+      messageId: "question",
+      messages: [{ role: "user", content: "Next game?" }],
+    };
+    mocks.limit.mockResolvedValueOnce({ allowed: false });
+    expect((await POST(request(firstTurn))).status).toBe(429);
+    mocks.reserve.mockRejectedValueOnce(new AgentQuotaError("full"));
+    expect((await POST(request(firstTurn))).status).toBe(402);
+    expect(mocks.releaseUnstarted).toHaveBeenCalledTimes(2);
+    expect(mocks.releaseUnstarted).toHaveBeenCalledWith(
+      "server-user",
+      firstTurn.conversationId,
+      firstTurn.requestId
+    );
+    expect(mocks.begin).not.toHaveBeenCalled();
   });
   it("counts partial answers when the provider fails after visible text", async () => {
     mocks.stream.mockReturnValue({

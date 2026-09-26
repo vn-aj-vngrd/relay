@@ -341,6 +341,22 @@ export async function beginAgentTurn(
       }));
   });
 }
+export async function releaseUnstartedAgentTurn(
+  userId: string,
+  id: string,
+  requestId: string
+) {
+  await db
+    .update(agentConversations)
+    .set({ activeRequestId: null, activeUntil: null })
+    .where(
+      and(
+        owned(userId, id),
+        eq(agentConversations.activeRequestId, requestId),
+        sql`jsonb_array_length(${agentConversations.messages}) = 0`
+      )
+    );
+}
 export async function finishAgentTurn(
   userId: string,
   id: string,

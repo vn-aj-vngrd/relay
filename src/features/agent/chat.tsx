@@ -193,6 +193,7 @@ export function AgentChat({
     ? [...messages, pendingQuestion]
     : messages;
   const viewport = useRef<HTMLDivElement>(null);
+  const knownUpdatedAt = useRef<string | null>(null);
   const follow = useRef(true);
   const [scrolling, setScrolling] = useState(false);
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,6 +212,7 @@ export function AgentChat({
     remotePending;
   useEffect(() => {
     let cancelled = false;
+    const localWorkStarted = () => session.activity === "working";
     const refresh = () => {
       void historyRequest<{ conversations: AgentConversationSummary[] }>()
         .then((recent) => {
@@ -227,6 +229,13 @@ export function AgentChat({
             const archived = Boolean(saved.archivedAt);
             session.archived = archived;
             setActiveArchived(archived);
+            if (busy || localWorkStarted()) return;
+            if (
+              saved.status === "working" ||
+              (typeof saved.updatedAt === "string" &&
+                saved.updatedAt !== knownUpdatedAt.current)
+            )
+              setRemotePending(true);
           })
           .catch(() => {});
     };
@@ -238,7 +247,7 @@ export function AgentChat({
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, [activeId, busy, session]);
+  }, [activeId, busy, session, setRemotePending]);
   const {
     proposals,
     error: proposalError,
@@ -281,6 +290,7 @@ export function AgentChat({
   }, [messages, status, proposals.length]);
   function resetConversation() {
     session.conversationId = null;
+    knownUpdatedAt.current = null;
     session.archived = false;
     session.title = "Your chats";
     setActiveTitle("Your chats");
@@ -314,6 +324,7 @@ export function AgentChat({
     try {
       const saved = await loadConversation(id);
       setMessages(conversationMessages(saved));
+      knownUpdatedAt.current = saved.updatedAt;
       session.conversationId = id;
       session.archived = Boolean(saved.archivedAt);
       session.title = saved.title;
@@ -352,6 +363,7 @@ export function AgentChat({
           session.draft = "";
         }
         session.conversationId = id;
+        knownUpdatedAt.current = saved.updatedAt;
         session.archived = Boolean(saved.archivedAt);
         session.title = saved.title;
         setActiveTitle(saved.title);
@@ -374,27 +386,31 @@ export function AgentChat({
   useEffect(() => {
     if (!remotePending || !activeId) return;
     let cancelled = false;
-    const timer = window.setInterval(() => {
+    let notified = false;
+    const refresh = () => {
       void loadConversation(activeId)
         .then((saved) => {
-          if (cancelled) return;
+          if (cancelled || session.conversationId !== activeId) return;
           setMessages(conversationMessages(saved));
+          knownUpdatedAt.current = saved.updatedAt;
           setRemotePending(saved.pending);
         })
         .catch(() => {
-          if (!cancelled) {
-            setRemotePending(false);
+          if (!cancelled && !notified) {
+            notified = true;
             notify(
               "Couldn’t refresh this reply. Reopen the chat from History."
             );
           }
         });
-    }, 3000);
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 3000);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [activeId, remotePending, setMessages, setRemotePending]);
+  }, [activeId, remotePending, session, setMessages, setRemotePending]);
   function limitInput(text: string) {
     if (text.length <= agentMessageMaxLength) return text;
     notify(
@@ -445,6 +461,7 @@ export function AgentChat({
         );
         if (controller.signal.aborted) return;
         session.conversationId = saved.id;
+        knownUpdatedAt.current = saved.updatedAt;
         session.archived = false;
         session.title = saved.title;
         setActiveTitle(saved.title);
