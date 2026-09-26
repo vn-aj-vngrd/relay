@@ -179,13 +179,53 @@ it("updates a finished row when another tab starts a reply", async () => {
     });
   mount();
   await screen.findByText("Done");
-  const refresh = intervals.mock.calls.find(([, delay]) => delay === 5000)?.[0];
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
   expect(refresh).toBeDefined();
   await act(async () => {
     (refresh as () => void)();
   });
   expect(screen.getByText("Working")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Chat a" })).toBeInTheDocument();
+  intervals.mockRestore();
+});
+
+it("reconciles chats archived or restored in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  mocks.read
+    .mockResolvedValueOnce({ conversations: [row("a")], hasMore: false })
+    .mockResolvedValueOnce({ conversations: [], hasMore: false })
+    .mockResolvedValueOnce({
+      conversations: [{ ...row("a"), archivedAt: new Date().toISOString() }],
+      hasMore: false,
+    })
+    .mockResolvedValueOnce({ conversations: [], hasMore: false });
+  mount();
+  await screen.findByRole("button", { name: "Chat a" });
+  const activeRefresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(activeRefresh).toBeDefined();
+  await act(async () => {
+    (activeRefresh as () => void)();
+  });
+  expect(
+    screen.queryByRole("button", { name: "Chat a" })
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("tab", { name: "Archived" }));
+  await screen.findByRole("button", { name: "Chat a" });
+  const archivedRefresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(archivedRefresh).toBeDefined();
+  await act(async () => {
+    (archivedRefresh as () => void)();
+  });
+  expect(
+    screen.queryByRole("button", { name: "Chat a" })
+  ).not.toBeInTheDocument();
+  expect(mocks.read.mock.calls[3][0]).toBe("?archived=true");
   intervals.mockRestore();
 });
 

@@ -105,6 +105,7 @@ export function AgentHistoryCollection() {
     }
   }, [editing]);
   const cursor = useRef<AgentConversationSummary | null>(null);
+  const firstPageIds = useRef<Set<string>>(new Set());
   const request = useRef<AbortController | null>(null);
   const load = useCallback(
     async (more = false) => {
@@ -126,6 +127,10 @@ export function AgentHistoryCollection() {
           { signal: controller.signal }
         );
         if (controller.signal.aborted) return;
+        if (!more)
+          firstPageIds.current = new Set(
+            page.conversations.map((row) => row.id)
+          );
         cursor.current = page.conversations.at(-1) ?? last;
         setRows((current) => {
           if (!more) return page.conversations;
@@ -156,6 +161,7 @@ export function AgentHistoryCollection() {
   );
   useEffect(() => {
     cursor.current = null;
+    firstPageIds.current = new Set();
     setRows([]);
     setHasMore(false);
     void load();
@@ -215,7 +221,6 @@ export function AgentHistoryCollection() {
     return () => window.clearInterval(timer);
   }, [rows, activeId, session.activity]);
   useEffect(() => {
-    if (tab !== "active" || !rows.length) return;
     let cancelled = false;
     let refreshing = false;
     const refresh = () => {
@@ -228,18 +233,24 @@ export function AgentHistoryCollection() {
       )
         return;
       refreshing = true;
-      void historyRequest<HistoryPage>()
+      void historyRequest<HistoryPage>(
+        tab === "archived" ? "?archived=true" : ""
+      )
         .then((page) => {
           if (cancelled) return;
-          const fresh = new Map(page.conversations.map((row) => [row.id, row]));
-          setRows((current) =>
-            current.map((row) => {
-              const update = fresh.get(row.id);
-              return update
-                ? { ...row, status: update.status, updatedAt: update.updatedAt }
-                : row;
-            })
-          );
+          const previousFirst = firstPageIds.current;
+          const freshIds = new Set(page.conversations.map((row) => row.id));
+          firstPageIds.current = freshIds;
+          if (rows.length <= 30) {
+            cursor.current = page.conversations.at(-1) ?? null;
+            setHasMore(page.hasMore);
+          }
+          setRows((current) => [
+            ...page.conversations,
+            ...current.filter(
+              (row) => !previousFirst.has(row.id) && !freshIds.has(row.id)
+            ),
+          ]);
         })
         .catch(() => {})
         .finally(() => {
