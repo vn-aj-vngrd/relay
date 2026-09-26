@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   actor: "actor",
   activeUntil: null as Date | null,
   archivedAt: null as Date | null,
+  lockOrder: [] as string[],
 }));
 vi.mock("@/features/auth/session", () => ({
   requireUser: async () => ({ id: mocks.actor }),
@@ -37,8 +38,12 @@ vi.mock("@/db/client", async () => {
     select: () => ({
       from: (table: unknown) => ({
         where: () => ({
-          for: async () =>
-            table === agentSettings
+          for: async () => {
+            if (table !== agentSettings)
+              mocks.lockOrder.push(
+                table === agentConversations ? "conversation" : "proposal"
+              );
+            return table === agentSettings
               ? [mocks.config]
               : table === agentConversations
                 ? [
@@ -47,7 +52,8 @@ vi.mock("@/db/client", async () => {
                       archivedAt: mocks.archivedAt,
                     },
                   ]
-                : [mocks.proposal],
+                : [mocks.proposal];
+          },
         }),
       }),
     }),
@@ -71,6 +77,7 @@ beforeEach(() => {
   mocks.writes = 0;
   mocks.activeUntil = null;
   mocks.archivedAt = null;
+  mocks.lockOrder = [];
   mocks.config = {
     enabled: true,
     allowGameCreation: true,
@@ -110,6 +117,10 @@ describe("Agent confirmation lifecycle", () => {
       "/groups/friday"
     );
     expect(mocks.writes).toBe(1);
+  });
+  it("locks the conversation before the proposal when confirming", async () => {
+    await confirmCreation("actor", "proposal");
+    expect(mocks.lockOrder.slice(0, 2)).toEqual(["conversation", "proposal"]);
   });
   it.each([
     "collecting",
