@@ -24,6 +24,7 @@ import {
   createConversation,
   historyRequest,
   loadConversation,
+  loadConversationSummary,
   setConversationUrl,
 } from "./history-client";
 import { AgentHistoryPanel } from "./history-panel";
@@ -51,15 +52,26 @@ const createTransport = (session: AgentSession) =>
       if (!response.ok) throw new Error(`AGENT_HTTP_${response.status}`);
       return ensureAgentUIStream(response);
     },
-    prepareSendMessagesRequest: ({ messages, trigger }) => ({
-      body: {
-        requestId: crypto.randomUUID(),
-        messageId: messages.findLast((message) => message.role === "user")?.id,
-        retry: trigger === "regenerate-message",
-        conversationId: session.conversationId ?? undefined,
-        messages: agentTransportMessages(messages, session.conversationId),
-      },
-    }),
+    prepareSendMessagesRequest: ({ messages, trigger }) => {
+      const question = messages.findLast((message) => message.role === "user");
+      const requestId =
+        trigger !== "regenerate-message" &&
+        question?.metadata &&
+        typeof question.metadata === "object" &&
+        "requestId" in question.metadata &&
+        typeof question.metadata.requestId === "string"
+          ? question.metadata.requestId
+          : crypto.randomUUID();
+      return {
+        body: {
+          requestId,
+          messageId: question?.id,
+          retry: trigger === "regenerate-message",
+          conversationId: session.conversationId ?? undefined,
+          messages: agentTransportMessages(messages, session.conversationId),
+        },
+      };
+    },
   });
 
 export function AgentChat({
@@ -208,6 +220,15 @@ export function AgentChat({
             );
         })
         .catch(() => {});
+      if (activeId)
+        void loadConversationSummary(activeId)
+          .then((saved) => {
+            if (cancelled || session.conversationId !== activeId) return;
+            const archived = Boolean(saved.archivedAt);
+            session.archived = archived;
+            setActiveArchived(archived);
+          })
+          .catch(() => {});
     };
     refresh();
     const timer = window.setInterval(refresh, 5000);
@@ -217,7 +238,7 @@ export function AgentChat({
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, [busy]);
+  }, [activeId, busy, session]);
   const {
     proposals,
     error: proposalError,
@@ -397,9 +418,10 @@ export function AgentChat({
       return;
     prepareLock.current = true;
     const controller = new AbortController();
+    const requestId = crypto.randomUUID();
     const createdAt = new Date().toISOString();
     const question: UIMessage = {
-      metadata: { createdAt },
+      metadata: { createdAt, requestId },
       id: crypto.randomUUID(),
       role: "user",
       parts: [{ type: "text", text: text.trim() }],
@@ -416,7 +438,11 @@ export function AgentChat({
     try {
       if (controller.signal.aborted) return;
       if (!session.conversationId) {
-        const saved = await createConversation(text, controller.signal);
+        const saved = await createConversation(
+          text,
+          requestId,
+          controller.signal
+        );
         if (controller.signal.aborted) return;
         session.conversationId = saved.id;
         session.archived = false;

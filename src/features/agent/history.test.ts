@@ -49,6 +49,7 @@ import {
   finishAgentTurn,
   listAgentConversations,
   readAgentConversation,
+  readAgentConversationSummary,
   renameAgentConversation,
   setAgentConversationArchived,
 } from "./history";
@@ -124,9 +125,52 @@ describe("private Agent history", () => {
   it("does not create a second chat while an account reply is active", async () => {
     mocks.activeRows.push({ id: "working" });
     await expect(
-      createAgentConversation("owner", "New chat")
+      createAgentConversation("owner", "New chat", "request-one")
     ).rejects.toMatchObject({ status: 409 });
     expect(mocks.database.insert).not.toHaveBeenCalled();
+  });
+  it("reserves a first turn before another tab can create a chat", async () => {
+    mocks.rows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: null,
+      lastInterrupted: false,
+    });
+    await createAgentConversation("owner", "New chat", "request-one");
+    expect(mocks.query.values).toHaveBeenCalledWith({
+      userId: "owner",
+      title: "New chat",
+      activeRequestId: "request-one",
+      activeUntil: expect.any(Date),
+    });
+    mocks.activeRows.push({ id: "conversation" });
+    await expect(
+      createAgentConversation("owner", "Another chat", "request-two")
+    ).rejects.toMatchObject({ status: 409 });
+  });
+  it("allows the matching reserved first turn once", async () => {
+    mocks.rows.push({
+      ...row(),
+      activeRequestId: "request-one",
+      activeUntil: new Date(Date.now() + 30_000),
+    });
+    await beginAgentTurn("owner", "conversation", "request-one", "Question");
+    expect(mocks.set).toHaveBeenCalledWith(
+      expect.objectContaining({ activeRequestId: "request-one" })
+    );
+  });
+  it("reads one owned summary without loading messages", async () => {
+    mocks.rows.push({
+      ...row(),
+      archivedAt: null,
+      lastRole: "assistant",
+      lastInterrupted: false,
+    });
+    const result = await readAgentConversationSummary("owner", "conversation");
+    expect(result.status).toBe("done");
+    expect(mocks.database.select).toHaveBeenCalledWith(
+      expect.objectContaining({ id: expect.anything() })
+    );
   });
   it("does not archive a chat with a live reply", async () => {
     mocks.rows.push({

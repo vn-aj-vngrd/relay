@@ -9,7 +9,7 @@ import { readAgentJson } from "@/features/agent/request";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const titleSchema = z
-  .object({ title: z.string().trim().min(1).max(100) })
+  .object({ title: z.string().trim().min(1).max(100), requestId: z.uuid() })
   .strict();
 export async function GET(request: Request) {
   return withAgentHistory(request, async (userId) => {
@@ -41,6 +41,10 @@ export async function POST(request: Request) {
         429,
         "Chat creation limit reached. Try again later."
       );
-    return createAgentConversation(userId, input.data.title);
+    return createAgentConversation(
+      userId,
+      input.data.title,
+      input.data.requestId
+    );
   });
 }

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   create: vi.fn(),
   load: vi.fn(),
   history: vi.fn(),
+  summary: vi.fn(),
   send: vi.fn(),
   stop: vi.fn(),
   clear: vi.fn(),
@@ -42,6 +43,7 @@ vi.mock("./history-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./history-client")>()),
   createConversation: mocks.create,
   loadConversation: mocks.load,
+  loadConversationSummary: mocks.summary,
   historyRequest: mocks.history,
   setConversationUrl: vi.fn(),
 }));
@@ -67,6 +69,7 @@ beforeEach(() => {
     updatedAt: new Date().toISOString(),
   });
   mocks.history.mockResolvedValue({ conversations: [] });
+  mocks.summary.mockResolvedValue({ archivedAt: null });
   mocks.status = "ready";
   mocks.error = undefined;
   mocks.messages = [];
@@ -295,6 +298,32 @@ describe("Agent chat controls", () => {
       screen.getByRole("textbox", { name: "Message Agent" })
     ).toHaveAttribute("contenteditable", "false");
     expect(mocks.load).not.toHaveBeenCalled();
+  });
+  it("reconciles archive and restore changes from another tab", async () => {
+    window.history.replaceState(null, "", "/agent?chat=saved");
+    mocks.load.mockResolvedValue({
+      id: "saved",
+      title: "Saved chat",
+      messages: [],
+      archivedAt: null,
+      pending: false,
+    });
+    mocks.summary
+      .mockResolvedValueOnce({ archivedAt: new Date().toISOString() })
+      .mockResolvedValue({ archivedAt: null });
+    render(<AgentChat available />);
+    await screen.findByText(
+      "This chat is archived. Restore it from Chat history to continue."
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Message Agent" })
+    ).toHaveAttribute("contenteditable", "false");
+    fireEvent.focus(window);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("textbox", { name: "Message Agent" })
+      ).toHaveAttribute("contenteditable", "true")
+    );
   });
   it("shows the question immediately while a suggested chat is being created", async () => {
     let finish!: (value: { id: string; title: string }) => void;

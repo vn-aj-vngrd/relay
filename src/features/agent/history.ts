@@ -96,7 +96,11 @@ export async function listAgentConversations(
     hasMore: rows.length > 30,
   };
 }
-export async function createAgentConversation(userId: string, title: string) {
+export async function createAgentConversation(
+  userId: string,
+  title: string,
+  requestId: string
+) {
   return db.transaction(async (tx) => {
     await tx
       .select({ id: users.id })
@@ -121,7 +125,12 @@ export async function createAgentConversation(userId: string, title: string) {
       );
     const [row] = await tx
       .insert(agentConversations)
-      .values({ userId, title })
+      .values({
+        userId,
+        title,
+        activeRequestId: requestId,
+        activeUntil: new Date(Date.now() + 30_000),
+      })
       .returning(summaryColumns);
     return summary(row);
   });
@@ -148,6 +157,14 @@ export async function readAgentConversation(
         row.activeUntil.getTime() > Date.now()
     ),
   };
+}
+export async function readAgentConversationSummary(userId: string, id: string) {
+  const [row] = await db
+    .select(summaryColumns)
+    .from(agentConversations)
+    .where(owned(userId, id));
+  if (!row) throw new AgentHistoryError(404, "Chat not found.");
+  return summary(row);
 }
 export async function renameAgentConversation(
   userId: string,
@@ -240,10 +257,13 @@ export async function beginAgentTurn(
         409,
         "Restore this chat before sending a message."
       );
+    const reservedForThisTurn =
+      row.activeRequestId === requestId && row.messages.length === 0;
     if (
       row.activeRequestId &&
       row.activeUntil &&
-      row.activeUntil.getTime() > Date.now()
+      row.activeUntil.getTime() > Date.now() &&
+      !reservedForThisTurn
     )
       throw new AgentHistoryError(
         409,

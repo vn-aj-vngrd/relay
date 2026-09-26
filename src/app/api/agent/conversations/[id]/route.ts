@@ -3,6 +3,7 @@ import {
   AgentHistoryError,
   deleteAgentConversation,
   readAgentConversation,
+  readAgentConversationSummary,
   renameAgentConversation,
   setAgentConversationArchived,
 } from "@/features/agent/history";
@@ -16,9 +17,12 @@ async function conversationId(context: Context) {
   return parsed.data;
 }
 export async function GET(request: Request, context: Context) {
-  return withAgentHistory(request, async (userId) =>
-    readAgentConversation(userId, await conversationId(context))
-  );
+  return withAgentHistory(request, async (userId) => {
+    const id = await conversationId(context);
+    return new URL(request.url).searchParams.get("summary") === "true"
+      ? readAgentConversationSummary(userId, id)
+      : readAgentConversation(userId, id);
+  });
 }
 export async function PATCH(request: Request, context: Context) {
   return withAgentHistory(request, async (userId) => {

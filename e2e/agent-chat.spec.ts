@@ -85,6 +85,7 @@ for (const width of [390, 1440]) {
     let approvals = 0;
     let releaseReply: (() => void) | undefined;
     let holdReply = false;
+    let reservedRequestId: string | null = null;
     await page.route("**/api/agent/creations**", async (route) => {
       const request = route.request();
       const action =
@@ -128,6 +129,11 @@ for (const width of [390, 1440]) {
     let archived = false;
     await page.route("**/api/agent/conversations**", (route) => {
       const request = route.request();
+      if (request.method() === "POST") {
+        reservedRequestId = (request.postDataJSON() as { requestId: string })
+          .requestId;
+        expect(reservedRequestId).toMatch(/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i);
+      }
       if (request.method() === "PATCH")
         archived = (request.postDataJSON() as { archived: boolean }).archived;
       const summary = {
@@ -156,9 +162,14 @@ for (const width of [390, 1440]) {
     await page.route("**/api/agent", async (route) => {
       if (route.request().method() !== "GET") {
         const body = route.request().postDataJSON() as {
+          requestId: string;
           messageId: string;
           messages: { content: string }[];
         };
+        if (reservedRequestId) {
+          expect(body.requestId).toBe(reservedRequestId);
+          reservedRequestId = null;
+        }
         expect(body.messages).toHaveLength(1);
         const text = body.messages.at(-1)?.content ?? "";
         if (
