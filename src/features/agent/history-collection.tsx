@@ -265,7 +265,12 @@ export function AgentHistoryCollection() {
                 const saved = await loadConversationSummary(row.id);
                 if (Boolean(saved.archivedAt) === (tab === "archived"))
                   retained.set(row.id, saved);
-              } catch {
+              } catch (error) {
+                if (
+                  error instanceof Error &&
+                  error.message.startsWith("Chat not found.")
+                )
+                  return;
                 retained.set(row.id, row);
                 failed.add(row.id);
               }

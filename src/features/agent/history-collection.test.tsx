@@ -257,8 +257,16 @@ it("keeps a first-page chat displaced by a new chat when older rows are loaded",
   mocks.summary.mockResolvedValue({ ...row("29"), archivedAt: null });
   mount();
   await screen.findByRole("button", { name: "Chat 29" });
+  const initialIntervals = intervals.mock.calls.filter(
+    ([, delay]) => delay === 5000
+  ).length;
   fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
   await screen.findByRole("button", { name: "Chat 30" });
+  await waitFor(() =>
+    expect(
+      intervals.mock.calls.filter(([, delay]) => delay === 5000).length
+    ).toBeGreaterThan(initialIntervals)
+  );
   const refresh = intervals.mock.calls
     .filter(([, delay]) => delay === 5000)
     .at(-1)?.[0];
@@ -270,6 +278,48 @@ it("keeps a first-page chat displaced by a new chat when older rows are loaded",
   expect(screen.getByRole("button", { name: "Chat 29" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Chat 30" })).toBeInTheDocument();
   expect(mocks.summary).toHaveBeenCalledWith("29");
+  intervals.mockRestore();
+});
+
+it("drops a displaced first-page chat deleted in another tab", async () => {
+  const intervals = vi.spyOn(window, "setInterval");
+  const firstPage = Array.from({ length: 30 }, (_, index) =>
+    row(String(index))
+  );
+  mocks.read
+    .mockResolvedValueOnce({ conversations: firstPage, hasMore: true })
+    .mockResolvedValueOnce({ conversations: [row("30")], hasMore: false })
+    .mockResolvedValueOnce({
+      conversations: [row("new"), ...firstPage.slice(0, 29)],
+      hasMore: true,
+    });
+  mocks.summary.mockRejectedValue(
+    new Error("Chat not found. It may have been deleted.")
+  );
+  mount();
+  await screen.findByRole("button", { name: "Chat 29" });
+  const initialIntervals = intervals.mock.calls.filter(
+    ([, delay]) => delay === 5000
+  ).length;
+  fireEvent.click(screen.getByRole("button", { name: "Load older chats" }));
+  await screen.findByRole("button", { name: "Chat 30" });
+  await waitFor(() =>
+    expect(
+      intervals.mock.calls.filter(([, delay]) => delay === 5000).length
+    ).toBeGreaterThan(initialIntervals)
+  );
+  const refresh = intervals.mock.calls
+    .filter(([, delay]) => delay === 5000)
+    .at(-1)?.[0];
+  expect(refresh).toBeDefined();
+  await act(async () => {
+    await Promise.resolve();
+    (refresh as () => void)();
+  });
+  expect(mocks.summary).toHaveBeenCalledWith("29");
+  expect(
+    screen.queryByRole("button", { name: "Chat 29" })
+  ).not.toBeInTheDocument();
   intervals.mockRestore();
 });
 
