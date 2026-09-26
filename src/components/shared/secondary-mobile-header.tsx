@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { z } from "zod";
 
 import { FocusedMobileHeader } from "./focused-mobile-header";
 
@@ -13,7 +14,8 @@ type SecondaryMobileRoute = {
 
 export function secondaryMobileRoute(
   pathname: string,
-  username: string
+  username: string,
+  sessionId?: string | null
 ): SecondaryMobileRoute | null {
   const profileHref = `/profile/${username}`;
   const profilePath = /^\/profile\/[^/]+(?:\/(edit|insights))?$/;
@@ -42,12 +44,16 @@ export function secondaryMobileRoute(
       backHref: "/home",
       backLabel: "Back to Home",
     };
-  if (pathname === "/feedback")
+  if (pathname === "/feedback") {
+    const gameSessionId = z.uuid().safeParse(sessionId);
     return {
       title: "Send feedback",
-      backHref: profileHref,
-      backLabel: "Back to profile",
+      backHref: gameSessionId.success
+        ? `/games/${gameSessionId.data}/play`
+        : profileHref,
+      backLabel: gameSessionId.success ? "Back to game" : "Back to profile",
     };
+  }
   if (pathname === "/settings")
     return {
       title: "Settings",
@@ -110,7 +116,11 @@ export function secondaryMobileRoute(
 }
 
 export function SecondaryMobileHeader({ username }: { username: string }) {
-  const route = secondaryMobileRoute(usePathname(), username);
+  const route = secondaryMobileRoute(
+    usePathname(),
+    username,
+    useSearchParams().get("session")
+  );
   if (!route) return null;
 
   return (

@@ -349,7 +349,7 @@ export function GlobalSearch({
   return (
     <div className="mx-auto w-full max-w-6xl">
       <h1 className="app-title hidden lg:block">Search Relay</h1>
-      <div className="sticky top-0 z-10 -mx-4 bg-surface px-4 pb-1 pt-1 sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:mt-6 lg:p-0">
+      <div className="sticky top-[env(safe-area-inset-top)] z-10 -mx-4 bg-surface px-4 pb-1 pt-1 sm:-mx-8 sm:px-8 lg:static lg:top-auto lg:mx-0 lg:mt-6 lg:p-0">
         <div className="relative">
           <MagnifyingGlass
             aria-hidden

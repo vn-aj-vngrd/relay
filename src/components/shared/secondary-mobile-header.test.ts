@@ -43,4 +43,20 @@ describe("secondary mobile routes", () => {
       heading: false,
     });
   });
+
+  it("returns contextual game feedback to its Play screen", () => {
+    const sessionId = "11111111-1111-4111-8111-111111111111";
+    expect(
+      secondaryMobileRoute("/feedback", username, sessionId)
+    ).toMatchObject({
+      backHref: `/games/${sessionId}/play`,
+      backLabel: "Back to game",
+    });
+    expect(
+      secondaryMobileRoute("/feedback", username, "invalid")
+    ).toMatchObject({
+      backHref: "/profile/alex-player",
+      backLabel: "Back to profile",
+    });
+  });
 });
