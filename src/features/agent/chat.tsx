@@ -214,6 +214,7 @@ export function AgentChat({
     let cancelled = false;
     const localWorkStarted = () => session.activity === "working";
     const refresh = () => {
+      if (document.visibilityState === "hidden") return;
       void historyRequest<{ conversations: AgentConversationSummary[] }>()
         .then((recent) => {
           if (!cancelled)
@@ -259,10 +260,12 @@ export function AgentChat({
     refresh();
     const timer = window.setInterval(refresh, 5000);
     window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
     };
   }, [activeId, busy, session, setRemotePending]);
   const {
@@ -405,6 +408,7 @@ export function AgentChat({
     let cancelled = false;
     let notified = false;
     const refresh = () => {
+      if (document.visibilityState === "hidden") return;
       void loadConversation(activeId)
         .then((saved) => {
           if (cancelled || session.conversationId !== activeId) return;
@@ -427,9 +431,11 @@ export function AgentChat({
     };
     refresh();
     const timer = window.setInterval(refresh, 3000);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
     };
   }, [activeId, remotePending, session, setMessages, setRemotePending]);
   function limitInput(text: string) {

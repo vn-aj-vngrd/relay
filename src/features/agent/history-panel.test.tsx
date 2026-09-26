@@ -1,10 +1,55 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ read: vi.fn() }));
 vi.mock("./history-client", () => ({ historyRequest: mocks.read }));
 
 import { AgentHistoryPanel } from "./history-panel";
+
+it("pauses recent chat polling in hidden tabs and refreshes on return", async () => {
+  const visibility = vi.spyOn(document, "visibilityState", "get");
+  const intervals = vi.spyOn(window, "setInterval");
+  visibility.mockReturnValue("visible");
+  mocks.read.mockResolvedValue({ conversations: [] });
+  try {
+    render(
+      <AgentHistoryPanel
+        disabled={false}
+        activeId={null}
+        activeTitle="Your chats"
+        onSelect={vi.fn()}
+      />
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Chat history: Your chats" })
+    );
+    await waitFor(() => expect(mocks.read).toHaveBeenCalled());
+    const refresh = intervals.mock.calls.find(
+      ([, delay]) => delay === 3000
+    )?.[0];
+    expect(refresh).toBeDefined();
+    const initial = mocks.read.mock.calls.length;
+    visibility.mockReturnValue("hidden");
+    await act(async () => {
+      (refresh as () => void)();
+      fireEvent(document, new Event("visibilitychange"));
+    });
+    expect(mocks.read).toHaveBeenCalledTimes(initial);
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    await waitFor(() => expect(mocks.read).toHaveBeenCalledTimes(initial + 1));
+  } finally {
+    visibility.mockRestore();
+    intervals.mockRestore();
+  }
+});
 
 it("shows recent-chat progress and a full-history link without row actions", async () => {
   mocks.read.mockResolvedValue({

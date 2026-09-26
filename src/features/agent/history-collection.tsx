@@ -208,7 +208,8 @@ export function AgentHistoryCollection() {
         session.activity !== "idle" &&
         row.status === "idle");
     if (!rows.some(needsRefresh)) return;
-    const timer = window.setInterval(() => {
+    const refresh = () => {
+      if (document.visibilityState === "hidden") return;
       for (const row of rows) {
         if (!needsRefresh(row)) continue;
         void loadConversationSummary(row.id)
@@ -219,8 +220,13 @@ export function AgentHistoryCollection() {
           })
           .catch(() => {});
       }
-    }, 3000);
-    return () => window.clearInterval(timer);
+    };
+    const timer = window.setInterval(refresh, 3000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [rows, activeId, session.activity]);
   useEffect(() => {
     let cancelled = false;
@@ -319,9 +325,11 @@ export function AgentHistoryCollection() {
         });
     };
     const timer = window.setInterval(refresh, 5000);
+    document.addEventListener("visibilitychange", refresh);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
     };
   }, [tab, rows.length, mutating, editing]);
   async function rename(id: string) {

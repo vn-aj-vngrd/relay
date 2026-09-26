@@ -75,6 +75,34 @@ beforeEach(() => {
   mocks.messages = [];
 });
 describe("Agent chat controls", () => {
+  it("pauses account status polling in hidden tabs and refreshes on return", async () => {
+    const visibility = vi.spyOn(document, "visibilityState", "get");
+    const intervals = vi.spyOn(window, "setInterval");
+    visibility.mockReturnValue("visible");
+    try {
+      render(<AgentChat available />);
+      await waitFor(() => expect(mocks.history).toHaveBeenCalled());
+      const refresh = intervals.mock.calls.find(
+        ([, delay]) => delay === 5000
+      )?.[0];
+      expect(refresh).toBeDefined();
+      const initial = mocks.history.mock.calls.length;
+      visibility.mockReturnValue("hidden");
+      await act(async () => {
+        (refresh as () => void)();
+        fireEvent(document, new Event("visibilitychange"));
+      });
+      expect(mocks.history).toHaveBeenCalledTimes(initial);
+      visibility.mockReturnValue("visible");
+      fireEvent(document, new Event("visibilitychange"));
+      await waitFor(() =>
+        expect(mocks.history).toHaveBeenCalledTimes(initial + 1)
+      );
+    } finally {
+      visibility.mockRestore();
+      intervals.mockRestore();
+    }
+  });
   it("places saved creation setup after Agent's latest reply", async () => {
     const userMessage: UIMessage = {
       id: "question",

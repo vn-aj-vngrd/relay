@@ -66,8 +66,15 @@ export function AgentHistoryPanel({
   }, []);
   useEffect(() => {
     if (!open) return;
-    const timer = window.setInterval(() => void load(true), 3000);
-    return () => window.clearInterval(timer);
+    const refresh = () => {
+      if (document.visibilityState !== "hidden") void load(true);
+    };
+    const timer = window.setInterval(refresh, 3000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [open, load]);
   return (
     <div

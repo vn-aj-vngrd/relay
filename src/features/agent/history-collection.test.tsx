@@ -230,6 +230,37 @@ it("polls a working row without downloading its transcript", async () => {
   intervals.mockRestore();
 });
 
+it("pauses working-row polling while history is hidden", async () => {
+  const visibility = vi.spyOn(document, "visibilityState", "get");
+  const intervals = vi.spyOn(window, "setInterval");
+  visibility.mockReturnValue("visible");
+  mocks.read.mockResolvedValue({
+    conversations: [{ ...row("a"), status: "working" }],
+    hasMore: false,
+  });
+  mocks.summary.mockResolvedValue({ ...row("a"), status: "done" });
+  try {
+    mount();
+    await screen.findByText("Working");
+    const refresh = intervals.mock.calls.find(
+      ([, delay]) => delay === 3000
+    )?.[0];
+    expect(refresh).toBeDefined();
+    visibility.mockReturnValue("hidden");
+    await act(async () => {
+      (refresh as () => void)();
+      fireEvent(document, new Event("visibilitychange"));
+    });
+    expect(mocks.summary).not.toHaveBeenCalled();
+    visibility.mockReturnValue("visible");
+    fireEvent(document, new Event("visibilitychange"));
+    await waitFor(() => expect(mocks.summary).toHaveBeenCalledWith("a"));
+  } finally {
+    visibility.mockRestore();
+    intervals.mockRestore();
+  }
+});
+
 it("reconciles chats archived or restored in another tab", async () => {
   const intervals = vi.spyOn(window, "setInterval");
   mocks.read
