@@ -11,7 +11,7 @@ export default function NotificationsLoading() {
       aria-busy="true"
     >
       <header className="border-b border-line pb-6">
-        <h1 className="app-title">Notifications</h1>
+        <h1 className="app-title hidden lg:block">Notifications</h1>
         <Skeleton className="mt-2 h-3.5 w-24" />
       </header>
       <nav

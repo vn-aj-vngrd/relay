@@ -79,6 +79,10 @@ describe("collection loading boundaries", () => {
 
   it("keeps notification filters real while notifications load", () => {
     render(<NotificationsLoading />);
+    expect(screen.getByRole("heading", { name: "Notifications" })).toHaveClass(
+      "hidden",
+      "lg:block"
+    );
     const navigation = screen.getByRole("navigation", {
       name: "Notification filters",
     });
