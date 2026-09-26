@@ -44,6 +44,12 @@ describe("secondary mobile routes", () => {
     });
   });
 
+  it("keeps the court directory's existing accessible page heading", () => {
+    expect(secondaryMobileRoute("/courts", username)).toMatchObject({
+      heading: false,
+    });
+  });
+
   it("returns contextual game feedback to its Play screen", () => {
     const sessionId = "11111111-1111-4111-8111-111111111111";
     expect(

@@ -85,7 +85,12 @@ export function secondaryMobileRoute(
       backLabel: "Back to Plan & billing",
     };
   if (pathname === "/courts")
-    return { title: "Courts", backHref: "/home", backLabel: "Back to Home" };
+    return {
+      title: "Courts",
+      backHref: "/home",
+      backLabel: "Back to Home",
+      heading: false,
+    };
   if (pathname === "/help")
     return {
       title: "Help Center",
