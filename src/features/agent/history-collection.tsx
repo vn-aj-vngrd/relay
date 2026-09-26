@@ -73,6 +73,7 @@ export function AgentHistoryCollection() {
       }
       session.conversationId = null;
       session.archived = false;
+      session.remotePending = false;
       session.draft = "";
     }
     const selected = rows.find((row) => row.id === id);
@@ -85,8 +86,11 @@ export function AgentHistoryCollection() {
     if (session.chat) session.chat.messages = [];
     session.conversationId = null;
     session.archived = false;
+    session.remotePending = false;
+    session.activity = "idle";
     session.draft = "";
     session.title = "Your chats";
+    session.notify();
   }
   function onRename(row: AgentConversationSummary) {
     if (row.id === session.conversationId) session.title = row.title;

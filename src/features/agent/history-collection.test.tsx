@@ -23,7 +23,11 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: mocks.push }) }));
 vi.mock("@/components/ui/action-notice", () => ({ notify: vi.fn() }));
 
 import { AgentHistoryCollection } from "./history-collection";
-import { AgentSessionProvider } from "./session";
+import {
+  AgentRuntimeContext,
+  AgentSessionProvider,
+  createAgentSession,
+} from "./session";
 
 let intersect: IntersectionObserverCallback;
 let options: IntersectionObserverInit | undefined;
@@ -327,4 +331,32 @@ it("moves chats between Chats and Archived without losing the other list", async
       screen.queryByRole("button", { name: "Chat b" })
     ).not.toBeInTheDocument()
   );
+});
+it("clears remote-pending state when archiving the selected chat", async () => {
+  const session = createAgentSession();
+  session.conversationId = "a";
+  session.remotePending = true;
+  mocks.read.mockImplementation((_path: string, init?: RequestInit) =>
+    Promise.resolve(
+      init?.method === "PATCH"
+        ? { ...row("a"), archivedAt: new Date().toISOString() }
+        : { conversations: [{ ...row("a"), status: "done" }], hasMore: false }
+    )
+  );
+  render(
+    <div className="app-scroll-surface">
+      <AgentRuntimeContext value={{ get: () => session }}>
+        <AgentSessionProvider userId="owner">
+          <AgentHistoryCollection />
+        </AgentSessionProvider>
+      </AgentRuntimeContext>
+    </div>
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "More actions for Chat a" })
+  );
+  fireEvent.click(screen.getByRole("menuitem", { name: "Archive" }));
+  await waitFor(() => expect(session.conversationId).toBeNull());
+  expect(session.remotePending).toBe(false);
+  expect(session.activity).toBe("idle");
 });
