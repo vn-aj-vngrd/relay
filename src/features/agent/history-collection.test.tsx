@@ -217,12 +217,15 @@ it("polls a working row without downloading its transcript", async () => {
   });
   mount();
   await screen.findByText("Working");
-  const refresh = intervals.mock.calls
-    .filter(([, delay]) => delay === 3000)
-    .at(-1)?.[0];
-  expect(refresh).toBeDefined();
+  let refresh: (() => void) | undefined;
+  await waitFor(() => {
+    refresh = intervals.mock.calls
+      .filter(([, delay]) => delay === 3000)
+      .at(-1)?.[0];
+    expect(refresh).toBeDefined();
+  });
   await act(async () => {
-    (refresh as () => void)();
+    refresh?.();
   });
   expect(mocks.summary).toHaveBeenCalledWith("a");
   expect(mocks.load).not.toHaveBeenCalled();
@@ -242,13 +245,14 @@ it("pauses working-row polling while history is hidden", async () => {
   try {
     mount();
     await screen.findByText("Working");
-    const refresh = intervals.mock.calls.find(
-      ([, delay]) => delay === 3000
-    )?.[0];
-    expect(refresh).toBeDefined();
+    let refresh: (() => void) | undefined;
+    await waitFor(() => {
+      refresh = intervals.mock.calls.find(([, delay]) => delay === 3000)?.[0];
+      expect(refresh).toBeDefined();
+    });
     visibility.mockReturnValue("hidden");
     await act(async () => {
-      (refresh as () => void)();
+      refresh?.();
       fireEvent(document, new Event("visibilitychange"));
     });
     expect(mocks.summary).not.toHaveBeenCalled();
