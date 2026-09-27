@@ -92,9 +92,9 @@ export const helpArticles: readonly HelpArticle[] = [
       "Agent request metrics require the current database migration.",
     ],
     steps: [
-      "Open Admin Console, then Agent. Read the Usage metrics section for charged messages, active users, released reservations and answer reports.",
-      "Use the provider-attempt rows for failed or stopped answers, failure rate, failed tool reads, average and P95 request time, and average time to first text over the last 30 days. P95 means 95% of recorded attempts finished within that time.",
-      "Compare Reported provider cost with Requests with provider cost. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free.",
+      "Open Admin Console, then Agent. Overview shows setup status and the last 30 days of charged messages, active users and provider attempts. Expand View setup checks and test connection to inspect readiness or test the saved connection.",
+      "Scan the 30-day usage summary and answer-health signals. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Each percentage includes its provider-attempt count; P95 means 95% of recorded attempts finished within that time.",
+      "Compare Reported provider cost with Requests with provider cost in the expanded details. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free. Open Settings to change the provider, Agent behavior, capabilities or monthly allowances.",
       "Open Review feedback to inspect player-submitted answer reports. Verify each report against authorized source records before changing Agent instructions or tools.",
     ],
     outcome:
@@ -106,6 +106,7 @@ export const helpArticles: readonly HelpArticle[] = [
     related: ["agent-capabilities", "support"],
     sources: [
       "src/app/(admin)/admin/agent/page.tsx",
+      "src/features/agent/admin-overview.tsx",
       "src/features/agent/admin-metrics.ts",
       "src/features/agent/request-metrics.ts",
     ],
