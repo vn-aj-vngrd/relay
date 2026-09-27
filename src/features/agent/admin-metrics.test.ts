@@ -67,6 +67,7 @@ describe("Agent admin usage metrics", () => {
       },
     });
     const projection = mocks.select.mock.calls[0][0];
+    const dialect = new PgDialect();
     expect(Object.keys(projection)).toEqual([
       "charged7Days",
       "released7Days",
@@ -75,13 +76,26 @@ describe("Agent admin usage metrics", () => {
       "activeUsers30Days",
       "reserved30Days",
     ]);
-    const filter = new PgDialect().sqlToQuery(mocks.where.mock.calls[0][0]);
+    expect(dialect.sqlToQuery(projection.charged7Days).params).toEqual([
+      "2026-09-20T00:00:00.000Z",
+    ]);
+    expect(dialect.sqlToQuery(projection.reserved30Days).params).toEqual([
+      "2026-09-27T00:00:00.000Z",
+    ]);
+    const filter = dialect.sqlToQuery(mocks.where.mock.calls[0][0]);
     expect(filter.params).toEqual(["2026-08-28T00:00:00.000Z"]);
     const feedbackFilter = new PgDialect().sqlToQuery(
       mocks.where.mock.calls[1][0]
     );
     expect(feedbackFilter.params).toEqual(["agent"]);
+    const feedbackProjection = mocks.select.mock.calls[1][0];
+    expect(dialect.sqlToQuery(feedbackProjection.reports30Days).params).toEqual(
+      ["2026-08-28T00:00:00.000Z"]
+    );
     const requestProjection = mocks.select.mock.calls[2][0];
+    expect(dialect.sqlToQuery(requestProjection.attempts7Days).params).toEqual([
+      "2026-09-20T00:00:00.000Z",
+    ]);
     const p95 = new PgDialect().sqlToQuery(requestProjection.p95DurationMs);
     expect(p95.sql).toContain("percentile_cont(0.95)");
   });
