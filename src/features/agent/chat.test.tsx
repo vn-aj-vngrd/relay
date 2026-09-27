@@ -657,4 +657,12 @@ describe("Agent chat controls", () => {
       "SECRET_PROVIDER_RESPONSE"
     );
   });
+  it("explains how to remove a blocked credential", () => {
+    mocks.error = new Error("AGENT_HTTP_422");
+    render(<AgentChat available />);
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Remove credentials or private keys"
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("start a new chat");
+  });
 });

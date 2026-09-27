@@ -1,7 +1,9 @@
 import "server-only";
+import type { Span } from "@opentelemetry/api";
 import { type ToolSet, tool } from "ai";
 import { z } from "zod";
 import { groupFiltersSchema } from "@/features/groups/filters";
+import { getPlayerInsights } from "@/features/players/insights";
 import { readAgentCourt, searchAgentCourts } from "./courts";
 import { creationPreparationSchema } from "./creation-schema";
 import { readAgentGameSection } from "./game-sections";
@@ -12,6 +14,7 @@ import {
   readAgentGroups,
   searchAgentGames,
 } from "./reads";
+import { agentDbSpan } from "./telemetry";
 import {
   type AgentConfig,
   agentCourtSearchSchema,
@@ -22,17 +25,26 @@ export function createAgentTools(
   userId: string,
   config: AgentConfig,
   signal: AbortSignal,
-  context?: { conversationId: string; messageId: string; requestId: string }
+  context?: { conversationId: string; messageId: string; requestId: string },
+  telemetryParent?: Span
 ) {
   let calls = 0;
-  async function read<T>(operation: () => Promise<T> | T) {
+  async function read<T>(
+    operation: () => Promise<T> | T,
+    source: "database" | "memory" = "database"
+  ) {
     if (signal.aborted || ++calls > 12)
       return {
         unavailable: true,
         reason: "Read limit reached. Narrow the question.",
       };
     try {
-      return await operation();
+      if (source === "memory") return await operation();
+      return await agentDbSpan(
+        "tool_read",
+        async () => operation(),
+        telemetryParent
+      );
     } catch {
       return {
         unavailable: true,
@@ -42,6 +54,35 @@ export function createAgentTools(
   }
   const tools: ToolSet = {};
   if (config.allowGameData) {
+    tools.myInsights = tool({
+      description:
+        "Read the signed-in player's personal game insights: completed games hosted, games and matches with recorded scores, wins, losses, win rate, team points and five recent scored games. Account games only; device-local Quick Play is excluded. A recent game has a link only when the player can still open it. Read only; never claim this is a competitive rating.",
+      inputSchema: z.object({}),
+      execute: () =>
+        read(async () => {
+          const insights = await getPlayerInsights(userId);
+          return {
+            hostedGames: insights.hostedGames,
+            gamesPlayed: insights.gamesPlayed,
+            matchesPlayed: insights.matchesPlayed,
+            wins: insights.wins,
+            losses: insights.losses,
+            winRate: insights.winRate,
+            pointsFor: insights.pointsFor,
+            pointsAgainst: insights.pointsAgainst,
+            recentGames: insights.recentGames.map((game) => ({
+              title: game.title,
+              startsAt: game.startsAt,
+              timezone: game.timezone,
+              matches: game.matches,
+              wins: game.wins,
+              losses: game.losses,
+              ...(game.canOpen ? { href: `/games/${game.id}/play` } : {}),
+            })),
+            note: "Only recorded completed matches count as played. Quick Play stays on the device. These results are for fun, not a competitive rating.",
+          };
+        }),
+    });
     tools.searchGames = tool({
       description:
         "Read games across upcoming, current, past, all or drafts with when; narrow by status, role, response, venue or dates. Mine matches My Games; invitations includes invitation history (response invited selects unanswered upcoming invitations); hosting, joining (Going), attention, open and groups are separate scopes. Drafts require hosting or group-owner access. Open keeps the UI public discovery rules and does not expose public history. Paginated; never imply truncated results are complete. Dates use Asia/Manila. Group results do not grant roster access. For a named group, resolve its ID with myGroups and pass groupId.",
@@ -110,19 +151,19 @@ export function createAgentTools(
       description:
         "List Help Center article titles/slugs to find an appropriate guide.",
       inputSchema: z.object({}),
-      execute: () => read(agentHelpIndex),
+      execute: () => read(agentHelpIndex, "memory"),
     });
     tools.searchHelp = tool({
       description:
         "Search Help Center using a few keywords, not an entire question. All words must match. A clear first match includes its authoritative article; use it directly if relevant. Read other matching guides with readHelp. Try helpIndex if no matches.",
       inputSchema: z.object({ query: z.string().max(100) }),
-      execute: ({ query }) => read(() => searchAgentHelp(query)),
+      execute: ({ query }) => read(() => searchAgentHelp(query), "memory"),
     });
     tools.readHelp = tool({
       description:
         "Read the authoritative Help Center guide before explaining how Relay works. Never reveal internal source file paths.",
       inputSchema: z.object({ slug: z.string().max(100) }),
-      execute: ({ slug }) => read(() => readAgentHelp(slug)),
+      execute: ({ slug }) => read(() => readAgentHelp(slug), "memory"),
     });
   }
   if (context && (config.allowGameCreation || config.allowGroupCreation)) {

@@ -289,9 +289,11 @@ export function AgentChat({
           ? "Sign in with an active account to continue."
           : error?.message === "AGENT_HTTP_409"
             ? "This chat is busy or full. Wait for its reply, or start a new chat."
-            : error?.message === "AGENT_HTTP_400"
-              ? "Shorten your message or start a new chat."
-              : "Agent couldn’t respond. Check your connection or try again later.";
+            : error?.message === "AGENT_HTTP_422"
+              ? "Remove credentials or private keys, then try again. If an older chat message contains one, start a new chat."
+              : error?.message === "AGENT_HTTP_400"
+                ? "Shorten your message or start a new chat."
+                : "Agent couldn’t respond. Check your connection or try again later.";
   useEffect(() => {
     if (busy || !available) return;
     const controller = new AbortController();

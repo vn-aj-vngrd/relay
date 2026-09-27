@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   release: vi.fn(),
   releaseUnstarted: vi.fn(),
   usage: vi.fn(),
+  recordMetric: vi.fn(),
 }));
 vi.mock("@/features/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/db/client", () => ({
@@ -26,6 +27,12 @@ vi.mock("@/features/agent/credentials", () => ({
   decryptAgentKey: () => "PRIVATE_PROVIDER_KEY",
 }));
 vi.mock("@/features/agent/tools", () => ({ createAgentTools: mocks.tools }));
+vi.mock("@/features/agent/request-metrics", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@/features/agent/request-metrics")
+  >()),
+  recordAgentRequestMetric: mocks.recordMetric,
+}));
 vi.mock("@/lib/env", () => ({
   getPublicEnv: () => ({ NEXT_PUBLIC_APP_URL: "https://relay.test" }),
 }));
@@ -99,6 +106,39 @@ beforeEach(() => {
   mocks.releaseUnstarted.mockResolvedValue(undefined);
 });
 describe("Agent streaming boundary", () => {
+  it("rejects an obvious credential before reservation or provider use", async () => {
+    const response = await POST(
+      request({
+        messages: [
+          { role: "user", content: `Please use sk-or-v1-${"a".repeat(64)}` },
+        ],
+      })
+    );
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({
+      error: "Remove credentials or private keys before sending.",
+    });
+    expect(mocks.reserve).not.toHaveBeenCalled();
+    expect(mocks.stream).not.toHaveBeenCalled();
+  });
+  it("stops a saved historical credential before provider use", async () => {
+    mocks.begin.mockResolvedValueOnce([
+      { role: "user", content: `sk-or-v1-${"a".repeat(64)}` },
+      { role: "user", content: "Next game?" },
+    ]);
+    const response = await POST(
+      request({
+        conversationId: "123e4567-e89b-42d3-a456-426614174000",
+        requestId: "223e4567-e89b-42d3-a456-426614174000",
+        messageId: "message",
+        messages: [{ role: "user", content: "Next game?" }],
+      })
+    );
+    expect(response.status).toBe(422);
+    expect(mocks.stream).not.toHaveBeenCalled();
+    expect(mocks.release).toHaveBeenCalledOnce();
+    expect(mocks.finish).toHaveBeenCalledOnce();
+  });
   it.each(["true", "false"])(
     "logs only aggregate timing when enabled=%s",
     async (enabled) => {
@@ -118,6 +158,12 @@ describe("Agent streaming boundary", () => {
             toolCallId: "PRIVATE_ID",
             output: { secret: "PRIVATE_OUTPUT" },
           };
+          yield {
+            type: "finish-step",
+            usage: { inputTokens: 100, outputTokens: 20 },
+            finishReason: "stop",
+            providerMetadata: { openrouter: { usage: { cost: 0.00042 } } },
+          };
           yield { type: "text-delta", text: "PRIVATE_ANSWER" };
         })(),
       });
@@ -126,6 +172,19 @@ describe("Agent streaming boundary", () => {
         /^setup;dur=\d+\.\d$/
       );
       expect(await response.text()).toBe("PRIVATE_ANSWER");
+      expect(mocks.recordMetric).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: "completed",
+          toolCalls: 1,
+          toolFailures: 0,
+          inputTokens: 100,
+          outputTokens: 20,
+          costUsdMicros: 420,
+        })
+      );
+      expect(JSON.stringify(mocks.recordMetric.mock.calls)).not.toContain(
+        "PRIVATE_"
+      );
       if (enabled === "true") {
         expect(log).toHaveBeenCalledOnce();
         expect(log).toHaveBeenCalledWith("[agent-performance]", {
@@ -174,6 +233,49 @@ describe("Agent streaming boundary", () => {
     expect(body).not.toContain("PRIVATE_");
     expect(mocks.charge).toHaveBeenCalledOnce();
   });
+  it("leaves cost unknown when one model step omits provider accounting", async () => {
+    mocks.stream.mockReturnValue({
+      fullStream: (async function* () {
+        yield { type: "start-step" };
+        yield {
+          type: "finish-step",
+          usage: { inputTokens: 10, outputTokens: 2 },
+          providerMetadata: { openrouter: { usage: { cost: 0.0001 } } },
+          finishReason: "tool-calls",
+        };
+        yield { type: "start-step" };
+        yield {
+          type: "finish-step",
+          usage: { inputTokens: 15, outputTokens: 3 },
+          providerMetadata: { openrouter: { usage: {} } },
+          finishReason: "stop",
+        };
+        yield { type: "text-delta", text: "Answer." };
+      })(),
+    });
+    expect(await (await POST(request())).text()).toBe("Answer.");
+    expect(mocks.recordMetric).toHaveBeenCalledWith(
+      expect.objectContaining({
+        inputTokens: 25,
+        outputTokens: 5,
+        costUsdMicros: null,
+      })
+    );
+  });
+  it("keeps an answer available and logs only a fixed event when metric storage fails", async () => {
+    mocks.recordMetric.mockRejectedValueOnce(
+      new Error("PRIVATE_DATABASE_ERROR")
+    );
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    mocks.stream.mockReturnValue({
+      fullStream: (async function* () {
+        yield { type: "text-delta", text: "Answer." };
+      })(),
+    });
+    expect(await (await POST(request())).text()).toBe("Answer.");
+    expect(log).toHaveBeenCalledWith("[agent-metrics] write failed");
+    expect(JSON.stringify(log.mock.calls)).not.toContain("PRIVATE_");
+  });
   it("ends failed work with a fixed error and releases an uncharged turn", async () => {
     mocks.stream.mockReturnValue({
       fullStream: (async function* () {
@@ -194,6 +296,13 @@ describe("Agent streaming boundary", () => {
     expect(body).not.toContain("PRIVATE_ERROR");
     expect(mocks.charge).not.toHaveBeenCalled();
     expect(mocks.release).toHaveBeenCalledOnce();
+    expect(mocks.recordMetric).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        errorKind: "generation",
+        costUsdMicros: null,
+      })
+    );
   });
   it.each([false, true])(
     "uses server-owned history and saves only the visible response (retry: %s)",
@@ -392,7 +501,8 @@ describe("Agent streaming boundary", () => {
       "server-user",
       expect.any(Object),
       expect.any(AbortSignal),
-      undefined
+      undefined,
+      expect.any(Object)
     );
     const options = mocks.stream.mock.calls[0][0];
     expect(JSON.stringify(options)).not.toContain("PRIVATE_PROVIDER_KEY");

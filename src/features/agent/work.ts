@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const workLabels = {
   reviewing: "Reviewing your request",
+  insights: "Reading your game insights",
   games: "Searching games",
   game: "Reading game details",
   groups: "Checking your groups",
@@ -38,6 +39,7 @@ export const workSchema = z.object({
 export type AgentWork = z.infer<typeof workSchema>;
 
 const toolSteps: Record<string, keyof typeof workLabels> = {
+  myInsights: "insights",
   searchGames: "games",
   gameDetails: "game",
   myGroups: "groups",

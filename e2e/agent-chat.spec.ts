@@ -11,14 +11,20 @@ import {
 // This fixture relies on route interception, including after a reload.
 test.use({ serviceWorkers: "block" });
 
-function activityReply(text: string) {
+function completedActivity() {
   const startedAt = Date.now() - 2000;
-  const work = {
+  return {
     startedAt,
     finishedAt: startedAt + 2000,
     status: "completed",
     entries: [{ step: "games", status: "complete" }],
-  };
+  } as const;
+}
+
+function activityReply(
+  text: string,
+  work: ReturnType<typeof completedActivity> = completedActivity()
+) {
   return `${[
     {
       type: "start",
@@ -117,12 +123,18 @@ for (const width of [390, 1440]) {
       updatedAt: "2030-09-01T00:00:00.000Z",
       pending: false,
       messages: [
-        { id: "question", role: "user", content: "When is my next game?" },
+        {
+          id: "question",
+          role: "user",
+          content: "When is my next game?",
+          createdAt: "2030-09-01T00:00:00.000Z",
+        },
         {
           id: "reply",
           role: "assistant",
           content:
             "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
+          createdAt: "2030-09-01T00:00:02.000Z",
         },
       ],
     };
@@ -208,6 +220,9 @@ for (const width of [390, 1440]) {
           releaseReply = resolve;
         });
       }
+      const work = completedActivity();
+      if (route.request().method() !== "GET")
+        Object.assign(conversation.messages[1], { work });
       return route.fulfill(
         route.request().method() === "GET"
           ? {
@@ -224,7 +239,8 @@ for (const width of [390, 1440]) {
           : {
               contentType: "text/event-stream",
               body: activityReply(
-                "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)"
+                "**Synthetic answer:** your game is tomorrow.\n\n- Bring a paddle\n\n[Guide](/help/create-game)",
+                work
               ),
             }
       );
@@ -264,6 +280,15 @@ for (const width of [390, 1440]) {
       page.getByRole("option", { name: /My invitations/ })
     ).toBeVisible();
     await slashComposer.press("Escape");
+    await slashComposer.fill("/insights");
+    await expect(
+      page.getByRole("option", { name: /My game insights/ })
+    ).toBeVisible();
+    await slashComposer.press("Enter");
+    await expect(slashComposer).toHaveText(
+      "Show my game insights: games hosted and played, wins, points, and recent results."
+    );
+    await expect(page.getByRole("log")).not.toContainText("game insights");
     await slashComposer.fill("/court");
     await expect(
       page.getByRole("listbox", { name: "Available Agent actions" })
@@ -392,6 +417,9 @@ for (const width of [390, 1440]) {
     ).toContainText("Searching games");
     await workSummary.click();
     await expect(workSummary).toHaveAttribute("aria-expanded", "false");
+    await expect(
+      page.getByRole("log").getByRole("link", { name: "Report answer" }).last()
+    ).toHaveAttribute("href", "/feedback?area=agent");
     // Actions reserve their row, reveal on hover/focus, and remain available
     // without hover on touch devices (regardless of viewport width).
     for (const [author, label] of [
