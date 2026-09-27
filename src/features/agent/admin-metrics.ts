@@ -13,12 +13,12 @@ export async function getAgentAdminMetrics(now = new Date()) {
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
   const [row] = await db
     .select({
-      charged7Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'charged' and ${agentMessageUsage.createdAt} >= ${sevenDaysAgo})::int`,
-      released7Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'released' and ${agentMessageUsage.createdAt} >= ${sevenDaysAgo})::int`,
+      charged7Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'charged' and ${agentMessageUsage.createdAt} >= ${sevenDaysAgo.toISOString()})::int`,
+      released7Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'released' and ${agentMessageUsage.createdAt} >= ${sevenDaysAgo.toISOString()})::int`,
       charged30Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'charged')::int`,
       released30Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'released')::int`,
       activeUsers30Days: sql<number>`count(distinct ${agentMessageUsage.userId}) filter (where ${agentMessageUsage.status} = 'charged')::int`,
-      reserved30Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'reserved' and ${agentMessageUsage.expiresAt} > ${now})::int`,
+      reserved30Days: sql<number>`count(*) filter (where ${agentMessageUsage.status} = 'reserved' and ${agentMessageUsage.expiresAt} > ${now.toISOString()})::int`,
     })
     .from(agentMessageUsage)
     .where(gte(agentMessageUsage.createdAt, thirtyDaysAgo));
@@ -26,7 +26,7 @@ export async function getAgentAdminMetrics(now = new Date()) {
   try {
     const [row] = await db
       .select({
-        reports30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.createdAt} >= ${thirtyDaysAgo})::int`,
+        reports30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.createdAt} >= ${thirtyDaysAgo.toISOString()})::int`,
         openReports: sql<number>`count(*) filter (where ${feedbackSubmissions.status} in ('new', 'reviewing', 'planned'))::int`,
       })
       .from(feedbackSubmissions)
@@ -57,8 +57,8 @@ export async function getAgentAdminMetrics(now = new Date()) {
   try {
     const [row] = await db
       .select({
-        attempts7Days: sql<number>`count(*) filter (where ${agentRequestMetrics.createdAt} >= ${sevenDaysAgo})::int`,
-        failed7Days: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'failed' and ${agentRequestMetrics.createdAt} >= ${sevenDaysAgo})::int`,
+        attempts7Days: sql<number>`count(*) filter (where ${agentRequestMetrics.createdAt} >= ${sevenDaysAgo.toISOString()})::int`,
+        failed7Days: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'failed' and ${agentRequestMetrics.createdAt} >= ${sevenDaysAgo.toISOString()})::int`,
         attempts30Days: sql<number>`count(*)::int`,
         failed30Days: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'failed')::int`,
         stopped30Days: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'stopped')::int`,
