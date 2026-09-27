@@ -129,6 +129,16 @@ describe("Admin Agent metrics", () => {
     expect(label.nextElementSibling).toHaveTextContent("Unavailable");
   });
 
+  it("does not round a positive provider cost down to zero", async () => {
+    const sample = await mocks.metrics();
+    mocks.metrics.mockResolvedValueOnce({
+      ...sample,
+      requests: { ...sample.requests, costUsdMicros: 40 },
+    });
+    render(await AdminAgentPage());
+    expect(screen.getByText("<$0.0001")).toBeVisible();
+  });
+
   it("labels unavailable feedback counts without hiding usage", async () => {
     const sample = await mocks.metrics();
     mocks.metrics.mockResolvedValueOnce({

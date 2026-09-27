@@ -192,7 +192,10 @@ export default async function AdminAgentPage() {
                   [
                     "Reported provider cost · 30 days",
                     metrics.requests.costReported30Days
-                      ? `$${(metrics.requests.costUsdMicros / 1_000_000).toFixed(4)}`
+                      ? metrics.requests.costUsdMicros > 0 &&
+                        metrics.requests.costUsdMicros < 100
+                        ? "<$0.0001"
+                        : `$${(metrics.requests.costUsdMicros / 1_000_000).toFixed(4)}`
                       : "Unavailable",
                   ],
                   [
