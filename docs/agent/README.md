@@ -56,7 +56,7 @@ Help Center is the only product-instruction source. No vector store, embeddings,
 
 1. Review and apply `drizzle/0056_agent_settings.sql` and `drizzle/0057_agent_message_allowances.sql` with the normal migration workflow. It enables RLS and revokes Supabase Data API privileges from `anon`, `authenticated` and `service_role`; only the server database connection handles the table. The application does not migrate automatically.
 2. Generate a 32-byte encryption key with `openssl rand -hex 32`. Set `AGENT_ENCRYPTION_KEY` in the server's secret store, never a `NEXT_PUBLIC_` variable. Use the same key across application instances and keep a secured backup separate from the database.
-3. Open **Admin → Agent** using an allowlisted account with MFA. Enter a dedicated, budget-limited OpenRouter key and select a tool-capable model. The public model catalog is cached for one hour; if it fails, manual model ID entry still works. Catalog presence does not prove that a model has an eligible privacy provider or account access.
+3. Open **Admin → Agent → Settings** using an allowlisted account with MFA. Enter a dedicated, budget-limited OpenRouter key and select a tool-capable model. The public model catalog is cached for one hour; if it fails, manual model ID entry still works. Catalog presence does not prove that a model has an eligible privacy provider or account access.
 4. Configure allowed reads, optional public-facing tone guidance and limits. Enable only after setup. The form verifies that the stored key can be decrypted; it does not make a billable test call or certify provider credentials/model availability.
 5. Verify Help Center grounding, actual game/roster permissions, cancellation, provider failure and quota behavior with disposable users and the selected provider before release.
 
@@ -133,7 +133,7 @@ streaming UI and live provider configuration still need their separate checks.
 
 ## Admin usage metrics
 
-Admin → Agent shows 7-day and 30-day charged-message and released-reservation
+Admin → Agent → Overview shows 7-day and 30-day charged-message and released-reservation
 counts, 30-day active users who had a charged message, currently unexpired
 reservations, Agent feedback report totals, provider attempts, failed/stopped
 attempts, failure rate, tool-read failures, average/P95 latency and time to first text, and
@@ -142,8 +142,12 @@ feedback area and `agent_request_metrics` after the usual admin MFA check.
 Apply migration `0064_agent_request_metrics` before deployment. The metrics
 table contains no account ID or conversation content; its Data API privileges
 are revoked. If request metrics are unavailable, existing message usage stays
-visible; feedback counts fail independently as well. With no provider attempts, the page shows an empty state instead of
-zero latency or cost. The page keeps settings available if usage storage fails.
+visible; feedback counts fail independently as well. The Overview shows a
+30-day usage summary and concise answer-health signals. Expand **Detailed
+metrics and definitions** for message delivery, feedback, reliability,
+response time and provider cost. Percentages include their sample counts. With
+no provider attempts, the page shows an empty state instead of zero latency or
+cost. The Settings tab remains available if usage storage fails.
 Failed metric writes emit a fixed `agent-metrics` server-log event without
 request content, and never interrupt the player's answer.
 Completed replies offer
@@ -182,7 +186,7 @@ Run `pnpm check:full` before committing and record exact results in the PR. Brow
 
 ## Monthly message allowances
 
-Defaults are **Free 50, Plus 250, Pro 750 messages per month**. They are live Agent entitlements configured in **Admin → Agent**, separate from immutable hosting-price/game/storage snapshots. Public pricing, landing, chat and Plan & billing use the same stored values. An admin change applies immediately to current accounts without resetting their existing usage. Zero disables a tier's Agent allowance. Unlimited hosting receives the configured Pro Agent allowance; it does not grant unlimited model spending.
+Defaults are **Free 50, Plus 250, Pro 750 messages per month**. They are live Agent entitlements configured in **Admin → Agent → Settings**, separate from immutable hosting-price/game/storage snapshots. Public pricing, landing, chat and Plan & billing use the same stored values. An admin change applies immediately to current accounts without resetting their existing usage. Zero disables a tier's Agent allowance. Unlimited hosting receives the configured Pro Agent allowance; it does not grant unlimited model spending.
 
 A message is one submitted question/follow-up or regenerated answer that begins producing non-whitespace answer text. Internal tool calls are not extra messages. Failures and cancellations before answer text starts release their reservation. Partial answers, failures after answer text starts, and cancellations after it starts count once. Retrying a failed-before-text answer uses a new request ID and can succeed without a prior charge. Regenerating an answer already started consumes another message. New chat never resets usage.
 
@@ -196,11 +200,13 @@ Quota handling reuses `getAccountAllowance` and `lockBillingAccount` from billin
 
 ### Readiness and safe settings edits
 
-Admin → Agent shows separate server checks for enablement, encryption availability,
+Admin → Agent → Overview has an expandable setup summary with separate server
+checks for enablement, encryption availability,
 credential readability, model selection, read-only capabilities, and usage storage.
 “Ready to accept questions” does not claim the provider/model has been tested: the
 first request still goes through OpenRouter's authorization and model routing.
-Existing credentials stay stored when editing other settings. Use **Replace API
+Existing credentials stay stored when editing other settings in the Settings
+tab. Use **Replace API
 key** to supply a replacement; removing a key remains an explicit checkbox choice.
 
 Usage queries serialize timestamps before passing raw SQL parameters to the
@@ -258,7 +264,7 @@ Regression coverage: history.test.ts, history-api.test.ts, Agent route tests, an
 
 ## Court Finder capability
 
-Admin → Agent → Behavior and access includes **Allow Court Finder answers**. `allowCourtSearch` controls both `searchCourts` and `courtDetails`; disabling it removes those tools. Saves are admin-authorized and audited. Migration `0060_agent_court_search.sql` enables this public-directory capability by default, consistent with the existing game/help read capabilities. It does not enable bookings or writes.
+Admin → Agent → Settings → Behavior and access includes **Allow Court Finder answers**. `allowCourtSearch` controls both `searchCourts` and `courtDetails`; disabling it removes those tools. Saves are admin-authorized and audited. Migration `0060_agent_court_search.sql` enables this public-directory capability by default, consistent with the existing game/help read capabilities. It does not enable bookings or writes.
 
 The tools reuse `getCourtListings`, the same verified Philippines directory, details formatters as Court Finder. Search returns at most eight records, with a bounded offset and exact internal `/courts/<slug>` links. Name/city/neighborhood queries match directory names and addresses; there is no external venue discovery or named-city geocoding. Unknown prices/hours, restricted access and operational status remain explicit. A listed court is not proof of a currently bookable slot.
 

@@ -19,7 +19,7 @@ export function agentReadiness(
     {
       label: "Agent enabled",
       ready: config.enabled,
-      hint: "Turn on Enable Agent below.",
+      hint: "Turn on Enable Agent in Settings.",
     },
     {
       label: "Server credential storage",

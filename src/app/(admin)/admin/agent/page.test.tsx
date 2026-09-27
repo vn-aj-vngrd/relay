@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -23,7 +23,7 @@ vi.mock("@/features/agent/connection-form", () => ({
   AgentConnectionForm: () => null,
 }));
 vi.mock("@/features/agent/settings-form", () => ({
-  AgentSettingsForm: () => null,
+  AgentSettingsForm: () => <div>Agent settings form</div>,
 }));
 
 import { defaultAgentConfig } from "@/features/agent/validation";
@@ -74,18 +74,52 @@ describe("Admin Agent metrics", () => {
   it("shows aggregate counts without user-level data", async () => {
     render(await AdminAgentPage());
     expect(
+      screen.getByRole("navigation", { name: "Agent sections" })
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/admin/agent?tab=settings"
+    );
+    expect(
       screen.getByRole("heading", { name: "Usage metrics" })
     ).toBeVisible();
     expect(screen.getByText("Active users · 30 days")).toBeVisible();
+    const detailToggle = screen.getByText("Detailed metrics and definitions");
+    expect(detailToggle.closest("details")).not.toHaveAttribute("open");
+    fireEvent.click(detailToggle);
+    expect(detailToggle.closest("details")).toHaveAttribute("open");
     expect(screen.getByText("Released before text · 7 days")).toBeVisible();
     expect(screen.getByText("Reported provider cost · 30 days")).toBeVisible();
     expect(screen.getByText("$0.0125")).toBeVisible();
     expect(screen.getByText("P95 request time · 30 days")).toBeVisible();
-    expect(screen.getByText("14.3%")).toBeVisible();
+    expect(screen.getByText(/1 of 7 · 14\.3%/)).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Review feedback" })
     ).toHaveAttribute("href", "/admin/feedback");
     expect(mocks.metrics).toHaveBeenCalledOnce();
+    expect(screen.queryByText("Agent settings form")).not.toBeInTheDocument();
+  });
+
+  it("opens settings separately without reading usage metrics", async () => {
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "settings" }),
+      })
+    );
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(screen.getByText("Agent settings form")).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "Usage metrics" })
+    ).not.toBeInTheDocument();
+    expect(mocks.metrics).not.toHaveBeenCalled();
+    expect(mocks.usage).not.toHaveBeenCalled();
   });
 
   it("keeps settings available when metrics cannot be read", async () => {
@@ -95,6 +129,21 @@ describe("Admin Agent metrics", () => {
       "Usage metrics are temporarily unavailable"
     );
     expect(screen.getByRole("heading", { name: "Setup status" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/admin/agent?tab=settings"
+    );
+  });
+
+  it("expands setup checks when readiness needs attention", async () => {
+    mocks.usage.mockRejectedValueOnce(new Error("database unavailable"));
+    render(await AdminAgentPage());
+    expect(screen.getByText("Setup needs attention")).toBeVisible();
+    expect(
+      screen
+        .getByText("View setup checks and test connection")
+        .closest("details")
+    ).toHaveAttribute("open");
   });
 
   it("distinguishes no samples from unavailable answer metrics", async () => {
@@ -125,6 +174,7 @@ describe("Admin Agent metrics", () => {
       requests: { ...sample.requests, costReported30Days: 0 },
     });
     render(await AdminAgentPage());
+    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     const label = screen.getByText("Reported provider cost · 30 days");
     expect(label.nextElementSibling).toHaveTextContent("Unavailable");
   });
@@ -136,6 +186,7 @@ describe("Admin Agent metrics", () => {
       requests: { ...sample.requests, costUsdMicros: 40 },
     });
     render(await AdminAgentPage());
+    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     expect(screen.getByText("<$0.0001")).toBeVisible();
   });
 
@@ -147,6 +198,7 @@ describe("Admin Agent metrics", () => {
       openReports: null,
     });
     render(await AdminAgentPage());
+    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     const label = screen.getByText("Answer reports · 30 days");
     expect(label.nextElementSibling).toHaveTextContent("Unavailable");
     expect(screen.getByText("Charged messages · 30 days")).toBeVisible();
