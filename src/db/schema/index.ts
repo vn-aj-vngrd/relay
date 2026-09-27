@@ -1429,6 +1429,32 @@ export const agentMessageUsage = pgTable(
   ]
 ).enableRLS();
 
+export const agentRequestMetrics = pgTable(
+  "agent_request_metrics",
+  {
+    id: uuid("id").primaryKey(),
+    status: text("status").notNull(),
+    errorKind: text("error_kind"),
+    durationMs: integer("duration_ms").notNull(),
+    firstTextMs: integer("first_text_ms"),
+    toolCalls: integer("tool_calls").notNull(),
+    toolFailures: integer("tool_failures").notNull(),
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+    costUsdMicros: integer("cost_usd_micros"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("agent_request_metrics_date_idx").on(table.createdAt),
+    check(
+      "agent_request_metrics_status",
+      sql`${table.status} in ('completed', 'failed', 'stopped')`
+    ),
+  ]
+).enableRLS();
+
 export const agentConversations = pgTable(
   "agent_conversations",
   {

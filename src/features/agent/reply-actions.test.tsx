@@ -35,11 +35,20 @@ describe("Agent reply copy", () => {
     fireEvent.click(screen.getByRole("button", { name: "Copy message" }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith("My question"));
     expect(screen.queryByRole("button", { name: /edit/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Report answer" })).toBeNull();
   });
   it("does not invent a timestamp for older messages without one", () => {
     const { container } = render(<AgentReplyActions text="Saved reply" />);
     expect(container.querySelector("time")).toBeNull();
     expect(screen.getByRole("button", { name: "Copy reply" })).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Report answer" })).toHaveAttribute(
+      "href",
+      "/feedback?area=agent"
+    );
+    expect(screen.getByRole("link", { name: "Report answer" })).toHaveClass(
+      "min-h-11",
+      "w-11"
+    );
   });
   it("shows an icon-only control with a tooltip on focus", async () => {
     render(<AgentReplyActions text="Next game" />);
@@ -76,6 +85,7 @@ describe("Agent reply copy", () => {
   it("disables copying while streaming and hides empty replies", () => {
     const { rerender } = render(<AgentReplyActions text="Partial" disabled />);
     expect(screen.getByRole("button", { name: "Copy reply" })).toBeDisabled();
+    expect(screen.queryByRole("link", { name: "Report answer" })).toBeNull();
     rerender(<AgentReplyActions text="  " />);
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });

@@ -15,10 +15,11 @@ import { getOwnFeedback } from "@/features/feedback/queries";
 export default async function FeedbackPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session?: string }>;
+  searchParams: Promise<{ session?: string; area?: string }>;
 }) {
   const user = await requireUser("/feedback");
-  const sessionId = z.uuid().safeParse((await searchParams).session);
+  const params = await searchParams;
+  const sessionId = z.uuid().safeParse(params.session);
   const gameContext = sessionId.success
     ? { sessionId: sessionId.data, pagePath: `/games/${sessionId.data}/play` }
     : undefined;
@@ -46,7 +47,10 @@ export default async function FeedbackPage({
             Specific examples help us understand and prioritize the right fix.
           </p>
         </div>
-        <FeedbackForm gameContext={gameContext} />
+        <FeedbackForm
+          gameContext={gameContext}
+          initialArea={params.area === "agent" ? "agent" : undefined}
+        />
       </section>
 
       <section aria-labelledby="past-feedback-title" className="pb-8 pt-2">

@@ -53,3 +53,16 @@ it("keeps creation disabled by default and its proposals outside the Data API", 
     "REVOKE ALL ON TABLE agent_creation_proposals FROM PUBLIC, anon, authenticated, service_role"
   );
 });
+
+it("keeps request metrics free of content and outside the Data API", () => {
+  const migration = readFileSync(
+    "drizzle/0064_agent_request_metrics.sql",
+    "utf8"
+  );
+  expect(migration).toContain(
+    'REVOKE ALL ON TABLE "agent_request_metrics" FROM PUBLIC, anon, authenticated, service_role'
+  );
+  expect(migration).not.toMatch(
+    /"(user_id|prompt|response|tool_input|tool_output)"/
+  );
+});

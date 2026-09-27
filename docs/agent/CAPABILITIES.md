@@ -42,6 +42,13 @@ archived state. No financial credentials, proof/media URLs, raw profiles, tokens
 or browser-local Quick Play data are returned. Story reads captions, not image
 contents. Reads do not authorize mutations.
 
+`myInsights` reuses the authenticated player's private Profile game-insights
+query. It returns recorded hosted/played games, matches, wins/losses, win rate,
+team points and up to five recent scored games. The tool binds the current user
+on the server and includes a recent-game link only while that user retains game
+access. It never reads another player's private insights or device-local Quick
+Play history. The Explore menu and Help Center use the same game-data switch.
+
 Lists are bounded and report truncation and continuation. A read-budget or paging
 limit means partial results, never absence of history. Past includes ended games;
 only status completed proves completion. Existing assistant claims that history is

@@ -1,5 +1,6 @@
 "use client";
-import { Check, Copy } from "@phosphor-icons/react";
+import { ChatCircleText, Check, Copy } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { notify } from "@/components/ui/action-notice";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -40,7 +41,7 @@ export function AgentReplyActions({
       ) : null}
       <button
         type="button"
-        className="pressable inline-flex min-h-9 w-9 shrink-0 items-center justify-center p-0 rounded-lg text-muted transition-colors hover:text-ink focus-visible:text-ink disabled:pointer-events-none disabled:opacity-45"
+        className="pressable inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg p-0 text-muted transition-colors hover:text-ink focus-visible:text-ink disabled:pointer-events-none disabled:opacity-45"
         aria-label={user ? "Copy message" : "Copy reply"}
         disabled={disabled}
         onClick={async () => {
@@ -67,6 +68,16 @@ export function AgentReplyActions({
           align="center"
         />
       </button>
+      {!user && !disabled ? (
+        <Link
+          href="/feedback?area=agent"
+          className="pressable inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:text-ink focus-visible:text-ink"
+          aria-label="Report answer"
+        >
+          <ChatCircleText size={15} aria-hidden />
+          <Tooltip content="Report answer" side="bottom" align="center" />
+        </Link>
+      ) : null}
       <span className="sr-only" role="status">
         {copied ? "Copied" : ""}
       </span>

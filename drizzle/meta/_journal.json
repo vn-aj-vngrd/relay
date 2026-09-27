@@ -449,6 +449,13 @@
       "when": 1790360365458,
       "tag": "0063_agent_conversation_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1790475272056,
+      "tag": "0064_agent_request_metrics",
+      "breakpoints": true
     }
   ]
 }

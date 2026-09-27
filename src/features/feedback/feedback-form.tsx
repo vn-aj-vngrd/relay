@@ -10,6 +10,7 @@ import { usePreserveFormValuesOnError } from "@/components/ui/use-preserve-form-
 
 import { type FeedbackActionState, submitFeedbackAction } from "./actions";
 import {
+  type FeedbackArea,
   type FeedbackType,
   feedbackAreaLabels,
   feedbackAreas,
@@ -42,8 +43,10 @@ function FieldError({ errors }: { errors?: string[] }) {
 
 export function FeedbackForm({
   gameContext,
+  initialArea,
 }: {
   gameContext?: { sessionId: string; pagePath: string };
+  initialArea?: FeedbackArea;
 }) {
   const [state, action] = useActionState<FeedbackActionState, FormData>(
     submitFeedbackAction,
@@ -129,7 +132,7 @@ export function FeedbackForm({
             id="feedback-area"
             name="area"
             label="Which part of Relay?"
-            defaultValue={gameContext ? "play" : "general"}
+            defaultValue={gameContext ? "play" : (initialArea ?? "general")}
             options={feedbackAreas.map((area) => ({
               value: area,
               label: feedbackAreaLabels[area],
@@ -204,7 +207,10 @@ export function FeedbackForm({
             id="feedback-page"
             name="pagePath"
             maxLength={300}
-            defaultValue={gameContext?.pagePath}
+            defaultValue={
+              gameContext?.pagePath ??
+              (initialArea === "agent" ? "/agent" : undefined)
+            }
             readOnly={Boolean(gameContext)}
             placeholder="/games/…"
             className="field read-only:bg-surface-strong read-only:text-muted"

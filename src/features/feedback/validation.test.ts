@@ -15,6 +15,19 @@ describe("submitFeedbackSchema", () => {
 
     expect(result.success).toBe(true);
   });
+  it("accepts an Agent answer report without copying its transcript", () => {
+    expect(
+      submitFeedbackSchema.safeParse({
+        type: "bug",
+        area: "agent",
+        title: "Agent missed my recent game",
+        description:
+          "The reply said I had no recent games, but Profile shows one.",
+        pagePath: "/agent",
+        contactAllowed: false,
+      }).success
+    ).toBe(true);
+  });
 
   it("accepts an issue report attached to a completed game", () => {
     expect(

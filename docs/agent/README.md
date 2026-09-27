@@ -41,6 +41,7 @@ The registry binds the authenticated user ID in its closure. No tool accepts a u
 | Tool | Purpose | Boundary |
 | --- | --- | --- |
 | `searchGames` | Mine, hosting, joining, attention, public open or group games | Authenticated membership/host or existing public discovery/group membership predicates; 20 per page, offset at most 200 |
+| `myInsights` | Signed-in player's recorded game and match statistics | Reuses private Profile insights query bound to authenticated user; recent links only when still accessible |
 | `gameDetails` | Details and permitted roster | Workspace permission plus removed-membership guard; at most 100 visible roster names |
 | `myGroups` | Group names, role and links | Current membership only; 20 per page |
 | `helpIndex` | Discover article slugs/titles | Public Help Center content only |
@@ -73,6 +74,7 @@ Backend authorization and narrow data projections are the security boundary. Pro
 - Valid Supabase session plus an existing unsuspended account and no forced password change.
 - PostgreSQL-backed monthly plan allowances plus per-user hourly rate limits (default 30, configurable 1–120); no process-local quota state.
 - Maximum 600 KB request body (including worst-case JSON escaping for the bounded conversation), 24 text messages and 4,000 characters per message. Clients cannot supply system/developer/tool roles, tool results, attachments, identity or provider settings. The optional UUID request identifier provides replay protection and does not grant access. Client assistant history is untrusted; tool reads establish current facts. The UI sends the latest 24 nonempty text messages and bounds each to 4,000 characters.
+- The request boundary blocks recognizable private keys and common API-token formats before reserving usage, saving a turn or contacting OpenRouter. A distinct client error asks the player to remove them. This is a narrow defense against accidental disclosure, not a complete secret detector; users must still review text before sending.
 - At most six model steps, twelve tool executions, a 50-second generation deadline and no model retries. Output tokens are capped per step (default 1,200; 256–4,000). OpenRouter account spending limits remain the global monetary safeguard.
 - The Agent UI requests an SDK message stream with server-authored activity labels, elapsed time and answer text. Legacy clients still receive text-only responses. Reasoning, raw tool inputs/results and provider metadata are never sent to the client. Error handling never logs or echoes upstream errors that might include request bodies or authorization headers.
 - Rendering escapes HTML and treats arbitrary links/images as inert text. Only narrow relative game/group/help/court links become navigation; destination routes enforce authorization again.
@@ -100,6 +102,70 @@ Do not add a generic database/HTTP tool, tool-name dispatch supplied by the clie
 - Improve source-grounding evaluations and relevance based on real questions; add historical-game filtering or richer attention insights only when needed.
 - Consider history search, configurable retention and spending dashboards when needed.
 - Creation contracts, current scope, and deferred actions are maintained in [Capabilities](CAPABILITIES.md).
+
+## Model behavior evals
+
+The [quality and evidence guide](QUALITY.md) defines the eval cases, error
+analysis workflow, guardrail boundaries and production evidence needed to make
+claims about actual usage.
+
+`evals/agent.behavior.eval.ts` is an opt-in, billable model suite. It uses the
+current Agent instructions and production-shaped read schemas with synthetic tool
+results. It checks past-game retrieval and citation, honest pagination,
+manual place clarification for “near me,” resistance to instructions in a
+game title, personal-insight grounding and failed-read honesty. The suite does
+not touch Relay accounts or the database.
+
+Set `AGENT_EVAL_API_KEY` and `AGENT_EVAL_MODEL` in `.env.local` or your shell,
+using a budget-limited key and tool-capable model, then run:
+
+```sh
+pnpm test:agent-evals
+```
+
+The eval uses strict zero-data-retention routing, a 50-second request deadline,
+no retries and at most six model steps per case. Missing credentials fail before
+provider requests. Record the model ID, date and individual case results when
+comparing changes; model outputs can vary, so investigate a failure before
+changing the prompt or threshold. A pass checks only these synthetic prompts.
+Authenticated tool authorization, saved conversations, creation approval,
+streaming UI and live provider configuration still need their separate checks.
+
+## Admin usage metrics
+
+Admin → Agent shows 7-day and 30-day charged-message and released-reservation
+counts, 30-day active users who had a charged message, currently unexpired
+reservations, Agent feedback report totals, provider attempts, failed/stopped
+attempts, failure rate, tool-read failures, average/P95 latency and time to first text, and
+OpenRouter-reported cost with coverage. It reads the existing usage ledger,
+feedback area and `agent_request_metrics` after the usual admin MFA check.
+Apply migration `0064_agent_request_metrics` before deployment. The metrics
+table contains no account ID or conversation content; its Data API privileges
+are revoked. If request metrics are unavailable, existing message usage stays
+visible; feedback counts fail independently as well. With no provider attempts, the page shows an empty state instead of
+zero latency or cost. The page keeps settings available if usage storage fails.
+Failed metric writes emit a fixed `agent-metrics` server-log event without
+request content, and never interrupt the player's answer.
+Completed replies offer
+Report answer, which opens the existing feedback form with Agent selected and
+does not attach the question or answer automatically. Admins review those
+reports in the existing Feedback queue.
+
+These counts are operational usage evidence, not a quality score or a complete
+failure rate. A charged message may later be interrupted; released reservations
+include stops and failures before text, while pre-reservation rejections are not
+recorded there. Provider attempts include only requests that reach generation.
+Missing step cost makes the whole request cost unknown, rather than zero. A
+report is a player signal, not a verified model error.
+`AGENT_PERFORMANCE_LOGGING=true` still provides content-free timing in server
+logs when diagnosing latency. `AGENT_OTEL_ENABLED=true` registers OpenTelemetry
+on Node and emits Agent generation, LLM-step, tool and database-operation spans
+to the configured Vercel trace sink. These custom spans contain only model/tool
+names, timing, finish reason and fixed status labels. They never record prompts,
+answers, tool arguments/results, IDs or raw exceptions. Configure trace access
+and retention before enabling. Review model behavior with the eval suite and
+inspect reported issues against the original authorized records before changing
+prompts or tools.
 
 ## Coverage and status
 

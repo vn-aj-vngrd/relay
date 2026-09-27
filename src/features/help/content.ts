@@ -81,6 +81,37 @@ export const helpCategories = [
 
 export const helpArticles: readonly HelpArticle[] = [
   {
+    slug: "admin-agent-metrics",
+    category: "settings",
+    title: "Review Agent usage and reliability",
+    summary:
+      "Understand Agent usage, latency, errors and reported provider cost in Admin Console.",
+    audience: "MFA-authorized Relay administrators",
+    prerequisites: [
+      "Sign in with an administrator account and complete the authenticator challenge.",
+      "Agent request metrics require the current database migration.",
+    ],
+    steps: [
+      "Open Admin Console, then Agent. Read the Usage metrics section for charged messages, active users, released reservations and answer reports.",
+      "Use the provider-attempt rows for failed or stopped answers, failure rate, failed tool reads, average and P95 request time, and average time to first text over the last 30 days. P95 means 95% of recorded attempts finished within that time.",
+      "Compare Reported provider cost with Requests with provider cost. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free.",
+      "Open Review feedback to inspect player-submitted answer reports. Verify each report against authorized source records before changing Agent instructions or tools.",
+    ],
+    outcome:
+      "You can spot usage and reliability changes without exposing conversation text in the metrics view.",
+    troubleshooting: [
+      "If Answer metrics are unavailable, check the Agent request-metrics migration and database connection. Existing message usage remains visible. No provider attempts means latency, errors and cost have no sample yet.",
+      "Counts exclude requests rejected before generation. A charged message or answer report does not prove the answer was correct; use the Agent quality evals and source review for that assessment.",
+    ],
+    related: ["agent-capabilities", "support"],
+    sources: [
+      "src/app/(admin)/admin/agent/page.tsx",
+      "src/features/agent/admin-metrics.ts",
+      "src/features/agent/request-metrics.ts",
+    ],
+    action: { href: "/admin/agent", label: "Open Agent administration" },
+  },
+  {
     slug: "agent-capabilities",
     category: "start",
     title: "What Agent can help you do",
@@ -94,6 +125,7 @@ export const helpArticles: readonly HelpArticle[] = [
     steps: [
       "Open Agent, then select + at the lower left of the message box. Browse Create and Explore. Creation tasks start a conversation with one question at a time and keep your unsent draft; Explore tasks insert prompts for you to review and send; you can also type your request directly. Type / in the message box to browse enabled tasks, then add a word such as court to filter. Use arrow keys and Enter, or tap a task, to start setup in chat or insert its prompt. Escape closes the menu without changing your draft.",
       "Explore past, current, upcoming, completed or cancelled games and your drafts when game answers are enabled. My Games and Invitations are separate collections: ask for invitation history or unanswered invitations. Narrow by name, venue, dates, group, your role or RSVP. Open games follow the same public discovery rules as the app; they are not a public archive.",
+      "Choose My game insights under Explore, or ask Agent for your own hosted-game count, games and matches played, wins, win rate, points, and recent scored games. These are the same recorded account statistics shown on your private game insights page; they are not a competitive rating. Agent links a recent game only if you can still open it.",
       "Ask about a game’s overview, players, attendance, booking state, Play courts and queue, recorded scores, Recap highlights or standings. You can also read permitted payment summaries, chat messages and Story photo captions. Hosts and co-hosts can see player payment rows; other participants see only their own. Agent does not read payment account credentials, proof images or device-local Quick Play history, and it does not interpret photo contents. Open the linked game section for those visual controls.",
       "Search your groups by name or owner/member role, ask for a group’s description and members, then explore its upcoming or completed games. Group membership allows game summaries but does not unlock a private game’s roster or other sections. Ask to continue when a list is partial; if the read limit is reached, narrow the question or open the linked page. An empty filtered list does not mean your entire history is empty.",
       "Ask how to use Relay with a few specific words, such as create a game or invite players. Agent uses current Help Center guides and links to the source so you can open the complete instructions.",
@@ -108,6 +140,8 @@ export const helpArticles: readonly HelpArticle[] = [
     troubleshooting: [
       "Missing creation options mean that capability is disabled. Contact an administrator or use Create game, Groups, or Quick Play directly.",
       "Check linked records: answers can be mistaken. Questions and relevant data are sent to the configured AI provider, so keep secrets out of chat.",
+      "Agent blocks recognizable API credentials and private keys before sending a message to the AI provider. Remove the credential and try again; if it is in an older saved message, start a new chat. This check cannot recognize every secret, so review all chat text before sending.",
+      "If an Agent answer looks wrong, choose Report answer under the completed reply. The feedback form selects Agent answers and /agent; describe the issue without pasting secrets. The conversation and answer are not attached automatically.",
       "Chats are saved to your account. Agent keeps processing while you visit other Relay pages in the same tab, including Quick Play, Courts and Help. One reply can run at a time; New chat and other conversations wait until it finishes. The sidebar and mobile header Agent icon show a working ring while a response is in progress. A blue dot means a reply is ready; a warning means the response needs attention. The session name menu shows a right-aligned icon for each recent chat's Working, Done or Needs attention state. These indicators clear when you return to Agent. Return to Agent to continue the latest conversation with its progress, reply and unsent draft intact. Stop, signing out or switching accounts ends active work. Reloading or closing the tab may interrupt a response; saved replies remain in History. Use the session name menu to reopen a chat. Select See all chats, then Chats or Archived, to rename, archive, restore or delete from the chat's More actions menu. Archived chats remain readable until you restore them to continue.",
       "Hover over your message or an Agent reply to reveal its time and Copy control with a short fade, or use Tab to focus Copy. The controls fade out when you move away, without shifting the conversation. On touch devices these controls stay visible; reduced-motion preferences skip the fade. Hover or focus an icon for its centered tooltip; near a screen edge, the tooltip shifts to stay visible. Copy includes the full message text; replies can be copied once streaming finishes. Older messages may not have a saved time.",
       "Write in the message box and select the circular up-arrow button to send, or press Enter. Shift+Enter adds a new line. While Agent responds, the same button becomes a square Stop control. The + button opens available actions.",
@@ -128,6 +162,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/agent/response-error.tsx",
       "src/features/agent/usage-indicator.tsx",
       "src/features/agent/tools.ts",
+      "src/features/players/insights.ts",
       "src/features/agent/reads.ts",
       "src/features/agent/game-sections.ts",
     ],
@@ -1474,6 +1509,7 @@ export const helpArticles: readonly HelpArticle[] = [
     prerequisites: ["Sign in to your own Relay profile."],
     steps: [
       "Open your own Profile and choose View game insights. On desktop, you can also choose it from Home.",
+      "When Agent game answers are enabled, choose My game insights under Explore in Agent or ask for your own recorded results.",
       "Read your completed hosted-game count, games with recorded play, matches, wins and losses, win rate, and your team’s points scored and conceded.",
       "Open a recent game to review its Play results. Only the five most recent games with recorded matches appear here; your totals cover all recorded matches.",
     ],
@@ -1483,12 +1519,14 @@ export const helpArticles: readonly HelpArticle[] = [
       "An RSVP or an unscored game does not count as played. Finish and record a match to include its result.",
       "Only you can open your detailed game insights. Profile summaries shown to other players are separate.",
       "Device-local Quick Play results do not appear in account insights.",
+      "Agent may make a mistake in its summary. Open your private game insights page to check the source figures.",
     ],
     related: ["settings-profile", "run-live-play", "score-corrections"],
     sources: [
       "src/app/(app)/home/page.tsx",
       "src/app/(app)/profile/[username]/insights/page.tsx",
       "src/features/players/insights.ts",
+      "src/features/agent/tools.ts",
     ],
   },
   {
@@ -1610,6 +1648,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Write a specific title and description: what you tried, expected, and saw. Add a local Relay page path when useful and choose whether you permit follow-up contact.",
       "Submit and use your feedback history to check status. New, Reviewing, Planned, Resolved, and Closed describe review, not a delivery promise.",
       "After a completed game, Smooth records the recap check-in; Had some issues opens this feedback flow with game context. You can dismiss that check-in without blocking results.",
+      "For an incorrect Agent reply, choose Report answer below it. The form selects Agent answers and /agent. Explain the mismatch; the chat transcript is not copied into the report automatically.",
     ],
     outcome:
       "Your account has a recorded submission and visible public status. Private triage notes are not shown to players.",
@@ -1622,6 +1661,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/feedback/validation.ts",
       "src/features/feedback/actions.ts",
       "src/app/(app)/feedback/page.tsx",
+      "src/features/agent/reply-actions.tsx",
     ],
     action: { href: "/feedback", label: "Send feedback (account)" },
   },

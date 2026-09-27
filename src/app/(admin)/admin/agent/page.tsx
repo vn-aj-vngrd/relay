@@ -1,7 +1,9 @@
 export const metadata = { title: "Agent settings · Admin" };
 
+import Link from "next/link";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
+import { getAgentAdminMetrics } from "@/features/agent/admin-metrics";
 import { readAgentSettings } from "@/features/agent/config";
 import { AgentConnectionForm } from "@/features/agent/connection-form";
 import { getAgentModels } from "@/features/agent/models";
@@ -42,6 +44,12 @@ export default async function AdminAgentPage() {
       hint: "The usage check failed. Check database connectivity and the Agent migration, then reload.",
     },
   ];
+  let metrics: Awaited<ReturnType<typeof getAgentAdminMetrics>> | null = null;
+  try {
+    metrics = await getAgentAdminMetrics();
+  } catch {
+    /* Keep configuration available when reporting storage is unavailable. */
+  }
   return (
     <div className="w-full">
       <AdminPageHeading
@@ -86,6 +94,151 @@ export default async function AdminAgentPage() {
           ))}
         </ul>
         <AgentConnectionForm />
+      </section>
+      <section
+        aria-labelledby="agent-usage-metrics"
+        className="mb-8 rounded-xl border border-line bg-surface p-5"
+      >
+        <h2 id="agent-usage-metrics" className="text-lg font-semibold">
+          Usage metrics
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Aggregate message usage and answer health. No questions, answers, user
+          names, or tool data are shown here.
+        </p>
+        {metrics ? (
+          <>
+            <dl className="mt-5 divide-y divide-line border-y border-line">
+              {[
+                ["Charged messages · 7 days", metrics.charged7Days],
+                ["Charged messages · 30 days", metrics.charged30Days],
+                ["Active users · 30 days", metrics.activeUsers30Days],
+                ["Released before text · 7 days", metrics.released7Days],
+                ["Released before text · 30 days", metrics.released30Days],
+                ["In-progress reservations", metrics.reserved30Days],
+                [
+                  "Answer reports · 30 days",
+                  metrics.reports30Days ?? "Unavailable",
+                ],
+                [
+                  "Unresolved answer reports",
+                  metrics.openReports ?? "Unavailable",
+                ],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex items-center justify-between gap-4 py-3"
+                >
+                  <dt className="text-sm leading-6 text-muted">{label}</dt>
+                  <dd className="score text-lg font-semibold">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <h3 className="mt-8 text-base font-semibold">Answer operations</h3>
+            {!metrics.requests ? (
+              <p role="status" className="mt-3 text-sm text-warning">
+                Answer metrics are unavailable. Check the Agent metrics
+                migration and database connection. Message usage above is still
+                available.
+              </p>
+            ) : metrics.requests.attempts30Days === 0 ? (
+              <p className="mt-3 text-sm text-muted">
+                No provider attempts recorded in the last 30 days. Latency,
+                errors and cost have no sample yet.
+              </p>
+            ) : (
+              <dl className="mt-3 divide-y divide-line border-y border-line">
+                {[
+                  [
+                    "Provider attempts · 7 days",
+                    metrics.requests.attempts7Days,
+                  ],
+                  [
+                    "Provider attempts · 30 days",
+                    metrics.requests.attempts30Days,
+                  ],
+                  ["Failed attempts · 7 days", metrics.requests.failed7Days],
+                  ["Failed attempts · 30 days", metrics.requests.failed30Days],
+                  [
+                    "Failure rate · 30 days",
+                    `${((metrics.requests.failed30Days / metrics.requests.attempts30Days) * 100).toFixed(1)}%`,
+                  ],
+                  [
+                    "Stopped attempts · 30 days",
+                    metrics.requests.stopped30Days,
+                  ],
+                  [
+                    "Failed tool reads · 30 days",
+                    metrics.requests.toolFailures30Days,
+                  ],
+                  [
+                    "Average request time · 30 days",
+                    `${metrics.requests.averageDurationMs.toLocaleString()} ms`,
+                  ],
+                  [
+                    "P95 request time · 30 days",
+                    `${metrics.requests.p95DurationMs.toLocaleString()} ms`,
+                  ],
+                  [
+                    "Average time to first text · 30 days",
+                    metrics.requests.firstTextCount30Days
+                      ? `${metrics.requests.averageFirstTextMs.toLocaleString()} ms`
+                      : "No answers started",
+                  ],
+                  [
+                    "Requests with first text",
+                    `${metrics.requests.firstTextCount30Days} of ${metrics.requests.attempts30Days}`,
+                  ],
+                  [
+                    "Reported provider cost · 30 days",
+                    metrics.requests.costReported30Days
+                      ? metrics.requests.costUsdMicros > 0 &&
+                        metrics.requests.costUsdMicros < 100
+                        ? "<$0.0001"
+                        : `$${(metrics.requests.costUsdMicros / 1_000_000).toFixed(4)}`
+                      : "Unavailable",
+                  ],
+                  [
+                    "Requests with provider cost",
+                    `${metrics.requests.costReported30Days} of ${metrics.requests.attempts30Days}`,
+                  ],
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="flex items-center justify-between gap-4 py-3"
+                  >
+                    <dt className="text-sm leading-6 text-muted">{label}</dt>
+                    <dd className="score text-lg font-semibold">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <p className="mt-4 text-xs leading-5 text-muted">
+              Charged includes answers that started but were later interrupted.
+              Released includes stopped or failed requests before answer text.
+              Failure rate is failed provider attempts divided by all provider
+              attempts; stops are shown separately. P95 means 95% of recorded
+              attempts finished within that time. Provider cost sums requests
+              with complete OpenRouter step costs; missing cost stays unknown.
+              Rejections before generation are excluded.
+            </p>
+            <p className="mt-2 text-xs leading-5 text-muted">
+              Answer reports are player-submitted feedback. Review them in the
+              admin Feedback queue; a report is a signal to investigate, not a
+              verified model error.
+            </p>
+            <Link
+              href="/admin/feedback"
+              className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline"
+            >
+              Review feedback
+            </Link>
+          </>
+        ) : (
+          <p role="status" className="mt-4 text-sm text-warning">
+            Usage metrics are temporarily unavailable. Settings remain editable.
+          </p>
+        )}
       </section>
       {!config.requireZeroRetention ? (
         <p className="mb-6 text-sm leading-6 text-warning">

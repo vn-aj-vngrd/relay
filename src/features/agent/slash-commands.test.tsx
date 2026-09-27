@@ -53,6 +53,9 @@ describe("Agent slash discovery", () => {
     await screen.findByRole("listbox", { name: "Available Agent actions" });
     expect(screen.queryByRole("group", { name: "Create" })).toBeNull();
     expect(screen.getByRole("group", { name: "Explore" })).toBeVisible();
+    expect(
+      screen.getByRole("option", { name: /My game insights/ })
+    ).toBeVisible();
     expect(input).toHaveTextContent("Please help");
     expect(change).not.toHaveBeenCalled();
     expect(screen.queryByRole("option", { name: /Create a game/ })).toBeNull();

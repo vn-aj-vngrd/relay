@@ -10,6 +10,10 @@ const mocks = vi.hoisted(() => ({
   group: vi.fn(),
   section: vi.fn(),
   creationOptions: vi.fn(),
+  insights: vi.fn(),
+}));
+vi.mock("@/features/players/insights", () => ({
+  getPlayerInsights: mocks.insights,
 }));
 vi.mock("./creation-service", () => ({
   creationOptions: mocks.creationOptions,
@@ -93,6 +97,7 @@ describe("Agent read-only registry", () => {
         )
       )
     ).toEqual([
+      "myInsights",
       "searchGames",
       "gameDetails",
       "myGroups",
@@ -116,6 +121,59 @@ describe("Agent read-only registry", () => {
         new AbortController().signal
       )
     ).toEqual({});
+  });
+  it("returns only the signed-in player's recorded insights and permitted links", async () => {
+    mocks.insights.mockResolvedValueOnce({
+      hostedGames: 2,
+      gamesPlayed: 3,
+      matchesPlayed: 4,
+      wins: 2,
+      losses: 2,
+      winRate: 50,
+      pointsFor: 40,
+      pointsAgainst: 38,
+      recentGames: [
+        {
+          id: "open-game",
+          title: "Open game",
+          startsAt: new Date("2026-09-20T10:00:00Z"),
+          timezone: "Asia/Manila",
+          matches: 2,
+          wins: 1,
+          losses: 1,
+          canOpen: true,
+        },
+        {
+          id: "closed-game",
+          title: "Closed game",
+          startsAt: new Date("2026-09-10T10:00:00Z"),
+          timezone: "Asia/Manila",
+          matches: 2,
+          wins: 1,
+          losses: 1,
+          canOpen: false,
+        },
+      ],
+    });
+    const tools = createAgentTools(
+      "viewer",
+      defaultAgentConfig,
+      new AbortController().signal
+    );
+    const result = await tools.myInsights.execute!(
+      {},
+      { toolCallId: "insights", messages: [], context: {} }
+    );
+    expect(mocks.insights).toHaveBeenCalledWith("viewer");
+    expect(result).toMatchObject({
+      hostedGames: 2,
+      wins: 2,
+      recentGames: [
+        { href: "/games/open-game/play" },
+        { title: "Closed game" },
+      ],
+    });
+    expect(result).not.toHaveProperty("recentGames.1.href");
   });
   it("binds identity on the server and sanitizes read errors", async () => {
     mocks.game.mockRejectedValue(new Error("DATABASE_PASSWORD=secret"));

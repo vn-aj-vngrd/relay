@@ -56,6 +56,13 @@ export const agentCapabilityPrompts = [
     category: "Create",
   },
   {
+    label: "My game insights",
+    prompt:
+      "Show my game insights: games hosted and played, wins, points, and recent results.",
+    capability: "allowGameData",
+    category: "Explore",
+  },
+  {
     label: "Find my next game",
     prompt: "When is my next game?",
     capability: "allowGameData",

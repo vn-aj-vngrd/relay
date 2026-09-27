@@ -6,6 +6,19 @@ vi.mock("./actions", () => ({ submitFeedbackAction: vi.fn(async () => ({})) }));
 import { FeedbackForm } from "./feedback-form";
 
 describe("FeedbackForm", () => {
+  it("preselects Agent without attaching chat content", () => {
+    const { container } = render(<FeedbackForm initialArea="agent" />);
+    expect(
+      screen.getByRole("button", { name: "Which part of Relay?" })
+    ).toHaveTextContent("Agent answers");
+    expect(container.querySelector('input[name="area"]')).toHaveValue("agent");
+    expect(screen.getByLabelText("Related Relay page (optional)")).toHaveValue(
+      "/agent"
+    );
+    expect(
+      screen.getByLabelText("Related Relay page (optional)")
+    ).not.toHaveAttribute("readonly");
+  });
   it("attaches completed-game context without asking the player to paste it", () => {
     const { container } = render(
       <FeedbackForm

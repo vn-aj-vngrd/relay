@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
 import { readAgentSettings } from "@/features/agent/config";
+import { containsObviousSecret } from "@/features/agent/guardrails";
 import {
   AgentHistoryError,
   beginAgentTurn,
@@ -17,6 +18,11 @@ import {
 import { agentInstructions } from "@/features/agent/instructions";
 import { agentModel } from "@/features/agent/provider";
 import { readAgentRequest } from "@/features/agent/request";
+import {
+  openRouterCostMicros,
+  recordAgentRequestMetric,
+} from "@/features/agent/request-metrics";
+import { agentDbSpan, agentSpan } from "@/features/agent/telemetry";
 import { createAgentTools } from "@/features/agent/tools";
 import {
   AgentDuplicateRequestError,
@@ -74,13 +80,15 @@ export async function POST(request: Request) {
   async function saveTurn() {
     if (!savedTurn) return;
     const saveStartedAt = performance.now();
-    await finishAgentTurn(
-      savedTurn.userId,
-      savedTurn.conversationId,
-      savedTurn.requestId,
-      answer,
-      interrupted,
-      work
+    await agentDbSpan("save_turn", () =>
+      finishAgentTurn(
+        savedTurn!.userId,
+        savedTurn!.conversationId,
+        savedTurn!.requestId,
+        answer,
+        interrupted,
+        work
+      )
     );
     timing.saveMs += performance.now() - saveStartedAt;
     savedTurn = null;
@@ -89,7 +97,9 @@ export async function POST(request: Request) {
   async function release() {
     if (reservation && !charged && !released) {
       try {
-        await releaseAgentMessage(reservation.userId, reservation.id);
+        await agentDbSpan("release_reservation", () =>
+          releaseAgentMessage(reservation!.userId, reservation!.id)
+        );
         released = true;
       } catch {
         /* Expiring reservations recover abandoned or failed attempts. */
@@ -104,6 +114,8 @@ export async function POST(request: Request) {
     if (!user) return failure(401, "Sign in to use Agent.");
     const body = await readAgentRequest(request);
     if (!body) return failure(400, "Start a new chat or shorten your message.");
+    if (body.messages.some((message) => containsObviousSecret(message.content)))
+      return failure(422, "Remove credentials or private keys before sending.");
     const requestId = body.requestId ?? crypto.randomUUID();
     if (body.conversationId)
       unstartedTurn = {
@@ -140,16 +152,20 @@ export async function POST(request: Request) {
           headers: { ...privateHeaders, ...rateLimitHeaders(limit) },
         }
       );
-    await reserveAgentMessage(user.id, requestId, config);
+    await agentDbSpan("reserve", () =>
+      reserveAgentMessage(user.id, requestId, config)
+    );
     reservation = { userId: user.id, id: requestId };
     let modelMessages = body.messages;
     if (body.conversationId) {
-      modelMessages = await beginAgentTurn(
-        user.id,
-        body.conversationId,
-        requestId,
-        body.messages.at(-1)!.content,
-        { messageId: body.messageId, retry: body.retry ?? false }
+      modelMessages = await agentDbSpan("begin_turn", () =>
+        beginAgentTurn(
+          user.id,
+          body.conversationId!,
+          requestId,
+          body.messages.at(-1)!.content,
+          { messageId: body.messageId, retry: body.retry ?? false }
+        )
       );
       savedTurn = {
         userId: user.id,
@@ -158,6 +174,14 @@ export async function POST(request: Request) {
       };
       unstartedTurn = null;
     }
+    if (
+      modelMessages.some((message) => containsObviousSecret(message.content))
+    ) {
+      interrupted = true;
+      await saveTurn();
+      await release();
+      return failure(422, "Remove credentials or private keys before sending.");
+    }
     const cancellation = new AbortController();
     const signal = AbortSignal.any([
       request.signal,
@@ -165,6 +189,8 @@ export async function POST(request: Request) {
       AbortSignal.timeout(50_000),
     ]);
     const generationStartedAt = performance.now();
+    const generationSpan = agentSpan("agent.generation");
+    generationSpan.setAttribute("agent.model", config.model);
     timing.setupMs = generationStartedAt - startedAt;
     const result = streamText({
       model: agentModel(
@@ -184,7 +210,8 @@ export async function POST(request: Request) {
               messageId: body.messageId,
               requestId,
             }
-          : undefined
+          : undefined,
+        generationSpan
       ),
       stopWhen: isStepCount(6),
       prepareStep: ({ stepNumber }) => ({
@@ -209,6 +236,14 @@ export async function POST(request: Request) {
       request.headers.get("x-relay-agent-stream") === "activity-v1";
     const toolEntries = new Map<string, number>();
     const toolStartedAt = new Map<string, number>();
+    const toolSpans = new Map<string, ReturnType<typeof agentSpan>>();
+    let modelSpan: ReturnType<typeof agentSpan> | null = null;
+    let inputTokens: number | null = null;
+    let outputTokens: number | null = null;
+    let costUsdMicros: number | null = null;
+    let pricedSteps = 0;
+    let toolFailures = 0;
+    let errorKind: "generation" | "tool" | null = null;
     let cancelled = false;
     const stream = new ReadableStream<UIMessageChunk>({
       cancel() {
@@ -240,13 +275,37 @@ export async function POST(request: Request) {
         try {
           let wrote = false;
           for await (const part of result.fullStream) {
-            if (part.type === "start-step") timing.modelSteps++;
+            if (part.type === "start-step") {
+              timing.modelSteps++;
+              modelSpan?.end();
+              modelSpan = agentSpan("agent.llm.step", generationSpan);
+            }
 
-            if (part.type === "error" || part.type === "abort")
+            if (part.type === "finish-step") {
+              if (part.usage.inputTokens !== undefined)
+                inputTokens = (inputTokens ?? 0) + part.usage.inputTokens;
+              if (part.usage.outputTokens !== undefined)
+                outputTokens = (outputTokens ?? 0) + part.usage.outputTokens;
+              const stepCost = openRouterCostMicros(part.providerMetadata);
+              if (stepCost !== null) {
+                pricedSteps++;
+                costUsdMicros = (costUsdMicros ?? 0) + stepCost;
+              }
+              modelSpan?.setAttribute("agent.finish_reason", part.finishReason);
+              modelSpan?.end();
+              modelSpan = null;
+            }
+
+            if (part.type === "error" || part.type === "abort") {
+              errorKind = "generation";
               throw new Error("Agent unavailable");
+            }
             if (part.type === "tool-call") {
               timing.toolCalls++;
               toolStartedAt.set(part.toolCallId, performance.now());
+              const toolSpan = agentSpan("agent.tool.execute", generationSpan);
+              toolSpan.setAttribute("agent.tool", part.toolName);
+              toolSpans.set(part.toolCallId, toolSpan);
               const step = toolWorkStep(part.toolName);
               if (step && work!.entries.length < 30) {
                 completePhase();
@@ -261,18 +320,25 @@ export async function POST(request: Request) {
                 timing.toolMs += performance.now() - toolStart;
                 toolStartedAt.delete(part.toolCallId);
               }
+              const output = part.type === "tool-result" ? part.output : null;
+              const unavailable =
+                output &&
+                typeof output === "object" &&
+                "unavailable" in output &&
+                output.unavailable === true;
+              const failed = part.type === "tool-error" || unavailable;
+              if (failed) {
+                toolFailures++;
+                errorKind = "tool";
+              }
+              toolSpans
+                .get(part.toolCallId)
+                ?.setAttribute("agent.status", failed ? "error" : "ok");
+              toolSpans.get(part.toolCallId)?.end();
+              toolSpans.delete(part.toolCallId);
               const index = toolEntries.get(part.toolCallId);
               if (index !== undefined) {
-                const output = part.type === "tool-result" ? part.output : null;
-                const unavailable =
-                  output &&
-                  typeof output === "object" &&
-                  "unavailable" in output &&
-                  output.unavailable === true;
-                work!.entries[index].status =
-                  part.type === "tool-error" || unavailable
-                    ? "failed"
-                    : "complete";
+                work!.entries[index].status = failed ? "failed" : "complete";
                 update();
               }
             }
@@ -292,7 +358,9 @@ export async function POST(request: Request) {
               if (!charged) {
                 timing.firstTextMs = performance.now() - generationStartedAt;
                 const chargeStartedAt = performance.now();
-                await chargeAgentMessage(user.id, requestId);
+                await agentDbSpan("charge", () =>
+                  chargeAgentMessage(user.id, requestId)
+                );
                 timing.chargeMs = performance.now() - chargeStartedAt;
                 charged = true;
               }
@@ -329,6 +397,7 @@ export async function POST(request: Request) {
         } catch {
           timing.generationMs = performance.now() - generationStartedAt;
           interrupted = true;
+          errorKind = "generation";
           work = finishWork(
             work!,
             request.signal.aborted || cancelled ? "stopped" : "failed"
@@ -343,12 +412,50 @@ export async function POST(request: Request) {
           emit({ type: "error", errorText: "Agent response interrupted" });
           if (!cancelled) controller.close();
         } finally {
+          modelSpan?.end();
+          for (const span of toolSpans.values()) span.end();
+          generationSpan.setAttribute("agent.status", work?.status ?? "failed");
+          generationSpan.end();
           try {
             await saveTurn();
           } catch {
             /* The saved prompt remains; no raw transcript is logged. */
           }
           await release();
+          try {
+            await agentDbSpan("record_metrics", () =>
+              recordAgentRequestMetric({
+                id: requestId,
+                status:
+                  work?.status === "completed"
+                    ? "completed"
+                    : work?.status === "stopped"
+                      ? "stopped"
+                      : "failed",
+                errorKind,
+                durationMs: Math.round(performance.now() - startedAt),
+                firstTextMs:
+                  timing.firstTextMs === null
+                    ? null
+                    : Math.round(timing.firstTextMs),
+                toolCalls: timing.toolCalls,
+                toolFailures,
+                inputTokens,
+                outputTokens,
+                costUsdMicros:
+                  timing.modelSteps > 0 &&
+                  pricedSteps === timing.modelSteps &&
+                  costUsdMicros !== null &&
+                  costUsdMicros <= 2_147_483_647
+                    ? costUsdMicros
+                    : null,
+              })
+            );
+          } catch {
+            // Metric storage must not interrupt an answer. Fixed event only:
+            // database errors may contain values from the saved conversation.
+            console.error("[agent-metrics] write failed");
+          }
           if (process.env.AGENT_PERFORMANCE_LOGGING === "true") {
             // Fixed numeric fields only: never transcripts, IDs, tool inputs,
             // provider bodies, credentials, or model reasoning.
