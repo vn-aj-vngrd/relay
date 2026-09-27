@@ -96,7 +96,7 @@ export default async function AdminAgentPage({
         {activeTab === "overview" ? (
           overview
         ) : (
-          <div className="max-w-3xl">
+          <div>
             {!config.requireZeroRetention ? (
               <p className="mb-6 text-sm leading-6 text-warning">
                 Provider policy mode is active. The selected provider may retain

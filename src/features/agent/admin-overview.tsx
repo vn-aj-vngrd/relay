@@ -8,13 +8,20 @@ type Check = { label: string; ready: boolean; hint: string };
 function MetricRow({
   label,
   value,
+  detail,
 }: {
   label: string;
   value: React.ReactNode;
+  detail?: string;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
-      <dt className="text-sm leading-6 text-muted">{label}</dt>
+      <dt className="text-sm leading-6 text-muted">
+        {label}
+        {detail ? (
+          <span className="block text-xs leading-5">{detail}</span>
+        ) : null}
+      </dt>
       <dd className="score text-right text-base font-semibold">{value}</dd>
     </div>
   );
@@ -142,39 +149,27 @@ export function AgentAdminOverview({
           </p>
         ) : (
           <>
-            <div className="mt-6 grid border-y border-line sm:grid-cols-3 sm:divide-x sm:divide-line">
-              <div className="py-4 sm:pr-5">
-                <p className="text-sm text-muted">Charged messages · 30 days</p>
-                <p className="score mt-1 text-3xl font-bold">
-                  {metrics.charged30Days}
-                </p>
-                <p className="mt-1 text-xs text-muted">
-                  {metrics.charged7Days} in the last 7 days
-                </p>
-              </div>
-              <div className="border-t border-line py-4 sm:border-t-0 sm:px-5">
-                <p className="text-sm text-muted">Active users · 30 days</p>
-                <p className="score mt-1 text-3xl font-bold">
-                  {metrics.activeUsers30Days}
-                </p>
-                <p className="mt-1 text-xs text-muted">
-                  With a charged message
-                </p>
-              </div>
-              <div className="border-t border-line py-4 sm:border-t-0 sm:pl-5">
-                <p className="text-sm text-muted">
-                  Provider attempts · 30 days
-                </p>
-                <p className="score mt-1 text-3xl font-bold">
-                  {requests ? requests.attempts30Days : "—"}
-                </p>
-                <p className="mt-1 text-xs text-muted">
-                  {requests
+            <dl className="mt-5 divide-y divide-line border-y border-line">
+              <MetricRow
+                label="Charged messages · 30 days"
+                detail={`${metrics.charged7Days} in the last 7 days`}
+                value={metrics.charged30Days}
+              />
+              <MetricRow
+                label="Active users · 30 days"
+                detail="With a charged message"
+                value={metrics.activeUsers30Days}
+              />
+              <MetricRow
+                label="Provider attempts · 30 days"
+                detail={
+                  requests
                     ? `${requests.attempts7Days} in the last 7 days`
-                    : "Answer metrics unavailable"}
-                </p>
-              </div>
-            </div>
+                    : "Answer metrics unavailable"
+                }
+                value={requests ? requests.attempts30Days : "—"}
+              />
+            </dl>
 
             {requests?.attempts30Days ? (
               <dl
