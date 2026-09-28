@@ -24,7 +24,14 @@ describe("Agent admin usage metrics", () => {
         reserved30Days: 1,
       },
     ]);
-    mocks.where.mockResolvedValueOnce([{ reports30Days: 2, openReports: 1 }]);
+    mocks.where.mockResolvedValueOnce([
+      {
+        reports30Days: 2,
+        openReports: 1,
+        goodRatings30Days: 4,
+        badRatings30Days: 2,
+      },
+    ]);
     mocks.where.mockResolvedValueOnce([
       {
         attempts7Days: 3,
@@ -51,6 +58,8 @@ describe("Agent admin usage metrics", () => {
       reserved30Days: 1,
       reports30Days: 2,
       openReports: 1,
+      goodRatings30Days: 4,
+      badRatings30Days: 2,
       requests: {
         attempts7Days: 3,
         failed7Days: 1,
@@ -92,6 +101,18 @@ describe("Agent admin usage metrics", () => {
     expect(dialect.sqlToQuery(feedbackProjection.reports30Days).params).toEqual(
       ["2026-08-28T00:00:00.000Z"]
     );
+    expect(dialect.sqlToQuery(feedbackProjection.reports30Days).sql).toContain(
+      '"agent_rating" is null'
+    );
+    expect(
+      dialect.sqlToQuery(feedbackProjection.goodRatings30Days).params
+    ).toEqual(["2026-08-28T00:00:00.000Z"]);
+    expect(
+      dialect.sqlToQuery(feedbackProjection.goodRatings30Days).sql
+    ).toContain('"agent_rated_at"');
+    expect(
+      dialect.sqlToQuery(feedbackProjection.badRatings30Days).sql
+    ).not.toContain('"updated_at"');
     const requestProjection = mocks.select.mock.calls[2][0];
     expect(dialect.sqlToQuery(requestProjection.attempts7Days).params).toEqual([
       "2026-09-20T00:00:00.000Z",
@@ -110,6 +131,8 @@ describe("Agent admin usage metrics", () => {
       activeUsers30Days: 0,
       released30Days: 0,
       reports30Days: 0,
+      goodRatings30Days: 0,
+      badRatings30Days: 0,
       requests: { attempts30Days: 0 },
     });
   });
@@ -133,6 +156,8 @@ describe("Agent admin usage metrics", () => {
       charged30Days: 4,
       reports30Days: null,
       openReports: null,
+      goodRatings30Days: null,
+      badRatings30Days: null,
       requests: { attempts30Days: 2 },
     });
   });

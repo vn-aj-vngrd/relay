@@ -1,0 +1,7 @@
+ALTER TABLE "feedback_submissions" ADD COLUMN "agent_conversation_id" uuid;--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD COLUMN "agent_message_id" text;--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD COLUMN "agent_rating" text;--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD COLUMN "agent_reasons" text[] DEFAULT '{}' NOT NULL;--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD CONSTRAINT "feedback_agent_reply_unique" UNIQUE("user_id","agent_conversation_id","agent_message_id");--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD CONSTRAINT "feedback_agent_rating_valid" CHECK ("feedback_submissions"."agent_rating" is null or "feedback_submissions"."agent_rating" in ('good', 'bad'));--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD CONSTRAINT "feedback_agent_reply_complete" CHECK (("feedback_submissions"."agent_rating" is null and "feedback_submissions"."agent_conversation_id" is null and "feedback_submissions"."agent_message_id" is null) or ("feedback_submissions"."agent_rating" is not null and "feedback_submissions"."agent_conversation_id" is not null and "feedback_submissions"."agent_message_id" is not null));

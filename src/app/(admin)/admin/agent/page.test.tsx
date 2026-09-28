@@ -47,6 +47,8 @@ beforeEach(() => {
     reserved30Days: 1,
     reports30Days: 2,
     openReports: 1,
+    goodRatings30Days: 4,
+    badRatings30Days: 2,
     requests: {
       attempts7Days: 3,
       failed7Days: 1,
@@ -67,12 +69,12 @@ beforeEach(() => {
 describe("Admin Agent metrics", () => {
   it("requires admin MFA authorization before reading usage", async () => {
     mocks.admin.mockRejectedValueOnce(new Error("redirect"));
-    await expect(AdminAgentPage()).rejects.toThrow("redirect");
+    await expect(AdminAgentPage({})).rejects.toThrow("redirect");
     expect(mocks.metrics).not.toHaveBeenCalled();
   });
 
   it("shows aggregate counts without user-level data", async () => {
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     expect(
       screen.getByRole("navigation", { name: "Agent sections" })
     ).toBeVisible();
@@ -96,6 +98,8 @@ describe("Admin Agent metrics", () => {
     expect(screen.getByText("Reported provider cost · 30 days")).toBeVisible();
     expect(screen.getByText("$0.0125")).toBeVisible();
     expect(screen.getByText("P95 request time · 30 days")).toBeVisible();
+    expect(screen.getByText("4 good · 2 needs work")).toBeVisible();
+    expect(screen.getByText("Good reply ratings · 30 days")).toBeVisible();
     expect(screen.getByText(/1 of 7 · 14\.3%/)).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Review feedback" })
@@ -124,7 +128,7 @@ describe("Admin Agent metrics", () => {
 
   it("keeps settings available when metrics cannot be read", async () => {
     mocks.metrics.mockRejectedValueOnce(new Error("database unavailable"));
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     expect(screen.getByRole("status")).toHaveTextContent(
       "Usage metrics are temporarily unavailable"
     );
@@ -137,7 +141,7 @@ describe("Admin Agent metrics", () => {
 
   it("expands setup checks when readiness needs attention", async () => {
     mocks.usage.mockRejectedValueOnce(new Error("database unavailable"));
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     expect(screen.getByText("Setup needs attention")).toBeVisible();
     expect(
       screen
@@ -152,7 +156,7 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, attempts30Days: 0 },
     });
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     expect(screen.getByText(/No provider attempts recorded/)).toBeVisible();
     expect(screen.queryByText("$0.0000")).not.toBeInTheDocument();
   });
@@ -160,7 +164,7 @@ describe("Admin Agent metrics", () => {
   it("keeps message usage visible when answer metrics are unavailable", async () => {
     const sample = await mocks.metrics();
     mocks.metrics.mockResolvedValueOnce({ ...sample, requests: null });
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     expect(screen.getByText("Charged messages · 30 days")).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Answer metrics are unavailable"
@@ -173,7 +177,7 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, costReported30Days: 0 },
     });
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     const label = screen.getByText("Reported provider cost · 30 days");
     expect(label.nextElementSibling).toHaveTextContent("Unavailable");
@@ -185,7 +189,7 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, costUsdMicros: 40 },
     });
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     expect(screen.getByText("<$0.0001")).toBeVisible();
   });
@@ -197,7 +201,7 @@ describe("Admin Agent metrics", () => {
       reports30Days: null,
       openReports: null,
     });
-    render(await AdminAgentPage());
+    render(await AdminAgentPage({}));
     fireEvent.click(screen.getByText("Detailed metrics and definitions"));
     const label = screen.getByText("Answer reports · 30 days");
     expect(label.nextElementSibling).toHaveTextContent("Unavailable");

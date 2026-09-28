@@ -5,12 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FocusedBackLink } from "@/components/shared/focused-mobile-header";
 import { notify } from "@/components/ui/action-notice";
 import { Button } from "@/components/ui/button";
-import { AgentMark } from "./agent-mark";
 import type { AgentUsageSummary } from "./allowance";
 import { type AgentCapabilities, availableAgentPrompts } from "./capabilities";
 import {
   AgentEmptyState,
   AgentMessage,
+  AgentMessageHeader,
   AgentNewChatButton,
 } from "./chat-presentation";
 import { AgentChatSkeleton } from "./chat-skeleton";
@@ -36,6 +36,7 @@ import {
 } from "./message-time";
 import { AgentReplyActions } from "./reply-actions";
 import { AgentResponseError } from "./response-error";
+import type { AgentReplyRating } from "./response-feedback";
 import type { AgentSession } from "./session";
 import { useAgentSession } from "./session";
 import { agentTransportMessages } from "./transport-messages";
@@ -143,7 +144,35 @@ export function AgentChat({
   });
   const [activeTitle, setActiveTitle] = useState(session.title);
   const [activeId, setActiveId] = useState(session.conversationId);
+  const [replyRatings, setReplyRatings] = useState<
+    Record<string, AgentReplyRating>
+  >({});
   const [activeArchived, setActiveArchived] = useState(session.archived);
+
+  useEffect(() => {
+    setReplyRatings({});
+    if (!activeId) return;
+    const controller = new AbortController();
+    void fetch(
+      `/api/agent/feedback?conversationId=${encodeURIComponent(activeId)}`,
+      { cache: "no-store", signal: controller.signal }
+    )
+      .then(async (response) => {
+        if (!response.ok) return;
+        const body = (await response.json()) as {
+          ratings: { messageId: string; rating: AgentReplyRating }[];
+        };
+        if (!controller.signal.aborted)
+          setReplyRatings((current) => ({
+            ...Object.fromEntries(
+              body.ratings.map(({ messageId, rating }) => [messageId, rating])
+            ),
+            ...current,
+          }));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [activeId]);
   const [accountWorking, setAccountWorking] = useState(false);
   const preparing = Boolean(session.preparation);
   const pendingQuestion = session.preparation?.question ?? null;
@@ -554,6 +583,9 @@ export function AgentChat({
     }
   }
   const lastMessage = visibleMessages.at(-1);
+  const latestAgentReplyIndex = visibleMessages.findLastIndex(
+    (message) => message.role === "assistant"
+  );
   const interactionsDisabled =
     busy || accountWorking || activeArchived || !available;
   return (
@@ -655,6 +687,16 @@ export function AgentChat({
                       <AgentReplyActions
                         timestamp={messageTimestamp(message)}
                         user={message.role === "user"}
+                        conversationId={activeId}
+                        messageId={message.id}
+                        rating={replyRatings[message.id]}
+                        alwaysVisible={index === latestAgentReplyIndex}
+                        onRatingSaved={(messageId, value) =>
+                          setReplyRatings((current) => ({
+                            ...current,
+                            [messageId]: value,
+                          }))
+                        }
                         text={message.parts
                           .filter((part) => part.type === "text")
                           .map((part) => part.text)
@@ -704,10 +746,7 @@ export function AgentChat({
           )}
           {error && lastMessage?.role !== "assistant" ? (
             <article aria-label="Agent" className="mt-7 max-w-full pr-2">
-              <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                <AgentMark size={18} className="text-primary" />
-                Agent
-              </div>
+              <AgentMessageHeader />
               <AgentResponseError
                 message={errorCopy}
                 disabled={interactionsDisabled}
@@ -717,7 +756,8 @@ export function AgentChat({
           ) : null}
           {(status === "submitted" || preparing) &&
           lastMessage?.role !== "assistant" ? (
-            <div className="mt-5">
+            <article aria-label="Agent" className="mt-7 max-w-full pr-2">
+              <AgentMessageHeader />
               <AgentWorkLog
                 work={{
                   startedAt:
@@ -727,8 +767,8 @@ export function AgentChat({
                   entries: [{ step: "reviewing", status: "running" }],
                 }}
               />
-            </div>
-          ) : remotePending ? (
+            </article>
+          ) : remotePending && lastMessage?.role !== "assistant" ? (
             <p role="status" className="mt-5 text-sm text-muted">
               Agent is working in another session. Waiting for the saved reply…
             </p>

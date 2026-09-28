@@ -135,11 +135,13 @@ streaming UI and live provider configuration still need their separate checks.
 
 Admin → Agent → Overview shows 7-day and 30-day charged-message and released-reservation
 counts, 30-day active users who had a charged message, currently unexpired
-reservations, Agent feedback report totals, provider attempts, failed/stopped
+reservations, voluntary reply ratings and separate Agent problem report totals, provider attempts, failed/stopped
 attempts, failure rate, tool-read failures, average/P95 latency and time to first text, and
 OpenRouter-reported cost with coverage. It reads the existing usage ledger,
 feedback area and `agent_request_metrics` after the usual admin MFA check.
-Apply migration `0064_agent_request_metrics` before deployment. The metrics
+Apply migrations `0064_agent_request_metrics`, `0065_agent_reply_feedback`, and
+`0066_agent_reply_rating_time`
+before deployment. The request metrics
 table contains no account ID or conversation content; its Data API privileges
 are revoked. If request metrics are unavailable, existing message usage stays
 visible; feedback counts fail independently as well. The Overview shows a
@@ -150,17 +152,24 @@ no provider attempts, the page shows an empty state instead of zero latency or
 cost. The Settings tab remains available if usage storage fails.
 Failed metric writes emit a fixed `agent-metrics` server-log event without
 request content, and never interrupt the player's answer.
-Completed replies offer
-Report answer, which opens the existing feedback form with Agent selected and
-does not attach the question or answer automatically. Admins review those
-reports in the existing Feedback queue.
+Saved replies offer separate Good response and Needs work controls. Either opens
+the feedback dialog with that rating selected; players choose a reason or add
+details, then submit. The owner-scoped API
+accepts only a saved assistant message in the caller's conversation, limits
+submissions, and keeps one rating per reply. It stores rating, reason codes and
+optional details in the existing Feedback queue without copying the question or
+answer. A separate Report a problem link opens the existing Agent feedback form.
+Admin Overview counts good and needs-work ratings for the last 30 days
+separately from problem reports. Ratings are voluntary and do not represent a
+quality score for all answers. The rating window uses the player's latest
+submission time, so later admin triage does not make an old rating look new.
 
 These counts are operational usage evidence, not a quality score or a complete
 failure rate. A charged message may later be interrupted; released reservations
 include stops and failures before text, while pre-reservation rejections are not
 recorded there. Provider attempts include only requests that reach generation.
 Missing step cost makes the whole request cost unknown, rather than zero. A
-report is a player signal, not a verified model error.
+rating or report is a player signal, not a verified model error.
 `AGENT_PERFORMANCE_LOGGING=true` still provides content-free timing in server
 logs when diagnosing latency. `AGENT_OTEL_ENABLED=true` registers OpenTelemetry
 on Node and emits Agent generation, LLM-step, tool and database-operation spans
@@ -283,7 +292,7 @@ The header starts as **Your chats**. The first question supplies an automatic, M
 Messages, waiting text and composer share a centered 768px maximum width inside the wider header. Usage retains its reset date; the billing link is removed from chat. The live character counter is at the composer's lower left. Nearby questions prompt for a city or neighborhood in chat, without device-location controls.
 
 
-The chat fits the app container on desktop and mobile; only messages scroll. Desktop scrollbars use the existing chat’s muted gray thumb and appear on hover, keyboard focus or scrolling; touch and forced-color modes retain native indicators. Completed Agent replies offer Copy, preserving Markdown, with inline Copied feedback and an error toast if clipboard access fails.
+The chat fits the app container on desktop and mobile; only messages scroll. Desktop scrollbars use the existing chat’s muted gray thumb and appear on hover, keyboard focus or scrolling; touch and forced-color modes retain native indicators. The latest Agent reply keeps its time, Copy and feedback controls visible; older desktop messages reveal actions on hover or focus. Copy preserves Markdown, with inline Copied feedback and an error toast if clipboard access fails.
 
 The recent-chat popover caps its height to the viewport, scrolls only its recent rows, and keeps See all chats in a separate footer. Titles truncate with full text available via the shared tooltip. The history page reuses the Games/Groups observer pattern with cursor-based batches, request deduplication, cancellation on unmount, and a manual retry/load fallback. Offscreen rows use the existing content-visibility optimization; list requests contain summaries only, not transcripts.
 

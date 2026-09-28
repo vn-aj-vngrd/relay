@@ -138,6 +138,25 @@ for (const width of [390, 1440]) {
         },
       ],
     };
+    let submittedRating: Record<string, unknown> | null = null;
+    await page.route("**/api/agent/feedback**", (route) => {
+      if (route.request().method() === "GET")
+        return route.fulfill({
+          contentType: "application/json",
+          body: JSON.stringify({ ratings: [] }),
+        });
+      submittedRating = route.request().postDataJSON() as Record<
+        string,
+        unknown
+      >;
+      return route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          messageId: submittedRating.messageId,
+          rating: submittedRating.rating,
+        }),
+      });
+    });
     let archived = false;
     await page.route("**/api/agent/conversations**", (route) => {
       const request = route.request();
@@ -417,11 +436,31 @@ for (const width of [390, 1440]) {
     ).toContainText("Searching games");
     await workSummary.click();
     await expect(workSummary).toHaveAttribute("aria-expanded", "false");
+    const agentReply = page
+      .getByRole("article", { name: "Agent", exact: true })
+      .last();
+    await agentReply.hover();
+    await agentReply.getByRole("button", { name: "Needs work" }).click();
+    const feedback = page.getByRole("dialog", { name: "Share reply feedback" });
     await expect(
-      page.getByRole("log").getByRole("link", { name: "Report answer" }).last()
+      feedback.getByRole("link", { name: "Report a problem" })
     ).toHaveAttribute("href", "/feedback?area=agent");
-    // Actions reserve their row, reveal on hover/focus, and remain available
-    // without hover on touch devices (regardless of viewport width).
+    await expect(feedback).toContainText("Needs work");
+    await feedback.getByRole("button", { name: "Incorrect details" }).click();
+    await feedback.getByRole("button", { name: "Submit feedback" }).click();
+    await expect(feedback).not.toBeVisible();
+    await expect(
+      agentReply.getByRole("button", { name: "Needs work" })
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(submittedRating).toMatchObject({
+      rating: "bad",
+      reasons: ["incorrect"],
+    });
+    expect(JSON.stringify(submittedRating)).not.toContain(
+      "When is my next game?"
+    );
+    // The latest Agent reply stays visible. Older actions reveal on hover/focus;
+    // touch devices keep all actions visible regardless of viewport width.
     for (const [author, label] of [
       ["You", "Copy message"],
       ["Agent", "Copy reply"],
@@ -434,7 +473,10 @@ for (const width of [390, 1440]) {
       const hover = await page.evaluate(
         () => matchMedia("(hover: hover) and (pointer: fine)").matches
       );
-      await expect(actions).toHaveCSS("opacity", hover ? "0" : "1");
+      await expect(actions).toHaveCSS(
+        "opacity",
+        hover && author === "You" ? "0" : "1"
+      );
       const before = await message.boundingBox();
       if (hover) {
         await message.hover();

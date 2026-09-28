@@ -1103,6 +1103,11 @@ export const feedbackSubmissions = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     pagePath: text("page_path"),
+    agentConversationId: uuid("agent_conversation_id"),
+    agentMessageId: text("agent_message_id"),
+    agentRating: text("agent_rating"),
+    agentRatedAt: timestamp("agent_rated_at", { withTimezone: true }),
+    agentReasons: text("agent_reasons").array().notNull().default([]),
     contactAllowed: boolean("contact_allowed").notNull().default(true),
     adminNote: text("admin_note"),
     reviewedById: uuid("reviewed_by_id").references(() => users.id, {
@@ -1116,6 +1121,23 @@ export const feedbackSubmissions = pgTable(
     index("feedback_status_created_idx").on(table.status, table.createdAt),
     index("feedback_type_created_idx").on(table.type, table.createdAt),
     unique("feedback_user_session_unique").on(table.userId, table.sessionId),
+    unique("feedback_agent_reply_unique").on(
+      table.userId,
+      table.agentConversationId,
+      table.agentMessageId
+    ),
+    check(
+      "feedback_agent_rating_valid",
+      sql`${table.agentRating} is null or ${table.agentRating} in ('good', 'bad')`
+    ),
+    check(
+      "feedback_agent_reply_complete",
+      sql`(${table.agentRating} is null and ${table.agentConversationId} is null and ${table.agentMessageId} is null) or (${table.agentRating} is not null and ${table.agentConversationId} is not null and ${table.agentMessageId} is not null)`
+    ),
+    check(
+      "feedback_agent_rated_at_complete",
+      sql`(${table.agentRating} is null and ${table.agentRatedAt} is null) or (${table.agentRating} is not null and ${table.agentRatedAt} is not null)`
+    ),
     check(
       "feedback_experience_valid",
       sql`${table.experience} is null or ${table.experience} in ('smooth', 'issues')`

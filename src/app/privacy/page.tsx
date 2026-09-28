@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy"
       summary="Relay uses only the information needed to organize a game, keep participants in sync, and preserve the session afterward."
-      updated="September 15, 2026"
+      updated="September 28, 2026"
     >
       <section>
         <h2>Information Relay stores</h2>
@@ -47,6 +47,13 @@ export default function PrivacyPage() {
           Agent history. You can delete individual conversations from History;
           ordinary database backup retention still applies. Drafts remain in
           your browser memory and are not saved to your account.
+        </p>
+        <p>
+          If you rate an Agent reply, Relay stores the rating, when you last
+          submitted it, selected reasons, any details you write, and identifiers
+          for the chat and reply. It does not copy the question or answer into
+          the feedback record. Feedback remains available for review if you
+          later delete the chat.
         </p>
         <p>
           Questions and relevant game information are processed by OpenRouter
