@@ -1,0 +1,2 @@
+ALTER TABLE "feedback_submissions" ADD COLUMN "agent_rated_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "feedback_submissions" ADD CONSTRAINT "feedback_agent_rated_at_complete" CHECK (("feedback_submissions"."agent_rating" is null and "feedback_submissions"."agent_rated_at" is null) or ("feedback_submissions"."agent_rating" is not null and "feedback_submissions"."agent_rated_at" is not null));

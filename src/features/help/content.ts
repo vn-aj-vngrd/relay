@@ -93,14 +93,14 @@ export const helpArticles: readonly HelpArticle[] = [
     ],
     steps: [
       "Open Admin Console, then Agent. Overview shows setup status and the last 30 days of charged messages, active users and provider attempts. Expand View setup checks and test connection to inspect readiness or test the saved connection.",
-      "Scan the 30-day usage summary, answer-health signals and player-rated replies. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Good and Needs work count only replies players chose to rate; they are not a score for all answers. Each provider percentage includes its attempt count; P95 means 95% of recorded attempts finished within that time.",
+      "Scan the 30-day usage summary, answer-health signals and player-rated replies. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Good and Needs work count replies players last rated within 30 days; admin review does not reset that window. These counts are not a score for all answers. Each provider percentage includes its attempt count; P95 means 95% of recorded attempts finished within that time.",
       "Compare Reported provider cost with Requests with provider cost in the expanded details. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free. Open Settings to change the provider, Agent behavior, capabilities or monthly allowances.",
       "Open Review feedback to inspect reply ratings with reasons and optional details, and separately submitted problem reports. Ratings do not attach the question or answer. Verify reported problems against authorized source records before changing Agent instructions or tools.",
     ],
     outcome:
       "You can spot usage and reliability changes without exposing conversation text in the metrics view.",
     troubleshooting: [
-      "If Answer metrics are unavailable, check the Agent request-metrics migration and database connection. If reply ratings are unavailable, check the reply-feedback migration. Existing message usage remains visible. No provider attempts means latency, errors and cost have no sample yet.",
+      "If Answer metrics are unavailable, check the Agent request-metrics migration and database connection. If reply ratings are unavailable, check both reply-feedback migrations. Existing message usage remains visible. No provider attempts means latency, errors and cost have no sample yet.",
       "Counts exclude requests rejected before generation. Ratings are voluntary and may not represent all answers; a charged message or problem report does not prove correctness. Use Agent quality evals and source review for that assessment.",
     ],
     related: ["agent-capabilities", "support"],

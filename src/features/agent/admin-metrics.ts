@@ -33,8 +33,8 @@ export async function getAgentAdminMetrics(now = new Date()) {
       .select({
         reports30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} is null and ${feedbackSubmissions.createdAt} >= ${thirtyDaysAgo.toISOString()})::int`,
         openReports: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} is null and ${feedbackSubmissions.status} in ('new', 'reviewing', 'planned'))::int`,
-        goodRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'good' and ${feedbackSubmissions.updatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
-        badRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'bad' and ${feedbackSubmissions.updatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
+        goodRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'good' and ${feedbackSubmissions.agentRatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
+        badRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'bad' and ${feedbackSubmissions.agentRatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
       })
       .from(feedbackSubmissions)
       .where(eq(feedbackSubmissions.area, "agent"));

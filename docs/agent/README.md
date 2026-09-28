@@ -139,7 +139,8 @@ reservations, voluntary reply ratings and separate Agent problem report totals, 
 attempts, failure rate, tool-read failures, average/P95 latency and time to first text, and
 OpenRouter-reported cost with coverage. It reads the existing usage ledger,
 feedback area and `agent_request_metrics` after the usual admin MFA check.
-Apply migrations `0064_agent_request_metrics` and `0065_agent_reply_feedback`
+Apply migrations `0064_agent_request_metrics`, `0065_agent_reply_feedback`, and
+`0066_agent_reply_rating_time`
 before deployment. The request metrics
 table contains no account ID or conversation content; its Data API privileges
 are revoked. If request metrics are unavailable, existing message usage stays
@@ -160,7 +161,8 @@ optional details in the existing Feedback queue without copying the question or
 answer. A separate Report a problem link opens the existing Agent feedback form.
 Admin Overview counts good and needs-work ratings for the last 30 days
 separately from problem reports. Ratings are voluntary and do not represent a
-quality score for all answers.
+quality score for all answers. The rating window uses the player's latest
+submission time, so later admin triage does not make an old rating look new.
 
 These counts are operational usage evidence, not a quality score or a complete
 failure rate. A charged message may later be interrupted; released reservations

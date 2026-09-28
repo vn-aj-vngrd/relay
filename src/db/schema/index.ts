@@ -1106,6 +1106,7 @@ export const feedbackSubmissions = pgTable(
     agentConversationId: uuid("agent_conversation_id"),
     agentMessageId: text("agent_message_id"),
     agentRating: text("agent_rating"),
+    agentRatedAt: timestamp("agent_rated_at", { withTimezone: true }),
     agentReasons: text("agent_reasons").array().notNull().default([]),
     contactAllowed: boolean("contact_allowed").notNull().default(true),
     adminNote: text("admin_note"),
@@ -1132,6 +1133,10 @@ export const feedbackSubmissions = pgTable(
     check(
       "feedback_agent_reply_complete",
       sql`(${table.agentRating} is null and ${table.agentConversationId} is null and ${table.agentMessageId} is null) or (${table.agentRating} is not null and ${table.agentConversationId} is not null and ${table.agentMessageId} is not null)`
+    ),
+    check(
+      "feedback_agent_rated_at_complete",
+      sql`(${table.agentRating} is null and ${table.agentRatedAt} is null) or (${table.agentRating} is not null and ${table.agentRatedAt} is not null)`
     ),
     check(
       "feedback_experience_valid",

@@ -107,6 +107,12 @@ describe("Agent admin usage metrics", () => {
     expect(
       dialect.sqlToQuery(feedbackProjection.goodRatings30Days).params
     ).toEqual(["2026-08-28T00:00:00.000Z"]);
+    expect(
+      dialect.sqlToQuery(feedbackProjection.goodRatings30Days).sql
+    ).toContain('"agent_rated_at"');
+    expect(
+      dialect.sqlToQuery(feedbackProjection.badRatings30Days).sql
+    ).not.toContain('"updated_at"');
     const requestProjection = mocks.select.mock.calls[2][0];
     expect(dialect.sqlToQuery(requestProjection.attempts7Days).params).toEqual([
       "2026-09-20T00:00:00.000Z",

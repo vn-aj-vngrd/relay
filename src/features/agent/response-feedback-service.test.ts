@@ -74,6 +74,7 @@ describe("Agent reply feedback scope", () => {
         agentConversationId: input.conversationId,
         agentMessageId: "reply-a",
         agentRating: "bad",
+        agentRatedAt: expect.any(Date),
         agentReasons: ["incorrect"],
         description: "Reasons: Incorrect details\nDetails: Wrong game time",
         status: "new",
@@ -85,7 +86,11 @@ describe("Agent reply feedback scope", () => {
     );
     expect(mocks.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        set: expect.objectContaining({ agentRating: "bad", status: "new" }),
+        set: expect.objectContaining({
+          agentRating: "bad",
+          agentRatedAt: mocks.values.mock.calls[0][0].agentRatedAt,
+          status: "new",
+        }),
       })
     );
   });

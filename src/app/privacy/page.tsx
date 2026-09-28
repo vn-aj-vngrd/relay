@@ -49,10 +49,11 @@ export default function PrivacyPage() {
           your browser memory and are not saved to your account.
         </p>
         <p>
-          If you rate an Agent reply, Relay stores the rating, selected reasons,
-          any details you write, and identifiers for the chat and reply. It does
-          not copy the question or answer into the feedback record. Feedback
-          remains available for review if you later delete the chat.
+          If you rate an Agent reply, Relay stores the rating, when you last
+          submitted it, selected reasons, any details you write, and identifiers
+          for the chat and reply. It does not copy the question or answer into
+          the feedback record. Feedback remains available for review if you
+          later delete the chat.
         </p>
         <p>
           Questions and relevant game information are processed by OpenRouter

@@ -361,9 +361,10 @@ export function AgentAdminOverview({
                 remains unknown; rejections before generation are excluded.
               </p>
               <p className="mt-2 max-w-3xl pb-5 text-xs leading-5 text-muted">
-                Reply ratings are voluntary feedback from rated replies, not a
-                score for all answers. Answer reports are separate signals to
-                investigate, not verified model errors.
+                Reply ratings are voluntary feedback from replies players last
+                rated in this period, not a score for all answers. Admin review
+                does not change their rating date. Answer reports are separate
+                signals to investigate, not verified model errors.
               </p>
             </details>
           </>

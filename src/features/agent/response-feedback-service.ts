@@ -76,6 +76,7 @@ export async function saveAgentReplyFeedback(
     agentConversationId: input.conversationId,
     agentMessageId: input.messageId,
     agentRating: input.rating,
+    agentRatedAt: now,
     agentReasons: input.reasons,
     type: "general" as const,
     area: "agent",
@@ -100,6 +101,7 @@ export async function saveAgentReplyFeedback(
       ],
       set: {
         agentRating: values.agentRating,
+        agentRatedAt: now,
         agentReasons: values.agentReasons,
         title: values.title,
         description: values.description,
