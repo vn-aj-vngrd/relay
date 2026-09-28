@@ -140,8 +140,8 @@ export function AgentAdminOverview({
           Usage metrics
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted">
-          Aggregate usage for the last 30 days. Open reports are current. No
-          conversation content is shown.
+          Aggregate usage and voluntary reply ratings for the last 30 days. Open
+          reports are current. No conversation content is shown.
         </p>
         {!metrics ? (
           <p role="status" className="mt-5 text-sm text-warning">
@@ -186,6 +186,15 @@ export function AgentAdminOverview({
                   <dt className="text-xs text-muted">P95 response time</dt>
                   <dd className="score mt-1 text-sm font-semibold">
                     {requests.p95DurationMs.toLocaleString()} ms
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted">Player-rated replies</dt>
+                  <dd className="score mt-1 text-sm font-semibold">
+                    {metrics.goodRatings30Days === null ||
+                    metrics.badRatings30Days === null
+                      ? "Unavailable"
+                      : `${metrics.goodRatings30Days} good · ${metrics.badRatings30Days} needs work`}
                   </dd>
                 </div>
                 <div>
@@ -235,6 +244,23 @@ export function AgentAdminOverview({
                   />
                 </MetricGroup>
                 <MetricGroup title="Feedback" divider="mobile">
+                  <MetricRow
+                    label="Rated replies · 30 days"
+                    value={
+                      metrics.goodRatings30Days === null ||
+                      metrics.badRatings30Days === null
+                        ? "Unavailable"
+                        : metrics.goodRatings30Days + metrics.badRatings30Days
+                    }
+                  />
+                  <MetricRow
+                    label="Good reply ratings · 30 days"
+                    value={metrics.goodRatings30Days ?? "Unavailable"}
+                  />
+                  <MetricRow
+                    label="Needs work ratings · 30 days"
+                    value={metrics.badRatings30Days ?? "Unavailable"}
+                  />
                   <MetricRow
                     label="Answer reports · 30 days"
                     value={metrics.reports30Days ?? "Unavailable"}
@@ -335,8 +361,9 @@ export function AgentAdminOverview({
                 remains unknown; rejections before generation are excluded.
               </p>
               <p className="mt-2 max-w-3xl pb-5 text-xs leading-5 text-muted">
-                Answer reports are player-submitted signals to investigate, not
-                verified model errors.
+                Reply ratings are voluntary feedback from rated replies, not a
+                score for all answers. Answer reports are separate signals to
+                investigate, not verified model errors.
               </p>
             </details>
           </>

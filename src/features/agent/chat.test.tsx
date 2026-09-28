@@ -581,7 +581,9 @@ describe("Agent chat controls", () => {
   it("shows elapsed work and request activity while waiting for a response", () => {
     mocks.status = "submitted";
     render(<AgentChat available />);
-    expect(screen.getByText("Working for 0s")).toBeInTheDocument();
+    const pendingReply = screen.getByRole("article", { name: "Agent" });
+    expect(pendingReply.querySelector("svg")).toBeInTheDocument();
+    expect(pendingReply).toContainElement(screen.getByText("Working for 0s"));
     expect(
       screen.getByRole("list", { name: "Agent activity" })
     ).toHaveTextContent("Reviewing your request");

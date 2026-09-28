@@ -22,4 +22,9 @@
     opacity: 1;
     pointer-events: auto;
   }
+
+  .message .actions.visibleActions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }

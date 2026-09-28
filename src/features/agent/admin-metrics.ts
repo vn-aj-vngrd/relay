@@ -22,12 +22,19 @@ export async function getAgentAdminMetrics(now = new Date()) {
     })
     .from(agentMessageUsage)
     .where(gte(agentMessageUsage.createdAt, thirtyDaysAgo));
-  let feedback: { reports30Days: number; openReports: number } | null = null;
+  let feedback: {
+    reports30Days: number;
+    openReports: number;
+    goodRatings30Days: number;
+    badRatings30Days: number;
+  } | null = null;
   try {
     const [row] = await db
       .select({
-        reports30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.createdAt} >= ${thirtyDaysAgo.toISOString()})::int`,
-        openReports: sql<number>`count(*) filter (where ${feedbackSubmissions.status} in ('new', 'reviewing', 'planned'))::int`,
+        reports30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} is null and ${feedbackSubmissions.createdAt} >= ${thirtyDaysAgo.toISOString()})::int`,
+        openReports: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} is null and ${feedbackSubmissions.status} in ('new', 'reviewing', 'planned'))::int`,
+        goodRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'good' and ${feedbackSubmissions.updatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
+        badRatings30Days: sql<number>`count(*) filter (where ${feedbackSubmissions.agentRating} = 'bad' and ${feedbackSubmissions.updatedAt} >= ${thirtyDaysAgo.toISOString()})::int`,
       })
       .from(feedbackSubmissions)
       .where(eq(feedbackSubmissions.area, "agent"));
@@ -35,6 +42,8 @@ export async function getAgentAdminMetrics(now = new Date()) {
       ? {
           reports30Days: Number(row.reports30Days ?? 0),
           openReports: Number(row.openReports ?? 0),
+          goodRatings30Days: Number(row.goodRatings30Days ?? 0),
+          badRatings30Days: Number(row.badRatings30Days ?? 0),
         }
       : null;
   } catch {
@@ -100,6 +109,8 @@ export async function getAgentAdminMetrics(now = new Date()) {
     reserved30Days: Number(row?.reserved30Days ?? 0),
     reports30Days: feedback?.reports30Days ?? null,
     openReports: feedback?.openReports ?? null,
+    goodRatings30Days: feedback?.goodRatings30Days ?? null,
+    badRatings30Days: feedback?.badRatings30Days ?? null,
     requests,
   };
 }

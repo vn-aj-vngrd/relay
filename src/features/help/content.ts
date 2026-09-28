@@ -21,7 +21,7 @@ export type HelpArticle = {
   }[];
 };
 
-export const helpReviewedAt = "2026-09-27";
+export const helpReviewedAt = "2026-09-28";
 export const helpOwner = "Relay product and support";
 
 export const helpCategories = [
@@ -93,21 +93,22 @@ export const helpArticles: readonly HelpArticle[] = [
     ],
     steps: [
       "Open Admin Console, then Agent. Overview shows setup status and the last 30 days of charged messages, active users and provider attempts. Expand View setup checks and test connection to inspect readiness or test the saved connection.",
-      "Scan the 30-day usage summary and answer-health signals. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Each percentage includes its provider-attempt count; P95 means 95% of recorded attempts finished within that time.",
+      "Scan the 30-day usage summary, answer-health signals and player-rated replies. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Good and Needs work count only replies players chose to rate; they are not a score for all answers. Each provider percentage includes its attempt count; P95 means 95% of recorded attempts finished within that time.",
       "Compare Reported provider cost with Requests with provider cost in the expanded details. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free. Open Settings to change the provider, Agent behavior, capabilities or monthly allowances.",
-      "Open Review feedback to inspect player-submitted answer reports. Verify each report against authorized source records before changing Agent instructions or tools.",
+      "Open Review feedback to inspect reply ratings with reasons and optional details, and separately submitted problem reports. Ratings do not attach the question or answer. Verify reported problems against authorized source records before changing Agent instructions or tools.",
     ],
     outcome:
       "You can spot usage and reliability changes without exposing conversation text in the metrics view.",
     troubleshooting: [
-      "If Answer metrics are unavailable, check the Agent request-metrics migration and database connection. Existing message usage remains visible. No provider attempts means latency, errors and cost have no sample yet.",
-      "Counts exclude requests rejected before generation. A charged message or answer report does not prove the answer was correct; use the Agent quality evals and source review for that assessment.",
+      "If Answer metrics are unavailable, check the Agent request-metrics migration and database connection. If reply ratings are unavailable, check the reply-feedback migration. Existing message usage remains visible. No provider attempts means latency, errors and cost have no sample yet.",
+      "Counts exclude requests rejected before generation. Ratings are voluntary and may not represent all answers; a charged message or problem report does not prove correctness. Use Agent quality evals and source review for that assessment.",
     ],
     related: ["agent-capabilities", "support"],
     sources: [
       "src/app/(admin)/admin/agent/page.tsx",
       "src/features/agent/admin-overview.tsx",
       "src/features/agent/admin-metrics.ts",
+      "src/features/agent/response-feedback-service.ts",
       "src/features/agent/request-metrics.ts",
     ],
     action: { href: "/admin/agent", label: "Open Agent administration" },
@@ -142,12 +143,12 @@ export const helpArticles: readonly HelpArticle[] = [
       "Missing creation options mean that capability is disabled. Contact an administrator or use Create game, Groups, or Quick Play directly.",
       "Check linked records: answers can be mistaken. Questions and relevant data are sent to the configured AI provider, so keep secrets out of chat.",
       "Agent blocks recognizable API credentials and private keys before sending a message to the AI provider. Remove the credential and try again; if it is in an older saved message, start a new chat. This check cannot recognize every secret, so review all chat text before sending.",
-      "If an Agent answer looks wrong, choose Report answer under the completed reply. The feedback form selects Agent answers and /agent; describe the issue without pasting secrets. The conversation and answer are not attached automatically.",
+      "To rate a saved Agent reply, choose Good response or Needs work below it, then choose a reason or add details. The rating, reasons and details are saved without copying the question or answer. Use Report a problem in that dialog for a separate issue report; avoid pasting secrets.",
       "Chats are saved to your account. Agent keeps processing while you visit other Relay pages in the same tab, including Quick Play, Courts and Help. One reply can run at a time; New chat and other conversations wait until it finishes. The sidebar and mobile header Agent icon show a working ring while a response is in progress. A blue dot means a reply is ready; a warning means the response needs attention. The session name menu shows a right-aligned icon for each recent chat's Working, Done or Needs attention state. These indicators clear when you return to Agent. Return to Agent to continue the latest conversation with its progress, reply and unsent draft intact. Stop, signing out or switching accounts ends active work. Reloading or closing the tab may interrupt a response; saved replies remain in History. Use the session name menu to reopen a chat. Select See all chats, then Chats or Archived, to rename, archive, restore or delete from the chat's More actions menu. Archived chats remain readable until you restore them to continue.",
-      "Hover over your message or an Agent reply to reveal its time and Copy control with a short fade, or use Tab to focus Copy. The controls fade out when you move away, without shifting the conversation. On touch devices these controls stay visible; reduced-motion preferences skip the fade. Hover or focus an icon for its centered tooltip; near a screen edge, the tooltip shifts to stay visible. Copy includes the full message text; replies can be copied once streaming finishes. Older messages may not have a saved time.",
+      "The latest Agent reply keeps its time, Copy, Good response and Needs work controls visible. Hover over older messages to reveal their time and controls with a short fade, or use Tab to focus them. On touch devices all controls stay visible; reduced-motion preferences skip the fade. Copy includes the full message text. Good response and Needs work are available on saved replies once streaming finishes. Older messages may not have a saved time.",
       "Write in the message box and select the circular up-arrow button to send, or press Enter. Shift+Enter adds a new line. While Agent responds, the same button becomes a square Stop control. The + button opens available actions.",
       "The small ring beside Send shows how much of your monthly message allowance is used or reserved for replies in progress. Hover, keyboard-focus or tap it to see the exact message count and reset date in Philippine time. This is your message allowance, not the model's context window.",
-      "While Agent responds, Working for shows elapsed time and current activity, such as searching games or reading a guide. A spinning ring marks the active step; it stays still if your device prefers reduced motion. When finished, Worked for collapses above the answer; select it to expand or close the activity log. Saved replies retain their activity after refresh; older replies may not have a log. These are activity summaries, not the model's private reasoning.",
+      "Agent's logo and name appear as soon as a reply starts. While Agent responds, Working for shows elapsed time and current activity, such as searching games or reading a guide. A spinning ring marks the active step; it stays still if your device prefers reduced motion. When finished, Worked for collapses above the answer; select it to expand or close the activity log. Saved replies retain their activity after refresh; older replies may not have a log. These are activity summaries, not the model's private reasoning.",
       "If a reply fails, its error appears in the conversation with Retry underneath. Any partial answer remains visible. Retry regenerates the latest response without sending your question twice. Stopped or interrupted work is labeled in its activity summary. A response still running in another tab shows a waiting message, then its saved reply appears in the open chat. Hidden tabs pause chat status checks and refresh when you return; Agent processing continues. If syncing fails, reopen the chat from History. History updates loaded Chats and Archived rows when another tab changes them; if another tab deletes your open chat, Agent returns to Your chats. A request rejected before Agent starts does not keep New chat blocked; follow the error guidance and try again when available.",
     ],
     related: ["agent-create", "create-a-game", "quick-play", "find-a-court"],
@@ -159,6 +160,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "src/features/agent/history-panel.tsx",
       "src/features/agent/history-collection.tsx",
       "src/features/agent/reply-actions.tsx",
+      "src/features/agent/response-feedback.ts",
       "src/features/agent/work-log.tsx",
       "src/features/agent/response-error.tsx",
       "src/features/agent/usage-indicator.tsx",
@@ -1649,7 +1651,7 @@ export const helpArticles: readonly HelpArticle[] = [
       "Write a specific title and description: what you tried, expected, and saw. Add a local Relay page path when useful and choose whether you permit follow-up contact.",
       "Submit and use your feedback history to check status. New, Reviewing, Planned, Resolved, and Closed describe review, not a delivery promise.",
       "After a completed game, Smooth records the recap check-in; Had some issues opens this feedback flow with game context. You can dismiss that check-in without blocking results.",
-      "For an incorrect Agent reply, choose Report answer below it. The form selects Agent answers and /agent. Explain the mismatch; the chat transcript is not copied into the report automatically.",
+      "For an Agent reply, choose Good response or Needs work to share a quick rating with reasons and optional details. Use Report a problem in that dialog for a separate issue report. Neither path copies the chat transcript automatically.",
     ],
     outcome:
       "Your account has a recorded submission and visible public status. Private triage notes are not shown to players.",

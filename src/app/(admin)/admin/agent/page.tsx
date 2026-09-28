@@ -15,7 +15,7 @@ export default async function AdminAgentPage({
   searchParams = Promise.resolve({}),
 }: {
   searchParams?: Promise<{ tab?: string | string[] }>;
-} = {}) {
+}) {
   const admin = await requireAdmin();
   const { tab } = await searchParams;
   const activeTab = tab === "settings" ? "settings" : "overview";

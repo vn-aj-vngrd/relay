@@ -50,12 +50,7 @@ export function AgentMessage({
           : `${styles.message} max-w-full pr-2`
       }
     >
-      {!user ? (
-        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-          <AgentMark size={18} className="text-primary" />
-          Agent
-        </div>
-      ) : null}
+      {!user ? <AgentMessageHeader /> : null}
       {beforeAnswer}
       <div
         className={
@@ -68,6 +63,15 @@ export function AgentMessage({
       </div>
       {children}
     </article>
+  );
+}
+
+export function AgentMessageHeader() {
+  return (
+    <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+      <AgentMark size={18} className="text-primary" />
+      Agent
+    </div>
   );
 }
 
