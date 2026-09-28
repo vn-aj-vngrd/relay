@@ -121,6 +121,7 @@ describe("Admin Agent metrics", () => {
     ).toHaveAttribute("href", "/admin/feedback");
     expect(mocks.metrics).toHaveBeenCalledOnce();
     expect(mocks.trend).toHaveBeenCalledOnce();
+    expect(mocks.models).not.toHaveBeenCalled();
     expect(screen.queryByText("Agent settings form")).not.toBeInTheDocument();
   });
 
@@ -135,6 +136,7 @@ describe("Admin Agent metrics", () => {
       "page"
     );
     expect(screen.getByText("Agent settings form")).toBeVisible();
+    expect(mocks.models).toHaveBeenCalledOnce();
     expect(
       screen.queryByRole("heading", { name: "Usage and answer health" })
     ).not.toBeInTheDocument();
@@ -166,6 +168,7 @@ describe("Admin Agent metrics", () => {
     expect(section).toHaveClass("w-full");
     expect(section).not.toHaveClass("max-w-3xl");
     expect(screen.getByText("Compatible model route")).toBeVisible();
+    expect(mocks.models).toHaveBeenCalledOnce();
     expect(
       screen.queryByText("View setup checks and test connection")
     ).not.toBeInTheDocument();
@@ -273,5 +276,6 @@ describe("Admin Agent metrics", () => {
     ).toBeVisible();
     expect(mocks.metrics).not.toHaveBeenCalled();
     expect(mocks.trend).not.toHaveBeenCalled();
+    expect(mocks.models).not.toHaveBeenCalled();
   });
 });

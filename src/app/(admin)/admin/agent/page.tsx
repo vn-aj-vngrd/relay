@@ -29,7 +29,10 @@ export default async function AdminAgentPage({
       : "overview";
   const { config, encryptedApiKey } = await readAgentSettings();
   const readiness = agentReadiness(config, encryptedApiKey);
-  const models = await getAgentModels(config.requireZeroRetention);
+  const models =
+    activeTab === "overview" || activeTab === "settings"
+      ? await getAgentModels(config.requireZeroRetention)
+      : [];
 
   let overview: React.ReactNode = null;
   if (activeTab === "overview") {
