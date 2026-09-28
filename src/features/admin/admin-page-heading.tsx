@@ -17,7 +17,7 @@ export function AdminPageHeading({
           Production operations
         </div>
         <h1 className="app-title">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+        <p className="mt-2 text-sm leading-6 text-muted xl:whitespace-nowrap">
           {description}
         </p>
       </div>

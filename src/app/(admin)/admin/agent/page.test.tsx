@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   config: vi.fn(),
   models: vi.fn(),
   metrics: vi.fn(),
+  trend: vi.fn(),
   usage: vi.fn(),
 }));
 vi.mock("server-only", () => ({}));
@@ -14,6 +15,7 @@ vi.mock("@/features/agent/config", () => ({ readAgentSettings: mocks.config }));
 vi.mock("@/features/agent/models", () => ({ getAgentModels: mocks.models }));
 vi.mock("@/features/agent/admin-metrics", () => ({
   getAgentAdminMetrics: mocks.metrics,
+  getAgentRequestTrend: mocks.trend,
 }));
 vi.mock("@/features/agent/usage", () => ({ getAgentUsage: mocks.usage }));
 vi.mock("@/features/agent/readiness", () => ({
@@ -64,6 +66,9 @@ beforeEach(() => {
       costReported30Days: 5,
     },
   });
+  mocks.trend.mockResolvedValue([
+    { day: "2026-09-28", attempts: 3, failed: 1, stopped: 0 },
+  ]);
 });
 
 describe("Admin Agent metrics", () => {
@@ -73,12 +78,16 @@ describe("Admin Agent metrics", () => {
     expect(mocks.metrics).not.toHaveBeenCalled();
   });
 
-  it("shows aggregate counts without user-level data", async () => {
-    render(await AdminAgentPage({}));
+  it("shows aggregate counts and measured visuals on the metrics tab", async () => {
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
     expect(
       screen.getByRole("navigation", { name: "Agent sections" })
     ).toBeVisible();
-    expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Metrics" })).toHaveAttribute(
       "aria-current",
       "page"
     );
@@ -87,24 +96,31 @@ describe("Admin Agent metrics", () => {
       "/admin/agent?tab=settings"
     );
     expect(
-      screen.getByRole("heading", { name: "Usage metrics" })
+      screen.getByRole("heading", { name: "Usage and answer health" })
     ).toBeVisible();
-    expect(screen.getByText("Active users · 30 days")).toBeVisible();
-    const detailToggle = screen.getByText("Detailed metrics and definitions");
-    expect(detailToggle.closest("details")).not.toHaveAttribute("open");
-    fireEvent.click(detailToggle);
-    expect(detailToggle.closest("details")).toHaveAttribute("open");
-    expect(screen.getByText("Released before text · 7 days")).toBeVisible();
-    expect(screen.getByText("Reported provider cost · 30 days")).toBeVisible();
+    expect(screen.getByText("Active users")).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: /Daily provider attempts/ })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: /Completed attempts: 5 of 7/ })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("img", {
+        name: /5 completed, 1 failed and 1 stopped out of 7/,
+      })
+    ).toBeVisible();
+    expect(screen.getByText("Reported provider cost")).toBeVisible();
     expect(screen.getByText("$0.0125")).toBeVisible();
-    expect(screen.getByText("P95 request time · 30 days")).toBeVisible();
-    expect(screen.getByText("4 good · 2 needs work")).toBeVisible();
-    expect(screen.getByText("Good reply ratings · 30 days")).toBeVisible();
-    expect(screen.getByText(/1 of 7 · 14\.3%/)).toBeVisible();
+    expect(screen.getByText("P95 request time")).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: /Good ratings: 4 of 6/ })
+    ).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Review feedback" })
     ).toHaveAttribute("href", "/admin/feedback");
     expect(mocks.metrics).toHaveBeenCalledOnce();
+    expect(mocks.trend).toHaveBeenCalledOnce();
     expect(screen.queryByText("Agent settings form")).not.toBeInTheDocument();
   });
 
@@ -120,7 +136,7 @@ describe("Admin Agent metrics", () => {
     );
     expect(screen.getByText("Agent settings form")).toBeVisible();
     expect(
-      screen.queryByRole("heading", { name: "Usage metrics" })
+      screen.queryByRole("heading", { name: "Usage and answer health" })
     ).not.toBeInTheDocument();
     expect(mocks.metrics).not.toHaveBeenCalled();
     expect(mocks.usage).not.toHaveBeenCalled();
@@ -128,26 +144,39 @@ describe("Admin Agent metrics", () => {
 
   it("keeps settings available when metrics cannot be read", async () => {
     mocks.metrics.mockRejectedValueOnce(new Error("database unavailable"));
-    render(await AdminAgentPage({}));
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
     expect(screen.getByRole("status")).toHaveTextContent(
       "Usage metrics are temporarily unavailable"
     );
-    expect(screen.getByRole("heading", { name: "Setup status" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
       "href",
       "/admin/agent?tab=settings"
     );
   });
 
-  it("expands setup checks when readiness needs attention", async () => {
+  it("keeps setup checks visible at full width when ready", async () => {
+    render(await AdminAgentPage({}));
+    const section = screen
+      .getByRole("heading", { name: "Setup status" })
+      .closest("section");
+    expect(section).toHaveClass("w-full");
+    expect(section).not.toHaveClass("max-w-3xl");
+    expect(screen.getByText("Compatible model route")).toBeVisible();
+    expect(
+      screen.queryByText("View setup checks and test connection")
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps setup checks visible when readiness needs attention", async () => {
     mocks.usage.mockRejectedValueOnce(new Error("database unavailable"));
     render(await AdminAgentPage({}));
     expect(screen.getByText("Setup needs attention")).toBeVisible();
-    expect(
-      screen
-        .getByText("View setup checks and test connection")
-        .closest("details")
-    ).toHaveAttribute("open");
+    expect(screen.getByText("Message usage service")).toBeVisible();
+    expect(screen.getByText("Needs attention")).toBeVisible();
   });
 
   it("distinguishes no samples from unavailable answer metrics", async () => {
@@ -156,7 +185,11 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, attempts30Days: 0 },
     });
-    render(await AdminAgentPage({}));
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
     expect(screen.getByText(/No provider attempts recorded/)).toBeVisible();
     expect(screen.queryByText("$0.0000")).not.toBeInTheDocument();
   });
@@ -164,8 +197,12 @@ describe("Admin Agent metrics", () => {
   it("keeps message usage visible when answer metrics are unavailable", async () => {
     const sample = await mocks.metrics();
     mocks.metrics.mockResolvedValueOnce({ ...sample, requests: null });
-    render(await AdminAgentPage({}));
-    expect(screen.getByText("Charged messages · 30 days")).toBeVisible();
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
+    expect(screen.getByText("Charged messages")).toBeVisible();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Answer metrics are unavailable"
     );
@@ -177,10 +214,13 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, costReported30Days: 0 },
     });
-    render(await AdminAgentPage({}));
-    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
-    const label = screen.getByText("Reported provider cost · 30 days");
-    expect(label.nextElementSibling).toHaveTextContent("Unavailable");
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
+    const label = screen.getByText("Reported provider cost");
+    expect(label.parentElement).toHaveTextContent("Unavailable");
   });
 
   it("does not round a positive provider cost down to zero", async () => {
@@ -189,8 +229,11 @@ describe("Admin Agent metrics", () => {
       ...sample,
       requests: { ...sample.requests, costUsdMicros: 40 },
     });
-    render(await AdminAgentPage({}));
-    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
     expect(screen.getByText("<$0.0001")).toBeVisible();
   });
 
@@ -201,10 +244,34 @@ describe("Admin Agent metrics", () => {
       reports30Days: null,
       openReports: null,
     });
-    render(await AdminAgentPage({}));
-    fireEvent.click(screen.getByText("Detailed metrics and definitions"));
-    const label = screen.getByText("Answer reports · 30 days");
-    expect(label.nextElementSibling).toHaveTextContent("Unavailable");
-    expect(screen.getByText("Charged messages · 30 days")).toBeVisible();
+    render(
+      await AdminAgentPage({
+        searchParams: Promise.resolve({ tab: "metrics" }),
+      })
+    );
+    expect(screen.getByText(/Unavailable open answer reports/)).toBeVisible();
+    expect(screen.getByText("Charged messages")).toBeVisible();
+  });
+
+  it("keeps evaluation inputs separate from measured metrics", async () => {
+    render(
+      await AdminAgentPage({ searchParams: Promise.resolve({ tab: "evals" }) })
+    );
+    expect(screen.getByRole("link", { name: "Evals" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(
+      screen.getByRole("heading", { name: "Evaluate Agent answers" })
+    ).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Evaluate Agent answers" })
+        .parentElement?.parentElement
+    ).toHaveClass("w-full");
+    expect(
+      screen.getByText(/this page does not record an eval pass rate/i)
+    ).toBeVisible();
+    expect(mocks.metrics).not.toHaveBeenCalled();
+    expect(mocks.trend).not.toHaveBeenCalled();
   });
 });

@@ -92,10 +92,11 @@ export const helpArticles: readonly HelpArticle[] = [
       "Agent request metrics require the current database migration.",
     ],
     steps: [
-      "Open Admin Console, then Agent. Overview shows setup status and the last 30 days of charged messages, active users and provider attempts. Expand View setup checks and test connection to inspect readiness or test the saved connection.",
-      "Scan the 30-day usage summary, answer-health signals and player-rated replies. Open Detailed metrics and definitions for Message delivery, Feedback, Reliability, Response time and Provider cost. Good and Needs work count replies players last rated within 30 days; admin review does not reset that window. These counts are not a score for all answers. Each provider percentage includes its attempt count; P95 means 95% of recorded attempts finished within that time.",
-      "Compare Reported provider cost with Requests with provider cost in the expanded details. OpenRouter may omit cost for a request; missing cost is unknown and is excluded from the total, not counted as free. Open Settings to change the provider, Agent behavior, capabilities or monthly allowances.",
+      "Open Admin Console, then Agent. Overview shows the readiness bar, every setup check and the saved connection test together. Checks that need attention include recovery guidance.",
+      "Open Metrics for 30-day usage and answer-health signals. The 14-day provider-attempt chart uses UTC dates; expand Daily values for exact counts. Reliability bars show completed and failed attempts, with stops counted separately. First-text and cost-coverage bars show their denominators. P95 means 95% of recorded attempts finished within that time.",
+      "Compare Reported provider cost with Cost coverage. OpenRouter may omit cost for a request; missing cost is unknown and excluded from the total, not counted as free. Good and Needs work count replies players last rated within 30 days; admin review does not reset that window. These voluntary ratings are not a score for all answers. Open Settings to change the provider, Agent behavior, capabilities or monthly allowances.",
       "Open Review feedback to inspect reply ratings with reasons and optional details, and separately submitted problem reports. Ratings do not attach the question or answer. Verify reported problems against authorized source records before changing Agent instructions or tools.",
+      "Open Evals to test the saved model route and review focused prompts with expected evidence. Use authorized test data when trying prompts in Agent. The tab does not show a live eval pass rate. The repository's synthetic model suite runs separately with its documented credentials and may incur provider charges.",
     ],
     outcome:
       "You can spot usage and reliability changes without exposing conversation text in the metrics view.",
@@ -107,6 +108,8 @@ export const helpArticles: readonly HelpArticle[] = [
     sources: [
       "src/app/(admin)/admin/agent/page.tsx",
       "src/features/agent/admin-overview.tsx",
+      "src/features/agent/admin-metrics-view.tsx",
+      "src/features/agent/admin-evals.tsx",
       "src/features/agent/admin-metrics.ts",
       "src/features/agent/response-feedback-service.ts",
       "src/features/agent/request-metrics.ts",

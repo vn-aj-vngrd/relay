@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ select: vi.fn(), where: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@/db/client", () => ({ db: { select: mocks.select } }));
 
-import { getAgentAdminMetrics } from "./admin-metrics";
+import { getAgentAdminMetrics, getAgentRequestTrend } from "./admin-metrics";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -13,6 +13,36 @@ beforeEach(() => {
 });
 
 describe("Agent admin usage metrics", () => {
+  it("fills empty UTC dates in the request trend without inventing attempts", async () => {
+    const groupBy = vi
+      .fn()
+      .mockResolvedValue([
+        { day: "2026-09-27", attempts: 3, failed: 1, stopped: 1 },
+      ]);
+    mocks.select.mockReturnValueOnce({
+      from: () => ({ where: () => ({ groupBy }) }),
+    });
+    const trend = await getAgentRequestTrend(new Date("2026-09-28T15:00:00Z"));
+    expect(trend).toHaveLength(14);
+    expect(trend[0]).toEqual({
+      day: "2026-09-15",
+      attempts: 0,
+      failed: 0,
+      stopped: 0,
+    });
+    expect(trend[12]).toEqual({
+      day: "2026-09-27",
+      attempts: 3,
+      failed: 1,
+      stopped: 1,
+    });
+    expect(trend[13]?.day).toBe("2026-09-28");
+    const filter = new PgDialect().sqlToQuery(
+      mocks.select.mock.calls[0][0].day
+    );
+    expect(filter.sql).toContain("time zone 'UTC'");
+  });
+
   it("reads only aggregate usage for the last 30 days", async () => {
     mocks.where.mockResolvedValueOnce([
       {

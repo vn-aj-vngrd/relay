@@ -262,6 +262,42 @@ describe("Agent model behavior with synthetic tool results", () => {
     );
   });
 
+  it("treats a successful empty game read as no recorded upcoming games", async () => {
+    let reads = 0;
+    const result = await generateText({
+      model: model(),
+      system,
+      prompt:
+        "Check my upcoming games. If the search finds none, tell me clearly without inventing a schedule.",
+      tools: {
+        searchGames: tool({
+          description:
+            "Search the signed-in player's authorized games by lifecycle.",
+          inputSchema: gameSearchSchema,
+          execute: async (input) => {
+            reads++;
+            return {
+              games: [],
+              nextOffset: null,
+              truncated: false,
+              scope: input.scope,
+              when: input.when,
+              timezone: "Asia/Manila",
+              asOf: "2026-09-27T04:00:00.000Z",
+            };
+          },
+        }),
+      },
+      stopWhen: isStepCount(3),
+      maxOutputTokens: 1200,
+      maxRetries: 0,
+      abortSignal: AbortSignal.timeout(50_000),
+    });
+    expect(reads).toBeGreaterThan(0);
+    expect(result.text).toMatch(/no upcoming|none|didn.t find any upcoming/i);
+    expect(result.text).not.toContain(fakeGame.title);
+  });
+
   it("uses the exact game ID in tool arguments for a named game link", async () => {
     const requestedIds: string[] = [];
     const result = await generateText({

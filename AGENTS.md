@@ -11,6 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Development loop
 
 - **PR workflow:** Read `docs/DEVELOPMENT_WORKFLOW.md` before branching, committing, opening or reviewing a PR, merging, or verifying a release. It owns naming conventions, standing PR-to-production authorization, comment resolution and CI/deployment gates.
+- **GitHub account:** Before pushing or using `gh` for this repository, run `gh auth switch -h github.com -u vn-aj-vngrd` so GitHub operations use the repository owner's account. If Git still uses another account, set the Git credential helper for that command to `gh auth git-credential`.
 
 - **Defer validation:** During development, focus on implementation. Do not automatically run linting, formatting checks, typechecking, tests, builds, or hook commands after edits or at ordinary handoff. Run checks earlier only when the user explicitly requests them (including test-first work).
 - **Journey coverage:** Maintain relevant E2E coverage when changing critical user behavior. Running E2E or dispatching its workflows remains opt-in and is excluded from pre-commit; follow `docs/RELIABILITY.md`.
