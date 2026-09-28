@@ -3,7 +3,12 @@ export const metadata = { title: "Agent · Admin" };
 import Link from "next/link";
 import { AdminPageHeading } from "@/features/admin/admin-page-heading";
 import { requireAdmin } from "@/features/admin/auth";
-import { getAgentAdminMetrics } from "@/features/agent/admin-metrics";
+import { AgentAdminEvals } from "@/features/agent/admin-evals";
+import {
+  getAgentAdminMetrics,
+  getAgentRequestTrend,
+} from "@/features/agent/admin-metrics";
+import { AgentAdminMetricsView } from "@/features/agent/admin-metrics-view";
 import { AgentAdminOverview } from "@/features/agent/admin-overview";
 import { readAgentSettings } from "@/features/agent/config";
 import { getAgentModels } from "@/features/agent/models";
@@ -18,10 +23,16 @@ export default async function AdminAgentPage({
 }) {
   const admin = await requireAdmin();
   const { tab } = await searchParams;
-  const activeTab = tab === "settings" ? "settings" : "overview";
+  const activeTab =
+    tab === "settings" || tab === "metrics" || tab === "evals"
+      ? tab
+      : "overview";
   const { config, encryptedApiKey } = await readAgentSettings();
   const readiness = agentReadiness(config, encryptedApiKey);
-  const models = await getAgentModels(config.requireZeroRetention);
+  const models =
+    activeTab === "overview" || activeTab === "settings"
+      ? await getAgentModels(config.requireZeroRetention)
+      : [];
 
   let overview: React.ReactNode = null;
   if (activeTab === "overview") {
@@ -53,20 +64,30 @@ export default async function AdminAgentPage({
         hint: "The usage check failed. Check database connectivity and the Agent migration, then reload.",
       },
     ];
-    let metrics: Awaited<ReturnType<typeof getAgentAdminMetrics>> | null = null;
-    try {
-      metrics = await getAgentAdminMetrics();
-    } catch {
-      /* Keep configuration available when reporting storage is unavailable. */
-    }
-    overview = <AgentAdminOverview checks={checks} metrics={metrics} />;
+    overview = <AgentAdminOverview checks={checks} />;
+  }
+
+  let metricsView: React.ReactNode = null;
+  if (activeTab === "metrics") {
+    const [metricsResult, trendResult] = await Promise.allSettled([
+      getAgentAdminMetrics(),
+      getAgentRequestTrend(),
+    ]);
+    metricsView = (
+      <AgentAdminMetricsView
+        metrics={
+          metricsResult.status === "fulfilled" ? metricsResult.value : null
+        }
+        trend={trendResult.status === "fulfilled" ? trendResult.value : null}
+      />
+    );
   }
 
   return (
     <div className="w-full [&>header]:mb-5">
       <AdminPageHeading
         title="Agent"
-        description="Monitor answer health and usage, then manage Agent settings. Changes are audited."
+        description="Review setup, measured health and evaluation inputs, then manage Agent settings. Changes are audited."
       />
       <nav
         aria-label="Agent sections"
@@ -75,6 +96,12 @@ export default async function AdminAgentPage({
         <div className="flex min-w-max gap-5">
           {[
             { label: "Overview", href: "/admin/agent", value: "overview" },
+            {
+              label: "Metrics",
+              href: "/admin/agent?tab=metrics",
+              value: "metrics",
+            },
+            { label: "Evals", href: "/admin/agent?tab=evals", value: "evals" },
             {
               label: "Settings",
               href: "/admin/agent?tab=settings",
@@ -95,6 +122,10 @@ export default async function AdminAgentPage({
       <div className="pt-8">
         {activeTab === "overview" ? (
           overview
+        ) : activeTab === "metrics" ? (
+          metricsView
+        ) : activeTab === "evals" ? (
+          <AgentAdminEvals />
         ) : (
           <div>
             {!config.requireZeroRetention ? (

@@ -114,3 +114,33 @@ export async function getAgentAdminMetrics(now = new Date()) {
     requests,
   };
 }
+
+export async function getAgentRequestTrend(now = new Date()) {
+  const start = new Date(now);
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - 13);
+  const day = sql<string>`to_char(${agentRequestMetrics.createdAt} at time zone 'UTC', 'YYYY-MM-DD')`;
+  const rows = await db
+    .select({
+      day,
+      attempts: sql<number>`count(*)::int`,
+      failed: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'failed')::int`,
+      stopped: sql<number>`count(*) filter (where ${agentRequestMetrics.status} = 'stopped')::int`,
+    })
+    .from(agentRequestMetrics)
+    .where(gte(agentRequestMetrics.createdAt, start))
+    .groupBy(day);
+  const byDay = new Map(rows.map((row) => [row.day, row]));
+  return Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(start);
+    date.setUTCDate(start.getUTCDate() + index);
+    const key = date.toISOString().slice(0, 10);
+    const row = byDay.get(key);
+    return {
+      day: key,
+      attempts: Number(row?.attempts ?? 0),
+      failed: Number(row?.failed ?? 0),
+      stopped: Number(row?.stopped ?? 0),
+    };
+  });
+}
