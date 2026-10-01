@@ -43,7 +43,7 @@ jobs:
             echo "A newer push exists; its release will include these commits." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         if: steps.current.outputs.release == 'true'
         with:
           version: 10.12.1
