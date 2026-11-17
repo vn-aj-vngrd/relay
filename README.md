@@ -59,3 +59,7 @@ corepack pnpm release:check
 ## Architecture
 
 Business rules live with their feature in `src/features`. Pages are Server Components unless browser interaction is required. Database and Supabase clients are server-only by default. Live views should reconcile a server-rendered snapshot with narrow Supabase channels and versioned compare-and-swap mutations; the schema includes version fields for this purpose.
+
+## License
+
+Relay is source-available, not open source: you may read it and run it locally to evaluate it. Other uses need permission. See [`LICENSE`](LICENSE).
