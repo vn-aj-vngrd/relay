@@ -51,6 +51,7 @@ corepack pnpm release:check
 - [`docs/product-blueprint.md`](./docs/product-blueprint.md) — requirements, flows, routes, IA, domain, authorization, architecture, and milestones
 - [`docs/integrations.md`](./docs/integrations.md) — Supabase, Vercel, Auth, Storage, Realtime, and credential operations
 - [`docs/PUBLIC_RELEASE_AUDIT.md`](./docs/PUBLIC_RELEASE_AUDIT.md) — security, reliability, performance, market, production, and field release gate
+- [`docs/AGENT_EVALS.md`](./docs/AGENT_EVALS.md) — measured Agent eval results, the model they ran on, and how to rerun them
 - [`docs/SUPPORT.md`](./docs/SUPPORT.md) — public-beta support ownership, targets, and triage
 - [`docs/research/competitor-patterns.md`](./docs/research/competitor-patterns.md) — primary-source product research and scoped decisions
 - [`docs/audits/2026-08-15-ui-audit.md`](./docs/audits/2026-08-15-ui-audit.md) — UI audit and remediation evidence

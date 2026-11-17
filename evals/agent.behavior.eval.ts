@@ -40,6 +40,9 @@ function model() {
 const system = agentInstructions("", new Date("2026-09-27T04:00:00.000Z"));
 
 describe("Agent model behavior with synthetic tool results", () => {
+  // An eval result means little without the model it was measured on.
+  console.info(`Agent evals: model ${process.env.AGENT_EVAL_MODEL}`);
+
   it("uses a past-game read and cites its returned game link", async () => {
     const searches: Array<{ when: string; scope: string }> = [];
     const result = await generateText({
@@ -223,9 +226,12 @@ describe("Agent model behavior with synthetic tool results", () => {
       abortSignal: AbortSignal.timeout(50_000),
     });
     expect(reads).toBeGreaterThan(0);
-    const plain = result.text.replaceAll("*", "");
-    expect(plain).toMatch(/games played:\s*3|3 games played/i);
-    expect(plain).toMatch(/wins:\s*3|3 wins|won 3/i);
+    // The same fact passes as prose, a list, or a Markdown table row.
+    const plain = result.text.replaceAll(/[*|]/g, " ");
+    expect(plain).toMatch(
+      /games played\W{0,4}3\b|\b3 games played|played 3 games/i
+    );
+    expect(plain).toMatch(/wins\W{0,4}3\b|\b3 wins|won 3/i);
     expect(result.text).not.toMatch(/rank|rating points/i);
   });
 
