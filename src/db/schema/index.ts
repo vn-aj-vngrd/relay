@@ -354,7 +354,7 @@ export const venueOperatingPeriods = pgTable(
       sql`${table.sequence} >= 0`
     ),
   ]
-);
+).enableRLS();
 
 export const venuePhotos = pgTable("venue_photos", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -1209,7 +1209,7 @@ export const adminAuditLogs = pgTable(
     ),
     index("admin_audit_target_idx").on(table.targetType, table.targetId),
   ]
-);
+).enableRLS();
 
 export const billingSettings = pgTable("billing_settings", {
   id: text("id").primaryKey().default("global"),
