@@ -470,6 +470,13 @@
       "when": 1790574071274,
       "tag": "0066_agent_reply_rating_time",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1795526472915,
+      "tag": "0067_rls_audit_logs_operating_periods",
+      "breakpoints": true
     }
   ]
 }
